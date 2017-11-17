@@ -19,6 +19,7 @@ from ansible.compat.tests.mock import patch, Mock
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.f5_utils import AnsibleF5Client
+from units.modules.utils import set_module_args
 
 try:
     from library.bigip_remote_syslog import Parameters
@@ -44,11 +45,6 @@ except ImportError:
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):

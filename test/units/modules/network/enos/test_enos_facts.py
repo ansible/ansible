@@ -22,8 +22,9 @@ __metaclass__ = type
 import json
 
 from ansible.compat.tests.mock import patch
-from .enos_module import TestEnosModule, load_fixture, set_module_args
+from .enos_module import TestEnosModule, load_fixture
 from ansible.modules.network.enos import enos_facts
+from units.modules.utils import set_module_args
 
 
 class TestEnosFacts(TestEnosModule):
@@ -31,11 +32,13 @@ class TestEnosFacts(TestEnosModule):
     module = enos_facts
 
     def setUp(self):
+        super(TestEnosFacts, self).setUp()
         self.mock_run_commands = patch(
             'ansible.modules.network.enos.enos_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestEnosFacts, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

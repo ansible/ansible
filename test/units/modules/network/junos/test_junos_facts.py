@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_facts
-from .junos_module import TestJunosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .junos_module import TestJunosModule, load_fixture
 
 RPC_CLI_MAP = {
     'get-software-information': 'show version',
@@ -38,6 +39,8 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_facts
 
     def setUp(self):
+        super(TestJunosCommandModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.junos.junos_facts.get_configuration')
         self.get_config = self.mock_get_config.start()
 
@@ -45,6 +48,7 @@ class TestJunosCommandModule(TestJunosModule):
         self.send_request = self.mock_send_request.start()
 
     def tearDown(self):
+        super(TestJunosCommandModule, self).tearDown()
         self.mock_send_request.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):

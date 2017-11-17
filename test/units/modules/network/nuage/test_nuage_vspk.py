@@ -30,7 +30,8 @@ except ImportError:
     raise SkipTest('Nuage Ansible modules requires the vspk and bambou python libraries')
 
 from ansible.compat.tests.mock import patch
-from .nuage_module import AnsibleExitJson, AnsibleFailJson, MockNuageConnection, TestNuageModule, set_module_args, set_module_args_custom_auth
+from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson
+from .nuage_module import MockNuageConnection, TestNuageModule
 
 _LOOP_COUNTER = 0
 
@@ -173,25 +174,25 @@ class TestNuageVSPKModule(TestNuageModule):
 
     def tearDown(self):
         super(TestNuageVSPKModule, self).tearDown()
-        for patch in self.patches:
-            patch.stop()
+        for mock in self.patches:
+            mock.stop()
 
     def test_certificate_auth(self):
-        set_module_args_custom_auth(
+        set_module_args(
             args={
                 'type': 'Enterprise',
                 'state': 'present',
                 'properties': {
                     'name': 'test-enterprise'
+                },
+                'auth': {
+                    'api_username': 'csproot',
+                    'api_certificate': '/dummy/location/certificate.pem',
+                    'api_key': '/dummy/location/key.pem',
+                    'api_enterprise': 'csp',
+                    'api_url': 'https://localhost:8443',
+                    'api_version': 'v5_0'
                 }
-            },
-            auth={
-                'api_username': 'csproot',
-                'api_certificate': '/dummy/location/certificate.pem',
-                'api_key': '/dummy/location/key.pem',
-                'api_enterprise': 'csp',
-                'api_url': 'https://localhost:8443',
-                'api_version': 'v5_0'
             }
         )
 
@@ -874,16 +875,16 @@ class TestNuageVSPKModule(TestNuageModule):
         self.assertEqual(result['msg'], "Job ended in an error")
 
     def test_fail_auth(self):
-        set_module_args_custom_auth(
+        set_module_args(
             args={
                 'type': 'Enterprise',
-                'command': 'find'
-            },
-            auth={
-                'api_username': 'csproot',
-                'api_enterprise': 'csp',
-                'api_url': 'https://localhost:8443',
-                'api_version': 'v5_0'
+                'command': 'find',
+                'auth': {
+                    'api_username': 'csproot',
+                    'api_enterprise': 'csp',
+                    'api_url': 'https://localhost:8443',
+                    'api_version': 'v5_0'
+                }
             }
         )
 
@@ -896,17 +897,17 @@ class TestNuageVSPKModule(TestNuageModule):
         self.assertEqual(result['msg'], 'Missing api_password or api_certificate and api_key parameter in auth')
 
     def test_fail_version(self):
-        set_module_args_custom_auth(
+        set_module_args(
             args={
                 'type': 'Enterprise',
-                'command': 'find'
-            },
-            auth={
-                'api_username': 'csproot',
-                'api_password': 'csproot',
-                'api_enterprise': 'csp',
-                'api_url': 'https://localhost:8443',
-                'api_version': 'v1_0'
+                'command': 'find',
+                'auth': {
+                    'api_username': 'csproot',
+                    'api_password': 'csproot',
+                    'api_enterprise': 'csp',
+                    'api_url': 'https://localhost:8443',
+                    'api_version': 'v1_0'
+                }
             }
         )
 
@@ -1197,16 +1198,16 @@ class TestNuageVSPKModule(TestNuageModule):
         self.assertEqual(result['msg'], 'Property fake is not valid for this type of entity')
 
     def test_input_auth_username(self):
-        set_module_args_custom_auth(
+        set_module_args(
             args={
                 'type': 'Enterprise',
-                'command': 'find'
-            },
-            auth={
-                'api_password': 'csproot',
-                'api_enterprise': 'csp',
-                'api_url': 'https://localhost:8443',
-                'api_version': 'v5_0'
+                'command': 'find',
+                'auth': {
+                    'api_password': 'csproot',
+                    'api_enterprise': 'csp',
+                    'api_url': 'https://localhost:8443',
+                    'api_version': 'v5_0'
+                }
             }
         )
 
@@ -1219,16 +1220,16 @@ class TestNuageVSPKModule(TestNuageModule):
         self.assertEqual(result['msg'], 'missing required arguments: api_username')
 
     def test_input_auth_enterprise(self):
-        set_module_args_custom_auth(
+        set_module_args(
             args={
                 'type': 'Enterprise',
-                'command': 'find'
-            },
-            auth={
-                'api_username': 'csproot',
-                'api_password': 'csproot',
-                'api_url': 'https://localhost:8443',
-                'api_version': 'v5_0'
+                'command': 'find',
+                'auth': {
+                    'api_username': 'csproot',
+                    'api_password': 'csproot',
+                    'api_url': 'https://localhost:8443',
+                    'api_version': 'v5_0'
+                }
             }
         )
 
@@ -1241,16 +1242,16 @@ class TestNuageVSPKModule(TestNuageModule):
         self.assertEqual(result['msg'], 'missing required arguments: api_enterprise')
 
     def test_input_auth_url(self):
-        set_module_args_custom_auth(
+        set_module_args(
             args={
                 'type': 'Enterprise',
-                'command': 'find'
-            },
-            auth={
-                'api_username': 'csproot',
-                'api_password': 'csproot',
-                'api_enterprise': 'csp',
-                'api_version': 'v5_0'
+                'command': 'find',
+                'auth': {
+                    'api_username': 'csproot',
+                    'api_password': 'csproot',
+                    'api_enterprise': 'csp',
+                    'api_version': 'v5_0'
+                }
             }
         )
 
@@ -1263,16 +1264,16 @@ class TestNuageVSPKModule(TestNuageModule):
         self.assertEqual(result['msg'], 'missing required arguments: api_url')
 
     def test_input_auth_version(self):
-        set_module_args_custom_auth(
+        set_module_args(
             args={
                 'type': 'Enterprise',
-                'command': 'find'
-            },
-            auth={
-                'api_username': 'csproot',
-                'api_password': 'csproot',
-                'api_enterprise': 'csp',
-                'api_url': 'https://localhost:8443',
+                'command': 'find',
+                'auth': {
+                    'api_username': 'csproot',
+                    'api_password': 'csproot',
+                    'api_enterprise': 'csp',
+                    'api_url': 'https://localhost:8443',
+                }
             }
         )
 
