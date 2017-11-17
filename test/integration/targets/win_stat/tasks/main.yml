@@ -1,3 +1,8 @@
+- name: make sure symlink file does not exist
+  test_symlink_file:
+    src: '{{win_stat_dir}}\file-link.txt'
+    state: absent
+
 - name: remove win_stat testing directories for clean slate
   win_file:
     path: '{{win_stat_dir}}'
@@ -25,11 +30,13 @@
     $normal_content = "abc"
     $normal_files = @(
         "nested\file.ps1",
+        "nested\hard-target.txt",
         "nested\read-only.ps1",
         "nested\archive.ps1",
         "nested\hidden.ps1",
         "nested\nested\file.ps1",
-        "folder space\file.ps1"
+        "folder space\file.ps1",
+        "link-dest\file.txt"
     )
     foreach ($file in $normal_files) {
         New-Item -Path "{{win_stat_dir}}\$file" -ItemType File
@@ -44,8 +51,9 @@
     $wmi.Create("{{win_stat_dir}}\shared", "folder-share", 0)
 
     cmd.exe /c mklink /D "{{win_stat_dir}}\link" "{{win_stat_dir}}\link-dest"
-    cmd.exe /c mklink /H "{{win_stat_dir}}\nested\hard-link.ps1" "{{win_stat_dir}}\nested\file.ps1"
+    cmd.exe /c mklink /H "{{win_stat_dir}}\nested\hard-link.ps1" "{{win_stat_dir}}\nested\hard-target.txt"
     cmd.exe /c mklink /J "{{win_stat_dir}}\junction-link" "{{win_stat_dir}}\junction-dest"
+    cmd.exe /c mklink /D "{{win_stat_dir}}\nested\nested\link-rel" "..\..\link-dest"
   
     $date = Get-Date -Year 2016 -Month 11 -Day 1 -Hour 7 -Minute 10 -Second 5 -Millisecond 0
     Get-ChildItem -Path "{{win_stat_dir}}" -Recurse | ForEach-Object {
@@ -69,14 +77,38 @@
         }
         $item.Attributes = $file_attributes -join ','
     }
+
     # weird issue, need to access the file in anyway to get the correct date stats
     Test-Path {{win_stat_dir}}\nested\hard-link.ps1
+
+# mklink.exe and win_file cannot do this right now so we need a custom module
+- name: create file symlink
+  test_symlink_file:
+    src: '{{win_stat_dir}}\file-link.txt'
+    target: '{{win_stat_dir}}\nested\file.ps1'
+    state: present
 
 - block:
   - include_tasks: tests.yml
 
   always:
+  - name: make sure symlink file does not exist
+    test_symlink_file:
+      src: '{{win_stat_dir}}\file-link.txt'
+      state: absent
+
   - name: remove testing folder
     win_file:
       path: '{{win_stat_dir}}'
       state: absent
+
+  - name: ensure test user is deleted
+    win_user:
+      name: '{{win_stat_user}}'
+      state: absent
+
+  - name: ensure testy user profile is deleted
+    win_shell: rmdir /S /Q {{profile_dir_out.stdout_lines[0]}}
+    args:
+      executable: cmd.exe
+    when: win_stat_user in profile_dir_out.stdout_lines[0]
