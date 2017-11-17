@@ -26,7 +26,7 @@ try:
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
-    from pyVmomi import vim
+    from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
@@ -420,11 +420,15 @@ def connect_to_api(module, disconnect_atexit=True):
                              " to log on to vCenter or ESXi API at %s: %s" % (username, hostname, e.msg))
     except (requests.ConnectionError, ssl.SSLError) as e:
         module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/443: %s" % (hostname, e))
+    except vmodl.fault.InvalidRequest as e:
+        # Request is malformed
+        module.fail_json(msg="Failed to get a response from server %s as "
+                             "request is malformed: %s" % (hostname, e.msg))
     except Exception as e:
-        module.fail_json(msg="Unknown error connecting to vCenter or ESXi API at %s: %s" % (hostname, e))
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s: %s" % (hostname, e))
 
     if service_instance is None:
-        module.fail_json(msg="Unknown error connecting to vCenter or ESXi API at %s" % hostname)
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s" % hostname)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
