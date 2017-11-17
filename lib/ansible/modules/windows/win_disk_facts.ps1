@@ -33,7 +33,7 @@ if ($disk) {
                                                           }
         if ($pdisk) {
             $result.ansible_facts.ansible_disk["disk_$($i)"]["physical_disk)"] += @{}
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].media_type = $pdisk.MediaType
+            #$result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].media_type = $pdisk.MediaType
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].device_id = $pdisk.DeviceId
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].friendly_name = $pdisk.FriendlyName
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].operational_status = $pdisk.OperationalStatus
