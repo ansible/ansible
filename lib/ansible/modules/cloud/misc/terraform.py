@@ -23,7 +23,7 @@ description:
 version_added: "2.5"
 options:
   state:
-    choices: ['latest', 'present', 'absent']
+    choices: ['planned', 'present', 'absent']
     description:
       - Goal state of given stage/project
     required: false
@@ -104,10 +104,12 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 
+DESTROY_ARGS = ('destroy', '-no-color', '-force')
 APPLY_ARGS = ('apply', '-no-color', '-auto-approve=true')
+module = None
 
 
-def preflight_validation(module, bin_path, project_path, variables_file=None, plan_file=None):
+def preflight_validation(bin_path, project_path, variables_file=None, plan_file=None):
     if not os.path.exists(bin_path):
         module.fail_json(msg="Path for Terraform binary '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
     if not os.path.isdir(project_path):
@@ -118,19 +120,20 @@ def preflight_validation(module, bin_path, project_path, variables_file=None, pl
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
 
-def _state_args(fail, state_file):
+def _state_args(state_file):
     if state_file and os.path.exists(state_file):
         return ['-state', state_file]
     if state_file and not os.path.exists(state_file):
-        fail(msg='Could not find state_file "{}", check the path and try again.'.format(state_file))
+        module.fail_json(msg='Could not find state_file "{}", check the path and try again.'.format(state_file))
     return []
 
 
-def build_plan(module, bin_path, project_path, variables_args, state_file):
-    _, plan_path = tempfile.mkstemp(suffix='.tfplan')
+def build_plan(bin_path, project_path, variables_args, state_file, plan_path=None):
+    if plan_path is None:
+        _, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
     command = [bin_path, 'plan', '-no-color', '-detailed-exitcode', '-out', plan_path]
-    command.extend(_state_args(module.fail_json, state_file))
+    command.extend(_state_args(state_file))
 
     rc, out, err = module.run_command(command + variables_args, cwd=project_path)
 
@@ -148,16 +151,20 @@ def build_plan(module, bin_path, project_path, variables_args, state_file):
 
 
 def main():
-    module = AnsibleModule(
+    global module; module = AnsibleModule(
         argument_spec=dict(
             project_path=dict(required=True, type='path'),
             binary_path=dict(type='path'),
-            state=dict(default='present', choices=['present', 'absent', 'latest']),
+            state=dict(default='present', choices=['present', 'absent', 'planned']),
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
             state_file=dict(type='path'),
+            targets=dict(type='list', default=[]),
+            lock=dict(type='bool', default=True),
+            lock_timeout=dict(type='int',),
         ),
+        required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
     )
 
@@ -174,7 +181,20 @@ def main():
     else:
         command = [module.get_bin_path('terraform')]
 
-    preflight_validation(module, command[0], project_path)
+    preflight_validation(command[0], project_path)
+
+    if state == 'present':
+        command.extend(APPLY_ARGS)
+    elif state == 'absent':
+        command.extend(DESTROY_ARGS)
+
+    if module.params.get('lock') is not None:
+        if module.params.get('lock'):
+            command.append('-lock=true')
+        else:
+            command.append('-lock=true')
+    if module.params.get('lock_timeout') is not None:
+        command.append('-lock-timeout=%ds' % module.params.get('lock_timeout'))
 
     variables_args = []
     for k, v in variables.items():
@@ -185,37 +205,50 @@ def main():
     if variables_file:
         variables_args.append('-var-file', variables_file)
 
-    command.extend(APPLY_ARGS)
+    for t in (module.params.get('targets') or []):
+        command.extend(['-target', t])
 
     # we aren't sure if this plan will result in changes, so assume yes
     needs_application, changed = True, True
 
-    if plan_file and os.path.exists(plan_file):
+    if state == 'planned':
+        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file)
+    if state == 'absent':
+        # deleting cannot use a statefile
+        needs_application = True
+        pass
+    elif plan_file and os.path.exists(plan_file):
         command.append(plan_file)
     elif plan_file and not os.path.exists(plan_file):
         module.fail_json(msg='Could not find plan_file "{}", check the path and try again.'.format(plan_file))
     else:
-        plan_file, needs_application = build_plan(module, command[0], project_path, variables_args, state_file)
+        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file)
         command.append(plan_file)
 
-    if needs_application and not module.check_mode:
+    if needs_application and not module.check_mode and not state == 'planned':
         rc, out, err = module.run_command(command, cwd=project_path)
+        if state == 'absent' and 'Resources: 0' in out:
+            changed = False
         if rc != 0:
             module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err), command=' '.join(command))
     else:
         changed = False
         out, err = '', ''
 
-    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(module.fail_json, state_file)
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
-    if rc != 0:
+    if rc == 1:
+        module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err))
+        outputs = {}
+    elif rc != 0:
         module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err), command=' '.join(outputs_command))
+    else:
+        outputs = json.loads(outputs_text)
 
-    outputs = json.loads(outputs_text)
 
 
     # gather some facts about the deployment
-    module.exit_json(changed=changed, state='present', outputs=outputs, sdtout=out, stderr=err, command=' '.join(command))
+    module.exit_json(changed=changed, state=state, outputs=outputs, sdtout=out, stderr=err, command=' '.join(command))
 
 
 if __name__ == '__main__':
