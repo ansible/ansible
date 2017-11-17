@@ -39,7 +39,7 @@
   zypper_repository:
     name: test
     state: present
-    repo: http://download.videolan.org/pub/vlc/SuSE/Leap_42.1/
+    repo: http://download.videolan.org/pub/vlc/SuSE/Leap_{{ ansible_distribution_version }}/
   register: zypper_result
 
 - name: Verify change on URL only change
@@ -57,7 +57,7 @@
     name: testrefresh
     refresh: no
     state: present
-    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
 
 - name: check refreshoption
   command: zypper -x lr testrefresh
@@ -72,7 +72,7 @@
     name: testprio
     priority: 55
     state: present
-    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
 
 - name: check refreshoption
   command: zypper -x lr testprio
@@ -86,7 +86,7 @@
   zypper_repository:
     name: "{{item}}"
     state: present
-    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
   with_items:
     - oss1
     - oss2
@@ -105,14 +105,14 @@
       - "zypper_result1.rc == 6"
       - "'not found' in zypper_result1.stderr"
       - "zypper_result2.rc == 0"
-      - "'http://download.opensuse.org/distribution/leap/42.1/repo/oss/' in zypper_result2.stdout"
+      - "'http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/' in zypper_result2.stdout"
 
 
 - name: reset oss repo (to not break zypper later)
   zypper_repository:
     name: OSS
     state: present
-    repo: http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
     priority: 99
     refresh: yes
 
@@ -122,8 +122,8 @@
     state: present
     repo: "{{ item }}"
   with_items:
-    - http://download.opensuse.org/repositories/science/openSUSE_Leap_42.1/
-    - http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_42.1/
+    - http://download.opensuse.org/repositories/science/openSUSE_Leap_{{ ansible_distribution_version }}/
+    - http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_{{ ansible_distribution_version }}/
 
 - name: check repo is updated by name
   command: zypper lr samename
@@ -136,7 +136,7 @@
 
 - name: remove last added repos (by URL to test that)
   zypper_repository:
-    repo: http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_42.1/
+    repo: http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_{{ ansible_distribution_version }}/
     state: absent
 
 - name: ensure zypper ref still works
