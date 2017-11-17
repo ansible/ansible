@@ -31,6 +31,7 @@ class TestNxosFeatureModule(TestNxosModule):
     module = nxos_feature
 
     def setUp(self):
+        super(TestNxosFeatureModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_feature.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -38,6 +39,7 @@ class TestNxosFeatureModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosFeatureModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

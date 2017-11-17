@@ -17,11 +17,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_banner
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosBannerModule(TestIosModule):
@@ -29,6 +28,8 @@ class TestIosBannerModule(TestIosModule):
     module = ios_banner
 
     def setUp(self):
+        super(TestIosBannerModule, self).setUp()
+
         self.mock_exec_command = patch('ansible.modules.network.ios.ios_banner.exec_command')
         self.exec_command = self.mock_exec_command.start()
 
@@ -36,6 +37,7 @@ class TestIosBannerModule(TestIosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestIosBannerModule, self).tearDown()
         self.mock_exec_command.stop()
         self.mock_load_config.stop()
 
