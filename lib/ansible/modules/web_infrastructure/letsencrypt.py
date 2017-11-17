@@ -838,8 +838,8 @@ class ACMEClient(object):
                 self.changed = True
 
         # Clean up temporary account key file
-        if self.account_key_content is not None:
-            os.remove(self.key)
+        if self.module.params['account_key_content'] is not None:
+            os.remove(self.account.key)
 
 
 def main():
