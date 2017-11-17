@@ -614,8 +614,8 @@ class QueryBuilder(object):
     def add_default_revoke(self):
         for obj in self._objs:
             self.query.append(
-                'ALTER DEFAULT PRIVILEGES IN SCHEMA {} REVOKE ALL ON {} FROM {};'.format(self._schema, obj,
-                                                                                         self._for_whom))
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                            self._for_whom))
 
     def add_grant_option(self):
         if self._grant_option:
@@ -626,18 +626,19 @@ class QueryBuilder(object):
         else:
             self.query[-1] += ';'
             if self._obj_type == 'group':
-                self.query.append('REVOKE ADMIN OPTION FOR {} FROM {};'.format(self._set_what, self._for_whom))
+                self.query.append('REVOKE ADMIN OPTION FOR {0} FROM {1};'.format(self._set_what, self._for_whom))
             elif not self._obj_type == 'default_privs':
-                self.query.append('REVOKE GRANT OPTION FOR {} FROM {};'.format(self._set_what, self._for_whom))
+                self.query.append('REVOKE GRANT OPTION FOR {0} FROM {1};'.format(self._set_what, self._for_whom))
 
     def add_default_priv(self):
         for obj in self._objs:
             self.query.append(
-                'ALTER DEFAULT PRIVILEGES IN SCHEMA {} GRANT {} ON {} TO {}'.format(self._schema, self._set_what, obj,
-                                                                                    self._for_whom))
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema, self._set_what,
+                                                                                        obj,
+                                                                                        self._for_whom))
             self.add_grant_option()
         self.query.append(
-            'ALTER DEFAULT PRIVILEGES IN SCHEMA {} GRANT USAGE ON TYPES TO {}'.format(self._schema, self._for_whom))
+            'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
         self.add_grant_option()
 
     def build_present(self):
@@ -645,7 +646,7 @@ class QueryBuilder(object):
             self.add_default_revoke()
             self.add_default_priv()
         else:
-            self.query.append('GRANT {} TO {}'.format(self._set_what, self._for_whom))
+            self.query.append('GRANT {0} TO {1}'.format(self._set_what, self._for_whom))
             self.add_grant_option()
 
     def build_absent(self):
@@ -653,10 +654,10 @@ class QueryBuilder(object):
             self.query = []
             for obj in ['TABLES', 'SEQUENCES', 'TYPES']:
                 self.query.append(
-                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {} REVOKE ALL ON {} FROM {};'.format(self._schema, obj,
-                                                                                             self._for_whom))
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                self._for_whom))
         else:
-            self.query.append('REVOKE {} FROM {};'.format(self._set_what, self._for_whom))
+            self.query.append('REVOKE {0} FROM {1};'.format(self._set_what, self._for_whom))
 
 
 def main():
@@ -757,8 +758,8 @@ def main():
             valid_objects_for_priv = frozenset(obj for obj in objs if privs.issubset(VALID_DEFAULT_OBJS[obj]))
             if not valid_objects_for_priv == objs:
                 module.fail_json(
-                    msg='Invalid priv specified. Valid object for priv : {}. Objects: {}'.format(valid_objects_for_priv,
-                                                                                                 objs))
+                    msg='Invalid priv specified. Valid object for priv: {0}. Objects: {1}'.format(
+                        valid_objects_for_priv, objs))
         else:
             objs = p.objs.split(',')
 
