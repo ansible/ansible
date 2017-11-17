@@ -185,7 +185,7 @@ As with most Ansible modules, the default states of the Packet modules are idemp
 
 The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoresOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
 
-The ``packet_device`` module has a `wait_for_public_IPv` parameter. If set to `4` or `6`, Ansible will wait until the GET API call for a device will contain an Internet-routeable IP addressi of the respective version. If we want to refer to an IP address in consequent module calls, it's wise to use the `wait_for_public_IPv` parameter.
+The packet_device module has a ``wait_for_public_IPv`` parameter. If set to 4 or 6, Ansible will wait until the GET API call for a device will contain an Internet-routeable IP address of the respective version. If we want to refer to an IP address in consequent module calls, it's wise to use the ``wait_for_public_IPv`` parameter.
 
 Run the playbook:
 
