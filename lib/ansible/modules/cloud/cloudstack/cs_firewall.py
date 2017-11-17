@@ -48,7 +48,6 @@ options:
       - List of CIDRs (full notation) to be used for firewall rule.
       - Since version 2.5, it is a list of CIDR.
     default: 0.0.0.0/0
-    type: list
     aliases: [ cidr ]
   start_port:
     description:
