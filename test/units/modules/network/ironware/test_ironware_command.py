@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ironware import ironware_command
-from .ironware_module import TestIronwareModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ironware_module import TestIronwareModule, load_fixture
 
 
 class TestIronwareCommandModule(TestIronwareModule):
@@ -31,10 +30,12 @@ class TestIronwareCommandModule(TestIronwareModule):
     module = ironware_command
 
     def setUp(self):
+        super(TestIronwareCommandModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.ironware.ironware_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIronwareCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

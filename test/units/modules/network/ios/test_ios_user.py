@@ -23,7 +23,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_user
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosUserModule(TestIosModule):
@@ -31,6 +32,8 @@ class TestIosUserModule(TestIosModule):
     module = ios_user
 
     def setUp(self):
+        super(TestIosUserModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.ios.ios_user.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -38,6 +41,7 @@ class TestIosUserModule(TestIosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestIosUserModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

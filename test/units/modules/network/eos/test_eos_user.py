@@ -17,11 +17,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_user
-from .eos_module import TestEosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .eos_module import TestEosModule, load_fixture
 
 
 class TestEosUserModule(TestEosModule):
@@ -29,6 +28,8 @@ class TestEosUserModule(TestEosModule):
     module = eos_user
 
     def setUp(self):
+        super(TestEosUserModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.eos.eos_user.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -36,6 +37,8 @@ class TestEosUserModule(TestEosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestEosUserModule, self).tearDown()
+
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

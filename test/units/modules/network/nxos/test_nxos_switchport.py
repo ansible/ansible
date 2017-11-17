@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_switchport
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosSwitchportModule(TestNxosModule):
     module = nxos_switchport
 
     def setUp(self):
+        super(TestNxosSwitchportModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_switchport.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -38,6 +38,7 @@ class TestNxosSwitchportModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosSwitchportModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

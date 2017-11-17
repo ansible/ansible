@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_portchannel
-from .nxos_module import TestNxosModule, load_fixture, set_module_args
+from .nxos_module import TestNxosModule, set_module_args
 
 
 class TestNxosPortchannelModule(TestNxosModule):
@@ -31,6 +29,8 @@ class TestNxosPortchannelModule(TestNxosModule):
     module = nxos_portchannel
 
     def setUp(self):
+        super(TestNxosPortchannelModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_portchannel.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -41,6 +41,7 @@ class TestNxosPortchannelModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosPortchannelModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()

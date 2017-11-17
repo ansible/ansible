@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_bgp
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosBgpModule(TestNxosModule):
     module = nxos_bgp
 
     def setUp(self):
+        super(TestNxosBgpModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_bgp.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosBgpModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosBgpModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 

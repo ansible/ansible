@@ -23,7 +23,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_command
-from .eos_module import TestEosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .eos_module import TestEosModule, load_fixture
 
 
 class TestEosCommandModule(TestEosModule):
@@ -31,10 +32,12 @@ class TestEosCommandModule(TestEosModule):
     module = eos_command
 
     def setUp(self):
+        super(TestEosCommandModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.eos.eos_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestEosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):

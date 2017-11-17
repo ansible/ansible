@@ -19,7 +19,6 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_evpn_global
@@ -31,6 +30,7 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
     module = nxos_evpn_global
 
     def setUp(self):
+        super(TestNxosEvpnGlobalModule, self).setUp()
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_evpn_global.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosEvpnGlobalModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

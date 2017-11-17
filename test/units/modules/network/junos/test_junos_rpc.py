@@ -26,7 +26,8 @@ except ImportError:
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_rpc
-from .junos_module import TestJunosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .junos_module import TestJunosModule, load_fixture
 
 
 RPC_CLI_MAP = {
@@ -43,10 +44,12 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_rpc
 
     def setUp(self):
+        super(TestJunosCommandModule, self).setUp()
         self.mock_send_request = patch('ansible.modules.network.junos.junos_rpc.send_request')
         self.send_request = self.mock_send_request.start()
 
     def tearDown(self):
+        super(TestJunosCommandModule, self).tearDown()
         self.mock_send_request.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
