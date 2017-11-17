@@ -317,6 +317,7 @@ Ansible Changes By Release
 * Fix for hostname module on RHEL 7.5 (https://github.com/ansible/ansible/issues/31811)
 * Fix provider password leak in logs for asa modules (https://github.com/ansible/ansible/issues/32343)
 * Fix tagging for dynamodb_table if region is not explicitly passed to the module (https://github.com/ansible/ansible/pull/32557)
+* Fix Python 3 decode error in `cloudflare_dns` (https://github.com/ansible/ansible/pull/32065)
 
 ### Known Bugs
 * Implicit localhost is getting ansible_connection from all:vars instead of
