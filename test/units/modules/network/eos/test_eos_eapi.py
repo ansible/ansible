@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_eapi
-from .eos_module import TestEosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .eos_module import TestEosModule, load_fixture
 
 
 class TestEosEapiModule(TestEosModule):
@@ -31,6 +30,8 @@ class TestEosEapiModule(TestEosModule):
     module = eos_eapi
 
     def setUp(self):
+        super(TestEosEapiModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.eos.eos_eapi.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -43,6 +44,8 @@ class TestEosEapiModule(TestEosModule):
         self.command_fixtures = {}
 
     def tearDown(self):
+        super(TestEosEapiModule, self).tearDown()
+
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

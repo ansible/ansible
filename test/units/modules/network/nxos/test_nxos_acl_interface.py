@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metacl_interfaceass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_acl_interface
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosAclInterfaceModule(TestNxosModule):
     module = nxos_acl_interface
 
     def setUp(self):
+        super(TestNxosAclInterfaceModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_acl_interface.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -38,6 +38,7 @@ class TestNxosAclInterfaceModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosAclInterfaceModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

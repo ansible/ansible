@@ -22,6 +22,7 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nso import nso_config
+from units.modules.utils import set_module_args, AnsibleFailJson
 from . import nso_module
 from .nso_module import MockResponse
 
@@ -46,11 +47,11 @@ class TestNsoConfig(nso_module.TestNsoModule):
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
         data = nso_module.load_fixture('config_config.json')
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(AnsibleFailJson):
             self.execute_module(changed=False, changes=[], diffs=[])
 
         self.assertEqual(0, len(calls))
@@ -75,7 +76,7 @@ class TestNsoConfig(nso_module.TestNsoModule):
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
         data = nso_module.load_fixture('config_empty_data.json')
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })
@@ -118,7 +119,7 @@ class TestNsoConfig(nso_module.TestNsoModule):
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
         data = nso_module.load_fixture('config_config.json')
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })

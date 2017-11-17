@@ -24,7 +24,8 @@ import json
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.ironware import ironware_config
-from .ironware_module import TestIronwareModule, load_fixture, set_module_args
+from .ironware_module import TestIronwareModule, load_fixture
+from units.modules.utils import set_module_args
 
 
 class TestIronwareConfigModule(TestIronwareModule):
@@ -32,6 +33,8 @@ class TestIronwareConfigModule(TestIronwareModule):
     module = ironware_config
 
     def setUp(self):
+        super(TestIronwareConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.ironware.ironware_config.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -42,6 +45,7 @@ class TestIronwareConfigModule(TestIronwareModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIronwareConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
