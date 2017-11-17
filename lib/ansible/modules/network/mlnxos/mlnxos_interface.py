@@ -20,17 +20,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
-from copy import deepcopy
-from time import sleep
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import conditional, \
-    remove_default_spec
-
-from ansible.module_utils.mlnxos import get_interfaces_config
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.modules.network.mlnxos import BaseMlnxosApp
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -48,7 +38,6 @@ description:
   - This module provides declarative management of Interfaces
     on MLNX-OS network devices.
 notes:
-  -
 options:
   name:
     description:
@@ -115,14 +104,24 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to
-            manage the device.
+  returned: always
   type: list
   sample:
-  - interface Eth1/2
-  - description test-interface
-  - mtu 512
+    - interface Eth1/2
+    - description test-interface
+    - mtu 512
 """
+
+from copy import deepcopy
+from time import sleep
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import conditional, \
+    remove_default_spec
+
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+from ansible.module_utils.mlnxos import get_interfaces_config
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
 
 
 class MlnxosInterfaceApp(BaseMlnxosApp):
@@ -241,14 +240,11 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
             name = self.get_if_name(item)
             self._current_config[name] = self._create_if_data(name, item)
 
-    def _is_allowed_missing_interface(self, req_if):
-        return False
-
     def generate_commands(self):
         for req_if in self._required_config:
             name = req_if['name']
             curr_if = self._current_config.get(name)
-            if not curr_if and not self._is_allowed_missing_interface(req_if):
+            if not curr_if:
                 self._module.fail_json(
                     msg='could not find interface %s' % name)
                 continue
@@ -307,5 +303,11 @@ class MlnxosInterfaceApp(BaseMlnxosApp):
         return failed_conditions
 
 
-if __name__ == '__main__':
+def main():
+    """ main entry point for module execution
+    """
     MlnxosInterfaceApp.main()
+
+
+if __name__ == '__main__':
+    main()

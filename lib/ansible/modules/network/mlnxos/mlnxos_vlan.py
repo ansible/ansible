@@ -20,14 +20,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
-import re
-
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.module_utils.mlnxos import show_cmd
-from ansible.modules.network.mlnxos import BaseMlnxosApp
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -37,7 +30,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: mlnxos_interface
+module: mlnxos_vlan
 version_added: "2.5"
 author: "Alex Tabachnik (@atabachnik)"
 short_description: Manage Interface on MLNX-OS network devices
@@ -45,7 +38,7 @@ description:
   - This module provides declarative management of vlan
     on MLNX-OS network devices.
 notes:
-  -
+  - tested on Mellanox OS 3.6.4000
 options:
   vlan_id:
     description:
@@ -108,8 +101,7 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to
-            manage the device.
+  returned: always
   type: list
   sample:
     - vlan 234
@@ -118,6 +110,15 @@ commands:
     - interface ethernet Eth1/1 switchport access allowed-vlan add 234
     - interface ethernet Eth1/1 switchport access allowed-vlan remove 234
 """
+
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
+from ansible.module_utils.mlnxos import show_cmd
 
 
 class MlnxosVlanApp(BaseMlnxosApp):
@@ -185,7 +186,7 @@ class MlnxosVlanApp(BaseMlnxosApp):
         # called in base class in run function
         self._current_config = dict()
         vlan_config = show_cmd(self._module, "show vlan")
-        for vlan_id, vlan_data in vlan_config.iteritems():
+        for vlan_id, vlan_data in iteritems(vlan_config):
             self._current_config[vlan_id] = \
                 self._create_vlan_data(vlan_id, vlan_data)
 
@@ -238,5 +239,11 @@ class MlnxosVlanApp(BaseMlnxosApp):
             self._commands.append(cmd)
 
 
-if __name__ == '__main__':
+def main():
+    """ main entry point for module execution
+    """
     MlnxosVlanApp.main()
+
+
+if __name__ == '__main__':
+    main()

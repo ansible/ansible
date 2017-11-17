@@ -15,12 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from ansible.module_utils.basic import AnsibleModule
 
-from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args
-from ansible.module_utils.mlnxos import show_command
-from ansible.modules.network.mlnxos import BaseMlnxosApp
-
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -39,20 +36,20 @@ description:
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
-extends_documentation_fragment: mlnxos
 notes:
   - Tested against MLNX-OS 3.6
 options:
   gather_subset:
     description:
-      - When supplied, this argument will restrict the facts collected
-        to a given subset.  Possible values for this argument include
-        all, version, module, and interfaces.  Can specify a list of
-        values to include a larger subset.  Values can also be used
-        with an initial C(M(!)) to specify that a specific subset should
-        not be collected.
+      - >-
+          When supplied, this argument will restrict the facts collected
+          to a given subset.  Possible values for this argument include
+          all, version, module, and interfaces.  Can specify a list of
+          values to include a larger subset.  Values can also be used
+          with an initial C(M(!)) to specify that a specific subset should
+          not be collected.
     required: false
-    default: 'version'
+    default: version
 """
 
 EXAMPLES = """
@@ -111,6 +108,13 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args
+from ansible.module_utils.mlnxos import show_command
 
 
 class MlnxosFactsApp(BaseMlnxosApp):
@@ -178,7 +182,7 @@ class MlnxosFactsApp(BaseMlnxosApp):
             facts.update(inst.facts)
 
         ansible_facts = dict()
-        for key, value in facts.iteritems():
+        for key, value in iteritems(facts):
             key = 'ansible_net_%s' % key
             ansible_facts[key] = value
 
@@ -259,5 +263,11 @@ FACT_SUBSETS = dict(
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 
-if __name__ == '__main__':
+def main():
+    """ main entry point for module execution
+    """
     MlnxosFactsApp.main()
+
+
+if __name__ == '__main__':
+    main()

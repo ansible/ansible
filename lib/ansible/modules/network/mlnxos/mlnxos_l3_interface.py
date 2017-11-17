@@ -18,10 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import absolute_import, division, print_function
 
-from ansible.modules.network.mlnxos.mlnxos_interface import MlnxosInterfaceApp
-from ansible.module_utils.mlnxos import get_interfaces_config
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -33,19 +32,21 @@ DOCUMENTATION = """
 ---
 module: mlnxos_l3_interface
 version_added: "2.5"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+author: "Samer Deeb (@samerd)"
 short_description: Manage L3 interfaces on MLNX-OS network devices
 description:
-  - This module provides declarative management of L3 interfaces
-    on MLNX-OS network devices.
+  - >-
+      This module provides declarative management of L3 interfaces
+      on MLNX-OS network devices.
 notes:
+  - tested on Mellanox OS 3.6.4000
 options:
   name:
     description:
       - Name of the L3 interface.
   ipaddress:
     description:
-      - IPv4 of the L3 interface: format 1.2.3.4/24
+      - "IPv4 of the L3 interface: format 1.2.3.4/24"
   aggregate:
     description: List of L3 interfaces definitions
   if_type:
@@ -87,8 +88,7 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device
-  returned: always, except for the platforms that use Netconf transport to
-              manage the device.
+  returned: always
   type: list
   sample:
     - interface Eth1/1
@@ -96,8 +96,16 @@ commands:
     - ip address 1.2.3.4/24
 """
 
+from copy import deepcopy
 
-class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import remove_default_spec
+
+from ansible.module_utils.mlnxos import get_interfaces_config, BaseMlnxosApp, \
+    mlnxos_argument_spec
+
+
+class MlnxosL3InterfaceApp(BaseMlnxosApp):
     @classmethod
     def _get_element_spec(cls):
         return dict(
@@ -108,6 +116,37 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
             state=dict(default='present',
                        choices=['present', 'absent'])
         )
+
+    @classmethod
+    def _get_aggregate_spec(cls, element_spec):
+        aggregate_spec = deepcopy(element_spec)
+        aggregate_spec['name'] = dict(required=True)
+
+        # remove default in aggregate spec, to handle common arguments
+        remove_default_spec(aggregate_spec)
+        return aggregate_spec
+
+    def init_module(self):
+        """ main entry point for module execution
+        """
+        element_spec = self._get_element_spec()
+        aggregate_spec = self._get_aggregate_spec(element_spec)
+        if aggregate_spec:
+            argument_spec = dict(
+                aggregate=dict(type='list', elements='dict',
+                               options=aggregate_spec),
+            )
+        else:
+            argument_spec = dict()
+        argument_spec.update(element_spec)
+        argument_spec.update(mlnxos_argument_spec)
+        required_one_of = [['name', 'aggregate']]
+        mutually_exclusive = [['name', 'aggregate']]
+        self._module = AnsibleModule(
+            argument_spec=argument_spec,
+            required_one_of=required_one_of,
+            mutually_exclusive=mutually_exclusive,
+            supports_check_mode=True)
 
     def get_required_config(self):
         self._required_config = list()
@@ -131,15 +170,18 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
             self.validate_param_values(params)
             self._required_config.append(params)
 
-    def load_current_config(self):
-        super(MlnxosL3InterfaceApp, self).load_current_config()
-        config = get_interfaces_config(self._module, "loopback")
+    @classmethod
+    def get_if_name(cls, item):
+        return cls.get_config_attr(item, "header")
 
-        for item in config:
-            name = self.get_if_name(item)
-            name = name.split()[1]
-            self._current_config[name] = self._create_if_data(
-                name, item, 'loopback')
+    @classmethod
+    def get_if_cmd(cls, if_name):
+        return if_name.replace("Eth", "interface ethernet ")
+
+    def add_command_to_interface(self, interface, cmd):
+        if interface not in self._commands:
+            self._commands.append(interface)
+        self._commands.append(cmd)
 
     def _create_if_data(self, name, item, if_type='ethernet'):
         return {
@@ -148,6 +190,20 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
             'state': 'present',
             'if_type': if_type
         }
+
+    def load_current_config(self):
+        self._current_config = dict()
+        config = get_interfaces_config(self._module, "ethernet")
+        for item in config:
+            name = self.get_if_name(item)
+            self._current_config[name] = self._create_if_data(name, item)
+
+        config = get_interfaces_config(self._module, "loopback")
+        for item in config:
+            name = self.get_if_name(item)
+            name = name.split()[1]
+            self._current_config[name] = self._create_if_data(
+                name, item, 'loopback')
 
     @classmethod
     def extract_ipaddress(cls, item):
@@ -158,6 +214,18 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
 
     def _is_allowed_missing_interface(self, req_if):
         return req_if['if_type'] == 'loopback'
+
+    def generate_commands(self):
+        for req_if in self._required_config:
+            name = req_if['name']
+            curr_if = self._current_config.get(name)
+            if not curr_if and not self._is_allowed_missing_interface(req_if):
+                self._module.fail_json(
+                    msg='could not find interface %s' % name)
+                continue
+            self._generate_if_commands(name, req_if, curr_if)
+        if self._commands:
+            self._commands.append('exit')
 
     def _generate_if_commands(self, name, req_if, curr_if):
         state = req_if['state']
@@ -185,5 +253,10 @@ class MlnxosL3InterfaceApp(MlnxosInterfaceApp):
             fp.write(str(self._commands))
 
 
-if __name__ == '__main__':
+def main():
+    """ main entry point for module execution
+    """
     MlnxosL3InterfaceApp.main()
+
+if __name__ == '__main__':
+    main()

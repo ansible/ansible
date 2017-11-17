@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import copy
 import sys
@@ -78,7 +79,7 @@ class ActionModule(_ActionModule):
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
-        _, out, _ = connection.exec_command('prompt()')
+        rc, out, err = connection.exec_command('prompt()')
         if str(out).strip().endswith(')#'):
             display.vvvv('wrong context, sending exit to device',
                          self._play_context.remote_addr)

@@ -20,12 +20,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.module_utils.mlnxos import show_cmd
-from ansible.modules.network.mlnxos import BaseMlnxosApp
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -40,10 +35,11 @@ version_added: "2.5"
 author: "Samer Deeb (@samerd)"
 short_description: Enables/Disables protocols on MLNX-OS network devices
 description:
-  - This module provides a mechanism for enabling disabling protocols
-    on MLNX-OS network devices.
+  - >-
+      This module provides a mechanism for enabling disabling protocols
+      on MLNX-OS network devices.
 notes:
-  -
+  - tested on Mellanox OS 3.6.4000
 options:
   mlag:
     description: MLAG protocol
@@ -59,10 +55,10 @@ options:
   igmp_snooping:
     description: IP IGMP snooping
     choices: ['enabled', 'disabled']
-  lacp:,
+  lacp:
     description: LACP protocol
     choices: ['enabled', 'disabled']
-  ip_routing="IP L3",
+  ip_routing:
     description: IP routing support
     choices: ['enabled', 'disabled']
   lldp:
@@ -89,14 +85,20 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to
-              manage the device.
+  returned: always
   type: list
   sample:
     - no spanning-tree
     - protocol mlag
     - exit
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
+from ansible.module_utils.mlnxos import show_cmd
 
 
 class MlnxosProtocolApp(BaseMlnxosApp):
@@ -148,21 +150,21 @@ class MlnxosProtocolApp(BaseMlnxosApp):
     def get_required_config(self):
         self._required_config = dict()
         module_params = self._module.params
-        for key, val in module_params.iteritems():
+        for key, val in iteritems(module_params):
             if key in self.PROTOCOL_MAPPING and val is not None:
                 self._required_config[key] = val
 
     def load_current_config(self):
         self._current_config = dict()
         config = show_cmd(self._module, "show protocols")
-        for protocol, protocol_json_attr in self.PROTOCOL_MAPPING.iteritems():
+        for protocol, protocol_json_attr in iteritems(self.PROTOCOL_MAPPING):
             val = config.get(protocol_json_attr, 'disabled')
             if val not in ('enabled', 'disabled'):
                 val = 'enabled'
             self._current_config[protocol] = val
 
     def generate_commands(self):
-        for protocl, req_val in self._required_config.iteritems():
+        for protocl, req_val in iteritems(self._required_config):
             curr_val = self._current_config.get(protocl, 'disabled')
             if curr_val != req_val:
                 enable_command, disable_command = \
@@ -176,5 +178,11 @@ class MlnxosProtocolApp(BaseMlnxosApp):
             self._commands.append("exit")
 
 
-if __name__ == '__main__':
+def main():
+    """ main entry point for module execution
+    """
     MlnxosProtocolApp.main()
+
+
+if __name__ == '__main__':
+    main()

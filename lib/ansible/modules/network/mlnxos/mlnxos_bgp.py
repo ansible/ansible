@@ -20,14 +20,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
-import re
-
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.mlnxos import get_bgp_summary
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.modules.network.mlnxos import BaseMlnxosApp
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -45,7 +38,7 @@ description:
   - This module provides declarative management of BGP router and neighbors
     on MLNX-OS network devices.
 notes:
-  -
+  - tested on Mellanox OS 3.6.4000
 options:
   as_number:
     description:
@@ -70,7 +63,7 @@ options:
   state:
     description:
       - BGP state.
-    choices: ['present', 'absent'].
+    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
@@ -97,8 +90,16 @@ commands:
     - exit
 """
 
+import re
 
-class MlnxosLagApp(BaseMlnxosApp):
+from ansible.module_utils.basic import AnsibleModule
+
+from ansible.module_utils.mlnxos import get_bgp_summary
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+
+
+class MlnxosBgpApp(BaseMlnxosApp):
     LOCAL_AS_REGEX = \
         r"BGP router identifier ([0-9\.]+), local AS number (\d+)"
     NEIGHBOR_REGEX = \
@@ -207,5 +208,11 @@ class MlnxosLagApp(BaseMlnxosApp):
             self._commands.append('no router bgp %d' % as_number)
 
 
+def main():
+    """ main entry point for module execution
+    """
+    MlnxosBgpApp.main()
+
+
 if __name__ == '__main__':
-    MlnxosLagApp.main()
+    main()

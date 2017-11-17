@@ -20,14 +20,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
-import re
-
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.mlnxos import show_cmd
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.modules.network.mlnxos import BaseMlnxosApp
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -45,24 +38,24 @@ description:
   - This module provides declarative management of MLAG virtual IPs
     on MLNX-OS network devices.
 notes:
-  -
+  - tested on Mellanox OS 3.6.4000
 options:
   ipaddress:
     description:
       - virtual IP address of the MLAG.
-    required: true if state is present
+    required: true #if state is present
   group_name:
     description:
       - MLAG group name
-    required: true if state is present
+    required: true #if state is present
   mac_address:
     description:
       - MLAG system mac address
-    required: true if state is present
+    required: true #if state is present
   state:
     description:
       - MLAG VIP state.
-    choices: ['present', 'absent'].
+    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
@@ -76,15 +69,23 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
-  returned: always, except for the platforms that use Netconf transport to
+  returned: always
   type: list
   sample:
     - mlag-vip ansible_test_group ip 50.3.3.1 /24 force
     - no mlag shutdown
 """
 
+import re
 
-class MlnxosLagApp(BaseMlnxosApp):
+from ansible.module_utils.basic import AnsibleModule
+
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
+from ansible.module_utils.mlnxos import show_cmd
+
+
+class MlnxosMLagVipApp(BaseMlnxosApp):
     LAG_ID_REGEX = re.compile(r"^(.*)(Po|Mpo)(\d+)(.*)$")
     IF_NAME_REGEX = re.compile(r"^Eth(\d+\/\d+)(.*)$")
 
@@ -168,5 +169,11 @@ class MlnxosLagApp(BaseMlnxosApp):
             self._commands.append('no mlag-vip')
 
 
+def main():
+    """ main entry point for module execution
+    """
+    MlnxosMLagVipApp.main()
+
+
 if __name__ == '__main__':
-    MlnxosLagApp.main()
+    main()

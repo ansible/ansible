@@ -20,12 +20,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.mlnxos import get_interfaces_config, show_cmd
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.modules.network.mlnxos import BaseMlnxosApp
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -43,7 +38,7 @@ description:
   - This module provides declarative management of vlan interface management
     on MLNX-OS network devices.
 notes:
-  -
+  - tested on Mellanox OS 3.6.4000
 options:
   vlan_id:
     description:
@@ -101,17 +96,23 @@ EXAMPLES = """
 
 RETURN = """
 commands:
-    description: The list of configuration mode commands to send to the device.
-      returned: always, except for the platforms that use Netconf transport to
-                manage the device.
-    type: list
-    sample:
-        vlan 234
-        exit
-        interface ethernet Eth1/1 switchport mode access
-        interface ethernet Eth1/1 switchport access allowed-vlan add 234
-        interface ethernet Eth1/1 switchport access allowed-vlan remove 234
+  description: The list of configuration mode commands to send to the device.
+  returned: always
+  type: list
+  sample:
+    - vlan 234
+    - exit
+    - interface ethernet Eth1/1 switchport mode access
+    - interface ethernet Eth1/1 switchport access allowed-vlan add 234
+    - interface ethernet Eth1/1 switchport access allowed-vlan remove 234
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+from ansible.module_utils.mlnxos import get_interfaces_config, show_cmd
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
 
 
 class MlnxosVlanInterfaceApp(BaseMlnxosApp):
@@ -174,7 +175,7 @@ class MlnxosVlanInterfaceApp(BaseMlnxosApp):
         if not mlag_data:
             return
         mlag_summary = mlag_data.get("MLAG IPLs Summary", {})
-        for ipl_id, ipl_list in mlag_summary.iteritems():
+        for ipl_id, ipl_list in iteritems(mlag_summary):
             for ipl_data in ipl_list:
                 vlan_id = int(ipl_data.get("Vlan Interface", 0))
                 vlan_data = self._current_config.get(vlan_id)
@@ -287,5 +288,11 @@ class MlnxosVlanInterfaceApp(BaseMlnxosApp):
                     (magp_prefix, req_magp_router_mac))
 
 
-if __name__ == '__main__':
+def main():
+    """ main entry point for module execution
+    """
     MlnxosVlanInterfaceApp.main()
+
+
+if __name__ == '__main__':
+    main()

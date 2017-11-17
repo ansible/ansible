@@ -20,14 +20,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-
-import re
-
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.mlnxos import get_interfaces_config
-from ansible.module_utils.mlnxos import mlnxos_argument_spec
-from ansible.modules.network.mlnxos import BaseMlnxosApp
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -37,24 +30,25 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: mlnxos_mlag
+module: mlnxos_lag
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
 short_description: Manage Lags on MLNX-OS network devices
 description:
-  - This module provides declarative management of Lags
-    on MLNX-OS network devices.
+  - >-
+      This module provides declarative management of Lags
+      on MLNX-OS network devices.
 notes:
-  -
+  - tested on Mellanox OS 3.6.4000
 options:
   lag_id:
     description:
-      - port channel ID of the LAG (1-4096).
+      - "port channel ID of the LAG (1-4096)."
     required: true
   lag_mode:
     description:
-      - LAG mode:
-    choices: [on, passive, active].
+      - LAG mode
+    choices: ['on', 'passive', 'active']
   mtu:
     description:
       - Maximum size of transmit packet.
@@ -88,6 +82,15 @@ commands:
     - interface ethernet 1/16 channel-group 5 mode on
     - interface ethernet 1/17 channel-group 5 mode on
 """
+
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+
+from ansible.module_utils.mlnxos import BaseMlnxosApp
+from ansible.module_utils.mlnxos import get_interfaces_config
+from ansible.module_utils.mlnxos import mlnxos_argument_spec
 
 
 class MlnxosLagApp(BaseMlnxosApp):
@@ -180,7 +183,7 @@ class MlnxosLagApp(BaseMlnxosApp):
             }
             self._current_config[lag_id] = obj
 
-        for lag_name, lag_data in lag_summary.iteritems():
+        for lag_name, lag_data in iteritems(lag_summary):
             lag_id = self.extract_lag_id(lag_name)
             if not lag_id:
                 continue
@@ -269,5 +272,11 @@ class MlnxosLagApp(BaseMlnxosApp):
         pass
 
 
-if __name__ == '__main__':
+def main():
+    """ main entry point for module execution
+    """
     MlnxosLagApp.main()
+
+
+if __name__ == '__main__':
+    main()

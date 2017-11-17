@@ -15,15 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import time
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.six import string_types
-
-from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args
-from ansible.module_utils.mlnxos import run_commands
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -34,64 +28,69 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: mlnxos_command
-version_added: "2.1"
+version_added: "2.5"
 author: "Samer Deeb (@samerd)"
 short_description: Run commands on remote devices running MLNXOS
 description:
-  - Sends arbitrary commands to an mlnxos node and returns the results
-    read from the device. This module includes an
-    argument that will cause the module to wait for a specific condition
-    before returning or timing out if the condition is not met.
-  - This module does not support running commands in configuration mode.
-    Please use M(mlnxos_config) to configure MLNXOS devices.
-extends_documentation_fragment: mlnxos
+  - >-
+       Sends arbitrary commands to an mlnxos node and returns the results
+       read from the device. This module includes an
+       argument that will cause the module to wait for a specific condition
+       before returning or timing out if the condition is not met.
+  - >-
+      This module does not support running commands in configuration mode.
+      Please use M(mlnxos_config) to configure MLNXOS devices.
 notes:
+  - tested on Mellanox OS 3.6.4000
 options:
   commands:
     description:
-      - List of commands to send to the remote mlnxos device over the
-        configured provider. The resulting output from the command
-        is returned. If the I(wait_for) argument is provided, the
-        module is not returned until the condition is satisfied or
-        the number of retries has expired.
+      - >-
+           List of commands to send to the remote mlnxos device over the
+           configured provider. The resulting output from the command
+           is returned. If the I(wait_for) argument is provided, the
+           module is not returned until the condition is satisfied or
+           the number of retries has expired.
     required: true
   wait_for:
     description:
-      - List of conditions to evaluate against the output of the
-        command. The task will wait for each condition to be true
-        before moving forward. If the conditional is not true
-        within the configured number of retries, the task fails.
-        See examples.
+      - >-
+          List of conditions to evaluate against the output of the
+          command. The task will wait for each condition to be true
+          before moving forward. If the conditional is not true
+          within the configured number of retries, the task fails.
+          See examples.
     required: false
     default: null
     aliases: ['waitfor']
-    version_added: "2.2"
   match:
     description:
-      - The I(match) argument is used in conjunction with the
-        I(wait_for) argument to specify the match policy.  Valid
-        values are C(all) or C(any).  If the value is set to C(all)
-        then all conditionals in the wait_for must be satisfied.  If
-        the value is set to C(any) then only one of the values must be
-        satisfied.
+      - >-
+          The I(match) argument is used in conjunction with the
+          I(wait_for) argument to specify the match policy.  Valid
+          values are C(all) or C(any).  If the value is set to C(all)
+          then all conditionals in the wait_for must be satisfied.  If
+          the value is set to C(any) then only one of the values must be
+          satisfied.
     required: false
     default: all
     choices: ['any', 'all']
-    version_added: "2.2"
   retries:
     description:
-      - Specifies the number of retries a command should by tried
-        before it is considered failed. The command is run on the
-        target device every retry and evaluated against the
-        I(wait_for) conditions.
+      - >-
+          Specifies the number of retries a command should by tried
+          before it is considered failed. The command is run on the
+          target device every retry and evaluated against the
+          I(wait_for) conditions.
     required: false
     default: 10
   interval:
     description:
-      - Configures the interval in seconds to wait between retries
-        of the command. If the command does not pass the specified
-        conditions, the interval indicates how long to wait before
-        trying the command again.
+      - >-
+          Configures the interval in seconds to wait between retries
+          of the command. If the command does not pass the specified
+          conditions, the interval indicates how long to wait before
+          trying the command again.
     required: false
     default: 1
 """
@@ -140,6 +139,16 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.six import string_types
+
+from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args
+from ansible.module_utils.mlnxos import run_commands
 
 
 def to_lines(stdout):
