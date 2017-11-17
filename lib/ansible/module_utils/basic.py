@@ -61,7 +61,7 @@ import errno
 import datetime
 from collections import deque
 from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
-from itertools import chain
+from itertools import chain, repeat
 
 try:
     import syslog
@@ -111,6 +111,11 @@ except ImportError:
     except SyntaxError:
         print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
         sys.exit(1)
+    else:
+        sj_version = json.__version__.split('.')
+        if sj_version < ('1', '6'):
+            # Version 1.5 released 2007-01-18 does not have the encoding parameter which we need
+            print('\n{"msg": "Error: Ansible requires the stdlib json or simplejson >= 1.6.  Neither was found!", "failed": true}')
 
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
@@ -149,7 +154,6 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
-from ansible.module_utils.json_utils import json_dict_bytes_to_unicode, json_dict_unicode_to_bytes, jsonify as make_it_json, _SetEncoder
 
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
@@ -312,6 +316,45 @@ def load_platform_subclass(cls, *args, **kwargs):
         subclass = cls
 
     return super(cls, subclass).__new__(subclass)
+
+
+def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, text_type):
+        return to_bytes(d, encoding=encoding, errors=errors)
+    elif isinstance(d, dict):
+        return dict(map(json_dict_unicode_to_bytes, iteritems(d), repeat(encoding), repeat(errors)))
+    elif isinstance(d, list):
+        return list(map(json_dict_unicode_to_bytes, d, repeat(encoding), repeat(errors)))
+    elif isinstance(d, tuple):
+        return tuple(map(json_dict_unicode_to_bytes, d, repeat(encoding), repeat(errors)))
+    else:
+        return d
+
+
+def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, binary_type):
+        # Warning, can traceback
+        return to_text(d, encoding=encoding, errors=errors)
+    elif isinstance(d, dict):
+        return dict(map(json_dict_bytes_to_unicode, iteritems(d), repeat(encoding), repeat(errors)))
+    elif isinstance(d, list):
+        return list(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
+    elif isinstance(d, tuple):
+        return tuple(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
+    else:
+        return d
 
 
 def return_values(obj):
@@ -696,6 +739,30 @@ def get_flags_from_attributes(attributes):
         if attr in attributes:
             flags.append(key)
     return ''.join(flags)
+
+
+def _json_encode_fallback(obj):
+    if isinstance(obj, Set):
+        return list(obj)
+    elif isinstance(obj, datetime.datetime):
+        return obj.isoformat()
+    raise TypeError("Cannot json serialize %s" % to_native(obj))
+
+
+def jsonify(data, **kwargs):
+    for encoding in ("utf-8", "latin-1"):
+        try:
+            return json.dumps(data, encoding=encoding, default=_json_encode_fallback, **kwargs)
+        # Old systems using old simplejson module does not support encoding keyword.
+        except TypeError:
+            try:
+                new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+            except UnicodeDecodeError:
+                continue
+            return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
+        except UnicodeDecodeError:
+            continue
+    raise UnicodeError('Invalid unicode encoding encountered')
 
 
 class AnsibleFallbackNotFound(Exception):
@@ -2136,7 +2203,7 @@ class AnsibleModule(object):
 
     def jsonify(self, data):
         try:
-            make_it_json(data)
+            jsonify(data)
         except UnicodeError as e:
             self.fail_json(msg=to_text(e))
 
