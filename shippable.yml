@@ -20,8 +20,8 @@ matrix:
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:centos7
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:fedora24
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:fedora25
-    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:opensuse42.1
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:opensuse42.2
+    - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:opensuse42.3
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1604
@@ -31,8 +31,8 @@ matrix:
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos7 PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora24 PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora25 PRIVILEGED=true
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:opensuse42.1 PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:opensuse42.2 PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:opensuse42.3 PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1604 PRIVILEGED=true
@@ -42,8 +42,8 @@ matrix:
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:centos7
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:fedora24
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:fedora25
-    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:opensuse42.1
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:opensuse42.2
+    - env: TEST=integration TARGET=other IMAGE=ansible/ansible:opensuse42.3
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1204
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1404
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:ubuntu1604
