@@ -1095,7 +1095,7 @@ files:
     labels: networking
   lib/ansible/plugins/callback/unixy.py:
     support: community
-    maintaners: akatch
+    maintainers: akatch
   lib/ansible/plugins/cliconf/:
     maintainers: $team_networking
     labels: networking
