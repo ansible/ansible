@@ -54,7 +54,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
   delegate_to: localhost
 
 - debug: var=storage_systems
@@ -70,7 +69,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
 
 - debug: var=storage_systems
 
@@ -81,7 +79,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
   delegate_to: localhost
 
 - debug: var=storage_systems
@@ -93,7 +90,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
   delegate_to: localhost
 
 - debug: var=storage_systems
@@ -107,7 +103,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
   delegate_to: localhost
 
 - debug: var=storage_systems
@@ -122,7 +117,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
   delegate_to: localhost
 
 - debug: var=storage_systems
@@ -143,7 +137,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
 
 - debug: var=storage_system_reachable_ports
 
@@ -158,7 +151,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
 
 - debug: var=storage_system_templates
 '''
