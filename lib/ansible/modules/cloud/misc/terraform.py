@@ -82,9 +82,21 @@ EXAMPLES = """
 RETURN = """
 outputs:
   type: complex
-  description:
+  description: A dictionary of all the TF outputs by their assigned name. Use `.outputs.MyOutputName.value` to access the value.
   returned: on success
   sample: '{"bukkit_arn": {"sensitive": false, "type": "string", "value": "arn:aws:s3:::tf-test-bukkit"}'
+  contains:
+    sensitive:
+      type: bool
+      returned: always
+      description: Whether Terraform has marked this value as sensitive
+    type:
+      type: string
+      returned: always
+      description: The type of the value (string, int, etc)
+    value:
+      returned: always
+      description: The value of the output as interpolated by Terraform
 stdout:
   type: string
   description: Full `terraform` command stdout, in case you want to display it or examine the event log
@@ -130,7 +142,7 @@ def _state_args(state_file):
 
 def build_plan(bin_path, project_path, variables_args, state_file, plan_path=None):
     if plan_path is None:
-        _, plan_path = tempfile.mkstemp(suffix='.tfplan')
+        f, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
     command = [bin_path, 'plan', '-no-color', '-detailed-exitcode', '-out', plan_path]
     command.extend(_state_args(state_file))
@@ -151,7 +163,8 @@ def build_plan(bin_path, project_path, variables_args, state_file, plan_path=Non
 
 
 def main():
-    global module; module = AnsibleModule(
+    global module
+    module = AnsibleModule(
         argument_spec=dict(
             project_path=dict(required=True, type='path'),
             binary_path=dict(type='path'),
@@ -216,7 +229,6 @@ def main():
     if state == 'absent':
         # deleting cannot use a statefile
         needs_application = True
-        pass
     elif plan_file and os.path.exists(plan_file):
         command.append(plan_file)
     elif plan_file and not os.path.exists(plan_file):
@@ -238,16 +250,16 @@ def main():
     outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc == 1:
-        module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err))
+        module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {}\nstderr: {}".format(outputs_text, outputs_err))
         outputs = {}
     elif rc != 0:
-        module.fail_json(msg="Failure when getting Terraform outputs. Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err), command=' '.join(outputs_command))
+        module.fail_json(
+            msg="Failure when getting Terraform outputs. "
+                "Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err),
+            command=' '.join(outputs_command))
     else:
         outputs = json.loads(outputs_text)
 
-
-
-    # gather some facts about the deployment
     module.exit_json(changed=changed, state=state, outputs=outputs, sdtout=out, stderr=err, command=' '.join(command))
 
 
