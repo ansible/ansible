@@ -17,7 +17,7 @@ short_description: Manage Subnets on Cisco ACI fabrics (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(fv:Subnet) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvSubnet.html).
+  I(fv:Subnet) at U(https://developer.cisco.com/media/mim-ref/MO-fvSubnet.html).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
