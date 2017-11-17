@@ -188,7 +188,7 @@ class MyAddPolicy(object):
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            if C.USE_PERSISTENT_CONNECTIONS:
+            if C.USE_PERSISTENT_CONNECTIONS or self.connection.force_persistence:
                 # don't print the prompt string since the user cannot respond
                 # to the question anyway
                 raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
