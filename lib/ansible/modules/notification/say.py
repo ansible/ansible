@@ -15,12 +15,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: osx_say
+module: say
 version_added: "1.2"
 short_description: Makes an OSX computer to speak.
 description:
    - makes an OS computer speak!  Amuse your friends, annoy your coworkers!
 notes:
+   - In 2.5, this module has been renamed from M(osx_say) into M(say).
    - If you like this module, you may also be interested in the osx_say callback in the plugins/ directory of the source checkout.
 options:
   msg:
@@ -38,7 +39,7 @@ author:
 '''
 
 EXAMPLES = '''
-- osx_say:
+- say:
     msg: '{{ inventory_hostname }} is all done'
     voice: Zarvox
   delegate_to: localhost
