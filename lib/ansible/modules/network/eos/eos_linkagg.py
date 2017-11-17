@@ -24,13 +24,9 @@ description:
 notes:
   - Tested against EOS 4.15
 options:
-  name:
-    description:
-      - Name of the link aggregation group.
-    required: true
   group:
     description:
-      - Channel-group number for the port-channel.
+      - Channel-group number for the port-channel
         Link aggregation group. Range 1-2000.
   mode:
     description:
@@ -41,7 +37,7 @@ options:
       - List of members of the link aggregation group.
   min_links:
     description:
-      - Minimum members that should be up
+      - Minimum number of ports required up
         before bringing up the link aggregation group.
   aggregate:
     description: List of link aggregation definitions.
@@ -54,26 +50,28 @@ options:
 
 EXAMPLES = """
 - name: create link aggregation group
-  group: 10
-  state: present
+  eos_linkagg:
+    group: 10
+    state: present
 
 - name: delete link aggregation group
-  group: 10
-  state: absent
+  eos_linkagg:
+    group: 10
+    state: absent
 
 - name: set link aggregation group to members
   eos_linkagg:
     group: 200
-    min_links: 5
+    min_links: 3
     mode: active
     members:
       - Ethernet0
       - Ethernet1
 
-- name: remove link aggregation group from eth0
+- name: remove link aggregation group from Ethernet0
   eos_linkagg:
     group: 200
-    min_links: 5
+    min_links: 3
     mode: active
     members:
       - Ethernet1
@@ -140,12 +138,14 @@ def map_obj_to_commands(updates, module):
                 commands.append('no interface port-channel {}'.format(group))
 
         elif state == 'present':
+            cmd = ['interface port-channel {}'.format(group),
+                   'end']
             if not obj_in_have:
                 if not group:
                     module.fail_json(msg='group is a required option')
+                commands.extend(cmd)
 
-                commands.append('interface port-channel {}'.format(group))
-                if min_links:
+                if min_links != 'None':
                     commands.append('port-channel min-links {}'.format(min_links))
 
                 if members:
@@ -155,10 +155,7 @@ def map_obj_to_commands(updates, module):
 
             else:
                 if members:
-                    cmd = ['interface port-channel {}'.format(group),
-                           'exit']
-
-                    if not obj_in_have['members']:
+                    if 'members' not in obj_in_have.keys():
                         for m in members:
                             commands.extend(cmd)
                             commands.append('interface {}'.format(m))
@@ -198,8 +195,8 @@ def map_params_to_obj(module, required_together=None):
 
             module._check_required_together(required_together, item)
             d = item.copy()
-            d['group'] = str(module.params['group'])
-            d['min_links'] = str(module.params['min_links'])
+            d['group'] = str(d['group'])
+            d['min_links'] = str(d['min_links'])
 
             obj.append(d)
     else:
