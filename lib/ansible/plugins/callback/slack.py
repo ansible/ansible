@@ -89,9 +89,9 @@ class CallbackModule(CallbackBase):
         # than 1 simultaneous playbooks running
         self.guid = uuid.uuid4().hex[:6]
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.webhook_url = self._plugin_options['webhook_url']
         self.channel = self._plugin_options['channel']
