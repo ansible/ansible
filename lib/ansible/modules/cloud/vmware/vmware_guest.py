@@ -317,7 +317,7 @@ import time
 HAS_PYVMOMI = False
 try:
     import pyVmomi
-    from pyVmomi import vim
+    from pyVmomi import vim, vmodl
 
     HAS_PYVMOMI = True
 except ImportError:
@@ -1456,7 +1456,11 @@ class PyVmomiHelper(PyVmomi):
 
         # Mark VM as Template
         if self.params['is_template'] and not self.current_vm_obj.config.template:
-            self.current_vm_obj.MarkAsTemplate()
+            try:
+                self.current_vm_obj.MarkAsTemplate()
+            except vmodl.fault.NotSupported as e:
+                self.module.fail_json(msg="Failed to mark virtual machine [%s] "
+                                          "as template: %s" % (self.params['name'], e.msg))
             change_applied = True
 
         # Mark Template as VM
