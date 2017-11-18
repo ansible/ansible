@@ -21,9 +21,9 @@ import pytest
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, Mock, call
-from ansible.modules.cloud.amazon import iot_thing
+from ansible.modules.cloud.amazon import aws_iot_thing
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
 
 boto3 = pytest.importorskip('boto3')
 
@@ -33,6 +33,8 @@ resource_not_found_exception = ClientError(resource_not_found_response, operatio
 
 fake_response = {'Error': {'Code': 'FakeException', 'Message': 'Fake Texesting Error'}}
 generic_client_exception = ClientError(fake_response, operation_name)
+
+boto_core_error = BotoCoreError()
 
 
 class AnsibleFailJson(Exception):
@@ -68,7 +70,7 @@ class AssertModuleFailsContext(object):
         return True
 
 
-class IotThing(unittest.TestCase):
+class AwsIotThing(unittest.TestCase):
     def setUp(self):
         client = boto3.client('iot', region_name='us-east-1')
         self.client = Mock(spec=client)
@@ -103,7 +105,7 @@ class IotThing(unittest.TestCase):
             principals=principals
         )
 
-        result = iot_thing.format_thing(True, thing, principals)
+        result = aws_iot_thing.format_thing(True, thing, principals)
 
         self.assertEqual(expected, result)
 
@@ -126,7 +128,7 @@ class IotThing(unittest.TestCase):
             principals=principals
         )
 
-        result = iot_thing.format_thing(False, thing, principals)
+        result = aws_iot_thing.format_thing(False, thing, principals)
 
         self.assertEqual(expected, result)
 
@@ -156,73 +158,94 @@ class IotThing(unittest.TestCase):
             thing_arn='arn'
         )
 
-        result = iot_thing.describe_and_format_changed_thing(
+        result = aws_iot_thing.describe_and_format_changed_thing(
             self.aws_module, self.client, thing_name, principals, additional_details)
 
         self.assertEqual(expected, result)
         self.client.describe_thing.assert_called_once_with(thingName=thing_name)
 
-    def test_describe_and_format_thing_fails(self):
+    def test_describe_and_format_thing_fails_with_client_exception(self):
         thing_name = 'mything'
         self.client.describe_thing.side_effect = resource_not_found_exception
         with self.assert_module_failed('Describing thing'):
-            iot_thing.describe_and_format_changed_thing(self.aws_module, self.client, thing_name, [], dict)
+            aws_iot_thing.describe_and_format_changed_thing(self.aws_module, self.client, thing_name, [], dict)
+
+    def test_describe_and_format_thing_fails_with_core_error(self):
+        thing_name = 'mything'
+        self.client.describe_thing.side_effect = boto_core_error
+        with self.assert_module_failed('Describing thing'):
+            aws_iot_thing.describe_and_format_changed_thing(self.aws_module, self.client, thing_name, [], dict)
 
     def test_parse_expected_version_when_none_specified(self):
         thing = dict(version=1)
-        result = iot_thing.parse_expected_version(self.aws_module, thing)
+        result = aws_iot_thing.parse_expected_version(self.aws_module, thing)
         self.assertIsNone(result)
 
     def test_parse_expected_version_match(self):
         thing = dict(version=7)
         self.aws_module.params['expected_version'] = 7
-        result = iot_thing.parse_expected_version(self.aws_module, thing)
+        result = aws_iot_thing.parse_expected_version(self.aws_module, thing)
         self.assertEqual(7, result)
 
     def test_parse_expected_version_mismatch(self):
         thing = dict(version=7)
         self.aws_module.params['expected_version'] = 8
         with self.assert_module_failed('Expected thing version 8 but actual version is 7'):
-            iot_thing.parse_expected_version(self.aws_module, thing)
+            aws_iot_thing.parse_expected_version(self.aws_module, thing)
 
     def test_detach_principal_success(self):
-        iot_thing.detach_principal(self.aws_module, self.client, 'mything', 'principal')
+        aws_iot_thing.detach_principal(self.aws_module, self.client, 'mything', 'principal')
         self.client.detach_thing_principal.assert_called_once_with(thingName='mything', principal='principal')
 
-    def test_detach_principal_failure(self):
+    def test_detach_principal_client_exception(self):
         self.client.detach_thing_principal.side_effect = resource_not_found_exception
         with self.assert_module_failed('Detaching principal'):
-            iot_thing.detach_principal(self.aws_module, self.client, 'mything', 'principal')
+            aws_iot_thing.detach_principal(self.aws_module, self.client, 'mything', 'principal')
+
+    def test_detach_principal_boto_core_error(self):
+        self.client.detach_thing_principal.side_effect = boto_core_error
+        with self.assert_module_failed('Detaching principal'):
+            aws_iot_thing.detach_principal(self.aws_module, self.client, 'mything', 'principal')
 
     def test_attach_principal_success(self):
-        iot_thing.attach_principal(self.aws_module, self.client, 'mything', 'principal')
+        aws_iot_thing.attach_principal(self.aws_module, self.client, 'mything', 'principal')
         self.client.attach_thing_principal.assert_called_once_with(thingName='mything', principal='principal')
 
-    def test_attach_principal_failure(self):
+    def test_attach_principal_client_exception(self):
         self.client.attach_thing_principal.side_effect = resource_not_found_exception
         with self.assert_module_failed('Attaching principal'):
-            iot_thing.attach_principal(self.aws_module, self.client, 'mything', 'principal')
+            aws_iot_thing.attach_principal(self.aws_module, self.client, 'mything', 'principal')
+
+    def test_attach_principal_boto_core_error(self):
+        self.client.attach_thing_principal.side_effect = boto_core_error
+        with self.assert_module_failed('Attaching principal'):
+            aws_iot_thing.attach_principal(self.aws_module, self.client, 'mything', 'principal')
 
     def test_list_principals(self):
         expected = ['p1', 'p2', 'p3']
         self.client.list_thing_principals.return_value = dict(principals=expected)
-        result = iot_thing.list_principals(self.aws_module, self.client, 'mything')
+        result = aws_iot_thing.list_principals(self.aws_module, self.client, 'mything')
         self.assertEqual(expected, result)
         self.client.list_thing_principals.assert_called_once_with(thingName='mything')
 
-    def test_list_principals_failure(self):
+    def test_list_principals_client_exception(self):
         self.client.list_thing_principals.side_effect = resource_not_found_exception
         with self.assert_module_failed('Listing thing principals'):
-            iot_thing.list_principals(self.aws_module, self.client, 'mything')
+            aws_iot_thing.list_principals(self.aws_module, self.client, 'mything')
+
+    def test_list_principals_boto_core_error(self):
+        self.client.list_thing_principals.side_effect = boto_core_error
+        with self.assert_module_failed('Listing thing principals'):
+            aws_iot_thing.list_principals(self.aws_module, self.client, 'mything')
 
     def test_get_absent_attributes(self):
         self.aws_module.params['absent_attributes'] = ['shenzi', 'banzi', 'ed']
-        result = iot_thing.get_absent_attributes(self.aws_module)
+        result = aws_iot_thing.get_absent_attributes(self.aws_module)
         self.assertEqual(dict(shenzi='', banzi='', ed=''), result)
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
-    @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.parse_expected_version')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.detach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.list_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.parse_expected_version')
     def test_delete_thing(self, mock_parse_expected_version, mock_list_principals, mock_detach_principal):
         self.aws_module.check_mode = False
         mock_parse_expected_version.return_value = 7
@@ -238,7 +261,7 @@ class IotThing(unittest.TestCase):
             ResponseMetadata=dict()
         )
 
-        iot_thing.delete_thing(self.aws_module, self.client, thing)
+        aws_iot_thing.delete_thing(self.aws_module, self.client, thing)
 
         self.client.delete_thing.assert_called_once_with(**dict(thingName='mything', expectedVersion=7))
 
@@ -249,10 +272,11 @@ class IotThing(unittest.TestCase):
         ]
         mock_detach_principal.assert_has_calls(expected_detach_calls, any_order=True)
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
-    @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.parse_expected_version')
-    def test_delete_thing_failure(self, mock_parse_expected_version, mock_list_principals, mock_detach_principal):
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.detach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.list_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.parse_expected_version')
+    def test_delete_thing_client_exception(
+            self, mock_parse_expected_version, mock_list_principals, mock_detach_principal):
         self.aws_module.check_mode = False
         self.client.delete_thing.side_effect = resource_not_found_exception
         mock_parse_expected_version.return_value = 7
@@ -269,53 +293,76 @@ class IotThing(unittest.TestCase):
         )
 
         with self.assert_module_failed('Deleting thing'):
-            iot_thing.delete_thing(self.aws_module, self.client, thing)
+            aws_iot_thing.delete_thing(self.aws_module, self.client, thing)
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
-    @patch('ansible.modules.cloud.amazon.iot_thing.attach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.detach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.list_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.parse_expected_version')
+    def test_delete_thing_boto_core_error(
+            self, mock_parse_expected_version, mock_list_principals, mock_detach_principal):
+        self.aws_module.check_mode = False
+        self.client.delete_thing.side_effect = boto_core_error
+        mock_parse_expected_version.return_value = 7
+        mock_list_principals.return_value = ['shenzi', 'banzi', 'ed']
+        thing_name = 'mything'
+
+        thing = dict(
+            thingName=thing_name,
+            attributes=dict(a1='v1'),
+            thingTypeName='mytype',
+            version=7,
+            defaultClientId='mything',
+            ResponseMetadata=dict()
+        )
+
+        with self.assert_module_failed('Deleting thing'):
+            aws_iot_thing.delete_thing(self.aws_module, self.client, thing)
+
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.list_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.detach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
     def test_change_principals_no_changes(self, mock_attach_principal, mock_detach_principal, mock_list_principals):
         self.aws_module.check_mode = False
         self.aws_module.params['attached_principals'] = ['Pumbaa', 'Timon']
         self.aws_module.params['detached_principals'] = ['Shenzi', 'Banzi']
         mock_list_principals.return_value = ['Pumbaa', 'Timon']
 
-        result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
+        result = aws_iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertFalse(result[0])
         self.assert_list_equal(['Pumbaa', 'Timon'], result[1])
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
-    @patch('ansible.modules.cloud.amazon.iot_thing.attach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.list_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.detach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
     def test_change_principals_attach(self, mock_attach_principal, mock_detach_principal, mock_list_principals):
         self.aws_module.check_mode = False
         self.aws_module.params['attached_principals'] = ['Pumbaa', 'Timon']
         self.aws_module.params['detached_principals'] = ['Shenzi', 'Banzi']
         mock_list_principals.return_value = ['Pumbaa']
 
-        result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
+        result = aws_iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertTrue(result[0])
         self.assert_list_equal(['Pumbaa', 'Timon'], result[1])
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
-    @patch('ansible.modules.cloud.amazon.iot_thing.attach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.list_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.detach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
     def test_change_principals_dettach(self, mock_attach_principal, mock_detach_principal, mock_list_principals):
         self.aws_module.check_mode = False
         self.aws_module.params['attached_principals'] = ['Pumbaa', 'Timon']
         self.aws_module.params['detached_principals'] = ['Shenzi', 'Banzi']
         mock_list_principals.return_value = ['Pumbaa', 'Banzi', 'Timon']
 
-        result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
+        result = aws_iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertTrue(result[0])
         self.assert_list_equal(['Pumbaa', 'Timon'], result[1])
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.list_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.detach_principal')
-    @patch('ansible.modules.cloud.amazon.iot_thing.attach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.list_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.detach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
     def test_change_principals_attach_and_detach(
             self, mock_attach_principal, mock_detach_principal, mock_list_principals):
         self.aws_module.check_mode = False
@@ -323,7 +370,7 @@ class IotThing(unittest.TestCase):
         self.aws_module.params['detached_principals'] = ['Shenzi', 'Banzi']
         mock_list_principals.return_value = ['Banzi', 'Simba', 'Timon', 'Shenzi']
 
-        result = iot_thing.change_principals(self.aws_module, self.client, 'mything')
+        result = aws_iot_thing.change_principals(self.aws_module, self.client, 'mything')
 
         self.assertTrue(result[0])
         self.assert_list_equal(['Pumbaa', 'Timon', 'Simba'], result[1])
@@ -331,14 +378,14 @@ class IotThing(unittest.TestCase):
     def test_change_thing_in_check_mode_type(self):
         thing = dict(version=7)
         update_args = dict(thingTypeName='mytype')
-        iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
+        aws_iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
         self.assertEqual(8, thing['version'])
         self.assertEqual('mytype', thing['thingTypeName'])
 
     def test_change_thing_in_check_mode_remove_type(self):
         thing = dict(version=7, thingTypeName='mytype')
         update_args = dict(removeThingType=True)
-        iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
+        aws_iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
         self.assertEqual(8, thing['version'])
         self.assertIsNone(thing.get('thingTypeName'))
 
@@ -356,7 +403,7 @@ class IotThing(unittest.TestCase):
             hyena='',
             warthog='Pumbaa'
         )))
-        iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
+        aws_iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
         self.assertEqual(11, thing['version'])
         self.assertEqual(dict(warthog='Pumbaa', meerkat='Timon', king='Simba'), thing['attributes'])
 
@@ -364,16 +411,21 @@ class IotThing(unittest.TestCase):
         thing = dict(version=2)
         update_args = dict(expectedVersion=1)
         with self.assert_module_failed('Expected thing version 1 but actual version is 2'):
-            iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
+            aws_iot_thing.change_thing_in_check_mode(self.aws_module, thing, update_args)
 
     def test_change_thing_in_cloud_success(self):
-        iot_thing.change_thing_in_cloud(self.aws_module, self.client, dict())
+        aws_iot_thing.change_thing_in_cloud(self.aws_module, self.client, dict())
         self.assertEqual(1, self.client.update_thing.call_count)
 
-    def test_change_thing_in_cloud_failure(self):
+    def test_change_thing_in_cloud_client_exception(self):
         self.client.update_thing.side_effect = resource_not_found_exception
         with self.assert_module_failed('Updating thing'):
-            iot_thing.change_thing_in_cloud(self.aws_module, self.client, dict())
+            aws_iot_thing.change_thing_in_cloud(self.aws_module, self.client, dict())
+
+    def test_change_thing_in_cloud_boto_core_error(self):
+        self.client.update_thing.side_effect = boto_core_error
+        with self.assert_module_failed('Updating thing'):
+            aws_iot_thing.change_thing_in_cloud(self.aws_module, self.client, dict())
 
     def test_set_attribute_delta_no_change(self):
         self.aws_module.params['attributes'] = dict(
@@ -389,7 +441,7 @@ class IotThing(unittest.TestCase):
 
         update_args = dict()
 
-        iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
 
         self.assertIsNone(update_args.get('attributePayload'))
 
@@ -412,7 +464,7 @@ class IotThing(unittest.TestCase):
 
         update_args = dict()
 
-        iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
 
         self.assertEqual(expected, update_args.get('attributePayload'))
 
@@ -436,7 +488,7 @@ class IotThing(unittest.TestCase):
 
         update_args = dict()
 
-        iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
 
         self.assertEqual(expected, update_args.get('attributePayload'))
 
@@ -457,14 +509,14 @@ class IotThing(unittest.TestCase):
 
         update_args = dict()
 
-        iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_attribute_delta(self.aws_module, thing, update_args)
 
         self.assertEqual(expected, update_args.get('attributePayload'))
 
     def test_set_type_delta_no_type_no_change(self):
         thing = dict()
         update_args = dict()
-        iot_thing.set_type_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_type_delta(self.aws_module, thing, update_args)
         self.assertIsNone(update_args.get('thingTypeName'))
         self.assertIsNone(update_args.get('removeThingType'))
 
@@ -472,7 +524,7 @@ class IotThing(unittest.TestCase):
         self.aws_module.params['type'] = 'mytype'
         thing = dict(thingTypeName='mytype')
         update_args = dict()
-        iot_thing.set_type_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_type_delta(self.aws_module, thing, update_args)
         self.assertIsNone(update_args.get('thingTypeName'))
         self.assertIsNone(update_args.get('removeThingType'))
 
@@ -480,7 +532,7 @@ class IotThing(unittest.TestCase):
         self.aws_module.params['type'] = 'mytype'
         thing = dict()
         update_args = dict()
-        iot_thing.set_type_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_type_delta(self.aws_module, thing, update_args)
         self.assertEqual('mytype', update_args.get('thingTypeName'))
         self.assertIsNone(update_args.get('removeThingType'))
 
@@ -488,7 +540,7 @@ class IotThing(unittest.TestCase):
         self.aws_module.params['type'] = 'newtype'
         thing = dict(thingTypeName='oldtype')
         update_args = dict()
-        iot_thing.set_type_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_type_delta(self.aws_module, thing, update_args)
         self.assertEqual('newtype', update_args.get('thingTypeName'))
         self.assertIsNone(update_args.get('removeThingType'))
 
@@ -496,7 +548,7 @@ class IotThing(unittest.TestCase):
         self.aws_module.params['remove_type'] = True
         thing = dict()
         update_args = dict()
-        iot_thing.set_type_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_type_delta(self.aws_module, thing, update_args)
         self.assertIsNone(update_args.get('thingTypeName'))
         self.assertIsNone(update_args.get('removeThingType'))
 
@@ -504,21 +556,21 @@ class IotThing(unittest.TestCase):
         self.aws_module.params['remove_type'] = True
         thing = dict(thingTypeName='mytype')
         update_args = dict()
-        iot_thing.set_type_delta(self.aws_module, thing, update_args)
+        aws_iot_thing.set_type_delta(self.aws_module, thing, update_args)
         self.assertIsNone(update_args.get('thingTypeName'))
         self.assertTrue(update_args.get('removeThingType'))
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing_in_check_mode')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing_in_cloud')
-    @patch('ansible.modules.cloud.amazon.iot_thing.set_attribute_delta')
-    @patch('ansible.modules.cloud.amazon.iot_thing.set_type_delta')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing_in_check_mode')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing_in_cloud')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.set_attribute_delta')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.set_type_delta')
     def test_change_thing_no_changes(
             self, mock_set_type_delta, mock_set_attribute_delta, mock_change_in_cloud, mock_change_in_check):
         thing = dict()
         thing_name = 'mything'
         expected_version = 1
 
-        changed = iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
+        changed = aws_iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
 
         self.assertFalse(changed)
         self.assertEqual(1, mock_set_type_delta.call_count)
@@ -530,10 +582,10 @@ class IotThing(unittest.TestCase):
     def add_dummy_to_update_args(aws_module, thing, update_args):
         update_args['dummy'] = 'dummy'
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing_in_check_mode')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing_in_cloud')
-    @patch('ansible.modules.cloud.amazon.iot_thing.set_attribute_delta')
-    @patch('ansible.modules.cloud.amazon.iot_thing.set_type_delta')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing_in_check_mode')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing_in_cloud')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.set_attribute_delta')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.set_type_delta')
     def test_change_thing_changes_in_normal_mode(
             self, mock_set_type_delta, mock_set_attribute_delta, mock_change_in_cloud, mock_change_in_check):
         self.aws_module.check_mode = False
@@ -548,7 +600,7 @@ class IotThing(unittest.TestCase):
             expectedVersion=expected_version
         )
 
-        changed = iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
+        changed = aws_iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
 
         self.assertTrue(changed)
         self.assertEqual(1, mock_set_type_delta.call_count)
@@ -556,10 +608,10 @@ class IotThing(unittest.TestCase):
         mock_change_in_cloud.assert_called_once_with(self.aws_module, self.client, expected)
         self.assertFalse(mock_change_in_check.called)
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing_in_check_mode')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing_in_cloud')
-    @patch('ansible.modules.cloud.amazon.iot_thing.set_attribute_delta')
-    @patch('ansible.modules.cloud.amazon.iot_thing.set_type_delta')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing_in_check_mode')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing_in_cloud')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.set_attribute_delta')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.set_type_delta')
     def test_change_thing_changes_in_check_mode(
             self, mock_set_type_delta, mock_set_attribute_delta, mock_change_in_cloud, mock_change_in_check):
         self.aws_module.check_mode = True
@@ -573,7 +625,7 @@ class IotThing(unittest.TestCase):
             thingName=thing_name
         )
 
-        changed = iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
+        changed = aws_iot_thing.change_thing(self.aws_module, self.client, thing, thing_name, expected_version)
 
         self.assertTrue(changed)
         self.assertEqual(1, mock_set_type_delta.call_count)
@@ -581,10 +633,10 @@ class IotThing(unittest.TestCase):
         self.assertFalse(mock_change_in_cloud.called)
         mock_change_in_check.assert_called_once_with(self.aws_module, thing, expected)
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.format_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.describe_and_format_changed_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing')
     def test_update_thing_with_change(
             self, mock_change_thing, mock_change_principals, mock_describe_and_format_thing, mock_format_thing):
         self.aws_module.check_mode = False
@@ -594,17 +646,17 @@ class IotThing(unittest.TestCase):
             thingName='mything'
         )
 
-        iot_thing.update_thing(self.aws_module, thing, self.client)
+        aws_iot_thing.update_thing(self.aws_module, thing, self.client)
 
         self.assertEqual(1, mock_change_thing.call_count)
         self.assertEqual(1, mock_change_principals.call_count)
         mock_describe_and_format_thing.assert_called_once_with(self.aws_module, self.client, 'mything', [], dict())
         self.assertFalse(mock_format_thing.called)
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.format_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.describe_and_format_changed_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing')
     def test_update_thing_with_change_in_check_mode(
             self, mock_change_thing, mock_change_principals, mock_describe_and_format_thing, mock_format_thing):
         self.aws_module.check_mode = True
@@ -614,17 +666,17 @@ class IotThing(unittest.TestCase):
             thingName='mything'
         )
 
-        iot_thing.update_thing(self.aws_module, thing, self.client)
+        aws_iot_thing.update_thing(self.aws_module, thing, self.client)
 
         self.assertEqual(1, mock_change_thing.call_count)
         self.assertEqual(1, mock_change_principals.call_count)
         self.assertFalse(mock_describe_and_format_thing.called)
         mock_format_thing.assert_called_once_with(True, thing, ['p1'])
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.format_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.describe_and_format_changed_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing')
     def test_update_thing_with_changed_principals(
             self, mock_change_thing, mock_change_principals, mock_describe_and_format_thing, mock_format_thing):
         mock_change_thing.return_value = False
@@ -633,17 +685,17 @@ class IotThing(unittest.TestCase):
             thingName='mything'
         )
 
-        iot_thing.update_thing(self.aws_module, thing, self.client)
+        aws_iot_thing.update_thing(self.aws_module, thing, self.client)
 
         self.assertEqual(1, mock_change_thing.call_count)
         self.assertEqual(1, mock_change_principals.call_count)
         self.assertFalse(mock_describe_and_format_thing.called)
         mock_format_thing.assert_called_once_with(True, thing, ['p1'])
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.format_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.describe_and_format_changed_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_principals')
-    @patch('ansible.modules.cloud.amazon.iot_thing.change_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_principals')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.change_thing')
     def test_update_thing_with_no_changes(
             self, mock_change_thing, mock_change_principals, mock_describe_and_format_thing, mock_format_thing):
         mock_change_thing.return_value = False
@@ -652,16 +704,16 @@ class IotThing(unittest.TestCase):
             thingName='mything'
         )
 
-        iot_thing.update_thing(self.aws_module, thing, self.client)
+        aws_iot_thing.update_thing(self.aws_module, thing, self.client)
 
         self.assertEqual(1, mock_change_thing.call_count)
         self.assertEqual(1, mock_change_principals.call_count)
         self.assertFalse(mock_describe_and_format_thing.called)
         mock_format_thing.assert_called_once_with(False, thing, ['p1'])
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.format_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.describe_and_format_changed_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.attach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
     def test_create_thing_in_check_mode(self, mock_attach_principal, mock_describe_and_format_thing, mock_format_thing):
         self.aws_module.check_mode = True
         self.aws_module.params['type'] = 'mytype'
@@ -683,16 +735,16 @@ class IotThing(unittest.TestCase):
             version=1
         )
 
-        iot_thing.create_thing(self.aws_module, thing_name, self.client)
+        aws_iot_thing.create_thing(self.aws_module, thing_name, self.client)
 
         self.assertFalse(mock_attach_principal.called)
         self.assertFalse(self.client.create_thing.called)
         self.assertFalse(mock_describe_and_format_thing.called)
         mock_format_thing.assert_called_once_with(True, expected, ['p1', 'p2'])
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.format_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.describe_and_format_changed_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.attach_principal')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
     def test_create_thing_success(self, mock_attach_principal, mock_describe_and_format_thing, mock_format_thing):
         self.aws_module.check_mode = False
         self.aws_module.params['attributes'] = dict(
@@ -721,7 +773,7 @@ class IotThing(unittest.TestCase):
             call(self.aws_module, self.client, thing_name, 'p2')
         ]
 
-        iot_thing.create_thing(self.aws_module, thing_name, self.client)
+        aws_iot_thing.create_thing(self.aws_module, thing_name, self.client)
 
         self.client.create_thing.assert_called_once_with(**expected)
         self.assertEqual(2, mock_attach_principal.call_count)
@@ -730,10 +782,11 @@ class IotThing(unittest.TestCase):
             self.aws_module, self.client, thing_name, ['p1', 'p2'], dict(thing_arn='arn'))
         self.assertFalse(mock_format_thing.called)
 
-    @patch('ansible.modules.cloud.amazon.iot_thing.format_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.describe_and_format_changed_thing')
-    @patch('ansible.modules.cloud.amazon.iot_thing.attach_principal')
-    def test_create_thing_failure(self, mock_attach_principal, mock_describe_and_format_thing, mock_format_thing):
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
+    def test_create_thing_client_exception(
+            self, mock_attach_principal, mock_describe_and_format_thing, mock_format_thing):
         self.aws_module.check_mode = False
         self.aws_module.params['attached_principals'] = ['p1', 'p2']
 
@@ -742,7 +795,26 @@ class IotThing(unittest.TestCase):
         thing_name = 'mything'
 
         with self.assert_module_failed('Creating thing'):
-            iot_thing.create_thing(self.aws_module, thing_name, self.client)
+            aws_iot_thing.create_thing(self.aws_module, thing_name, self.client)
+
+        self.assertFalse(mock_attach_principal.called)
+        self.assertFalse(mock_describe_and_format_thing.called)
+        self.assertFalse(mock_format_thing.called)
+
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.format_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.describe_and_format_changed_thing')
+    @patch('ansible.modules.cloud.amazon.aws_iot_thing.attach_principal')
+    def test_create_thing_boto_core_error(
+            self, mock_attach_principal, mock_describe_and_format_thing, mock_format_thing):
+        self.aws_module.check_mode = False
+        self.aws_module.params['attached_principals'] = ['p1', 'p2']
+
+        self.client.create_thing.side_effect = boto_core_error
+
+        thing_name = 'mything'
+
+        with self.assert_module_failed('Creating thing'):
+            aws_iot_thing.create_thing(self.aws_module, thing_name, self.client)
 
         self.assertFalse(mock_attach_principal.called)
         self.assertFalse(mock_describe_and_format_thing.called)
@@ -760,19 +832,24 @@ class IotThing(unittest.TestCase):
 
         self.client.describe_thing.return_value = thing
 
-        result = iot_thing.describe_thing(self.aws_module, self.client, 'mything')
+        result = aws_iot_thing.describe_thing(self.aws_module, self.client, 'mything')
 
         self.assertEqual(thing, result)
 
     def test_describe_thing_not_found(self):
         self.client.describe_thing.side_effect = resource_not_found_exception
-        result = iot_thing.describe_thing(self.aws_module, self.client, 'mything')
+        result = aws_iot_thing.describe_thing(self.aws_module, self.client, 'mything')
         self.assertIsNone(result)
 
-    def test_describe_thing_failure(self):
+    def test_describe_thing_client_exception(self):
         self.client.describe_thing.side_effect = generic_client_exception
         with self.assert_module_failed('Describing thing'):
-            iot_thing.describe_thing(self.aws_module, self.client, 'mything')
+            aws_iot_thing.describe_thing(self.aws_module, self.client, 'mything')
+
+    def test_describe_thing_client_boto_core_error(self):
+        self.client.describe_thing.side_effect = boto_core_error
+        with self.assert_module_failed('Describing thing'):
+            aws_iot_thing.describe_thing(self.aws_module, self.client, 'mything')
 
     def assert_module_failed(self, msg):
         return AssertModuleFailsContext(self, msg)

@@ -1,18 +1,6 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -22,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: iot_thing
+module: aws_iot_thing
 short_description: Manage AWS IOT things
 description:
     - This module allows the user to manage IOT things.  It includes support for creating and deleting things as well as
@@ -74,52 +62,52 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: create IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     state: present
 
 - name: delete IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     state: absent
 
 - name: set type of IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     type: mytype
 
 - name: set the type associated with an IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     remove_type: True
 
 - name: disassociate an IOT thing from a type
-  iot_thing:
+  aws_iot_thing:
     name: mything
     type:
       state: absent
 
 - name: attach a certificate to an IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     attached_principals:
       - "arn:aws:iot:us-east-1:account-id:cert/uuid"
 
 - name: detach a certificate from an IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     detached_principals:
       - "arn:aws:iot:us-east-1:account-id:cert/uuid"
 
 - name: add attributes to an IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     attributes:
       key1: value1
       key2: value2
 
 - name: remove attributes from an IOT thing
-  iot_thing:
+  aws_iot_thing:
     name: mything
     absent_attributes:
       - key3
@@ -137,7 +125,7 @@ version:
     returned: on success when I(state=present)
     type: int
     sample: 123
-attribute:
+attributes:
     description: The attributes currently set on the IOT thing.
     returned: on success when I(state=present)
     type: dict
@@ -170,60 +158,10 @@ from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_
 
 
 try:
-    from botocore.exceptions import ClientError, ValidationError
+    from botocore.exceptions import ClientError, BotoCoreError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
-
-
-def main():
-    argument_spec = dict(
-        name=dict(required=True, type='str'),
-        state=dict(default='present', choices=['present', 'absent']),
-        type=dict(type='str'),
-        remove_type=dict(type='bool'),
-        attached_principals=dict(type='list', default=[]),
-        detached_principals=dict(type='list', default=[]),
-        attributes=dict(type='dict', default=dict()),
-        absent_attributes=dict(type='list', default=[]),
-        expected_version=dict(type='int')
-    )
-
-    mutually_exclusive = [['type', 'remove_type']]
-
-    aws_module = AnsibleAWSModule(argument_spec=argument_spec,
-                                  supports_check_mode=True,
-                                  mutually_exclusive=mutually_exclusive)
-
-    state = aws_module.params.get('state')
-    thing_name = aws_module.params.get('name')
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(aws_module, boto3=True)
-    if not region:
-        aws_module.fail_json(msg='region must be specified')
-
-    try:
-        client = boto3_conn(aws_module,
-                            conn_type='client',
-                            resource='iot',
-                            region=region,
-                            endpoint=ec2_url,
-                            **aws_connect_kwargs)
-    except (ClientError, ValidationError) as e:
-        aws_module.fail_json_aws(e, msg='Trying to connect to AWS')
-
-    thing = describe_thing(aws_module, client, thing_name)
-
-    result = dict(changed=False)
-    if thing is None and state == 'present':
-        result = create_thing(aws_module, thing_name, client)
-    elif thing is not None:
-        if state == 'present':
-            result = update_thing(aws_module, thing, client)
-        else:
-            result = delete_thing(aws_module, client, thing)
-
-    aws_module.exit_json(**result)
 
 
 def describe_thing(aws_module, client, thing_name):
@@ -233,6 +171,8 @@ def describe_thing(aws_module, client, thing_name):
     except ClientError as e:
         if e.response['Error']['Code'] != 'ResourceNotFoundException':
             aws_module.fail_json_aws(e, msg='Describing thing')
+    except BotoCoreError as e:
+        aws_module.fail_json(e, msg='Describing thing')
 
     return thing
 
@@ -253,7 +193,7 @@ def create_thing(aws_module, thing_name, client):
     if not aws_module.check_mode:
         try:
             thing = client.create_thing(**create_args)
-        except ClientError as e:
+        except (ClientError, BotoCoreError) as e:
             aws_module.fail_json_aws(e, msg='Creating thing')
 
         for principal in principals:
@@ -342,7 +282,7 @@ def set_attribute_delta(aws_module, thing, update_args):
 def change_thing_in_cloud(aws_module, client, update_args):
     try:
         client.update_thing(**update_args)
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         aws_module.fail_json_aws(e, msg='Updating thing')
 
 
@@ -406,7 +346,7 @@ def delete_thing(aws_module, client, thing):
 
         try:
             client.delete_thing(**delete_args)
-        except ClientError as e:
+        except (ClientError, BotoCoreError) as e:
             aws_module.fail_json_aws(e, msg='Deleting thing')
 
     return dict(changed=True)
@@ -433,7 +373,7 @@ def create_attribute_payload(attributes):
 def list_principals(aws_module, client, thing_name):
     try:
         principals = client.list_thing_principals(thingName=thing_name)
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         aws_module.fail_json_aws(e, msg='Listing thing principals')
     return principals.get('principals')
 
@@ -442,7 +382,7 @@ def attach_principal(aws_module, client, thing_name, principal):
     try:
         client.attach_thing_principal(thingName=thing_name,
                                       principal=principal)
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         aws_module.fail_json_aws(e, msg='Attaching principal')
 
 
@@ -450,7 +390,7 @@ def detach_principal(aws_module, client, thing_name, principal):
     try:
         client.detach_thing_principal(thingName=thing_name,
                                       principal=principal)
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         aws_module.fail_json_aws(e, msg='Detaching principal')
 
 
@@ -465,7 +405,7 @@ def parse_expected_version(aws_module, thing):
 def describe_and_format_changed_thing(aws_module, client, thing_name, principals, additional_details):
     try:
         thing = client.describe_thing(thingName=thing_name)
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         aws_module.fail_json_aws(e, msg='Describing thing')
 
     thing.update(additional_details)
@@ -478,6 +418,51 @@ def format_thing(changed, thing, principals):
     thing['principals'] = principals
     thing['changed'] = changed
     return camel_dict_to_snake_dict(thing)
+
+
+def main():
+    argument_spec = dict(
+        name=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        type=dict(),
+        remove_type=dict(type='bool'),
+        attached_principals=dict(type='list', default=[]),
+        detached_principals=dict(type='list', default=[]),
+        attributes=dict(type='dict', default=dict()),
+        absent_attributes=dict(type='list', default=[]),
+        expected_version=dict(type='int')
+    )
+
+    mutually_exclusive = [['type', 'remove_type']]
+
+    aws_module = AnsibleAWSModule(argument_spec=argument_spec,
+                                  supports_check_mode=True,
+                                  mutually_exclusive=mutually_exclusive)
+
+    state = aws_module.params.get('state')
+    thing_name = aws_module.params.get('name')
+
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(aws_module, boto3=True)
+
+    client = boto3_conn(aws_module,
+                        conn_type='client',
+                        resource='iot',
+                        region=region,
+                        endpoint=ec2_url,
+                        **aws_connect_kwargs)
+
+    thing = describe_thing(aws_module, client, thing_name)
+
+    result = dict(changed=False)
+    if thing is None and state == 'present':
+        result = create_thing(aws_module, thing_name, client)
+    elif thing is not None:
+        if state == 'present':
+            result = update_thing(aws_module, thing, client)
+        else:
+            result = delete_thing(aws_module, client, thing)
+
+    aws_module.exit_json(**result)
 
 
 if __name__ == '__main__':
