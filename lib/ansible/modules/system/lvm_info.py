@@ -261,5 +261,6 @@ def main():
 
     module.exit_json(**result)
 
-main()
+if __name__ == "__main__":
+    main()
 
