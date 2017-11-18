@@ -908,18 +908,23 @@ class VmsModule(BaseModule):
             ]
             # Stateless snapshot may be already removed:
             if snap_stateless:
+                """
+                We need to wait for Active snapshot ID, to be removed as it's current
+                stateless snapshot. Then we need to wait for staless snapshot ID to
+                be read, for use, because it will become active snapshot.
+                """
                 wait(
-                    service=snapshots_service.snapshot_service(snap_stateless[0].id),
+                    service=snapshots_service.snapshot_service(snap_active.id),
                     condition=lambda snap: snap is None,
                     wait=self.param('wait'),
                     timeout=self.param('timeout'),
                 )
-            wait(
-                service=snapshots_service.snapshot_service(snap_active.id),
-                condition=lambda snap: snap.snapshot_status == otypes.SnapshotStatus.OK,
-                wait=self.param('wait'),
-                timeout=self.param('timeout'),
-            )
+                wait(
+                    service=snapshots_service.snapshot_service(snap_stateless[0].id),
+                    condition=lambda snap: snap.snapshot_status == otypes.SnapshotStatus.OK,
+                    wait=self.param('wait'),
+                    timeout=self.param('timeout'),
+                )
         return True
 
     def __attach_disks(self, entity):
