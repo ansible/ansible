@@ -15,6 +15,7 @@ DOCUMENTATION = """
 """
 import os
 import pty
+import re
 import json
 import subprocess
 
@@ -92,10 +93,15 @@ class Connection(ConnectionBase):
         (stdout, stderr) = p.communicate()
         stdin.close()
 
-        if p.returncode == 0:
-            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
-        else:
-            result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
+        out = stdout if p.returncode == 0 else stderr
+        if br"##RESPONSE##:" not in out:
+            return None
+
+        resp = out.split(br"##RESPONSE##:")
+        result = json.loads(to_text(resp[1].strip(), errors='surrogate_then_replace'))
+
+        if resp[0] and C.DEFAULT_DEBUG:
+            display.display(resp[0], color=C.COLOR_DEBUG)
 
         if 'messages' in result:
             for msg in result.get('messages'):
@@ -104,7 +110,7 @@ class Connection(ConnectionBase):
         if 'error' in result:
             if self._play_context.verbosity > 2:
                 msg = "The full traceback is:\n" + result['exception']
-                display.display(result['exception'], color=C.COLOR_ERROR)
+                display.display(msg, color=C.COLOR_ERROR)
             raise AnsibleError(result['error'])
 
         return result['socket_path']
