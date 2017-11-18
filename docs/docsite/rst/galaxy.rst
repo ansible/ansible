@@ -139,7 +139,7 @@ Installing multiple roles from multiple files
 
 At a basic level, including requirements files allows you to break up bits of roles into smaller files. Role includes pull in roles from other files.
 
-Use the following command to install roles includes in *requirements.yml*  + *webserver,yml*
+Use the following command to install roles includes in *requirements.yml*  + *webserver.yml*
 
 ::
 
