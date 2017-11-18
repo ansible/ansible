@@ -98,9 +98,11 @@ from ansible.module_utils.basic import AnsibleModule
 import os
 import subprocess
 
+
 def sh(cmd):
     out = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()[0]
     return out.splitlines()
+
 
 def cmd_to_fmt(cmd, head):
     ret = sh(cmd)
@@ -156,20 +158,20 @@ class VolumeGroup:
         for item in r:
             attr = list(r[count]['attr'])
             r[count]['attr'] = {
-                "read" : False if attr[1] == 'w' else True,
-                "write" : False if attr[1] == 'r' else True,
-                "r/w" : attr[0],
-                "resizeable" : False if attr[1] == '-' else True,
-                "exported" : False if attr[2] == '-' else True,
-                "partial" : False if attr[3] == '-' else True,
-                "allocation_policy" : {
-                    "contiguous" : True if attr[4] == 'c' else False,
-                    "cling" : True if attr[4] == 'l' else False,
-                    "normal" : True if attr[4] == 'n' else False,
-                    "anywhere" : True if attr[4] == 'a' else False,
-                    "inherited" : True if attr[4] == 'i' else False,
+                "read": False if attr[1] == 'w' else True,
+                "write": False if attr[1] == 'r' else True,
+                "r/w": attr[0],
+                "resizeable": False if attr[1] == '-' else True,
+                "exported": False if attr[2] == '-' else True,
+                "partial": False if attr[3] == '-' else True,
+                "allocation_policy": {
+                    "contiguous": True if attr[4] == 'c' else False,
+                    "cling": True if attr[4] == 'l' else False,
+                    "normal": True if attr[4] == 'n' else False,
+                    "anywhere": True if attr[4] == 'a' else False,
+                    "inherited": True if attr[4] == 'i' else False,
                 },
-                "cluster" : True if attr[5] == 'c' else False
+                "cluster": True if attr[5] == 'c' else False
             }
             count += 1
 
@@ -190,13 +192,13 @@ class LogicalVolume:
                     k['filesystem'] = FileSystem.get_fs(k['device'])
             else:
                 if name == k['lv']:
-                    k['device']  ="/dev/mapper/%s-%s" % ( k['vg'], k['lv'])
+                    k['device'] = "/dev/mapper/%s-%s" % (k['vg'], k['lv'])
                     k['filesystem'] = FileSystem.get_fs(k['device'])
         return k
 
     @staticmethod
     def getAll():
-        head = ["lv", "vg", "attr", "lsize" ,"pool", "origin", "data_percent", "meta_percent", "move", "log", "cpy_percent_sync", "convert"]
+        head = ["lv", "vg", "attr", "lsize", "pool", "origin", "data_percent", "meta_percent", "move", "log", "cpy_percent_sync", "convert"]
         return cmd_to_fmt("lvs | egrep -v '^.+LV.+' | sed 's/^  //g'", head)
 
     @staticmethod
@@ -241,13 +243,13 @@ def main():
 
     module = AnsibleModule(
         argument_spec={
-            'name': {  'required': False, 'type': 'str' },
+            'name': {'required': False, 'type': 'str'},
             'type': {
                 'required': True,
                 'type': 'str',
                 'choices': ["pv", "lv", "vg"]
             },
-            'method' : {
+            'method': {
                 'required': False,
                 'default': 'get'
             }
@@ -263,4 +265,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
