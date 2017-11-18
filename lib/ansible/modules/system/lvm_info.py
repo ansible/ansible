@@ -19,7 +19,7 @@ author:
   - Daniele Marcocci (@danielino)
 module: lvm_info
 short_description: This is a sample module to get info about lvm devices
-version_added: "2.4"
+version_added: "2.5"
 description:
   - This module get info about lvm devices
 options:
