@@ -1106,7 +1106,8 @@ def expand_ebs_volume_pool(eg_compute, ebs_volumes_list):
 def expand_launch_spec(eg_compute, module, is_update, do_not_update):
     eg_launch_spec = expand_fields(lspec_fields, module.params, 'LaunchSpecification')
 
-    eg_launch_spec.iam_role = expand_fields(iam_fields, module.params, 'IamRole')
+    if module.params['iam_role_arn'] is not None or module.params['iam_role_name'] is not None:
+        eg_launch_spec.iam_role = expand_fields(iam_fields, module.params, 'IamRole')
 
     tags = module.params['tags']
     load_balancers = module.params['load_balancers']
