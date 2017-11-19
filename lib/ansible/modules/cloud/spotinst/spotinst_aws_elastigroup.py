@@ -834,7 +834,7 @@ tracking_policy_fields = ('policy_name',
                           'threshold')
 
 action_fields = (dict(ansible_field_name='action_type',
-                 spotinst_field_name='type'),
+                      spotinst_field_name='type'),
                  'adjustment',
                  'min_target_capacity',
                  'max_target_capacity',
