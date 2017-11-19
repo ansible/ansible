@@ -444,7 +444,7 @@ def main():
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(aws_module, boto3=True)
 
-    client = boto3_conn(aws_module,
+    client = boto3_conn(aws_module._module,
                         conn_type='client',
                         resource='iot',
                         region=region,

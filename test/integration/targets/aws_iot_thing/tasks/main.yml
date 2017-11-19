@@ -1,0 +1,220 @@
+---
+- block:
+    # ============================================================
+    - name: test create thing with no region
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called without region
+      assert:
+        that:
+          - result.failed
+          - result.msg == "The aws_iot_thing module requires a region and none was found in configuration, environment variables or module parameters"
+
+    # ============================================================
+    - name: test create thing with unknown type
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        type: unknown_type_name
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with unknown type
+      assert:
+        that:
+          - result.failed
+          - "{{result.msg.startswith('Creating thing: An error occurred (ResourceNotFoundException) when calling the CreateThing operation: Thing Type')}}"
+
+    # ============================================================
+    - name: test type and remove_type are mutually exclusive
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        type: unknown_type_name
+        remove_type: trye
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+      ignore_errors: true
+
+    - name: assert type and remove_type are mutually exclusive
+      assert:
+        that:
+          - result.failed
+          - "result.msg == 'parameters are mutually exclusive: type, remove_type'"
+
+    # ============================================================
+    - name: test create thing
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        attributes:
+          lion: Mufasa
+          hyena: Ed
+          meerkat: Timon
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: thing
+
+    - name: assert thing created
+      assert:
+        that:
+          - not thing | failed
+          - thing.changed == True
+          - thing.default_client_id is defined
+          - thing.principals | length == 0
+          - thing.thing_arn is defined
+          - thing.thing_name == thing_name
+          - thing.version == 1
+          - thing.attributes | length == 3
+          - thing.attributes.lion == "Mufasa"
+          - thing.attributes.hyena == "Ed"
+          - thing.attributes.meerkat == "Timon"
+
+    # ============================================================
+    - name: test idempotence
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        attributes:
+          lion: Mufasa
+          hyena: Ed
+          meerkat: Timon
+        expected_version: 1
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+
+    - name: assert idempotence
+      assert:
+        that:
+          - not result | failed
+          - result.changed == False
+          - result.default_client_id == thing.default_client_id
+          - result.principals | length == 0
+          - result.thing_arn is not defined
+          - result.thing_name == thing_name
+          - result.version == 1
+          - result.attributes | length == 3
+          - result.attributes.lion == "Mufasa"
+          - result.attributes.hyena == "Ed"
+          - result.attributes.meerkat == "Timon"
+
+    # ============================================================
+    - name: test incorrect expected_version causes failure on change
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        attributes:
+          lion: Mufasa
+          hyena: Ed
+          meerkat: Timon
+        expected_version: 2
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+      ignore_errors: True
+
+    - name: assert incorrect expected_version causes failure on change
+      assert:
+        that:
+          - result.failed
+          - result.msg == "Expected thing version 2 but actual version is 1"
+
+    # ============================================================
+    - name: test change attributes
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        attributes:
+          lion: Simba
+          warthog: Pumbaa
+          meerkat: Timon
+        absent_attributes:
+          - hyena
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+
+    - name: assert things changed
+      assert:
+        that:
+          - not result | failed
+          - result.changed == True
+          - result.default_client_id == thing.default_client_id
+          - result.principals | length == 0
+          - result.thing_arn is not defined
+          - result.thing_name == thing_name
+          - result.version == 2
+          - result.attributes | length == 3
+          - result.attributes.lion == "Simba"
+          - result.attributes.warthog == "Pumbaa"
+          - result.attributes.meerkat == "Timon"
+
+    # ============================================================
+    - name: test incorrect expected_version causes failure on delete
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        state: absent
+        expected_version: 1
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+      ignore_errors: True
+
+    - name: assert incorrect expected_version causes failure on delete
+      assert:
+        that:
+          - result.failed
+          - result.msg == "Expected thing version 1 but actual version is 2"
+
+    # ============================================================
+    - name: delete thing
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        state: absent
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+
+    - name: assert thing removed
+      assert:
+        that:
+          - not result | failed
+          - result.changed == True
+
+  always:
+    # ============================================================
+    - name: test delete thing that does not exist
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        state: absent
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+        security_token: "{{ security_token }}"
+        ec2_region: '{{ec2_region}}'
+      register: result
+
+    - name: assert nothing changed
+      assert:
+        that:
+          - not result | failed
+          - result.changed == False
