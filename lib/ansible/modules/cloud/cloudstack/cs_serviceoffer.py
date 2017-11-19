@@ -39,7 +39,7 @@ options:
   deployment_planner:
     description:
       - The deployment planner heuristics used to deploy a VM of this offering.
-      - If C(null), the value of global config C(vm.deployment.planner) is used.
+      - If not set, the value of global config C(vm.deployment.planner) is used.
   display_text:
     description:
       - Display text of the service offering.
@@ -56,9 +56,9 @@ options:
       - Hypervisor snapshot reserve space as a percent of a volume.
       - Only for managed storage using Xen or VMware.
   disk_iops_customized
-    default: false
     description:
       - Whether compute offering iops is custom or not.
+    default: false
   disk_iops_read_rate:
     description:
       - IO requests read rate of the disk offering.
@@ -72,14 +72,14 @@ options:
     description:
       - Min. iops of the compute offering.
   is_system:
-    default: false
     description:
       - Whether it is a system VM offering or not.
-  is_volatile:
     default: false
+  is_volatile:
     description:
       - Whether the virtual machine needs to be volatile or not.
       - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
+    default: false
   memory:
     description:
       - The total memory of the service offering in MB.
@@ -92,43 +92,43 @@ options:
       - Data transfer rate in Mb/s allowed.
       - Supported only for non-system offering and system offerings having C(system_vm_type=domainrouter).
   offer_ha:
-    default: false
     description:
       - Whether HA is set for the service offering.
+    default: false
   provisioning_type:
+    description:
+      - Provisioning type used to create volumes.
     choices:
       - thin
       - sparse
       - fat
-    description:
-      - Provisioning type used to create volumes.
   service_offering_details:
     description:
       - Details for planner, used to store specific parameters.
   state:
+    description:
+      - State of the service offering.
     choices:
       - present
       - absent
     default: present
-    description:
-      - State of the service offering.
   storage_type:
+    description:
+      - The storage type of the service offering.
     choices:
       - local
       - shared
-    description:
-      - The storage type of the service offering.
   system_vm_type:
+    description:
+      - The system VM type.
+      - Required if C(is_system=true).
     choices:
       - domainrouter
       - consoleproxy
       - secondarystoragevm
+  storage_tags:
     description:
-      - The system VM type.
-      - Required if C(is_system=true).
-  tags:
-    description:
-      - The tags for this service offering.
+      - The storage tags for this service offering.
 extends_documentation_fragment: cloudstack
 '''
 
@@ -215,15 +215,35 @@ cpu_speed:
   type: int
   sample: 2198
 disk_iops_max:
-  description:
+  description: Max iops of the disk offering
   returned: success
   type: int
-  sample:
+  sample: 1000
 disk_iops_min:
-  description:
+  description: Min iops of the disk offering
   returned: success
   type: int
-  sample:
+  sample: 500
+disk_bytes_read_rate:
+  description: Bytes read rate of the service offering
+  returned: success
+  type: int
+  sample: 1000
+disk_bytes_write_rate:
+  description: Bytes write rate of the service offering
+  returned: success
+  type: int
+  sample: 1000
+disk_iops_read_rate:
+  description: IO requests per second read rate of the service offering
+  returned: success
+  type: int
+  sample: 1000
+disk_iops_write_rate:
+  description: IO requests per second write rate of the service offering
+  returned: success
+  type: int
+  sample: 1000
 created:
   description: Date the offering was created
   returned: success
@@ -251,6 +271,11 @@ storage_tags:
   sample: [ 'eco' ]
 is_system:
   description: Whether the offering is for system VMs or not
+  returned: success
+  type: bool
+  sample: false
+is_iops_customized:
+  description: Whether the offering uses custom IOPS or not
   returned: success
   type: bool
   sample: false
@@ -300,6 +325,11 @@ service_offering_details:
   type: dict
   sample: "{'vgpuType': 'GRID K180Q','pciDevice':'Group of NVIDIA Corporation GK107GL
 [GRID K1] GPUs'}"
+network_rate:
+  description: Data transfer rate in megabits per second allowed
+  returned: success
+  type: int
+  sample 1000
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -326,7 +356,7 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'miniops': 'disk_iops_min',
             'hypervisorsnapshotreserve': 'hypervisor_snapshot_reserve',
             'iscustomized': 'is_customized',
-            'iscustomizediops': 'customized_iops_enabled',
+            'iscustomizediops': 'is_iops_customized',
             'issystem': 'is_system',
             'isvolatile': 'is_volatile',
             'limitcpuuse': 'limit_cpu_usage',
@@ -388,7 +418,7 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'byteswriterate': self.module.params.get('disk_bytes_write_rate'),
             'cpunumber': self.module.params.get('cpu_number'),
             'cpuspeed': self.module.params.get('cpu_speed'),
-            'customizediops': self.module.params.get('customized_iops'),
+            'customizediops': self.module.params.get('is_iops_customized'),
             'deploymentplanner': self.module.params.get('deployment_planner'),
             'domainid': self.get_domain(key='id'),
             'hosttags': self.module.params.get('host_tags'),
@@ -464,6 +494,7 @@ def main():
         disk_iops_min=dict(type='int'),
         is_system=dict(type='bool', default=False),
         is_volatile=dict(type='bool'),
+        is_iops_customized=dict(type='bool'),
         memory=dict(type='int'),
         network_rate=dict(type='int'),
         offer_ha=dict(type='bool'),
