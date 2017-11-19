@@ -277,8 +277,16 @@ def gather_vm_facts(content, vm):
         'hw_cores_per_socket': vm.config.hardware.numCoresPerSocket,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
+        'hw_datastores': [],
+        'hw_files': [],
+        'hw_esxi_host': None,
+        'hw_guest_ha_state': vm.summary.runtime.dasVmProtection,
+        'hw_is_template': vm.config.template,
+        'hw_folder': None,
         'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
         'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
+        'guest_question': vm.summary.runtime.question,
+        'guest_consolidation_needed': vm.summary.runtime.consolidationNeeded,
         'ipv4': None,
         'ipv6': None,
         'annotation': vm.config.annotation,
@@ -286,6 +294,47 @@ def gather_vm_facts(content, vm):
         'snapshots': [],
         'current_snapshot': None,
     }
+
+    # facts that may or may not exist
+    if vm.summary.runtime.host:
+        host = vm.summary.runtime.host
+        facts['hw_esxi_host'] = host.summary.config.name
+
+    datastores = vm.datastore
+    for ds in datastores:
+        facts['hw_datastores'].append(ds.info.name)
+
+    try:
+        files = vm.config.files
+        layout = vm.layout
+        if files:
+            facts['hw_files'] = [files.vmPathName]
+            for item in layout.snapshot:
+                for snap in item.snapshotFile:
+                    facts['hw_files'].append(files.snapshotDirectory + snap)
+            for item in layout.configFile:
+                facts['hw_files'].append(os.path.dirname(files.vmPathName) + '/' + item)
+            for item in vm.layout.logFile:
+                facts['hw_files'].append(files.logDirectory + item)
+            for item in vm.layout.disk:
+                for disk in item.diskFile:
+                    facts['hw_files'].append(disk)
+    except:
+        pass
+
+    folder = vm.parent
+    if folder:
+        foldername = folder.name
+        fp = folder.parent
+        # climb back up the tree to find our path, stop before the root folder
+        while fp is not None and fp.name is not None and fp != content.rootFolder:
+            foldername = fp.name + '/' + foldername
+            try:
+                fp = fp.parent
+            except:
+                break
+        foldername = '/' + foldername
+        facts['hw_folder'] = foldername
 
     cfm = content.customFieldsManager
     # Resolve custom values

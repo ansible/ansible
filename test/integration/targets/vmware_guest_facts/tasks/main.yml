@@ -42,6 +42,13 @@
 
 - set_fact: dc1="{{ datacenters['json'][0] }}"
 
+- name: get a list of hosts from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=H
+  register: hosts
+
+- set_fact: h1="{{ hosts['json'][0] }}"
+
 - name: get a list of virtual machines from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=VM
@@ -68,6 +75,8 @@
       - "guest_facts_0001['instance']['hw_name'] == vm1 | basename"
       - "guest_facts_0001['instance']['hw_product_uuid'] is defined"
       - "guest_facts_0001['instance']['hw_cores_per_socket'] is defined"
+      - "guest_facts_0001['instance']['hw_datastores'] is defined"
+      - "guest_facts_0001['instance']['hw_esxi_host'] == h1 | basename"
 
 - set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
 
@@ -154,3 +163,4 @@
       - "guest_facts_0004['instance']['snapshots'][0]['name'] == 'snap1'"
       - "guest_facts_0004['instance']['snapshots'][1]['name'] == 'snap2'"
       - "guest_facts_0004['instance']['current_snapshot']['name'] == 'snap2'"
+      - "guest_facts_0002['instance']['hw_folder'] == vm1 | dirname"
