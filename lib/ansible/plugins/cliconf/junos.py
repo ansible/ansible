@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import json
 
 from itertools import chain
@@ -67,17 +66,23 @@ class Cliconf(CliconfBase):
             self.send_command(cmd)
 
     def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+        command = kwargs.get('command')
+        return self.send_command(command)
 
-    def commit(self, comment=None):
+    def commit(self, *args, **kwargs):
+        comment = kwargs.get('comment', None)
+        command = b'commit'
         if comment:
-            command = b'commit comment {0}'.format(comment)
-        else:
-            command = b'commit'
+            command += b' comment {0}'.format(comment)
+        command += b' and-quit'
         self.send_command(command)
 
-    def discard_changes(self):
-        self.send_command(b'rollback')
+    def discard_changes(self, rollback_id=None):
+        command = b'rollback'
+        if rollback_id is not None:
+            command += b' %s' % int(rollback_id)
+        for cmd in chain(to_list(command), b'exit'):
+            self.send_command(cmd)
 
     def get_capabilities(self):
         result = {}
@@ -85,3 +90,9 @@ class Cliconf(CliconfBase):
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
+
+    def compare_configuration(self, rollback_id=None):
+        command = b'show | compare'
+        if rollback_id is not None:
+            command += b' rollback %s' % int(rollback_id)
+        return self.send_command(command)

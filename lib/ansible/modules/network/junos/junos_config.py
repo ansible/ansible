@@ -191,9 +191,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import get_diff, load_config, get_configuration
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
-from ansible.module_utils.junos import junos_argument_spec, load_configuration
-from ansible.module_utils.junos import check_args as junos_check_args
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.junos import junos_argument_spec, load_configuration, get_connection, tostring
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -217,14 +215,13 @@ DEFAULT_COMMENT = 'configured by junos_config'
 
 
 def check_args(module, warnings):
-    junos_check_args(module, warnings)
-
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
 
-def zeroize(ele):
-    return send_request(ele, Element('request-system-zeroize'))
+def zeroize(module):
+    conn = get_connection(module)
+    return conn.execute_rpc(tostring(Element('request-system-zeroize')), ignore_warning=False)
 
 
 def rollback(ele, id='0'):
