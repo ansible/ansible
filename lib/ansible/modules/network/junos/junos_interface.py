@@ -185,9 +185,10 @@ from copy import deepcopy
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netconf import exec_rpc
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.network_common import conditional
-from ansible.module_utils.junos import junos_argument_spec, get_connection
+from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
@@ -258,7 +259,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    get_connection(module)
     warnings = list()
     result = {'changed': False}
 
@@ -336,7 +336,7 @@ def main():
         if result['changed']:
             sleep(item.get('delay'))
 
-        reply = module._junos_connection.execute_rpc(tostring(element), ignore_warning=False)
+        reply = exec_rpc(module, tostring(element), ignore_warning=False)
         if state in ('up', 'down'):
             admin_status = reply.xpath('interface-information/physical-interface/admin-status')
             if not admin_status or not conditional(state, admin_status[0].text.strip()):
@@ -358,7 +358,7 @@ def main():
                 intf_name = SubElement(element, 'interface-device')
                 intf_name.text = item.get('name')
 
-                reply = module._junos_connection.execute_rpc(tostring(element), ignore_warning=False)
+                reply = exec_rpc(module, tostring(element), ignore_warning=False)
                 have_host = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-system-name')]
                 have_port = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-port-id')]
 

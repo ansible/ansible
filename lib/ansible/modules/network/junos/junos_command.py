@@ -171,7 +171,8 @@ import re
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, get_configuration, get_connection
+from ansible.module_utils.netconf import exec_rpc
+from ansible.module_utils.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.six import string_types, iteritems
 
@@ -202,7 +203,6 @@ def to_lines(stdout):
 def rpc(module, items):
 
     responses = list()
-
     for item in items:
         name = item['name']
         xattrs = item['xattrs']
@@ -240,7 +240,7 @@ def rpc(module, items):
         if fetch_config:
             reply = get_configuration(module, format=xattrs['format'])
         else:
-            reply = module._junos_connection.execute_rpc(tostring(element), ignore_warning=False)
+            reply = exec_rpc(module, tostring(element), ignore_warning=False)
 
         if xattrs['format'] == 'text':
             if fetch_config:
@@ -364,9 +364,10 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    get_connection(module)
+    conn = get_connection(module)
+    capabilities = get_capabilities(module)
 
-    if module.params['provider'] and module.params['provider']['transport'] == 'cli':
+    if capabilities.get('network_api') == 'cliconf':
         if any((module.params['wait_for'], module.params['match'], module.params['rpcs'])):
             module.warn('arguments wait_for, match, rpcs are not supported when using transport=cli')
         commands = module.params['commands']
@@ -379,7 +380,7 @@ def main():
             if ('display json' not in cmd) and ('display xml' not in cmd):
                 if display and display != 'text':
                     cmd += ' | display {0}'.format(display)
-            output.append(module._junos_connection.get(command=cmd))
+            output.append(conn.get(command=cmd))
 
         lines = [out.split('\n') for out in output]
         result = {'changed': False, 'stdout': output, 'stdout_lines': lines}

@@ -25,10 +25,8 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.connection import Connection
-
+from ansible.module_utils.connection import Connection, ConnectionError
 
 try:
     from lxml.etree import Element, fromstring
@@ -36,6 +34,11 @@ except ImportError:
     from xml.etree.ElementTree import Element, fromstring
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
+
+
+def exec_rpc(module, *args, **kwargs):
+    connection = NetconfConnection(module._socket_path)
+    return connection.execute_rpc(*args, **kwargs)
 
 
 class NetconfConnection(Connection):
@@ -52,8 +55,8 @@ class NetconfConnection(Connection):
 
            For usage refer the respective connection plugin docs.
         """
-        self.check_rc = kwargs.get('check_rc', True)
-        self.ignore_warning = kwargs.get('ignore_warning', True)
+        self.check_rc = kwargs.pop('check_rc', True)
+        self.ignore_warning = kwargs.pop('ignore_warning', True)
 
         response = self._exec_jsonrpc(name, *args, **kwargs)
         if 'error' in response:
@@ -70,7 +73,7 @@ class NetconfConnection(Connection):
 
             error_list = root.findall('.//nc:rpc-error', NS_MAP)
             if not error_list:
-                AnsibleError(to_text(rpc_error, errors='surrogate_then_replace'))
+                raise ConnectionError(to_text(rpc_error, errors='surrogate_then_replace'))
 
             warnings = []
             for error in error_list:
@@ -80,5 +83,5 @@ class NetconfConnection(Connection):
                 if severity == 'warning' and self.ignore_warning:
                     warnings.append(message)
                 else:
-                    self._module.fail_json(msg=str(rpc_error))
+                    raise ConnectionError(to_text(rpc_error, errors='surrogate_then_replace'))
             return warnings

@@ -189,6 +189,7 @@ import re
 import json
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netconf import exec_rpc
 from ansible.module_utils.junos import get_diff, load_config, get_configuration
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 from ansible.module_utils.junos import junos_argument_spec, load_configuration, get_connection, tostring
@@ -220,8 +221,7 @@ def check_args(module, warnings):
 
 
 def zeroize(module):
-    conn = get_connection(module)
-    return conn.execute_rpc(tostring(Element('request-system-zeroize')), ignore_warning=False)
+    return exec_rpc(module, tostring(Element('request-system-zeroize')), ignore_warning=False)
 
 
 def rollback(ele, id='0'):

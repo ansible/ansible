@@ -102,7 +102,7 @@ def parse_port(config):
 
 
 def map_config_to_obj(module):
-    conn = module._junos_connection
+    conn = get_connection(module)
     out = conn.get(command='show configuration system services netconf')
     if out is None:
         module.fail_json(msg='unable to retrieve current config')
@@ -138,7 +138,7 @@ def map_params_to_obj(module):
 
 
 def load_config(module, config, commit=False):
-    conn = module._junos_connection
+    conn = get_connection(module)
 
     conn.edit_config(to_list(config) + ['top'])
     diff = conn.compare_configuration()
@@ -165,7 +165,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    get_connection(module)
     warnings = list()
     result = {'changed': False, 'warnings': warnings}
 

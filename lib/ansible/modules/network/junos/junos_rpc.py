@@ -95,7 +95,8 @@ output_lines:
   type: list
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, get_connection
+from ansible.module_utils.netconf import exec_rpc
+from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
@@ -151,8 +152,7 @@ def main():
             if value is not True:
                 child.text = value
 
-    conn = get_connection(module)
-    reply = conn.execute_rpc(tostring(element), ignore_warning=False)
+    reply = exec_rpc(module, tostring(element), ignore_warning=False)
 
     result['xml'] = str(tostring(reply))
 

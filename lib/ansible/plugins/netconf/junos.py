@@ -22,11 +22,8 @@ __metaclass__ = type
 import json
 import re
 
-from functools import partial
-from xml.etree.ElementTree import fromstring
-
 from ansible import constants as C
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
@@ -50,10 +47,10 @@ class Netconf(NetconfBase):
 
     def get_device_info(self):
         device_info = dict()
-
         device_info['network_os'] = 'junos'
-        data = self.execute_rpc('get-software-information')
-        reply = fromstring(data)
+        ele = new_ele('get-software-information')
+        data = self.execute_rpc(to_xml(ele))
+        reply = to_ele(to_bytes(data, errors='surrogate_or_strict'))
         sw_info = reply.find('.//software-information')
 
         device_info['network_os_version'] = self.get_text(sw_info, 'junos-version')
@@ -66,9 +63,9 @@ class Netconf(NetconfBase):
     def execute_rpc(self, name):
         """RPC to be execute on remote device
            :name: Name of rpc in string format"""
-        name = to_ele(to_native(name, errors='surrogate_or_strict'))
         try:
-            return self.m.rpc(name).data_xml
+            obj = to_ele(to_bytes(name, errors='surrogate_or_strict'))
+            return self.m.rpc(obj).data_xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -80,7 +77,7 @@ class Netconf(NetconfBase):
         :target: is the name of the configuration datastore being edited
         :config: is the configuration in string format."""
         if kwargs.get('config'):
-            kwargs['config'] = to_native(kwargs['config'], errors='surrogate_or_strict')
+            kwargs['config'] = to_bytes(kwargs['config'], errors='surrogate_or_strict')
             if kwargs.get('format', 'xml') == 'xml':
                 kwargs['config'] = to_ele(kwargs['config'])
 

@@ -78,6 +78,7 @@ ansible_facts:
   type: dict
 """
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netconf import exec_rpc
 from ansible.module_utils.junos import junos_argument_spec, get_param
 from ansible.module_utils.junos import get_configuration, get_connection
 from ansible.module_utils.pycompat24 import get_exception
@@ -116,7 +117,7 @@ class FactsBase(object):
         return str(output.text).strip()
 
     def rpc(self, rpc):
-        return self.module._junos_connection.execute_rpc(tostring(Element(rpc)))
+        return exec_rpc(self.module, tostring(Element(rpc)))
 
     def get_text(self, ele, tag):
         try:
@@ -221,7 +222,7 @@ class Interfaces(FactsBase):
     def populate(self):
         ele = Element('get-interface-information')
         SubElement(ele, 'detail')
-        reply = self.module._junos_connection.execute_rpc(tostring(ele))
+        reply = exec_rpc(self.module, tostring(ele))
 
         interfaces = {}
 

@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 import collections
+import json
 from contextlib import contextmanager
 from copy import deepcopy
 
@@ -68,12 +69,26 @@ def get_provider_argspec():
 def get_connection(module):
     if hasattr(module, '_junos_connection'):
         return module._junos_connection
-    if module._name == 'junos_netconf' or (module.params['provider'].get('transport') == 'cli' and module._name == 'junos_command'):
+
+    capabilities = get_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
         module._junos_connection = Connection(module._socket_path)
-    else:
+    elif network_api == 'netconf':
         module._junos_connection = NetconfConnection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type %s' % network_api)
 
     return module._junos_connection
+
+
+def get_capabilities(module):
+    if hasattr(module, '_junos_capabilities'):
+        return module._junos_capabilities
+
+    capabilities = Connection(module._socket_path).get_capabilities()
+    module._junos_capabilities = json.loads(capabilities)
+    return module._junos_capabilities
 
 
 def _validate_rollback_id(module, value):
