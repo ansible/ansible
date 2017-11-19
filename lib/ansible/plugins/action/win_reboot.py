@@ -8,6 +8,7 @@ import time
 
 from datetime import datetime, timedelta
 
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils._text import to_native
 
@@ -45,7 +46,7 @@ class ActionModule(ActionBase):
     def do_until_success_or_timeout(self, what, timeout, what_desc, fail_sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
-        e = ""
+        exc = ""
         while datetime.utcnow() < max_end_time:
             try:
                 what()
@@ -53,11 +54,12 @@ class ActionModule(ActionBase):
                     display.debug("win_reboot: %s success" % what_desc)
                 return
             except Exception as e:
+                exc = e
                 if what_desc:
                     display.debug("win_reboot: %s fail (expected), retrying in %d seconds..." % (what_desc, fail_sleep))
                 time.sleep(fail_sleep)
 
-        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, exc))
 
     def run(self, tmp=None, task_vars=None):
 
@@ -117,6 +119,7 @@ class ActionModule(ActionBase):
             return result
 
         # Initiate reboot
+        display.vvv("rebooting server")
         (rc, stdout, stderr) = self._connection.exec_command('shutdown /r /t %d /c "%s"' % (pre_reboot_delay, msg))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
@@ -138,14 +141,22 @@ class ActionModule(ActionBase):
             return result
 
         start = datetime.now()
+        # Get the original connection_timeout option var so it can be reset after
+        connection_timeout_orig = None
+        try:
+            connection_timeout_orig = self._connection.get_option('connection_timeout')
+        except AnsibleError:
+            display.debug("win_reboot: connection_timeout connection option has not been set")
 
         try:
             # keep on checking system uptime with short connection responses
             def check_uptime():
                 display.vvv("attempting to get system uptime")
+
                 # override connection timeout from defaults to custom value
                 try:
-                    self._connection._set_connection_timeout_override(connect_timeout)
+                    self._connection.set_options(direct={"connection_timeout": connect_timeout})
+                    self._connection._reset()
                 except AttributeError:
                     display.warning("Connection plugin does not allow the connection timeout to be overridden")
 
@@ -162,9 +173,10 @@ class ActionModule(ActionBase):
 
             # reset the connection to clear the custom connection timeout
             try:
+                self._connection.set_options(direct={"connection_timeout": connection_timeout_orig})
                 self._connection._reset()
-            except AttributeError:
-                pass
+            except (AnsibleError, AttributeError):
+                display.debug("Failed to reset connection_timeout back to default")
 
             # finally run test command to ensure everything is working
             def run_test_command():
@@ -184,7 +196,7 @@ class ActionModule(ActionBase):
         except TimedOutException as toex:
             result['failed'] = True
             result['rebooted'] = True
-            result['msg'] = toex.message
+            result['msg'] = to_native(toex)
 
         if post_reboot_delay != 0:
             display.vvv("win_reboot: waiting an additional %d seconds" % post_reboot_delay)

@@ -78,6 +78,17 @@ DOCUMENTATION = """
         choices: [managed, manual]
         vars:
           - name: ansible_winrm_kinit_mode
+      connection_timeout:
+        description:
+            - Sets the operation and read timeout settings for the WinRM
+              connection.
+            - Corresponds to the C(operation_timeout_sec) and
+              C(read_timeout_sec) args in pywinrm so avoid setting these vars
+              with this one.
+            - The default value is whatever is set in the installed version of
+              pywinrm.
+        vars:
+          - name: ansible_winrm_connection_timeout
 """
 
 import base64
@@ -146,7 +157,6 @@ class Connection(ConnectionBase):
 
         self.protocol = None
         self.shell_id = None
-        self.connection_timeout = None
         self.delegate = None
         self._shell_type = 'powershell'
 
@@ -171,6 +181,7 @@ class Connection(ConnectionBase):
         self._winrm_path = self._options['path']
         self._kinit_cmd = self._options['kerberos_command']
         self._winrm_transport = self._options['transport']
+        self._winrm_connection_timeout = self._options['connection_timeout']
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
@@ -263,10 +274,9 @@ class Connection(ConnectionBase):
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
                 winrm_kwargs = self._winrm_kwargs.copy()
-                if self.connection_timeout:  # allows plugins like win_reboot to override the timeout
-                    winrm_kwargs['operation_timeout_sec'] = self.connection_timeout
-                    winrm_kwargs['read_timeout_sec'] = self.connection_timeout + 1
-                    self.connection_timeout = None
+                if self._winrm_connection_timeout:
+                    winrm_kwargs['operation_timeout_sec'] = self._winrm_connection_timeout
+                    winrm_kwargs['read_timeout_sec'] = self._winrm_connection_timeout + 1
                 protocol = Protocol(endpoint, transport=transport, **winrm_kwargs)
 
                 # open the shell from connect so we know we're able to talk to the server
@@ -376,13 +386,6 @@ class Connection(ConnectionBase):
         self.protocol = None
         self.shell_id = None
         self._connect()
-
-    def _set_connection_timeout_override(self, timeout):
-        # used by win_reboot to temporarily override the connection timeout, it is only
-        # overridden on the first reset, all subsequent calls to self._reset() will revert
-        # the timeout back to the normal host_var settings
-        self.connection_timeout = timeout
-        self._reset()
 
     def _create_raw_wrapper_payload(self, cmd, environment=None):
         environment = {} if environment is None else environment
