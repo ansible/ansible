@@ -96,3 +96,39 @@ class TestNxosBgpModule(TestNxosModule):
             changed=True,
             commands=['router bgp 65535', 'graceful-restart restart-time 120']
         )
+
+class TestNxosBgp32BitsAS(TestNxosModule):
+
+    module = nxos_bgp
+
+    def setUp(self):
+        super(TestNxosBgp32BitsAS, self).setUp()
+
+        self.mock_load_config = patch('ansible.modules.network.nxos.nxos_bgp.load_config')
+        self.load_config = self.mock_load_config.start()
+
+        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_bgp.get_config')
+        self.get_config = self.mock_get_config.start()
+
+    def tearDown(self):
+        super(TestNxosBgp32BitsAS, self).tearDown()
+        self.mock_load_config.stop()
+        self.mock_get_config.stop()
+
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('nxos_bgp', 'config_32_bits_as.cfg')
+        self.load_config.return_value = []
+
+    def test_nxos_bgp_change_nothing(self):
+        set_module_args(dict(asn='65535.65535', router_id='192.168.1.1'))
+        self.execute_module(changed=False)
+
+    def test_nxos_bgp_wrong_asn(self):
+        set_module_args(dict(asn='65535.10', router_id='192.168.1.1'))
+        result = self.execute_module(failed=True)
+        self.assertEqual(result['msg'], 'Another BGP ASN already exists.')
+
+    def test_nxos_bgp_remove(self):
+        set_module_args(dict(asn='65535.65535', state='absent'))
+        self.execute_module(changed=True, commands=['no router bgp 65535.65535'])
+
