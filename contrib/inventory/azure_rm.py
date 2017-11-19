@@ -194,6 +194,7 @@ import os
 import re
 import sys
 import inspect
+from time import time
 
 try:
     # python2
@@ -277,6 +278,50 @@ def azure_id_to_dict(id):
         result[pieces[index]] = pieces[index + 1]
         index += 1
     return result
+
+
+class CloudInventoryCache(object):
+    def __init__(self, cache_name='ansible-cloud-cache', cache_path='/tmp',
+                 cache_max_age=300):
+        cache_dir = os.path.expanduser(cache_path)
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        self.cache_path_cache = os.path.join(cache_dir, cache_name)
+
+        self.cache_max_age = cache_max_age
+
+    def is_valid(self, max_age=None):
+        ''' Determines if the cache files have expired, or if it is still valid '''
+
+        if max_age is None:
+            max_age = self.cache_max_age
+
+        if os.path.isfile(self.cache_path_cache):
+            mod_time = os.path.getmtime(self.cache_path_cache)
+            current_time = time()
+            if (mod_time + max_age) > current_time:
+                return True
+
+        return False
+
+    def get_all_data_from_cache(self, filename=''):
+        ''' Reads the JSON inventory from the cache file. Returns Python dictionary. '''
+
+        data = ''
+        if not filename:
+            filename = self.cache_path_cache
+        with open(filename, 'r') as cache:
+            data = cache.read()
+        return json.loads(data)
+
+    def write_to_cache(self, data, filename=''):
+        ''' Writes data to file as JSON.  Returns True. '''
+        if not filename:
+            filename = self.cache_path_cache
+        json_data = json.dumps(data)
+        with open(filename, 'w') as cache:
+            cache.write(json_data)
+        return True
 
 
 class AzureRM(object):
@@ -600,7 +645,19 @@ class AzureInventory(object):
         if self._args.no_powerstate:
             self.include_powerstate = False
 
-        self.get_inventory()
+        # Cache management
+        cache_used = False
+        if self._args.refresh_cache or not self.cache.is_valid():
+            self.get_inventory()
+            self.cache.write_to_cache(self._inventory)
+        else:
+            self.load_inventory_from_cache()
+            cache_used = True
+            self._inventory['_meta']['stats'] = {'use_cache': True}
+        self._inventory['_meta']['stats'] = {
+            'cache_used': cache_used
+        }
+
         print(self._json_format_dict(pretty=self._args.pretty))
         sys.exit(0)
 
@@ -642,7 +699,21 @@ class AzureInventory(object):
                             help='Return inventory for comma separated list of locations')
         parser.add_argument('--no-powerstate', action='store_true', default=False,
                             help='Do not include the power state of each virtual host')
+        parser.add_argument('--refresh-cache', action='store_true', default=False,
+                            help='Force refresh of cache by making API requests (default: False - use cache files)')
         return parser.parse_args()
+
+    def load_inventory_from_cache(self):
+        ''' Loads inventory from JSON on disk. '''
+
+        try:
+            self._inventory = self.cache.get_all_data_from_cache()
+        except Exception as e:
+            print(
+                "Invalid inventory file %s.  Please rebuild with -refresh-cache option."
+                % (self.cache.cache_path_cache))
+            raise
+
 
     def get_inventory(self):
         if len(self.resource_groups) > 0:
@@ -883,6 +954,14 @@ class AzureInventory(object):
                     val = self._to_boolean(env_settings[key])
                     setattr(self, key, val)
 
+        # Caching
+        cache_path = file_settings['cache_path']
+        cache_max_age = file_settings['cache_max_age']
+        cache_name = 'ansible-azure_rm.cache'
+        self.cache = CloudInventoryCache(cache_path=cache_path,
+                                         cache_max_age=cache_max_age,
+                                         cache_name=cache_name)
+
     def _parse_ref_id(self, reference):
         response = {}
         keys = reference.strip('/').split('/')
@@ -926,6 +1005,8 @@ class AzureInventory(object):
                 except:
                     pass
 
+            settings['cache_path'] = config.get('cache', 'cache_path')
+            settings['cache_max_age'] = config.getint('cache', 'cache_max_age')
         return settings
 
     def _tags_match(self, tag_obj, tag_args):
