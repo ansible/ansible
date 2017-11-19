@@ -1010,6 +1010,9 @@ class AzureInventory(object):
                 except:
                     pass
 
+            if not config.has_section('cache'):
+                config.add_section('cache')
+
             settings['cache_path'] = config.get('cache', 'cache_path')
             settings['cache_max_age'] = config.getint('cache', 'cache_max_age')
         return settings
