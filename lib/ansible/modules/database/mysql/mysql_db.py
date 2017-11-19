@@ -58,7 +58,7 @@ options:
     version_added: "2.1"
   ignore_tables:
     description:
-      - A list of table names that will be ignored in the dump. Format: database_name.table_name
+      - A list of table names that will be ignored in the dump in the form database_name.table_name
     required: false
     default: empty list
     version_added: "2.5"
@@ -136,7 +136,7 @@ def db_delete(cursor, db):
 
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None, ignore_tables=list()):
+            single_transaction=None, quick=None, ignore_tables=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
