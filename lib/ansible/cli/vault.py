@@ -102,7 +102,7 @@ class VaultCLI(CLI):
             self.parser.add_option('--stdin-name', dest='encrypt_string_stdin_name',
                                    default=None,
                                    help="Specify the variable name for stdin")
-            self.parser.set_usage("usage: %prog encrypt-string [--prompt] [options] string_to_encrypt")
+            self.parser.set_usage("usage: %prog encrypt_string [--prompt] [options] string_to_encrypt")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
