@@ -165,7 +165,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --quick"
     if ignore_tables:
         for an_ignored_table in ignore_tables:
-            cmd += " --ignore-table={}".format(an_ignored_table)
+            cmd += " --ignore-table={0}".format(an_ignored_table)
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
