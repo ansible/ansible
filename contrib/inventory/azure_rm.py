@@ -646,6 +646,7 @@ class AzureInventory(object):
             self.include_powerstate = False
 
         # Cache management
+        start_inventory_time = time()
         cache_used = False
         if self._args.refresh_cache or not self.cache.is_valid():
             self.get_inventory()
@@ -654,7 +655,9 @@ class AzureInventory(object):
             self.load_inventory_from_cache()
             cache_used = True
             self._inventory['_meta']['stats'] = {'use_cache': True}
+
         self._inventory['_meta']['stats'] = {
+            'inventory_load_time': time() - start_inventory_time,
             'cache_used': cache_used
         }
 
