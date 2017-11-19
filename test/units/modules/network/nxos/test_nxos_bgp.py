@@ -97,6 +97,7 @@ class TestNxosBgpModule(TestNxosModule):
             commands=['router bgp 65535', 'graceful-restart restart-time 120']
         )
 
+
 class TestNxosBgp32BitsAS(TestNxosModule):
 
     module = nxos_bgp
@@ -131,4 +132,3 @@ class TestNxosBgp32BitsAS(TestNxosModule):
     def test_nxos_bgp_remove(self):
         set_module_args(dict(asn='65535.65535', state='absent'))
         self.execute_module(changed=True, commands=['no router bgp 65535.65535'])
-
