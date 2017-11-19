@@ -717,7 +717,6 @@ class AzureInventory(object):
                 % (self.cache.cache_path_cache))
             raise
 
-
     def get_inventory(self):
         if len(self.resource_groups) > 0:
             # get VMs for requested resource groups
