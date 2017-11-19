@@ -833,7 +833,8 @@ tracking_policy_fields = ('policy_name',
                           'target',
                           'threshold')
 
-action_fields = ('action_type',
+action_fields = (dict(ansible_field_name='action_type',
+                 spotinst_field_name='type'),
                  'adjustment',
                  'min_target_capacity',
                  'max_target_capacity',
@@ -990,6 +991,7 @@ def retrieve_group_instances(client, module, group_id):
 
         is_amount_fulfilled = False
         while is_amount_fulfilled is False and wait_timeout > time.time():
+            instances = list()
             amount_of_fulfilled_instances = 0
             active_instances = client.get_elastigroup_active_instances(group_id=group_id)
 
@@ -1465,12 +1467,15 @@ def main():
 
     credentials_path = module.params.get('credentials_path')
 
-    with open(credentials_path, "r") as creds:
-        for line in creds:
-            eq_index = line.find('=')
-            var_name = line[:eq_index].strip()
-            string_value = line[eq_index + 1:].strip()
-            creds_file_loaded_vars[var_name] = string_value
+    try:
+        with open(credentials_path, "r") as creds:
+            for line in creds:
+                eq_index = line.find('=')
+                var_name = line[:eq_index].strip()
+                string_value = line[eq_index + 1:].strip()
+                creds_file_loaded_vars[var_name] = string_value
+    except IOError:
+        pass
     # End of creds file retrieval
 
     token = module.params.get('token')
