@@ -36,6 +36,10 @@
     provider: "{{ netconf }}"
     port: 8022
 
+- name: wait for persistent socket to timeout
+  pause:
+    seconds: 120
+
 # This protects against the port override above not being honoured and a bug setting the port
 - name: Ensure we can NOT communicate over default port
   junos_command:
@@ -47,12 +51,15 @@
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to open shell' in result.msg"
 
 - name: Set back netconf to default port
   junos_netconf:
     state: present
   register: result
+
+- name: wait for persistent socket to timeout
+  pause:
+    seconds: 120
 
 - name: Ensure we can communicate over netconf
   junos_command:

@@ -45,7 +45,7 @@
 
 - name: wait for persistent socket to timeout
   pause:
-    seconds: 150
+    seconds: 120
 
 - name: Ensure we can NOT talk via netconf
   junos_command:
@@ -57,7 +57,6 @@
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to open shell' in result.msg"
 
 - name: re-enable netconf
   junos_netconf:
