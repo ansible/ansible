@@ -992,7 +992,10 @@ class AzureInventory(object):
         config = None
         settings = None
         try:
-            config = cp.ConfigParser()
+            config = cp.ConfigParser(defaults={
+                'cache_path': '~/.ansible/tmp',
+                'cache_max_age': '300'
+            })
             config.read(path)
         except:
             pass
