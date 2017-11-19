@@ -70,7 +70,7 @@ options:
         required: False
         default: False
         version_added: '2.5'
-    security:
+    network_policy:
         description:
             - Dict which configures the different security values for portgroup.
             - 'Valid attributes are:'
@@ -152,7 +152,7 @@ EXAMPLES = '''
         num_ports: 120
         portgroup_type: earlyBinding
         state: present
-        security:
+        network_policy:
           promiscuous: yes
           forged_transmits: yes
           mac_changes: yes
@@ -193,9 +193,9 @@ class VMwareDvsPortgroup(object):
         self.dv_switch = None
         self.state = self.module.params['state']
         self.vlan_trunk = self.module.params['vlan_trunk']
-        self.security_promiscuous = self.module.params['security']['promiscuous']
-        self.security_forged_transmits = self.module.params['security']['forged_transmits']
-        self.security_mac_changes = self.module.params['security']['mac_changes']
+        self.security_promiscuous = self.module.params['network_policy']['promiscuous']
+        self.security_forged_transmits = self.module.params['network_policy']['forged_transmits']
+        self.security_mac_changes = self.module.params['network_policy']['mac_changes']
         self.policy_block_override = self.module.params['port_policy']['block_override']
         self.policy_ipfix_override = self.module.params['port_policy']['ipfix_override']
         self.policy_live_port_move = self.module.params['port_policy']['live_port_move']
@@ -321,7 +321,7 @@ def main():
             portgroup_type=dict(required=True, choices=['earlyBinding', 'lateBinding', 'ephemeral'], type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             vlan_trunk=dict(type='bool', default=False),
-            security=dict(
+            network_policy=dict(
                 type='dict',
                 options=dict(
                     promiscuous=dict(type='bool', default=False),

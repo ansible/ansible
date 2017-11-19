@@ -154,7 +154,7 @@
     num_ports: 32
     portgroup_type: earlyBinding
     state: present
-    security:
+    network_policy:
       promiscuous: yes
       forged_transmits: yes
       mac_changes: yes
@@ -190,7 +190,7 @@
     num_ports: 32
     portgroup_type: earlyBinding
     state: present
-    security:
+    network_policy:
       promiscuous: yes
       forged_transmits: yes
       mac_changes: no
