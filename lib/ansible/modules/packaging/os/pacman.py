@@ -18,8 +18,7 @@ DOCUMENTATION = '''
 module: pacman
 short_description: Manage packages with I(pacman)
 description:
-    - Manage packages with the I(pacman) package manager, which is used by
-      Arch Linux and its variants.
+    - Manage packages with the I(pacman) package manager, which is used by Arch Linux and its variants.
 version_added: "1.0"
 author:
     - Indrajit Raychaudhuri (@indrajitr)
@@ -28,7 +27,7 @@ author:
 options:
     name:
         description:
-            - Name of the package to install, upgrade, or remove.
+            - Name or list of names of the packages to install, upgrade, or remove.
         aliases: [ package, pkg ]
 
     state:
@@ -69,6 +68,9 @@ options:
         type: bool
         default: no
         version_added: "2.0"
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 
 RETURN = '''

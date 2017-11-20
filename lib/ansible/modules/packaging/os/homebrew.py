@@ -34,16 +34,15 @@ version_added: "1.1"
 options:
     name:
         description:
-            - name of package to install/remove
+            - list of names of packages to install/remove
         required: false
         default: None
         aliases: ['pkg', 'package', 'formula']
     path:
         description:
-            - >
-              ':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed
-              relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an
-              alternative location in the system.
+            - "A ':' separated list of paths to search for 'brew' executable.
+              Since a package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command,
+              providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
         required: false
         default: '/usr/local/bin'
     state:
@@ -73,7 +72,9 @@ options:
         default: null
         aliases: ['options']
         version_added: "1.4"
-notes:  []
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 EXAMPLES = '''
 # Install formula foo with 'brew' in default path (C(/usr/local/bin))
