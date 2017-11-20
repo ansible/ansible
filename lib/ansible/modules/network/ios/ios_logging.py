@@ -245,7 +245,7 @@ def map_config_to_obj(module):
     obj = []
     dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
 
-    data = get_config(module, flags=['| section logging'])
+    data = get_config(module, flags=['| include logging'])
 
     for line in data.split('\n'):
         match = re.search(r'logging (\S+)', line, re.M)
