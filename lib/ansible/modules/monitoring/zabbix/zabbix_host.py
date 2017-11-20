@@ -192,7 +192,7 @@ EXAMPLES = '''
         port: 12345
     proxy: a.zabbix.proxy
 
-- name: Create a new host or update an existing host's tls settings
+- name: Update an existing host's TLS settings
   local_action:
     module: zabbix_host
     server_url: http://monitor.example.com
