@@ -205,7 +205,7 @@
         that:
             - "rpm_result.rc == 1"
             - "not dnf_result.changed"
-            - "dnf_result|failed"
+            - "dnf_result is failed"
     # ============================================================================
   always:
     - name: Clean up

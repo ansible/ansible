@@ -358,7 +358,7 @@
             - "rpm_result.rc == 1"
             - "yum_result.rc == 0"
             - "not yum_result.changed"
-            - "not yum_result|failed"
+            - "not yum_result is failed"
 
     - name: Verify yum module outputs
       assert:
@@ -385,7 +385,7 @@
             - "rpm_result.rc == 1"
             - "yum_result.rc == 1"
             - "not yum_result.changed"
-            - "yum_result|failed"
+            - "yum_result is failed"
 
     - name: Verify yum module outputs
       assert:
