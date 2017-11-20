@@ -61,7 +61,6 @@ EXAMPLES = '''
             name: CPG_FC-AO
             deviceType: FC
 
-  no_log: true
   delegate_to: localhost
 
 - name: Add a StoreServ Storage System with one managed pool (API500 onwards)
@@ -84,7 +83,6 @@ EXAMPLES = '''
                 name: CPG_FC-AO
                 deviceType: FC
 
-  no_log: true
   delegate_to: localhost
 
 - name: Remove the storage system by its IP (before API500)
@@ -98,7 +96,6 @@ EXAMPLES = '''
         credentials:
             ip_hostname: 172.18.11.12
 
-  no_log: true
   delegate_to: localhost
 
 - name: Remove the storage system by its IP (API500 onwards)
@@ -112,7 +109,6 @@ EXAMPLES = '''
         credentials:
             hostname: 172.18.11.12
 
-  no_log: true
   delegate_to: localhost
 '''
 
