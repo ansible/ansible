@@ -74,6 +74,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ldap import LdapGeneric, gen_specs, HAS_LDAP
 from ansible.module_utils._text import to_native
 
+try:
+    import ldap
+except ImportError:
+    HAS_LDAP = False
+
 
 class LdapPasswd(LdapGeneric):
     def __init__(self, module):
@@ -83,7 +88,27 @@ class LdapPasswd(LdapGeneric):
         self.passwd = self.module.params['passwd']
 
     def passwd_c(self):
-        return self.connection.compare_s(self.dn, 'userPassword', self.passwd) == 0
+        u_con = ldap.initialize(self.server_uri)
+
+        if self.start_tls:
+            try:
+                u_con.start_tls_s()
+            except ldap.LDAPError as e:
+                self.module.fail_json(msg="Cannot start TLS.", details=to_native(e),
+                                      exception=traceback.format_exc())
+
+        try:
+            u_con.simple_bind_s(self.dn, self.passwd)
+        except ldap.INVALID_CREDENTIALS:
+            return True
+        except ldap.LDAPError as e:
+            self.module.fail_json(
+                msg="Cannot bind to the server.", details=to_native(e),
+                exception=traceback.format_exc())
+        else:
+            return False
+        finally:
+            u_con.unbind()
 
     def passwd_s(self):
         # Exit early if the password is already valid
