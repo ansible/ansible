@@ -93,4 +93,4 @@ class TestJunosCommandModule(TestJunosModule):
     def test_junos_rpc_attrs(self):
         set_module_args(dict(rpc='load-configuration', output='xml', attrs={'url': '/var/tmp/config.conf'}))
         result = self.execute_module(format='xml')
-        self.assertTrue(reply.find('<load-success/>'))
+        self.assertTrue(result['xml'].find('<load-success/>'))
