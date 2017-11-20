@@ -26,7 +26,6 @@ author:
 - James Tanner (@jctanner) <tanner.jc@gmail.com>
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
-- Steve Jacobs (@stevejacobs) <sjacobs@brokencrew.com>
 notes:
 - Tested on vSphere 5.5 and 6.0
 requirements:
@@ -102,7 +101,7 @@ options:
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
     - ' - C(type) (string): Valid values are:'
-    - '   C(thin) thin disk, C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.4, Default: C(None) thick disk, no eagerzero.'
+    - '   C(thin) thin disk, C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5, Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore.'
   cdrom:
@@ -1021,12 +1020,10 @@ class PyVmomiHelper(PyVmomi):
             # is it thin?
             if 'type' in expected_disk_spec:
                 disk_type = expected_disk_spec.get('type', '').lower()
-
                 if disk_type == 'thin':
                     diskspec.device.backing.thinProvisioned = True
                 elif disk_type == 'eagerzeroedthick':
                     diskspec.device.backing.eagerlyScrub = True
-                
 
             # which datastore?
             if expected_disk_spec.get('datastore'):
