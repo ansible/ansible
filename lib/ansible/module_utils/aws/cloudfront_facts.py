@@ -30,8 +30,6 @@ Common cloudfront facts shared between modules
 
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
-from functools import partial
-import traceback
 
 try:
     import botocore
@@ -54,142 +52,95 @@ class CloudFrontFactsServiceManager:
             self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION "
                                   "environment variable or in boto configuration file")
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Can't establish connection - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Can't establish connection")
 
     def get_distribution(self, distribution_id):
         try:
-            func = partial(self.client.get_distribution, Id=distribution_id)
-            return self.paginated_response(func)
+            return self.client.get_distribution(Id=distribution_id)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing distribution - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error describing distribution")
 
     def get_distribution_config(self, distribution_id):
         try:
-            func = partial(self.client.get_distribution_config, Id=distribution_id)
-            return self.paginated_response(func)
+            return self.client.get_distribution_config(Id=distribution_id)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error describing distribution configuration")
 
     def get_origin_access_identity(self, origin_access_identity_id):
         try:
-            func = partial(self.client.get_cloud_front_origin_access_identity, Id=origin_access_identity_id)
-            return self.paginated_response(func)
+            return self.client.get_cloud_front_origin_access_identity(Id=origin_access_identity_id)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing origin access identity - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error describing origin access identity")
 
     def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
-            func = partial(self.client.get_cloud_front_origin_access_identity_config, Id=origin_access_identity_id)
-            return self.paginated_response(func)
+            return self.client.get_cloud_front_origin_access_identity_config(Id=origin_access_identity_id)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error describing origin access identity configuration")
 
     def get_invalidation(self, distribution_id, invalidation_id):
         try:
-            func = partial(self.client.get_invalidation, DistributionId=distribution_id, Id=invalidation_id)
-            return self.paginated_response(func)
+            return self.client.get_invalidation(DistributionId=distribution_id, Id=invalidation_id)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing invalidation - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error describing invalidation")
 
     def get_streaming_distribution(self, distribution_id):
         try:
-            func = partial(self.client.get_streaming_distribution, Id=distribution_id)
-            return self.paginated_response(func)
+            return self.client.get_streaming_distribution(Id=distribution_id)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error describing streaming distribution")
 
     def get_streaming_distribution_config(self, distribution_id):
         try:
-            func = partial(self.client.get_streaming_distribution_config, Id=distribution_id)
-            return self.paginated_response(func)
+            return self.client.get_streaming_distribution_config(Id=distribution_id)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error describing streaming distribution")
 
     def list_origin_access_identities(self):
         try:
-            func = partial(self.client.list_cloud_front_origin_access_identities)
-            origin_access_identity_list = self.paginated_response(func, 'CloudFrontOriginAccessIdentityList')
-            if origin_access_identity_list['Quantity'] > 0:
-                return origin_access_identity_list['Items']
-            return {}
+            paginator = self.client.get_paginator('list_cloud_front_origin_access_identities')
+            result = paginator.paginate().build_full_result()['CloudFrontOriginAccessIdentityList']
+            return result.get('Items', [])
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error listing cloud front origin access identities - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error listing cloud front origin access identities")
 
     def list_distributions(self, keyed=True):
         try:
-            func = partial(self.client.list_distributions)
-            distribution_list = self.paginated_response(func, 'DistributionList')
-            if distribution_list['Quantity'] == 0:
-                return {}
-            else:
-                distribution_list = distribution_list['Items']
+            paginator = self.client.get_paginator('list_distributions')
+            result = paginator.paginate().build_full_result().get('DistributionList', {})
+            distribution_list = result.get('Items', [])
             if not keyed:
                 return distribution_list
             return self.keyed_list_helper(distribution_list)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error listing distributions - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error listing distributions")
 
     def list_distributions_by_web_acl_id(self, web_acl_id):
         try:
-            func = partial(self.client.list_distributions_by_web_acl_id, WebAclId=web_acl_id)
-            distribution_list = self.paginated_response(func, 'DistributionList')
-            if distribution_list['Quantity'] == 0:
-                return {}
-            else:
-                distribution_list = distribution_list['Items']
+            result = self.client.list_distributions_by_web_acl_id(WebAclId=web_acl_id)
+            distribution_list = result.get('DistributionList', {}).get('Items', [])
             return self.keyed_list_helper(distribution_list)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error listing distributions by web acl id - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error listing distributions by web acl id")
 
     def list_invalidations(self, distribution_id):
         try:
-            func = partial(self.client.list_invalidations, DistributionId=distribution_id)
-            invalidation_list = self.paginated_response(func, 'InvalidationList')
-            if invalidation_list['Quantity'] > 0:
-                return invalidation_list['Items']
-            return {}
+            paginator = self.client.get_paginator('list_invalidations')
+            result = paginator.paginate(DistributionId=distribution_id).build_full_result()
+            return result.get('InvalidationList', {}).get('Items', [])
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error listing invalidations - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error listing invalidations")
 
     def list_streaming_distributions(self, keyed=True):
         try:
-            func = partial(self.client.list_streaming_distributions)
-            streaming_distribution_list = self.paginated_response(func, 'StreamingDistributionList')
-            if streaming_distribution_list['Quantity'] == 0:
-                return {}
-            else:
-                streaming_distribution_list = streaming_distribution_list['Items']
+            paginator = self.client.get_paginator('list_streaming_distributions')
+            result = paginator.paginate().build_full_result()
+            streaming_distribution_list = result.get('StreamingDistributionList', {}).get('Items', [])
             if not keyed:
                 return streaming_distribution_list
             return self.keyed_list_helper(streaming_distribution_list)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error listing streaming distributions - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error listing streaming distributions")
 
     def summary(self):
         summary_dict = {}
@@ -209,9 +160,7 @@ class CloudFrontFactsServiceManager:
                 origin_access_identity_list['origin_access_identities'].append(oai_summary)
             return origin_access_identity_list
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error generating summary of origin access identities")
 
     def summary_get_distribution_list(self, streaming=False):
         try:
@@ -235,12 +184,9 @@ class CloudFrontFactsServiceManager:
                 distribution_list[list_name].append(temp_distribution)
             return distribution_list
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error generating summary of distributions - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error generating summary of distributions")
         except Exception as e:
-            self.module.fail_json(msg="Error generating summary of distributions - " + str(e),
-                                  exception=traceback.format_exc())
+            self.module.fail_json_aws(e, msg="Error generating summary of distributions")
 
     def get_etag_from_distribution_id(self, distribution_id, streaming):
         distribution = {}
@@ -258,9 +204,7 @@ class CloudFrontFactsServiceManager:
                 invalidation_ids.append(invalidation['Id'])
             return invalidation_ids
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error getting list of invalidation ids - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error getting list of invalidation ids")
 
     def get_distribution_id_from_domain_name(self, domain_name):
         try:
@@ -275,44 +219,14 @@ class CloudFrontFactsServiceManager:
                             break
             return distribution_id
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error getting distribution id from domain name - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            self.module.fail_json_aws(e, msg="Error getting distribution id from domain name")
 
     def get_aliases_from_distribution_id(self, distribution_id):
-        aliases = []
         try:
-            distributions = self.list_distributions(False)
-            for dist in distributions:
-                if dist['Id'] == distribution_id and 'Items' in dist['Aliases']:
-                    for alias in dist['Aliases']['Items']:
-                        aliases.append(alias)
-                    break
-            return aliases
+            distribution = self.get_distribution(distribution_id)
+            return distribution['DistributionConfig']['Aliases'].get('Items', [])
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error getting list of aliases from distribution_id - " + str(e),
-                                  exception=traceback.format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
-
-    def paginated_response(self, func, result_key=""):
-        '''
-        Returns expanded response for paginated operations.
-        The 'result_key' is used to define the concatenated results that are combined from each paginated response.
-        '''
-        args = dict()
-        results = dict()
-        loop = True
-        while loop:
-            response = func(**args)
-            if result_key == "":
-                result = response
-                result.pop('ResponseMetadata', None)
-            else:
-                result = response.get(result_key)
-            results.update(result)
-            args['NextToken'] = response.get('NextToken')
-            loop = args['NextToken'] is not None
-        return results
+            self.module.fail_json_aws(e, msg="Error getting list of aliases from distribution_id")
 
     def keyed_list_helper(self, list_to_key):
         keyed_list = dict()
