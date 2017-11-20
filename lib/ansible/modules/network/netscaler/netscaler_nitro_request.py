@@ -15,12 +15,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netscaler_nitro_request
-short_description: Issue NITRO API requests to a Netscaler instance.
+short_description: Issue Nitro API requests to a Netscaler instance.
 description:
-    - Issue NITRO API requests to a Netscaler instance.
+    - Issue Nitro API requests to a Netscaler instance.
     - This is intended to be a short hand for using the uri Ansible module to issue the raw HTTP requests directly.
     - It provides consistent return values and has no other dependencies apart from the base Ansible runtime environment.
-    - This module is intended to run either on the ansible  control node or a bastion (jumpserver) with access to the actual netscaler instance
+    - This module is intended to run either on the Ansible control node or a bastion (jumpserver) with access to the actual Netscaler instance
 
 
 version_added: "2.5.0"
@@ -31,24 +31,24 @@ options:
 
     nsip:
         description:
-            - The ip address of the netscaler or MAS instance where the nitro API calls will be made.
-            - "The port can be specified with the colon (:). E.g. 192.168.1.1:555."
+            - The IP address of the Netscaler or MAS instance where the Nitro API calls will be made.
+            - "The port can be specified with the colon C(:). E.g. C(192.168.1.1:555)."
 
     nitro_user:
         description:
-            - The username with which to authenticate to the netscaler node.
+            - The username with which to authenticate to the Netscaler node.
         required: true
 
     nitro_pass:
         description:
-            - The password with which to authenticate to the netscaler node.
+            - The password with which to authenticate to the Netscaler node.
         required: true
 
     nitro_protocol:
         choices: [ 'http', 'https' ]
         default: http
         description:
-            - Which protocol to use when accessing the nitro API objects.
+            - Which protocol to use when accessing the Nitro API objects.
 
     validate_certs:
         description:
@@ -57,7 +57,7 @@ options:
 
     nitro_auth_token:
         description:
-            - The authentication token provided by the C(mas_login) operation. It is required when issuing NITRO API calls through a MAS proxy.
+            - The authentication token provided by the C(mas_login) operation. It is required when issuing Nitro API calls through a MAS proxy.
 
     resource:
         description:
@@ -71,21 +71,21 @@ options:
 
     attributes:
         description:
-            - The attributes of the NITRO object we are operating on.
+            - The attributes of the Nitro object we are operating on.
             - "It is required for the following I(operation) values: C(add), C(update), C(action)."
 
     args:
         description:
-            - A dictionary which defines the key arguments by which we will select the NITRO object to operate on.
+            - A dictionary which defines the key arguments by which we will select the Nitro object to operate on.
             - "It is required for the following I(operation) values: C(get_by_args), C('delete_by_args')."
 
     filter:
         description:
-            - A dictionary which defines the filter with which to refine the NITRO objects returned by the C(get_filtered) I(operation).
+            - A dictionary which defines the filter with which to refine the Nitro objects returned by the C(get_filtered) I(operation).
 
     operation:
         description:
-            - Define the NITRO operation that we want to perform.
+            - Define the Nitro operation that we want to perform.
         choices:
             - add
             - update
@@ -113,15 +113,15 @@ options:
 
     instance_ip:
         description:
-            - The ip address of the target Netscaler instance when issuing a NITRO request through a MAS proxy.
+            - The IP address of the target Netscaler instance when issuing a Nitro request through a MAS proxy.
 
     instance_name:
         description:
-            - The name of the target Netscaler instance when issuing a NITRO request through a MAS proxy.
+            - The name of the target Netscaler instance when issuing a Nitro request through a MAS proxy.
 
     instance_id:
         description:
-            - The id of the target Netscaler instance when issuing a NITRO request through a MAS proxy.
+            - The id of the target Netscaler instance when issuing a Nitro request through a MAS proxy.
 '''
 
 EXAMPLES = '''
@@ -132,9 +132,7 @@ EXAMPLES = '''
     nsip: "{{ nsip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: add
-
     resource: server
     name: test-server-1
     attributes:
@@ -147,9 +145,7 @@ EXAMPLES = '''
     nsip: "{{ nsip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: update
-
     resource: server
     name: test-server-1
     attributes:
@@ -163,9 +159,7 @@ EXAMPLES = '''
     nsip: "{{ nsip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: get
-
     resource: server
     name: test-server-1
 
@@ -176,9 +170,7 @@ EXAMPLES = '''
     nsip: "{{ nsip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: delete
-
     resource: server
     name: test-server-1
 
@@ -188,10 +180,8 @@ EXAMPLES = '''
     nsip: "{{ nsip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: action
     action: rename
-
     resource: server
     attributes:
       name: test-server-1
@@ -204,9 +194,7 @@ EXAMPLES = '''
     nsip: "{{ nsip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: get_by_args
-
     resource: server
     args:
       name: test-server-1
@@ -218,16 +206,14 @@ EXAMPLES = '''
     nsip: "{{ nsip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: get_filtered
-
     resource: server
     filter:
       ipaddress: 192.168.1.2
 
 # Doing a NITRO request through MAS.
 # Requires to have an authentication token from the mas_login and used as the nitro_auth_token parameter
-# Also nsip is the MAS address and the target Netscaler ip must be defined with instance_ip
+# Also nsip is the MAS address and the target Netscaler IP must be defined with instance_ip
 # The rest of the task arguments remain the same as when issuing the NITRO request directly to a Netscaler instance.
 
 - name: Do mas login
@@ -237,7 +223,6 @@ EXAMPLES = '''
     nsip: "{{ mas_ip }}"
     nitro_user: "{{ nitro_user }}"
     nitro_pass: "{{ nitro_pass }}"
-
     operation: mas_login
 
 
@@ -247,9 +232,7 @@ EXAMPLES = '''
     nsip: "{{ mas_ip }}"
     nitro_auth_token: "{{ login_result.nitro_auth_token }}"
     instance_ip: "{{ nsip }}"
-
     operation: add
-
     resource: server
     name: test-server-1
     attributes:
@@ -325,7 +308,6 @@ class NitroAPICaller(object):
         ),
         nitro_user=dict(
             fallback=(env_fallback, ['NETSCALER_NITRO_USER']),
-            no_log=True
         ),
         nitro_pass=dict(
             fallback=(env_fallback, ['NETSCALER_NITRO_PASS']),
@@ -340,7 +322,10 @@ class NitroAPICaller(object):
             default=True,
             type='bool'
         ),
-        nitro_auth_token=dict(type='str'),
+        nitro_auth_token=dict(
+            type='str',
+            no_log=True
+        ),
         resource=dict(type='str'),
         name=dict(type='str'),
         attributes=dict(type='dict'),
