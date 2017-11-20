@@ -58,7 +58,7 @@ aci_argument_spec = dict(
     timeout=dict(type='int', default=30),
     use_proxy=dict(type='bool', default=True),
     use_ssl=dict(type='bool', default=True),
-    validate_certs=dict(type='bool', default=True)
+    validate_certs=dict(type='bool', default=True),
 )
 
 '''
