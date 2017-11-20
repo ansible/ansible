@@ -208,7 +208,8 @@ from ansible.module_utils.urls import fetch_url
 
 
 API_URL = 'https://api.cloudscale.ch/v1/'
-TIMEOUT_WAIT = 30
+TIMEOUT_WAIT = 60
+TIMEOUT_API = 30
 ALLOWED_STATES = ('running',
                   'stopped',
                   'absent',
@@ -248,7 +249,7 @@ class AnsibleCloudscaleServer(object):
                                        "Use the 'uuid' parameter to identify the server." % name)
 
     def _get(self, api_call):
-        resp, info = fetch_url(self._module, API_URL + api_call, headers=self._auth_header)
+        resp, info = fetch_url(self._module, API_URL + api_call, headers=self._auth_header, timeout=TIMEOUT_API)
 
         if info['status'] == 200:
             return json.loads(resp.read())
@@ -264,7 +265,8 @@ class AnsibleCloudscaleServer(object):
                                API_URL + api_call,
                                headers=self._auth_header,
                                method='POST',
-                               data=data)
+                               data=data,
+                               timeout=TIMEOUT_API)
 
         if info['status'] == 201:
             return json.loads(resp.read())
@@ -278,7 +280,8 @@ class AnsibleCloudscaleServer(object):
         resp, info = fetch_url(self._module,
                                API_URL + api_call,
                                headers=self._auth_header,
-                               method='DELETE')
+                               method='DELETE',
+                               timeout=TIMEOUT_API)
 
         if info['status'] == 204:
             return None
@@ -305,7 +308,8 @@ class AnsibleCloudscaleServer(object):
         url_path = 'servers/' + self.info['uuid']
         resp, info = fetch_url(self._module,
                                API_URL + url_path,
-                               headers=self._auth_header)
+                               headers=self._auth_header,
+                               timeout=TIMEOUT_API)
         if info['status'] == 200:
             self.info = self._transform_state(json.loads(resp.read()))
         elif info['status'] == 404:
