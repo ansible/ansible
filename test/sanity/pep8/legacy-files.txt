@@ -12,7 +12,6 @@ lib/ansible/modules/cloud/amazon/ec2_elb.py
 lib/ansible/modules/cloud/amazon/ec2_elb_lb.py
 lib/ansible/modules/cloud/amazon/ec2_eni_facts.py
 lib/ansible/modules/cloud/amazon/ec2_lc_facts.py
-lib/ansible/modules/cloud/amazon/ec2_metric_alarm.py
 lib/ansible/modules/cloud/amazon/ec2_scaling_policy.py
 lib/ansible/modules/cloud/amazon/ec2_snapshot.py
 lib/ansible/modules/cloud/amazon/ec2_snapshot_facts.py
