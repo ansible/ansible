@@ -122,6 +122,80 @@
     that:
       - "not url_installed.changed"
 
+- name: install glean without constraints applied
+  pip:
+    name: glean
+    user: yes
+  register: req_no_constraints
+
+- name: check that version of package is not constrained
+  assert:
+    that:
+      - "req_no_constraints.changed"
+      - "'glean-1.10.0' not in req_no_constraints.stdout_lines"
+
+- name: uninstall glean
+  pip:
+    name: glean
+    user: yes
+    state: absent
+  register: req_removed
+
+- name: check that glean was uninstalled with user
+  assert:
+    that:
+      - "req_removed.changed"
+
+# Test user and constraints installs
+- name: create a constraints file
+  copy: dest={{ output_dir }}/pipconstraints.txt
+    content="glean===1.10.0"
+
+- name: install glean with constraints applied
+  pip:
+    name: glean
+    constraints: "{{ output_dir }}/pipconstraints.txt"
+    user: yes
+  register: req_constraints
+
+# TODO(mordred) pip module does not report back version in the return info.
+# Once it does/can, change this to verify using req_installed.version instead
+# of looking in stdout_lines
+- name: check that version of package was installed that we expect
+  assert:
+    that:
+      - "req_constraints.changed"
+      - "'Successfully installed glean-1.10.0' in req_constraints.stdout_lines"
+
+- name: set fact for user install location
+  set_fact:
+    user_python_dir: "{{ ansible_user_dir }}/.local/lib/python{% set pver = '.'.join(ansible_python_version.split('.')[0:2]) %}{{ pver }}/site-packages"
+
+- name: look for user installed module
+  stat:
+    path: "{{ user_python_dir }}/glean-1.10.0.dist-info"
+    get_checksum: false
+    get_mime: false
+    get_md5: false
+  register: req_stat_results
+
+- name: check that we found the dist-info file
+  assert:
+    that:
+      - "req_stat_results.stat.exists"
+
+- name: install glean with constraints applied again
+  pip:
+    name: glean
+    constraints: "{{ output_dir }}/pipconstraints.txt"
+    user: yes
+  register: req_reinstalled
+
+- name: check that a change did not occur
+  assert:
+    that:
+      - "not req_reinstalled.changed"
+
 # Test pip package in check mode doesn't always report changed.
 
 # Special case for pip

@@ -102,6 +102,17 @@ options:
         packages which are to be used by all users. Note that this requires you
         to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
     version_added: "2.1"
+  user:
+    description:
+      - Pass the user flag.
+    type: bool
+    default: 'no'
+    version_added: "2.5"
+  constraints:
+    description:
+      - The path to a pip constraints file, which should be local to the remote system.
+        File can be specified as a relative path if using the chdir option.
+    version_added: "2.5"
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
@@ -157,7 +168,7 @@ EXAMPLES = '''
 # Install (Bottle) within a user home directory.
 - pip:
     name: bottle
-    extra_args: --user
+    user: yes
 
 # Install specified python requirements.
 - pip:
@@ -167,6 +178,11 @@ EXAMPLES = '''
 - pip:
     requirements: /my_app/requirements.txt
     virtualenv: /my_app/venv
+
+# Install specified python requirements constrained by a constraints file.
+- pip:
+    requirements: /my_app/requirements.txt
+    constraints: /my_app/constraints.txt
 
 # Install specified python requirements and custom Index URL.
 - pip:
@@ -356,6 +372,7 @@ def main():
             name=dict(type='list'),
             version=dict(type='str'),
             requirements=dict(type='str'),
+            constraints=dict(type='path'),
             virtualenv=dict(type='path'),
             virtualenv_site_packages=dict(type='bool', default=False),
             virtualenv_command=dict(type='path', default='virtualenv'),
@@ -363,6 +380,7 @@ def main():
             use_mirrors=dict(type='bool', default=True),
             extra_args=dict(type='str'),
             editable=dict(type='bool', default=False),
+            user=dict(type='bool', default=False),
             chdir=dict(type='path'),
             executable=dict(type='path'),
             umask=dict(type='str'),
@@ -376,6 +394,7 @@ def main():
     name = module.params['name']
     version = module.params['version']
     requirements = module.params['requirements']
+    constraints = module.params['constraints']
     extra_args = module.params['extra_args']
     virtualenv_python = module.params['virtualenv_python']
     chdir = module.params['chdir']
@@ -485,8 +504,20 @@ def main():
                 # Ok, we will reconstruct the option string
                 extra_args = ' '.join(args_list)
 
+        if module.params['user']:
+            args_list = []  # used if extra_args is not used at all
+            if extra_args:
+                args_list = extra_args.split(' ')
+            if '--user' not in args_list:
+                args_list.append('--user')
+                # Ok, we will reconstruct the option string
+                extra_args = ' '.join(args_list)
+
         if extra_args:
             cmd += ' %s' % extra_args
+
+        if constraints:
+            cmd += ' -c %s' % constraints
 
         if name:
             for pkg in name:
