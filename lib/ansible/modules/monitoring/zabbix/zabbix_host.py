@@ -453,14 +453,14 @@ class Host(object):
             return True
 
         # Check whether the visible_name has changed; Zabbix defaults to the technical hostname if not set.
-        if host['name'] != visible_name and host['name'] != host_name:
-            return True
+        if visible_name:
+            if host['name'] != visible_name and host['name'] != host_name:
+                return True
 
-        # The Zabbbix API returns an empty description as an empty string
-        if description is None:
-            description = ''
-        if host['description'] != description:
-            return True
+        # Only compare description if it is given as a module parameter
+        if description:
+            if host['description'] != description:
+                return True
 
         return False
 
@@ -646,14 +646,18 @@ def main():
                 host_groups = host.get_host_groups_by_host_id(host_id)
                 group_ids = host.get_group_ids_by_group_names(host_groups)
 
-            if not force:
-                # get existing groups, interfaces and templates and merge them with ones provided as an argument
-                # we do not want to overwrite anything if force: no is explicitly used, we just want to add new ones
-                for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
-                    if group_id not in group_ids:
-                        group_ids.append(group_id)
+            # get existing host's interfaces
+            exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
+            exist_interfaces_copy = copy.deepcopy(exist_interfaces)
 
-                for interface in host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id}):
+            # if no interfaces were specified with the module, start with an empty list
+            if not interfaces:
+                interfaces = []
+
+            # When force=no is specified, append existing interfaces to interfaces to update. When
+            # no interfaces have been specified, copy existing interfaces in the same manner
+            if not force or not interfaces:
+                for interface in copy.deepcopy(exist_interfaces):
                     # remove values not used during hostinterface.add/update calls
                     for key in interface.keys():
                         if key in ['interfaceid', 'hostid', 'bulk']:
@@ -666,14 +670,17 @@ def main():
                     if interface not in interfaces:
                         interfaces.append(interface)
 
+            if not force:
+                # get existing groups, interfaces and templates and merge them with ones provided as an argument
+                # we do not want to overwrite anything if force: no is explicitly used, we just want to add new ones
+                for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
+                    if group_id not in group_ids:
+                        group_ids.append(group_id)
+
                 template_ids = list(set(template_ids + host.get_host_templates_by_host_id(host_id)))
 
-            # get exist host's interfaces
-            exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
-            exist_interfaces_copy = copy.deepcopy(exist_interfaces)
-
             # update host
-            interfaces_len = len(interfaces) if interfaces else 0
+            interfaces_len = len(interfaces)
 
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
