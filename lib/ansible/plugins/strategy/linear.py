@@ -324,7 +324,11 @@ class StrategyModule(StrategyBase):
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             if included_file._is_role:
+                                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
+                                templar = Templar(loader=self._loader, variables=task_vars)
                                 new_ir = included_file._task.copy()
+                                new_ir._ds['include_role']['name'] = templar.template(new_ir._ds['include_role']['name'])
+                                new_ir._role_name = templar.template(new_ir._role_name)
                                 new_ir.vars.update(included_file._args)
 
                                 new_blocks, handler_blocks = new_ir.get_block_list(
