@@ -144,7 +144,7 @@ def extract_key_data(key):
     data = {
         'name': key['KeyName'],
         'fingerprint': key['KeyFingerprint']
-        }
+    }
     if 'KeyMaterial' in key:
         data['private_key'] = key['KeyMaterial']
     return data
