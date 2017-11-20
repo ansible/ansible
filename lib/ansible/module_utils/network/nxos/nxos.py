@@ -145,8 +145,17 @@ class Cli:
                 cmd = item['command']
 
             out = connection.get(cmd)
-            responses.append(to_text(out, errors='surrogate_then_replace'))
+            try:
+                out = to_text(out, errors='surrogate_or_strict')
+            except UnicodeError:
+                self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
+            try:
+                out = self._module.from_json(out)
+            except ValueError:
+                out = to_text(out).strip()
+
+            responses.append(out)
         return responses
 
     def load_config(self, config, return_error=False, opts=None):
