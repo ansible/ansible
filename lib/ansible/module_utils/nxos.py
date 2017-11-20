@@ -169,8 +169,11 @@ class Cli:
                 except ValueError:
                     out = to_text(out).strip()
 
-            if item['output'] == 'json' and out != '' and isinstance(out, string_types):
-                self._module.fail_json(msg='failed to retrieve output of %s in json format' % item['command'])
+            # Handle empty string output and specific nxos platform N3K
+            if rc == 0 and item['output'] == 'json':
+                check = ['', '?xml']
+                if not any(i in out for i in check) and isinstance(out, string_types):
+                    self._module.fail_json(msg='failed to retrieve output of %s in json format' % item['command'])
 
             responses.append(out)
         return responses
