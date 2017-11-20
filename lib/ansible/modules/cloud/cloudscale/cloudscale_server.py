@@ -245,7 +245,7 @@ class AnsibleCloudscaleServer(object):
                 self.info = self._transform_state(matching_server[0])
             elif len(matching_server) > 1:
                 self._module.fail_json(msg="More than one server with name '%s' exists. "
-                                       "Use the 'uuid' parameter to identify the server" % name)
+                                       "Use the 'uuid' parameter to identify the server." % name)
 
     def _get(self, api_call):
         resp, info = fetch_url(self._module, API_URL + api_call, headers=self._auth_header)
@@ -254,7 +254,7 @@ class AnsibleCloudscaleServer(object):
             return json.loads(resp.read())
         else:
             self._module.fail_json(msg='Failure while calling the cloudscale.ch API with GET for '
-                                       '"%s": %s' % (api_call, info['body']))
+                                       '"%s".' % api_call, fetch_url_info=info)
 
     def _post(self, api_call, data=None):
         if data is not None:
@@ -272,7 +272,7 @@ class AnsibleCloudscaleServer(object):
             return None
         else:
             self._module.fail_json(msg='Failure while calling the cloudscale.ch API with POST for '
-                                       '"%s": %s' % (api_call, info['body']))
+                                       '"%s".' % api_call, fetch_url_info=info)
 
     def _delete(self, api_call):
         resp, info = fetch_url(self._module,
@@ -284,7 +284,7 @@ class AnsibleCloudscaleServer(object):
             return None
         else:
             self._module.fail_json(msg='Failure while calling the cloudscale.ch API with DELETE for '
-                                       '"%s": %s' % (api_call, info['body']))
+                                       '"%s".' % api_call, fetch_url_info=info)
 
     @staticmethod
     def _transform_state(server):
@@ -302,8 +302,9 @@ class AnsibleCloudscaleServer(object):
             return
 
         # Can't use _get here because we want to handle 404
+        url_path = 'servers/' + self.info['uuid']
         resp, info = fetch_url(self._module,
-                               API_URL + 'servers/' + self.info['uuid'],
+                               API_URL + url_path,
                                headers=self._auth_header)
         if info['status'] == 200:
             self.info = self._transform_state(json.loads(resp.read()))
@@ -312,8 +313,8 @@ class AnsibleCloudscaleServer(object):
                          'name': self.info.get('name', None),
                          'state': 'absent'}
         else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API for '
-                                       'update_info: %s' % info['body'])
+            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with GET for '
+                                       '"%s".' % url_path, fetch_url_info=info)
 
     def wait_for_state(self, states):
         start = datetime.now()
@@ -323,7 +324,7 @@ class AnsibleCloudscaleServer(object):
                 return True
             sleep(1)
 
-        self._module.fail_json(msg='Timeout while waiting for a state change on server %s to states %s. Current state is %s'
+        self._module.fail_json(msg='Timeout while waiting for a state change on server %s to states %s. Current state is %s.'
                                % (self.info['name'], states, self.info['state']))
 
     def create_server(self):
@@ -336,7 +337,7 @@ class AnsibleCloudscaleServer(object):
                 missing_parameters.append(p)
 
         if len(missing_parameters) > 0:
-            self._module.fail_json(msg='Missing required parameter(s) to create a new server: %s' %
+            self._module.fail_json(msg='Missing required parameter(s) to create a new server: %s.' %
                                    ' '.join(missing_parameters))
 
         # Sanitize data dictionary
