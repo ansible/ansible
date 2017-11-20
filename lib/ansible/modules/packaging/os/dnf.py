@@ -25,9 +25,9 @@ description:
 options:
   name:
     description:
-      - >
-        Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update.
-        You can also pass a url or a local path to a rpm file.
+      - "A list of package names, or package specifier with version, like C(name-1.0)
+        When using state=latest, this can be '*' which means run: dnf -y update.
+        You can also pass a url or a local path to a rpm file."
     required: true
     default: null
     aliases: []
@@ -95,12 +95,12 @@ options:
     required: false
     choices: [ "yes", "no" ]
     version_added: "2.4"
-
-notes: ["autoremove requires dnf >= 2.0.1"]
-# informational: requirements for nodes
+notes:
+  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 requirements:
   - "python >= 2.6"
   - python-dnf
+  - for the autoremove option you need dnf >= 2.0.1"
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'

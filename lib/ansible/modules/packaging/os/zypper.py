@@ -38,7 +38,7 @@ description:
 options:
     name:
         description:
-        - Package name C(name) or package specifier.
+        - Package name C(name) or package specifier or a list of either.
         - Can include a version like C(name=1.0), C(name>3.4) or C(name<=2.7). If a version is given, C(oldpackage) is implied and zypper is allowed to
           update the package within the version range given.
         - You can also pass a url or a local path to a rpm file.
@@ -107,7 +107,9 @@ options:
         description:
           - Add additional options to C(zypper) command.
           - Options should be supplied in a single line as if given in the command line.
-
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 # informational: requirements for nodes
 requirements:
     - "zypper >= 1.0  # included in openSuSE >= 11.1 or SuSE Linux Enterprise Server/Desktop >= 11.0"
