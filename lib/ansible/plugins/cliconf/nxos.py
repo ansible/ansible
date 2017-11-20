@@ -52,7 +52,7 @@ class Cliconf(CliconfBase):
 
         return self.send_command(cmd)
 
-    def edit_config(self, command, return_error=False, opts=None):
+    def edit_config(self, command):
         for cmd in chain([b'configure'], to_list(command), [b'end']):
             self.send_command(cmd)
 

@@ -154,9 +154,9 @@ class Cli:
         """
         try:
             connection = self._get_connection()
-            connection.edit_config(config, return_error=return_error, opts=opts)
+            connection.edit_config(config)
         except ConnectionError as exc:
-            module.fail_json(msg=to_text(exc))
+            self._module.fail_json(msg=to_text(exc))
 
 
 class Nxapi:
