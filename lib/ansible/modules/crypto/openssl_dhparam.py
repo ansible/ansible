@@ -82,8 +82,48 @@ filename:
 
 import os
 import re
-import subprocess
 
+"""Note: We also monkey-patch subprocess for python 2.6 to
+give feature parity with later versions.
+Monkey-patch from http://pydoc.net/pep8radius/0.9.0/ with slight modifications
+MIT Licence
+
+Remove patch when Python 2.6 is no longer supported
+"""
+import subprocess
+try:
+    from subprocess import check_output, CalledProcessError
+except ImportError:  # pragma: no cover
+    # python 2.6 doesn't include check_output
+    # monkey patch it in!
+    def check_output(*popenargs, **kwargs):
+        if 'stdout' in kwargs:  # pragma: no cover
+            raise ValueError('stdout argument not allowed, '
+                             'it will be overridden.')
+        process = subprocess.Popen(stdout=subprocess.PIPE,
+                                   *popenargs, **kwargs)
+        output = process.communicate()[0]
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = popenargs[0]
+            raise CalledProcessError(retcode, cmd, output=output)
+        return output
+
+    # overwrite CalledProcessError due to `output`
+    # keyword not being available (in 2.6)
+    class CalledProcessError(Exception):
+        """Exception raised for call errors"""
+
+        def __init__(self, returncode, cmd, output=None):
+            self.returncode = returncode
+            self.cmd = cmd
+            self.output = output
+
+        def __str__(self):
+            return "Command '%s' returned non-zero exit status %d" % (
+                self.cmd, self.returncode)
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -110,7 +150,7 @@ class DHParameter(object):
         try:
             subprocess.check_call(
                 ["openssl", "dhparam", "-out", self.path, str(self.size)])
-        except subprocess.CalledProcessError as exc:
+        except CalledProcessError as exc:
             os.remove(self.path)
             raise DHParameterError(str(exc))
         file_args = module.load_file_common_arguments(module.params)
@@ -122,16 +162,16 @@ class DHParameter(object):
         if self.force:
             return False
         try:
-            result = to_native(subprocess.check_output(
+            result = to_native(check_output(
                 ["openssl", "dhparam", "-check", "-text", "-noout", "-in", self.path],
                 stderr=subprocess.STDOUT,
             )).strip()
-        except subprocess.CalledProcessError:
+        except CalledProcessError as e:
             # If the call failed the file probably doesn't exist or is
             # unreadable
             return False
         # output contains "(xxxx bit)"
-        match = re.search(r"DH Parameters:\s+\((\d+) bit\).*", result)
+        match = re.search(r"Parameters:\s+\((\d+) bit\).*", result)
         if not match:
             return False  # No "xxxx bit" in output
         else:
