@@ -34,7 +34,8 @@ RPC_CLI_MAP = {
     'get-interface-information': 'show interfaces details',
     'get-system-memory-information': 'show system memory',
     'get-chassis-inventory': 'show chassis hardware',
-    'get-system-storage': 'show system storage'
+    'get-system-storage': 'show system storage',
+    'load-configuration': 'load configuration'
 }
 
 
