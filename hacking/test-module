@@ -41,7 +41,7 @@ from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
 import ansible.executor.module_common as module_common
 import ansible.constants as C
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 
 try:
     import json
@@ -152,7 +152,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
         task_vars=task_vars
     )
 
-    if module_style == 'new' and 'ANSIBALLZ_WRAPPER = True' in module_data:
+    if module_style == 'new' and 'ANSIBALLZ_WRAPPER = True' in to_native(module_data):
         module_style = 'ansiballz'
 
     modfile2_path = os.path.expanduser(destfile)
