@@ -24,14 +24,12 @@ description:
 options:
   name:
     description:
-      - Package name, or package specifier with version, like C(name-1.0).
-        If a previous version is specified, the task also needs to turn
-        C(allow_downgrade) on. See the C(allow_downgrade) documentation for
-        caveats with downgrading packages. When using state=latest, this can
-        be '*' which means run C(yum -y update).  You can also pass a url
-        or a local path to a rpm file (using state=present). To operate on
-        several packages this can accept a comma separated list of packages
-        or (as of 2.0) a list of packages.
+      - A package name , or package specifier with version, like C(name-1.0).
+      - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
+        See the C(allow_downgrade) documentation for caveats with downgrading packages.
+      - When using state=latest, this can be '*' which means run C(yum -y update).
+      - You can also pass a url or a local path to a rpm file (using state=present).
+        To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
     required: true
     aliases: [ pkg ]
   exclude:
@@ -130,10 +128,8 @@ options:
     default: "no"
     version_added: "2.4"
 notes:
-  - When used with a loop of package names in a playbook, ansible optimizes
-    the call to the yum module.  Instead of calling the module with a single
-    package each time through the loop, ansible calls the module once with all
-    of the package names from the loop.
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
   - In versions prior to 1.9.2 this module installed and removed each package
     given to the yum module separately. This caused problems when packages
     specified by filename or url had to be installed or removed together. In

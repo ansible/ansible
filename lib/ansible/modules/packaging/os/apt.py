@@ -26,10 +26,8 @@ version_added: "0.0.2"
 options:
   name:
     description:
-      - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Name wildcards (fnmatch) like C(apt*) and version wildcards
-        like C(foo=1.0*) are also supported.  Note that the apt-get commandline supports implicit regex matches here but we do not because it can let
-        typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for
-        the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
+      - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0).
+        Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.
     required: false
     default: null
     aliases: [ 'pkg', 'package' ]
@@ -145,6 +143,10 @@ notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
    - apt starts newly installed services by default, this is what the underlying tooling does,
      to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
+   - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
+     (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
+     Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
+   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 '''
 
 EXAMPLES = '''

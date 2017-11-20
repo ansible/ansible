@@ -23,13 +23,12 @@ DOCUMENTATION = '''
 module: pkgng
 short_description: Package manager for FreeBSD >= 9.0
 description:
-    - Manage binary packages for FreeBSD using 'pkgng' which
-      is available in versions after 9.0.
+    - Manage binary packages for FreeBSD using 'pkgng' which is available in versions after 9.0.
 version_added: "1.2"
 options:
     name:
         description:
-            - Name of package to install/remove.
+            - Name or list of names of packages to install/remove.
         required: true
     state:
         description:
@@ -86,7 +85,9 @@ options:
         default: no
 author: "bleader (@bleader)"
 notes:
-    - When using pkgsite, be careful that already in cache packages won't be downloaded again.
+  - When using pkgsite, be careful that already in cache packages won't be downloaded again.
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 
 EXAMPLES = '''
