@@ -475,7 +475,7 @@ def flatten(mylist, levels=None):
         elif isinstance(element, MutableSequence):
             if levels:
                 levels = int(levels) - 1
-                if levels > 0:
+                if levels >= 0:
                     ret.extend(flatten(element, levels=levels))
                 else:
                     ret.append(element)
