@@ -534,10 +534,11 @@ class VariableManager:
             items = [None]
 
         delegated_host_vars = dict()
+        item_var = getattr(task.loop_control, 'loop_var', 'item')
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
-                vars_copy['item'] = item
+                vars_copy[item_var] = item
 
             templar.set_available_variables(vars_copy)
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)

@@ -182,6 +182,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32866
 * restore host/group_vars merge order
   https://github.com/ansible/ansible/pull/32963
+* use correct loop var when delegating
+  https://github.com/ansible/ansible/pull/32986
 
 <a id="2.4.1"></a>
 
