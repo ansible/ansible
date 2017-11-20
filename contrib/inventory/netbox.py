@@ -108,7 +108,7 @@ class NetboxAsInventory(object):
 
         key_value = ""
         try:
-            # Reduce key path, where it get value value from nested dict.
+            # Reduce key path, where it get value from nested dict.
             # a replacement for buildin reduce function.
             for key in key_path:
                 if isinstance(source_dict.get(key), dict) and len(key_path) > 1:
