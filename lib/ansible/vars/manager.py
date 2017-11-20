@@ -43,7 +43,7 @@ from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.clean import namespace_facts
 
 try:
     from __main__ import display
@@ -518,10 +518,11 @@ class VariableManager:
             items = [None]
 
         delegated_host_vars = dict()
+        item_var = getattr(task.loop_control, 'loop_var', 'item')
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
-                vars_copy['item'] = item
+                vars_copy[item_var] = item
 
             templar.set_available_variables(vars_copy)
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
