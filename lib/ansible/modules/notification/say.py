@@ -49,11 +49,11 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 
-DEFAULT_VOICE = 'Alex'
-
-
 def say(module, msg, voice):
-    module.run_command(["/usr/bin/say", msg, "--voice=%s" % (voice)], check_rc=True)
+    cmd = ['/usr/bin/say', msg]
+    if voice:
+        cmd.extend(('-v', voice))
+    module.run_command(cmd, check_rc=True)
 
 
 def main():
@@ -61,7 +61,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             msg=dict(required=True),
-            voice=dict(required=False, default=DEFAULT_VOICE),
+            voice=dict(required=False),
         ),
         supports_check_mode=False
     )
