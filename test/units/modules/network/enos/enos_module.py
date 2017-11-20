@@ -115,4 +115,3 @@ class TestEnosModule(unittest.TestCase):
 
     def load_fixtures(self, commands=None):
         pass
-
