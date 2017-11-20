@@ -249,6 +249,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         variable_manager=variable_manager,
                     )
 
+                    # FIXME: remove once 'include' is removed
                     # pop tags out of the include args, if they were specified there, and assign
                     # them to the include. If the include already had tags specified, we raise an
                     # error so that users know not to specify them both ways
@@ -257,6 +258,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         tags = tags.split(',')
 
                     if len(tags) > 0:
+                        if 'include_tasks' in task_ds or 'import_tasks' in task_ds:
+                            raise AnsibleParerError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
                                 "Include tasks should not specify tags in more than one way (both via args and directly on the task). "
