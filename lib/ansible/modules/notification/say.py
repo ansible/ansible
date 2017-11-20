@@ -63,7 +63,7 @@ def main():
             msg=dict(required=True),
             voice=dict(required=False),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     msg = module.params['msg']
@@ -76,9 +76,12 @@ def main():
     if not executable:
         module.fail_json(msg="Unable to find either 'say' or 'espeak' executable")
 
+    if module.check_mode:
+        module.exit_json(msg=msg, changed=False)
+
     say(module, executable, msg, voice)
 
-    module.exit_json(msg=msg, changed=False)
+    module.exit_json(msg=msg, changed=True)
 
 
 if __name__ == '__main__':
