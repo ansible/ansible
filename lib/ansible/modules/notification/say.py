@@ -46,7 +46,7 @@ EXAMPLES = '''
 '''
 import os
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, get_platform
 
 
 def say(module, executable, msg, voice):
@@ -72,6 +72,10 @@ def main():
     executable = module.get_bin_path('say')
     if not executable:
         executable = module.get_bin_path('espeak')
+    elif get_platform() != 'Darwin':
+        # 'say' binary available, it might be GNUstep tool which doesn't support 'voice' parameter
+        voice = None
+        module.warn("'say' executable found but system is '%s': ignoring voice parameter" % get_platform())
 
     if not executable:
         module.fail_json(msg="Unable to find either 'say' or 'espeak' executable")
