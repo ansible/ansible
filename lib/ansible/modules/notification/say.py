@@ -17,12 +17,12 @@ DOCUMENTATION = '''
 ---
 module: say
 version_added: "1.2"
-short_description: Makes an OSX computer to speak.
+short_description: Makes a computer to speak.
 description:
-   - makes an OS computer speak!  Amuse your friends, annoy your coworkers!
+   - makes a computer speak! Amuse your friends, annoy your coworkers!
 notes:
    - In 2.5, this module has been renamed from M(osx_say) into M(say).
-   - If you like this module, you may also be interested in the osx_say callback in the plugins/ directory of the source checkout.
+   - If you like this module, you may also be interested in the osx_say callback plugin.
 options:
   msg:
     description:
@@ -32,7 +32,7 @@ options:
     description:
       What voice to use
     required: false
-requirements: [ say ]
+requirements: [ say or espeak ]
 author:
     - "Ansible Core Team"
     - "Michael DeHaan (@mpdehaan)"
@@ -49,8 +49,8 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 
-def say(module, msg, voice):
-    cmd = ['/usr/bin/say', msg]
+def say(module, executable, msg, voice):
+    cmd = [executable, msg]
     if voice:
         cmd.extend(('-v', voice))
     module.run_command(cmd, check_rc=True)
@@ -66,13 +66,17 @@ def main():
         supports_check_mode=False
     )
 
-    if not os.path.exists("/usr/bin/say"):
-        module.fail_json(msg="/usr/bin/say is not installed")
-
     msg = module.params['msg']
     voice = module.params['voice']
 
-    say(module, msg, voice)
+    executable = module.get_bin_path('say')
+    if not executable:
+        executable = module.get_bin_path('espeak')
+
+    if not executable:
+        module.fail_json(msg="Unable to find either 'say' or 'espeak' executable")
+
+    say(module, executable, msg, voice)
 
     module.exit_json(msg=msg, changed=False)
 
