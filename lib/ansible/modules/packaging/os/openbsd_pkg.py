@@ -27,7 +27,7 @@ requirements:
 options:
     name:
         description:
-        - Name of the package.
+        - A name or a list of names of the packages.
         required: yes
     state:
         description:
@@ -66,6 +66,9 @@ options:
         type: bool
         default: 'no'
         version_added: "2.3"
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 
 EXAMPLES = '''
