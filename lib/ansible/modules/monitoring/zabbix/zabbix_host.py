@@ -640,10 +640,11 @@ def main():
             host.delete_host(host_id, host_name)
             module.exit_json(changed=True, result="Successfully delete host %s" % host_name)
         else:
-            if not group_ids:
+            if not host_groups:
                 # if host_groups have not been specified when updating an existing host, just
                 # get the group_ids from the existing host without updating them.
-                group_ids = host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id))
+                host_groups = host.get_host_groups_by_host_id(host_id)
+                group_ids = host.get_group_ids_by_group_names(host_groups)
 
             if not force:
                 # get existing groups, interfaces and templates and merge them with ones provided as an argument
