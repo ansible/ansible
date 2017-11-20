@@ -33,7 +33,7 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
-        name: "ansible-test-{{ resource_prefix }}-role"
+        name: "ansible-test-sts-role"
         assume_role_policy_document:  "{{ lookup('template','policy.json.j2') }}"
         managed_policy:
           - arn:aws:iam::aws:policy/IAMReadOnlyAccess
@@ -132,14 +132,14 @@
       assert:
         that:
           - 'result.failed'
-          - "'Not authorized to perform sts:AssumeRole' in result.msg"
+          - "'The policy is not in the valid JSON format.' in result.msg"
       when: result.module_stderr is not defined
 
     - name: assert assume role with invalid policy
       assert:
         that:
           - 'result.failed'
-          - "'Not authorized to perform sts:AssumeRole' in result.module_stderr"
+          - "'The policy is not in the valid JSON format.' in result.module_stderr"
       when: result.module_stderr is defined
 
     # ============================================================
@@ -321,7 +321,7 @@
         aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
         security_token: "{{ assumed_role.sts_creds.session_token }}"
         region: "{{ aws_region}}"
-        name: "ansible-test-{{ resource_prefix }}-role"
+        name: "ansible-test-sts-role"
         assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
         state: present
       register: result
@@ -340,7 +340,7 @@
         aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
         security_token: "{{ assumed_role.sts_creds.session_token }}"
         region: "{{ aws_region}}"
-        name: "ansible-test-{{ resource_prefix }}-new-role"
+        name: "ansible-test-sts-new-role"
         assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
         state: present
       register: result
@@ -361,22 +361,3 @@
           - 'not result.changed'
           - "'is not authorized to perform: iam:CreateRole' in result.module_stderr"
       when: result.module_stderr is defined
-
-  always:
-
-    # ============================================================
-    - name: test state=absent (expect changed=true)
-      iam_role:
-        name: "ansible-test-{{ resource_prefix }}-role"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
-        state: absent
-      register: result
-
-    - name: assert state=absent
-      assert:
-        that:
-           - 'not result.failed'
-           - 'result.changed'
