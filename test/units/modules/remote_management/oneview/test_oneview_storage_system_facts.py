@@ -1,6 +1,8 @@
 # Copyright: (c) 2016-2017 Hewlett Packard Enterprise Development LP
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import pytest
+
 from hpe_test_utils import mock_ov_client, mock_ansible_module
 from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_storage_system_facts import StorageSystemFactsModule
@@ -55,9 +57,14 @@ PARAMS_GET_POOL_BY_IP_HOSTNAME = dict(
 )
 
 
-def test_should_get_all_storage_system(mock_ov_client, mock_ansible_module):
+@pytest.fixture
+def resource(mock_ov_client):
+    return mock_ov_client.storage_systems
+
+
+def test_should_get_all_storage_system(resource, mock_ansible_module):
     mock_ansible_module.params = PARAMS_GET_ALL
-    mock_ov_client.storage_systems.get_all = lambda: [{"name": "Storage System Name"}]
+    resource.get_all.return_value = [{"name": "Storage System Name"}]
 
     StorageSystemFactsModule().run()
 
@@ -67,9 +74,9 @@ def test_should_get_all_storage_system(mock_ov_client, mock_ansible_module):
     )
 
 
-def test_should_get_storage_system_by_name(mock_ov_client, mock_ansible_module):
+def test_should_get_storage_system_by_name(resource, mock_ansible_module):
     mock_ansible_module.params = PARAMS_GET_BY_NAME
-    mock_ov_client.storage_systems.get_by_name = lambda x: {"name": "Storage System Name"}
+    resource.get_by_name.return_value = {"name": "Storage System Name"}
 
     StorageSystemFactsModule().run()
 
@@ -79,9 +86,9 @@ def test_should_get_storage_system_by_name(mock_ov_client, mock_ansible_module):
     )
 
 
-def test_should_get_storage_system_by_ip_hostname(mock_ov_client, mock_ansible_module):
+def test_should_get_storage_system_by_ip_hostname(resource, mock_ansible_module):
     mock_ansible_module.params = PARAMS_GET_BY_HOSTNAME
-    mock_ov_client.storage_systems.get_by_ip_hostname = lambda x: {"ip_hostname": "10.0.0.0"}
+    resource.get_by_ip_hostname.return_value = {"ip_hostname": "10.0.0.0"}
 
     StorageSystemFactsModule().run()
 
@@ -91,10 +98,10 @@ def test_should_get_storage_system_by_ip_hostname(mock_ov_client, mock_ansible_m
     )
 
 
-def test_should_get_storage_system_by_hostname(mock_ov_client, mock_ansible_module):
+def test_should_get_storage_system_by_hostname(resource, mock_ov_client, mock_ansible_module):
     mock_ov_client.api_version = 500
     mock_ansible_module.params = PARAMS_GET_BY_HOSTNAME
-    mock_ov_client.storage_systems.get_by_hostname = lambda x: {"hostname": "10.0.0.0"}
+    resource.get_by_hostname.return_value = {"hostname": "10.0.0.0"}
 
     StorageSystemFactsModule().run()
 
@@ -104,10 +111,10 @@ def test_should_get_storage_system_by_hostname(mock_ov_client, mock_ansible_modu
     )
 
 
-def test_should_get_all_host_types(mock_ov_client, mock_ansible_module):
+def test_should_get_all_host_types(resource, mock_ansible_module):
     mock_ansible_module.params = PARAMS_GET_HOST_TYPES
-    mock_ov_client.storage_systems.get_host_types = lambda: HOST_TYPES
-    mock_ov_client.storage_systems.get_all = lambda: [{"name": "Storage System Name"}]
+    resource.get_host_types = lambda: HOST_TYPES
+    resource.get_all = lambda: [{"name": "Storage System Name"}]
 
     StorageSystemFactsModule().run()
 
@@ -119,11 +126,11 @@ def test_should_get_all_host_types(mock_ov_client, mock_ansible_module):
     )
 
 
-def test_should_get_reachable_ports(mock_ov_client, mock_ansible_module):
+def test_should_get_reachable_ports(resource, mock_ov_client, mock_ansible_module):
     mock_ov_client.api_version = 500
     mock_ansible_module.params = PARAMS_GET_REACHABLE_PORTS
-    mock_ov_client.storage_systems.get_reachable_ports = lambda x: [{'port': 'port1'}]
-    mock_ov_client.storage_systems.get_by_hostname = lambda x: {"name": "Storage System Name", "uri": "rest/123"}
+    resource.get_reachable_ports.return_value = [{'port': 'port1'}]
+    resource.get_by_hostname.return_value = {"name": "Storage System Name", "uri": "rest/123"}
 
     StorageSystemFactsModule().run()
 
@@ -135,11 +142,11 @@ def test_should_get_reachable_ports(mock_ov_client, mock_ansible_module):
     )
 
 
-def test_should_get_templates(mock_ov_client, mock_ansible_module):
+def test_should_get_templates(resource, mock_ov_client, mock_ansible_module):
     mock_ov_client.api_version = 500
     mock_ansible_module.params = PARAMS_GET_TEMPLATES
-    mock_ov_client.storage_systems.get_templates = lambda x: [{'template': 'temp'}]
-    mock_ov_client.storage_systems.get_by_hostname = lambda x: {"name": "Storage System Name", "uri": "rest/123"}
+    resource.get_templates.return_value = [{'template': 'temp'}]
+    resource.get_by_hostname.return_value = {"name": "Storage System Name", "uri": "rest/123"}
 
     StorageSystemFactsModule().run()
 
@@ -151,10 +158,10 @@ def test_should_get_templates(mock_ov_client, mock_ansible_module):
     )
 
 
-def test_should_get_storage_pools_system_by_name(mock_ov_client, mock_ansible_module):
+def test_should_get_storage_pools_system_by_name(resource, mock_ansible_module):
     mock_ansible_module.params = PARAMS_GET_POOL_BY_NAME
-    mock_ov_client.storage_systems.get_by_name = lambda x: {"name": "Storage System Name", "uri": "uri"}
-    mock_ov_client.storage_systems.get_storage_pools = lambda x: {"name": "Storage Pool"}
+    resource.get_by_name.return_value = {"name": "Storage System Name", "uri": "uri"}
+    resource.get_storage_pools.return_value = {"name": "Storage Pool"}
 
     StorageSystemFactsModule().run()
 
@@ -167,10 +174,10 @@ def test_should_get_storage_pools_system_by_name(mock_ov_client, mock_ansible_mo
     )
 
 
-def test_should_get_storage_system_pools_by_ip_hostname(mock_ov_client, mock_ansible_module):
+def test_should_get_storage_system_pools_by_ip_hostname(resource, mock_ansible_module):
     mock_ansible_module.params = PARAMS_GET_POOL_BY_IP_HOSTNAME
-    mock_ov_client.storage_systems.get_by_ip_hostname = lambda x: {"ip_hostname": "10.0.0.0", "uri": "uri"}
-    mock_ov_client.storage_systems.get_storage_pools = lambda x: {"name": "Storage Pool"}
+    resource.get_by_ip_hostname.return_value = {"ip_hostname": "10.0.0.0", "uri": "uri"}
+    resource.get_storage_pools.return_value = {"name": "Storage Pool"}
 
     StorageSystemFactsModule().run()
 
