@@ -449,7 +449,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.DOTALL)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.DOTALL)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:
