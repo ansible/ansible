@@ -5,7 +5,6 @@ import pytest
 import yaml
 
 from ansible.compat.tests import mock
-from hpe_test_utils import mock_ov_client, mock_ansible_module
 from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_storage_system import StorageSystemModule
 
@@ -298,3 +297,7 @@ def test_should_do_nothing_when_storage_system_not_exist(resource, mock_ansible_
         changed=False,
         msg=StorageSystemModule.MSG_ALREADY_ABSENT
     )
+
+
+if __name__ == '__main__':
+    pytest.main([__file__])

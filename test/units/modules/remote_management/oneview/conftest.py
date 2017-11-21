@@ -1,5 +1,6 @@
-# Copyright (c) 2016-2017 Hewlett Packard Enterprise Development LP
+# Copyright: (c) 2016-2017, Hewlett Packard Enterprise Development LP
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 import pytest
 
 from mock import Mock, patch
@@ -9,9 +10,10 @@ from hpOneView.oneview_client import OneViewClient
 
 @pytest.fixture
 def mock_ov_client():
-    patcher_json_file = patch.object(OneViewClient, 'from_json_file')
-    client = patcher_json_file.start()
-    return client.return_value
+    client = Mock()
+    OneViewClient.from_json_file = lambda x: client
+    client.api_version = 300
+    return client
 
 
 @pytest.fixture
