@@ -104,8 +104,6 @@ def get_a_ssh_config(box_name):
 
     return dict((v, host_config[k]) for k, v in _ssh_to_ansible)
 
-
-
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 
