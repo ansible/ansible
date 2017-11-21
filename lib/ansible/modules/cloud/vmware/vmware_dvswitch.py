@@ -22,7 +22,7 @@ description:
 version_added: 2.0
 author: "Joseph Callen (@jcpowermac)"
 notes:
-    - Tested on vSphere 5.5
+    - Tested on vSphere 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -35,6 +35,12 @@ options:
         description:
             - The name of the switch to create or remove
         required: True
+    switch_version:
+        description:
+            - The version of the switch to create. Can be 6.5.0, 6.0.0, 5.5.0, 5.1.0, 5.0.0 with a vcenter running vSphere 6.5
+            - Needed if you have a vcenter version > ESXi version to join DVS. If not specified version=version of vcenter
+        required: False
+        version_added: 2.5
     mtu:
         description:
             - The switch maximum transmission unit
@@ -77,6 +83,7 @@ EXAMPLES = '''
     password: vcenter_password
     datacenter_name: datacenter
     switch_name: dvSwitch
+    switch_version: 6.0.0
     mtu: 9000
     uplink_quantity: 2
     discovery_proto: lldp
@@ -106,6 +113,7 @@ class VMwareDVSwitch(object):
         self.module = module
         self.dvs = None
         self.switch_name = self.module.params['switch_name']
+        self.switch_version = self.module.params['switch_version']
         self.datacenter_name = self.module.params['datacenter_name']
         self.mtu = self.module.params['mtu']
         self.uplink_quantity = self.module.params['uplink_quantity']
@@ -151,6 +159,7 @@ class VMwareDVSwitch(object):
         spec.productInfo = vim.dvs.ProductSpec()
         spec.productInfo.name = "DVS"
         spec.productInfo.vendor = "VMware"
+        spec.productInfo.version = self.switch_version
 
         for count in range(1, self.uplink_quantity + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
@@ -193,6 +202,7 @@ def main():
     argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
                               switch_name=dict(required=True, type='str'),
                               mtu=dict(required=True, type='int'),
+                              switch_version=dict(type='str'),
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
                               discovery_operation=dict(required=True, choices=['both', 'none', 'advertise', 'listen'], type='str'),
