@@ -292,7 +292,7 @@ class RudderInventory(object):
         ''' Converts 'bad' characters in a string to underscores so they can be
         used as Ansible variable names '''
 
-        return re.sub('[^A-Za-z0-9\_]', '_', word)
+        return re.sub(r'[^A-Za-z0-9\_]', '_', word)
 
 # Run the script
 RudderInventory()

@@ -79,7 +79,7 @@ DOCKER_REQUIRED_TOGETHER = [
 ]
 
 DEFAULT_DOCKER_REGISTRY = 'https://index.docker.io/v1/'
-EMAIL_REGEX = '[^@]+@[^@]+\.[^@]+'
+EMAIL_REGEX = r'[^@]+@[^@]+\.[^@]+'
 BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 

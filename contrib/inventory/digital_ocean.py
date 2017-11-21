@@ -460,7 +460,7 @@ or environment variables (DO_API_TOKEN)\n''')
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        return re.sub("[^A-Za-z0-9\-\.]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-\.]", "_", word)
 
     def do_namespace(self, data):
         ''' Returns a copy of the dictionary with all the keys put in a 'do_' namespace '''

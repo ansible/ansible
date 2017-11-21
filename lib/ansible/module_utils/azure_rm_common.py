@@ -71,8 +71,8 @@ AZURE_COMMON_REQUIRED_IF = [
 ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ANSIBLE_VERSION)
 CLOUDSHELL_USER_AGENT_KEY = 'AZURE_HTTP_USER_AGENT'
 
-CIDR_PATTERN = re.compile("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1"
-                          "[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))")
+CIDR_PATTERN = re.compile(r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1"
+                          r"[0-9]{2}|2[0-4][0-9]|25[0-5])(/([0-9]|[1-2][0-9]|3[0-2]))")
 
 AZURE_SUCCESS_STATE = "Succeeded"
 AZURE_FAILED_STATE = "Failed"

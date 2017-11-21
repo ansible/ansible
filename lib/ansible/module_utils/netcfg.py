@@ -35,9 +35,9 @@ from ansible.module_utils.network_common import to_list
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
 
 DEFAULT_IGNORE_LINES_RE = set([
-    re.compile("Using \d+ out of \d+ bytes"),
-    re.compile("Building configuration"),
-    re.compile("Current configuration : \d+ bytes")
+    re.compile(r"Using \d+ out of \d+ bytes"),
+    re.compile(r"Building configuration"),
+    re.compile(r"Current configuration : \d+ bytes")
 ])
 
 

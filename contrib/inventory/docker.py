@@ -656,7 +656,7 @@ class DockerInventory(object):
                 self.hostvars[name].update(facts)
 
     def _slugify(self, value):
-        return 'docker_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+        return 'docker_%s' % (re.sub(r'[^\w-]', '_', value).lower().lstrip('_'))
 
     def get_hosts(self, config):
         '''

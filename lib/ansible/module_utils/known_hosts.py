@@ -58,7 +58,7 @@ def get_fqdn_and_port(repo_url):
 
     fqdn = None
     port = None
-    ipv6_re = re.compile('(\[[^]]*\])(?::([0-9]+))?')
+    ipv6_re = re.compile(r'(\[[^]]*\])(?::([0-9]+))?')
     if "@" in repo_url and "://" not in repo_url:
         # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
