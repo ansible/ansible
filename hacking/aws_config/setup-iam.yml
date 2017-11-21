@@ -36,11 +36,11 @@
 
     - name: Ensure Managed IAM policies exist
       iam_managed_policy:
-        policy_name: "AnsibleTest{{ item|basename|regex_replace('-.*', '')|upper }}Policy"
+        policy_name: "AnsibleTest{{ item|basename|regex_replace('-.*', '')|capitalize }}Policy"
         policy: "{{ lookup('template', item) }}"
         state: present
         profile: "{{ profile|default(omit) }}"
-      with_fileglob: "testing_policies/*"
+      with_fileglob: "testing_policies/*.json"
       register: iam_managed_policies
 
     - debug:
