@@ -57,6 +57,7 @@ class PullCLI(CLI):
 
     DEFAULT_REPO_TYPE = 'git'
     DEFAULT_PLAYBOOK = 'local.yml'
+    REPO_CHOICES = ('git', 'subversion', 'hg', 'bzr')
     PLAYBOOK_ERRORS = {
         1: 'File does not exist',
         2: 'File is not readable',
@@ -176,7 +177,7 @@ class PullCLI(CLI):
         if not inv_opts:
             inv_opts = " -i localhost, "
 
-        # FIXME: enable more repo modules hg/svn?
+        # SCM specific options
         if self.options.module_name == 'git':
             repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
             if self.options.checkout:
@@ -191,14 +192,31 @@ class PullCLI(CLI):
             if self.options.verify:
                 repo_opts += ' verify_commit=yes'
 
-            if self.options.clean:
-                repo_opts += ' force=yes'
-
             if self.options.tracksubs:
                 repo_opts += ' track_submodules=yes'
 
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
+        elif self.options.module_name == 'subversion':
+            repo_opts = "repo=%s dest=%s" % (self.options.url, self.options.dest)
+            if self.options.checkout:
+                repo_opts += ' revision=%s' % self.options.checkout
+            if not self.options.fullclone:
+                repo_opts += ' export=yes'
+        elif self.options.module_name == 'hg':
+            repo_opts = "repo=%s dest=%s" % (self.options.url, self.options.dest)
+            if self.options.checkout:
+                repo_opts += ' revision=%s' % self.options.checkout
+        elif self.options.module_name == 'bzr':
+            repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
+            if self.options.checkout:
+                repo_opts += ' version=%s' % self.options.checkout
+        else:
+            raise AnsibleOptionsError('Unsupported (%s) SCM module for pull, choices are: %s' % (self.options.module_name, ','.join(self.REPO_CHOICES)))
+
+        # options common to all supported SCMS
+        if self.options.clean:
+            repo_opts += ' force=yes'
 
         path = module_loader.find_plugin(self.options.module_name)
         if path is None:
