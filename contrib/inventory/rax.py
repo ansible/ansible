@@ -189,7 +189,7 @@ p = load_config_file()
 
 
 def rax_slugify(value):
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+    return 'rax_%s' % (re.sub(r'[^\w-]', '_', value).lower().lstrip('_'))
 
 
 def to_dict(obj):

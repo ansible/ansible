@@ -305,7 +305,7 @@ def dict_merge(base, other):
 
 
 def conditional(expr, val, cast=None):
-    match = re.match('^(.+)\((.+)\)$', str(expr), re.I)
+    match = re.match(r'^(.+)\((.+)\)$', str(expr), re.I)
     if match:
         op, arg = match.groups()
     else:

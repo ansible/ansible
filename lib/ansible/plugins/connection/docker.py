@@ -115,7 +115,7 @@ class Connection(ConnectionBase):
 
     @staticmethod
     def _sanitize_version(version):
-        return re.sub(u'[^0-9a-zA-Z\.]', u'', version)
+        return re.sub(u'[^0-9a-zA-Z.]', u'', version)
 
     def _old_docker_version(self):
         cmd_args = []

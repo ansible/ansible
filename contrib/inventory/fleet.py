@@ -61,7 +61,7 @@ def get_ssh_config():
 def list_running_boxes():
     boxes = []
     for line in subprocess.check_output(["fleetctl", "list-machines"]).split('\n'):
-        matcher = re.search("[^\s]+[\s]+([^\s]+).+", line)
+        matcher = re.search(r"[^\s]+[\s]+([^\s]+).+", line)
         if matcher and matcher.group(1) != "IP":
             boxes.append(matcher.group(1))
 

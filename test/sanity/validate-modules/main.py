@@ -70,7 +70,7 @@ BLACKLIST_IMPORTS = {
                     'ansible.module_utils.urls instead')
         }
     },
-    'boto(?:\.|$)': {
+    r'boto(?:\.|$)': {
         'new_only': True,
         'error': {
             'code': 204,

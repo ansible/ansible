@@ -29,7 +29,7 @@ def get_sysctl(module, prefixes):
     for line in out.splitlines():
         if not line:
             continue
-        (key, value) = re.split('\s?=\s?|: ', line, maxsplit=1)
+        (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
         sysctl[key] = value.strip()
 
     return sysctl
