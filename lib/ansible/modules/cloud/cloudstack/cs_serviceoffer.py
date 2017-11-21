@@ -52,6 +52,8 @@ options:
   host_tags:
     description:
       - The host tagsfor this service offering.
+    aliases:
+      - host_tag
   hypervisor_snapshot_reserve:
     description:
       - Hypervisor snapshot reserve space as a percent of a volume.
@@ -486,7 +488,7 @@ def main():
         limit_cpu_usage=dict(type='bool'),
         deployment_planner=dict(),
         domain=dict(),
-        host_tags=dict(type='list'),
+        host_tags=dict(type='list', aliases=['host_tag']),
         hypervisor_snapshot_reserve=dict(type='int'),
         disk_bytes_read_rate=dict(),
         disk_bytes_write_rate=dict(),
