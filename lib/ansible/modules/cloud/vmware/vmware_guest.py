@@ -86,6 +86,7 @@ options:
     - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(num_cpus) (integer): Number of CPUs.'
+    - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
   guest_id:
     description:
@@ -215,7 +216,8 @@ EXAMPLES = r'''
       datastore: g73_datastore
     hardware:
       memory_mb: 512
-      num_cpus: 1
+      num_cpus: 6
+      num_cpu_cores_per_socket: 3
       scsi: paravirtual
     cdrom:
       type: iso
@@ -594,7 +596,26 @@ class PyVmomiHelper(PyVmomi):
         # set cpu/memory/etc
         if 'hardware' in self.params:
             if 'num_cpus' in self.params['hardware']:
-                self.configspec.numCPUs = int(self.params['hardware']['num_cpus'])
+                try:
+                    num_cpus = int(self.params['hardware']['num_cpus'])
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.num_cpus attribute should be an integer value.")
+
+                if 'num_cpu_cores_per_socket' in self.params['hardware']:
+                    try:
+                        num_cpu_cores_per_socket = int(self.params['hardware']['num_cpu_cores_per_socket'])
+                    except ValueError as e:
+                        self.module.fail_json(msg="hardware.num_cpu_cores_per_socket attribute "
+                                                  "should be an integer value.")
+                    if num_cpus % num_cpu_cores_per_socket != 0:
+                        self.module.fail_json(msg="hardware.num_cpus attribute should be a multiple "
+                                                  "of hardware.num_cpu_cores_per_socket")
+
+                    self.configspec.numCoresPerSocket = num_cpu_cores_per_socket
+                    if vm_obj is None or self.configspec.numCoresPerSocket != vm_obj.config.hardware.numCoresPerSocket:
+                        self.change_detected = True
+
+                self.configspec.numCPUs = num_cpus
                 if vm_obj is None or self.configspec.numCPUs != vm_obj.config.hardware.numCPU:
                     self.change_detected = True
             # num_cpu is mandatory for VM creation
