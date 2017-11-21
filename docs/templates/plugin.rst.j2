@@ -253,7 +253,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
             <th class="head">type</th>
             <th class="head">sample</th>
         </tr>
-        {%- for key, value in returndocs.items() recursive -%}
+        {% for key, value in returndocs.items() recursive %}
             <tr>
                 <td style="border-left: @{ loop.depth0*30 }@px solid">@{ key }@</td>
                 <td>
@@ -274,16 +274,14 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
              # since in some documentations,
              # lists are used instead of dicts. This handles both types
              # ---------------------------------------------------------#}
-            {%- if value.contains -%}
+            {% if value.contains %}
                 {% if value.contains.items %}
-                    {% set contains = value.contains.items() %}
-                    @{ loop(contains) }@
+                    @{ loop(value.contains.items()) }@
                 {% elif value.contains[0].items %}
-                    {% set contains = value.contains[0].items() %}
-                    @{ loop(contains) }@
+                    @{ loop(value.contains[0].items()) }@
                 {% endif %}
-            {%- endif -%}
-        {%- endfor -%}
+            {% endif %}
+        {% endfor %}
     </table>
     </br></br>
 {% endif %}
