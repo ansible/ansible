@@ -58,6 +58,7 @@ options:
       - Client certificate filename in standard PEM format to be used for authentication.
     required: false
   client_key:
+    description:
       - Client private key filename in standard PEM format to be used for authentication.
     required: false
   state:
