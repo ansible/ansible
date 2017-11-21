@@ -53,6 +53,13 @@ options:
         standard PEM format or base64 encoded PEM data. Note that certificate
         verification is broken until ansible supports a version of
         'match_hostname' that can match the IP address against the CA data.
+  client_cert:
+    description:
+      - Client certificate filename in standard PEM format to be used for authentication.
+    required: false
+  client_key:
+      - Client private key filename in standard PEM format to be used for authentication.
+    required: false
   state:
     description:
       - The desired action to take on the Kubernetes data.
@@ -334,6 +341,8 @@ def main():
             force_basic_auth=dict(type='bool', default=True),
             validate_certs=dict(type='bool', default=False),
             certificate_authority_data=dict(type='str'),
+            client_cert=dict(required=False),
+            client_key=dict(required=False),
             insecure=dict(type='bool', default=False),
             api_endpoint=dict(type='str', required=True),
             patch_operation=dict(type='str', default='Strategic Merge Patch', aliases=['patch_strategy'],
