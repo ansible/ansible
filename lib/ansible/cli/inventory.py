@@ -178,8 +178,8 @@ class InventoryCLI(CLI):
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         else:
-            import json
-            results = json.dumps(stuff, sort_keys=True, indent=4)
+            from ansible.module_utils.basic import jsonify
+            results = jsonify(stuff, sort_keys=True, indent=4)
 
         return results
 

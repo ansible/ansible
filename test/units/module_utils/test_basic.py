@@ -85,7 +85,9 @@ class TestModuleUtilsBasic(ModuleTestCase):
             if name == 'json':
                 raise ImportError
             elif name == 'simplejson':
-                return MagicMock()
+                sj = MagicMock()
+                sj.__version__ = '3.10.0'
+                return sj
             return realimport(name, *args, **kwargs)
 
         self.clear_modules(['json', 'ansible.module_utils.basic'])
