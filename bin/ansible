@@ -129,6 +129,10 @@ if __name__ == '__main__':
         display.error("User interrupted execution")
         exit_code = 99
     except Exception as e:
+        if C.DEFAULT_DEBUG:
+            # Show raw stacktraces in debug mode, It also allow pdb to
+            # enter post mortem mode.
+            raise
         have_cli_options = cli is not None and cli.options is not None
         display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
