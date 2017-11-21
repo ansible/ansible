@@ -52,6 +52,7 @@ options:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
     - This is required if name is not supplied.
+    - Please note that a supplied UUID will be ignored on VM creation, as VMware creates the UUID internally.
   template:
     description:
     - Template used to create VM.
