@@ -246,67 +246,44 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 .. raw:: html
 
     <table border=1 cellpadding=4>
-
-    <tr>
-    <th class="head">name</th>
-    <th class="head">description</th>
-    <th class="head">returned</th>
-    <th class="head">type</th>
-    <th class="head">sample</th>
-    </tr>
-{% for entry in returndocs %}
-
-    <tr>
-    <td>@{ entry }@</td>
-    <td>
-{% if returndocs[entry].description is string %}
-        <div>@{ returndocs[entry].description | replace('\n', '\n    ') | html_ify }@</div>
-{% else %}
-{% for desc in returndocs[entry].description %}
-        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-{% endfor %}
-{% endif %}
-    </td>
-    <td align=center>@{ returndocs[entry].returned }@</td>
-    <td align=center>@{ returndocs[entry].type }@</td>
-    <td align=center>@{ returndocs[entry].sample | replace('\n', '\n    ') | html_ify }@</td>
-    </tr>
-{% if returndocs[entry].type == 'complex' %}
-
-    <tr>
-    <td>contains:</td>
-    <td colspan=4>
-        <table border=1 cellpadding=2>
-
         <tr>
-        <th class="head">name</th>
-        <th class="head">description</th>
-        <th class="head">returned</th>
-        <th class="head">type</th>
-        <th class="head">sample</th>
+            <th class="head">name</th>
+            <th class="head">description</th>
+            <th class="head">returned</th>
+            <th class="head">type</th>
+            <th class="head">sample</th>
         </tr>
-{% for sub in returndocs[entry].contains %}
-
-        <tr>
-        <td>@{ sub }@</td>
-        <td>
-{% if returndocs[entry].contains[sub].description is string %}
-            <div>@{ returndocs[entry].contains[sub].description | replace('\n', '\n    ') | html_ify }@</div>
-{% else %}
-{% for desc in returndocs[entry].contains[sub].description %}
-            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-{% endfor %}
-{% endif %}
-        </td>
-        <td align=center>@{ returndocs[entry].contains[sub].returned }@</td>
-        <td align=center>@{ returndocs[entry].contains[sub].type }@</td>
-        <td align=center>@{ returndocs[entry].contains[sub].sample }@</td>
-        </tr>
-{% endfor %}
-        </table>
-	</td></tr>
-{% endif %}
-{% endfor %}
+        {%- for key, value in returndocs.items() recursive -%}
+            <tr>
+                <td style="border-left: @{ loop.depth0*30 }@px solid">@{ key }@</td>
+                <td>
+                    {% if value.description is string %}
+                        <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
+                    {% else %}
+                    {% for desc in value.description %}
+                        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endfor %}
+                    {% endif %}
+                </td>
+                <td align=center>@{ value.returned }@</td>
+                <td align=center>@{ value.type }@</td>
+                <td align=center>@{ value.sample | replace('\n', '\n    ') | html_ify }@</td>
+            </tr>
+            {# ---------------------------------------------------------
+             # sadly we cannot blindly iterate through the child dicts,
+             # since in some documentations,
+             # lists are used instead of dicts. This handles both types
+             # ---------------------------------------------------------#}
+            {%- if value.contains -%}
+                {% if value.contains.items %}
+                    {% set contains = value.contains.items() %}
+                    @{ loop(contains) }@
+                {% elif value.contains[0].items %}
+                    {% set contains = value.contains[0].items() %}
+                    @{ loop(contains) }@
+                {% endif %}
+            {%- endif -%}
+        {%- endfor -%}
     </table>
     </br></br>
 {% endif %}
