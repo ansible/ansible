@@ -655,7 +655,8 @@ def main():
                 interfaces = []
 
             # When force=no is specified, append existing interfaces to interfaces to update. When
-            # no interfaces have been specified, copy existing interfaces in the same manner
+            # no interfaces have been specified, copy existing interfaces as specified from the API.
+            # Do the same with templates and host groups.
             if not force or not interfaces:
                 for interface in copy.deepcopy(exist_interfaces):
                     # remove values not used during hostinterface.add/update calls
@@ -670,14 +671,13 @@ def main():
                     if interface not in interfaces:
                         interfaces.append(interface)
 
+            if not force or link_templates is None:
+                template_ids = list(set(template_ids + host.get_host_templates_by_host_id(host_id)))
+
             if not force:
-                # get existing groups, interfaces and templates and merge them with ones provided as an argument
-                # we do not want to overwrite anything if force: no is explicitly used, we just want to add new ones
                 for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
                     if group_id not in group_ids:
                         group_ids.append(group_id)
-
-                template_ids = list(set(template_ids + host.get_host_templates_by_host_id(host_id)))
 
             # update host
             interfaces_len = len(interfaces)
