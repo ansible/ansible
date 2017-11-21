@@ -95,8 +95,8 @@ def main():
     # Try to spot where this has happened and fix it.
     for fragment in params['name']:
         if (
-            re.search('^\d+(?:\.\d+)*', fragment)
-            and packages and re.search('@[^,]*$', packages[-1])
+            re.search(r'^\d+(?:\.\d+)*', fragment)
+            and packages and re.search(r'@[^,]*$', packages[-1])
         ):
             packages[-1] += ',' + fragment
         else:

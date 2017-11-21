@@ -75,7 +75,7 @@ def main():
     def monit_version():
         rc, out, err = module.run_command('%s -V' % MONIT, check_rc=True)
         version_line = out.split('\n')[0]
-        version = re.search("[0-9]+\.[0-9]+", version_line).group().split('.')
+        version = re.search(r"[0-9]+\.[0-9]+", version_line).group().split('.')
         # Use only major and minor even if there are more these should be enough
         return int(version[0]), int(version[1])
 
