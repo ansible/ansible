@@ -184,6 +184,9 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32963
 * use correct loop var when delegating
   https://github.com/ansible/ansible/pull/32986
+* Handle sets and datetime objects in inventory sources fixing tracebacks
+  https://github.com/ansible/ansible/pull/32990
+
 
 <a id="2.4.1"></a>
 
