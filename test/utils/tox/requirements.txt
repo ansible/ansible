@@ -2,6 +2,7 @@
 # Test requirements
 #
 
+paramiko < 2.4.0 ; python_version < '2.7'  # paramiko 2.4.0 drops support for python 2.6
 nose
 mock >= 1.0.1, < 1.1
 passlib
