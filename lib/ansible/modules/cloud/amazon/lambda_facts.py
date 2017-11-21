@@ -361,7 +361,7 @@ def main():
     # validate function_name if present
     function_name = module.params['function_name']
     if function_name:
-        if not re.search("^[\w\-:]+$", function_name):
+        if not re.search(r"^[\w\-:]+$", function_name):
             module.fail_json(
                 msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(function_name)
             )

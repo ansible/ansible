@@ -66,7 +66,7 @@ class Blacklist(object):
             return False
 
     def get_pattern(self):
-        return '^blacklist\s*' + self.module + '$'
+        return r'^blacklist\s*' + self.module + '$'
 
     def readlines(self):
         f = open(self.filename, 'r')

@@ -261,7 +261,7 @@ def get_quotas(name, nofail):
         out = run_gluster(['volume', 'quota', name, 'list'])
     for row in out.split('\n'):
         if row[:1] == '/':
-            q = re.split('\s+', row)
+            q = re.split(r'\s+', row)
             quotas[q[0]] = q[1]
     return quotas
 

@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: add_host
 short_description: add a host (and alternatively a group) to the ansible-playbook in-memory inventory

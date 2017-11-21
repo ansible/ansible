@@ -208,8 +208,8 @@ class SourcesList(object):
             return s
 
         # Drop options and protocols.
-        line = re.sub('\[[^\]]+\]', '', line)
-        line = re.sub('\w+://', '', line)
+        line = re.sub(r'\[[^\]]+\]', '', line)
+        line = re.sub(r'\w+://', '', line)
 
         # split line into valid keywords
         parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]

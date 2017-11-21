@@ -145,7 +145,7 @@ class Imgadm(object):
 
     # Helper method to massage stderr
     def errmsg(self, stderr):
-        match = re.match('^imgadm .*?: error \(\w+\): (.*): .*', stderr)
+        match = re.match(r'^imgadm .*?: error \(\w+\): (.*): .*', stderr)
         if match:
             return match.groups()[0]
         else:
@@ -236,7 +236,7 @@ class Imgadm(object):
             if rc != 0:
                 self.module.fail_json(msg='Failed to import image: {0}'.format(self.errmsg(stderr)))
 
-            regex = 'Image {0} \(.*\) is already installed, skipping'.format(self.uuid)
+            regex = r'Image {0} \(.*\) is already installed, skipping'.format(self.uuid)
             if re.match(regex, stdout):
                 self.changed = False
 

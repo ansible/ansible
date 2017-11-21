@@ -188,7 +188,7 @@ def validate_params(module):
 
     # validate function name
     if function_name.startswith('arn:'):
-        if not re.search('^[\w\-]+$', function_name):
+        if not re.search(r'^[\w\-]+$', function_name):
             module.fail_json(
                 msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(
                     function_name)
@@ -197,7 +197,7 @@ def validate_params(module):
             module.fail_json(
                 msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
     else:
-        if not re.search('^[\w\-:]+$', function_name):
+        if not re.search(r'^[\w\-:]+$', function_name):
             module.fail_json(
                 msg='ARN {0} is invalid. ARNs must contain only alphanumeric characters, hyphens and colons.'.format(function_name)
             )

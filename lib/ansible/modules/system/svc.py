@@ -180,11 +180,11 @@ class Svc(object):
         else:
             self.full_state = out
 
-            m = re.search('\(pid (\d+)\)', out)
+            m = re.search(r'\(pid (\d+)\)', out)
             if m:
                 self.pid = m.group(1)
 
-            m = re.search('(\d+) seconds', out)
+            m = re.search(r'(\d+) seconds', out)
             if m:
                 self.duration = m.group(1)
 
