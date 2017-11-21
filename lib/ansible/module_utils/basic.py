@@ -2203,7 +2203,7 @@ class AnsibleModule(object):
 
     def jsonify(self, data):
         try:
-            jsonify(data)
+            return jsonify(data)
         except UnicodeError as e:
             self.fail_json(msg=to_text(e))
 
