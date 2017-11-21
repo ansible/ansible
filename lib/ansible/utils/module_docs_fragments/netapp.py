@@ -51,7 +51,7 @@ requirements:
   - netapp-lib (2015.9.25). Install using 'pip install netapp-lib'
 
 notes:
-  - The modules prefixed with C(netapp\_cdot) are built to support the ONTAP storage platform.
+  - The modules prefixed with C(netapp\\_cdot) are built to support the ONTAP storage platform.
 
 """
 
@@ -75,7 +75,7 @@ requirements:
   - solidfire-sdk-python (1.1.0.92)
 
 notes:
-  - The modules prefixed with C(sf\_) are built to support the SolidFire storage platform.
+  - The modules prefixed with C(sf\\_) are built to support the SolidFire storage platform.
 
 """
 

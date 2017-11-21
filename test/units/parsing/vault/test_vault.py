@@ -285,7 +285,7 @@ class TestScriptVaultSecret(unittest.TestCase):
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             self.assertRaisesRegexp(errors.AnsibleError,
-                                    'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
+                                    r'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
                                     secret.load)
 
 

@@ -327,7 +327,7 @@ class LibcloudInventory(object):
         used as Ansible groups
         '''
 
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         '''

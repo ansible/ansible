@@ -39,7 +39,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-_SAFE_GROUP = re.compile("[^A-Za-z0-9\_]")
+_SAFE_GROUP = re.compile("[^A-Za-z0-9_]")
 
 
 # Helper methods

@@ -501,7 +501,7 @@ class PlayContext(Base):
 
                 # passing code ref to examine prompt as simple string comparisson isn't good enough with su
                 def detect_su_prompt(b_data):
-                    b_password_string = b"|".join([b'(\w+\'s )?' + x for x in b_SU_PROMPT_LOCALIZATIONS])
+                    b_password_string = b"|".join([br'(\w+\'s )?' + x for x in b_SU_PROMPT_LOCALIZATIONS])
                     # Colon or unicode fullwidth colon
                     b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
                     b_SU_PROMPT_LOCALIZATIONS_RE = re.compile(b_password_string, flags=re.IGNORECASE)

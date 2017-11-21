@@ -171,7 +171,7 @@ class CallbackModule(CallbackBase):
         duration = host_data.finish - task_data.start
 
         if self._task_class == 'true':
-            junit_classname = re.sub('\.yml:[0-9]+$', '', task_data.path)
+            junit_classname = re.sub(r'\.yml:[0-9]+$', '', task_data.path)
         else:
             junit_classname = task_data.path
 

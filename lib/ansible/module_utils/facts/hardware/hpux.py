@@ -127,7 +127,7 @@ class HPUXHardware(Hardware):
                         memory_facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
-            data = re.search('Memory[\ :=]*([0-9]*).*MB.*', out).groups()[0].strip()
+            data = re.search(r'Memory[\ :=]*([0-9]*).*MB.*', out).groups()[0].strip()
             memory_facts['memtotal_mb'] = int(data)
         rc, out, err = self.module.run_command("/usr/sbin/swapinfo -m -d -f -q")
         memory_facts['swaptotal_mb'] = int(out.strip())

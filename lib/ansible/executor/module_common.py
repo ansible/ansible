@@ -627,9 +627,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         module_style = 'new'
         module_substyle = 'powershell'
         b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
-    elif re.search(b'#Requires \-Module', b_module_data, re.IGNORECASE) \
-            or re.search(b'#Requires \-Version', b_module_data, re.IGNORECASE)\
-            or re.search(b'#AnsibleRequires \-OSVersion', b_module_data, re.IGNORECASE):
+    elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
+            or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
+            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
@@ -796,9 +796,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         min_ps_version = None
 
         requires_module_list = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
-        requires_ps_version = re.compile(to_bytes('(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_os_version = re.compile(to_bytes('(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_become = re.compile(to_bytes('(?i)^#ansiblerequires\s+\-become$'))
+        requires_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
+        requires_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
+        requires_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
 
         for line in lines:
             module_util_line_match = requires_module_list.match(line)

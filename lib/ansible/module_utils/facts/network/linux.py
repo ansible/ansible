@@ -297,9 +297,9 @@ class LinuxNetwork(Network):
             args = [ethtool_path, '-T', device]
             rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
-                data['timestamping'] = [m.lower() for m in re.findall('SOF_TIMESTAMPING_(\w+)', stdout)]
-                data['hw_timestamp_filters'] = [m.lower() for m in re.findall('HWTSTAMP_FILTER_(\w+)', stdout)]
-                m = re.search('PTP Hardware Clock: (\d+)', stdout)
+                data['timestamping'] = [m.lower() for m in re.findall(r'SOF_TIMESTAMPING_(\w+)', stdout)]
+                data['hw_timestamp_filters'] = [m.lower() for m in re.findall(r'HWTSTAMP_FILTER_(\w+)', stdout)]
+                m = re.search(r'PTP Hardware Clock: (\d+)', stdout)
                 if m:
                     data['phc_index'] = int(m.groups()[0])
 

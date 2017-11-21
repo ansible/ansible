@@ -586,7 +586,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     ex:
       human_to_bytes('10M') <=> human_to_bytes(10, 'M')
     '''
-    m = re.search('^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
+    m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
     if m is None:
         raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
     try:
