@@ -17,7 +17,7 @@ This example shows how Ansible can be used to connect to and manage multiple net
 
 .. FIXME FUTURE Gundalow - Link to examples index once created
 
-.. note:: This example is for educational purposes only and is not intended for production use.
+.. note:: This example is for educational purposes only and is not intended for production use, for example, passwords should NEVER be stored in cleartext.
 
 Audience
 --------
@@ -39,7 +39,7 @@ This example requires the following:
 
 
 .. FIXME FUTURE Gundalow - Once created we will link to the connection table here (which platforms support network_cli & credentials through inventory)
-.. FIXME FUTURE Gundalow -  Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - Once documented in above FIXME add details her
+.. FIXME FUTURE Gundalow - Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - Once documented in above FIXME add details here
 
 Solution
 =========
@@ -69,7 +69,7 @@ Create a file called ``fetch-facts.yml`` containing the following:
 
 .. code-block:: yaml
 
-   - name: "Download switch configuration"
+   - name: "Demonstrate connecting to switches"
      hosts: switches
      gather_facts: no
 
@@ -170,14 +170,7 @@ Run the playbook
    cat /tmp/switch-facts
    find /tmp/backups
 
-If you receive an error ``unable to open shell`` ensure that the ssh fingerprints are in ``~/.ssh/known_hosts``, this can be achieved by doing using ``ssh-keyscan`` to pre-populate the ``known_hosts`` file.
-
-.. code-block:: shell
-
-   ssh-keyscan eos01.example.net
-   ssh-keyscan vyos01.example.net
-
-If `ansible-playbook` still fails, please follow the debug steps in :doc:`network_debug_troubleshooting`.
+If `ansible-playbook` fails, please follow the debug steps in :doc:`network_debug_troubleshooting`.
 
 Details
 =======
@@ -206,7 +199,7 @@ ansible_connection
 
 Setting ``ansible_connection=network_cli`` informs Ansible that the remote node is a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
 
-.. FIXME FUTURE Gundalow - Once the new connection types are defined (in 2.5) we will need to update this.
+.. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written) - in particular eapi/nxapi
 
 Playbook
 --------
@@ -216,14 +209,14 @@ Collect data
 
 Here we use the ``_facts`` modules :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
 
-Ansible "Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_``. The return values (data returned by a module) are documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
+Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
 
 To ensure we call the correct mode (eos_facts or vyos_facts) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
 Privilege escalation
 ^^^^^^^^^^^^^^^^^^^^
 
-Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible 2.5 added support for ``become`` when using ``connection=network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as show here:
+Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible 2.5 added support for ``become`` when using ``connection=network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
 
 .. code-block:: yaml
 
@@ -239,7 +232,7 @@ For more information see the :doc:`Ansible Privilege Escalation<become>` guide.
 Demo variables
 --------------
 
-Although these tasks are not needed to write data to disk, they are useful to demonstrate some methods of accessing facts about the given devices or a named host.
+Although these tasks are not needed to write data to disk, they are used to demonstrate some methods of accessing facts about the given devices or a named host.
 
 Ansible ``hostvars`` allows you to access variables from a named host. Without this wed return the details for the current host
 
@@ -252,12 +245,12 @@ The :ref:`eos_config <eos_config>` and :ref:`vyos_config <vyos_config>` modules 
 
 To demonstrate how we can move the backup file to a different location we ``register`` the result and use the ``backup_path`` return value as source location to move the file into ``/tmp/backups/`` directory which we have created.
 
-Note that when using variables from tasks in this way we use  double quotes (``"``) and double curly-brackets (``{{...}}`` to tell Ansible that this is a variable.
+Note that when using variables from tasks in this way we use double quotes (``"``) and double curly-brackets (``{{...}}`` to tell Ansible that this is a variable.
 
 Troubleshooting
 ===============
 
-If you receive an error ``unable to open shell`` please follow the debug steps in :doc:`network_debug_troubleshooting`.
+If you receive an connection error please double check the inventory and Playbook for typos or missing lines, if the issue still occurs follow the debug steps in :doc:`network_debug_troubleshooting`.
 
 
 .. seealso::
