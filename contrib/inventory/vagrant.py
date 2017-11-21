@@ -37,8 +37,8 @@ import sys
 import os.path
 import subprocess
 import re
+from io import StringIO
 from paramiko import SSHConfig
-from cStringIO import StringIO
 from optparse import OptionParser
 from collections import defaultdict
 try:
@@ -74,7 +74,7 @@ def get_ssh_config():
 
 # list all the running boxes
 def list_running_boxes():
-    output = subprocess.check_output(["vagrant", "status"]).split('\n')
+    output = subprocess.check_output(["vagrant", "status"]).decode('utf-8').split('\n')
 
     boxes = []
 
@@ -90,7 +90,7 @@ def list_running_boxes():
 def get_a_ssh_config(box_name):
     """Gives back a map of all the machine's ssh configurations"""
 
-    output = subprocess.check_output(["vagrant", "ssh-config", box_name])
+    output = subprocess.check_output(["vagrant", "ssh-config", box_name]).decode('utf-8')
     config = SSHConfig()
     config.parse(StringIO(output))
     host_config = config.lookup(box_name)
@@ -103,6 +103,11 @@ def get_a_ssh_config(box_name):
             host_config['identityfile'] = id
 
     return dict((v, host_config[k]) for k, v in _ssh_to_ansible)
+
+
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+os.chdir(dir_path)
 
 # List out servers that vagrant has running
 # ------------------------------
