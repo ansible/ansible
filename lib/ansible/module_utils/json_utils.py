@@ -28,13 +28,6 @@ try:
 except ImportError:
     import simplejson as json
 
-from datetime import datetime
-from collections import Set
-from itertools import repeat
-
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import binary_type, iteritems, text_type
-
 
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any
 # changes are propagated there.
