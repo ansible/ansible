@@ -78,6 +78,17 @@ DOCUMENTATION = """
         choices: [managed, manual]
         vars:
           - name: ansible_winrm_kinit_mode
+      connection_timeout:
+        description:
+            - Sets the operation and read timeout settings for the WinRM
+              connection.
+            - Corresponds to the C(operation_timeout_sec) and
+              C(read_timeout_sec) args in pywinrm so avoid setting these vars
+              with this one.
+            - The default value is whatever is set in the installed version of
+              pywinrm.
+        vars:
+          - name: ansible_winrm_connection_timeout
 """
 
 import base64
@@ -170,6 +181,7 @@ class Connection(ConnectionBase):
         self._winrm_path = self._options['path']
         self._kinit_cmd = self._options['kerberos_command']
         self._winrm_transport = self._options['transport']
+        self._winrm_connection_timeout = self._options['connection_timeout']
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
@@ -261,7 +273,11 @@ class Connection(ConnectionBase):
                     self._kerb_auth(self._winrm_user, self._winrm_pass)
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
-                protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
+                winrm_kwargs = self._winrm_kwargs.copy()
+                if self._winrm_connection_timeout:
+                    winrm_kwargs['operation_timeout_sec'] = self._winrm_connection_timeout
+                    winrm_kwargs['read_timeout_sec'] = self._winrm_connection_timeout + 1
+                protocol = Protocol(endpoint, transport=transport, **winrm_kwargs)
 
                 # open the shell from connect so we know we're able to talk to the server
                 if not self.shell_id:

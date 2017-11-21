@@ -4,12 +4,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import socket
 import time
 
 from datetime import datetime, timedelta
 
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
+from ansible.module_utils._text import to_native
 
 try:
     from __main__ import display
@@ -25,7 +26,6 @@ class TimedOutException(Exception):
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
-    DEFAULT_SHUTDOWN_TIMEOUT = 600
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_PRE_REBOOT_DELAY = 2
@@ -33,10 +33,20 @@ class ActionModule(ActionBase):
     DEFAULT_TEST_COMMAND = 'whoami'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible.'
 
+    def get_system_uptime(self):
+        uptime_command = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
+        (rc, stdout, stderr) = self._connection.exec_command(uptime_command)
+
+        if rc != 0:
+            raise Exception("win_reboot: failed to get host uptime info, rc: %d, stdout: %s, stderr: %s"
+                            % (rc, stdout, stderr))
+
+        return stdout
+
     def do_until_success_or_timeout(self, what, timeout, what_desc, fail_sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
-        e = None
+        exc = ""
         while datetime.utcnow() < max_end_time:
             try:
                 what()
@@ -44,11 +54,12 @@ class ActionModule(ActionBase):
                     display.debug("win_reboot: %s success" % what_desc)
                 return
             except Exception as e:
+                exc = e
                 if what_desc:
                     display.debug("win_reboot: %s fail (expected), retrying in %d seconds..." % (what_desc, fail_sleep))
                 time.sleep(fail_sleep)
 
-        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, exc))
 
     def run(self, tmp=None, task_vars=None):
 
@@ -66,24 +77,24 @@ class ActionModule(ActionBase):
         if result.get('skipped', False) or result.get('failed', False):
             return result
 
-        winrm_host = self._connection._winrm_host
-        winrm_port = self._connection._winrm_port
-
         # Handle timeout parameters and its alias
-        if self._task.args.get('shutdown_timeout') is not None:
-            shutdown_timeout = int(self._task.args.get('shutdown_timeout', self.DEFAULT_SHUTDOWN_TIMEOUT))
-        else:
-            shutdown_timeout = int(self._task.args.get('shutdown_timeout_sec', self.DEFAULT_SHUTDOWN_TIMEOUT))
-
-        if self._task.args.get('reboot_timeout') is not None:
-            reboot_timeout = int(self._task.args.get('reboot_timeout', self.DEFAULT_REBOOT_TIMEOUT))
-        else:
-            reboot_timeout = int(self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT))
+        deprecated_args = {
+            'shutdown_timeout': '2.5',
+            'shutdown_timeout_sec': '2.5',
+        }
+        for arg, version in deprecated_args.items():
+            if self._task.args.get(arg) is not None:
+                display.warning("Since Ansible %s, %s is no longer used with win_reboot" % (arg, version))
 
         if self._task.args.get('connect_timeout') is not None:
             connect_timeout = int(self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT))
         else:
             connect_timeout = int(self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
+
+        if self._task.args.get('reboot_timeout') is not None:
+            reboot_timeout = int(self._task.args.get('reboot_timeout', self.DEFAULT_REBOOT_TIMEOUT))
+        else:
+            reboot_timeout = int(self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT))
 
         if self._task.args.get('pre_reboot_delay') is not None:
             pre_reboot_delay = int(self._task.args.get('pre_reboot_delay', self.DEFAULT_PRE_REBOOT_DELAY))
@@ -98,7 +109,17 @@ class ActionModule(ActionBase):
         test_command = str(self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND))
         msg = str(self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE))
 
+        # Get current uptime
+        try:
+            before_uptime = self.get_system_uptime()
+        except Exception as e:
+            result['failed'] = True
+            result['reboot'] = False
+            result['msg'] = to_native(e)
+            return result
+
         # Initiate reboot
+        display.vvv("rebooting server")
         (rc, stdout, stderr) = self._connection.exec_command('shutdown /r /t %d /c "%s"' % (pre_reboot_delay, msg))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
@@ -119,40 +140,52 @@ class ActionModule(ActionBase):
             result['msg'] = "Shutdown command failed, error text was %s" % stderr
             return result
 
-        def raise_if_port_open():
-            try:
-                sock = socket.create_connection((winrm_host, winrm_port), connect_timeout)
-                sock.close()
-            except:
-                return False
-
-            raise Exception("port is open")
-
         start = datetime.now()
+        # Get the original connection_timeout option var so it can be reset after
+        connection_timeout_orig = None
+        try:
+            connection_timeout_orig = self._connection.get_option('connection_timeout')
+        except AnsibleError:
+            display.debug("win_reboot: connection_timeout connection option has not been set")
 
         try:
-            self.do_until_success_or_timeout(raise_if_port_open, shutdown_timeout, what_desc="winrm port down")
+            # keep on checking system uptime with short connection responses
+            def check_uptime():
+                display.vvv("attempting to get system uptime")
 
-            def connect_winrm_port():
-                sock = socket.create_connection((winrm_host, winrm_port), connect_timeout)
-                sock.close()
-
-            self.do_until_success_or_timeout(connect_winrm_port, reboot_timeout, what_desc="winrm port up")
-
-            def run_test_command():
-                display.vvv("attempting post-reboot test command '%s'" % test_command)
-                # call connection reset between runs if it's there
+                # override connection timeout from defaults to custom value
                 try:
+                    self._connection.set_options(direct={"connection_timeout": connect_timeout})
                     self._connection._reset()
                 except AttributeError:
-                    pass
+                    display.warning("Connection plugin does not allow the connection timeout to be overridden")
 
+                # try and get uptime
+                try:
+                    current_uptime = self.get_system_uptime()
+                except Exception as e:
+                    raise e
+
+                if current_uptime == before_uptime:
+                    raise Exception("uptime has not changed")
+
+            self.do_until_success_or_timeout(check_uptime, reboot_timeout, what_desc="reboot uptime check success")
+
+            # reset the connection to clear the custom connection timeout
+            try:
+                self._connection.set_options(direct={"connection_timeout": connection_timeout_orig})
+                self._connection._reset()
+            except (AnsibleError, AttributeError):
+                display.debug("Failed to reset connection_timeout back to default")
+
+            # finally run test command to ensure everything is working
+            def run_test_command():
+                display.vvv("attempting post-reboot test command '%s'" % test_command)
                 (rc, stdout, stderr) = self._connection.exec_command(test_command)
 
                 if rc != 0:
                     raise Exception('test command failed')
 
-            # FUTURE: ensure that a reboot has actually occurred by watching for change in last boot time fact
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
 
             self.do_until_success_or_timeout(run_test_command, reboot_timeout, what_desc="post-reboot test command success")
@@ -163,7 +196,7 @@ class ActionModule(ActionBase):
         except TimedOutException as toex:
             result['failed'] = True
             result['rebooted'] = True
-            result['msg'] = toex.message
+            result['msg'] = to_native(toex)
 
         if post_reboot_delay != 0:
             display.vvv("win_reboot: waiting an additional %d seconds" % post_reboot_delay)
