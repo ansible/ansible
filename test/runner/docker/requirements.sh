@@ -5,6 +5,7 @@ python_versions=(
     2.7
     3.5
     3.6
+    3.7
 )
 
 requirements=()
