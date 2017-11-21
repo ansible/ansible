@@ -2,13 +2,6 @@
 # Copyright (c) 2017 Andrew Wilson AndyPi.co.uk
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.urls import open_url
-import json
-__metaclass__ = type
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -81,22 +74,22 @@ RETURN = '''
 create_hostname:
     description: create fly hostname
     returned: changed
-    type: json
+    type: dictionary
     sample: {"changed": true, "failed": false, "response": {"dns_configured": false, "hostname": "example.com", "preview_hostname": "xyz.shw.io"}}
 view_hostname:
     description: view a specific fly hostname
     returned: success
-    type: json
+    type: dictionary
     sample: {"changed": false, "failed": false, "response": {"dns_configured": false, "hostname": "example.com", "preview_hostname": "xyz.shw.io"}}
 add_backend:
     description: add a fly backend
     returned: changed
-    type: json
+    type: dictionary
     sample: {"changed": true, "failed": false, "id": "123123123"}
 add_rule:
     description: add a fly rule
     returned: changed
-    type: json
+    type: dictionary
     sample: {"changed": true, "failed": false, "response": {"data": {"attributes": {"action_type": "rewrite",
                                                                      "backend_id": "123123123",
                                                                      "hostname": "example.com",
@@ -109,6 +102,12 @@ add_rule:
                                                                      "redirect_url": null}, "id": "456456456", "type": "rules"}}}
 '''
 
+from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.urls import open_url
+import json
+__metaclass__ = type
 
 api_endpoint = 'https://fly.io/api/v1/sites/'
 
@@ -124,7 +123,7 @@ class Fly(object):
         return v
 
     def fly_simple_api_call(self, url, headers, payload=None):
-        error_msg=""
+        error_msg = ""
         if payload is not None:
             data = json.dumps(payload)
         else:
@@ -189,13 +188,13 @@ class Fly(object):
         url = api_endpoint + site + '/rules'
         headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer %s' % fly_auth_key}
         payload = {"data": {"attributes": {
-                              "hostname": hostname,
-                              "backend_id": backend_id,
-                              "action_type": action_type,
-                              "path": path,
-                              "priority": priority,
-                              "path_replacement": path_replacement
-                    }}}
+                            "hostname": hostname,
+                            "backend_id": backend_id,
+                            "action_type": action_type,
+                            "path": path,
+                            "priority": priority,
+                            "path_replacement": path_replacement
+                   }}}
         self.fly_simple_api_call(url, headers, payload)
 
 
