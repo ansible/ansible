@@ -50,7 +50,7 @@ In this example, we will create an inventory file containing some network switch
 
 Create a file called ``inventory``, containing:
 
-.. code-block::
+.. code-block:: none
 
    [switches:children]
    eos
