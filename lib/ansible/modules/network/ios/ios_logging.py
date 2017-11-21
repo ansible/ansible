@@ -260,6 +260,16 @@ def map_config_to_obj(module):
                     'facility': parse_facility(line, dest),
                     'level': parse_level(line, dest)
                 })
+            else:
+                ip_match = re.search(r'\d+\.\d+\.\d+\.\d+', match.group(1), re.M)
+                if ip_match:
+                    dest = 'host'
+                    obj.append({
+                        'dest': dest,
+                        'name': match.group(1),
+                        'facility': parse_facility(line, dest),
+                        'level': parse_level(line, dest)
+                    })
     return obj
 
 
