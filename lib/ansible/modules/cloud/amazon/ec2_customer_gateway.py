@@ -107,32 +107,62 @@ gateway.customer_gateway:
         state:
             description: state of gateway.
             returned: when gateway exists and is available.
-            state: available
+            sample: available
             type: string
         tags:
             description: any tags on the gateway.
             returned: when gateway exists and is available, and when tags exist.
-            state: available
-            type: string
+            sample: {Name: ansible_test, foo: bar}
+            type: dict
         type:
             description: encryption type.
             returned: when gateway exists and is available.
             sample: ipsec.1
             type: string
 gateway.customer_gateways:
-    description:
-      - A list containing the details about each gateway (in the same structure as gateway.customer_gateway) that
-        match the provided IP address.
-    type: list
+    description: A list containing all gateways that match the provided IP address.
+    type: complex
     returned: success
+    contains:
+        bgp_asn:
+            description: The Border Gateway Autonomous System Number.
+            returned: when the gateway exists.
+            sample: 65123
+            type: string
+        customer_gateway_id:
+            description: gateway id assigned by amazon.
+            returned: when the gateway exists.
+            sample: cgw-cb6386a2
+            type: string
+        ip_address:
+            description: ip address of your gateway device.
+            returned: when the gateway exists.
+            sample: 1.2.3.4
+            type: string
+        state:
+            description: state of gateway.
+            returned: when the gateway exists.
+            sample: available
+            type: string
+        tags:
+            description: any tags on the gateway.
+            returned: when gateway exists and is available, and when tags exist.
+            type: dict
+            sample: {Name: ansible_test, foo: bar}
+        type:
+            description: encryption type.
+            returned: when the gateway exists.
+            sample: ipsec.1
+            type: string
 changed:
-  description: whether or not the customer gateway has been modified
-  type: bool
-  returned: always
+    description: whether or not the customer gateway has been modified
+    type: bool
+    sample: false
+    returned: always
 name:
-  description: the name of the customer gateway determined by C(name)
-  type: str
-  returned: success
+    description: the name of the customer gateway determined by C(name)
+    type: str
+    returned: success
 '''
 
 try:
@@ -148,8 +178,8 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info, boto3_tag_list_to_ansible_dict)
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_tag_list_to_ansible_dict
 
 
 class Ec2CustomerGatewayManager:
@@ -219,7 +249,7 @@ class Ec2CustomerGatewayManager:
         return response
 
     def clean_results(self, results):
-        # don't camel_dict_to_snake dict the tags
+        # preserve tags before using camel_dict_to_snake_dict
         current_tags = boto3_tag_list_to_ansible_dict(results.get('gateway', {}).get('CustomerGateway', {}).get('Tags', []))
 
         results = camel_dict_to_snake_dict(results)
@@ -230,7 +260,7 @@ class Ec2CustomerGatewayManager:
         # since these tags are in a list of dicts they won't be modified by camel_dict_to_snake_dict
         for gateway in results['gateway']['customer_gateways']:
             if 'tags' in gateway:
-                gateway['tags'] = boto3_tag_list_to_ansible_dict(gateway['tags'], 'key', 'value')
+                gateway['tags'] = boto3_tag_list_to_ansible_dict(gateway['tags'])
 
         if 'tags' in results['gateway']['customer_gateway']:
             results['gateway']['customer_gateway']['tags'] = current_tags
