@@ -121,11 +121,11 @@ class Cli:
         """
         flags = [] if flags is None else flags
 
-        if self._device_configs is not {}:
+        if self._device_configs != {}:
             return self._device_configs
         else:
             connection = self._get_connection()
-            out = connection.get_config(flags)
+            out = connection.get_config(flags=flags)
             cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs = cfg
             return cfg
@@ -393,7 +393,7 @@ def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
     conn = get_connection(module)
-    return conn.get_config(flags)
+    return conn.get_config(flags=flags)
 
 
 def run_commands(module, commands, check_rc=True):
