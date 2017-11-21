@@ -138,6 +138,7 @@ import sys
 import re
 import argparse
 from time import time
+from pprint import pprint
 import ast
 
 try:
@@ -189,7 +190,7 @@ or environment variables (DO_API_TOKEN)\n''')
 
         # env command, show DigitalOcean credentials
         if self.args.env:
-            print("DO_API_TOKEN=%s" % self.api_token)
+            print('DO_API_TOKEN=%s' % self.api_token)
             sys.exit(0)
 
         # Manage cache
@@ -238,7 +239,7 @@ or environment variables (DO_API_TOKEN)\n''')
             self.write_to_cache()
 
         if self.args.pretty:
-            print(json.dumps(json_data, sort_keys=True, indent=2))
+            pprint(json.dumps(json_data, sort_keys=True))
         else:
             print(json.dumps(json_data))
         # That's all she wrote...
@@ -460,7 +461,7 @@ or environment variables (DO_API_TOKEN)\n''')
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        return re.sub("[^A-Za-z0-9\-\.]", "_", word)
+        return re.sub('[^A-Za-z0-9\-\.]', '_', word)
 
     def do_namespace(self, data):
         ''' Returns a copy of the dictionary with all the keys put in a 'do_' namespace '''
