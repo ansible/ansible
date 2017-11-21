@@ -164,6 +164,22 @@ class Cli:
         connection = self._get_connection()
         connection.edit_config(config)
 
+    def get_capabilities(self):
+        connection = self._get_connection()
+        info = connection.get_capabilities()
+
+        try:
+            info = to_text(info, errors='surrogate_or_strict')
+        except UnicodeError:
+            self._module.fail_json(msg=u'Failed to decode output from %s' % (to_text(info)))
+
+        try:
+            info = self._module.from_json(info)
+        except ValueError:
+            info = to_text(info).strip()
+
+        return info
+
 
 class Nxapi:
 
@@ -349,6 +365,9 @@ class Nxapi:
         else:
             return []
 
+    def get_capabilities(self):
+        pass
+
 
 def is_json(cmd):
     return str(cmd).endswith('| json')
@@ -401,3 +420,8 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, config, return_error=False, opts=None):
     conn = get_connection(module)
     return conn.load_config(config, return_error=return_error, opts=opts)
+
+
+def get_capabilities(module):
+    conn = get_connection(module)
+    return conn.get_capabilities()
