@@ -1,0 +1,11 @@
+---
+vars:
+  vlan: "{{ item.name }}"
+
+keys:
+  vlans:
+    type: list
+    value: "{{ vlan }}"
+    top: configuration/vlans/vlan
+    items:
+      name: name
