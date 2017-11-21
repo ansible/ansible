@@ -176,6 +176,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32710)
 * Fix nxos_snmp_host bug
   (https://github.com/ansible/ansible/pull/32916)
+* Make IOS devices consistent ios_logging
+  (https://github.com/ansible/ansible/pull/33100)
 
 <a id="2.4.1"></a>
 
