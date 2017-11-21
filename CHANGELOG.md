@@ -186,7 +186,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32986
 * Handle sets and datetime objects in inventory sources fixing tracebacks
   https://github.com/ansible/ansible/pull/32990
-
+* Fix for breaking change to Azure Python SDK DNS RecordSet constructor in azure-mgmt-dns==1.2.0
+  https://github.com/ansible/ansible/pull/33165
 
 <a id="2.4.1"></a>
 
