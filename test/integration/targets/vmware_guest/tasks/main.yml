@@ -20,3 +20,4 @@
 - include: cdrom_d1_c1_f0.yml
 - include: create_rp_d1_c1_f0.yml
 - include: create_guest_invalid_d1_c1_f0.yml
+- include: mac_address_d1_c1_f0.yml
