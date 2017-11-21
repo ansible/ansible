@@ -368,7 +368,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     group_id or a non-None ip range.
     """
 
-    FOREIGN_SECURITY_GROUP_REGEX = '^(\S+)/(sg-\S+)/(\S+)'
+    FOREIGN_SECURITY_GROUP_REGEX = r'^(\S+)/(sg-\S+)/(\S+)'
     group_id = None
     group_name = None
     ip = None

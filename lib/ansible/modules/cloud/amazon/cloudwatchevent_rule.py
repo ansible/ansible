@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: cloudwatchevent_rule
 short_description: Manage CloudWatch Event rules and targets

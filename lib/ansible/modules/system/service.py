@@ -672,10 +672,10 @@ class LinuxService(Service):
 
             initpath = '/etc/init'
             if self.upstart_version >= LooseVersion('0.6.7'):
-                manreg = re.compile('^manual\s*$', re.M | re.I)
+                manreg = re.compile(r'^manual\s*$', re.M | re.I)
                 config_line = 'manual\n'
             else:
-                manreg = re.compile('^start on manual\s*$', re.M | re.I)
+                manreg = re.compile(r'^start on manual\s*$', re.M | re.I)
                 config_line = 'start on manual\n'
             conf_file_name = "%s/%s.conf" % (initpath, self.name)
             override_file_name = "%s/%s.override" % (initpath, self.name)
@@ -1308,7 +1308,7 @@ class SunOSService(Service):
         # Support for synchronous restart/refresh is only supported on
         # Oracle Solaris >= 11.2
         for line in open('/etc/release', 'r').readlines():
-            m = re.match('\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
+            m = re.match(r'\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
             if m and m.groups()[0] >= 11.2:
                 return True
 

@@ -161,14 +161,14 @@ def optionDict(line, iface, option, value):
 
 
 def getValueFromLine(s):
-    spaceRe = re.compile('\s+')
+    spaceRe = re.compile(r'\s+')
     for m in spaceRe.finditer(s):
         pass
     valueEnd = m.start()
     option = s.split()[0]
     optionStart = s.find(option)
     optionLen = len(option)
-    valueStart = re.search('\s', s[optionLen + optionStart:]).end() + optionLen + optionStart
+    valueStart = re.search(r'\s', s[optionLen + optionStart:]).end() + optionLen + optionStart
     return s[valueStart:valueEnd]
 
 
@@ -286,7 +286,7 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
                     old_value = target_option['value']
                     prefix_start = old_line.find(option)
                     optionLen = len(option)
-                    old_value_position = re.search("\s+".join(old_value.split()), old_line[prefix_start + optionLen:])
+                    old_value_position = re.search(r"\s+".join(old_value.split()), old_line[prefix_start + optionLen:])
                     start = old_value_position.start() + prefix_start + optionLen
                     end = old_value_position.end() + prefix_start + optionLen
                     line = old_line[:start] + value + old_line[end:]

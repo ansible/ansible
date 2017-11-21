@@ -613,8 +613,8 @@ AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 def extract_names_from_blob_uri(blob_uri, storage_suffix):
     # HACK: ditch this once python SDK supports get by URI
-    m = re.match('^https://(?P<accountname>[^\.]+)\.blob\.{0}/'
-                 '(?P<containername>[^/]+)/(?P<blobname>.+)$'.format(storage_suffix), blob_uri)
+    m = re.match(r'^https://(?P<accountname>[^.]+)\.blob\.{0}/'
+                 r'(?P<containername>[^/]+)/(?P<blobname>.+)$'.format(storage_suffix), blob_uri)
     if not m:
         raise Exception("unable to parse blob uri '%s'" % blob_uri)
     extracted_names = m.groupdict()
