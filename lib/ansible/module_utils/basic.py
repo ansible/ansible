@@ -113,7 +113,7 @@ except ImportError:
         sys.exit(1)
     else:
         sj_version = json.__version__.split('.')
-        if sj_version < ('1', '6'):
+        if sj_version < ['1', '6']:
             # Version 1.5 released 2007-01-18 does not have the encoding parameter which we need
             print('\n{"msg": "Error: Ansible requires the stdlib json or simplejson >= 1.6.  Neither was found!", "failed": true}')
 
