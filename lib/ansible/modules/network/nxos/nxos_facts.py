@@ -170,6 +170,8 @@ import re
 
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
 
@@ -184,11 +186,54 @@ class FactsBase(object):
     def populate(self):
         pass
 
+    def execute_module_command(self, command, output):
+        resp = list()
+
+        if command['output'] == 'json' and not is_json(command['command']):
+            cmd = '%s | json' % command['command']
+        elif command['output'] == 'text' and is_json(command['command']):
+            cmd = command['command'].rsplit('|', 1)[0]
+        else:
+            cmd = command['command']
+
+        rc, out, err = exec_command(self.module, cmd)
+        try:
+            out = to_text(out, errors='surrogate_or_strict')
+        except UnicodeError:
+            self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+
+        if rc != 0:
+            try:
+                out = self.module.from_json(err)
+            except ValueError:
+                out = to_text(err).strip()
+        else:
+            try:
+                out = self.module.from_json(out)
+            except ValueError:
+                out = to_text(out).strip()
+
+        resp.append(out)
+
+        return resp
+
+
     def run(self, command, output=None):
         command_string = command
-        if output:
-            command = {'command': command, 'output': output}
-        resp = run_commands(self.module, command, check_rc=False)
+
+        if (self.module.params['transport'] == 'nxapi'
+                or self.module.params['provider']['transport'] == 'nxapi'):
+            if output:
+                command = {'command': command, 'output': output}
+            resp = run_commands(self.module, command, check_rc=False)
+
+        else:
+            if output:
+                command = {'command': command, 'output': output}
+            else:
+                command = {'command': command, 'output': ''}
+            resp = self.execute_module_command(command=command, output=output)
+
         try:
             return resp[0]
         except IndexError:

@@ -161,11 +161,8 @@ class Cli:
     def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
         """
-        try:
-            connection = self._get_connection()
-            connection.edit_config(config)
-        except ConnectionError as exc:
-            self._module.fail_json(msg=to_text(exc))
+        connection = self._get_connection()
+        connection.edit_config(config)
 
 
 class Nxapi:

@@ -167,13 +167,13 @@ def load_config(module, config, return_error=False, opts=None):
     if opts is None:
         opts = {}
 
-    rc, out, err = exec_command('configure')
+    rc, out, err = exec_command(module, 'configure')
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', output=to_text(err))
 
     msgs = []
     for cmd in config:
-        rc, out, err = exec_command(cmd)
+        rc, out, err = exec_command(module, cmd)
         if opts.get('ignore_timeout') and rc == 1:
             msgs.append(err)
             return msgs
@@ -182,7 +182,7 @@ def load_config(module, config, return_error=False, opts=None):
         elif out:
             msgs.append(out)
 
-    exec_command('end')
+    exec_command(module, 'end')
     return msgs
 
 
