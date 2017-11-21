@@ -15,7 +15,8 @@ DOCUMENTATION = '''
 ---
 module: cs_serviceoffer
 description:
-  - Create, update, delete service offerings.
+  - Create and delete service offerings for guest and system VMs.
+  - Update display_text of existing service offering.
 short_description: Manages service offerings on Apache CloudStack based clouds.
 version_added: "2.5"
 author: "René Moser (@resmo)"
@@ -55,7 +56,7 @@ options:
     description:
       - Hypervisor snapshot reserve space as a percent of a volume.
       - Only for managed storage using Xen or VMware.
-  disk_iops_customized
+  disk_iops_customized:
     description:
       - Whether compute offering iops is custom or not.
     default: false
@@ -129,6 +130,8 @@ options:
   storage_tags:
     description:
       - The storage tags for this service offering.
+    aliases:
+      - storage_tag
 extends_documentation_fragment: cloudstack
 '''
 
@@ -155,7 +158,7 @@ EXAMPLES = '''
     storage_type: shared
     is_volatile: true
     host_tags: eco
-    tags: eco
+    storage_tags: eco
 
 - name: Create or update a volatile compute service offering with shared storage
   local_action:
@@ -168,7 +171,7 @@ EXAMPLES = '''
     storage_type: shared
     is_volatile: true
     host_tags: eco
-    tags: eco
+    storage_tags: eco
 
 - name: Remove a compute service offering
   local_action:
@@ -187,7 +190,7 @@ EXAMPLES = '''
     cpu_speed: 2198
     memory: 2048
     storage_type: shared
-    tags: perf
+    storage_tags: perf
 
 - name: Remove a system offering
   local_action:
@@ -329,7 +332,7 @@ network_rate:
   description: Data transfer rate in megabits per second allowed
   returned: success
   type: int
-  sample 1000
+  sample: 1000
 '''
 
 from ansible.module_utils.basic import AnsibleModule
