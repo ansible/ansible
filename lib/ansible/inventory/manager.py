@@ -99,7 +99,7 @@ def split_host_pattern(pattern):
         try:
             (base, port) = parse_address(pattern, allow_ranges=True)
             patterns = [pattern]
-        except:
+        except Exception:
             # The only other case we accept is a ':'-separated list of patterns.
             # This mishandles IPv6 addresses, and is retained only for backwards
             # compatibility.
@@ -526,7 +526,9 @@ class InventoryManager(object):
         if matching_groups:
             for groupname in matching_groups:
                 results.extend(self._inventory.groups[groupname].get_hosts())
-        else:
+
+        # check hosts if no groups matched or it is a regex/glob pattern
+        if not matching_groups or pattern.startswith('~') or any(special in pattern for special in ('.', '?', '*', '[')):
             # pattern might match host
             matching_hosts = self._match_list(self._inventory.hosts, pattern)
             if matching_hosts:
