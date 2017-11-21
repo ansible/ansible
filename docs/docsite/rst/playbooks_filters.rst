@@ -340,7 +340,7 @@ output, use the ``parse_cli`` filter::
   {{ output | parse_cli('path/to/spec') }}
 
 The ``parse_cli`` filter will load the spec file and pass the command output
-through, it returning JSON output. The YAML spec file defines how to parse the CLI output.
+through it, returning JSON output. The YAML spec file defines how to parse the CLI output.
 
 The spec file should be valid formatted YAML.  It defines how to parse the CLI
 output and return JSON data.  Below is an example of a valid spec file that
@@ -485,19 +485,19 @@ value using the same ``show vlan | display xml`` command.::
           state: ".[@inactive='inactive']"
 
 
-The value of ``top`` is the relative XPath with respect to the XML root node.
-With reference to example XML output given below the value of ``top`` is ``configuration/vlans/vlan``
-which is a relative XPath expression with respect to the root node (<rpc-reply>) and
-``configuration`` in the value of ``top`` is the outer most container node and ``vlan``
-is the inner-most container node based on XML hierarchy.
+The value of ``top`` is the XPath relative to the XML root node.
+In the example XML output given below, the value of ``top`` is ``configuration/vlans/vlan``,
+which is an XPath expression relative to the root node (<rpc-reply>). 
+``configuration`` in the value of ``top`` is the outer most container node, and ``vlan``
+is the inner-most container node.
 
-``items`` is a dictionary, of key-value pairs that map user-defined names to XPath expressions
-that select elements. The Xpath expression is relative XPath with respect to value of XPath in ``top``.
-For example the ``vlan_id`` in spec file is user defined name and it's value ``vlan-id`` is the
-relative XPath with respect to value of XPath in ``top``
+``items`` is a dictionary of key-value pairs that map user-defined names to XPath expressions
+that select elements. The Xpath expression is relative to the value of the XPath value contained in ``top``.
+For example, the ``vlan_id`` in the spec file is a user defined name and its value ``vlan-id`` is the
+relative to the value of XPath in ``top``
 
-Attributes of XML tags can be extracted using XPath expressions, the value of ``state`` in spec
-is a XPath expression to get the attributes of ``vlan`` tag in output XML.::
+Attributes of XML tags can be extracted using XPath expressions. The value of ``state`` in the spec
+is an XPath expression used to get the attributes of the ``vlan`` tag in output XML.::
 
     <rpc-reply>
       <configuration>
@@ -511,7 +511,7 @@ is a XPath expression to get the attributes of ``vlan`` tag in output XML.::
       </configuration>
     </rpc-reply>
 
-.. note:: To get more details on supported XPath expression, check https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support
+.. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
 
 .. _hash_filters:
 
