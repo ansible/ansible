@@ -47,6 +47,7 @@ EXAMPLES = '''
 - name: Find Guest's Folder using name
   vmware_guest_find:
     hostname: 192.168.1.209
+    datacenter: datacenter-name
     username: administrator@vsphere.local
     password: vmware
     validate_certs: no
@@ -56,6 +57,7 @@ EXAMPLES = '''
 - name: Find Guest's Folder using UUID
   vmware_guest_find:
     hostname: 192.168.1.209
+    datacenter: datacenter-name
     username: administrator@vsphere.local
     password: vmware
     validate_certs: no
