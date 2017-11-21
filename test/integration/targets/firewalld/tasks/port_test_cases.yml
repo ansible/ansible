@@ -1,4 +1,4 @@
-# Test playbook for the firewalld module
+# Test playbook for the firewalld module - port operations
 # (c) 2017, Adam Miller <admiller@redhat.com>
 
 # This file is part of Ansible
@@ -16,71 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: Ensure /run/firewalld exists
-  file:
-    path: /run/firewalld
-    state: directory
-
-################################################################################
-# BEGIN: service test cases
-- name: firewalld service test permanent enabled
-  firewalld:
-    service: https
-    permanent: true
-    state: enabled
-  register: result
-
-- name: assert firewalld service test permanent enabled worked
-  assert:
-    that:
-    - not result|failed
-    - result|changed
-
-- name: firewalld service test permanent enabled rerun (verify not changed)
-  firewalld:
-    service: https
-    permanent: true
-    state: enabled
-  register: result
-
-- name: assert firewalld service test permanent enabled rerun worked (verify not changed)
-  assert:
-    that:
-    - not result|failed
-    - not result|changed
-
-- name: firewalld service test permanent disabled
-  firewalld:
-    service: https
-    permanent: true
-    state: disabled
-  register: result
-
-- name: assert firewalld service test permanent disabled worked
-  assert:
-    that:
-    - not result|failed
-    - result|changed
-
-- name: firewalld service test permanent disabled rerun (verify not changed)
-  firewalld:
-    service: https
-    permanent: true
-    state: disabled
-  register: result
-
-- name: assert firewalld service test permanent disabled rerun worked (verify not changed)
-  assert:
-    that:
-    - not result|failed
-    - not result|changed
-
-# END: service test cases
-################################################################################
-
-
-################################################################################
-# BEGIN: port test cases
 - name: firewalld port test permanent enabled
   firewalld:
     port: 8081/tcp
@@ -132,6 +67,3 @@
     that:
     - not result|failed
     - not result|changed
-
-# END: service test cases
-################################################################################

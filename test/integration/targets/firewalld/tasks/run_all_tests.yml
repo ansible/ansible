@@ -16,19 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: Run firewalld tests
-  block:
-    - name: Ensure firewalld is installed
-      package:
-        name: firewalld
-        state: installed
-      # This doesn't work for CentOS 6 because firewalld doesn't exist in CentOS6
+- name: Ensure /run/firewalld exists
+  file:
+    path: /run/firewalld
+    state: directory
 
-    # Check to make sure the firewalld python module is available.
-    - shell: "{{ansible_python.executable}} -c 'import firewall'"
-      register: check_output
-      ignore_errors: true
+# firewalld service operation test cases
+- import_tasks: service_test_cases.yml
 
-    - import_tasks: run_all_tests.yml
-      when: check_output.rc == 0
-  when: (ansible_os_family != "RedHat" and ansible_distribution_major_version != "6")
+# firewalld port operation test cases
+- import_tasks: port_test_cases.yml
