@@ -44,6 +44,22 @@
 
     # ============================================================
 
+    - name: test check mode creating a VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: check for a change
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+
     - name: create a VPC
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
@@ -77,6 +93,23 @@
     - name: save default dhcp_options_id for later comparison
       set_fact:
         default_dhcp_options_id: "{{ result.vpc.dhcp_options_id }}"
+
+    # ============================================================
+
+    - name: test check mode creating an identical VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        multi_ok: yes
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert a change would be made
+      assert:
+        that:
+          - 'result.changed'
 
     # ============================================================
 
@@ -169,8 +202,7 @@
     # ============================================================
 
     - name: create a DHCP option set to use in next test
-      ec2_vpc_dhcp_options:
-        region: us-east-1
+      ec2_vpc_dhcp_option:
         dns_servers:
           - 4.4.4.4
           - 8.8.8.8
@@ -194,7 +226,7 @@
         that:
           - 'result.changed'
           - default_dhcp_options_id != result.vpc.dhcp_options_id
-    
+
     # ============================================================
 
     - name: modify classic_link_enabled
@@ -212,12 +244,46 @@
       assert:
         that:
           - 'result | success'
-          # FIXME The module currently doesn't note changed for VPC attributes
+          # FIXME The module currently doesn't note changed for VPC attributes.
+          # Once this is fixed a test should be added for check mode as well.
           # - 'result.changed'
 
     # ============================================================
 
+    - name: test check mode to delete a VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert that a change would have been made
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+
   always:
+
+    - name: replace the DHCP options set so the new one can be deleted
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        multi_ok: no
+        dhcp_opts_id: "{{ default_dhcp_options_id }}"
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: remove the DHCP option set
+      ec2_vpc_dhcp_option:
+        dhcp_options_id: "{{ new_dhcp.dhcp_options_id }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: true
 
     - name: remove the VPC
       ec2_vpc_net:
