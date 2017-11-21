@@ -1,255 +1,264 @@
 ---
-# tasks file for test_s3
-#   Test creating a bucket                                      (bucket1 created)
-#   Test creating a bucket with tags                            (bucket2 created)
-#   Test modifying tags of a bucket                             (bucket2 modified)
-#   Test creating a bucket with policy                          (bucket3 created)
-#   Test doing something not permitted by the policy            (bucket3 not modified)
-#   Test creating a bucket that already exists                  (bucket3 not modified)
-#   Test removing a policy from a bucket                        (bucket3 modified)
-#   Test deleting a bucket that doesn't exist                   (no bucket affected)
-#   Test deleting a bucket with an object in it without force   (bucket1 not modified)
-#   Test deleting a bucket with an object in it with force      (bucket1 deleted)
-#   Test deleting an empty bucket without force                 (bucket2 deleted)
-#   Test deleting an empty bucket with force                    (bucket3 deleted)
-#   Test creating a bucket with a . in the name                 (bucket4 created)
-#   Test deleting a bucket with a . in the name                 (bucket4 deleted)
-# ============================================================
-- name: generate random name for the bucket name
-  command: bash -c 'echo ansible_test_$RANDOM'
-  register: bucket
-# ============================================================
-- name: create temporary file object to use later
-  tempfile:
-  register: tmp1
-- name: give temporary file data
-  copy:
-    content: "foo"
-    dest: "{{ tmp1.path }}"
-# ============================================================
-- name: test create bucket-1
-  s3_bucket:
-    name: "{{ bucket.stdout }}-1"
-    state: present
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed is true and there are no tags or policy
-  assert:
-    that:
-      - "result.changed == true"
-      - "result.tags == {}"
-      - "result.policy == {}"
-# ============================================================
-- name: test create bucket-2 with tags
-  s3_bucket:
-    name: "{{ bucket.stdout }}-2"
-    state: present
-    tags:
-      test: s3_bucket
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed is true and that tags are present
-  assert:
-    that:
-      - "result.changed == true"
-      - "result.tags == {'test': 's3_bucket'}"
-# ============================================================
-- name: test modifying tags of bucket-2
-  s3_bucket:
-    name: "{{ bucket.stdout }}-2"
-    state: present
-    tags:
-      new_tag: ansible test
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed is true and tags have been modified
-  assert:
-    that:
-      - "result.changed == true"
-      - "result.tags == {'new_tag': 'ansible test'}"
-# ============================================================
-- name: test create bucket-3 with a policy that denies put object
-  s3_bucket:
-    name: "{{ bucket.stdout }}-3"
-    state: present
-    policy: {"Version": "2012-10-17", "Statement": [{"Sid": " Deny all actions", "Principal": "*", "Effect": "Deny", "Action": "s3:*", "Resource": "arn:aws:s3:::{{ bucket.stdout }}-3/*"}]}
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed is true and that policy is correct
-  assert:
-    that:
-      - "result.changed == true"
-      - "'Statement' in result.policy"
-# ============================================================
-- name: verify that the policy works by trying to put an object in the bucket
-  s3:
-    bucket: "{{ bucket.stdout }}-3"
-    mode: put
-    src: "{{ tmp1.path }}"
-    object: delete.txt
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-  register: result
-  ignore_errors: yes
-- name: assert that it failed
-  assert:
-    that:
-      - "result.failed == true"
-# ============================================================
-- name: test that we can change the policy
-  s3_bucket:
-    name: "{{ bucket.stdout }}-3"
-    state: present
-    policy: {"Version": "2012-10-17", "Statement": [{"Sid": " Allow all actions", "Principal": "*", "Effect": "Allow", "Action": "s3:*", "Resource": "arn:aws:s3:::{{ bucket.stdout }}-3/*"}]}
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert that the policy is updated
-  assert:
-    that:
-      - "result.changed == true"
-      - "'Statement' in result.policy"
-# ============================================================
-- name: verify that the policy works by putting/deleting an object in the bucket
-  s3:
-    bucket: "{{ bucket.stdout }}-3"
-    mode: put
-    src: "{{ tmp1.path }}"
-    object: delete.txt
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-- name: delete it
-  s3:
-    bucket: "{{ bucket.stdout }}-3"
-    mode: delobj
-    object: delete.txt  
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-  register: result
-- name: assert that changed is true
-  assert:
-    that:
-      - "result.changed == true"
-# ============================================================
-- name: test creating a bucket name that already exists
-  s3_bucket:
-    name: "{{ bucket.stdout }}-3"
-    state: present
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed is false since the bucket already exists and policy wasn't removed
-  assert:
-    that:
-      - "result.changed == false"
-      - result.policy
-# ============================================================
-- name: test delete a bucket that doesn't exist
-  s3_bucket:
-    name: "{{ bucket.stdout}}-nonexistent"
-    state: absent
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed is false since the bucket doesn't exist
-  assert:
-    that:
-      - "result.changed == false"
-# ============================================================
-- name: put object in bucket with s3 module to test deletion with/without force
-  s3:
-    bucket: "{{ bucket.stdout }}-1"
-    mode: put
-    src: "{{ tmp1.path }}"
-    object: delete.txt
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-# ============================================================
-- name: wait a few seconds before continuing
-  pause:
-    seconds: 3
-# ============================================================
-- name: test deleting bucket with content without force option
-  s3_bucket:
-    name: "{{ bucket.stdout }}-1"
-    state: absent
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  ignore_errors: yes
-  register: result
-- name: assert that delete.txt is no longer an object in the bucket deleteme
-  assert:
-    that:
-      - "result.msg == 'The bucket you tried to delete is not empty'"
-# ============================================================
-- name: test delete bucket with force option
-  s3_bucket:
-    name: "{{ bucket.stdout }}-1"
-    state: absent
-    force: yes
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert that changed is True
-  assert:
-    that:
-      - "result.changed == true"
-# ============================================================
-- name: delete temporary file 1
-  file:
-    state: absent
-    path: "{{ tmp1.path }}"
-# ============================================================
-- name: delete empty bucket with tags without force  
-  s3_bucket:
-    name: "{{ bucket.stdout }}-2"
-    state: absent
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed
-  assert:
-    that:
-      "result.changed == true"
-# ============================================================
-- name: delete empty bucket with force
-  s3_bucket:
-    name: "{{ bucket.stdout }}-3"
-    state: absent
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
-    requester_pays: true
-  register: result
-- name: assert changed
-  assert:
-    that:
-      "result.changed == true"
+
+  - name: set connection information for subsequent tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+      no_log: yes
+
+  # ============================================================
+
+  - name: create temporary file object to use later
+    tempfile:
+    register: tmp1
+
+  - name: give temporary file data
+    copy:
+      content: "foo"
+      dest: "{{ tmp1.path }}"
+
+  # ============================================================
+
+  - name: test create bucket-1
+    s3_bucket:
+      name: "{{ bucket_name }}-1"
+      state: present
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is true and there are no tags or policy
+    assert:
+      that:
+        - "result.changed == true"
+        - "result.tags == {}"
+        - "result.policy == {}"
+
+  # ============================================================
+
+  - name: test create bucket-2 with tags
+    s3_bucket:
+      name: "{{ bucket_name }}-2"
+      state: present
+      tags:
+        test: s3_bucket
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is true and that tags are present
+    assert:
+      that:
+        - "result.changed == true"
+        - "result.tags == {'test': 's3_bucket'}"
+
+  # ============================================================
+
+  - name: test modifying tags of bucket-2
+    s3_bucket:
+      name: "{{ bucket_name }}-2"
+      state: present
+      tags:
+        new_tag: ansible test
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is true and tags have been modified
+    assert:
+      that:
+        - "result.changed == true"
+        - "result.tags == {'new_tag': 'ansible test'}"
+
+  # ============================================================
+
+  - name: test create bucket-3 with a policy that denies put object
+    s3_bucket:
+      name: "{{ bucket_name }}-3"
+      state: present
+      policy: {"Version": "2012-10-17", "Statement": [{"Sid": " Deny all actions", "Principal": "*", "Effect": "Deny", "Action": "s3:*", "Resource": "arn:aws:s3:::{{ bucket_name }}-3/*"}]}
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is true and that policy is correct
+    assert:
+      that:
+        - "result.changed == true"
+        - "'Statement' in result.policy"
+
+  # ============================================================
+
+  - name: verify that the policy works by trying to put an object in the bucket
+    s3:
+      bucket: "{{ bucket_name }}-3"
+      mode: put
+      src: "{{ tmp1.path }}"
+      object: delete.txt
+      <<: *aws_connection_info
+    register: result
+    ignore_errors: yes
+
+  - name: assert that it failed
+    assert:
+      that:
+        - "result.failed == true"
+
+  # ============================================================
+
+  - name: test that we can change the policy
+    s3_bucket:
+      name: "{{ bucket_name }}-3"
+      state: present
+      policy: {"Version": "2012-10-17", "Statement": [{"Sid": " Allow all actions", "Principal": "*", "Effect": "Allow", "Action": "s3:*", "Resource": "arn:aws:s3:::{{ bucket_name }}-3/*"}]}
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert that the policy is updated
+    assert:
+      that:
+        - "result.changed == true"
+        - "'Statement' in result.policy"
+
+  # ============================================================
+
+  - name: verify that the policy works by putting/deleting an object in the bucket
+    s3:
+      bucket: "{{ bucket_name }}-3"
+      mode: put
+      src: "{{ tmp1.path }}"
+      object: delete.txt
+      <<: *aws_connection_info
+
+  - name: delete it
+    s3:
+      bucket: "{{ bucket_name }}-3"
+      mode: delobj
+      object: delete.txt
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert that changed is true
+    assert:
+      that:
+        - "result.changed == true"
+
+  # ============================================================
+
+  - name: test creating a bucket name that already exists
+    s3_bucket:
+      name: "{{ bucket_name }}-3"
+      state: present
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is false since the bucket already exists and policy wasn't removed
+    assert:
+      that:
+        - "result.changed == false"
+        - result.policy
+
+  # ============================================================
+
+  - name: test delete a bucket that doesn't exist
+    s3_bucket:
+      name: "{{ bucket_name }}-nonexistent"
+      state: absent
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed is false since the bucket doesn't exist
+    assert:
+      that:
+        - "result.changed == false"
+
+  # ============================================================
+
+  - name: put object in bucket with s3 module to test deletion with/without force
+    s3:
+      bucket: "{{ bucket_name }}-1"
+      mode: put
+      src: "{{ tmp1.path }}"
+      object: delete.txt
+      <<: *aws_connection_info
+
+  # ============================================================
+
+  - name: wait a few seconds before continuing
+    pause:
+      seconds: 3
+
+  # ============================================================
+
+  - name: test deleting bucket with content without force option
+    s3_bucket:
+      name: "{{ bucket_name }}-1"
+      state: absent
+      requester_pays: true
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: result
+
+  - name: assert that delete.txt is no longer an object in the bucket deleteme
+    assert:
+      that:
+        - "result.msg == 'The bucket you tried to delete is not empty'"
+
+  # ============================================================
+
+  - name: test delete bucket with force option
+    s3_bucket:
+      name: "{{ bucket_name }}-1"
+      state: absent
+      force: yes
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert that changed is True
+    assert:
+      that:
+        - "result.changed == true"
+
+  # ============================================================
+
+  - name: delete temporary file 1
+    file:
+      state: absent
+      path: "{{ tmp1.path }}"
+
+  # ============================================================
+
+  - name: delete empty bucket with tags without force
+    s3_bucket:
+      name: "{{ bucket_name }}-2"
+      state: absent
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed
+    assert:
+      that:
+        - "result.changed == true"
+
+  # ============================================================
+
+  - name: delete empty bucket with force
+    s3_bucket:
+      name: "{{ bucket_name }}-3"
+      state: absent
+      requester_pays: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: assert changed
+    assert:
+      that:
+        - "result.changed == true"
