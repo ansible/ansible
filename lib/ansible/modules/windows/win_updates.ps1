@@ -224,7 +224,7 @@ try {
     Fail-Json -obj $result -message "Failed to create Update Collection object: $($_.Exception.Message)"
 }
 
-foreach ($updates in $updates_to_install) {
+foreach ($update in $updates_to_install) {
     Write-DebugLog -msg "Adding update $($update.Identity.UpdateID)"
     $installer.Updates.Add($update) > $null
 }
