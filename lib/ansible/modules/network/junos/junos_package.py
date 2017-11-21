@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: junos_package
-version_added: "2.1"
+version_added: "2.5"
 author: "Peter Sprygada (@privateip)"
 short_description: Installs packages on remote devices running Junos
 description:
