@@ -31,4 +31,4 @@
 
     - import_tasks: run_all_tests.yml
       when: check_output.rc == 0
-  when: (ansible_os_family != "RedHat" and ansible_distribution_major_version != "6")
+  when: not (ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7)
