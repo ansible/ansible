@@ -100,7 +100,8 @@ options:
     - A list of disks to add.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
-    - ' - C(type) (string): Valid value is C(thin) (default: None).'
+    - ' - C(type) (string): Valid values are:'
+    - '   C(thin) thin disk, C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5, Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore.'
   cdrom:
@@ -1018,8 +1019,11 @@ class PyVmomiHelper(PyVmomi):
 
             # is it thin?
             if 'type' in expected_disk_spec:
-                if expected_disk_spec.get('type', '').lower() == 'thin':
+                disk_type = expected_disk_spec.get('type', '').lower()
+                if disk_type == 'thin':
                     diskspec.device.backing.thinProvisioned = True
+                elif disk_type == 'eagerzeroedthick':
+                    diskspec.device.backing.eagerlyScrub = True
 
             # which datastore?
             if expected_disk_spec.get('datastore'):
