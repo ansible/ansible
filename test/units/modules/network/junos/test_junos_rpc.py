@@ -35,7 +35,8 @@ RPC_CLI_MAP = {
     'get-interface-information': 'show interfaces details',
     'get-system-memory-information': 'show system memory',
     'get-chassis-inventory': 'show chassis hardware',
-    'get-system-storage': 'show system storage'
+    'get-system-storage': 'show system storage',
+    'load-configuration': 'load configuration'
 }
 
 
@@ -91,3 +92,8 @@ class TestJunosCommandModule(TestJunosModule):
         args, kwargs = self.send_request.call_args
         reply = tostring(args[1]).decode()
         self.assertTrue(reply.find('<interface>em0</interface><media /></get-software-information>'))
+
+    def test_junos_rpc_attrs(self):
+        set_module_args(dict(rpc='load-configuration', output='xml', attrs={'url': '/var/tmp/config.conf'}))
+        result = self.execute_module(format='xml')
+        self.assertTrue(result['xml'].find('<load-success/>'))
