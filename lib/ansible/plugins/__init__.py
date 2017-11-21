@@ -55,7 +55,7 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:
-            option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self.name, variables=hostvars)
+            option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self._load_name, variables=hostvars)
             self.set_option(option, option_value)
         return self._options.get(option)
 
