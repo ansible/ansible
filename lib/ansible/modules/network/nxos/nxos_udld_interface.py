@@ -141,7 +141,7 @@ def check_load_config(module, config, return_error=False):
     for cmd in config:
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
-             module.fail_json(msg=to_text(err))
+            module.fail_json(msg=to_text(err))
         elif out:
             msgs.append(out)
 
@@ -302,8 +302,7 @@ def main():
         else:
             changed = True
             # set the return_error to True for load_config
-            if (module.params['transport'] == 'cli' or
-                module.params['provider']['transport'] == 'cli'):
+            if module.params['transport'] == 'cli' or module.params['provider']['transport'] == 'cli':
                 msgs = check_load_config(module, cmds, True)
             else:
                 msgs = load_config(module, cmds, True)

@@ -220,8 +220,7 @@ class FactsBase(object):
     def run(self, command, output=None):
         command_string = command
 
-        if (self.module.params['transport'] == 'nxapi' or
-            self.module.params['provider']['transport'] == 'nxapi'):
+        if self.module.params['transport'] == 'nxapi' or self.module.params['provider']['transport'] == 'nxapi':
             if output:
                 command = {'command': command, 'output': output}
             resp = run_commands(self.module, command, check_rc=False)
