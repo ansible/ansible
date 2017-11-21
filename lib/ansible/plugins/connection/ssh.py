@@ -186,6 +186,7 @@ DOCUMENTATION = '''
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
       use_tty:
+        version_added: '2.5'
         default: True
         description: add -tt to ssh commands to force tty allocation
         env: [{name: ANSIBLE_SSH_USETTY}]
