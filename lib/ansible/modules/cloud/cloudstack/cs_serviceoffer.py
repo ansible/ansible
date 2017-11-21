@@ -416,6 +416,15 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
 
     def _create_offering(self, service_offering):
         self.result['changed'] = True
+
+        system_vm_type = self.module.params.get('system_vm_type')
+        is_system = self.module.params.get('is_system')
+
+        required_params = []
+        if is_system and not system_vm_type:
+            required_params.add('system_vm_type')
+        self.module.fail_on_missing_params(required_params=required_params)
+
         args = {
             'name': self.module.params.get('name'),
             'displaytext': self.get_or_fallback('display_text', 'name'),
@@ -432,7 +441,7 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'iopswriterate': self.module.params.get('disk_iops_write_rate'),
             'maxiops': self.module.params.get('disk_iops_max'),
             'miniops': self.module.params.get('disk_iops_min'),
-            'issystem': self.module.params.get('is_system'),
+            'issystem': is_system,
             'isvolatile': self.module.params.get('is_volatile'),
             'memory': self.module.params.get('memory'),
             'networkrate': self.module.params.get('network_rate'),
@@ -440,7 +449,7 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'provisioningtype': self.module.params.get('provisioning_type'),
             'serviceofferingdetails': self.module.params.get('service_offering_details'),
             'storagetype': self.module.params.get('storage_type'),
-            'systemvmtype': self.module.params.get('system_vm_type'),
+            'systemvmtype': system_vm_type,
             'tags': self.module.params.get('storage_tags'),
             'limit_cpu_use': self.module.params.get('limit_cpu_usage')
         }
@@ -514,9 +523,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
-        required_if=[
-            ('is_system', True, ['system_vm_type']),
-        ],
         supports_check_mode=True
     )
 
