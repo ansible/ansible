@@ -1,17 +1,17 @@
 ---
-- name: setup
+- name: setup service offering
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     state: absent
   register: so
-- name: verify setup
+- name: verify setup service offering
   assert:
     that:
     - so|success
 
 - name: create service offering in check mode
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
     cpu_speed: 2198
@@ -56,7 +56,7 @@
 
 - name: create service offering idempotence
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
     cpu_speed: 2198
@@ -82,7 +82,7 @@
 
 - name: update service offering in check mode
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     display_text: Micro RAM 512MB 1vCPU
   register: so
   check_mode: true
@@ -101,7 +101,7 @@
 
 - name: update service offering
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     display_text: Micro RAM 512MB 1vCPU
   register: so
 - name: verify update service offerin
@@ -119,7 +119,7 @@
 
 - name: update service offering idempotence
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     display_text: Micro RAM 512MB 1vCPU
   register: so
 - name: verify update service offering idempotence
@@ -137,7 +137,7 @@
 
 - name: remove service offering in check mode
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     state: absent
   check_mode: true
   register: so
@@ -156,7 +156,7 @@
 
 - name: remove service offering
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     state: absent
   register: so
 - name: verify remove service offering
@@ -174,7 +174,7 @@
 
 - name: remove service offering idempotence
   cs_serviceoffer:
-    name: "Micro"
+    name: Micro
     state: absent
   register: so
 - name: verify remove service offering idempotence
