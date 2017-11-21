@@ -155,6 +155,9 @@ files:
   $modules/cloud/atomic/: krsacme
   $modules/cloud/azure/azure.py:
     ignored: jwhitbeck
+  $modules/cloud/azure/azure_rm_dnsrecordset.py:
+    ignored: ozboms
+    maintainers: $team_azure
   $modules/cloud/azure/azure_rm_networkinterface.py:
     ignored: chouseknecht
     maintainers: $team_azure
