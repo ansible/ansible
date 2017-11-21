@@ -74,7 +74,7 @@ def activate(module):
 def is_policy_enabled(module, name):
     cmd = "%s list" % (AWALL_PATH)
     rc, stdout, stderr = module.run_command(cmd)
-    if re.search("^%s\s+enabled" % name, stdout, re.MULTILINE):
+    if re.search(r"^%s\s+enabled" % name, stdout, re.MULTILINE):
         return True
     return False
 

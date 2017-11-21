@@ -274,7 +274,7 @@ from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_bytes, to_native
 
-_IDENT = "[a-zA-Z-][a-zA-Z0-9_\-\.]*"
+_IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
 _NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT
 # Note: we can't reasonably support the 'if you need to put both ' and " in a string, concatenate
 # strings wrapped by the other delimiter' XPath trick, especially as simple XPath.

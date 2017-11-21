@@ -181,7 +181,7 @@ def alter_retention_policy(module, client, retention_policy):
     duration = module.params['duration']
     replication = module.params['replication']
     default = module.params['default']
-    duration_regexp = re.compile('(\d+)([hdw]{1})|(^INF$){1}')
+    duration_regexp = re.compile(r'(\d+)([hdw]{1})|(^INF$){1}')
     changed = False
 
     duration_lookup = duration_regexp.search(duration)

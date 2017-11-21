@@ -231,7 +231,7 @@ def codex_list(module):
     if rc != 0:
         module.fail_json(msg="unable to list grimoire collection, fix your Codex")
 
-    rex = re.compile("^\s*\[\d+\] : (?P<grim>[\w\-\+\.]+) : [\w\-\+\./]+(?: : (?P<ver>[\w\-\+\.]+))?\s*$")
+    rex = re.compile(r"^\s*\[\d+\] : (?P<grim>[\w\-+.]+) : [\w\-+./]+(?: : (?P<ver>[\w\-+.]+))?\s*$")
 
     # drop 4-line header and empty trailing line
     for line in stdout.splitlines()[4:-1]:

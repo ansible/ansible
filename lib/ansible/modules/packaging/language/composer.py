@@ -137,7 +137,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def parse_out(string):
-    return re.sub("\s+", " ", string).strip()
+    return re.sub(r"\s+", " ", string).strip()
 
 
 def has_changed(string):

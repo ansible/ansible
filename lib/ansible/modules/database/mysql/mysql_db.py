@@ -126,7 +126,7 @@ from ansible.module_utils._text import to_native
 
 
 def db_exists(cursor, db):
-    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_", "\_"),))
+    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_", r"\_"),))
     return bool(res)
 
 

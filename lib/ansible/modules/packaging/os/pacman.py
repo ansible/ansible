@@ -194,7 +194,7 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        regex = re.compile(r'([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))
@@ -419,11 +419,11 @@ def main():
         for i, pkg in enumerate(pkgs):
             if not pkg:  # avoid empty strings
                 continue
-            elif re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
+            elif re.match(r".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)
-                pkgs[i] = re.sub('-[0-9].*$', '', pkgs[i].split('/')[-1])
+                pkgs[i] = re.sub(r'-[0-9].*$', '', pkgs[i].split('/')[-1])
             else:
                 pkg_files.append(None)
 
