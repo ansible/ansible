@@ -12,7 +12,7 @@
                 "rds:DeleteDBInstance"
             ],
             "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-testing*"
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-test*"
             ]
         },
         {
@@ -25,7 +25,7 @@
                 "rds:DescribeDBInstances"
             ],
             "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:rds-*"
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-test-*"
             ]
         },
         {
@@ -42,9 +42,9 @@
                 "rds:CreateDBInstanceReadReplica"
             ],
             "Resource": [
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:snapshot-*",
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:rds-*",
-                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:rds-*"
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:ansible-test-*",
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:snapshot:rds:ansible-test-*",
+                "arn:aws:rds:{{aws_region}}:{{aws_account}}:db:ansible-test*"
             ]
         },
         {
