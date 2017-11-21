@@ -103,7 +103,6 @@ def get_placement_groups_details(connection, module):
 
     results = []
     for placement_group in groups:
-        print placement_group
         results.append({
             "name": placement_group.name,
             "state": placement_group.state,

@@ -108,7 +108,6 @@ def get_placement_group_details(connection, module):
         return None
     else:
         placement_group = groups[0]
-        print placement_group
         return {
             "name": placement_group.name,
             "state": placement_group.state,
