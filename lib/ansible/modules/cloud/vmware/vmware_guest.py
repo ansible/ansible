@@ -313,6 +313,7 @@ instance:
     sample: None
 '''
 
+import re
 import time
 
 HAS_PYVMOMI = False
@@ -470,13 +471,28 @@ class PyVmomiDeviceHelper(object):
         nic.device.connectable.startConnected = True
         nic.device.connectable.allowGuestControl = True
         nic.device.connectable.connected = True
-        if 'mac' in device_infos:
-            nic.device.addressType = 'assigned'
+        if 'mac' in device_infos and self.is_valid_mac_addr(device_infos['mac']):
+            nic.device.addressType = 'manual'
             nic.device.macAddress = device_infos['mac']
         else:
             nic.device.addressType = 'generated'
 
         return nic
+
+    @staticmethod
+    def is_valid_mac_addr(mac_addr):
+        """
+        Function to validate MAC address for given string
+        Args:
+            mac_addr: string to validate as MAC address
+
+        Returns: (Boolean) True if string is valid MAC address, otherwise False
+        """
+        ret = False
+        mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
+        if mac_addr_regex.match(mac_addr):
+            ret = True
+        return ret
 
 
 class PyVmomiCache(object):
