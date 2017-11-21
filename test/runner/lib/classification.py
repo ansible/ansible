@@ -509,6 +509,12 @@ class PathMapper(object):
                     }
 
         if path.startswith('test/runner/'):
+            if dirname == 'test/runner' and name in (
+                    'Dockerfile',
+                    '.dockerignore',
+            ):
+                return minimal  # not used by tests, only used to build the default container
+
             return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/shippable/'):
