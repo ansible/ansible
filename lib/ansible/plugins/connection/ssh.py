@@ -193,7 +193,7 @@ DOCUMENTATION = '''
         ini:
         - {key: usetty, section: ssh_connection}
         type: boolean
-        yaml: {key: ssh_connection.usetty}
+        yaml: {key: connection.usetty}
 '''
 
 import errno
