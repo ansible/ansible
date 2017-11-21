@@ -23,6 +23,7 @@ from operator import attrgetter
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
 from ansible.parsing.dataloader import DataLoader
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 try:
     from __main__ import display
@@ -179,7 +180,13 @@ class InventoryCLI(CLI):
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         else:
             import json
-            results = json.dumps(stuff, sort_keys=True, indent=4)
+
+            # yaml.objects.AnsibleVaultEncryptedUnicode is not json serializable, so add a default for dumps
+            def default(data):
+                if isinstance(data, AnsibleVaultEncryptedUnicode):
+                    return data.data
+                return json.JSONEncoder.default(data)
+            results = json.dumps(stuff, sort_keys=True, indent=4, default=default)
 
         return results
 
