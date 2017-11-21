@@ -228,7 +228,7 @@ def run(module, result):
     if result['changed'] or module.params['save_when'] == 'always':
         result['changed'] = True
         if not module.check_mode:
-            cmd = {'command': 'write memory', 'output': 'text'}
+            cmd = {'command': 'write memory'}
             run_commands(module, [cmd])
 
 

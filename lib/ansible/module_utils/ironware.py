@@ -96,6 +96,7 @@ def run_commands(module, commands, check_rc=True):
 
 
 def get_config(module, source='running', flags=None):
+    global _DEVICE_CONFIG
     if source is 'running' and flags is None and _DEVICE_CONFIG is not None:
         return _DEVICE_CONFIG
     else:
