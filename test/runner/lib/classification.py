@@ -487,6 +487,10 @@ class PathMapper(object):
 
                 test_path = os.path.dirname(test_path)
 
+        if path.startswith('test/runner/completion/'):
+            if path == 'test/runner/completion/docker.txt':
+                return all_tests(self.args, force=True)  # force all tests due to risk of breaking changes in new test environment
+
         if path.startswith('test/runner/docker/'):
             return minimal  # not used by tests, only used to build the default container
 
@@ -585,12 +589,16 @@ class PathMapper(object):
         return None  # unknown, will result in fall-back to run all tests
 
 
-def all_tests(args):
+def all_tests(args, force=False):
     """
     :type args: TestConfig
+    :type force: bool
     :rtype: dict[str, str]
     """
-    integration_all_target = get_integration_all_target(args)
+    if force:
+        integration_all_target = 'all'
+    else:
+        integration_all_target = get_integration_all_target(args)
 
     return {
         'sanity': 'all',
