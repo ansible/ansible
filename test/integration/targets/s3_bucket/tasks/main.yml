@@ -93,7 +93,7 @@
   # ============================================================
 
   - name: verify that the policy works by trying to put an object in the bucket
-    s3:
+    aws_s3:
       bucket: "{{ bucket_name }}-3"
       mode: put
       src: "{{ tmp1.path }}"
@@ -127,7 +127,7 @@
   # ============================================================
 
   - name: verify that the policy works by putting/deleting an object in the bucket
-    s3:
+    aws_s3:
       bucket: "{{ bucket_name }}-3"
       mode: put
       src: "{{ tmp1.path }}"
@@ -135,7 +135,7 @@
       <<: *aws_connection_info
 
   - name: delete it
-    s3:
+    aws_s3:
       bucket: "{{ bucket_name }}-3"
       mode: delobj
       object: delete.txt
@@ -181,7 +181,7 @@
   # ============================================================
 
   - name: put object in bucket with s3 module to test deletion with/without force
-    s3:
+    aws_s3:
       bucket: "{{ bucket_name }}-1"
       mode: put
       src: "{{ tmp1.path }}"
