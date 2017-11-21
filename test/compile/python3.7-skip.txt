@@ -1,0 +1,13 @@
+lib/ansible/cli/adhoc.py
+lib/ansible/executor/task_executor.py
+lib/ansible/modules/packaging/os/yum_repository.py
+lib/ansible/plugins/action/__init__.py
+lib/ansible/plugins/action/net_base.py
+lib/ansible/plugins/action/normal.py
+lib/ansible/plugins/action/package.py
+lib/ansible/plugins/action/service.py
+test/units/executor/test_task_executor.py
+test/units/modules/network/nuage/test_nuage_vspk.py
+test/units/plugins/action/test_action.py
+test/units/plugins/action/test_raw.py
+test/units/plugins/action/test_synchronize.py
