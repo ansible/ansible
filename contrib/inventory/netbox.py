@@ -10,8 +10,8 @@ import argparse
 
 try:
     import requests
-except:
-    sys.exit("requests package is required for this inventory script.")
+except ImportError:
+    sys.exit('requests package is required for this inventory script.')
 
 try:
     import json
@@ -79,6 +79,7 @@ class NetboxAsInventory(object):
         # Script configuration.
         self.script_config = script_config_data
         self.api_url = self._config(["main", "api_url"])
+        self.api_token = self._config(["main", "api_token"], default="", optional=True)
         self.group_by = self._config(["group_by"], default={})
         self.hosts_vars = self._config(["hosts_vars"], default={})
 
@@ -91,7 +92,7 @@ class NetboxAsInventory(object):
         }
 
     def _get_value_by_path(self, source_dict, key_path,
-                           ignore_key_error=False, default=""):
+                           ignore_key_error=False, default="", error_message=""):
         """Get key value from nested dict by path.
 
         Args:
@@ -107,6 +108,9 @@ class NetboxAsInventory(object):
         """
 
         key_value = ""
+        if not error_message:
+            error_message = "The key %s is not found. Please remember, Python is case sensitive."
+
         try:
             # Reduce key path, where it get value from nested dict.
             # a replacement for buildin reduce function.
@@ -114,8 +118,8 @@ class NetboxAsInventory(object):
                 if isinstance(source_dict.get(key), dict) and len(key_path) > 1:
                     source_dict = source_dict.get(key)
                     key_path = key_path[1:]
-                    self._get_value_by_path(source_dict, key_path,
-                                            ignore_key_error=ignore_key_error, default=default)
+                    self._get_value_by_path(source_dict, key_path, ignore_key_error=ignore_key_error,
+                                            default=default, error_message=error_message)
                 else:
                     key_value = source_dict[key]
 
@@ -126,10 +130,10 @@ class NetboxAsInventory(object):
             elif not default and ignore_key_error:
                 key_value = None
             elif not key_value and not ignore_key_error:
-                sys.exit("The key %s is not found. Please remember, Python is case sensitive." % key_name)
+                sys.exit(error_message % key_name)
         return key_value
 
-    def _config(self, key_path, default=""):
+    def _config(self, key_path, default="", optional=False):
         """Get value from config var.
 
         Args:
@@ -139,18 +143,15 @@ class NetboxAsInventory(object):
         Returns:
             The value of the key from config file or the default value.
         """
+        error_message = "The key %s is not found in config file."
         config = self.script_config.setdefault("netbox", {})
-        value = self._get_value_by_path(config, key_path, ignore_key_error=True, default=default)
-
-        if value:
-            key_value = value
-        else:
-            sys.exit("The key '%s' is not found in config file." % ".".join(key_path))
+        key_value = self._get_value_by_path(config, key_path, ignore_key_error=optional,
+                                            default=default, error_message=error_message)
 
         return key_value
 
     @staticmethod
-    def get_hosts_list(api_url, specific_host=None):
+    def get_hosts_list(api_url, api_token=None, specific_host=None):
         """Retrieves hosts list from netbox API.
 
         Returns:
@@ -160,13 +161,18 @@ class NetboxAsInventory(object):
         if not api_url:
             sys.exit("Please check API URL in script configuration file.")
 
+        if api_token:
+            api_url_headers = {'Authorization': "Token %s" % api_token}
+        else:
+            api_url_headers = {}
+
         if specific_host:
             api_url_params = {"name": specific_host}
         else:
             api_url_params = {}
 
         # Get hosts list.
-        hosts_list = requests.get(api_url, params=api_url_params)
+        hosts_list = requests.get(api_url, params=api_url_params, headers=api_url_headers)
 
         # Check that a request is 200 and not something else like 404, 401, 500 ... etc.
         hosts_list.raise_for_status()
@@ -318,7 +324,7 @@ class NetboxAsInventory(object):
         """
 
         inventory_dict = dict()
-        netbox_hosts_list = self.get_hosts_list(self.api_url, self.host)
+        netbox_hosts_list = self.get_hosts_list(self.api_url, self.api_token, self.host)
         if isinstance(netbox_hosts_list, dict) and "results" in netbox_hosts_list:
             netbox_hosts_list = netbox_hosts_list["results"]
 
