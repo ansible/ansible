@@ -1240,7 +1240,7 @@ class PyVmomiHelper(PyVmomi):
         if self.params['resource_pool']:
             resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
         # next priority, esxi hostname given.
-        elif self.params['esxi_hostname']:
+        elif self.params['esxi_hostname'] or self.params['cluster']:
             host = self.select_host()
             resource_pool = self.select_resource_pool_by_host(host)
         # next priority, cluster given, take the root of the pool
@@ -1338,8 +1338,7 @@ class PyVmomiHelper(PyVmomi):
                 # create the relocation spec
                 relospec = vim.vm.RelocateSpec()
 
-                # Only select specific host when ESXi hostname is provided
-                if self.params['esxi_hostname']:
+                if self.params['esxi_hostname'] or self.params['cluster']:
                     relospec.host = self.select_host()
                 relospec.datastore = datastore
 
