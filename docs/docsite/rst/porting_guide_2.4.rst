@@ -31,7 +31,9 @@ This means you can no longer use it early in plays to determine ``hosts:`` or si
 This also changes the behaviour of ``add_hosts`` and the implicit localhost; 
 because they no longer automatically inherit the global value, they default to ``None``. See the module documentation for more information.
 
-The ``inventory_file`` remains unchanged, as it was always host specific.
+The ``inventory_file`` remains mostly unchanged, as it was always host specific.
+
+Since you don't have a single inventory anymore the 'implicit localhost' doesn't get either of these variables defined.
 
 A bug was fixed with the inventory path/directory, which was defaulting to the current working directory. This caused ``group_vars`` and ``host_vars`` to be picked up from the current working directory instead of just adjacent to the playbook or inventory directory when a host list (comma separated host names) was provided as inventory.
 
