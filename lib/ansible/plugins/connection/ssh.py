@@ -185,6 +185,14 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
+      use_tty:
+        default: True
+        description: add -tt to ssh commands to force tty allocation
+        env: [{name: ANSIBLE_SSH_USETTY}]
+        ini:
+        - {key: usetty, section: ssh_connection}
+        type: boolean
+        yaml: {key: ssh_connection.usetty}
 '''
 
 import errno
@@ -957,7 +965,11 @@ class Connection(ConnectionBase):
 
         ssh_executable = self._play_context.ssh_executable
 
-        if not in_data and sudoable and C.ANSIBLE_SSH_USETTY:
+        # -tt can cause various issues in some environments so allow the user
+        # to disable it as a troubleshooting method.
+        use_tty = self.get_option('use_tty')
+
+        if not in_data and sudoable and use_tty:
             args = (ssh_executable, '-tt', self.host, cmd)
         else:
             args = (ssh_executable, self.host, cmd)

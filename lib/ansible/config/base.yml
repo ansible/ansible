@@ -129,15 +129,6 @@ ANSIBLE_SSH_RETRIES:
   - {key: retries, section: ssh_connection}
   type: integer
   yaml: {key: ssh_connection.retries}
-ANSIBLE_SSH_USETTY:
-  # TODO: move to ssh plugin
-  default: True
-  description: add -tt to ssh commands to force tty allocation
-  env: [{name: ANSIBLE_SSH_USETTY}]
-  ini:
-  - {key: usetty, section: ssh_connection}
-  type: boolean
-  yaml: {key: ssh_connection.usetty}
 ANY_ERRORS_FATAL:
   name: Make Task failures fatal
   default: False
