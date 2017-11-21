@@ -25,6 +25,7 @@ author:
     - "Tony Minfei Ding"
     - "Harrison Gu (@harrisongu)"
     - "Werner Dijkerman"
+    - "Eike Frost (@eikef)"
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
@@ -639,8 +640,11 @@ def main():
             host.delete_host(host_id, host_name)
             module.exit_json(changed=True, result="Successfully delete host %s" % host_name)
         else:
-            if not group_ids:
-                module.fail_json(msg="Specify at least one group for updating host '%s'." % host_name)
+            if not host_groups:
+                # if host_groups have not been specified when updating an existing host, just
+                # get the group_ids from the existing host without updating them.
+                host_groups = host.get_host_groups_by_host_id(host_id)
+                group_ids = host.get_group_ids_by_group_names(host_groups)
 
             if not force:
                 # get existing groups, interfaces and templates and merge them with ones provided as an argument
