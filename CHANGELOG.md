@@ -190,6 +190,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/33165
 * Fix for breaking change to Azure Python SDK that prevented some members from being returned in facts modules
   https://github.com/ansible/ansible/pull/33169
+* restored glob/regex host pattern matching to traverse groups and hosts and not return after first found
+  https://github.com/ansible/ansible/pull/33158
 
 <a id="2.4.1"></a>
 
