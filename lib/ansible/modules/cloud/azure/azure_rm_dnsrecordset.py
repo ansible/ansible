@@ -324,7 +324,6 @@ class AzureRMRecordSet(AzureRMModuleBase):
         if self.results['changed']:
             if self.state == 'present':
                 record_set_args = dict(
-                    type=self.record_type,
                     ttl=self.time_to_live
                 )
 
