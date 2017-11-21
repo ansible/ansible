@@ -154,7 +154,11 @@ def main():
         if not module.check_mode:
             conn.send(msg)
         time.sleep(1)
-        conn.disconnect()
+        try:
+            conn.disconnect()
+        except IOError as e:
+            if e.message != 'Disconnected from server.':
+                raise e
     except Exception as e:
         module.fail_json(msg="unable to send msg: %s" % to_native(e), exception=traceback.format_exc())
 
