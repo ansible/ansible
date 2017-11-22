@@ -162,7 +162,7 @@ Tests
 Tests succeeded/failed
 -----------------------
 
-Prior to 2.4 task return code ``rc`` overriden ``failed``. In 2.4 both of them are used to calculate the state of the task. Because of this test plugins ``succeeded``/``failed``` have also been changed. This means that overriding task failure with ``failed_when: no`` will result in ``succeeded``/``failed`` returning ``True``/``False``, respectively (it was opposite prior to 2.4). For example:
+Prior to Ansible version 2.4, a task return code of ``rc`` would override a return code of ``failed``. In version 2.4,  both ``rc`` and ``failed`` are used to calculate the state of the task. Because of this, test plugins ``succeeded``/``failed``` have also been changed. This means that overriding a task failure with ``failed_when: no`` will result in ``succeeded``/``failed`` returning ``True``/``False``. For example:
 
     - command: /bin/false
       register: result
@@ -177,10 +177,10 @@ Prior to 2.4 task return code ``rc`` overriden ``failed``. In 2.4 both of them a
       when: result|succeeded
 
     - debug:
-        msg: 'This always printed'
+        msg: 'This is always printed'
       when: result.rc != 0
 
-As we can see from the example above, in 2.3 ``succeeded``/``failed`` only checked the value of ``rc``, while in 2.4 they obey what was overriden with ``failed_when: no``. To know how the task was actually executed we need to check ``rc``.
+As we can see from the example above, in Ansible 2.3 ``succeeded``/``failed`` only checked the value of ``rc``.
 
 Networking
 ==========
