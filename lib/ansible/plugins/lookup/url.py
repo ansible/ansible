@@ -34,7 +34,7 @@ EXAMPLES = """
   loop: "{{ lookup('url', 'https://github.com/gremlin.keys', wantlist=True) }}"
 
 - name: display ip ranges
-  debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', splitlines=False) }}"
+  debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
 """
 
 RETURN = """
