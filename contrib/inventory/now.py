@@ -44,7 +44,7 @@ from cookielib import LWPCookieJar
 
 
 class NowInventory(object):
-    def __init__(self, hostname, username, password, fields=None, groups=None, selection=None):
+    def __init__(self, hostname, username, password, fields=None, groups=None, selection=None, proxy=None):
         self.hostname = hostname
 
         # requests session
@@ -74,6 +74,9 @@ class NowInventory(object):
         if selection is None:
             selection = []
 
+        if proxy is None:
+            proxy = []
+
         # extra fields (table columns)
         self.fields = fields
 
@@ -82,6 +85,9 @@ class NowInventory(object):
 
         # selection order
         self.selection = selection
+
+        # proxy settings
+        self.proxy = proxy
 
         # initialize inventory
         self.inventory = {'_meta': {'hostvars': {}}}
@@ -133,7 +139,8 @@ class NowInventory(object):
         url = "https://%s/%s" % (self.hostname, path)
 
         # perform REST operation
-        response = self.session.get(url, auth=self.auth, headers=self.headers)
+        response = self.session.get(url, auth=self.auth, headers=self.headers,
+                                    proxies={'http':self.proxy, 'https':self.proxy})
         if response.status_code != 200:
             print >> sys.stderr, "http error (%s): %s" % (response.status_code,
                                                           response.text)
@@ -168,6 +175,7 @@ class NowInventory(object):
     def generate(self):
 
         table = 'cmdb_ci_server'
+        # table = 'cmdb_ci_linux_server'
         base_fields = [
             u'name', u'host_name', u'fqdn', u'ip_address', u'sys_class_name'
         ]
@@ -239,8 +247,8 @@ def main(args):
             config.read(config_file)
             break
 
-# Read authentication information from environment variables (if set),
-# otherwise from INI file.
+    # Read authentication information from environment variables (if set),
+    # otherwise from INI file.
     instance = os.environ.get('SN_INSTANCE')
     if not instance and config.has_option('auth', 'instance'):
         instance = config.get('auth', 'instance')
@@ -280,13 +288,19 @@ def main(args):
     if isinstance(fields, str):
         fields = fields.split(',')
 
+    # SN_PROXY
+    proxy = os.environ.get('SN_PROXY')
+    if not proxy and config.has_option('config', 'proxy'):
+        proxy = config.get('config', 'proxy')
+
     inventory = NowInventory(
         hostname=instance,
         username=username,
         password=password,
         fields=fields,
         groups=groups,
-        selection=selection)
+        selection=selection,
+        proxy=proxy)
     inventory.generate()
     print(inventory.json())
 
