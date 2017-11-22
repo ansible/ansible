@@ -528,7 +528,7 @@ class AzureRMModuleBase(object):
             self.log("dependencies: ")
             self.log(str(dependencies))
         serializer = Serializer(classes=dependencies)
-        return serializer.body(obj, class_name)
+        return serializer.body(obj, class_name, keep_readonly=True)
 
     def get_poller_result(self, poller, wait=5):
         '''
