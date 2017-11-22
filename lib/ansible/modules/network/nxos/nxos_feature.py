@@ -87,7 +87,7 @@ def check_args(module, warnings):
 
 def get_available_features(feature, module):
     available_features = {}
-    feature_regex = '(?P<feature>\S+)\s+\d+\s+(?P<state>.*)'
+    feature_regex = r'(?P<feature>\S+)\s+\d+\s+(?P<state>.*)'
     command = {'command': 'show feature', 'output': 'text'}
 
     try:

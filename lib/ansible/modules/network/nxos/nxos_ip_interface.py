@@ -306,9 +306,9 @@ def parse_unstructured_data(body, interface_name, version, module):
     else:
         for index in range(0, len(splitted_body) - 1):
             if "IP address" in splitted_body[index]:
-                regex = '.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:' + \
-                        '\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?' + \
-                        '(.+?tag:\s(?P<tag>\d+).*)?'
+                regex = r'.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:' + \
+                        r'\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?' + \
+                        r'(.+?tag:\s(?P<tag>\d+).*)?'
                 match = re.match(regex, splitted_body[index])
                 if match:
                     match_dict = match.groupdict()
@@ -325,7 +325,7 @@ def parse_unstructured_data(body, interface_name, version, module):
                     interface['prefixes'].append(prefix)
 
     try:
-        vrf_regex = '.+?VRF\s+(?P<vrf>\S+?)\s'
+        vrf_regex = r'.+?VRF\s+(?P<vrf>\S+?)\s'
         match_vrf = re.match(vrf_regex, body, re.DOTALL)
         vrf = match_vrf.groupdict()['vrf']
     except AttributeError:
@@ -344,7 +344,7 @@ def parse_interface_data(body):
 
     for index in range(0, len(splitted_body) - 1):
             if "Encapsulation 802.1Q" in splitted_body[index]:
-                regex = '(.+?ID\s(?P<dot1q>\d+).*)?'
+                regex = r'(.+?ID\s(?P<dot1q>\d+).*)?'
                 match = re.match(regex, splitted_body[index])
                 if match:
                     match_dict = match.groupdict()

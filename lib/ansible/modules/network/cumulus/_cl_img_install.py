@@ -181,7 +181,7 @@ def check_fw_print_env(module, slot_num):
         cmd = "/usr/bin/grub-editenv list"
         grub_output = run_cl_cmd(module, cmd)
         for _line in grub_output:
-            _regex_str = re.compile('cl.ver' + slot_num + '=([\w.]+)-')
+            _regex_str = re.compile('cl.ver' + slot_num + r'=([\w.]+)-')
             m0 = re.match(_regex_str, _line)
             if m0:
                 return m0.group(1)
@@ -197,7 +197,7 @@ def get_primary_slot_num(module):
         cmd = "/usr/bin/grub-editenv list"
         grub_output = run_cl_cmd(module, cmd)
         for _line in grub_output:
-            _regex_str = re.compile('cl.active=(\d)')
+            _regex_str = re.compile(r'cl.active=(\d)')
             m0 = re.match(_regex_str, _line)
             if m0:
                 return m0.group(1)
@@ -210,7 +210,7 @@ def get_active_slot(module):
         module.fail_json(msg='Failed to open /proc/cmdline. ' +
                          'Unable to determine active slot')
 
-    _match = re.search('active=(\d+)', cmdline)
+    _match = re.search(r'active=(\d+)', cmdline)
     if _match:
         return _match.group(1)
     return None
@@ -247,9 +247,9 @@ def determine_sw_version(module):
         return
     else:
         _filename = module.params.get('src').split('/')[-1]
-        _match = re.search('\d+\W\d+\W\w+', _filename)
+        _match = re.search(r'\d+\W\d+\W\w+', _filename)
         if _match:
-            module.sw_version = re.sub('\W', '.', _match.group())
+            module.sw_version = re.sub(r'\W', '.', _match.group())
             return
     _msg = 'Unable to determine version from file %s' % (_filename)
     module.exit_json(changed=False, msg=_msg)

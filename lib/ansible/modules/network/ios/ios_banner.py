@@ -123,7 +123,7 @@ def map_config_to_obj(module):
                                     'show running-config | begin banner %s'
                                     % module.params['banner'])
         if out:
-            output = re.search('\^C(.*)\^C', out, re.S).group(1).strip()
+            output = re.search(r'\^C(.*)\^C', out, re.S).group(1).strip()
         else:
             output = None
     obj = {'banner': module.params['banner'], 'state': 'absent'}

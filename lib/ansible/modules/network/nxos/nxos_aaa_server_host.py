@@ -211,8 +211,8 @@ def get_aaa_host_info(module, server_type, address):
 
     if body[0]:
         try:
-            pattern = ('(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
-                       '(key 7 "\w+")|( port \d+)')
+            pattern = (r'(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
+                       r'(key 7 "\w+")|( port \d+)')
             raw_match = re.findall(pattern, body[0])
             aaa_host_info = _match_dict(raw_match, {'acct-port': 'acct_port',
                                                     'auth-port': 'auth_port',

@@ -451,7 +451,7 @@ class ApiParameters(Parameters):
 
     @address.setter
     def address(self, value):
-        pattern = '^(?P<ip>[0-9A-Fa-f:.]+)%?(?P<rd>\d+)?\/(?P<nm>\d+)$'
+        pattern = r'^(?P<ip>[0-9A-Fa-f:.]+)%?(?P<rd>\d+)?\/(?P<nm>\d+)$'
         matches = re.match(pattern, value)
         if not matches:
             raise F5ModuleError(
