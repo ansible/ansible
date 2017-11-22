@@ -11,9 +11,7 @@ When you try to reference a ``localhost`` and you don't have it defined in inven
           stat: path=/var/log/hosts/{{inventory_hostname}}.log
           delegate_to: localhost
 
-In a case like this (or ``local_action``) Ansible needs to contact a 'localhost' but you did not supply one,
-since it is common enough and we 'should know' the settings, we create one for you.
-This host is defined with specific connection vars equivalent to this in an inventory::
+In a case like this (or ``local_action``) when Ansible needs to contact a 'localhost' but you did not supply one, we create one for you. This host is defined with specific connection variables equivalent to this in an inventory::
 
    ...
 
@@ -24,11 +22,7 @@ This host is defined with specific connection vars equivalent to this in an inve
         ansible_python_interpreter: "{{ansible_playbook_python}}"
 
 This ensures that the proper connection and Python are used to execute your tasks locally.
-You can override the built-in implicit version by creating a ``localhost`` host entry in your inventory.
-
-At that point, all implicit behaviors are ignored, the ``localhost`` in inventory is treated just like any other host,
-group and host vars will appy, including connection vars, which includes the ``ansible_python_interpreter`` setting.
-This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former.
+You can override the built-in implicit version by creating a ``localhost`` host entry in your inventory. At that point, all implicit behaviors are ignored; the ``localhost`` in inventory is treated just like any other host. Group and host vars will appy, including connection vars, which includes the ``ansible_python_interpreter`` setting. This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former.
 
 .. note::
   - This host is not targetable via any group, however it will use vars from ``host_vars`` and from the 'all' group.
