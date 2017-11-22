@@ -301,10 +301,11 @@ def main():
             module.exit_json(changed=True, commands=cmds)
         else:
             changed = True
+            info = get_capabilities(module)
             # set the return_error to True for load_config
-            if module.params['transport'] == 'cli' or module.params['provider']['transport'] == 'cli':
+            if info and info['network_api'] == 'cliconf':
                 msgs = check_load_config(module, cmds, True)
-            else:
+            elif info is None:
                 msgs = load_config(module, cmds, True)
             # since there are multiple commands sent simultaneously
             # the output will have one error code for each command.

@@ -219,18 +219,19 @@ class FactsBase(object):
 
     def run(self, command, output=None):
         command_string = command
+        info = get_capabilities(self.module)
 
-        if self.module.params['transport'] == 'nxapi' or self.module.params['provider']['transport'] == 'nxapi':
-            if output:
-                command = {'command': command, 'output': output}
-            resp = run_commands(self.module, command, check_rc=False)
-
-        else:
+        if info and info['network_api'] == 'cliconf':
             if output:
                 command = {'command': command, 'output': output}
             else:
                 command = {'command': command, 'output': ''}
             resp = self.execute_module_command(command=command, output=output)
+
+        elif info is None:
+            if output:
+                command = {'command': command, 'output': output}
+            resp = run_commands(self.module, command, check_rc=False)
 
         try:
             return resp[0]
