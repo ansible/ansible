@@ -61,6 +61,7 @@ aci_argument_spec = dict(
     validate_certs=dict(type='bool', default=True),
 )
 
+'''
 URL_MAPPING = dict(
     action_rule=dict(aci_class='rtctrlAttrP', mo='attr-', key='name'),
     aep=dict(aci_class='infraAttEntityP', mo='infra/attentp-', key='name'),
@@ -97,6 +98,7 @@ URL_MAPPING = dict(
     tenant_span_src_grp_dst_grp=dict(aci_class='spanSpanLbl', mo='spanlbl-', key='name'),
     vrf=dict(aci_class='fvCtx', mo='ctx-', key='name'),
 )
+'''
 
 
 def aci_response_error(result):
@@ -284,16 +286,16 @@ class ACIModule(object):
         """
         This method is used to retrieve the appropriate URL path and filter_string to make the request to the APIC.
 
-        :param root_class: Type str.
-                           The top-level class naming parameter per the modules (EX: tenant).
-        :param sublass_1: Type str.
-                          The second-level class naming parameter per the modules (EX: bd).
-        :param sublass_2: Type str.
-                          The third-level class naming parameter per the modules (EX: gateway).
-        :param sublass_3: Type str.
-                          The fourth-level class naming parameter per the modules.
-        :param child_classes: Type tuple.
-                              The list of child classes that the module supports along with the object.
+        :param root_class: The top-level class dictionary containing aci_class, aci_rn, filter_target, and module_object keys.
+        :param sublass_1: The second-level class dictionary containing aci_class, aci_rn, filter_target, and module_object keys.
+        :param sublass_2: The third-level class dictionary containing aci_class, aci_rn, filter_target, and module_object keys.
+        :param sublass_3: The fourth-level class dictionary containing aci_class, aci_rn, filter_target, and module_object keys.
+        :param child_classes: The list of child classes that the module supports along with the object.
+        :type root_class: dict
+        :type subclass_1: dict
+        :type subclass_2: dict
+        :type subclass_3: dict
+        :type child_classes: list
         :return: The path and filter_string needed to build the full URL.
         """
         if child_classes is None:
@@ -314,18 +316,16 @@ class ACIModule(object):
         self.result['url'] = '{}://{}/{}'.format(self.module.params['protocol'], self.module.params['hostname'], path)
         self.result['filter_string'] = filter_string
 
-    def _construct_url_1(self, obj_class, child_includes):
+    def _construct_url_1(self, obj, child_includes):
         """
         This method is used by get_url when the object is the top-level class.
         """
-        obj = self.module.params.get(obj_class)
-        obj_dict = URL_MAPPING[obj_class]
-        obj_class = obj_dict['aci_class']
-        obj_mo = obj_dict['mo']
+        obj_class = obj['aci_class']
+        obj_rn = obj['aci_rn']
 
         # State is present or absent
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}[{}].json'.format(obj_mo, obj)
+            path = 'api/mo/uni/{}.json'.format(obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         # Query for all objects of the module's class
         elif obj is None:
@@ -333,7 +333,7 @@ class ACIModule(object):
             filter_string = ''
         # Query for a specific object in the module's class
         else:
-            path = 'api/mo/uni/{}[{}].json'.format(obj_mo, obj)
+            path = 'api/mo/uni/{}.json'.format(obj_rn)
             filter_string = ''
 
         # Append child_includes to filter_string if filter string is empty
@@ -342,19 +342,16 @@ class ACIModule(object):
 
         return path, filter_string
 
-    def _construct_url_2(self, parent_class, obj_class, child_includes):
+    def _construct_url_2(self, parent, obj, child_includes):
         """
         This method is used by get_url when the object is the second-level class.
         """
-        parent = self.module.params.get(parent_class)
-        parent_dict = URL_MAPPING[parent_class]
-        parent_class = parent_dict['aci_class']
-        parent_mo = parent_dict['mo']
-        obj = self.module.params.get(obj_class)
-        obj_dict = URL_MAPPING[obj_class]
-        obj_class = obj_dict['aci_class']
-        obj_mo = obj_dict['mo']
-        obj_key = obj_dict['key']
+        parent_rn = parent['aci_rn']
+        parent_obj = parent['module_object']
+        obj_class = obj['aci_class']
+        obj_rn = obj['aci_rn']
+        obj_filter = obj['filter_target']
+        obj = obj['module_object']
 
         if not child_includes:
             self_child_includes = '?rsp-subtree=full&rsp-subtree-class=' + obj_class
@@ -363,26 +360,26 @@ class ACIModule(object):
 
         # State is present or absent
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}[{}]/{}[{}].json'.format(parent_mo, parent, obj_mo, obj)
+            path = 'api/mo/uni/{}/{}.json'.format(parent_rn, obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         # Query for all objects of the module's class
-        elif obj is None and parent is None:
+        elif obj is None and parent_obj is None:
             path = 'api/class/{}.json'.format(obj_class)
             filter_string = ''
         # Queries when parent object is provided
-        elif parent is not None:
+        elif parent_obj is not None:
             # Query for specific object in the module's class
             if obj is not None:
-                path = 'api/mo/uni/{}[{}]/{}[{}].json'.format(parent_mo, parent, obj_mo, obj)
+                path = 'api/mo/uni/{}/{}.json'.format(parent_rn, obj_rn)
                 filter_string = ''
             # Query for all object's of the module's class that belong to a specific parent object
             else:
-                path = 'api/mo/uni/{}[{}].json'.format(parent_mo, parent)
+                path = 'api/mo/uni/{}.json'.format(parent_rn)
                 filter_string = self_child_includes
         # Query for all objects of the module's class that match the provided ID value
         else:
             path = 'api/class/{}.json'.format(obj_class)
-            filter_string = '?query-target-filter=eq({}.{}, \"{}\")'.format(obj_class, obj_key, obj) + child_includes
+            filter_string = '?query-target-filter=eq{}'.format(obj_filter) + child_includes
 
         # Append child_includes to filter_string if filter string is empty
         if child_includes is not None and filter_string == '':
@@ -390,24 +387,20 @@ class ACIModule(object):
 
         return path, filter_string
 
-    def _construct_url_3(self, root_class, parent_class, obj_class, child_includes):
+    def _construct_url_3(self, root, parent, obj, child_includes):
         """
         This method is used by get_url when the object is the third-level class.
         """
-        root = self.module.params.get(root_class)
-        root_dict = URL_MAPPING[root_class]
-        root_class = root_dict['aci_class']
-        root_mo = root_dict['mo']
-        parent = self.module.params.get(parent_class)
-        parent_dict = URL_MAPPING[parent_class]
-        parent_class = parent_dict['aci_class']
-        parent_mo = parent_dict['mo']
-        parent_key = parent_dict['key']
-        obj = self.module.params.get(obj_class)
-        obj_dict = URL_MAPPING[obj_class]
-        obj_class = obj_dict['aci_class']
-        obj_mo = obj_dict['mo']
-        obj_key = obj_dict['key']
+        root_rn = root['aci_rn']
+        root_obj = root['module_object']
+        parent_class = parent['aci_class']
+        parent_rn = parent['aci_rn']
+        parent_filter = parent['filter_target']
+        parent_obj = parent['module_object']
+        obj_class = obj['aci_class']
+        obj_rn = obj['aci_rn']
+        obj_filter = obj['filter_target']
+        obj = obj['module_object']
 
         if not child_includes:
             self_child_includes = '&rsp-subtree=full&rsp-subtree-class=' + obj_class
@@ -421,49 +414,49 @@ class ACIModule(object):
 
         # State is ablsent or present
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}[{}]/{}[{}]/{}[{}].json'.format(root_mo, root, parent_mo, parent, obj_mo, obj)
+            path = 'api/mo/uni/{}/{}/{}.json'.format(root_rn, parent_rn, obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         # Query for all objects of the module's class
-        elif obj is None and parent is None and root is None:
+        elif obj is None and parent_obj is None and root_obj is None:
             path = 'api/class/{}.json'.format(obj_class)
             filter_string = ''
         # Queries when root object is provided
-        elif root is not None:
+        elif root_obj is not None:
             # Queries when parent object is provided
-            if parent is not None:
+            if parent_obj is not None:
                 # Query for a specific object of the module's class
                 if obj is not None:
-                    path = 'api/mo/uni/{}[{}]/{}[{}]/{}[{}].json'.format(root_mo, root, parent_mo, parent, obj_mo, obj)
+                    path = 'api/mo/uni/{}/{}/{}.json'.format(root_rn, parent_rn, obj_rn)
                     filter_string = ''
                 # Query for all objects of the module's class that belong to a specific parent object
                 else:
-                    path = 'api/mo/uni/{}[{}]/{}[{}].json'.format(root_mo, root, parent_mo, parent)
+                    path = 'api/mo/uni/{}/{}.json'.format(root_rn, parent_rn)
                     filter_string = self_child_includes.replace('&', '?', 1)
             # Query for all objects of the module's class that match the provided ID value and belong to a specefic root object
             elif obj is not None:
-                path = 'api/mo/uni/{}[{}].json'.format(root_mo, root)
-                filter_string = '?rsp-subtree-filter=eq({}.{}, \"{}\"){}'.format(obj_class, obj_key, obj, self_child_includes)
+                path = 'api/mo/uni/{}.json'.format(root_rn)
+                filter_string = '?rsp-subtree-filter=eq{}{}'.format(obj_filter, self_child_includes)
             # Query for all objects of the module's class that belong to a specific root object
             else:
-                path = 'api/mo/uni/{}[{}].json'.format(root_mo, root)
+                path = 'api/mo/uni/{}.json'.format(root_rn)
                 filter_string = '?' + parent_self_child_includes
         # Queries when parent object is provided but root object is not provided
-        elif parent is not None:
+        elif parent_obj is not None:
             # Query for all objects of the module's class that belong to any parent class
             # matching the provided ID values for both object and parent object
             if obj is not None:
                 path = 'api/class/{}.json'.format(parent_class)
-                filter_string = '?query-target-filter=eq({}.{}, \"{}\"){}&rsp-subtree-filter=eq({}.{}, \"{}\")'.format(
-                    parent_class, parent_key, parent, self_child_includes, obj_class, obj_key, obj)
+                filter_string = '?query-target-filter=eq{}{}&rsp-subtree-filter=eq{}'.format(
+                    parent_filter, self_child_includes, obj_filter)
             # Query for all objects of the module's class that belong to any parent class
             # matching the provided ID value for the parent object
             else:
                 path = 'api/class/{}.json'.format(parent_class)
-                filter_string = '?query-target-filter=eq({}.{}, \"{}\"){}'.format(parent_class, parent_key, parent, self_child_includes)
+                filter_string = '?query-target-filter=eq{}{}'.format(parent_filter, self_child_includes)
         # Query for all objects of the module's class matching the provided ID value of the object
         else:
             path = 'api/class/{}.json'.format(obj_class)
-            filter_string = '?query-target-filter=eq({}.{}, \"{}\")'.format(obj_class, obj_key, obj) + child_includes
+            filter_string = '?query-target-filter=eq{}'.format(obj_filter) + child_includes
 
         # append child_includes to filter_string if filter string is empty
         if child_includes is not None and filter_string == '':
@@ -471,33 +464,30 @@ class ACIModule(object):
 
         return path, filter_string
 
-    def _construct_url_4(self, root_class, sec_class, parent_class, obj_class, child_includes):
+    def _construct_url_4(self, root, sec, parent, obj, child_includes):
         """
         This method is used by get_url when the object is the third-level class.
         """
-        root = self.module.params.get(root_class)
-        root_dict = URL_MAPPING[root_class]
-        root_class = root_dict['aci_class']
-        root_mo = root_dict['mo']
-        sec = self.module.params.get(sec_class)
-        sec_dict = URL_MAPPING[sec_class]
-        sec_class = sec_dict['aci_class']
-        sec_mo = sec_dict['mo']
-        # sec_key = sec_dict['key']
-        parent = self.module.params.get(parent_class)
-        parent_dict = URL_MAPPING[parent_class]
-        parent_class = parent_dict['aci_class']
-        parent_mo = parent_dict['mo']
-        # parent_key = parent_dict['key']
-        obj = self.module.params.get(obj_class)
-        obj_dict = URL_MAPPING[obj_class]
-        obj_class = obj_dict['aci_class']
-        obj_mo = obj_dict['mo']
-        # obj_key = obj_dict['key']
+        # root_class = root['aci_class']
+        root_rn = root['aci_rn']
+        # root_filter = root['filter_target']
+        # root_obj = root['module_object']
+        # sec_class = sec['aci_class']
+        sec_rn = sec['aci_rn']
+        # sec_filter = sec['filter_target']
+        # sec_obj = sec['module_object']
+        # parent_class = parent['aci_class']
+        parent_rn = parent['aci_rn']
+        # parent_filter = parent['filter_target']
+        # parent_obj = parent['module_object']
+        obj_class = obj['aci_class']
+        obj_rn = obj['aci_rn']
+        # obj_filter = obj['filter_target']
+        # obj = obj['module_object']
 
         # State is ablsent or present
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}[{}]/{}[{}]/{}[{}]/{}[{}].json'.format(root_mo, root, sec_mo, sec, parent_mo, parent, obj_mo, obj)
+            path = 'api/mo/uni/{}/{}/{}/{}.json'.format(root_rn, sec_rn, parent_rn, obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         else:
             path = 'api/class/{}.json'.format(obj_class)

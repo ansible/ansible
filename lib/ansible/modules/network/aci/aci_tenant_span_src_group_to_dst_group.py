@@ -95,13 +95,30 @@ def main():
     dst_group = module.params['dst_group']
     src_group = module.params['src_group']
     state = module.params['state']
-
-    # Add tenant_span_src_grp and tenant_span_src_grp_dst_grp to module.params for URL building
-    module.params['tenant_span_src_grp'] = src_group
-    module.params['tenant_span_src_grp_dst_grp'] = dst_group
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='tenant_span_src_grp', subclass_2='tenant_span_src_grp_dst_grp')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='spanSrcGrp',
+            aci_rn='srcgrp-{}'.format(src_group),
+            filter_target='(spanSrcGrp.name, "{}")'.format(src_group),
+            module_object=src_group,
+        ),
+        subclass_2=dict(
+            aci_class='spanSpanLbl',
+            aci_rn='spanlbl-{}'.format(dst_group),
+            filter_target='(spanSpanLbl.name, "{}")'.format(dst_group),
+            module_object=dst_group,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -122,10 +139,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove tenant_span_src_grp and tenant_span_src_grp_dst_grp that was used to build URL from module.params
-    module.params.pop('tenant_span_src_grp')
-    module.params.pop('tenant_span_src_grp_dst_grp')
 
     module.exit_json(**aci.result)
 

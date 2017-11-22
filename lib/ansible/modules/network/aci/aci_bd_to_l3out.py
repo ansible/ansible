@@ -79,14 +79,33 @@ def main():
         ],
     )
 
+    bd = module.params['bd']
     l3out = module.params['l3out']
     state = module.params['state']
-
-    # Add bd_l3out key to module.params for building the URL
-    module.params['bd_l3out'] = l3out
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='bd', subclass_2='bd_l3out')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvBD',
+            aci_rn='BD-{}'.format(bd),
+            filter_target='(fvBD.name, "{}")'.format(bd),
+            module_object=bd,
+        ),
+        subclass_2=dict(
+            aci_class='fvRsBDToOut',
+            aci_rn='rsBDToOut-{}'.format(l3out),
+            filter_target='(fvRsBDToOut.tnL3extOutName, "{}")'.format(l3out),
+            module_object=l3out,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -104,9 +123,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove bd_l3out key used for URL building from module.params
-    module.params.pop('bd_l3out')
 
     module.exit_json(**aci.result)
 
