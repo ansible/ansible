@@ -77,7 +77,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         if cache is None:
-            cache = self._options['cache']
+            cache = self.get_option('cache')
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
