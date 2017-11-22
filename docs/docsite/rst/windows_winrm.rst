@@ -597,7 +597,7 @@ authentication through HTTPS. If ``ansible_user`` has a UPN value like
 to use Kerberos unless ``ansible_winrm_transport`` has been set to something other than
 ``kerberos``.
 
-As of Ansible 2.0, the following custom inventory variables are also supported
+The following custom inventory variables are also supported
 for additional configuration of WinRM connections:
 
 * ``ansible_port``: The port WinRM will run over, HTTPS is ``5986`` which is

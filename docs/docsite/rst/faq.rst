@@ -67,7 +67,7 @@ for new users.
 How do I configure a jump host to access servers that I have no direct access to?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-With Ansible 2, you can set a `ProxyCommand` in the
+You can set a `ProxyCommand` in the
 `ansible_ssh_common_args` inventory variable. Any arguments specified in
 this variable are added to the sftp/scp/ssh command line when connecting
 to the relevant host(s). Consider the following inventory group:
@@ -269,7 +269,7 @@ environment variable on the management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Starting with Ansible 1.4, remote environment variables are available via facts in the 'ansible_env' variable:
+Remote environment variables are available via facts in the 'ansible_env' variable:
 
 .. code-block:: jinja
 
@@ -348,7 +348,7 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
-In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
+If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
     - name: secret task
       shell: /usr/bin/do_something --value={{ secret_value }}

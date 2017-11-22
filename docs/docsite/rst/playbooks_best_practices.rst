@@ -285,29 +285,29 @@ Now what sort of use cases does this layout enable?  Lots!  If I want to reconfi
 
     ansible-playbook -i production site.yml
 
-What about just reconfiguring NTP on everything?  Easy.::
+To reconfigure NTP on everything::
 
     ansible-playbook -i production site.yml --tags ntp
 
-What about just reconfiguring my webservers?::
+To reconfigure just my webservers::
 
     ansible-playbook -i production webservers.yml
 
-What about just my webservers in Boston?::
+For just my webservers in Boston::
 
     ansible-playbook -i production webservers.yml --limit boston
 
-What about just the first 10, and then the next 10?::
+Forjust the first 10, and then the next 10::
    
     ansible-playbook -i production webservers.yml --limit boston[1:10]
     ansible-playbook -i production webservers.yml --limit boston[11:20]
 
-And of course just basic ad-hoc stuff is also possible.::
+And of course just basic ad-hoc stuff is also possible::
 
     ansible boston -i production -m ping
     ansible boston -i production -m command -a '/sbin/reboot'
 
-And there are some useful commands to know (at least in 1.1 and higher)::
+And there are some useful commands to know::
 
     # confirm what task names would be run if I ran this command and said "just ntp tasks"
     ansible-playbook -i production webservers.yml --tags ntp --list-tasks
