@@ -54,6 +54,13 @@ options:
       - The email-address(es) the mail is being 'blind' copied to. This is
         a comma-separated list, which may contain address and phrase portions.
     required: false
+  replyto:
+    description:
+      - The email-address the mail is being replied to. May contain address and
+        phrase portions.
+    default: null
+    required: false
+    version_added: "2.4"
   subject:
     description:
       - The subject of the email being sent.
@@ -63,6 +70,13 @@ options:
       - The body of the email being sent.
     default: $subject
     required: false
+  body_alt:
+    description:
+      - The alternative body of the email being sent. This can be used in conjunction
+        with subtype html to also send a text version of the body.
+    default: null
+    required: false
+    version_added: "2.4"
   username:
     description:
       - If SMTP requires username
@@ -93,6 +107,14 @@ options:
     default: null
     required: false
     version_added: "1.0"
+  attach_inline:
+    description:
+      - A space-separated list of pathnames of files to display as inline images in
+        HTML message. Subtype html is mandatory to make this work.
+        Attached files will be accessible using CID (content-id) starting at 0.
+    default: null
+    required: false
+    version_added: "2.4"
   headers:
     description:
       - A vertical-bar-separated list of headers which should be added to the message.
@@ -199,6 +221,7 @@ from email.utils import parseaddr, formataddr
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -213,12 +236,15 @@ def main():
             host = dict(default='localhost'),
             port = dict(default=25, type='int'),
             sender = dict(default='root', aliases=['from']),
+            replyto = dict(default=None),
             to = dict(default='root', aliases=['recipients']),
             cc = dict(default=None),
             bcc = dict(default=None),
             subject = dict(required=True, aliases=['msg']),
             body = dict(default=None),
+            body_alt = dict(default=None),
             attach = dict(default=None),
+            attach_inline = dict(default=None),
             headers = dict(default=None),
             charset = dict(default='us-ascii'),
             subtype = dict(default='plain'),
@@ -232,12 +258,15 @@ def main():
     host = module.params.get('host')
     port = module.params.get('port')
     sender = module.params.get('sender')
+    replyto = module.params.get('replyto')
     recipients = module.params.get('to')
     copies = module.params.get('cc')
     blindcopies = module.params.get('bcc')
     subject = module.params.get('subject')
     body = module.params.get('body')
+    body_alt = module.params.get('body_alt')
     attach_files = module.params.get('attach')
+    attach_inline = module.params.get('attach_inline')
     headers = module.params.get('headers')
     charset = module.params.get('charset')
     subtype = module.params.get('subtype')
@@ -312,6 +341,8 @@ def main():
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = formataddr((sender_phrase, sender_addr))
+    if replyto:
+        msg['Reply-To'] = formataddr( parseaddr(replyto))
     msg.preamble = "Multipart message"
 
     if headers is not None:
@@ -346,8 +377,15 @@ def main():
     if len(cc_list) > 0:
         msg['Cc'] = ", ".join(cc_list)
 
-    part = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
-    msg.attach(part)
+    if subtype == 'html':
+        part1 = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
+        msg.attach(part1)
+        if body_alt:
+            part2 = MIMEText(body_alt + "\n\n", _subtype='plain', _charset=charset)
+            msg.attach(part2)
+    else:
+        part = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
+        msg.attach(part)
 
     if attach_files is not None:
         for file in attach_files.split():
@@ -365,6 +403,24 @@ def main():
             except Exception as e:
                 module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" %
                                  (file, to_native(e)), exception=traceback.format_exc())
+
+    if attach_inline is not None:
+        """The inline images are accessible in html messsage like:
+        <img src="cid:cid-0" alt="...">"""
+        i = 0
+        for file in attach_inline.split():
+            try:
+                fp = open(file, 'rb')
+
+                part = MIMEImage(fp.read())
+                fp.close()
+
+                part.add_header('Content-ID', '<cid-{}>'.format(i))
+                msg.attach(part)
+            except Exception as e:
+                module.fail_json(rc=1, msg="Failed to send mail: can't attach inline file %s: %s" %
+                                 (file, to_native(e)), exception=traceback.format_exc())
+            i += 1
 
     composed = msg.as_string()
 
