@@ -58,5 +58,6 @@ class FilterModule(object):
 if __name__ == "__main__":
     list_data = [{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]
     print(cast_list_to_dict(list_data, 'proto'))
+
     dict_data = {'eigrp': {'state': 'enabled', 'as': '1'}, 'ospf': {'state': 'enabled', 'as': '2'}}
     print(cast_dict_to_list(dict_data, 'proto'))
