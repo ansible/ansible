@@ -68,7 +68,7 @@ decide to do something conditionally based on success or failure::
         when: result|skipped
 
 
-.. note:: the filters have been updated in 2.1 so both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. note:: The complete list of task state filters available for use with when statements can be found here: :doc:`_test_task_results`
 
 Note that was a little bit of foreshadowing on the 'register' statement.  We'll get to it a bit later in this chapter.
 
