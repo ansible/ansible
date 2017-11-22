@@ -343,12 +343,6 @@ class StrategyBase:
             task_result._host = original_host
             task_result._task = original_task
 
-            # get the correct loop var for use later
-            if original_task.loop_control:
-                loop_var = original_task.loop_control.loop_var or 'item'
-            else:
-                loop_var = 'item'
-
             # send callbacks for 'non final' results
             if '_ansible_retry' in task_result._result:
                 self._tqm.send_callback('v2_runner_retry', task_result)
@@ -892,7 +886,10 @@ class StrategyBase:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
         elif meta_action == 'reset_connection':
-            connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task)
+            templar = Templar(loader=self._loader, variables=all_vars)
+            updated_play_context = self._play_context.set_task_and_variable_override(task=task, variables=all_vars, templar=templar)
+            connection = connection_loader.get(updated_play_context.connection, updated_play_context, os.devnull)
             play_context.set_options_from_plugin(connection)
             if connection:
                 connection.reset()
