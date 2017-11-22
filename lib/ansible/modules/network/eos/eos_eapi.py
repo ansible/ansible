@@ -208,7 +208,7 @@ def validate_local_http_port(value, module):
 
 def validate_vrf(value, module):
     out = run_commands(module, ['show vrf'])
-    configured_vrfs = re.findall('^\s+(\w+)(?=\s)', out[0], re.M)
+    configured_vrfs = re.findall(r'^\s+(\w+)(?=\s)', out[0], re.M)
     configured_vrfs.append('default')
     if value not in configured_vrfs:
         module.fail_json(msg='vrf `%s` is not configured on the system' % value)

@@ -215,7 +215,7 @@ class Hardware(FactsBase):
         self.facts['filesystems'] = self.parse_filesystems(data)
 
         data = self.responses[1]
-        match = re.findall('\s(\d+)\s', data)
+        match = re.findall(r'\s(\d+)\s', data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) // 1024
             self.facts['memfree_mb'] = int(match[2]) // 1024

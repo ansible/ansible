@@ -130,7 +130,7 @@ def has_vrf(module, vrf):
     if _CONFIGURED_VRFS is not None:
         return vrf in _CONFIGURED_VRFS
     config = get_config(module)
-    _CONFIGURED_VRFS = re.findall('vrf definition (\S+)', config)
+    _CONFIGURED_VRFS = re.findall(r'vrf definition (\S+)', config)
     return vrf in _CONFIGURED_VRFS
 
 def requires_vrf(module, vrf):
@@ -244,11 +244,11 @@ def map_obj_to_commands(want, have, module):
     return commands
 
 def parse_hostname(config):
-    match = re.search('^hostname (\S+)', config, re.M)
+    match = re.search(r'^hostname (\S+)', config, re.M)
     return match.group(1)
 
 def parse_domain_name(config):
-    match = re.findall('^ip domain name (?:vrf (\S+) )*(\S+)', config, re.M)
+    match = re.findall(r'^ip domain name (?:vrf (\S+) )*(\S+)', config, re.M)
     matches = list()
     for vrf, name in match:
         if not vrf:
@@ -257,7 +257,7 @@ def parse_domain_name(config):
     return matches
 
 def parse_domain_search(config):
-    match = re.findall('^ip domain list (?:vrf (\S+) )*(\S+)', config, re.M)
+    match = re.findall(r'^ip domain list (?:vrf (\S+) )*(\S+)', config, re.M)
     matches = list()
     for vrf, name in match:
         if not vrf:
@@ -266,7 +266,7 @@ def parse_domain_search(config):
     return matches
 
 def parse_name_servers(config):
-    match = re.findall('^ip name-server (?:vrf (\S+) )*(.*)', config, re.M)
+    match = re.findall(r'^ip name-server (?:vrf (\S+) )*(.*)', config, re.M)
     matches = list()
     for vrf, servers in match:
         if not vrf:
@@ -276,7 +276,7 @@ def parse_name_servers(config):
     return matches
 
 def parse_lookup_source(config):
-    match = re.search('ip domain lookup source-interface (\S+)', config, re.M)
+    match = re.search(r'ip domain lookup source-interface (\S+)', config, re.M)
     if match:
         return match.group(1)
 

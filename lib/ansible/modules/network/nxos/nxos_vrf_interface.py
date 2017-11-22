@@ -151,7 +151,7 @@ def get_interface_info(interface, module):
         interface = interface.capitalize()
 
     command = 'show run | section interface.{0}'.format(interface)
-    vrf_regex = ".*vrf\s+member\s+(?P<vrf>\S+).*"
+    vrf_regex = r".*vrf\s+member\s+(?P<vrf>\S+).*"
 
     try:
         body = execute_show_command(command, module)
