@@ -26,7 +26,7 @@ description:
     - Create an EC2 Placement Group; if the placement group already exists,
       nothing is done. Or, delete an existing placement group. If the placement
       group is absent, do nothing.
-version_added: "2.4"
+version_added: "2.5"
 author: "Brad Macpherson (@iiibrad)"
 options:
   name:
@@ -84,34 +84,37 @@ placement_group:
 '''
 
 try:
-    import boto.ec2
-    import boto.vpc
-    from boto.exception import BotoServerError
+    import boto3
+    from botocore.exceptions import ClientError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError, connect_to_aws,
-                                      ec2_argument_spec, get_aws_connection_info,
+from ansible.module_utils.ec2 import (AnsibleAWSError,
+                                      connect_to_aws,
+                                      boto3_conn,
+                                      ec2_argument_spec,
+                                      get_aws_connection_info,
                                       get_ec2_security_group_ids_from_names)
 
 
 def get_placement_group_details(connection, module):
     name = module.params.get("name")
-    groups = connection.get_all_placement_groups(
-        filters={
-            "group-name": [name]
-        })
+    response = connection.describe_placement_groups(
+        Filters=[{
+            "Name":    "group-name",
+            "Values": [name]
+        }])
 
-    if len(groups) != 1:
+    if len(response['PlacementGroups']) != 1:
         return None
     else:
-        placement_group = groups[0]
+        placement_group = response['PlacementGroups'][0]
         return {
-            "name": placement_group.name,
-            "state": placement_group.state,
-            "strategy": placement_group.strategy,
+            "name": placement_group['GroupName'],
+            "state": placement_group['State'],
+            "strategy": placement_group['Strategy'],
         }
 
 
@@ -120,9 +123,9 @@ def create_placement_group(connection, module):
 
     try:
         connection.create_placement_group(
-            name, 'cluster', dry_run=module.check_mode)
+            GroupName=name, Strategy='cluster', DryRun=module.check_mode)
 
-    except BotoServerError as e:
+    except ClientError as e:
         module.fail_json(msg=e.message)
 
     module.exit_json(changed=True,
@@ -135,9 +138,10 @@ def delete_placement_group(connection, module):
     name = module.params.get("name")
 
     try:
-        connection.delete_placement_group(name, dry_run=module.check_mode)
+        connection.delete_placement_group(
+            GroupName=name, DryRun=module.check_mode)
 
-    except BotoServerError as e:
+    except ClientError as e:
         module.fail_json(msg=e.message)
 
     module.exit_json(changed=True)
@@ -160,12 +164,13 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(
+        module, boto3=True)
 
     if region:
         try:
-            connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+            connection = boto3.client('ec2', region, **aws_connect_params)
+        except (boto3.exceptions.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")

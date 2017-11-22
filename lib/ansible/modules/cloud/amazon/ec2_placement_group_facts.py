@@ -24,7 +24,7 @@ module: ec2_placement_group_facts
 short_description: List EC2 Placement Group(s) details
 description:
     - List details of EC2 Placement Group(s).
-version_added: "2.4"
+version_added: "2.5"
 author: "Brad Macpherson (@iiibrad)"
 options:
   names:
@@ -79,34 +79,38 @@ placement_groups:
 '''
 
 try:
-    import boto.ec2
-    import boto.vpc
+    import boto3
+    from botocore.exceptions import ClientError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError, connect_to_aws,
-                                      ec2_argument_spec, get_aws_connection_info,
+from ansible.module_utils.ec2 import (AnsibleAWSError,
+                                      connect_to_aws,
+                                      boto3_conn,
+                                      ec2_argument_spec,
+                                      get_aws_connection_info,
                                       get_ec2_security_group_ids_from_names)
 
 
 def get_placement_groups_details(connection, module):
     names = module.params.get("names")
     if len(names) > 0:
-        groups = connection.get_all_placement_groups(
-            filters={
-                "group-name": names
-            })
+        response = connection.describe_placement_groups(
+            Filters=[{
+                "Name":    "group-name",
+                "Values": names
+            }])
     else:
-        groups = connection.get_all_placement_groups()
+        response = connection.describe_placement_groups()
 
     results = []
-    for placement_group in groups:
+    for placement_group in response['PlacementGroups']:
         results.append({
-            "name": placement_group.name,
-            "state": placement_group.state,
-            "strategy": placement_group.strategy,
+            "name": placement_group['GroupName'],
+            "state": placement_group['State'],
+            "strategy": placement_group['Strategy'],
         })
     return results
 
@@ -127,12 +131,13 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(
+        module, boto3=True)
 
     if region:
         try:
-            connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
+            connection = boto3.client('ec2', region, **aws_connect_params)
+        except (boto3.exceptions.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
