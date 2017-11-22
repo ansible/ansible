@@ -168,7 +168,7 @@ class NowInventory(object):
             return
 
         group = group.lower()
-        group = re.sub('\W', '_', group)
+        group = re.sub(r' ', '_', group)
 
         self.inventory.setdefault(group, {'hosts': []})
         self.inventory[group]['hosts'].append(target)
