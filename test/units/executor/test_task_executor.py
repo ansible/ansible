@@ -370,11 +370,11 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.changed_when = None
         mock_task.failed_when = None
         mock_task.post_validate.return_value = None
-        # mock_task.async cannot be left unset, because on Python 3 MagicMock()
+        # mock_task.async_val cannot be left unset, because on Python 3 MagicMock()
         # > 0 raises a TypeError   There are two reasons for using the value 1
         # here: on Python 2 comparing MagicMock() > 0 returns True, and the
         # other reason is that if I specify 0 here, the test fails. ;)
-        mock_task.async = 1
+        mock_task.async_val = 1
         mock_task.poll = 0
 
         mock_play_context = MagicMock()
@@ -431,7 +431,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_host = MagicMock()
 
         mock_task = MagicMock()
-        mock_task.async = 0.1
+        mock_task.async_val = 0.1
         mock_task.poll = 0.05
 
         mock_play_context = MagicMock()

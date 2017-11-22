@@ -537,7 +537,7 @@ class TaskExecutor:
             if self._task.register:
                 vars_copy[self._task.register] = wrap_var(result.copy())
 
-            if self._task.async > 0:
+            if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
                     # FIXME callback 'v2_runner_on_async_poll' here
@@ -668,7 +668,7 @@ class TaskExecutor:
             shared_loader_obj=self._shared_loader_obj,
         )
 
-        time_left = self._task.async
+        time_left = self._task.async_val
         while time_left > 0:
             time.sleep(self._task.poll)
 

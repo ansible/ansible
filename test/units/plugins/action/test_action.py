@@ -75,12 +75,12 @@ class TestActionBase(unittest.TestCase):
 
         play_context = PlayContext()
 
-        mock_task.async = None
+        mock_task.async_val = None
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
         self.assertEqual(results, dict())
 
-        mock_task.async = 0
+        mock_task.async_val = 0
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
         self.assertEqual(results, {})
@@ -92,7 +92,7 @@ class TestActionBase(unittest.TestCase):
         # create our fake task
         mock_task = MagicMock()
         mock_task.action = "copy"
-        mock_task.async = 0
+        mock_task.async_val = 0
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
