@@ -138,7 +138,7 @@ class CallbackModule(CallbackBase):
             extra_vars = self.get_option('extra_vars')
             subset = self.get_option('subset')
             inventory = os.path.basename(
-                os.path.realpath(self.get_option('inventory')
+                os.path.realpath(self.get_option('inventory'))
             )
 
             invocation_items.append('Inventory:  %s' % inventory)
