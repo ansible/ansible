@@ -156,6 +156,31 @@ If you have a template lookup like this::
 
     {{ "name surname" | regex_replace("^[^\\s]+\\s+(.*)", "\\1") }}
 
+Tests
+=====
+
+Tests succeeded/failed
+-----------------------
+
+Prior to 2.4 task return code ``rc`` overriden ``failed``. In 2.4 both of them are used to calculate the state of the task. Because of this test plugins ``succeeded``/``failed``` have also been changed. This means that overriding task failure with ``failed_when: no`` will result in ``succeeded``/``failed`` returning ``True``/``False``, respectively (it was opposite prior to 2.4). For example:
+
+    - command: /bin/false
+      register: result
+      failed_when: no
+
+    - debug:
+        msg: 'This is printed on 2.3'
+      when: result|failed
+
+    - debug:
+        msg: 'This is printed on 2.4'
+      when: result|succeeded
+
+    - debug:
+        msg: 'This always printed'
+      when: result.rc != 0
+
+As we can see from the example above, in 2.3 ``succeeded``/``failed`` only checked the value of ``rc``, while in 2.4 they obey what was overriden with ``failed_when: no``. To know how the task was actually executed we need to check ``rc``.
 
 Networking
 ==========
