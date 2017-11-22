@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: junos_package
-version_added: "2.5"
+version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Installs packages on remote devices running Junos
 description:
@@ -67,6 +67,7 @@ options:
         device to skip checking the current device configuration
         compatibility with the package being installed. When set to false
         validation is not performed.
+    version_added: 2.5
     required: false
     default: true
     choices: ['true', 'false']
