@@ -28,7 +28,7 @@ if [ -s /tmp/network.txt ]; then
     echo "Running network integration tests for multiple platforms concurrently."
 
     platforms=(
-        --platform vyos/1.1.0
+        --platform vyos/1.1.8
         --platform ios/csr1000v
     )
 else
@@ -36,7 +36,7 @@ else
     echo "Running network integration tests for a single platform only."
 
     platforms=(
-        --platform vyos/1.1.0
+        --platform vyos/1.1.8
     )
 fi
 
