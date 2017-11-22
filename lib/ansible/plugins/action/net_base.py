@@ -114,7 +114,7 @@ class ActionModule(ActionBase):
             display.vvvv('Running implementation module %s' % module)
             result.update(self._execute_module(module_name=module,
                           module_args=new_module_args, task_vars=task_vars,
-                          wrap_async=self._task.async))
+                          wrap_async=self._task.async_val))
 
             display.vvvv('Caching network OS %s in facts' % play_context.network_os)
             result['ansible_facts'] = {'network_os': play_context.network_os}

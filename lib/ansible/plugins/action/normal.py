@@ -39,7 +39,7 @@ class ActionModule(ActionBase):
                 del results['invocation']['module_args']
 
             # FUTURE: better to let _execute_module calculate this internally?
-            wrap_async = self._task.async and not self._connection.has_native_async
+            wrap_async = self._task.async_val and not self._connection.has_native_async
 
             # do work!
             results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars, wrap_async=wrap_async))
