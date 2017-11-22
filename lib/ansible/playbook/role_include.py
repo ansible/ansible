@@ -48,7 +48,7 @@ class IncludeRole(TaskInclude):
     OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
-    _tags_inheritable = False
+    _inheritable = False
 
     # =================================================================================
     # ATTRIBUTES

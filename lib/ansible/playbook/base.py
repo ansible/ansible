@@ -159,6 +159,8 @@ class Base(with_metaclass(BaseMeta, object)):
         'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
     ]
 
+    _inheritable = True
+
     def __init__(self):
 
         # initialize the data loader and variable manager, which will be provided

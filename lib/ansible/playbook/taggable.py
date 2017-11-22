@@ -31,7 +31,6 @@ class Taggable:
 
     untagged = frozenset(['untagged'])
     _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int))
-    _tags_inheritable = True
 
     def __init__(self):
         super(Taggable, self).__init__()
@@ -52,9 +51,7 @@ class Taggable:
         '''
         Override for the 'tags' getattr fetcher, used from Base, allow some classes to not give their tags to their 'children'
         '''
-        tags = []
-        if self._tags_inheritable:
-            tags = self._attributes.get('tags', [])
+        tags = self._attributes.get('tags', [])
         if hasattr(self, '_get_parent_attribute'):
             tags = self._get_parent_attribute('tags', extend=True)
         return tags
