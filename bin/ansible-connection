@@ -51,6 +51,8 @@ class ConnectionProcess(object):
         self.srv = JsonRpcServer()
         self.sock = None
 
+        self.connection = None
+
     def start(self):
         try:
             messages = list()
@@ -67,6 +69,7 @@ class ConnectionProcess(object):
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null')
             self.connection.set_options()
             self.connection._connect()
+            self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
             messages.append('connection to remote device started successfully')
 
@@ -84,7 +87,7 @@ class ConnectionProcess(object):
 
     def run(self):
         try:
-            while True:
+            while self.connection.connected:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
@@ -135,24 +138,19 @@ class ConnectionProcess(object):
     def shutdown(self):
         """ Shuts down the local domain socket
         """
-        if not os.path.exists(self.socket_path):
-            return
-
-        try:
-            if self.sock:
-                self.sock.close()
-            if self.connection:
-                self.connection.close()
-
-        except Exception:
-            pass
-
-        finally:
-            if os.path.exists(self.socket_path):
-                os.remove(self.socket_path)
-                setattr(self.connection, '_socket_path', None)
-                setattr(self.connection, '_connected', False)
-
+        if os.path.exists(self.socket_path):
+            try:
+                if self.sock:
+                    self.sock.close()
+                if self.connection:
+                    self.connection.close()
+            except:
+                pass
+            finally:
+                if os.path.exists(self.socket_path):
+                    os.remove(self.socket_path)
+                    setattr(self.connection, '_socket_path', None)
+                    setattr(self.connection, '_connected', False)
         display.display('shutdown complete', log_only=True)
 
     def do_EXEC(self, data):

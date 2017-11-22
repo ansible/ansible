@@ -209,6 +209,15 @@ class Connection(ConnectionBase):
 
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 
+    def reset(self):
+        '''
+        Reset the connection
+        '''
+        if self._socket_path:
+            display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
+            self.close()
+        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
+
     def close(self):
         if self._manager:
             self._manager.close_session()
