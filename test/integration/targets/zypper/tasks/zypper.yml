@@ -294,6 +294,55 @@
       - zypper_rm is failed
       - zypper_rm.msg.startswith('Can not remove via URL.')
 
+- name: remove pattern update_test
+  zypper:
+    name: update_test
+    type: pattern
+    state: absent
+
+- name: install pattern update_test
+  zypper:
+    name: update_test
+    type: pattern
+    state: present
+  register: zypper_install_pattern1
+  
+- name: install pattern update_test again
+  zypper:
+    name: update_test
+    type: pattern
+    state: present
+  register: zypper_install_pattern2
+
+- assert:
+    that:
+      - zypper_install_pattern1 is changed
+      - zypper_install_pattern2 is not changed
+
+- name: remove hello
+  zypper:
+    name: hello
+    state: absent
+
+- name: install via URL
+  zypper:
+    state: present
+    name: http://download.opensuse.org/distribution/leap/42.3/repo/oss/suse/x86_64/hello-2.9-9.6.x86_64.rpm
+    # works on 42.1 up to 42.3
+  register: zypperin1
+
+- name: test install
+  zypper:
+    name: hello
+    state: present
+  register: zypperin2
+  
+- assert:
+    that:
+      - zypperin1 is successful
+      - zypperin1 is changed
+      - zypperin2 is not changed
+
 # check for https://github.com/ansible/ansible/issues/20139
 - name: run updatecache
   zypper:
