@@ -499,12 +499,13 @@ def main():
             )
         elif state == 'iscsidiscover':
             host_id = get_id_by_name(hosts_service, module.params['name'])
+            iscsi_param = module.params['iscsi']
             iscsi_targets = hosts_service.service(host_id).iscsi_discover(
                 iscsi=otypes.IscsiDetails(
-                    port=int(module.params['iscsi']['port']) if module.params['iscsi']['port'].isdigit() else None,
-                    username=module.params['iscsi']['username'],
-                    password=module.params['iscsi']['password'],
-                    address=module.params['iscsi']['address'],
+                    port=int(iscsi_param.get('port', 3260)),
+                    username=iscsi_param.get('username'),
+                    password=iscsi_param.get('password'),
+                    address=iscsi_param.get('address'),
                 ),
             )
             ret = {
@@ -514,14 +515,15 @@ def main():
             }
         elif state == 'iscsilogin':
             host_id = get_id_by_name(hosts_service, module.params['name'])
+            iscsi_param = module.params['iscsi']
             ret = hosts_module.action(
                 action='iscsi_login',
                 iscsi=otypes.IscsiDetails(
-                    port=int(module.params['iscsi']['port']) if module.params['iscsi']['port'].isdigit() else None,
-                    username=module.params['iscsi']['username'],
-                    password=module.params['iscsi']['password'],
-                    address=module.params['iscsi']['address'],
-                    target=module.params['iscsi']['target'],
+                    port=int(iscsi_param.get('port', 3260)),
+                    username=iscsi_param.get('username'),
+                    password=iscsi_param.get('password'),
+                    address=iscsi_param.get('address'),
+                    target=iscsi_param.get('target'),
                 ),
             )
         elif state == 'started':
