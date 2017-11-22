@@ -667,17 +667,28 @@ def cs_policybindings_identical(client, module):
 
 def sync_cs_policybindings(client, module):
     log('Syncing cs policybindings')
+    actual_bindings = get_actual_policybindings(client, module)
+    configured_bindings = get_configured_policybindings(client, module)
 
-    # Delete all actual bindings
-    for binding in get_actual_policybindings(client, module).values():
-        log('Deleting binding for policy %s' % binding.policyname)
-        csvserver_cspolicy_binding.delete(client, binding)
+    # Delete actual bindings not in configured
+    delete_keys = list(set(actual_bindings.keys()) - set(configured_bindings.keys()))
+    for key in delete_keys:
+        log('Deleting binding for policy %s' % key)
+        csvserver_cspolicy_binding.delete(client, actual_bindings[key])
 
-    # Add all configured bindings
+    # Add configured bindings not in actual
+    add_keys = list(set(configured_bindings.keys()) - set(actual_bindings.keys()))
+    for key in add_keys:
+        log('Adding binding for policy %s' % key)
+        configured_bindings[key].add()
 
-    for binding in get_configured_policybindings(client, module).values():
-        log('Adding binding for policy %s' % binding.policyname)
-        binding.add()
+    # Update existing if changed
+    modify_keys = list(set(configured_bindings.keys()) & set(actual_bindings.keys()))
+    for key in modify_keys:
+        if not configured_bindings[key].has_equal_attributes(actual_bindings[key]):
+            log('Updating binding for policy %s' % key)
+            csvserver_cspolicy_binding.delete(client, actual_bindings[key])
+            configured_bindings[key].add()
 
 
 def ssl_certkey_bindings_identical(client, module):
