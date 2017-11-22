@@ -103,11 +103,11 @@ def main():
         ],
     )
 
-    # contract = module.params['contract']
+    contract = module.params['contract']
     filter_name = module.params['filter']
     log = module.params['log']
-    # subject = module.params['subject']
-    # tenant = module.params['tenant']
+    subject = module.params['subject']
+    tenant = module.params['tenant']
     state = module.params['state']
 
     # Add subject_filter key to modul.params for building the URL
@@ -118,7 +118,33 @@ def main():
         log = ''
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='contract', subclass_2='subject', subclass_3='subject_filter')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzBrCP',
+            aci_rn='brc-{}'.format(contract),
+            filter_target='(vzBrCP.name, "{}")'.format(contract),
+            module_object=contract,
+        ),
+        subclass_2=dict(
+            aci_class='vzSubj',
+            aci_rn='subj-{}'.format(subject),
+            filter_target='(vzSubj.name, "{}")'.format(subject),
+            module_object=subject,
+        ),
+        subclass_3=dict(
+            aci_class='vzRsSubjFiltAtt',
+            aci_rn='rssubjFiltAtt-{}'.format(filter_name),
+            filter_target='(vzRsSubjFiltAtt.tnVzFilterName, "{}")'.format(filter_name),
+            module_object=filter_name,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

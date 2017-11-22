@@ -79,7 +79,7 @@ RETURN = r''' # '''
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-ACI_CLASS_MAPPING = {"consumer": "fvRsCons", "provider": "fvRsProv"}
+ACI_CLASS_MAPPING = {"consumer": {"class": "fvRsCons", "rn": "rscons-"}, "provider": {"class": "fvRsProv", "rn": "rsprov-"}}
 PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_one": "AtmostOne", "none": "None"}
 
 
@@ -106,22 +106,51 @@ def main():
         ],
     )
 
+    ap = module.params['ap']
     contract = module.params['contract']
     contract_type = module.params['contract_type']
-    aci_class = ACI_CLASS_MAPPING[contract_type]
+    epg = module.params['epg']
     priority = module.params['priority']
     provider_match = module.params['provider_match']
+    if provider_match is not None:
+        provider_match = PROVIDER_MATCH_MAPPING[provider_match]
     state = module.params['state']
+    tenant = module.params['tenant']
+
+    aci_class = ACI_CLASS_MAPPING[contract_type]["class"]
+    aci_rn = ACI_CLASS_MAPPING[contract_type]["rn"]
 
     if contract_type == "consumer" and provider_match is not None:
         module.fail_json(msg="the 'provider_match' is only configurable for Provided Contracts")
 
-    # Construct contract_class key and add to module.params for building URL
-    contract_class = 'epg_' + contract_type
-    module.params[contract_class] = contract
-
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='ap', subclass_2='epg', subclass_3=contract_class)
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{}'.format(ap),
+            filter_target='(fvAp.name, "{}")'.format(ap),
+            module_object=ap,
+        ),
+        subclass_2=dict(
+            aci_class='fvAEPg',
+            aci_rn='epg-{}'.format(epg),
+            filter_target='(fvAEPg.name, "{}")'.format(epg),
+            module_object=epg,
+        ),
+        subclass_3=dict(
+            aci_class=aci_class,
+            aci_rn='{}{}'.format(aci_rn, contract),
+            filter_target='({}.tnVzBrCPName, "{}'.format(aci_class, contract),
+            module_object=contract,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -143,9 +172,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove contract_class that is used to build URL from module.params
-    module.params.pop(contract_class)
 
     module.exit_json(**aci.result)
 

@@ -120,9 +120,24 @@ def main():
     ap = module.params['ap']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='ap')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{}'.format(ap),
+            filter_target='(fvAp.name, "{}")'.format(ap),
+            module_object=ap,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

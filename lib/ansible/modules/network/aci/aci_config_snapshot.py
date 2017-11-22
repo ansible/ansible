@@ -147,13 +147,20 @@ def main():
     snapshot = module.params['snapshot']
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot
-        module.params['snapshot'] = snapshot
     state = module.params['state']
 
     aci = ACIModule(module)
 
     if state == 'present':
-        aci.construct_url(root_class='export_policy')
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configExportP',
+                aci_rn='fabric/configexp-{}'.format(export_policy),
+                filter_target='(configExportP.name, "{}")'.format(export_policy),
+                module_object=export_policy,
+            ),
+        )
+
         aci.get_existing()
 
         # Filter out module params with null values
@@ -176,13 +183,25 @@ def main():
         aci.post_config()
 
     else:
-        # Add snapshot_container to module.params to build URL
+        # Prefix the proper url to export_policy
         if export_policy is not None:
-            module.params['snapshot_container'] = 'uni/fabric/configexp-{}'.format(module.params['export_policy'])
-        else:
-            module.params['snapshot_container'] = None
+            export_policy = 'uni/fabric/configexp-{}'.format(export_policy)
 
-        aci.construct_url(root_class='snapshot_container', subclass_1='snapshot')
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configSnapshotCont',
+                aci_rn='backupst/snapshots-[{}]'.format(export_policy),
+                filter_target='(configSnapshotCont.name, "{}")'.format(export_policy),
+                module_object=export_policy,
+            ),
+            subclass_1=dict(
+                aci_class='configSnapshot',
+                aci_rn='snapshot-{}'.format(snapshot),
+                filter_target='(configSnapshot.name, "{}")'.format(snapshot),
+                module_object=snapshot,
+            ),
+        )
+
         aci.get_existing()
 
         if state == 'absent':
@@ -200,9 +219,6 @@ def main():
 
                 # Mark Snapshot for Deletion
                 aci.post_config()
-
-        # Remove snapshot used to build URL from module.params
-        module.params.pop('snapshot_container')
 
     module.exit_json(**aci.result)
 

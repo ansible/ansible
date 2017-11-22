@@ -71,20 +71,26 @@ options:
     - The L3 Out that contains the assocated Route Profile.
   scope:
     description:
-    - Determines if scope of the Subnet.
-    - The private option only allows communication with hosts in the same VRF.
-    - The public option allows the Subnet to be advertised outside of the ACI Fabric, and allows communication with
+    - Determines the scope of the Subnet.
+    - The C(private) option only allows communication with hosts in the same VRF.
+    - The C(public) option allows the Subnet to be advertised outside of the ACI Fabric, and allows communication with
       hosts in other VRFs.
     - The shared option limits communication to hosts in either the same VRF or the shared VRF.
+    - The value is a list of options, C(private) and C(public) are mutually exclusive, but both can be used with C(shared).
     - The APIC defaults new Subnets to C(private).
-    choices: [ private, public, shared ]
+    choices:
+      - private
+      - public
+      - shared
+      - [ private, shared ]
+      - [ public, shared ]
     default: private
   subnet_control:
     description:
     - Determines the Subnet's Control State.
-    - The querier_ip option is used to treat the gateway_ip as an IGMP querier source IP.
-    - The nd_ra option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
-    - The no_gw option is used to remove default gateway functionality from the gateway address.
+    - The C(querier_ip) option is used to treat the gateway_ip as an IGMP querier source IP.
+    - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
+    - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
     - The APIC defaults new Subnets to C(nd_ra).
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
     default: nd_ra
@@ -98,7 +104,97 @@ options:
     aliases: [ tenant_name ]
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: create a tenant
+  aci_tenant:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+
+- name: create a bridge domain
+  aci_bd:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    bd: database
+
+- name: create a subnet
+  aci_bd_subnet:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    bd: database
+    gateway: 10.1.1.1
+    mask: 24
+
+- name: create a subnet with options
+  aci_bd_subnet:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    bd: database
+    subnet_name: sql
+    gateway: 10.1.2.1
+    mask: 23
+    description: SQL Servers
+    scope: public
+    route_profile_l3_out: corp
+    route_profile: corp_route_profile
+
+- name: update a subnets scope to private and shared
+  aci_bd_subnet:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    bd: database
+    gateway: 10.1.1.1
+    mask: 24
+    scope: [private, shared]
+
+- name: get all subnets
+  aci_bd_subnet:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+
+- name: get all subnets of specific gateway in specified tenant
+  aci_bd_subnet:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+    tenant: production
+    gateway: 10.1.1.1
+    mask: 24
+
+- name: get specific subnet
+  aci_bd_subnet:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+    tenant: production
+    bd: database
+    gateway: 10.1.1.1
+    mask: 24
+
+- name: delete a subnet
+  aci_bd_subnet:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: absent
+    tenant: production
+    bd: database
+    gateway: 10.1.1.1
+    mask: 24
+'''
 
 RETURN = r''' # '''
 
@@ -122,7 +218,10 @@ def main():
         preferred=dict(type='str', choices=['no', 'yes']),
         route_profile=dict(type='str'),
         route_profile_l3_out=dict(type='str'),
-        scope=dict(type='str', choices=['private', 'public', 'shared']),
+        scope=dict(
+            type='list',
+            choices=[['private'], ['public'], ['shared'], ['private', 'shared'], ['shared', 'private'], ['public', 'shared'], ['shared', 'public']],
+        ),
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
@@ -141,32 +240,56 @@ def main():
 
     description = module.params['description']
     enable_vip = module.params['enable_vip']
+    tenant = module.params['tenant']
+    bd = module.params['bd']
     gateway = module.params['gateway']
     mask = module.params['mask']
     if mask is not None and mask not in range(0, 129):
         # TODO: split checkes between IPv4 and IPv6 Addresses
         module.fail_json(msg='Valid Subnet Masks are 0 to 32 for IPv4 Addresses and 0 to 128 for IPv6 addresses')
+    if gateway is not None:
+        gateway = '{}/{}'.format(gateway, str(mask))
     subnet_name = module.params['subnet_name']
     nd_prefix_policy = module.params['nd_prefix_policy']
     preferred = module.params['preferred']
     route_profile = module.params['route_profile']
     route_profile_l3_out = module.params['route_profile_l3_out']
     scope = module.params['scope']
+    if scope:
+        if len(scope) == 1:
+            scope = scope[0]
+        elif 'public' in scope:
+            scope = 'public,shared'
+        else:
+            scope = 'private,shared'
     state = module.params['state']
     subnet_control = module.params['subnet_control']
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
 
-    # Construct gateway_addr and add to module.params for constructing URL
-    if gateway is not None and mask is not None:
-        gateway_addr = '{}/{}'.format(gateway, str(mask))
-        module.params['gateway_addr'] = gateway_addr
-
     aci = ACIModule(module)
     aci.construct_url(
-        root_class='tenant', subclass_1='bd', subclass_2='gateway_addr',
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, \"{}\")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvBD',
+            aci_rn='BD-{}'.format(bd),
+            filter_target='(fvBD.name, \"{}\")'.format(bd),
+            module_object=bd,
+        ),
+        subclass_2=dict(
+            aci_class='fvSubnet',
+            aci_rn='subnet-[{}]'.format(gateway),
+            filter_target='(fvSubnet.ip, \"{}\")'.format(gateway),
+            module_object=gateway,
+        ),
         child_classes=['fvRsBDSubnetToProfile', 'fvRsNdPfxPol'],
     )
+
     aci.get_existing()
 
     if state == 'present':
@@ -176,7 +299,7 @@ def main():
             class_config=dict(
                 ctrl=subnet_control,
                 descr=description,
-                ip=gateway_addr,
+                ip=gateway,
                 name=subnet_name,
                 preferred=preferred,
                 scope=scope,
@@ -196,9 +319,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove gateway_addr used to form URL from module.params
-    module.params.pop("gateway_addr", None)
 
     module.exit_json(**aci.result)
 
