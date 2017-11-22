@@ -183,7 +183,7 @@ class MyAddPolicy(object):
 
     def missing_host_key(self, client, hostname, key):
 
-        if all((self.get_option('host_key_checking'), not self.get_option('host_key_auto_add'))):
+        if all((self._options['host_key_checking'], not self._options['host_key_auto_add'])):
 
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
