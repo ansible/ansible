@@ -23,7 +23,7 @@ Rolling Update Batch Size
 `````````````````````````
 
 
-By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates use case, you can define how many hosts Ansible should manage at a single time by using the ''serial'' keyword::
+By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ''serial'' keyword::
 
 
     - name: test play
