@@ -61,6 +61,16 @@ options:
     required: false
     default: false
     choices: ['true', 'false']
+  validate:
+    description:
+      - The I(validate) argument is responsible for instructing the remote
+        device to skip checking the current device configuration
+        compatibility with the package being installed. When set to false
+        validation is not performed.
+    version_added: 2.5
+    required: false
+    default: true
+    choices: ['true', 'false']
   force:
     description:
       - The I(force) argument instructs the module to bypass the package
@@ -135,12 +145,14 @@ def install_package(module, device):
     junos = SW(device)
     package = module.params['src']
     no_copy = module.params['no_copy']
+    validate = module.params['validate']
 
     def progress_log(dev, report):
         module.log(report)
 
     module.log('installing package')
-    result = junos.install(package, progress=progress_log, no_copy=no_copy)
+    result = junos.install(package, progress=progress_log, no_copy=no_copy,
+                           validate=validate)
 
     if not result:
         module.fail_json(msg='Unable to install package on device')
@@ -158,6 +170,7 @@ def main():
         version=dict(),
         reboot=dict(type='bool', default=True),
         no_copy=dict(default=False, type='bool'),
+        validate=dict(default=True, type='bool'),
         force=dict(type='bool', default=False),
         transport=dict(default='netconf', choices=['netconf'])
     )
