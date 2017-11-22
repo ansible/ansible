@@ -188,8 +188,8 @@ def parse_ping(ping_stats):
     Example: "Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/8 ms"
     Returns the percent of packet loss, recieved packets, transmitted packets, and RTT dict.
     """
-    rate_re = re.compile("^\w+\s+\w+\s+\w+\s+(?P<pct>\d+)\s+\w+\s+\((?P<rx>\d+)\/(?P<tx>\d+)\)")
-    rtt_re = re.compile(".*,\s+\S+\s+\S+\s+=\s+(?P<min>\d+)\/(?P<avg>\d+)\/(?P<max>\d+)\s+\w+\s*$|.*\s*$")
+    rate_re = re.compile(r"^\w+\s+\w+\s+\w+\s+(?P<pct>\d+)\s+\w+\s+\((?P<rx>\d+)/(?P<tx>\d+)\)")
+    rtt_re = re.compile(r".*,\s+\S+\s+\S+\s+=\s+(?P<min>\d+)/(?P<avg>\d+)/(?P<max>\d+)\s+\w+\s*$|.*\s*$")
 
     rate = rate_re.match(ping_stats)
     rtt = rtt_re.match(ping_stats)

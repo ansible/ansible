@@ -418,7 +418,7 @@ class MPLS(FactsBase):
             path['up'] = True if match.group(1) == 'UP' else False
             path['name'] = None
             if path['up']:
-                match = re.search('bypass_lsp: (\S)', data, re.M)
+                match = re.search(r'bypass_lsp: (\S)', data, re.M)
                 path['name'] = match.group(1) if match else None
             return path
 

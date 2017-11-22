@@ -185,7 +185,7 @@ class Hardware(FactsBase):
     def populate(self):
         super(Hardware, self).populate()
         data = self.responses[0]
-        match = re.findall('\s(\d+)\s', data)
+        match = re.findall(r'\s(\d+)\s', data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) // 1024
             self.facts['memfree_mb'] = int(match[1]) // 1024
@@ -231,12 +231,12 @@ class Interfaces(FactsBase):
         for en in vlan_info_next.splitlines():
             if en == '':
                 continue
-            match = re.search('^(\S+)\s+(\S+)\s+(\S+)', en)
+            match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
             intf = match.group(1)
             if intf not in facts:
                 facts[intf] = list()
             fact = dict()
-            matc = re.search('^([\w+\s\d]*)\s+(\S+)\s+(\S+)', en)
+            matc = re.search(r'^([\w+\s\d]*)\s+(\S+)\s+(\S+)', en)
             fact['address'] = matc.group(2)
             fact['masklen'] = matc.group(3)
             facts[intf].append(fact)
@@ -299,7 +299,7 @@ class Interfaces(FactsBase):
             desc_val, desc_info = desc_next.split('Port')
         for en in desc_val.splitlines():
             if key in en:
-                match = re.search('^(\S+)\s+(\S+)', en)
+                match = re.search(r'^(\S+)\s+(\S+)', en)
                 if match.group(2) in ['Full', 'N/A']:
                     return "Null"
                 else:
@@ -331,7 +331,7 @@ class Interfaces(FactsBase):
         for en in mediatype_next.splitlines():
             if key in en:
                 flag = 0
-                match = re.search('^(\S+)\s+(\S+)\s+(\S+)', en)
+                match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
                 if match:
                     strval = match.group(3)
                     return strval
@@ -344,7 +344,7 @@ class Interfaces(FactsBase):
         for en in type_val_next.splitlines():
             if key in en:
                 flag = 0
-                match = re.search('^(\S+)\s+(\S+)\s+(\S+)', en)
+                match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
                 if match:
                     strval = match.group(2)
                     return strval
