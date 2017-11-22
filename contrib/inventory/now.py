@@ -44,7 +44,15 @@ from cookielib import LWPCookieJar
 
 
 class NowInventory(object):
-    def __init__(self, hostname, username, password, fields=None, groups=None, selection=None, proxy=None):
+    def __init__(
+            self,
+            hostname,
+            username,
+            password,
+            fields=None,
+            groups=None,
+            selection=None,
+            proxy=None):
         self.hostname = hostname
 
         # requests session
@@ -139,8 +147,9 @@ class NowInventory(object):
         url = "https://%s/%s" % (self.hostname, path)
 
         # perform REST operation
-        response = self.session.get(url, auth=self.auth, headers=self.headers,
-                                    proxies={'http':self.proxy, 'https':self.proxy})
+        response = self.session.get(
+            url, auth=self.auth, headers=self.headers, proxies={
+                'http': self.proxy, 'https': self.proxy})
         if response.status_code != 200:
             print >> sys.stderr, "http error (%s): %s" % (response.status_code,
                                                           response.text)
