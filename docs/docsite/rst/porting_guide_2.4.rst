@@ -156,6 +156,31 @@ If you have a template lookup like this::
 
     {{ "name surname" | regex_replace("^[^\\s]+\\s+(.*)", "\\1") }}
 
+Tests
+=====
+
+Tests succeeded/failed
+-----------------------
+
+Prior to Ansible version 2.4, a task return code of ``rc`` would override a return code of ``failed``. In version 2.4,  both ``rc`` and ``failed`` are used to calculate the state of the task. Because of this, test plugins ``succeeded``/``failed``` have also been changed. This means that overriding a task failure with ``failed_when: no`` will result in ``succeeded``/``failed`` returning ``True``/``False``. For example:
+
+    - command: /bin/false
+      register: result
+      failed_when: no
+
+    - debug:
+        msg: 'This is printed on 2.3'
+      when: result|failed
+
+    - debug:
+        msg: 'This is printed on 2.4'
+      when: result|succeeded
+
+    - debug:
+        msg: 'This is always printed'
+      when: result.rc != 0
+
+As we can see from the example above, in Ansible 2.3 ``succeeded``/``failed`` only checked the value of ``rc``.
 
 Networking
 ==========
