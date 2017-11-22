@@ -1,14 +1,12 @@
 Strategies
 ===========
 
-In 2.0 we added a new way to control play execution, ``strategy``, by default plays will
-still run as they used to, with what we call the ``linear`` strategy. All hosts will run each
-task before any host starts the next task, using the number of forks (default 5) to parallelize.
+Strategies are a way to control play execution. By default, plays run with a  ``linear`` strategy, in which all hosts will run each task before any host starts the next task, using the number of forks (default 5) to parallelize.
 
 The ``serial`` directive can 'batch' this behaviour to a subset of the hosts, which then run to
 completion of the play before the next 'batch' starts.
 
-A second ``strategy`` ships with ansible ``free``, which allows each host to run until the end of
+A second ``strategy`` ships with Ansible - ``free`` - which allows each host to run until the end of
 the play as fast as it can.::
 
     - hosts: all
@@ -22,8 +20,8 @@ the play as fast as it can.::
 Strategy Plugins
 `````````````````
 
-The strategies are implemented via a new type of plugin, this means that in the future new
-execution types can be added, either locally by users or to Ansible itself by
+The strategies are implemented as plugins. In the future, new
+execution strategies can be added, either locally by users or to Ansible itself by
 a code contribution.
 
 One example is ``debug`` strategy. See :doc:`playbooks_debugger` for details.

@@ -3,7 +3,7 @@ Ansible Vault
 
 .. contents:: Topics
 
-New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
+The "Vault" is a feature of ansible that allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plaintext in playbooks or roles. These vault files can then be distributed or placed in source control.
 
 To enable this feature, a command line tool - :ref:`ansible-vault` - is used to edit files, and a command line flag (:option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` or :option:`--vault-password-file <ansible-playbook --vault-password-file>`) is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
 
@@ -103,8 +103,6 @@ to the disk, so be sure you do not want :ref:`ansible-vault edit <ansible_vault_
 
 Viewing Encrypted Files
 ```````````````````````
-
-*Available since Ansible 1.8*
 
 If you want to view the contents of an encrypted file without editing it, you can use the :ref:`ansible-vault view <ansible_vault_view>` command:
 
