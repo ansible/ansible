@@ -13,6 +13,9 @@ To use the ``debug`` strategy, change the ``strategy`` attribute like this::
       tasks:
       ...
 
+If you don't want change the code, you can define ``ANSIBLE_STRATEGY=debug``
+environment variable in order to enable the debugger.
+
 For example, run the playbook below::
 
     - hosts: test
