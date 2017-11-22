@@ -358,11 +358,11 @@ def get_igmp_interface(module, interface):
     staticoif = []
     if body:
         split_body = body.split('\n')
-        route_map_regex = ('.*ip igmp static-oif route-map\s+'
-                           '(?P<route_map>\S+).*')
-        prefix_source_regex = ('.*ip igmp static-oif\s+(?P<prefix>'
-                               '((\d+.){3}\d+))(\ssource\s'
-                               '(?P<source>\S+))?.*')
+        route_map_regex = (r'.*ip igmp static-oif route-map\s+'
+                           r'(?P<route_map>\S+).*')
+        prefix_source_regex = (r'.*ip igmp static-oif\s+(?P<prefix>'
+                               r'((\d+.){3}\d+))(\ssource\s'
+                               r'(?P<source>\S+))?.*')
 
         for line in split_body:
             temp = {}

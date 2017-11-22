@@ -191,8 +191,8 @@ def get_existing(module):
     body = execute_show_command(command, module)[0]
     if body:
         split_body = body.splitlines()
-        snapshot_regex = ('(?P<name>\S+)\s+(?P<date>\w+\s+\w+\s+\d+\s+\d+'
-                          ':\d+:\d+\s+\d+)\s+(?P<description>.*)')
+        snapshot_regex = (r'(?P<name>\S+)\s+(?P<date>\w+\s+\w+\s+\d+\s+\d+'
+                          r':\d+:\d+\s+\d+)\s+(?P<description>.*)')
         for snapshot in split_body:
             temp = {}
             try:
@@ -229,7 +229,7 @@ def action_add(module, existing_snapshots):
     body = execute_show_command(command, module)[0]
 
     if body:
-        section_regex = '.*\[(?P<section>\S+)\].*'
+        section_regex = r'.*\[(?P<section>\S+)\].*'
         split_body = body.split('\n\n')
         for section in split_body:
             temp = {}
