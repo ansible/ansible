@@ -304,7 +304,7 @@ class StorageDomainModule(BaseModule):
                     otypes.LogicalUnit(
                         id=lun_id,
                         address=storage.get('address'),
-                        port=storage.get('port', 3260),
+                        port=int(storage.get('port', 3260)),
                         target=storage.get('target'),
                         username=storage.get('username'),
                         password=storage.get('password'),
