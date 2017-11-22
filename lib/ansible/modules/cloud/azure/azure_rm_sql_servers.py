@@ -45,7 +45,8 @@ options:
         suboptions:
             type:
                 description:
-                    - The identity type. Set this to 'SystemAssigned' in order to automatically create and assign an Azure Active Directory principal for the resource. Possible values include: 'SystemAssigned'
+                    - "The identity type. Set this to 'SystemAssigned' in order to automatically create and assign an Azure Active Directory principal for th
+                       e resource. Possible values include: 'SystemAssigned'"
                 required: False
     administrator_login:
         description:
@@ -81,6 +82,13 @@ EXAMPLES = '''
           administrator_login: mylogin
           administrator_login_password: Testpasswordxyz12!
           version: "{{ version }}"
+'''
+
+RETURN = '''
+state:
+    description: Current state of Server
+    returned: always
+    type: dict
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
