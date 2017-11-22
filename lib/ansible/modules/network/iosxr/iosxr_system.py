@@ -168,16 +168,16 @@ def map_obj_to_commands(want, have, module):
     return commands
 
 def parse_hostname(config):
-    match = re.search('^hostname (\S+)', config, re.M)
+    match = re.search(r'^hostname (\S+)', config, re.M)
     return match.group(1)
 
 def parse_domain_name(config):
-    match = re.search('^domain name (\S+)', config, re.M)
+    match = re.search(r'^domain name (\S+)', config, re.M)
     if match:
         return match.group(1)
 
 def parse_lookup_source(config):
-    match = re.search('^domain lookup source-interface (\S+)', config, re.M)
+    match = re.search(r'^domain lookup source-interface (\S+)', config, re.M)
     if match:
         return match.group(1)
 
@@ -186,10 +186,10 @@ def map_config_to_obj(module):
     return {
         'hostname': parse_hostname(config),
         'domain_name': parse_domain_name(config),
-        'domain_search': re.findall('^domain list (\S+)', config, re.M),
+        'domain_search': re.findall(r'^domain list (\S+)', config, re.M),
         'lookup_source': parse_lookup_source(config),
         'lookup_enabled': 'domain lookup disable' not in config,
-        'name_servers': re.findall('^domain name-server (\S+)', config, re.M)
+        'name_servers': re.findall(r'^domain name-server (\S+)', config, re.M)
     }
 
 def map_params_to_obj(module):
