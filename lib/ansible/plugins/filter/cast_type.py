@@ -8,7 +8,7 @@ __metaclass__ = type
 from ansible.errors import AnsibleError, AnsibleFilterError
 
 
-def list_to_dict(data, key):
+def cast_list_to_dict(data, key):
     new_obj = {}
 
     if not isinstance(data, list):
@@ -29,7 +29,7 @@ def list_to_dict(data, key):
     return new_obj
 
 
-def dict_to_list(data, key_name):
+def cast_dict_to_list(data, key_name):
     new_obj = []
 
     if not isinstance(data, dict):
@@ -50,13 +50,13 @@ class FilterModule(object):
     '''
     def filters(self):
         return {
-            'list_to_dict': list_to_dict,
-            'dict_to_list': dict_to_list,
+            'cast_list_to_dict': cast_list_to_dict,
+            'cast_dict_to_list': cast_dict_to_list,
         }
 
 
 if __name__ == "__main__":
     list_data = [{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]
-    print(list_to_dict(list_data, 'proto'))
+    print(cast_list_to_dict(list_data, 'proto'))
     dict_data = {'eigrp': {'state': 'enabled', 'as': '1'}, 'ospf': {'state': 'enabled', 'as': '2'}}
-    print(dict_to_list(dict_data, 'proto'))
+    print(cast_dict_to_list(dict_data, 'proto'))
