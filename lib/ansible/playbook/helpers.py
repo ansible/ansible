@@ -259,7 +259,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     if len(tags) > 0:
                         if 'include_tasks' in task_ds or 'import_tasks' in task_ds:
-                            raise AnsibleParerError('You cannot specify "tags" inline to the task, it is a task keyword')
+                            raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
                                 "Include tasks should not specify tags in more than one way (both via args and directly on the task). "
