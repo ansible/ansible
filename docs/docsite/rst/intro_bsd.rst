@@ -66,7 +66,7 @@ Using BSD as the control machine is as simple as installing the Ansible package 
 BSD Facts
 `````````
 
-Ansible gathers facts from the BSDs in a similar manner to Linux machines, but since the data, names and structures can vary for network, disks and other devices, one should expect the output to be slightly different yet still familiar to a BSD administrator.
+Ansible gathers facts from the BSDs in a similar manner to Linux machines, but since the data, names, and structures can vary for network, disks, and other devices, one should expect the output to be slightly different yet still familiar to a BSD administrator.
 
 .. _bsd_contributions:
 

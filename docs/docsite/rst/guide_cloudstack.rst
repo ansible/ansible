@@ -134,7 +134,7 @@ Environment Variables
 `````````````````````
 .. versionadded:: 2.3
 
-Since Ansible 2.3 it is possible to use environment variables for domain (``CLOUDSTACK_DOMAIN``), account (``CLOUDSTACK_ACCOUNT``), project (``CLOUDSTACK_PROJECT``), VPC (``CLOUDSTACK_VPC``) and zone (``CLOUDSTACK_ZONE``). This simplifies the tasks by not repeating the arguments for every tasks.
+Since Ansible 2.3 it is possible to use environment variables for domain (``CLOUDSTACK_DOMAIN``), account (``CLOUDSTACK_ACCOUNT``), project (``CLOUDSTACK_PROJECT``), VPC (``CLOUDSTACK_VPC``), and zone (``CLOUDSTACK_ZONE``). This simplifies the tasks by not repeating the arguments for every tasks.
 
 Below you see an example how it can be used in combination with Ansible's block feature:
 
@@ -197,7 +197,7 @@ This is how our inventory looks like:
 
 As you can see, the public IPs for our web servers and jumphost has been assigned as variable ``public_ip`` directly in the inventory.
 
-The configure the jumphost, web servers and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver and db-server. The cloud-vm is there for specifying the defaults of our cloud infrastructure.
+To configure the jumphost, web servers, and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver, and db-server. The cloud-vm is there for specifying the defaults of our cloud infrastructure.
 
 .. code-block:: yaml
 
@@ -262,9 +262,9 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
           cs_staticnat: vm="{{ inventory_hostname_short }}" ip_address="{{ public_ip }}"
           when: public_ip is defined
 
-In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``connection=local`` to execute the API calls locally from our workstation.
+In the above play we defined 3 tasks and used the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``connection=local`` to execute the API calls locally from our workstation.
 
-In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
+In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering, and start the VM again.
 
 In the second task we ensure the ports are opened if we give a public IP to the VM.
 

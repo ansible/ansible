@@ -71,7 +71,7 @@ Development and stable version maintenance workflow
 
 The Ansible community develops and maintains Ansible on GitHub_.
 
-New modules, plugins, features and bugfixes will always be integrated in what will become the next
+New modules, plugins, features, and bugfixes will always be integrated in what will become the next
 major version of Ansible.  This work is tracked on the ``devel`` git branch.
 
 Ansible provides bugfixes and security improvements for the most recent major release. The previous
@@ -81,7 +81,7 @@ security fixes to releases which are two releases old. This work is tracked on t
 
 .. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
     are only supported for two releases with the first stage including both security and general bug
-    fixes while the second stage includes security and critical bug fixes
+    fixes while the second stage includes security and critical bug fixes.
 
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.

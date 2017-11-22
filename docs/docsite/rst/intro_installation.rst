@@ -269,7 +269,7 @@ If you are installing on OS X Mavericks, you may encounter some noise from your 
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
-Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
+Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install Ansible directly.
 
 .. _tagged_releases:
 

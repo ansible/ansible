@@ -60,7 +60,7 @@ Individuals with direct commit access to ansible/ansible are entrusted with powe
   - Discuss with other committers, specially when you are unsure of something.
   - Document! If your PR is a new feature or a change to behavior, make sure you've updated all associated documentation or have notified the right people to do so. It also helps to add the version of Core against which this documentation is compatible (to avoid confusion with stable versus devel docs, for backwards compatibility, etc.).
   - Consider scope, sometimes a fix can be generalized
-  - Keep it simple, then things are maintainable, debuggable and intelligible.
+  - Keep it simple, then things are maintainable, debuggable, and intelligible.
 
 Committers are expected to continue to follow the same community and contribution guidelines followed by the rest of the Ansible community. 
 
