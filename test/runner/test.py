@@ -524,7 +524,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               metavar='IMAGE',
                               nargs='?',
                               default=None,
-                              const='ubuntu1604',
+                              const='default',
                               help='run from a docker container').completer = complete_docker
 
     environments.add_argument('--remote',
