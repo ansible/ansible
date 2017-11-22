@@ -3,7 +3,7 @@ Using Vault in playbooks
 
 .. contents:: Topics
 
-Added in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
+The "Vault" is a feature of Ansible that allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plaintext in playbooks or roles. These vault files can then be distributed or placed in source control.
 
 To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag :option:`--ask-vault-pass <ansible-vault --ask-vault-pass>` or :option:`--vault-password-file <ansible-vault --vault-password-file>` is used. You can also modify your ``ansible.cfg`` file to specify the location of a password file or configure Ansible to always prompt for the password. These options require no command line flag usage.
 
@@ -20,7 +20,7 @@ To run a playbook that contains vault-encrypted data files, you must pass one of
 
 This prompt will then be used to decrypt (in memory only) any vault encrypted files that are accessed.  Currently this requires that all files be encrypted with the same password.
 
-Alternatively, passwords can be specified with a file or a script, the script version will require Ansible 1.7 or later.  When using this flag, ensure permissions on the file are such that no one else can access your key and do not add your key to source control::
+Alternatively, passwords can be specified with a file or a script (the script version will require Ansible 1.7 or later).  When using this flag, ensure permissions on the file are such that no one else can access your key and do not add your key to source control::
 
     ansible-playbook site.yml --vault-password-file ~/.vault_pass.txt
 

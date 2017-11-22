@@ -24,11 +24,9 @@ Remote Connection Information
 Before we get started, it's important to understand how Ansible communicates with remote
 machines over SSH. 
 
-By default, Ansible 1.3 and later will try to use native 
+By default, Ansible will try to use native 
 OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
 OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
-
-In releases up to and including Ansible 1.2, the default was strictly paramiko.  Native SSH had to be explicitly selected with the ``-c`` ssh option or set in the configuration file.
 
 Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :doc:`intro_configuration`.
 
@@ -126,7 +124,7 @@ You can specify localhost explicitly by adding this to your inventory file::
 Host Key Checking
 `````````````````
 
-Ansible 1.2.1 and later have host key checking enabled by default.  
+Ansible has host key checking enabled by default.  
 
 If a host is reinstalled and has a different key in 'known_hosts', this will result in an error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron.  You might not want this.
 
