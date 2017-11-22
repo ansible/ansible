@@ -16,8 +16,6 @@ as desired.
 Ignoring Failed Commands
 ````````````````````````
 
-.. versionadded:: 0.6
-
 Generally playbooks will stop executing any more steps on a host that has a task fail.
 Sometimes, though, you want to continue on.  To do so, write a task that looks like this::
 
@@ -47,8 +45,6 @@ so subsequent tasks can try to use them again.
 Handlers and Failure
 ````````````````````
 
-.. versionadded:: 1.9.1
-
 When a task fails on a host, handlers which were previously notified
 will *not* be run on that host. This can lead to cases where an unrelated failure
 can leave a host in an unexpected state. For example, a task could update
@@ -67,13 +63,11 @@ the handler from running, such as a host becoming unreachable.)
 Controlling What Defines Failure
 ````````````````````````````````
 
-.. versionadded:: 1.4
-
 Suppose the error code of a command is meaningless and to tell if there
 is a failure what really matters is the output of the command, for instance
 if the string "FAILED" is in the output.
 
-Ansible in 1.4 and later provides a way to specify this behavior as follows::
+Ansible provides a way to specify this behavior as follows::
 
     - name: Fail task when the command error output prints FAILED
       command: /usr/bin/example-command -x -y -z
@@ -102,8 +96,6 @@ In previous version of Ansible, this can still be accomplished as follows::
 
 Overriding The Changed Result
 `````````````````````````````
-
-.. versionadded:: 1.3
 
 When a shell/command or other module runs it will typically report
 "changed" status based on whether it thinks it affected machine state.
