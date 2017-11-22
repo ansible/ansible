@@ -362,7 +362,9 @@ Action Shorthand
 
 Ansible prefers listing modules like this::
 
-    template: src=templates/foo.j2 dest=/etc/foo.conf
+    template:
+        src: templates/foo.j2
+        dest: /etc/foo.conf
 
 Early versions of Ansible used the following format, which still works::
 
