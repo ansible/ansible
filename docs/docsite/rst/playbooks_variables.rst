@@ -1010,8 +1010,8 @@ This can often be used for things that might apply to some hosts multiple times.
        - { role: app_user, name: Graham }
        - { role: app_user, name: John   }
 
-In this example, the same role was invoked multiple times.  In that example it's quite likely there was
-no default for 'name' supplied at all.  Ansible can yell at you when variables aren't defined -- it's the default behavior in fact.
+In this example, the same role was invoked multiple times.  It's quite likely there was
+no default for 'name' supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
 
 There are a few other things that go on with roles.
 
