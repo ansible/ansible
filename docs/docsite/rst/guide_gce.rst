@@ -83,7 +83,7 @@ Create a file ``secrets.py`` looking like following, and put it in some folder w
 .. code-block:: python
 
     GCE_PARAMS = ('i...@project.googleusercontent.com', '/path/to/project.json')
-    GCE_KEYWORD_PARAMS = {'project': 'project_id'}
+    GCE_KEYWORD_PARAMS = {'project': 'project_id', 'datacenter': 'gce_zone'}
 
 Ensure to enter the email address from the created services account and not the one from your main account.
 
