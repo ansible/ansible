@@ -471,10 +471,10 @@ class Host(object):
                 return True
 
         if inventory_zabbix:
-           proposed_inventory = copy.deepcopy(host['inventory'])
-           proposed_inventory.update(inventory_zabbix)
-           if proposed_inventory != host['inventory']:
-               return True
+            proposed_inventory = copy.deepcopy(host['inventory'])
+            proposed_inventory.update(inventory_zabbix)
+            if proposed_inventory != host['inventory']:
+                return True
 
         return False
 
@@ -516,7 +516,6 @@ class Host(object):
         elif inventory_mode == "disabled":
             return int(-1)
         return inventory_mode
-
 
     # Update the host inventory_mode
     def update_inventory_mode(self, host_id, inventory_mode):
