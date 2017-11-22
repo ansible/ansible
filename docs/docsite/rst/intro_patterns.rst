@@ -99,8 +99,7 @@ And if you want to read the list of hosts from a file, prefix the file name with
 
 Easy enough.  See :doc:`intro_adhoc` and then :doc:`playbooks` for how to apply this knowledge.
 
-.. note:: With the exception of version 1.9, you can use ',' instead of ':' as a host list separator. The ',' is preferred specially when dealing with ranges and ipv6.
-.. note:: As of 2.0 the ';' is deprecated as a host list separator.
+.. note:: You can use ',' instead of ':' as a host list separator. The ',' is preferred specially when dealing with ranges and ipv6.
 
 .. seealso::
 
