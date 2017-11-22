@@ -175,6 +175,8 @@ class StrategyModule(StrategyBase):
             results = self._process_pending_results(iterator)
             host_results.extend(results)
 
+            self.update_active_connections(results)
+
             try:
                 included_files = IncludedFile.process_include_results(
                     host_results,

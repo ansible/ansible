@@ -44,15 +44,10 @@ class JsonRpcServer(object):
             kwargs = params
 
         rpc_method = None
-
-        if method in ('shutdown', 'reset'):
-            rpc_method = getattr(self, 'shutdown')
-
-        else:
-            for obj in self._objects:
-                rpc_method = getattr(obj, method, None)
-                if rpc_method:
-                    break
+        for obj in self._objects:
+            rpc_method = getattr(obj, method, None)
+            if rpc_method:
+                break
 
         if not rpc_method:
             error = self.method_not_found()
