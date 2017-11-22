@@ -230,7 +230,8 @@ class Connection(ConnectionBase):
         '''
         if self._socket_path:
             display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
-            self.shutdown()
+            self.close()
+        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
 
     def close(self):
         '''

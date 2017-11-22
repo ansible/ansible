@@ -292,6 +292,8 @@ class StrategyModule(StrategyBase):
 
                 host_results.extend(results)
 
+                self.update_active_connections(results)
+
                 try:
                     included_files = IncludedFile.process_include_results(
                         host_results,
