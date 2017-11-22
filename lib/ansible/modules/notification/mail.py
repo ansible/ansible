@@ -60,7 +60,7 @@ options:
         phrase portions.
     default: null
     required: false
-    version_added: "2.4"
+    version_added: "2.5"
   subject:
     description:
       - The subject of the email being sent.
@@ -76,7 +76,7 @@ options:
         with subtype html to also send a text version of the body.
     default: null
     required: false
-    version_added: "2.4"
+    version_added: "2.5"
   username:
     description:
       - If SMTP requires username
@@ -114,7 +114,7 @@ options:
         Attached files will be accessible using CID (content-id) starting at 0.
     default: null
     required: false
-    version_added: "2.4"
+    version_added: "2.5"
   headers:
     description:
       - A vertical-bar-separated list of headers which should be added to the message.
