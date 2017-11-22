@@ -353,7 +353,7 @@ class Host(object):
 
     # get host by host name
     def get_host_by_host_name(self, host_name):
-        host_list = self._zapi.host.get({'output': 'extend', 'filter': {'host': [host_name]}})
+        host_list = self._zapi.host.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'host': [host_name]}})
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -429,7 +429,8 @@ class Host(object):
 
     # check all the properties before link or clear template
     def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
-                             exist_interfaces, host, proxy_id, visible_name, description, host_name):
+                             exist_interfaces, host, proxy_id, visible_name, description, host_name,
+                             inventory_mode, inventory_zabbix):
         # get the existing host's groups
         exist_host_groups = self.get_host_groups_by_host_id(host_id)
         if set(host_groups) != set(exist_host_groups):
@@ -461,6 +462,19 @@ class Host(object):
         if description:
             if host['description'] != description:
                 return True
+
+        if inventory_mode:
+            if host['inventory']:
+                if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                    return True
+            elif inventory_mode != 'disabled':
+                return True
+
+        if inventory_zabbix:
+           proposed_inventory = copy.deepcopy(host['inventory'])
+           proposed_inventory.update(inventory_zabbix)
+           if proposed_inventory != host['inventory']:
+               return True
 
         return False
 
@@ -494,6 +508,16 @@ class Host(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to link template to host: %s" % e)
 
+    def inventory_mode_numeric(self, inventory_mode):
+        if inventory_mode == "automatic":
+            return int(1)
+        elif inventory_mode == "manual":
+            return int(0)
+        elif inventory_mode == "disabled":
+            return int(-1)
+        return inventory_mode
+
+
     # Update the host inventory_mode
     def update_inventory_mode(self, host_id, inventory_mode):
 
@@ -501,12 +525,7 @@ class Host(object):
         if not inventory_mode:
             return
 
-        if inventory_mode == "automatic":
-            inventory_mode = int(1)
-        elif inventory_mode == "manual":
-            inventory_mode = int(0)
-        elif inventory_mode == "disabled":
-            inventory_mode = int(-1)
+        inventory_mode = self.inventory_mode_numeric(inventory_mode)
 
         # watch for - https://support.zabbix.com/browse/ZBX-6033
         request_str = {'hostid': host_id, 'inventory_mode': inventory_mode}
@@ -648,7 +667,6 @@ def main():
 
             # get existing host's interfaces
             exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
-            exist_interfaces_copy = copy.deepcopy(exist_interfaces)
 
             # if no interfaces were specified with the module, start with an empty list
             if not interfaces:
@@ -680,36 +698,23 @@ def main():
                         group_ids.append(group_id)
 
             # update host
-            interfaces_len = len(interfaces)
+            if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
+                                         exist_interfaces, zabbix_host_obj, proxy_id, visible_name,
+                                         description, host_name, inventory_mode, inventory_zabbix):
+                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                                            tls_psk, tls_issuer, tls_subject)
+                host.update_host(host_name, group_ids, status, host_id,
+                                 interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
+                                 tls_psk_identity, tls_psk, tls_issuer, tls_subject)
+                host.update_inventory_mode(host_id, inventory_mode)
+                host.update_inventory_zabbix(host_id, inventory_zabbix)
 
-            if len(exist_interfaces) > interfaces_len:
-                if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name, description, host_name):
-                    host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                                tls_psk, tls_issuer, tls_subject)
-                    host.update_host(host_name, group_ids, status, host_id,
-                                     interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
-                                     tls_psk_identity, tls_psk, tls_issuer, tls_subject)
-                    module.exit_json(changed=True,
-                                     result="Successfully update host %s (%s) and linked with template '%s'"
-                                            % (host_name, ip, link_templates))
-                else:
-                    module.exit_json(changed=False)
+                module.exit_json(changed=True,
+                                 result="Successfully update host %s (%s) and linked with template '%s'"
+                                        % (host_name, ip, link_templates))
             else:
-                if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name, description, host_name):
-                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
-                                     visible_name, description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
-                                     tls_subject)
-                    host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                                tls_psk, tls_issuer, tls_subject)
-                    host.update_inventory_mode(host_id, inventory_mode)
-                    host.update_inventory_zabbix(host_id, inventory_zabbix)
-                    module.exit_json(changed=True,
-                                     result="Successfully update host %s (%s) and linked with template '%s'"
-                                            % (host_name, ip, link_templates))
-                else:
-                    module.exit_json(changed=False)
+                module.exit_json(changed=False)
+
     else:
         if state == "absent":
             # the host is already deleted.
