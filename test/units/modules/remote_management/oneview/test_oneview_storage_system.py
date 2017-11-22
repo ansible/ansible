@@ -104,10 +104,6 @@ del DICT_DEFAULT_STORAGE_SYSTEM_500['credentials']['password']
 
 class TestStorageSystemModule(OneViewBaseTest):
     @pytest.fixture
-    def testing_class(self):
-        return StorageSystemModule
-
-    @pytest.fixture
     def resource(self, mock_ov_client):
         return mock_ov_client.storage_systems
 
