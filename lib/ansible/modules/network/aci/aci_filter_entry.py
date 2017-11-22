@@ -184,6 +184,7 @@ def main():
         dst_start = FILTER_PORT_MAPPING[dst_start]
     entry = module.params['entry']
     ether_type = module.params['ether_type']
+    filter_name = module.params['filter']
     icmp_msg_type = module.params['icmp_msg_type']
     if icmp_msg_type is not None:
         icmp_msg_type = ICMP_MAPPING[icmp_msg_type]
@@ -193,6 +194,7 @@ def main():
     ip_protocol = module.params['ip_protocol']
     state = module.params['state']
     stateful = module.params['stateful']
+    tenant = module.params['tenant']
 
     # validate that dst_port is not passed with dst_start or dst_end
     if dst_port is not None and (dst_end is not None or dst_start is not None):
@@ -202,7 +204,27 @@ def main():
         dst_start = dst_port
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='filter', subclass_2='entry')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzFilter',
+            aci_rn='flt-{}'.format(filter_name),
+            filter_target='(vzFilter.name, "{}")'.format(filter_name),
+            module_object=filter_name,
+        ),
+        subclass_2=dict(
+            aci_class='vzEntry',
+            aci_rn='e-{}'.format(entry),
+            filter_target='(vzEntry.name, "{}")'.format(entry),
+            module_object=entry
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

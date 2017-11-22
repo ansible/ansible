@@ -100,9 +100,24 @@ def main():
     description = module.params['description']
     tag = module.params['tag']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='rtp')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='l3extRouteTagPol',
+            aci_rn='rttag-{}'.format(rtp),
+            filter_target='(l3extRouteTagPol.name, "{}")'.format(rtp),
+            module_object=rtp,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

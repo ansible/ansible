@@ -121,9 +121,24 @@ def main():
     filter_name = module.params['filter']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant", subclass_1="filter")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzFilter',
+            aci_rn='flt-{}'.format(filter_name),
+            filter_target='(vzFilter.name, "{}")'.format(filter_name),
+            module_object=filter_name,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

@@ -91,9 +91,24 @@ def main():
     action_rule = module.params['action_rule']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='action_rule')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='rtctrlAttrP',
+            aci_rn='attr-{}'.format(action_rule),
+            filter_target='(rtctrlAttrP.name, "{}")'.format(action_rule),
+            module_object=action_rule,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

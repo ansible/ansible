@@ -102,7 +102,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='lldp_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='lldpIfPol',
+            aci_rn='infra/lldpIfP-{}'.format(lldp_policy),
+            filter_target='(lldpIfPol.name, "{}")'.format(lldp_policy),
+            module_object=lldp_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

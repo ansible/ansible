@@ -93,9 +93,24 @@ def main():
     monitoring_policy = module.params['monitoring_policy']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='monitoring_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='monEPGPol',
+            aci_rn='monepg-{}'.format(monitoring_policy),
+            filter_target='(monEPGPol.name, "{}")'.format(monitoring_policy),
+            module_object=monitoring_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

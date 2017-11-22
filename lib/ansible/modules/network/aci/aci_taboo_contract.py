@@ -101,9 +101,24 @@ def main():
     description = module.params['description']
     scope = module.params['scope']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='taboo_contract')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzTaboo',
+            aci_rn='taboo-{}'.format(taboo_contract),
+            filter_target='(vzTaboo.name, "{}")'.format(taboo_contract),
+            module_object=taboo_contract,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
