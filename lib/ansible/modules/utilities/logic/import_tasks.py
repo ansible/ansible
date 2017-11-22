@@ -7,52 +7,53 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'core'
+}
 
 
 DOCUMENTATION = '''
 ---
-author:
-    - "Ansible Core Team (@ansible)"
+author: Ansible Core Team (@ansible)
 module: import_tasks
-short_description: import a task list.
+short_description: Import a task list
 description:
-     - Imports a list of tasks to be added to the current playbook for subsequent execution.
+  - Imports a list of tasks to be added to the current playbook for subsequent execution.
 version_added: "2.4"
 options:
   free-form:
     description:
-        - This action allows you to specify the name of the file directly w/o any other options.
-        - Any loops, conditionals and most other keywords will be applied to the included tasks, not to this statement itself.
-        - If you need any of those to apply to this action, use M(include_tasks) instead.
+      - The name of the imported file is specified directly without any other option.
+      - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement
+        itself. If you need any of those to apply, use M(include_tasks) instead.
 notes:
-    - This is really not a module, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a module can.
+  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
 '''
 
 EXAMPLES = """
-# include task list in play
 - hosts: all
   tasks:
     - debug:
         msg: task1
 
-    - import_tasks: stuff.yml
+    - name: Include task list in play
+      import_tasks: stuff.yaml
 
     - debug:
         msg: task10
 
-# apply conditional to all imported tasks
-- hosts: all
+  hosts: all
   tasks:
     - debug:
         msg: task1
 
-    - import_tasks: stuff.yml
+    - name: Apply conditional to all imported tasks
+      import_tasks: stuff.yaml
       when: hostvar is defined
 """
 
 RETURN = """
-# this module does not return anything except tasks to execute
+# This module does not return anything except tasks to execute.
 """
