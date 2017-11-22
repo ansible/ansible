@@ -254,12 +254,12 @@
 - name: verify simultaneous install/remove worked
   assert:
     that:
-      - zypper_res1|success
-      - zypper_res1|changed
-      - not zypper_res1a|changed
-      - zypper_res1b|changed
-      - not zypper_res2|changed
-      - not zypper_res3|changed
+      - zypper_res1 is successful
+      - zypper_res1 is changed
+      - zypper_res1a is not changed
+      - zypper_res1b is changed
+      - zypper_res2 is not changed
+      - zypper_res3 is not changed
 
 
 - name: install and remove with state=absent
@@ -273,7 +273,7 @@
 - name: verify simultaneous install/remove failed with absent
   assert:
     that:
-      - zypper_res|failed
+      - zypper_res is failed
       - zypper_res.results[0].msg == "Can not combine '+' prefix with state=remove/absent."
 
 - name: try rm patch
@@ -282,7 +282,7 @@
   register: zypper_patch
 - assert:
     that: 
-      - zypper_patch|failed
+      - zypper_patch is failed
       - zypper_patch.msg.startswith('Can not remove patches.')
 
 - name: try rm URL
@@ -291,7 +291,7 @@
   register: zypper_rm
 - assert:
     that: 
-      - zypper_rm|failed
+      - zypper_rm is failed
       - zypper_rm.msg.startswith('Can not remove via URL.')
 
 # check for https://github.com/ansible/ansible/issues/20139
@@ -313,6 +313,6 @@
 
 - assert:
     that:
-      - zypper_result_update_cache|success
-      - zypper_result_update_cache_check|success
-      - not zypper_result_update_cache_check|changed
+      - zypper_result_update_cache is successful
+      - zypper_result_update_cache_check is successful
+      - zypper_result_update_cache_check is not changed
