@@ -128,10 +128,24 @@ def main():
     policy_control_direction = module.params['policy_control_direction']
     policy_control_preference = module.params['policy_control_preference']
     state = module.params['state']
+    tenant = module.params['tenant']
     vrf = module.params['vrf']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant", subclass_1="vrf")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvCtx',
+            aci_rn='ctx-{}'.format(vrf),
+            filter_target='(fvCtx.name, "{}")'.format(vrf),
+            module_object=vrf,
+        ),
+    )
     aci.get_existing()
 
     if state == 'present':

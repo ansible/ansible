@@ -136,6 +136,8 @@ RETURN = r'''
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+MATCH_MAPPING = dict(all='All', at_least_one='AtleastOne', at_most_one='AtmostOne', none='None')
+
 
 def main():
     argument_spec = aci_argument_spec
@@ -167,19 +169,45 @@ def main():
     subject = module.params['subject']
     priority = module.params['priority']
     reverse_filter = module.params['reverse_filter']
+    contract = module.params['contract']
     dscp = module.params['dscp']
     description = module.params['description']
     filter_name = module.params['filter']
     directive = module.params['directive']
     consumer_match = module.params['consumer_match']
+    if consumer_match is not None:
+        consumer_match = MATCH_MAPPING[consumer_match]
     provider_match = module.params['provider_match']
+    if provider_match is not None:
+        provider_match = MATCH_MAPPING[provider_match]
     state = module.params['state']
+    tenant = module.params['tenant']
 
     if directive is not None or filter_name is not None:
         module.fail_json(msg='Managing Contract Subjects to Filter bindings has been moved to M(aci_subject_bind_filter)')
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='contract', subclass_2='subject')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzBrCP',
+            aci_rn='brc-{}'.format(contract),
+            filter_target='(vzBrCP.name, "{}")'.format(contract),
+            module_object=contract,
+        ),
+        subclass_2=dict(
+            aci_class='vzSubj',
+            aci_rn='subj-{}'.format(subject),
+            filter_target='(vzSubj.name, "{}")'.format(subject),
+            module_object=subject,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
