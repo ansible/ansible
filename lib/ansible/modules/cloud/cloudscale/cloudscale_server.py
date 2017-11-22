@@ -86,6 +86,11 @@ options:
     description:
       - cloudscale.ch API token.
       - This can also be passed in the CLOUDSCALE_API_TOKEN environment variable.
+  api_timeout:
+    description:
+      - Timeout in seconds for calls to the cloudscale.ch API.
+    default: 30
+    version_added: "2.5"
 '''
 
 EXAMPLES = '''
@@ -207,8 +212,6 @@ from ansible.module_utils.urls import fetch_url
 
 
 API_URL = 'https://api.cloudscale.ch/v1/'
-TIMEOUT_WAIT = 60
-TIMEOUT_API = 30
 ALLOWED_STATES = ('running',
                   'stopped',
                   'absent',
@@ -248,7 +251,7 @@ class AnsibleCloudscaleServer(object):
                                        "Use the 'uuid' parameter to identify the server." % name)
 
     def _get(self, api_call):
-        resp, info = fetch_url(self._module, API_URL + api_call, headers=self._auth_header, timeout=TIMEOUT_API)
+        resp, info = fetch_url(self._module, API_URL + api_call, headers=self._auth_header, timeout=self._module.params['api_timeout'])
 
         if info['status'] == 200:
             return json.loads(resp.read())
@@ -267,7 +270,7 @@ class AnsibleCloudscaleServer(object):
                                headers=headers,
                                method='POST',
                                data=data,
-                               timeout=TIMEOUT_API)
+                               timeout=self._module.params['api_timeout'])
 
         if info['status'] == 201:
             return json.loads(resp.read())
@@ -282,7 +285,7 @@ class AnsibleCloudscaleServer(object):
                                API_URL + api_call,
                                headers=self._auth_header,
                                method='DELETE',
-                               timeout=TIMEOUT_API)
+                               timeout=self._module.params['api_timeout'])
 
         if info['status'] == 204:
             return None
@@ -310,7 +313,7 @@ class AnsibleCloudscaleServer(object):
         resp, info = fetch_url(self._module,
                                API_URL + url_path,
                                headers=self._auth_header,
-                               timeout=TIMEOUT_API)
+                               timeout=self._module.params['api_timeout'])
         if info['status'] == 200:
             self.info = self._transform_state(json.loads(resp.read()))
         elif info['status'] == 404:
@@ -323,7 +326,8 @@ class AnsibleCloudscaleServer(object):
 
     def wait_for_state(self, states):
         start = datetime.now()
-        while datetime.now() - start < timedelta(seconds=TIMEOUT_WAIT):
+        timeout = self._module.params['api_timeout'] * 2
+        while datetime.now() - start < timedelta(seconds=timeout):
             self.update_info()
             if self.info['state'] in states:
                 return True
@@ -349,7 +353,7 @@ class AnsibleCloudscaleServer(object):
         for k, v in data.items():
 
             # Remove items not relevant to the create server call
-            if k in ('api_token', 'uuid', 'state'):
+            if k in ('api_token', 'api_timeout', 'uuid', 'state'):
                 del data[k]
                 continue
 
@@ -394,6 +398,7 @@ def main():
             anti_affinity_with=dict(),
             user_data=dict(),
             api_token=dict(no_log=True),
+            api_timeout=dict(default=30, type='int'),
         ),
         required_one_of=(('name', 'uuid'),),
         mutually_exclusive=(('name', 'uuid'),),
