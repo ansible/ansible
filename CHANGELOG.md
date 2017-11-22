@@ -188,6 +188,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/32990
 * Fix for breaking change to Azure Python SDK DNS RecordSet constructor in azure-mgmt-dns==1.2.0
   https://github.com/ansible/ansible/pull/33165
+* Fix for breaking change to Azure Python SDK that prevented some members from being returned in facts modules
+  https://github.com/ansible/ansible/pull/33169
 
 <a id="2.4.1"></a>
 
