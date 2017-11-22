@@ -512,7 +512,6 @@
     tls_accept: 7
     tls_psk: 123456789abcdef123456789abcdef13
     tls_issuer: AcmeCorp
-    tls_psk_identity: eLCv9Lgwzl
     tls_subject: AcmeCorpServer
   register: zabbix_host1
 
@@ -533,7 +532,6 @@
     tls_accept: 7
     tls_psk: 123456789abcdef123456789abcdef13
     tls_issuer: AcmeCorp
-    tls_psk_identity: eLCv9Lgwzl
     tls_subject: AcmeCorpServer
   register: zabbix_host1
 
