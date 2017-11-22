@@ -274,13 +274,13 @@ class Host(object):
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
                 parameters['name'] = visible_name
-            if tls_psk_identity:
+            if tls_psk_identity is not None:
                 parameters['tls_psk_identity'] = tls_psk_identity
-            if tls_psk:
+            if tls_psk is not None:
                 parameters['tls_psk'] = tls_psk
-            if tls_issuer:
+            if tls_issuer is not None:
                 parameters['tls_issuer'] = tls_issuer
-            if tls_subject:
+            if tls_subject is not None:
                 parameters['tls_subject'] = tls_subject
             if description:
                 parameters['description'] = description
@@ -430,7 +430,8 @@ class Host(object):
     # check all the properties before link or clear template
     def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
                              exist_interfaces, host, proxy_id, visible_name, description, host_name,
-                             inventory_mode, inventory_zabbix):
+                             inventory_mode, inventory_zabbix, tls_accept, tls_psk_identity, tls_psk,
+                             tls_issuer, tls_subject, tls_connect):
         # get the existing host's groups
         exist_host_groups = self.get_host_groups_by_host_id(host_id)
         if set(host_groups) != set(exist_host_groups):
@@ -476,6 +477,30 @@ class Host(object):
             if proposed_inventory != host['inventory']:
                 return True
 
+        if tls_accept is not None:
+            if int(host['tls_accept']) != tls_accept:
+                return True
+
+        if tls_psk_identity is not None:
+            if host['tls_psk_identity'] != tls_psk_identity:
+                return True
+
+        if tls_psk is not None:
+            if host['tls_psk'] != tls_psk:
+                return True
+
+        if tls_issuer is not None:
+            if host['tls_issuer'] != tls_issuer:
+                return True
+
+        if tls_subject is not None:
+            if host['tls_subject'] != tls_subject:
+                return True
+
+        if tls_connect is not None:
+            if int(host['tls_connect']) != tls_connect:
+                return True
+
         return False
 
     # link or clear template of the host
@@ -493,13 +518,13 @@ class Host(object):
         templates_clear_list = list(templates_clear)
         request_str = {'hostid': host_id, 'templates': template_id_list, 'templates_clear': templates_clear_list,
                        'tls_connect': tls_connect, 'tls_accept': tls_accept}
-        if tls_psk_identity:
+        if tls_psk_identity is not None:
             request_str['tls_psk_identity'] = tls_psk_identity
-        if tls_psk:
+        if tls_psk is not None:
             request_str['tls_psk'] = tls_psk
-        if tls_issuer:
+        if tls_issuer is not None:
             request_str['tls_issuer'] = tls_issuer
-        if tls_subject:
+        if tls_subject is not None:
             request_str['tls_subject'] = tls_subject
         try:
             if self._module.check_mode:
@@ -703,7 +728,8 @@ def main():
             # update host
             if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
                                          exist_interfaces, zabbix_host_obj, proxy_id, visible_name,
-                                         description, host_name, inventory_mode, inventory_zabbix):
+                                         description, host_name, inventory_mode, inventory_zabbix,
+                                         tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect):
                 host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
                                             tls_psk, tls_issuer, tls_subject)
                 host.update_host(host_name, group_ids, status, host_id,
