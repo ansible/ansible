@@ -141,7 +141,7 @@ def connection_exists(client, connection_id=None, connection_name=None, verify=T
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to describe DirectConnect ID {0}".format(connection_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
     match = []
     connection = []
@@ -186,7 +186,7 @@ def create_connection(client, location, bandwidth, name, lag_id):
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to create DirectConnect connection {0}".format(name),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
     return connection['connectionId']
 
 
@@ -290,10 +290,8 @@ def main():
             changed = ensure_absent(connection, connection_id)
             response = {}
     except DirectConnectError as e:
-        if e.response:
-            module.fail_json(msg=e.msg, exception=e.last_traceback, **e.response)
-        elif e.last_traceback:
-            module.fail_json(msg=e.msg, exception=e.last_traceback)
+        if e.last_traceback:
+            module.fail_json(msg=e.msg, exception=e.last_traceback, **camel_dict_to_snake_dict(e.exception.response))
         else:
             module.fail_json(msg=e.msg)
 
