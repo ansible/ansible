@@ -62,6 +62,11 @@ options:
                   - 1
                   - 3
                   - 5
+            vm_size:
+                description:
+                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                required: true
+                default: Standard_D2v2
             dns_prefix:
                 description:
                   - The DNS Prefix to use for the Container Service master nodes.
@@ -325,8 +330,10 @@ def create_master_profile_instance(masterprofile):
     '''
     return ContainerServiceMasterProfile(
         count=masterprofile[0]['count'],
-        dns_prefix=masterprofile[0]['dns_prefix']
-    )
+        dns_prefix=masterprofile[0]['dns_prefix'],
+        vm_size=masterprofile[0]['vm_size'],
+        first_consecutive_static_ip=None
+        )
 
 
 def create_diagnostics_profile_instance(diagprofile):
@@ -365,7 +372,7 @@ def create_acs_dict(acs):
         orchestrator_profile=create_orchestrator_profile_dict(acs.orchestrator_profile),
         master_profile=create_master_profile_dict(acs.master_profile),
         linux_profile=create_linux_profile_dict(acs.linux_profile),
-        service_principal_profile=acs.service_principal_profile,
+        service_principal_profile=create_service_principal_profile_dict(acs.service_principal_profile),
         diagnostics_profile=create_diagnotstics_profile_dict(acs.diagnostics_profile),
         provisioning_state=acs.provisioning_state,
         agent_pool_profiles=create_agent_pool_profiles_dict(acs.agent_pool_profiles),
@@ -396,10 +403,22 @@ def create_master_profile_dict(masterprofile):
     results = dict(
         count=masterprofile.count,
         fqdn=masterprofile.fqdn,
+        vm_size=masterprofile.vm_size,
         dns_prefix=masterprofile.dns_prefix
     )
     return results
 
+def create_service_principal_profile_dict(serviceprincipalprofile):
+    '''
+    Helper method to deserialize a ContainerServiceServicePrincipalProfile to a dict
+    :param: serviceprincipalprofile: ContainerServiceServicePrincipalProfile with the Azure callback object
+    :return: dict with the state on Azure
+    '''
+    results = dict(
+        client_id=serviceprincipalprofile.client_id,
+        secret=serviceprincipalprofile.secret
+    )
+    return results
 
 def create_diagnotstics_profile_dict(diagnosticsprofile):
     '''
@@ -564,12 +583,12 @@ class AzureRMContainerService(AzureRMModuleBase):
                         to_be_updated = True
 
                     # Cannot Update the master count for now // Uncomment this block in the future to support it
-                    if response['master_profile'].get('count') != self.master_profile[0].get('count'):
+                    if response['master_profile'].get('count') != self.master_profile[0].get('count') or response['master_profile'].get('vm_size') != self.master_profile[0].get('vm_size'):
                         # self.log(("Master Profile Count Diff, Was {0} / Now {1}"
                         #           .format(response['master_profile'].count,
                         #           self.master_profile[0].get('count'))))
                         # to_be_updated = True
-                        self.module.warn("master_profile.count cannot be updated")
+                        self.module.warn("master_profile.count or master_profile.vm_size cannot be updated")
 
                     # Cannot Update the SSH Key for now // Uncomment this block in the future to support it
                     if response['linux_profile'].get('ssh_key') != self.linux_profile[0].get('ssh_key'):
@@ -649,7 +668,7 @@ class AzureRMContainerService(AzureRMModuleBase):
             location=self.location,
             tags=self.tags,
             orchestrator_profile=create_orch_platform_instance(self.orchestration_platform),
-            service_principal_profile=service_principal_profile,
+            service_principal_profile=create_service_principal_profile_instance(self.service_principal),
             linux_profile=create_linux_profile_instance(self.linux_profile),
             master_profile=create_master_profile_instance(self.master_profile),
             agent_pool_profiles=agentpools,
