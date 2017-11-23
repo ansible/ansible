@@ -69,7 +69,7 @@ ansible_facts:
                     type: string
                     sample: "3"
                 disk_identifier:
-                    description: 
+                    description:
                       - Detailed information about one particular disk.
                       - The identifier is displayed as a digit in order to structure the output but is not the actual number of the particular disk.
                       - Please see the containing return property "number" to get the actual disk number of the particular disk.
@@ -177,9 +177,10 @@ ansible_facts:
                             type: string
                             sample: "\\\\?\\scsi#disk&ven_red_hat&prod_virtio#4&23208fd0&1&000000#{<id>}"
                         partition_identifier:
-                            description: 
+                            description:
                               - Detailed information about one particular partition on the specified disk.
-                              - The identifier is displayed as a digit in order to structure the output but is not the actual number of the particular partition.
+                              - The identifier is displayed as a digit in order to structure the output but is not
+                                the actual number of the particular partition.
                               - Please see the containing return property "number" to get the actual partition number.
                             returned: if existent
                             type: complex
@@ -190,7 +191,7 @@ ansible_facts:
                                     type: string
                                     sample: "1"
                                 size:
-                                    description: 
+                                    description:
                                       - Size in gb of the particular partition.
                                       - Accurate to three decimal places.
                                     returned: always
@@ -257,9 +258,10 @@ ansible_facts:
                                     type: string
                                     sample: "\\\\?\\Volume{85bdc4a8-f8eb-11e6-80fa-806e6f6e6963}\\"
                                 volume_identifier:
-                                    description: 
+                                    description:
                                       - Detailed information about one particular volume on the specified partition.
-                                      - Please note that volumes have no "number" property and the identifier is displayed as a digit in order to structure the output.
+                                      - Please note that volumes have no "number" property and the identifier is displayed
+                                        as a digit in order to structure the output.
                                     returned: if existent
                                     type: complex
                                     contains:
@@ -373,7 +375,7 @@ ansible_facts:
                                     type: string
                                     sample: "false"
                                 cannot_pool_reason:
-                                    description: Information why the particular physical disk can't be added to a storage pool.
+                                    description: Information why the particular physical disk can not be added to a storage pool.
                                     returned: if can_pool property has value false
                                     type: string
                                     sample: "Insufficient Capacity"
@@ -381,7 +383,7 @@ ansible_facts:
                                     description: Object ID of the particular physical disk.
                                     returned: always
                                     type: string
-                                    sample: "{1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_PhysicalDisk.ObjectId=\"{<object_id>}:PD:{<pd>}\"
+                                    sample: '{1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_PhysicalDisk.ObjectId=\"{<object_id>}:PD:{<pd>}\"'
                                 unique_id:
                                     description: Unique ID of the particular physical disk.
                                     returned: always
