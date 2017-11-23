@@ -81,3 +81,17 @@
       that:
           - 'find_test1.matched == 2'
           - 'find_test1.files | length == 2'
+
+- name: find the xml file
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.xml"
+      recurse: yes
+  register: find_test2
+- debug: var=find_test2
+- name: validate gr_name and pw_name are defined
+  assert:
+      that:
+          - 'find_test2.matched == 1'
+          - 'find_test2.files[0].pw_name is defined'
+          - 'find_test2.files[0].gr_name is defined'
