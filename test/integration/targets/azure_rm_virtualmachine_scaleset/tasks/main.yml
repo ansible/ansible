@@ -14,8 +14,14 @@
 - name: Create public IP address
   azure_rm_publicipaddress:
     resource_group: "{{ resource_group }}"
-    allocation_method: Dynamic
+    allocation_method: Static
     name: testPublicIP
+
+- name: Create load balancer
+  azure_rm_loadbalancer:
+    resource_group: "{{ resource_group }}"
+    name: testLB
+    public_ip_address_name: testPublicIP
 
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
@@ -28,6 +34,7 @@
     capacity: 2
     virtual_network_name: testVnet
     subnet_name: testSubnet
+    load_balancer: testLB
     upgrade_policy: Manual
     tier: Standard
     managed_disk_type: Standard_LRS
@@ -73,10 +80,15 @@
         caching: ReadWrite
         managed_disk_type: Standard_LRS
 
+- name: Delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: "{{ resource_group }}"
+    name: testLB
+    state: absent
+
 - name: Delete public IP address
   azure_rm_publicipaddress:
     resource_group: "{{ resource_group }}"
-    allocation_method: Dynamic
     state: absent
     name: testPublicIP
 

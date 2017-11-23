@@ -156,6 +156,10 @@ options:
             - Subnet name
         aliases:
             - subnet
+    load_balancer:
+        description:
+            - Load balancer name
+        version_added: "2.5"
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources
@@ -296,6 +300,7 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import parse_resource_id
     from azure.mgmt.compute.models import VirtualMachineScaleSet, \
         VirtualMachineScaleSetStorageProfile, \
         VirtualMachineScaleSetOSProfile, \
@@ -309,7 +314,7 @@ try:
         VirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings, \
         VirtualMachineScaleSetPublicIPAddressConfiguration, Sku, \
         UpgradePolicy, VirtualMachineScaleSetNetworkConfiguration, \
-        ApiEntityReference, ImageReference
+        ApiEntityReference, ImageReference, SubResource
 
     from azure.mgmt.network.models import PublicIPAddress, \
         NetworkSecurityGroup, NetworkInterface, \
@@ -352,6 +357,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             data_disks=dict(type='list'),
             subnet_name=dict(type='str', aliases=['subnet']),
+            load_balancer=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
         )
@@ -378,6 +384,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.virtual_network_name = None
         self.tags = None
         self.differences = None
+        self.load_balancer = None
 
         self.results = dict(
             changed=False,
@@ -511,12 +518,20 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
 
-                    if self.subnet_name:
-                        subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
-
                     if not self.virtual_network_name:
                         default_vnet = self.create_default_vnet()
                         virtual_network = default_vnet.id
+                        self.virtual_network_name = default_vnet.name
+
+                    if self.subnet_name:
+                        subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
+
+                    load_balancer_backend_address_pools = None
+                    load_balancer_inbound_nat_pools = None
+                    if self.load_balancer:
+                        load_balancer = self.get_load_balancer(self.load_balancer)
+                        load_balancer_backend_address_pools = [SubResource(resource.id) for resource in load_balancer.backend_address_pools] if load_balancer.backend_address_pools else None
+                        load_balancer_inbound_nat_pools = [SubResource(resource.id) for resource in load_balancer.inbound_nat_pools] if load_balancer.inbound_nat_pools else None
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
@@ -562,7 +577,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 name='default',
                                                 subnet=ApiEntityReference(
                                                     id=subnet.id
-                                                )
+                                                ),
+                                                primary=True,
+                                                load_balancer_backend_address_pools=load_balancer_backend_address_pools,
+                                                load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools
                                             )
                                         ]
                                     )
@@ -677,6 +695,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 vnet_name,
                 str(exc)))
         return subnet
+
+    def get_load_balancer(self, id):
+        id_dict = parse_resource_id(id)
+        try:
+            return self.network_client.load_balancers.get(id_dict.get('resource_group', self.resource_group), id_dict.get('name'))
+        except Exception as exc:
+            self.fail("Error fetching load balancer {0} - {1}".format(id, str(exc)))
 
     def serialize_vmss(self, vmss):
         '''
