@@ -1762,12 +1762,57 @@ class PyVmomiHelper(PyVmomi):
                 elif disk_type == 'eagerzeroedthick':
                     diskspec.device.backing.eagerlyScrub = True
 
-            # which datastore?
+            # Select actual datastore and datastore name while creating data disk for
+            # virtual machine.
+            if vm_obj is None:
+                vm_name = self.params['name'].replace('.', '_')
+            else:
+                vm_name = vm_obj.name
+
             if expected_disk_spec.get('datastore'):
-                # TODO: This is already handled by the relocation spec,
-                # but it needs to eventually be handled for all the
-                # other disks defined
-                pass
+                # User has specified datastore name
+                datastore_name = expected_disk_spec['datastore']
+                datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+
+                if datastore is None:
+                    self.module.fail_json(msg="Unable to find datastore named %s specified "
+                                              "in disk configuration at index %s" % (datastore_name,
+                                                                                     disk_index))
+                parent_dc = self.cache.get_parent_datacenter(datastore)
+                vmdk_file_name = self.create_directory_for_datadisk(datacenter=parent_dc,
+                                                                    datastore=datastore,
+                                                                    vm_name=vm_name,
+                                                                    diskspec=diskspec)
+                diskspec.device.backing.datastore = datastore
+                diskspec.device.backing.fileName = vmdk_file_name
+
+            elif expected_disk_spec.get('autoselect_datastore', False):
+                # User has specified autoselect datastore option
+                datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
+                datastores = [x for x in datastores if
+                              self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
+
+                if datastores is None or len(datastores) == 0:
+                    self.module.fail_json(msg="Unable to find a datastore for disk at "
+                                              "index %s when autoselecting" % disk_index)
+                datastore_freespace = 0
+                datastore = None
+                for ds in datastores:
+                    if ds.summary.freeSpace > datastore_freespace:
+                        datastore = ds
+                        datastore_name = datastore.name
+                        datastore_freespace = ds.summary.freeSpace
+
+                if datastore is None:
+                    self.module.fail_json(msg="Unable to find datastore with sufficient size while autoselecting")
+
+                parent_dc = self.cache.get_parent_datacenter(datastore)
+                vmdk_file_name = self.create_directory_for_datadisk(datacenter=parent_dc,
+                                                                    datastore=datastore,
+                                                                    vm_name=vm_name,
+                                                                    diskspec=diskspec)
+                diskspec.device.backing.fileName = vmdk_file_name
+                diskspec.device.backing.datastore = datastore
 
             # increment index for next disk search
             disk_index += 1
@@ -1787,6 +1832,31 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.deviceChange.append(diskspec)
 
                 self.change_detected = True
+
+    def create_directory_for_datadisk(self, datacenter, datastore, vm_name, diskspec):
+        """
+        Helper function to create a directory for data disk
+        """
+        parent_dc = datacenter
+        datastore_name = datastore.name
+        # Try to create folder for virtual machine and disks inside datastore
+        path_on_ds = '[' + datastore_name + ']'
+        try:
+            self.content.fileManager.MakeDirectory(name=path_on_ds,
+                                                   datacenter=parent_dc,
+                                                   createParentDirectories=True)
+        except vim.fault.FileAlreadyExists as e:
+            pass
+        except vim.fault.InvalidDatastore as e:
+            self.module.fail_json(msg="Failed to create a directory %s required for data "
+                                      "disk on datastore %s: %s" % (path_on_ds, datastore_name, e.msg))
+        except vmodl.RuntimeFault as e:
+            self.module.fail_json(msg="Failed to create a directory %s for data "
+                                      "disk with datacenter %s: %s" % (path_on_ds, parent_dc.name, e.msg))
+
+        vmdk_file_name = path_on_ds + '/' + vm_name + '_' + str(diskspec.device.unitNumber) + '.vmdk'
+
+        return vmdk_file_name
 
     def select_host(self):
         hostsystem = self.cache.get_esx_host(self.params['esxi_hostname'])
