@@ -1,5 +1,5 @@
 - name: Create Servers
-  azure_rm_sql_servers:
+  azure_rm_sql_server:
     resource_group: "{{ resource_group }}"
     name: zims-server
     location: westus

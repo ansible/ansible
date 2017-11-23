@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sql_servers
+module: azure_rm_sql_server
 version_added: "2.5"
 short_description: Manage an Server.
 description:
@@ -72,7 +72,7 @@ author:
 
 EXAMPLES = '''
       - name: Create (or update) Servers
-        azure_rm_sql_servers:
+        azure_rm_sql_server:
           resource_group: "{{ resource_group }}"
           name: zims-server
           location: westus
