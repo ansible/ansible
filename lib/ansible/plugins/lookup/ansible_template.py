@@ -29,19 +29,19 @@ except ImportError:
 
 
 DOCUMENTATION = """
-  lookup: ansible-template
+  lookup: ansible_template
   version_added: "2.5"
   short_description: "Template facts using Ansible directives language"
   description:
     - The ansible-template lookup provides a structure approach to templating
-      out host facts to another format.  It is useful when wanting to tranform
+      out host facts to another format.  It is useful when wanting to transform
       fact key/value pairs into another structured test format.
   options:
     _terms:
       description: Relative or absolute path to the template file.
       required: True
     root_fact:
-      description: Roots the template values at the root fact if specified
+      description: Roots the template values at the root fact if specified to simplify template writing
       type: string
 """
 
@@ -54,6 +54,11 @@ EXAMPLES = """
 - name: template global facts using multiple templates
   set_fact:
     configuration: "{{ lookup('ansible_template', 'my_template_1.yaml', 'my_template_2.yaml') }}"
+
+- name: templates can also be passed a list
+  set_fact:
+    configuration: "{{ lookup('ansible_template', ['my_template_1.yaml', 'my_template_2.yaml']) }}"
+
 
 - name: template global facts with relative path
   set_fact:
@@ -74,6 +79,7 @@ RETURN = """
 
 MISSING_KEY_OPTIONS = frozenset(('warn', 'fail', 'ignore'))
 
+
 VALID_OPTIONS = frozenset((
     'template',
     'block',
@@ -85,7 +91,6 @@ VALID_OPTIONS = frozenset((
     'name',
     'join'
 ))
-
 
 
 class LookupModule(LookupBase):
