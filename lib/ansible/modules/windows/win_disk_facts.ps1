@@ -25,12 +25,12 @@ try {
 if ($disk) {
     [string]$diskcount = $disk | Measure-Object | Select-Object  -ExpandProperty Count
     $result.ansible_facts.ansible_disk.total_disks_found = $diskcount
-    $i = 0
+    $i = 1
     foreach ($disks in $disk) {
         $result.ansible_facts.ansible_disk["disk_$($i)"] += @{}
-        $pdisk = Get-PhysicalDisk | Where-Object {
-                                                            $_.SerialNumber -eq $disks.SerialNumber
-                                                          }
+        $pdisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object {
+            $_.SerialNumber -eq $disks.SerialNumber
+        }
         if ($pdisk) {
             $result.ansible_facts.ansible_disk["disk_$($i)"]["physical_disk)"] += @{}
             #$result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].media_type = $pdisk.MediaType
@@ -38,18 +38,23 @@ if ($disk) {
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].friendly_name = $pdisk.FriendlyName
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].operational_status = $pdisk.OperationalStatus
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].health_status = $pdisk.HealthStatus
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].usage = $pdisk.Usage
+            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].usage_type = $pdisk.Usage
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].supported_usages = $pdisk.SupportedUsages
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].spindle_speed = $pdisk.SpindleSpeed
+            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].spindle_speed = "$($pdisk.SpindleSpeed)rpm"
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].can_pool = $pdisk.CanPool
-            if ($pdisk.CanPool) {
+            if (-not $pdisk.CanPool) {
                 $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].cannot_pool_reason = $pdisk.CannotPoolReason
             }   
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].object_id = $pdisk.ObjectId
             $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].unique_id = $pdisk.UniqueId
+            $vdisk = Get-VirtualDisk -PhysicalDisk $pdisk -ErrorAction SilentlyContinue
+            if ($vdisk) {
+                $result.ansible_facts.ansible_disk["disk_$($i)"]["virtual_disk)"] += @{}
+                $result.ansible_facts.ansible_disk."disk_$($i)"["virtual_disk)"].friendly_name = $vdisk.FriendlyName
+            }
         }
         $result.ansible_facts.ansible_disk."disk_$($i)".number = $disks.Number
-        $result.ansible_facts.ansible_disk."disk_$($i)".size = "$($Size = $disks.Size / 1GB)$($Size)gb"
+        $result.ansible_facts.ansible_disk."disk_$($i)".size = "$($disks.Size / 1GB)gb"
         $result.ansible_facts.ansible_disk."disk_$($i)".bus_type = $disks.BusType
         $result.ansible_facts.ansible_disk."disk_$($i)".friendly_name = $disks.FriendlyName
         $result.ansible_facts.ansible_disk."disk_$($i)".partition_style = $disks.PartitionStyle
@@ -68,11 +73,13 @@ if ($disk) {
         $result.ansible_facts.ansible_disk."disk_$($i)".unique_id = $disks.UniqueId
         $result.ansible_facts.ansible_disk."disk_$($i)".guid = "$([string]$disks.Guid)"
         $result.ansible_facts.ansible_disk."disk_$($i)".path = $disks.Path
-        $part = Get-Partition -DiskNumber $i -ErrorAction SilentlyContinue
+        $part = Get-Partition -DiskNumber $($disks.Number) -ErrorAction SilentlyContinue
         if ($part) {
-            $j = 0
+            $j = 1
             foreach ($parts in $part) {
                 $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"] += @{}
+                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].number = $parts.PartitionNumber
+                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].size = "$($pSize = "{0:N3}" -f ($parts.Size /1GB))$($pSize)gb"
                 $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].type = $parts.Type
                 if ($disks.PartitionStyle -eq "GPT") {
                     $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].gpt_type = $parts.GptType
@@ -81,8 +88,6 @@ if ($disk) {
                     $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].mbr_type = $parts.MbrType
                     $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].active = $parts.IsActive
                 }
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].number = $parts.PartitionNumber
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].size = $parts.Size
                 $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].drive_letter = "$([string]$parts.DriveLetter)"
                 $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].transition_state = $parts.TransitionState
                 $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].offset = $parts.Offset             
@@ -92,17 +97,17 @@ if ($disk) {
                 $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].access_paths = "$([string]$parts.AccessPaths)"
                 $vol = Get-Volume -Partition $parts -ErrorAction SilentlyContinue
                 if ($vol) {
-                    $k = 0
+                    $k = 1
                     foreach ($vols in $vol) {
                         $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"] += @{}
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].size = "$($volSize = $vols.Size / 1GB)$($volSize)gb"
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].size_remaining = "$($volSizeRe = $vols.SizeRemaining / 1GB)$($volSizeRe)gb"
+                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].size = "$($vSize = "{0:N3}" -f ($vols.Size / 1GB))$($vSize)gb"
+                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].size_remaining = "$($vSizeRe = "{0:N3}" -f ($vols.SizeRemaining / 1GB))$($vSizeRe)gb"
                         $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].type = $vols.FileSystem
                         $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].label = $vols.FileSystemLabel
                         $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].health_status = $vols.HealthStatus
                         $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].drive_type = $vols.DriveType
                         if ([System.Environment]::OSVersion.Version.Major -ge 10) {
-                            $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].allocation_unit_size = "$($vols.AllocationUnitSize)byte"
+                            $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].allocation_unit_size = "$($vols.AllocationUnitSize /1KB)kb"
                         } else {
                             $volsPath = ($vols.Path.TrimStart("\\?\")).TrimEnd("\")
                             $BlockSize = (Get-CimInstance -Query "SELECT BlockSize FROM Win32_Volume WHERE DeviceID like '%$volsPath%'" -ErrorAction SilentlyContinue | Select-Object BlockSize).BlockSize
