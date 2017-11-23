@@ -192,6 +192,9 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/33169
 * restored glob/regex host pattern matching to traverse groups and hosts and not return after first found
   https://github.com/ansible/ansible/pull/33158
+* change nxos_interface module to use "show interface" to support more platforms
+  https://github.com/ansible/ansible/pull/33037
+
 
 <a id="2.4.1"></a>
 
