@@ -22,7 +22,7 @@
 - name: test fail unknown affinity type
   cs_affinitygroup:
     name: "{{ cs_resource_prefix }}_ag"
-    affinty_type: unexistent affinity type
+    affinity_type: unexistent affinity type
   register: ag
   ignore_errors: true
 - name: verify test fail unknown affinity type
