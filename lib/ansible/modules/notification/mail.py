@@ -50,7 +50,7 @@ options:
     description:
     - The email-address(es) the mail is being 'blind' copied to.
     - This is a list, which may contain address and phrase portions.
-    replyto:
+  replyto:
     description:
       - The email-address the mail is being replied to.
       - May contain address and phrase portions.
@@ -413,7 +413,7 @@ def main():
                 msg.attach(part)
             except Exception as e:
                 module.fail_json(rc=1, msg="Failed to send mail: can't attach inline file %s: %s" %
-                                 (file, to_native(e)), exception=traceback.format_exc())
+                                 (filename, to_native(e)), exception=traceback.format_exc())
             i += 1
 
     composed = msg.as_string()
