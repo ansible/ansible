@@ -50,6 +50,13 @@ options:
     description:
     - The email-address(es) the mail is being 'blind' copied to.
     - This is a list, which may contain address and phrase portions.
+    replyto:
+    description:
+      - The email-address the mail is being replied to.
+      - May contain address and phrase portions.
+    default: null
+    required: false
+    version_added: "2.5"
   subject:
     description:
     - The subject of the email being sent.
@@ -58,6 +65,13 @@ options:
     description:
     - The body of the email being sent.
     default: $subject
+  body_alt:
+    description:
+      - The alternative body of the email being sent.
+      - This can be used with subtype html to an alternate text version of the body.
+    default: null
+    required: false
+    version_added: "2.5"
   username:
     description:
     - If SMTP requires username.
@@ -82,6 +96,14 @@ options:
     - Attached files will have their content-type set to C(application/octet-stream).
     default: []
     version_added: '1.0'
+  attach_inline:
+    description:
+      - A list of pathnames of files to attach as inline images in HTML message.
+      - Subtype html is mandatory to make this work.
+      - Attached files will be accessible using CID (content-id) starting at 0.
+    default: null
+    required: false
+    version_added: "2.5"
   headers:
     description:
     - A list of headers which should be added to the message.
@@ -190,6 +212,7 @@ from email.utils import parseaddr, formataddr
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from email.header import Header
 
 from ansible.module_utils.basic import AnsibleModule
@@ -205,12 +228,15 @@ def main():
             host=dict(type='str', default='localhost'),
             port=dict(type='int', default=25),
             sender=dict(type='str', default='root', aliases=['from']),
+            replyto=dict(type='str'),
             to=dict(type='list', default=['root'], aliases=['recipients']),
             cc=dict(type='list', default=[]),
             bcc=dict(type='list', default=[]),
             subject=dict(type='str', required=True, aliases=['msg']),
             body=dict(type='str'),
+            body_alt=dict(type='str'),
             attach=dict(type='list', default=[]),
+            attach_inline=dict(type='list', default=[]),
             headers=dict(type='list', default=[]),
             charset=dict(type='str', default='utf-8'),
             subtype=dict(type='str', default='plain', choices=['html', 'plain']),
@@ -225,12 +251,15 @@ def main():
     host = module.params.get('host')
     port = module.params.get('port')
     sender = module.params.get('sender')
+    replyto = module.params.get('replyto')
     recipients = module.params.get('to')
     copies = module.params.get('cc')
     blindcopies = module.params.get('bcc')
     subject = module.params.get('subject')
     body = module.params.get('body')
+    body_alt = module.params.get('body_alt')
     attach_files = module.params.get('attach')
+    attach_inline = module.params.get('attach_inline')
     headers = module.params.get('headers')
     charset = module.params.get('charset')
     subtype = module.params.get('subtype')
@@ -306,8 +335,10 @@ def main():
     if not secure_state and (username and password):
         module.warn('Username and Password was sent without encryption')
 
-    msg = MIMEMultipart(_charset=charset)
+    msg = MIMEMultipart('related', _charset=charset)
     msg['From'] = formataddr((sender_phrase, sender_addr))
+    if replyto is not None:
+        msg['Reply-To'] = formataddr(parseaddr(replyto))
     msg['Subject'] = Header(subject, charset)
     msg.preamble = "Multipart message"
 
@@ -340,8 +371,18 @@ def main():
         addr_list.append(parseaddr(addr)[1])    # address only, w/o phrase
     msg['Cc'] = ", ".join(cc_list)
 
-    part = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
-    msg.attach(part)
+    if subtype == 'html' and body_alt is not None:
+        msg_alt = MIMEMultipart('alternative')
+        msg.attach(msg_alt)
+
+        alt_text = MIMEText(body_alt + "\n\n", _subtype='plain', _charset=charset)
+        msg_alt.attach(alt_text)
+
+        alt_html = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
+        msg_alt.attach(alt_html)
+    else:
+        part = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
+        msg.attach(part)
 
     # NOTE: Backware compatibility with old syntax using space as delimiter is not retained
     #       This breaks files with spaces in it :-(
@@ -356,6 +397,24 @@ def main():
         except Exception as e:
             module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" %
                              (filename, to_native(e)), exception=traceback.format_exc())
+
+    if attach_inline is not None:
+        """The inline images are accessible in html messsage like:
+        <img src="cid:cid-0" alt="...">"""
+        i = 0
+        for filename in attach_inline:
+            try:
+                part = MIMEBase('application', 'octet-stream')
+                with open(filename, 'rb') as fp:
+                    part.set_payload(fp.read())
+                encoders.encode_base64(part)
+                part.add_header('Content-disposition', 'attachment', filename=os.path.basename(filename))
+                part.add_header('Content-ID', '<cid-{}>'.format(i))
+                msg.attach(part)
+            except Exception as e:
+                module.fail_json(rc=1, msg="Failed to send mail: can't attach inline file %s: %s" %
+                                 (file, to_native(e)), exception=traceback.format_exc())
+            i += 1
 
     composed = msg.as_string()
 
