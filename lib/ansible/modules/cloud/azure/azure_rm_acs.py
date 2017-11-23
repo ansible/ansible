@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -67,6 +66,7 @@ options:
                     - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
                 required: true
                 default: Standard_D2v2
+                version_added: 2.5
             dns_prefix:
                 description:
                   - The DNS Prefix to use for the Container Service master nodes.
@@ -325,6 +325,9 @@ def create_ssh_configuration_instance(sshconf):
 def create_master_profile_instance(masterprofile):
     '''
     Helper method to serialize a dict to a ContainerServiceMasterProfile
+    Note: first_consecutive_static_ip is specifically set to None, for Azure server doesn't accept
+    request body with this property. This should be an inconsistency bug before Azure client SDK
+    and Azure server.
     :param: masterprofile: dict with the parameters to setup the ContainerServiceMasterProfile
     :return: ContainerServiceMasterProfile
     '''
@@ -333,7 +336,7 @@ def create_master_profile_instance(masterprofile):
         dns_prefix=masterprofile[0]['dns_prefix'],
         vm_size=masterprofile[0]['vm_size'],
         first_consecutive_static_ip=None
-        )
+    )
 
 
 def create_diagnostics_profile_instance(diagprofile):
@@ -408,6 +411,7 @@ def create_master_profile_dict(masterprofile):
     )
     return results
 
+
 def create_service_principal_profile_dict(serviceprincipalprofile):
     '''
     Helper method to deserialize a ContainerServiceServicePrincipalProfile to a dict
@@ -419,6 +423,7 @@ def create_service_principal_profile_dict(serviceprincipalprofile):
         secret=serviceprincipalprofile.secret
     )
     return results
+
 
 def create_diagnotstics_profile_dict(diagnosticsprofile):
     '''
@@ -582,16 +587,29 @@ class AzureRMContainerService(AzureRMModuleBase):
                     if update_tags:
                         to_be_updated = True
 
+                    def check_different(profile, property):
+                        return response[profile].get(property) != getattr(self, profile)[0].get(property)
+
                     # Cannot Update the master count for now // Uncomment this block in the future to support it
-                    if response['master_profile'].get('count') != self.master_profile[0].get('count') or response['master_profile'].get('vm_size') != self.master_profile[0].get('vm_size'):
+                    if check_different('master_profile', 'count'):
                         # self.log(("Master Profile Count Diff, Was {0} / Now {1}"
                         #           .format(response['master_profile'].count,
                         #           self.master_profile[0].get('count'))))
                         # to_be_updated = True
-                        self.module.warn("master_profile.count or master_profile.vm_size cannot be updated")
+                        self.module.warn("master_profile.count cannot be updated")
+
+
+                    # Cannot Update the master vm_size for now. Could be a client SDK bug
+                    # Uncomment this block in the future to support it
+                    if check_different('master_profile', 'vm_size'):
+                        # self.log(("Master Profile VM Size Diff, Was {0} / Now {1}"
+                        #           .format(response['master_profile'].get('vm_size'),
+                        #                   self.master_profile[0].get('vm_size'))))
+                        # to_be_updated = True
+                        self.module.warn("master_profile.vm_size cannot be updated")
 
                     # Cannot Update the SSH Key for now // Uncomment this block in the future to support it
-                    if response['linux_profile'].get('ssh_key') != self.linux_profile[0].get('ssh_key'):
+                    if check_different('linux_profile', 'ssh_key'):
                         # self.log(("Linux Profile Diff SSH, Was {0} / Now {1}"
                         #          .format(response['linux_profile'].ssh.public_keys[0].key_data,
                         #          self.linux_profile[0].get('ssh_key'))))
@@ -601,7 +619,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                     # self.log("linux_profile response : {0}".format(response['linux_profile'].get('admin_username')))
                     # self.log("linux_profile self : {0}".format(self.linux_profile[0].get('admin_username')))
                     # Cannot Update the Username for now // Uncomment this block in the future to support it
-                    if response['linux_profile'].get('admin_username') != self.linux_profile[0].get('admin_username'):
+                    if check_different('linux_profile', 'admin_username'):
                         # self.log(("Linux Profile Diff User, Was {0} / Now {1}"
                         #          .format(response['linux_profile'].admin_username,
                         #          self.linux_profile[0].get('admin_username'))))
@@ -618,10 +636,11 @@ class AzureRMContainerService(AzureRMModuleBase):
                         for profile_self in self.agent_pool_profiles:
                             if profile_result['name'] == profile_self['name']:
                                 matched = True
-                                if profile_result['count'] != profile_self['count'] or profile_result['vm_size'] != profile_self['vm_size']:
+                                if profile_result['count'] != profile_self['count'] or profile_result['vm_size'] != \
+                                        profile_self['vm_size']:
                                     self.log(("Agent Profile Diff - Count was {0} / Now {1} - Vm_size was {2} / Now {3}"
-                                             .format(profile_result['count'], profile_self['count'],
-                                              profile_result['vm_size'], profile_self['vm_size'])))
+                                              .format(profile_result['count'], profile_self['count'],
+                                                      profile_result['vm_size'], profile_self['vm_size'])))
                                     to_be_updated = True
                         if not matched:
                             self.log("Agent Pool not found")
@@ -685,7 +704,8 @@ class AzureRMContainerService(AzureRMModuleBase):
         # self.log("vm_diagnostics : {0}".format(parameters.diagnostics_profile.vm_diagnostics))
 
         try:
-            poller = self.containerservice_client.container_services.create_or_update(self.resource_group, self.name, parameters)
+            poller = self.containerservice_client.container_services.create_or_update(self.resource_group, self.name,
+                                                                                      parameters)
             response = self.get_poller_result(poller)
         except CloudError as exc:
             self.log('Error attempting to create the ACS instance.')
@@ -735,6 +755,7 @@ class AzureRMContainerService(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMContainerService()
+
 
 if __name__ == '__main__':
     main()
