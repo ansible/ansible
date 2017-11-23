@@ -106,6 +106,11 @@ options:
               for by C(name).'
             - Custom image support was added in Ansible 2.5
         required: true
+    availability_set:
+        description:
+            - Name or ID of an existing availability set to add the VM to. The availability_set should be in the same resource group as VM.
+        default: null
+        version_added: "2.5"
     storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
@@ -448,6 +453,9 @@ azure_vm:
     type: complex
     contains: {
         "properties": {
+            "availabilitySet": {
+                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
+            },
             "hardwareProfile": {
                 "vmSize": "Standard_D1"
             },
@@ -588,13 +596,14 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import parse_resource_id
     from azure.mgmt.compute.models import NetworkInterfaceReference, \
                                           VirtualMachine, HardwareProfile, \
                                           StorageProfile, OSProfile, OSDisk, DataDisk, \
                                           VirtualHardDisk, ManagedDiskParameters, \
                                           ImageReference, NetworkProfile, LinuxConfiguration, \
                                           SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
-                                          DiskCreateOptionTypes, Plan
+                                          DiskCreateOptionTypes, Plan, SubResource
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
                                           NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
@@ -637,6 +646,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
             image=dict(type='raw'),
+            availability_set=dict(type='str'),
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
@@ -670,6 +680,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.ssh_password_enabled = None
         self.ssh_public_keys = None
         self.image = None
+        self.availability_set = None
         self.storage_account_name = None
         self.storage_container_name = None
         self.storage_blob_name = None
@@ -893,6 +904,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not image_reference:
                         self.fail("Parameter error: an image is required when creating a virtual machine.")
 
+                    availability_set_resource = None
+                    if self.availability_set:
+                        parsed_availability_set = parse_resource_id(self.availability_set)
+                        availability_set = self.get_availability_set(parsed_availability_set.get('resource_group', self.resource_group),
+                                                                     parsed_availability_set.get('name'))
+                        availability_set_resource = SubResource(availability_set.id)
+
                     # Get defaults
                     if not self.network_interface_names:
                         default_nic = self.create_default_nic()
@@ -956,6 +974,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
+                        availability_set=availability_set_resource,
                         plan=plan
                     )
 
@@ -1052,6 +1071,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk']['storageAccountType']
                         )
 
+                    availability_set_resource = None
+                    try:
+                        availability_set_resource = SubResource(vm_dict['properties']['availabilitySet']['id'])
+                    except Exception:
+                        # pass if the availability set is not set
+                        pass
+
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
                         os_profile=OSProfile(
@@ -1077,6 +1103,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 version=vm_dict['properties']['storageProfile']['imageReference']['version']
                             ),
                         ),
+                        availability_set=availability_set_resource,
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
@@ -1434,6 +1461,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 return ImageReference(id=vm_image.id)
 
         self.fail("Error could not find image with name {0}".format(name))
+    def get_availability_set(self, resource_group, name):
+        try:
+            return self.compute_client.availability_sets.get(resource_group, name)
+        except Exception as exc:
+            self.fail("Error fetching availability set {0} - {1}".format(name, str(exc)))
 
     def get_storage_account(self, name):
         try:
