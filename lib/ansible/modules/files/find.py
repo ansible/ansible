@@ -172,7 +172,9 @@ examined:
 '''
 
 import fnmatch
+import grp
 import os
+import pwd
 import re
 import stat
 import sys
@@ -263,6 +265,19 @@ def contentfilter(fsname, pattern):
 
 
 def statinfo(st):
+    pw_name = ""
+    gr_name = ""
+
+    try:  # user data
+        pw_name = pwd.getpwuid(st.st_uid).pw_name
+    except:
+        pass
+
+    try:  # group data
+        gr_name = grp.getgrgid(st.st_gid).gr_name
+    except:
+        pass
+
     return {
         'mode': "%04o" % stat.S_IMODE(st.st_mode),
         'isdir': stat.S_ISDIR(st.st_mode),
@@ -281,6 +296,8 @@ def statinfo(st):
         'atime': st.st_atime,
         'mtime': st.st_mtime,
         'ctime': st.st_ctime,
+        'gr_name': gr_name,
+        'pw_name': pw_name,
         'wusr': bool(st.st_mode & stat.S_IWUSR),
         'rusr': bool(st.st_mode & stat.S_IRUSR),
         'xusr': bool(st.st_mode & stat.S_IXUSR),
