@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -52,6 +39,23 @@ options:
         - Tools
         - UpdateRollups
         - Updates
+    reboot:
+        description:
+        - Ansible will automatically reboot the remote host if it is required
+          and continue to install updates after the reboot.
+        - This can be used instead of using a M(win_reboot) task after this one
+          and ensures all updates for that category is installed in one go.
+        - Async does not work when C(reboot=True).
+        type: bool
+        default: 'no'
+        version_added: '2.5'
+    reboot_timeout:
+        description:
+        - The time in secons to wait until the host is back online from a
+          reboot.
+        - This is only used if C(reboot=True) and a reboot is required.
+        default: 1200
+        version_added: '2.5'
     state:
         description:
         - Controls whether found updates are returned as a list or actually installed.
@@ -91,6 +95,12 @@ EXAMPLES = r'''
     category_names: SecurityUpdates
     state: searched
     log_path: c:\ansible_wu.txt
+
+- name: Install all security updates with automatic reboots
+  win_updates:
+    category_names:
+    - SecurityUpdates
+    reboot: yes
 '''
 
 RETURN = r'''
