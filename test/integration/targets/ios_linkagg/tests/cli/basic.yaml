@@ -5,13 +5,13 @@
 #  ios_config:
 #    lines:
 #      - no interface port-channel 20
-#      - no interface port-channel 100
+#      - no interface port-channel 5
 #    authorize: yes
 
 #- name: setup - remove config used in test(part2)
 #  ios_config:
 #    lines:
-#      - no channel-group 20
+#      - no channel-group 20 mode active
 #    authorize: yes
 #    parents: "{{ item }}"
 #  with_items:
@@ -77,7 +77,7 @@
 #    that:
 #      - "result.changed == true"
 #      - "'interface GigabitEthernet0/1' in result.commands"
-#      - "'no channel-group 20' in result.commands"
+#      - "'no channel-group 20 mode active' in result.commands"
 
 #- name: remove link aggregation group from member(Idempotence)
 #  ios_linkagg: *remove_member
@@ -91,7 +91,7 @@
 #  ios_linkagg: &remove
 #    group: 20
 #    state: absent
-#    authorise: yes
+#    authorize: yes
 #  register: result
 
 #- assert:
@@ -110,7 +110,7 @@
 #- name: create aggregate of linkagg definitions
 #  ios_linkagg: &create_agg
 #    aggregate:
-#      - { group: 100 }
+#      - { group: 5 }
 #      - { group: 20, mode: active, members: ['GigabitEthernet0/1'] }
 #    authorize: yes
 #  register: result
@@ -118,7 +118,7 @@
 #- assert:
 #    that:
 #      - "result.changed == true"
-#      - "'interface port-channel 100' in result.commands"
+#      - "'interface port-channel 5' in result.commands"
 #      - "'interface port-channel 20' in result.commands"
 #      - "'interface GigabitEthernet0/1' in result.commands"
 #      - "'channel-group 20 mode active' in result.commands"
@@ -135,13 +135,13 @@
 #  ios_config:
 #    lines:
 #      - no interface port-channel 20
-#      - no interface port-channel 100
+#      - no interface port-channel 5
 #    authorize: yes
 
 #- name: teardown(part2)
 #  ios_config:
 #    lines:
-#      - no channel-group 20
+#      - no channel-group 20 mode active
 #    authorize: yes
 #    parents: "{{ item }}"
 #  with_items:

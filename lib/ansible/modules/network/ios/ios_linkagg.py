@@ -124,10 +124,12 @@ def map_obj_to_commands(updates, module):
                 commands.append('no interface port-channel {}'.format(group))
 
         elif state == 'present':
+            cmd = ['interface port-channel {}'.format(group),
+                   'end']
             if not obj_in_have:
                 if not group:
                     module.fail_json(msg='group is a required option')
-                commands.append('interface port-channel {}'.format(group))
+                commands.extend(cmd)
 
                 if members:
                     for m in members:
@@ -138,22 +140,22 @@ def map_obj_to_commands(updates, module):
                 if members:
                     if 'members' not in obj_in_have.keys():
                         for m in members:
-                            commands.append('interface port-channel {}'.format(group))
+                            commands.extend(cmd)
                             commands.append('interface {}'.format(m))
                             commands.append('channel-group {0} mode {1}'.format(group, mode))
 
                     elif set(members) != set(obj_in_have['members']):
                         missing_members = list(set(members) - set(obj_in_have['members']))
                         for m in missing_members:
-                            commands.append('interface port-channel {}'.format(group))
+                            commands.extend(cmd)
                             commands.append('interface {}'.format(m))
                             commands.append('channel-group {0} mode {1}'.format(group, mode))
 
                         superfluous_members = list(set(obj_in_have['members']) - set(members))
                         for m in superfluous_members:
-                            commands.append('interface port-channel {}'.format(group))
+                            commands.extend(cmd)
                             commands.append('interface {}'.format(m))
-                            commands.append('no channel-group {}'.format(group))
+                            commands.append('no channel-group {0} mode {1}'.format(group, mode))
 
     if purge:
         for h in have:
