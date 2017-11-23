@@ -54,7 +54,7 @@ options:
     description:
       - Instance type to use for the instance
     required: true
-    default: null
+    default: 'null'
     aliases: []
   image_id:
     description:
@@ -87,7 +87,8 @@ options:
   instance_monitoring:
     description:
       - Specifies whether instances are launched with detailed monitoring.
-    default: false
+    default: 'true'
+    choices: ['true', 'false']
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address
@@ -307,7 +308,7 @@ def create_launch_config(connection, module):
     if classic_link_vpc_id is not None:
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
 
-    if instance_monitoring:
+    if instance_monitoring is not None:
         launch_config['InstanceMonitoring'] = {'Enabled': instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
