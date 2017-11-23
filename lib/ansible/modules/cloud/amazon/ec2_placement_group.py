@@ -103,7 +103,7 @@ def get_placement_group_details(connection, module):
     name = module.params.get("name")
     response = connection.describe_placement_groups(
         Filters=[{
-            "Name":    "group-name",
+            "Name": "group-name",
             "Values": [name]
         }])
 

@@ -30,7 +30,7 @@ options:
   names:
     description:
       - A list of names to filter on. If a listed group does not exist, there
-      will be no corresponding entry in the result; no error will be raised.
+        will be no corresponding entry in the result; no error will be raised.
     required: false
     default: []
 extends_documentation_fragment:
@@ -99,7 +99,7 @@ def get_placement_groups_details(connection, module):
     if len(names) > 0:
         response = connection.describe_placement_groups(
             Filters=[{
-                "Name":    "group-name",
+                "Name": "group-name",
                 "Values": names
             }])
     else:
