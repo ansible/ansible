@@ -183,7 +183,7 @@ def check_args(module, warnings):
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
 
-            
+
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
