@@ -90,6 +90,7 @@ commands:
   returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
   sample:
+    - interface port-channel 30
     - interface GigabitEthernet0/3
     - channel-group 30 mode on
     - no interface port-channel 30
@@ -134,7 +135,7 @@ def map_obj_to_commands(updates, module):
                 if not group:
                     module.fail_json(msg='group is a required option')
                 commands.append('interface port-channel {}'.format(group))
-                
+
                 if members:
                     for m in members:
                         commands.append('interface {}'.format(m))
@@ -202,7 +203,7 @@ def parse_mode(module, config, group, member):
     parents = ['interface {0}'.format(member)]
     body = netcfg.get_section(parents)
 
-    match_int = re.findall('interface {0}\n'.format(member), body, re.M)
+    match_int = re.findall(r'interface {0}\n'.format(member), body, re.M)
     if match_int:
         match = re.search(r'channel-group {0} mode (\S+)'.format(group), body, re.M)
         if match:
@@ -217,19 +218,17 @@ def parse_members(module, config, group):
     for line in config.strip().split('!'):
         l = line.strip()
         if l.startswith('interface'):
-            match_group = re.findall('channel-group {0} mode'.format(group), l, re.M)
+            match_group = re.findall(r'channel-group {0} mode'.format(group), l, re.M)
             if match_group:
-                match = re.search('interface (\S+)', l, re.M)
+                match = re.search(r'interface (\S+)', l, re.M)
                 if match:
-                    member = match.group(1)
-                    members.append(member)
+                    members.append(match.group(1))
 
     return members
 
 
-def get_channel(group, module):
-    config = get_config(module)
-    match = re.findall('interface (\S+)', config, re.M)
+def get_channel(module, config, group):
+    match = re.findall(r'interface (\S+)', config, re.M)
 
     if not match:
         return {}
@@ -254,7 +253,7 @@ def map_config_to_obj(module):
             obj = {}
             group = match.group(1)
             obj['group'] = group
-            obj.update(get_channel(group, module))
+            obj.update(get_channel(module, config, group))
             objs.append(obj)
 
     return objs
