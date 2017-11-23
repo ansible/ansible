@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -97,19 +97,6 @@ options:
     required: false
     default: line
     choices: ['line', 'block', 'config']
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This
-        argument will be removed in a future release.
-    required: false
-    default: false
-    choices: [ "yes", "no" ]
-    version_added: "2.5"
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -195,11 +182,6 @@ def check_args(module, warnings):
     if module.params['comment']:
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
-    if module.params['force']:
-        warnings.append('The force argument is deprecated, please use '
-                        'match=none instead.  This argument will be '
-                        'removed in the future')
-
 
 def get_running_config(module):
     contents = module.params['config']
@@ -271,10 +253,6 @@ def main():
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block', 'config']),
 
-        # this argument is deprecated in favor of setting match: none
-        # it will be removed in a future version
-        force=dict(default=False, type='bool'),
-
         config=dict(),
         backup=dict(type='bool', default=False),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
@@ -294,9 +272,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
-
-    if module.params['force'] is True:
-        module.params['match'] = 'none'
 
     warnings = list()
     check_args(module, warnings)
