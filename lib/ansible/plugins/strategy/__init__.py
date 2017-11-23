@@ -36,7 +36,7 @@ from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -140,8 +140,12 @@ class StrategyBase:
     def cleanup(self):
         # close active persistent connections
         for sock in itervalues(self._active_connections):
-            conn = Connection(sock)
-            conn.reset()
+            try:
+                conn = Connection(sock)
+                conn.reset()
+            except ConnectionError as e:
+                # most likely socket is already closed
+                display.debug("got an error while closing persistent connection: %s" % e)
         self._final_q.put(_sentinel)
         self._results_thread.join()
 
