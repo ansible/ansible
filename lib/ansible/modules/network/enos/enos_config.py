@@ -145,9 +145,9 @@ EXAMPLES = """
 - name: configure interface settings
   enos_config:
     lines:
-      - description test interface
-      - ip address 172.31.1.1 255.255.255.0
-    parents: interface GigabitEthernet0/0/0/0
+      - enable
+      - ip ospf enable
+    parents: interface ip 13
 
 - name: load a config from disk and replace the current config
   enos_config:
