@@ -22,7 +22,7 @@ description:
   - This module provides declarative management of link aggregation groups
     on Cisco IOS network devices.
 notes:
-  - Tested against EOS 4.15
+  - Tested against IOS 15.2
 options:
   group:
     description:
@@ -75,13 +75,6 @@ EXAMPLES = """
     aggregate:
       - { group: 3, mode: on, members: [GigabitEthernet0/1] }
       - { group: 100, mode: passive, members: [GigabitEthernet0/2] }
-
-- name: Remove aggregate of linkagg definitions
-  ios_linkagg:
-    aggregate:
-      - { group: 3, mode: on, members: [GigabitEthernet0/1] }
-      - { group: 100, mode: passive, members: [GigabitEthernet0/2] }
-    state: absent
 """
 
 RETURN = """
