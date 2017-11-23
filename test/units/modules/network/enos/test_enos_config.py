@@ -102,11 +102,6 @@ class TestEnosConfigModule(TestEnosModule):
         commands = parents + lines
         self.execute_module(changed=True, commands=commands)
 
-    def test_enos_config_force(self):
-        lines = ['hostname router']
-        set_module_args(dict(lines=lines, force=True))
-        self.execute_module(changed=True, commands=lines)
-
     def test_enos_config_match_none(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string']
         parents = ['interface ip 13']
