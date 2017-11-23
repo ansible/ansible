@@ -17,7 +17,7 @@ short_description: Manage SPAN source group to destination group bindings on Cis
 description:
 - Manage SPAN source groups' associated destinaton group on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(span:SrcGrp) at U(https://developer.cisco.com/media/mim-ref/MO-spanSpanLbl.html).
+  I(span:SrcGrp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

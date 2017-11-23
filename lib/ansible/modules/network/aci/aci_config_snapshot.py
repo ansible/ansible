@@ -19,8 +19,7 @@ description:
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
 - More information from the internal APIC classes
-  I(config:Snapshot) at U(https://developer.cisco.com/media/mim-ref/MO-configSnapshot.html) and
-  I(config:ExportP) at U(https://developer.cisco.com/media/mim-ref/MO-configExportP.html).
+  I(config:Snapshot) and I(config:ExportP) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

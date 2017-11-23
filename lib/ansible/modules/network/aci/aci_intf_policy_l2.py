@@ -17,7 +17,7 @@ short_description: Manage Layer 2 interface policies on Cisco ACI fabrics (l2:If
 description:
 - Manage Layer 2 interface policies on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(l2:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-l2IfPol.html).
+  I(l2:IfPol) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

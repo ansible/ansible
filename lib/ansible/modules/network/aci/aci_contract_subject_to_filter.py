@@ -17,7 +17,7 @@ short_description: Bind Contract Subjects to Filters on Cisco ACI fabrics (vz:Rs
 description:
 - Bind Contract Subjects to Filters on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(vz:RsSubjFiltAtt) at U(https://developer.cisco.com/media/mim-ref/MO-vzRsSubjFiltAtt.html).
+  I(vz:RsSubjFiltAtt) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

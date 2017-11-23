@@ -17,8 +17,7 @@ short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fv
 description:
 - Bind EPGs to Contracts on Cisco ACI fabrics.
 - More information from the internal APIC classes
-  I(fv:RsCons) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsCons.html) and
-  I(fv:RsProv) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsProv.html).
+  I(fv:RsCons) and I(fv:RsProv) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)

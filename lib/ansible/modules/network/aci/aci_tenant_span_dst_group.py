@@ -17,7 +17,7 @@ short_description: Manage SPAN destination groups on Cisco ACI fabrics (span:Des
 description:
 - Manage SPAN destination groups on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(span:DestGrp) at U(https://developer.cisco.com/media/mim-ref/MO-spanDestGrp.html).
+  I(span:DestGrp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
