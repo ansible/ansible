@@ -23,6 +23,12 @@ options:
     description: Display name
   givenname:
     description: First name
+  krbpasswordexpiration:
+    description:
+    - Date at which the user password will expire
+    - In the format YYYYMMddHHmmss
+    - e.g. 20180121182022 will expire on 21 January 2018 at 18:20:22
+    version_added: 2.5
   loginshell:
     description: Login shell
   mail:
@@ -75,6 +81,7 @@ EXAMPLES = '''
 - ipa_user:
     name: pinky
     state: present
+    krbpasswordexpiration: 20200119235959
     givenname: Pinky
     sn: Acme
     mail:
@@ -138,11 +145,14 @@ class UserIPAClient(IPAClient):
         return self._post_json(method='user_enable', name=name)
 
 
-def get_user_dict(displayname=None, givenname=None, loginshell=None, mail=None, nsaccountlock=False, sn=None,
-                  sshpubkey=None, telephonenumber=None, title=None, userpassword=None, gidnumber=None, uidnumber=None):
+def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, loginshell=None,
+                  mail=None, nsaccountlock=False, sn=None, sshpubkey=None, telephonenumber=None,
+                  title=None, userpassword=None, gidnumber=None, uidnumber=None):
     user = {}
     if displayname is not None:
         user['displayname'] = displayname
+    if krbpasswordexpiration is not None:
+        user['krbpasswordexpiration'] = krbpasswordexpiration + "Z"
     if givenname is not None:
         user['givenname'] = givenname
     if loginshell is not None:
@@ -226,6 +236,7 @@ def ensure(module, client):
     nsaccountlock = state == 'disabled'
 
     module_user = get_user_dict(displayname=module.params.get('displayname'),
+                                krbpasswordexpiration=module.params.get('krbpasswordexpiration'),
                                 givenname=module.params.get('givenname'),
                                 loginshell=module.params['loginshell'],
                                 mail=module.params['mail'], sn=module.params['sn'],
@@ -261,6 +272,7 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(displayname=dict(type='str'),
                          givenname=dict(type='str'),
+                         krbpasswordexpiration=dict(type='str'),
                          loginshell=dict(type='str'),
                          mail=dict(type='list'),
                          sn=dict(type='str'),
