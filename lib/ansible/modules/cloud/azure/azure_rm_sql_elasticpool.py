@@ -44,7 +44,7 @@ options:
         required: True
     edition:
         description:
-            - The edition of the elastic pool. Possible values include: 'Basic', 'Standard', 'Premium'
+            - "The edition of the elastic pool. Possible values include: 'Basic', 'Standard', 'Premium'"
         required: False
     dtu:
         description:
