@@ -142,18 +142,17 @@ def main():
     pool = module.params['pool']
     pool_type = module.params['pool_type']
     state = module.params['state']
+
     aci_class = ACI_MAPPING[pool_type]["aci_class"]
     aci_mo = ACI_MAPPING[pool_type]["aci_mo"]
+    pool_name = pool
 
     # ACI Pool URL requires the allocation mode for vlan and vsan pools (ex: uni/infra/vlanns-[poolname]-static)
-    if pool_type != 'vxlan' and pool and not allocation_mode:
-        module.fail_json(msg='ACI requires the "allocation_mode" for "pool_type" of "vlan" and "vsan" when the "pool" is provided')
-
-    # Construct proper pool name used in the URL for vlan and vsan pools.
     if pool_type != 'vxlan' and pool is not None:
-        pool_name = '[{0}]-{1}'.format(pool, allocation_mode)
-    else:
-        pool_name = pool
+        if allocation_mode is not None:
+            pool_name = '[{0}]-{1}'.format(pool, allocation_mode)
+        else:
+            module.fail_json(msg='ACI requires the "allocation_mode" for "pool_type" of "vlan" and "vsan" when the "pool" is provided')
 
     aci = ACIModule(module)
     aci.construct_url(
