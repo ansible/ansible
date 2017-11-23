@@ -43,7 +43,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
   delegate_to: localhost
 - debug: var=datacenters
 
@@ -58,7 +57,6 @@ EXAMPLES = '''
       count: 3
       sort: 'name:descending'
       filter: 'state=Unmanaged'
-  no_log: true
 - debug: var=datacenters
 
 - name: Gather facts about a Data Center by name
@@ -68,7 +66,6 @@ EXAMPLES = '''
     password: my_password
     api_version: 500
     name: "My Data Center"
-  no_log: true
   delegate_to: localhost
 - debug: var=datacenters
 
@@ -81,7 +78,6 @@ EXAMPLES = '''
     name: "My Data Center"
     options:
       - visualContent
-  no_log: true
   delegate_to: localhost
 - debug: var=datacenters
 - debug: var=datacenter_visual_content
