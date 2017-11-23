@@ -115,51 +115,54 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-subnet.availability_zone:
-    description: availability zone subnet resides in
-    returned: success
-    type: string
-    sample: us-west-1b
-subnet.available_ip_address_count:
-    description: number of ip addresses that can be allocated in this subnet
-    returned: success
-    type: int
-    sample: 251
-subnet.cidr_block:
-    description: The CIDR block for the subnet
-    returned: success
-    type: string
-    sample: "10.0.0.0/24"
-subnet.default_for_az:
-    description: indicates whether this is the default subnet for this availability zone
-    returned: success
-    type: boolean
-    sample: false
-subnet.id:
-    description: VPC subnet resource id
-    returned: success
-    type: string
-    sample: subnet-5a25360f
-subnet.map_public_ip_on_launch:
-    description: indicates whether instances in this subnet are automatically assigned public IPs
-    returned: success
-    type: boolean
-    sample: false
-subnet.state:
-    description: current state of the subnet
-    returned: success
-    type: string
-    sample: available
-subnet.tags:
-    description: tags attached to the subnet
-    returned: success
-    type: dict
-    sample: { env": "production", tier": "web"}
-subnet.vpc_id:
-    description: VPC id that this subnet is associated with
-    returned: success
-    type: string
-    sample: vpc-62c1b399
+subnet:
+    type: complex
+    contains:
+        availability_zone:
+            description: availability zone subnet resides in
+            returned: success
+            type: string
+            sample: us-west-1b
+        available_ip_address_count:
+            description: number of ip addresses that can be allocated in this subnet
+            returned: success
+            type: int
+            sample: 251
+        cidr_block:
+            description: The CIDR block for the subnet
+            returned: success
+            type: string
+            sample: "10.0.0.0/24"
+        default_for_az:
+            description: indicates whether this is the default subnet for this availability zone
+            returned: success
+            type: boolean
+            sample: false
+        id:
+            description: VPC subnet resource id
+            returned: success
+            type: string
+            sample: subnet-5a25360f
+        map_public_ip_on_launch:
+            description: indicates whether instances in this subnet are automatically assigned public IPs
+            returned: success
+            type: boolean
+            sample: false
+        state:
+            description: current state of the subnet
+            returned: success
+            type: string
+            sample: available
+        tags:
+            description: tags attached to the subnet
+            returned: success
+            type: dict
+            sample: { env": "production", tier": "web"}
+        vpc_id:
+            description: VPC id that this subnet is associated with
+            returned: success
+            type: string
+            sample: vpc-62c1b399
 '''
 
 import re
