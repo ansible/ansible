@@ -16,6 +16,11 @@
       name: "{{ storage_account }}"
       account_type: Standard_LRS
 
+- name: Create an availability set
+  azure_rm_availabilityset:
+    name: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    resource_group: "{{ resource_group }}"
+
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
@@ -62,12 +67,17 @@
       short_hostname: testvm
       os_type: Linux
       network_interfaces: testvm001
+      availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
   register: output
+
+- assert:
+      that:
+        - azure_vm.properties.availabilitySet.id
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
