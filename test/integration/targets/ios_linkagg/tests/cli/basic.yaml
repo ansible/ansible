@@ -5,10 +5,17 @@
 #  ios_config:
 #    lines:
 #      - no interface port-channel 20
-#      - no interface port-channel 5
 #    authorize: yes
+#  ignore_errors: yes
 
 #- name: setup - remove config used in test(part2)
+#  ios_config:
+#    lines:
+#      - no interface port-channel 5
+#    authorize: yes
+#  ignore_errors: yes
+
+#- name: setup - remove config used in test(part3)
 #  ios_config:
 #    lines:
 #      - no channel-group 20 mode active
@@ -135,10 +142,17 @@
 #  ios_config:
 #    lines:
 #      - no interface port-channel 20
-#      - no interface port-channel 5
 #    authorize: yes
+#  ignore_errors: yes
 
 #- name: teardown(part2)
+#  ios_config:
+#    lines:
+#      - no interface port-channel 5
+#    authorize: yes
+#  ignore_errors: yes
+
+#- name: teardown(part3)
 #  ios_config:
 #    lines:
 #      - no channel-group 20 mode active
