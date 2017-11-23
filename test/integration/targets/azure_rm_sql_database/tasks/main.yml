@@ -1,0 +1,25 @@
+- name: Create instance of Server
+  azure_rm_sql_server:
+    resource_group: "{{ resource_group }}"
+    name: zims-server
+    location: westus
+    administrator_login: mylogin
+    administrator_login_password: Testpasswordxyz12!
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state.state == 'Ready' 
+- name: Create instance of Database
+  azure_rm_sql_database:
+    resource_group: "{{ resource_group }}"
+    server_name: zims-server
+    name: test-database
+    location: westus
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state.status == 'Online'

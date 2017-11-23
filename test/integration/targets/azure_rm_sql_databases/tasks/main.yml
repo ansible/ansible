@@ -1,8 +1,0 @@
-- name: Create Sql
-  azure_rm_sql_databases:
-  register: output
-- name: Assert the resource instance is well created
-  assert:
-    that:
-      - output.changed
-      - output.state.state == 'Ready'
