@@ -74,6 +74,19 @@ RETURN = """
 
 MISSING_KEY_OPTIONS = frozenset(('warn', 'fail', 'ignore'))
 
+VALID_OPTIONS = frozenset((
+    'template',
+    'block',
+    'when',
+    'required',
+    'indent',
+    'missing_key',
+    'loop',
+    'name',
+    'join'
+))
+
+
 
 class LookupModule(LookupBase):
 
@@ -83,48 +96,40 @@ class LookupModule(LookupBase):
 
         ret = []
 
-        for term in terms:
-            display.debug("File lookup term: %s" % term)
+        for items in terms:
+            for term in to_list(items):
+                display.debug("File lookup term: %s" % term)
 
-            lookupfile = self.find_file_in_search_path(variables, 'templates', term)
-            display.vvvvv("File lookup using %s as file" % lookupfile)
-            if lookupfile:
-                with open(to_bytes(lookupfile, errors='surrogate_or_strict'), 'rb') as f:
-                    template_data = to_text(f.read(), errors='surrogate_or_strict')
+                lookupfile = self.find_file_in_search_path(variables, 'templates', term)
+                display.vvvvv("File lookup using %s as file" % lookupfile)
 
-                    # set jinja2 internal search path for includes
-                    searchpath = variables.get('ansible_search_path')
-                    if searchpath:
-                        # our search paths aren't actually the proper ones for jinja includes.
-                        # We want to search into the 'templates' subdir of each search path in
-                        # addition to our original search paths.
-                        newsearchpath = []
-                        for p in searchpath:
-                            newsearchpath.append(os.path.join(p, 'templates'))
-                            newsearchpath.append(p)
-                        searchpath = newsearchpath
-                    else:
-                        searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
-                    self._templar.environment.loader.searchpath = searchpath
+                if lookupfile:
+                    with open(to_bytes(lookupfile, errors='surrogate_or_strict'), 'rb') as f:
+                        template_data = to_text(f.read(), errors='surrogate_or_strict')
+                        spec = yaml.safe_load(template_data)
 
-                    spec = yaml.safe_load(template_data)
+                        if root_fact:
+                            template_vars = self.template("{{ %s }}" % root_fact, variables)
+                            if not template_vars:
+                                raise AnsibleError('specified value for root_fact not found')
 
-                    if root_fact:
-                        template_vars = self.template("{{ %s }}" % root_fact, variables)
-                        if not template_vars:
-                            raise AnsibleError('specified value for root_fact not found')
+                        else:
+                            template_vars = variables.copy()
 
-                    else:
-                        template_vars = variables.copy()
-
-                    ret.extend(self.build(spec, template_vars))
+                        ret.extend(self.build(spec, template_vars))
 
         return [ret]
+
+    def validate_spec_entry(self, spec):
+        if set(spec.keys()).difference(VALID_OPTIONS):
+            raise AnsibleError('invalid options specified in template')
 
     def build(self, spec, template_vars):
         config_lines = list()
 
         for item in spec:
+            self.validate_spec_entry(item)
+
             name = item.get('name')
             block = item.get('block')
             when = item.get('when')
@@ -159,7 +164,7 @@ class LookupModule(LookupBase):
 
                         for entry in block:
                             if 'template' not in entry:
-                                raise AnsibleError("missing required block entry `lines`")
+                                raise AnsibleError("missing required block entry `template`")
                             templated_values = self._process_block(entry, item_data)
 
                             if templated_values:
@@ -179,7 +184,7 @@ class LookupModule(LookupBase):
 
                         for entry in block:
                             if 'template' not in entry:
-                                raise AnsibleError("missing required block entry `lines`")
+                                raise AnsibleError("missing required block entry `template`")
                             templated_values = self._process_block(entry, item_data)
 
                             if templated_values:
@@ -194,7 +199,7 @@ class LookupModule(LookupBase):
                                 continue
 
                         if 'template' not in entry:
-                            raise AnsibleError("missing required block entry `lines`")
+                            raise AnsibleError("missing required block entry `template`")
 
                         templated_values = self._process_block(entry, template_vars)
 
