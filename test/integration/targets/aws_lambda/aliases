@@ -1,4 +1,4 @@
 cloud/aws
-posix/ci/cloud/group1/aws
+posix/ci/cloud/group4/aws
 execute_lambda
 lambda
