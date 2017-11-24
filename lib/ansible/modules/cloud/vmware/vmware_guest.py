@@ -105,6 +105,7 @@ options:
     - '   C(thin) thin disk, C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5, Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore.'
+    - ' - C(datastore_cluster) (string): Datastore cluster to use. Not compatible with C(autoselect_datastore) or C(datastore).'
   cdrom:
     description:
     - A CD-ROM configuration for the VM.
@@ -797,7 +798,6 @@ class PyVmomiHelper(PyVmomi):
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection
-                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1101,7 +1101,7 @@ class PyVmomiHelper(PyVmomi):
 
         return datastore
 
-    def select_datastore(self, vm_obj=None):
+    def select_datastore(self, vm_obj=None, destfolder=None, configspec=None):
         datastore = None
         datastore_name = None
 
@@ -1125,6 +1125,32 @@ class PyVmomiHelper(PyVmomi):
                         datastore = ds
                         datastore_name = datastore.name
                         datastore_freespace = ds.summary.freeSpace
+
+            elif 'datastore_cluster' in self.params['disk'][0]:
+                podsel = vim.storageDrs.PodSelectionSpec()
+                pod = find_obj(self.content, [vim.StoragePod], self.params['disk'][0]['datastore_cluster'])
+                if pod:
+                    podsel.storagePod = pod
+                else:
+                    self.module.fail_json(msg="Failed to find a matching cluster datastore")
+
+                storagespec = vim.storageDrs.StoragePlacementSpec()
+                storagespec.type = 'create'
+                storagespec.podSelectionSpec = podsel
+                storagespec.folder = destfolder
+                storagespec.configSpec = configspec
+                storagespec.resourcePool = self.get_resource_pool()
+                storagespec.host = self.select_host()
+
+                try:
+                    rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storagespec)
+                    rec_action = rec.recommendations[0].action[0]
+                    real_datastore_name = rec_action.destination.name
+                except Exception:
+                    self.module.fail_json(msg="Failed to get Recommend Datastores")
+
+                datastore = find_obj(self.content, [vim.Datastore], real_datastore_name)
+                datastore_name = datastore.name
 
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
@@ -1308,9 +1334,6 @@ class PyVmomiHelper(PyVmomi):
         if self.params['resource_pool'] or self.params['template']:
             resource_pool = self.get_resource_pool()
 
-        # set the destination datastore for VM & disks
-        (datastore, datastore_name) = self.select_datastore(vm_obj)
-
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
@@ -1318,6 +1341,9 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
+
+        # set the destination datastore for VM & disks
+        (datastore, datastore_name) = self.select_datastore(vm_obj, destfolder, self.configspec)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
         network_changes = False
