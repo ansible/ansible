@@ -4,14 +4,13 @@
 # Copyright: (c) 2017, Stéphane Travassac <stravassac () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -173,12 +172,11 @@ from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, f
                                          find_vm_by_id, HAS_PYVMOMI, vmware_argument_spec)
 
 
-
 def directory(module, content, vm):
-    operations_permit = ['create','delete']
+    operations_permit = ['create', 'delete']
     vm_username = module.params['vm_username']
     vm_password = module.params['vm_password']
-        
+
     if "path" not in module.params["directory"]:
         module.fail_json(msg="directory.path is mandatory")
     if "operation" not in module.params["directory"]:
@@ -196,38 +194,39 @@ def directory(module, content, vm):
     file_manager = content.guestOperationsManager.fileManager
     if operation == "create":
         file_manager.MakeDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
-                                                    createParentDirectories=recurse)
+                                          createParentDirectories=recurse)
     if operation == "delete":
         file_manager.DeleteDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
-                                                    recursive=recurse)
+                                            recursive=recurse)
 
 
-def fetch(module,content, vm):
+def fetch(module, content, vm):
     vm_username = module.params['vm_username']
     vm_password = module.params['vm_password']
-    
+
     if "src" not in module.params["fetch"]:
         module.fail_json(msg="fetch.src is mandatory")
     if "dest" not in module.params["fetch"]:
         module.fail_json(msg="fetch.dest is mandatory")
-    
+
     dest = module.params["fetch"]['dest']
     src = module.params['fetch']['src']
-    
+
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     file_manager = content.guestOperationsManager.fileManager
 
     fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
-                                                                              guestFilePath=src)
+                                                                  guestFilePath=src)
     url = fileTransferInfo.url
     f = requests.get(url, verify=module.params['validate_certs'])
     with open(dest, "wb") as local_file:
         local_file.write(f.content)
 
-def copy(module,content, vm):
+
+def copy(module, content, vm):
     vm_username = module.params['vm_username']
     vm_password = module.params['vm_password']
-    
+
     if "src" not in module.params["copy"]:
         module.fail_json(msg="copy.src is mandatory")
     if "dest" not in module.params["copy"]:
@@ -236,7 +235,7 @@ def copy(module,content, vm):
         overwrite = module.params["copy"]["overwrite"]
     else:
         overwrite = False
-    
+
     dest = module.params["copy"]['dest']
     src = module.params['copy']['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
@@ -246,22 +245,21 @@ def copy(module,content, vm):
         module.fail_json(msg="Source %s not readable" % (src))
     if os.path.isdir(b_src):
         module.fail_json(msg="copy does not support copy of directory: %s" % (src))
-    
+
     data = None
     with open(b_src, "r") as local_file:
-          data = local_file.read()
-    file_size = os.path.getsize(b_src)    
+        data = local_file.read()
+    file_size = os.path.getsize(b_src)
 
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     file_attributes = vim.vm.guest.FileManager.FileAttributes()
     file_manager = content.guestOperationsManager.fileManager
     url = file_manager.InitiateFileTransferToGuest(vm=vm, auth=creds, guestFilePath=dest,
-                                                           fileAttributes=file_attributes, overwrite=overwrite,
-                                                           fileSize=file_size)
+                                                   fileAttributes=file_attributes, overwrite=overwrite,
+                                                   fileSize=file_size)
     r = requests.put(url, data=data, verify=module.params['validate_certs'])
-    if r.status_code <> 200:
-       raise Exception('initiateFileTransferToGuest : problem during file transfer') 
-   
+    if r.status_code != 200:
+        raise Exception('initiateFileTransferToGuest : problem during file transfer')
 
 
 def main():
@@ -270,7 +268,8 @@ def main():
                               cluster=dict(type='str'),
                               folder=dict(type='str', default='/vm'),
                               vm_id=dict(type='str', required=True),
-                              vm_id_type=dict(default='vm_name', type='str', choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
+                              vm_id_type=dict(default='vm_name', type='str',
+                                              choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
                               vm_username=dict(type='str', required=True),
                               vm_password=dict(type='str', no_log=True, required=True),
                               directory=dict(type='dict', default={}),
@@ -285,10 +284,10 @@ def main():
 
     if not HAS_PYVMOMI:
         module.fail_json(changed=False, msg='pyvmomi is required for this module')
-    
+
     if not REQUESTS_FOUND:
-            self.module.fail_json(
-                msg='requests library is required for this module')
+        module.fail_json(
+            msg='requests library is required for this module')
 
     datacenter_name = module.params['datacenter']
     cluster_name = module.params['cluster']
@@ -310,7 +309,8 @@ def main():
     if module.params['vm_id_type'] == 'inventory_path':
         vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type="inventory_path", folder=folder)
     else:
-        vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type=module.params['vm_id_type'], datacenter=datacenter, cluster=cluster)
+        vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type=module.params['vm_id_type'],
+                           datacenter=datacenter, cluster=cluster)
 
     if not vm:
         module.fail_json(msg='Unable to find virtual machine.')
