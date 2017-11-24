@@ -71,10 +71,11 @@ DOCUMENTATION = """
 
 import os
 import logging
+import json
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import ConnectionBase, ensure_connect
@@ -110,10 +111,19 @@ class Connection(ConnectionBase):
         self._network_os = self._play_context.network_os or 'default'
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
+        self._netconf = None
         self._manager = None
         self._connected = False
 
         self._local = LocalConnection(play_context, new_stdin, *args, **kwargs)
+
+    def __getattr__(self, name):
+        try:
+            return self.__dict__[name]
+        except KeyError:
+            if name.startswith('_'):
+                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+            return getattr(self._netconf, name)
 
     def exec_command(self, request, in_data=None, sudoable=True):
         """Sends the request to the node and returns the reply
@@ -131,7 +141,8 @@ class Connection(ConnectionBase):
             try:
                 reply = self._manager.rpc(request)
             except RPCError as exc:
-                return to_xml(exc.xml)
+                error = self.internal_error(data=to_text(to_xml(exc.xml), errors='surrogate_or_strict'))
+                return json.dumps(error)
 
             return reply.data_xml
         else:

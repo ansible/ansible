@@ -87,6 +87,13 @@
     that:
       - "result.changed == false"
       - "'{{ inventory_hostname_short }}' == '{{ result['ansible_facts']['ansible_net_config']['configuration'][0]['system'][0]['host-name'][0]['data'] }}' "
+  when: ansible_net_version == "15.1X49-D15.4"
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'{{ inventory_hostname_short }}' == '{{ result['ansible_facts']['ansible_net_config']['configuration']['system']['host-name'] }}' "
+  when: ansible_net_version == "17.3R1.10"
 
 - name: Collect config facts from device in text format
   junos_facts:
