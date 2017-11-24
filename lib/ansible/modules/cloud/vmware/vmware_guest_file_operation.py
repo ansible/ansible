@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: vmware_guest_file_operation
 short_description: Files operation in a VMware guest operating system whithout network
 description:
-    - Module allows user to create,delete file or directory in the guest operating system.
+    - Module allows user to copy and fetch file and create,delete directory in the guest operating system.
 version_added: "2.5"
 author:
   - Stéphane Travassac (@stravassac)
@@ -28,6 +28,7 @@ notes:
 requirements:
     - "python >= 2.6"
     - PyVmomi
+    - requests
 options:
     datacenter:
         description:
