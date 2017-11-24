@@ -598,7 +598,6 @@ class AzureRMContainerService(AzureRMModuleBase):
                         # to_be_updated = True
                         self.module.warn("master_profile.count cannot be updated")
 
-
                     # Cannot Update the master vm_size for now. Could be a client SDK bug
                     # Uncomment this block in the future to support it
                     if check_different('master_profile', 'vm_size'):
