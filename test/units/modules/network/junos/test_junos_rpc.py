@@ -20,9 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
-    from lxml.etree import tostring
+    from lxml.etree import tostring, fromstring
 except ImportError:
-    from xml.etree.ElementTree import tostring
+    from xml.etree.ElementTree import tostring, fromstring
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_rpc
@@ -46,16 +46,28 @@ class TestJunosCommandModule(TestJunosModule):
 
     def setUp(self):
         super(TestJunosCommandModule, self).setUp()
-        self.mock_send_request = patch('ansible.modules.network.junos.junos_rpc.send_request')
-        self.send_request = self.mock_send_request.start()
+        self.mock_conn = patch('ansible.module_utils.connection.Connection')
+        self.conn = self.mock_conn.start()
+
+        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.netconf_conn = self.mock_netconf.start()
+
+        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.netconf_rpc = self.mock_netconf_rpc.start()
+
+        self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_rpc.exec_rpc')
+        self.exec_rpc = self.mock_exec_rpc.start()
 
     def tearDown(self):
         super(TestJunosCommandModule, self).tearDown()
-        self.mock_send_request.stop()
+        self.mock_conn.stop()
+        self.mock_netconf.stop()
+        self.mock_netconf_rpc.stop()
+        self.mock_exec_rpc.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
         def load_from_file(*args, **kwargs):
-            module, element = args
+            element = fromstring(args[1])
             if element.text:
                 path = str(element.text)
             else:
@@ -69,7 +81,7 @@ class TestJunosCommandModule(TestJunosModule):
 
             return load_fixture(filename)
 
-        self.send_request.side_effect = load_from_file
+        self.exec_rpc.side_effect = load_from_file
 
     def test_junos_rpc_xml(self):
         set_module_args(dict(rpc='get-chassis-inventory'))
@@ -89,9 +101,9 @@ class TestJunosCommandModule(TestJunosModule):
     def test_junos_rpc_args(self):
         set_module_args(dict(rpc='get-software-information', args={'interface': 'em0', 'media': True}))
         result = self.execute_module(format='xml')
-        args, kwargs = self.send_request.call_args
-        reply = tostring(args[1]).decode()
-        self.assertTrue(reply.find('<interface>em0</interface><media /></get-software-information>'))
+        args, kwargs = self.exec_rpc.call_args
+        reply = args[1]
+        self.assertTrue(reply.find(b'<interface>em0</interface><media /></get-software-information>'))
 
     def test_junos_rpc_attrs(self):
         set_module_args(dict(rpc='load-configuration', output='xml', attrs={'url': '/var/tmp/config.conf'}))

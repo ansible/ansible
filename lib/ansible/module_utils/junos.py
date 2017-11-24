@@ -17,13 +17,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 import collections
+import json
 from contextlib import contextmanager
 from copy import deepcopy
 
 from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.netconf import send_request, children
-from ansible.module_utils.netconf import discard_changes, validate
-from ansible.module_utils.six import string_types
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.netconf import NetconfConnection
 from ansible.module_utils._text import to_text
 
 try:
@@ -45,7 +45,7 @@ junos_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'transport': dict()
+    'transport': dict(default='netconf', choices=['cli', 'netconf'])
 }
 junos_argument_spec = {
     'provider': dict(type='dict', options=junos_provider_spec),
@@ -66,8 +66,29 @@ def get_provider_argspec():
     return junos_provider_spec
 
 
-def check_args(module, warnings):
-    pass
+def get_connection(module):
+    if hasattr(module, '_junos_connection'):
+        return module._junos_connection
+
+    capabilities = get_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
+        module._junos_connection = Connection(module._socket_path)
+    elif network_api == 'netconf':
+        module._junos_connection = NetconfConnection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type %s' % network_api)
+
+    return module._junos_connection
+
+
+def get_capabilities(module):
+    if hasattr(module, '_junos_capabilities'):
+        return module._junos_capabilities
+
+    capabilities = Connection(module._socket_path).get_capabilities()
+    module._junos_capabilities = json.loads(capabilities)
+    return module._junos_capabilities
 
 
 def _validate_rollback_id(module, value):
@@ -96,73 +117,58 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
     if action == 'set' and not format == 'text':
         module.fail_json(msg='format must be text when action is set')
 
+    conn = get_connection(module)
     if rollback is not None:
         _validate_rollback_id(module, rollback)
-        xattrs = {'rollback': str(rollback)}
+        obj = Element('load-configuration', {'rollback': str(rollback)})
+        conn.execute_rpc(tostring(obj))
     else:
-        xattrs = {'action': action, 'format': format}
-
-    obj = Element('load-configuration', xattrs)
-
-    if candidate is not None:
-        lookup = {'xml': 'configuration', 'text': 'configuration-text',
-                  'set': 'configuration-set', 'json': 'configuration-json'}
-
-        if action == 'set':
-            cfg = SubElement(obj, 'configuration-set')
-        else:
-            cfg = SubElement(obj, lookup[format])
-
-        if isinstance(candidate, string_types):
-            if format == 'xml':
-                cfg.append(fromstring(candidate))
-            else:
-                cfg.text = to_text(candidate, encoding='latin-1')
-        else:
-            cfg.append(candidate)
-    return send_request(module, obj)
+        return conn.load_configuration(config=candidate, action=action, format=format)
 
 
-def get_configuration(module, compare=False, format='xml', rollback='0'):
+def get_configuration(module, compare=False, format='xml', rollback='0', filter=None):
     if format not in CONFIG_FORMATS:
         module.fail_json(msg='invalid config format specified')
-    xattrs = {'format': format}
+
+    conn = get_connection(module)
     if compare:
+        xattrs = {'format': format}
         _validate_rollback_id(module, rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
-    return send_request(module, Element('get-configuration', xattrs))
+        reply = conn.execute_rpc(tostring(Element('get-configuration', xattrs)))
+    else:
+        reply = conn.get_configuration(format=format, filter=filter)
+
+    return reply
 
 
-def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None):
-    obj = Element('commit-configuration')
-    if confirm:
-        SubElement(obj, 'confirmed')
+def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None, synchronize=False,
+                         at_time=None, exit=False):
+    conn = get_connection(module)
     if check:
-        SubElement(obj, 'check')
-    if comment:
-        subele = SubElement(obj, 'log')
-        subele.text = str(comment)
-    if confirm_timeout:
-        subele = SubElement(obj, 'confirm-timeout')
-        subele.text = str(confirm_timeout)
-    return send_request(module, obj)
+        reply = conn.validate()
+    else:
+        reply = conn.commit(confirmed=confirm, timeout=confirm_timeout, comment=comment, synchronize=synchronize, at_time=at_time)
+
+    return reply
 
 
-def command(module, command, format='text', rpc_only=False):
-    xattrs = {'format': format}
+def command(module, cmd, format='text', rpc_only=False):
+    conn = get_connection(module)
     if rpc_only:
-        command += ' | display xml rpc'
-        xattrs['format'] = 'text'
-    return send_request(module, Element('command', xattrs, text=command))
+        cmd += ' | display xml rpc'
+    return conn.command(command=cmd, format=format)
 
 
 def lock_configuration(x):
-    return send_request(x, Element('lock-configuration'))
+    conn = get_connection(x)
+    return conn.lock()
 
 
 def unlock_configuration(x):
-    return send_request(x, Element('unlock-configuration'))
+    conn = get_connection(x)
+    return conn.unlock()
 
 
 @contextmanager
@@ -174,8 +180,12 @@ def locked_config(module):
         unlock_configuration(module)
 
 
-def get_diff(module, rollback='0'):
+def discard_changes(module, exit=False):
+    conn = get_connection(module)
+    return conn.discard_changes(exit=exit)
 
+
+def get_diff(module, rollback='0'):
     reply = get_configuration(module, compare=True, format='text', rollback=rollback)
     # if warning is received from device diff is empty.
     if isinstance(reply, list):
@@ -187,7 +197,7 @@ def get_diff(module, rollback='0'):
 
 
 def load_config(module, candidate, warnings, action='merge', format='xml'):
-
+    get_connection(module)
     if not candidate:
         return
 
@@ -198,8 +208,7 @@ def load_config(module, candidate, warnings, action='merge', format='xml'):
     if isinstance(reply, list):
         warnings.extend(reply)
 
-    validate(module)
-
+    module._junos_connection.validate()
     return get_diff(module)
 
 
