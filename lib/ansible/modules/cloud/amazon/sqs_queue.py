@@ -233,7 +233,7 @@ def update_sqs_queue(queue,
 
 
 def set_queue_attribute(queue, attribute, value, check_mode=False):
-    if not value:
+    if not value and value != 0:
         return False
 
     try:
