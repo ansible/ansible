@@ -316,6 +316,7 @@ def main():
         sys.stderr.write(json.dumps(result))
     else:
         rc = 0
+        sys.stdout.write('\n#DELIM#\n')
         sys.stdout.write(json.dumps(result))
 
     sys.exit(rc)

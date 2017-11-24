@@ -93,7 +93,7 @@ class Connection(ConnectionBase):
         stdin.close()
 
         if p.returncode == 0:
-            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
+            result = json.loads(to_text(stdout.split('\n#DELIM#\n')[-1], errors='surrogate_then_replace'))
         else:
             result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
 
