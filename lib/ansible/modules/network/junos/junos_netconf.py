@@ -71,8 +71,7 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import junos_argument_spec, get_connection
 from ansible.module_utils.junos import commit_configuration, discard_changes
 from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import iteritems
@@ -103,10 +102,10 @@ def parse_port(config):
 
 
 def map_config_to_obj(module):
-    cmd = 'show configuration system services netconf'
-    rc, out, err = exec_command(module, cmd)
-    if rc != 0:
-        module.fail_json(msg='unable to retrieve current config', stderr=err)
+    conn = get_connection(module)
+    out = conn.get(command='show configuration system services netconf')
+    if out is None:
+        module.fail_json(msg='unable to retrieve current config')
     config = str(out).strip()
 
     obj = {'state': 'absent'}
@@ -139,23 +138,16 @@ def map_params_to_obj(module):
 
 
 def load_config(module, config, commit=False):
+    conn = get_connection(module)
 
-    exec_command(module, 'configure')
-
-    for item in to_list(config):
-        rc, out, err = exec_command(module, item)
-        if rc != 0:
-            module.fail_json(msg=str(err))
-
-    exec_command(module, 'top')
-    rc, diff, err = exec_command(module, 'show | compare')
-
+    conn.edit_config(to_list(config) + ['top'])
+    diff = conn.compare_configuration()
     if diff:
         if commit:
-            exec_command(module, 'commit and-quit')
+            commit_configuration(module)
+
         else:
-            for cmd in ['rollback 0', 'exit']:
-                exec_command(module, cmd)
+            discard_changes(module)
 
     return str(diff).strip()
 
@@ -174,8 +166,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)

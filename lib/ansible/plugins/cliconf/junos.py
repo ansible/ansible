@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import json
-
+import re
 from itertools import chain
-from xml.etree.ElementTree import fromstring
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network_common import to_list
@@ -39,49 +37,66 @@ class Cliconf(CliconfBase):
             pass
 
     def get_device_info(self):
-        device_info = {}
-
+        device_info = dict()
         device_info['network_os'] = 'junos'
-        reply = self.get(b'show version | display xml')
-        data = fromstring(to_text(reply, errors='surrogate_then_replace').strip())
 
-        sw_info = data.find('.//software-information')
+        reply = self.get(command='show version')
+        data = to_text(reply, errors='surrogate_or_strict').strip()
 
-        device_info['network_os_version'] = self.get_text(sw_info, 'junos-version')
-        device_info['network_os_hostname'] = self.get_text(sw_info, 'host-name')
-        device_info['network_os_model'] = self.get_text(sw_info, 'product-model')
+        match = re.search(r'Junos: (\S+)', data)
+        if match:
+            device_info['network_os_version'] = match.group(1)
 
+        match = re.search(r'Model: (\S+)', data, re.M)
+        if match:
+            device_info['network_os_model'] = match.group(1)
+
+        match = re.search(r'Hostname: (\S+)', data, re.M)
+        if match:
+            device_info['network_os_hostname'] = match.group(1)
         return device_info
 
     def get_config(self, source='running', format='text'):
         if source != 'running':
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if format == 'text':
-            cmd = b'show configuration'
+            cmd = 'show configuration'
         else:
-            cmd = b'show configuration | display %s' % format
-        return self.send_command(to_bytes(cmd, errors='surrogate_or_strict'))
+            cmd = 'show configuration | display %s' % format
+        return self.send_command(cmd)
 
     def edit_config(self, command):
-        for cmd in chain([b'configure'], to_list(command)):
+        for cmd in chain(['configure'], to_list(command)):
             self.send_command(cmd)
 
     def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+        command = kwargs.get('command')
+        return self.send_command(command)
 
-    def commit(self, comment=None):
+    def commit(self, *args, **kwargs):
+        comment = kwargs.get('comment', None)
+        command = b'commit'
         if comment:
-            command = b'commit comment {0}'.format(comment)
-        else:
-            command = b'commit'
-        self.send_command(command)
+            command += b' comment {0}'.format(comment)
+        command += b' and-quit'
+        return self.send_command(command)
 
-    def discard_changes(self):
-        self.send_command(b'rollback')
+    def discard_changes(self, rollback_id=None):
+        command = b'rollback'
+        if rollback_id is not None:
+            command += b' %s' % int(rollback_id)
+        for cmd in chain(to_list(command), b'exit'):
+            self.send_command(cmd)
 
     def get_capabilities(self):
-        result = {}
+        result = dict()
         result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
+
+    def compare_configuration(self, rollback_id=None):
+        command = b'show | compare'
+        if rollback_id is not None:
+            command += b' rollback %s' % int(rollback_id)
+        return self.send_command(command)

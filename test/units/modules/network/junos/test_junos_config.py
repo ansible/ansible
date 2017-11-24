@@ -54,8 +54,17 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_get_diff = patch('ansible.modules.network.junos.junos_config.get_diff')
         self.get_diff = self.mock_get_diff.start()
 
-        self.mock_send_request = patch('ansible.modules.network.junos.junos_config.send_request')
-        self.send_request = self.mock_send_request.start()
+        self.mock_conn = patch('ansible.module_utils.connection.Connection')
+        self.conn = self.mock_conn.start()
+
+        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.netconf_conn = self.mock_netconf.start()
+
+        self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_config.exec_rpc')
+        self.exec_rpc = self.mock_exec_rpc.start()
+
+        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.netconf_rpc = self.mock_netconf_rpc.start()
 
     def tearDown(self):
         super(TestJunosConfigModule, self).tearDown()
@@ -65,8 +74,11 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_unlock_configuration.stop()
         self.mock_commit_configuration.stop()
         self.mock_get_diff.stop()
-        self.mock_send_request.stop()
         self.load_configuration.stop()
+        self.mock_conn.stop()
+        self.mock_netconf.stop()
+        self.mock_exec_rpc.stop()
+        self.mock_netconf_rpc.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
         self.get_config.return_value = load_fixture('get_configuration_rpc_reply.txt')
@@ -162,7 +174,7 @@ class TestJunosConfigModule(TestJunosModule):
         src = load_fixture('junos_config.json', content='str')
         set_module_args(dict(zeroize='yes'))
         self.execute_module(changed=True)
-        self.assertEqual(self.send_request.call_count, 1)
+        self.assertEqual(self.exec_rpc.call_count, 1)
 
     def test_junos_config_src_format_xml(self):
         src = load_fixture('junos_config.json', content='str')

@@ -147,8 +147,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.netconf import send_request
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import junos_argument_spec, get_connection
 from ansible.module_utils.junos import commit_configuration, discard_changes
 from ansible.module_utils.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
@@ -167,7 +166,8 @@ def handle_purge(module, want):
     element = Element('system')
     login = SubElement(element, 'login')
 
-    reply = send_request(module, Element('get-configuration'), ignore_warning=False)
+    conn = get_connection(module)
+    reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
     users = reply.xpath('configuration/system/login/user/name')
     if users:
         for item in users:
@@ -310,8 +310,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)

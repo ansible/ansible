@@ -7,7 +7,6 @@ __metaclass__ = type
 import json
 import traceback
 
-from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import binary_type
 
