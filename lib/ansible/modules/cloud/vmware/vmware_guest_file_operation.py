@@ -4,8 +4,6 @@
 # Copyright: (c) 2017, Stéphane Travassac <stravassac () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -80,24 +78,24 @@ options:
         description:
             - Create or delete directory
             - 'Valid attributes are:'
-                - 'path: directory path to create or remove'
-                - 'operation: Valid values are create, delete'
-                - 'recurse: Valid values are True, False (not required, default False)'
+            - '  path: directory path to create or remove'
+            - '  operation: Valid values are create, delete'
+            - '  recurse: Valid values are True, False (not required, default False)'
         required: False
     file_copy:
         description:
             - Copy file to vm networkless
             - 'Valid attributes are:'
-                - 'src: file source absolute or relative'
-                - 'dest: file destination, path must be exist'
-                - 'overwrite: False or True (not required, default False)'
+            - '  src: file source absolute or relative'
+            - '  dest: file destination, path must be exist'
+            - '  overwrite: False or True (not required, default False)'
         required: False
     fetch_file:
         description:
             - Get file from vm networkless
             - 'Valid attributes are:'
-                - 'src: The file on the remote system to fetch. This I(must) be a file, not a directory
-                - 'dest: file destination on localhost, path must be exist'
+            - '  src: The file on the remote system to fetch. This I(must) be a file, not a directory'
+            - '  dest: file destination on localhost, path must be exist'
         required: False
 
 '''
@@ -158,15 +156,10 @@ try:
     from pyVmomi import vim, vmodl
 except ImportError:
     pass
-try:
-    import requests
-except ImportError:
-    REQUESTS_FOUND = False
-else:
-    REQUESTS_FOUND = True
 
 import os
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils import urls
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, find_datacenter_by_name,
                                          find_vm_by_id, HAS_PYVMOMI, vmware_argument_spec)
@@ -181,7 +174,7 @@ def directory(module, content, vm):
         module.fail_json(msg="directory.path is mandatory")
     if "operation" not in module.params["directory"]:
         module.fail_json(msg="directory.operation is mandatory")
-    if not "recurse" in module.params["directory"]:
+    if "recurse" not in module.params["directory"]:
         recurse = False
     else:
         recurse = module.params["directory"]['recurse']
@@ -198,6 +191,7 @@ def directory(module, content, vm):
     if operation == "delete":
         file_manager.DeleteDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
                                             recursive=recurse)
+    return True
 
 
 def fetch(module, content, vm):
@@ -218,9 +212,10 @@ def fetch(module, content, vm):
     fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
                                                                   guestFilePath=src)
     url = fileTransferInfo.url
-    f = requests.get(url, verify=module.params['validate_certs'])
+    resp, info = urls.fetch_url(module, url, method="GET")
     with open(dest, "wb") as local_file:
-        local_file.write(f.content)
+        local_file.write(resp.read())
+    return True
 
 
 def copy(module, content, vm):
@@ -257,9 +252,12 @@ def copy(module, content, vm):
     url = file_manager.InitiateFileTransferToGuest(vm=vm, auth=creds, guestFilePath=dest,
                                                    fileAttributes=file_attributes, overwrite=overwrite,
                                                    fileSize=file_size)
-    r = requests.put(url, data=data, verify=module.params['validate_certs'])
-    if r.status_code != 200:
+
+    resp, info = urls.fetch_url(module, url, data=data, method="PUT")
+    status_code = info["status"]
+    if status_code != 200:
         raise Exception('initiateFileTransferToGuest : problem during file transfer')
+    return True
 
 
 def main():
@@ -284,10 +282,6 @@ def main():
 
     if not HAS_PYVMOMI:
         module.fail_json(changed=False, msg='pyvmomi is required for this module')
-
-    if not REQUESTS_FOUND:
-        module.fail_json(
-            msg='requests library is required for this module')
 
     datacenter_name = module.params['datacenter']
     cluster_name = module.params['cluster']
