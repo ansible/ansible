@@ -587,11 +587,11 @@ class AzureRMContainerService(AzureRMModuleBase):
                     if update_tags:
                         to_be_updated = True
 
-                    def check_different(profile, property):
+                    def is_property_changed(profile, property):
                         return response[profile].get(property) != getattr(self, profile)[0].get(property)
 
                     # Cannot Update the master count for now // Uncomment this block in the future to support it
-                    if check_different('master_profile', 'count'):
+                    if is_property_changed('master_profile', 'count'):
                         # self.log(("Master Profile Count Diff, Was {0} / Now {1}"
                         #           .format(response['master_profile'].count,
                         #           self.master_profile[0].get('count'))))
@@ -600,7 +600,7 @@ class AzureRMContainerService(AzureRMModuleBase):
 
                     # Cannot Update the master vm_size for now. Could be a client SDK bug
                     # Uncomment this block in the future to support it
-                    if check_different('master_profile', 'vm_size'):
+                    if is_property_changed('master_profile', 'vm_size'):
                         # self.log(("Master Profile VM Size Diff, Was {0} / Now {1}"
                         #           .format(response['master_profile'].get('vm_size'),
                         #                   self.master_profile[0].get('vm_size'))))
@@ -608,7 +608,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                         self.module.warn("master_profile.vm_size cannot be updated")
 
                     # Cannot Update the SSH Key for now // Uncomment this block in the future to support it
-                    if check_different('linux_profile', 'ssh_key'):
+                    if is_property_changed('linux_profile', 'ssh_key'):
                         # self.log(("Linux Profile Diff SSH, Was {0} / Now {1}"
                         #          .format(response['linux_profile'].ssh.public_keys[0].key_data,
                         #          self.linux_profile[0].get('ssh_key'))))
@@ -618,7 +618,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                     # self.log("linux_profile response : {0}".format(response['linux_profile'].get('admin_username')))
                     # self.log("linux_profile self : {0}".format(self.linux_profile[0].get('admin_username')))
                     # Cannot Update the Username for now // Uncomment this block in the future to support it
-                    if check_different('linux_profile', 'admin_username'):
+                    if is_property_changed('linux_profile', 'admin_username'):
                         # self.log(("Linux Profile Diff User, Was {0} / Now {1}"
                         #          .format(response['linux_profile'].admin_username,
                         #          self.linux_profile[0].get('admin_username'))))
