@@ -168,7 +168,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
@@ -216,8 +216,6 @@ def main():
                            mutually_exclusive=mutually_exclusive)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:

@@ -78,10 +78,10 @@ ansible_facts:
   type: dict
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args, get_param
-from ansible.module_utils.junos import get_configuration
+from ansible.module_utils.netconf import exec_rpc
+from ansible.module_utils.junos import junos_argument_spec, get_param
+from ansible.module_utils.junos import get_configuration, get_connection
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
 
 
@@ -117,7 +117,7 @@ class FactsBase(object):
         return str(output.text).strip()
 
     def rpc(self, rpc):
-        return send_request(self.module, Element(rpc))
+        return exec_rpc(self.module, tostring(Element(rpc)))
 
     def get_text(self, ele, tag):
         try:
@@ -222,7 +222,7 @@ class Interfaces(FactsBase):
     def populate(self):
         ele = Element('get-interface-information')
         SubElement(ele, 'detail')
-        reply = send_request(self.module, ele)
+        reply = exec_rpc(self.module, tostring(ele))
 
         interfaces = {}
 
@@ -309,9 +309,8 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
+    get_connection(module)
     warnings = list()
-    check_args(module, warnings)
-
     gather_subset = module.params['gather_subset']
     ofacts = False
 

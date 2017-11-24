@@ -95,8 +95,8 @@ output_lines:
   type: list
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.netconf import exec_rpc
+from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
@@ -123,8 +123,6 @@ def main():
                            supports_check_mode=False)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False, 'warnings': warnings}
 
     rpc = str(module.params['rpc']).replace('_', '-')
@@ -154,7 +152,7 @@ def main():
             if value is not True:
                 child.text = value
 
-    reply = send_request(module, element)
+    reply = exec_rpc(module, tostring(element), ignore_warning=False)
 
     result['xml'] = str(tostring(reply))
 

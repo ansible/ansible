@@ -89,7 +89,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         self._connection = connection
 
     def _alarm_handler(self, signum, frame):
-        raise AnsibleConnectionFailure('timeout waiting for command to complete')
+        """Alarm handler raised in case of command timeout """
+        display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
+        self.close()
 
     def send_command(self, command, prompt=None, answer=None, sendonly=False):
         """Executes a cli command and returns the results
@@ -97,10 +99,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         the results to the caller.  The command output will be returned as a
         string
         """
-        timeout = self._connection._play_context.timeout or 30
-        signal.signal(signal.SIGALRM, self._alarm_handler)
-        signal.alarm(timeout)
-        display.display("command: %s" % command, log_only=True)
+        if not signal.getsignal(signal.SIGALRM):
+            signal.signal(signal.SIGALRM, self._alarm_handler)
+        signal.alarm(self._connection._play_context.timeout)
         resp = self._connection.send(command, prompt, answer, sendonly)
         signal.alarm(0)
         return resp

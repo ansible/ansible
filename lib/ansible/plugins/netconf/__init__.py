@@ -22,7 +22,14 @@ __metaclass__ = type
 from abc import ABCMeta, abstractmethod
 from functools import wraps
 
+from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
+
+try:
+    from ncclient.operations import RPCError
+    from ncclient.xml_ import to_xml
+except ImportError:
+    raise AnsibleError("ncclient is not installed")
 
 
 def ensure_connected(func):
@@ -115,7 +122,10 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
             :error_option: if specified must be one of { `"stop-on-error"`, `"continue-on-error"`, `"rollback-on-error"` }
             The `"rollback-on-error"` *error_option* depends on the `:rollback-on-error` capability.
         """
-        return self.m.get_config(*args, **kwargs).data_xml
+        try:
+            return self.m.edit_config(*args, **kwargs).data_xml
+        except RPCError as exc:
+            raise Exception(to_xml(exc.xml))
 
     @ensure_connected
     def validate(self, *args, **kwargs):
@@ -146,7 +156,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         """Release a configuration lock, previously obtained with the lock operation.
         :target: is the name of the configuration datastore to unlock
         """
-        return self.m.lock(*args, **kwargs).data_xml
+        return self.m.unlock(*args, **kwargs).data_xml
 
     @ensure_connected
     def discard_changes(self, *args, **kwargs):
@@ -166,7 +176,16 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :confirmed: whether this is a confirmed commit
         :timeout: specifies the confirm timeout in seconds
         """
-        return self.m.commit(*args, **kwargs).data_xml
+        try:
+            return self.m.commit(*args, **kwargs).data_xml
+        except RPCError as exc:
+            raise Exception(to_xml(exc.xml))
+
+    @ensure_connected
+    def validate(self, *args, **kwargs):
+        """Validate the contents of the specified configuration.
+           :source: name of configuration data store"""
+        return self.m.validate(*args, **kwargs).data_xml
 
     @abstractmethod
     def get_capabilities(self, commands):
