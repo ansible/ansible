@@ -587,8 +587,13 @@ class AzureRMContainerService(AzureRMModuleBase):
                     if update_tags:
                         to_be_updated = True
 
-                    def is_property_changed(profile, property):
-                        return response[profile].get(property) != getattr(self, profile)[0].get(property)
+                    def is_property_changed(profile, property, ignore_case=False):
+                        base = response[profile].get(property)
+                        new = getattr(self, profile)[0].get(property)
+                        if ignore_case:
+                            return base.lower() != new.lower()
+                        else:
+                            return base != new
 
                     # Cannot Update the master count for now // Uncomment this block in the future to support it
                     if is_property_changed('master_profile', 'count'):
@@ -600,7 +605,7 @@ class AzureRMContainerService(AzureRMModuleBase):
 
                     # Cannot Update the master vm_size for now. Could be a client SDK bug
                     # Uncomment this block in the future to support it
-                    if is_property_changed('master_profile', 'vm_size'):
+                    if is_property_changed('master_profile', 'vm_size', True):
                         # self.log(("Master Profile VM Size Diff, Was {0} / Now {1}"
                         #           .format(response['master_profile'].get('vm_size'),
                         #                   self.master_profile[0].get('vm_size'))))
