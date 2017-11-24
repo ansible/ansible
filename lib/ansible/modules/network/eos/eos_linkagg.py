@@ -215,7 +215,7 @@ def parse_mode(group, member, config):
     mode = None
 
     for line in config.strip().split('!'):
-        match_int = re.findall('interface {}\\b'.format(member), line, re.M)
+        match_int = re.findall(r'interface {}\\b'.format(member), line, re.M)
         if match_int:
             match = re.search(r'channel-group {} mode (\S+)'.format(group), line, re.M)
             if match:
@@ -228,9 +228,9 @@ def parse_members(group, config):
     members = []
 
     for line in config.strip().split('!'):
-        match_group = re.findall('channel-group {} mode\\b'.format(group), line, re.M)
+        match_group = re.findall(r'channel-group {} mode\\b'.format(group), line, re.M)
         if match_group:
-            match = re.search('interface (\S+)', line, re.M)
+            match = re.search(r'interface (\S+)', line, re.M)
             if match:
                 members.append(match.group(1))
 
@@ -243,7 +243,7 @@ def get_channel(group, module):
 
     for line in config.split('\n'):
         l = line.strip()
-        match = re.search('interface (\S+)', l, re.M)
+        match = re.search(r'interface (\S+)', l, re.M)
 
         if match:
             member = match.group(1)
@@ -257,7 +257,7 @@ def parse_min_links(group, config):
     min_links = ''
 
     for line in config.strip().split('!'):
-        match_pc = re.findall('interface Port-Channel{}\\b'.format(group), line, re.M)
+        match_pc = re.findall(r'interface Port-Channel{}\\b'.format(group), line, re.M)
         if match_pc:
             match = re.search(r'port-channel min-links (\S+)', line, re.M)
             if match:
