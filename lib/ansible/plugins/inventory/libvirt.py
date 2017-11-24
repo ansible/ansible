@@ -10,6 +10,7 @@ DOCUMENTATION = '''
     name: libvirt
     plugin_type: inventory
     short_description: libvirt inventory source
+    version_added: '2.5'
     requirements:
       - libvirt python library
     author:
