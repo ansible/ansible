@@ -367,7 +367,7 @@ def create_acs_dict(acs):
     :param: acs: ContainerService or AzureOperationPoller with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         id=acs.id,
         name=acs.name,
         location=acs.location,
@@ -381,7 +381,6 @@ def create_acs_dict(acs):
         agent_pool_profiles=create_agent_pool_profiles_dict(acs.agent_pool_profiles),
         type=acs.type
     )
-    return results
 
 
 def create_linux_profile_dict(linuxprofile):
@@ -390,11 +389,10 @@ def create_linux_profile_dict(linuxprofile):
     :param: linuxprofile: ContainerServiceLinuxProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         ssh_key=linuxprofile.ssh.public_keys[0].key_data,
         admin_username=linuxprofile.admin_username
     )
-    return results
 
 
 def create_master_profile_dict(masterprofile):
@@ -403,13 +401,12 @@ def create_master_profile_dict(masterprofile):
     :param: masterprofile: ContainerServiceMasterProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         count=masterprofile.count,
         fqdn=masterprofile.fqdn,
         vm_size=masterprofile.vm_size,
         dns_prefix=masterprofile.dns_prefix
     )
-    return results
 
 
 def create_service_principal_profile_dict(serviceprincipalprofile):
@@ -418,11 +415,10 @@ def create_service_principal_profile_dict(serviceprincipalprofile):
     :param: serviceprincipalprofile: ContainerServiceServicePrincipalProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         client_id=serviceprincipalprofile.client_id,
         secret=serviceprincipalprofile.secret
     )
-    return results
 
 
 def create_diagnotstics_profile_dict(diagnosticsprofile):
@@ -431,10 +427,9 @@ def create_diagnotstics_profile_dict(diagnosticsprofile):
     :param: diagnosticsprofile: ContainerServiceVMDiagnostics with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         vm_diagnostics=diagnosticsprofile.vm_diagnostics.enabled
     )
-    return results
 
 
 def create_orchestrator_profile_dict(orchestratorprofile):
@@ -443,10 +438,9 @@ def create_orchestrator_profile_dict(orchestratorprofile):
     :param: orchestratorprofile: ContainerServiceOrchestratorProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         orchestrator_type=str(orchestratorprofile.orchestrator_type)
     )
-    return results
 
 
 def create_agent_pool_profiles_dict(agentpoolprofiles):
@@ -455,17 +449,13 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
     :param: agentpoolprofiles: ContainerServiceAgentPoolProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = []
-    for profile in agentpoolprofiles:
-        result = dict(
-            count=profile.count,
-            vm_size=profile.vm_size,
-            name=profile.name,
-            dns_prefix=profile.dns_prefix,
-            fqdn=profile.fqdn
-        )
-        results.append(result)
-    return results
+    return [dict(
+        count=profile.count,
+        vm_size=profile.vm_size,
+        name=profile.name,
+        dns_prefix=profile.dns_prefix,
+        fqdn=profile.fqdn
+    ) for profile in agentpoolprofiles]
 
 
 class AzureRMContainerService(AzureRMModuleBase):
