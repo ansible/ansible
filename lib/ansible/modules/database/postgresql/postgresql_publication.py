@@ -30,36 +30,12 @@ options:
       - Name of the database to connect to.
     required: false
     default: postgres
-  login_user:
-    description:
-      - The username used to authenticate with.
-    required: false
-    default: null
-  login_password:
-    description:
-      - The password used to authenticate with.
-    required: false
-    default: null
-  login_host:
-    description:
-      - Host running the database.
-    required: false
-    default: localhost
-  login_unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections.
-    required: false
-    default: null
   tables:
     description:
       - List of the tables to target for publication.
+      - If not value is set all tables are targeted.
     required: false
     default: null
-  port:
-    description:
-      - Database port to connect to.
-    required: false
-    default: 5432
   state:
     description:
       - The publication state.
@@ -75,6 +51,8 @@ notes:
    - PostgreSQL version should be C(10.0) or greater.
 requirements: [ psycopg2 ]
 author: "Loic Blot <loic.blot@unix-experience.fr>"
+extends_documentation_fragment:
+- postgres
 '''
 
 EXAMPLES = '''
@@ -109,6 +87,7 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils._text import to_native
@@ -197,7 +176,7 @@ def publication_create(cursor, publication, tables):
     else:
         publication_info = get_publication_info(cursor, publication)
         # If publication switch from targeted tables to all tables (or invert), recreate it
-        if publication_info['alltables'] is True and not tables or publication_info['alltables'] is True and not tables:
+        if publication_info['alltables'] is True and tables or publication_info['alltables'] is False and not tables:
             publication_delete(cursor, publication)
             return publication_create(cursor, publication, tables)
 
@@ -220,18 +199,16 @@ def publication_matches(cursor, publication, owner):
 
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        name=dict(required=True),
+        database=dict(default="postgres"),
+        state=dict(default="present", choices=["absent", "present"]),
+        tables=dict(default=None, type="list")
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            name=dict(required=True),
-            database=dict(default="postgres"),
-            state=dict(default="present", choices=["absent", "present"]),
-            tables=dict(default=None, type="list")
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
@@ -263,7 +240,6 @@ def main():
 
     try:
         db_connection = psycopg2.connect(database=database, **kw)
-        # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True
         else:
