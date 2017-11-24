@@ -36,8 +36,7 @@ class OneViewBaseTest(object):
     def testing_module(self):
         resource_name = type(self).__name__.replace('Test', '')
         resource_module_path_name = resource_name.replace('Module', '')
-        resource_module_path_name = re.findall('[A-Z][^A-Z]*', resource_module_path_name)
-        resource_module_path_name = 'oneview_' + str.join('_', resource_module_path_name).lower()
+        resource_module_path_name = 'oneview_' + self.underscore(resource_module_path_name)
 
         ansible = __import__('ansible')
         oneview_module = ansible.modules.remote_management.oneview
@@ -54,6 +53,16 @@ class OneViewBaseTest(object):
             raise Exception(message)
         return testing_module
 
+    def pluralize(self, word):
+        # the 'ch' is for case of resources named like the 'Switch' resource
+        suffix = 'es' if (word[-2:] == 'ch') else 's'
+        return word + suffix
+
+    def underscore(self, word):
+        newword = re.findall('[A-Z][^A-Z]*', word)
+        newword = str.join('_', newword).lower()
+        return newword
+
     def test_main_function_should_call_run_method(self, testing_module, mock_ansible_module):
         mock_ansible_module.params = {'config': 'config.json'}
 
@@ -64,8 +73,23 @@ class OneViewBaseTest(object):
             mock_run.assert_called_once()
 
 
-class FactsParamsTest(OneViewBaseTest):
-    def test_should_get_all_using_filters(self, testing_module):
+class OneViewBaseFactsTest(OneViewBaseTest):
+    """
+    OneViewBaseFactsTest has common test for classes that support pass additional
+        parameters when retrieving all resources.
+    """
+
+    def __validations(self):
+        self.testing_module()
+        if not self.testing_class:
+            raise Exception("Mocks are not configured, you must call 'configure_mocks' before running this test.")
+
+        if not self.resource:
+            raise Exception(
+                "Mock for the client not configured, you must call 'configure_client_mock' before running this test.")
+
+    def test_should_get_all_using_filters(self):
+        self.__validations()
         self.resource.get_all.return_value = []
 
         params_get_all_with_filters = dict(
@@ -84,7 +108,8 @@ class FactsParamsTest(OneViewBaseTest):
 
         self.resource.get_all.assert_called_once_with(start=1, count=3, sort='name:descending', filter='purpose=General', query='imported eq true')
 
-    def test_should_get_all_without_params(self, testing_module):
+    def test_should_get_all_without_params(self):
+        self.__validations()
         self.resource.get_all.return_value = []
 
         params_get_all_with_filters = dict(
