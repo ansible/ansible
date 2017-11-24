@@ -158,12 +158,20 @@ def _count_newlines_from_end(in_str):
         return i
 
 
-def tests_as_filters_warning(func):
+def tests_as_filters_warning(name, func):
+    '''
+    Closure to enable displaying a deprecation warning when tests are used as a filter
+
+    This closure is only used when registering ansible provided tests as filters
+
+    This function should be removed in 2.9 along with registering ansible provided tests as filters
+    in Templar._get_filters
+    '''
     @wraps(func)
     def wrapper(*args, **kwargs):
         display.deprecated(
             'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
-            '`result is %(name)s`' % dict(name=func.__name__),
+            '`result is %(name)s`' % dict(name=name),
             version='2.9'
         )
         return func(*args, **kwargs)
@@ -297,8 +305,9 @@ class Templar:
         for fp in plugins:
             self._filters.update(fp.filters())
 
+        # TODO: Remove registering tests as filters in 2.9
         for name, func in self._get_tests().items():
-            self._filters[name] = tests_as_filters_warning(func)
+            self._filters[name] = tests_as_filters_warning(name, func)
 
         return self._filters.copy()
 
