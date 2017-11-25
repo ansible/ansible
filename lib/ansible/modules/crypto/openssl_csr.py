@@ -23,8 +23,7 @@ description:
     - "This module allows one to (re)generate OpenSSL certificate signing requests.
        It uses the pyOpenSSL python library to interact with openssl. This module supports
        the subjectAltName as well as the keyUsage and extendedKeyUsage extensions.
-       Note: At least one of common_name or subject_alt_name must be specified.
-       This module uses file common arguments to specify generated file permissions."
+       Note: At least one of common_name or subject_alt_name must be specified."
 requirements:
     - "python-pyOpenSSL >= 0.15"
 options:
@@ -132,6 +131,7 @@ options:
         aliases: [ 'extKeyUsage_critical', 'extendedKeyUsage_critical' ]
         description:
             - Should the extkeyUsage extension be considered as critical
+extends_documentation_fragment: files
 
 notes:
     - "If the certificate signing request already exists it will be checked whether subjectAltName,
