@@ -20,11 +20,13 @@
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network_common import to_list, EntityCollection
 
 
 _DEVICE_CONFIGS = {}
+_CONNECTION = None
+
 
 mlnxos_provider_spec = {
     'host': dict(),
@@ -45,6 +47,12 @@ mlnxos_argument_spec = {
     'provider': dict(type='dict', options=mlnxos_provider_spec),
 }
 
+command_spec = {
+    'command': dict(key=True),
+    'prompt': dict(),
+    'answer': dict()
+}
+
 
 def get_provider_argspec():
     return mlnxos_provider_spec
@@ -54,24 +62,32 @@ def check_args(module, warnings):
     pass
 
 
+def get_connection(module):
+    global _CONNECTION
+    if _CONNECTION:
+        return _CONNECTION
+    _CONNECTION = Connection(module._socket_path)
+    return _CONNECTION
+
+
 def to_commands(module, commands):
-    spec = {
-        'command': dict(key=True),
-        'prompt': dict(),
-        'answer': dict()
-    }
-    transform = ComplexList(spec, module)
-    return transform(commands)
+    if not isinstance(commands, list):
+        raise AssertionError('argument must be of type <list>')
+
+    transform = EntityCollection(module, command_spec)
+    commands = transform(commands)
+    return commands
 
 
 def run_commands(module, commands, check_rc=True):
-    responses = list()
+    connection = get_connection(module)
+
     commands = to_commands(module, to_list(commands))
+
+    responses = list()
+
     for cmd in commands:
-        cmd = module.jsonify(cmd)
-        rc, out, err = exec_command(module, cmd)
-        if check_rc and rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'),
-                             rc=rc)
+        out = connection.get(**cmd)
         responses.append(to_text(out, errors='surrogate_then_replace'))
+
     return responses
