@@ -374,19 +374,17 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'systemvmtype': 'system_vm_type',
             'tags': 'storage_tags',
         }
-        self.service_offering = None
 
     def get_service_offering(self):
-        if not self.service_offering:
-            args = {
-                'name': self.module.params.get('name'),
-                'domainid': self.get_domain(key='id'),
-                'issystem': self.module.params.get('is_system'),
-                'systemvmtype': self.module.params.get('system_vm_type'),
-            }
-            service_offerings = self.query_api('listServiceOfferings', **args)
-            if service_offerings:
-                return service_offerings['serviceoffering'][0]
+        args = {
+            'name': self.module.params.get('name'),
+            'domainid': self.get_domain(key='id'),
+            'issystem': self.module.params.get('is_system'),
+            'systemvmtype': self.module.params.get('system_vm_type'),
+        }
+        service_offerings = self.query_api('listServiceOfferings', **args)
+        if service_offerings:
+            return service_offerings['serviceoffering'][0]
 
     def present_service_offering(self):
         service_offering = self.get_service_offering()
@@ -394,12 +392,6 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             service_offering = self._create_offering(service_offering)
         else:
             service_offering = self._update_offering(service_offering)
-
-        if service_offering:
-            service_offering = self.ensure_tags(
-                resource=service_offering,
-                resource_type='ServiceOffering'
-            )
 
         return service_offering
 
@@ -422,7 +414,7 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
 
         required_params = []
         if is_system and not system_vm_type:
-            required_params.add('system_vm_type')
+            required_params.append('system_vm_type')
         self.module.fail_on_missing_params(required_params=required_params)
 
         args = {
