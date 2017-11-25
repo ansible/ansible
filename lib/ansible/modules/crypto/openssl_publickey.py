@@ -211,10 +211,13 @@ class PublicKey(crypto_utils.OpenSSLObject):
             if not os.path.exists(self.privatekey_path):
                 return False
 
-            current_publickey = crypto.dump_publickey(
-                crypto.FILETYPE_ASN1,
-                crypto.load_publickey(crypto.FILETYPE_PEM, open(self.path, 'rb').read())
-            )
+            try:
+                current_publickey = crypto.dump_publickey(
+                    crypto.FILETYPE_ASN1,
+                    crypto.load_publickey(crypto.FILETYPE_PEM, open(self.path, 'rb').read())
+                )
+            except crypto.Error:
+                return False
 
             desired_publickey = crypto.dump_publickey(
                 crypto.FILETYPE_ASN1,
