@@ -183,7 +183,7 @@ options:
         description:
             - If set to True, the I(subject_alt_name) extension field must contain only these values.
         aliases: [ subjectAltName_strict ]
-
+extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
       Date specified should be UTC. Minutes and seconds are mandatory.
