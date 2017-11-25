@@ -4,6 +4,7 @@
 # Copyright: (c) 2017, Stéphane Travassac <stravassac () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -13,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: vmware_guest_file_operation
-short_description: Files operation in a VMware guest operating system whithout network
+short_description: Files operation in a VMware guest operating system without network
 description:
     - Module allows user to copy and fetch file and create,delete directory in the guest operating system.
 version_added: "2.5"
@@ -51,8 +52,6 @@ options:
             - '   folder: /folder1/datacenter1/vm/folder2'
             - '   folder: vm/folder2'
             - '   folder: folder2'
-        default: /vm
-        version_added: "2.4"
     vm_id:
         description:
             - Name of the virtual machine to work with.
@@ -68,7 +67,7 @@ options:
             - 'vm_name'
     vm_username:
         description:
-            - The user to login-in to the virtual machine.
+            - The user to login in to the virtual machine.
         required: True
     vm_password:
         description:
@@ -80,7 +79,7 @@ options:
             - 'Valid attributes are:'
             - '  path: directory path to create or remove'
             - '  operation: Valid values are create, delete'
-            - '  recurse: Valid values are True, False (not required, default False)'
+            - '  recurse (boolean): Not required, default (false)'
         required: False
     file_copy:
         description:
@@ -165,7 +164,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import urls
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, find_datacenter_by_name,
-                                         find_vm_by_id, HAS_PYVMOMI, vmware_argument_spec)
+                                         find_vm_by_id, HAS_PYVMOMI, vmware_argument_spec, PyVmomi)
 
 
 def directory(module, content, vm):
@@ -180,7 +179,7 @@ def directory(module, content, vm):
     if "recurse" not in module.params["directory"]:
         recurse = False
     else:
-        recurse = module.params["directory"]['recurse']
+        recurse = bool(module.params['directory']['recurse'])
     operation = module.params["directory"]['operation']
     path = module.params["directory"]['path']
     if operation not in operations_permit:
@@ -189,11 +188,19 @@ def directory(module, content, vm):
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     file_manager = content.guestOperationsManager.fileManager
     if operation == "create":
-        file_manager.MakeDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
-                                          createParentDirectories=recurse)
+        try:
+            file_manager.MakeDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
+                                              createParentDirectories=recurse)
+        except Exception as e:
+            module.fail_json(msg=e)
+
     if operation == "delete":
-        file_manager.DeleteDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
-                                            recursive=recurse)
+        try:
+            file_manager.DeleteDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
+                                                recursive=recurse)
+        except Exception as e:
+            module.fail_json(changed=False, msg=e)
+
     return True
 
 
@@ -212,12 +219,17 @@ def fetch(module, content, vm):
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     file_manager = content.guestOperationsManager.fileManager
 
-    fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
-                                                                  guestFilePath=src)
+    try:
+        fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
+                                                                      guestFilePath=src)
+    except Exception as e:
+        module.fail_json(changed=False, msg=e)
+
     url = fileTransferInfo.url
     resp, info = urls.fetch_url(module, url, method="GET")
     with open(dest, "wb") as local_file:
         local_file.write(resp.read())
+
     return True
 
 
@@ -252,11 +264,15 @@ def copy(module, content, vm):
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     file_attributes = vim.vm.guest.FileManager.FileAttributes()
     file_manager = content.guestOperationsManager.fileManager
-    url = file_manager.InitiateFileTransferToGuest(vm=vm, auth=creds, guestFilePath=dest,
-                                                   fileAttributes=file_attributes, overwrite=overwrite,
-                                                   fileSize=file_size)
+    try:
+        url = file_manager.InitiateFileTransferToGuest(vm=vm, auth=creds, guestFilePath=dest,
+                                                       fileAttributes=file_attributes, overwrite=overwrite,
+                                                       fileSize=file_size)
+    except Exception as e:
+        module.fail_json(changed=False, msg=e)
 
     resp, info = urls.fetch_url(module, url, data=data, method="PUT")
+
     status_code = info["status"]
     if status_code != 200:
         raise Exception('initiateFileTransferToGuest : problem during file transfer')
@@ -267,7 +283,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(datacenter=dict(type='str'),
                               cluster=dict(type='str'),
-                              folder=dict(type='str', default='/vm'),
+                              folder=dict(type='str'),
                               vm_id=dict(type='str', required=True),
                               vm_id_type=dict(default='vm_name', type='str',
                                               choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
@@ -285,6 +301,9 @@ def main():
 
     if not HAS_PYVMOMI:
         module.fail_json(changed=False, msg='pyvmomi is required for this module')
+
+    if module.params['vm_id_type'] == 'vm_name' and not module.params['folder']:
+        raise Exception('Folder is required parameter when vm_id_type is inventory_path')
 
     datacenter_name = module.params['datacenter']
     cluster_name = module.params['cluster']
@@ -325,7 +344,7 @@ def main():
     except vmodl.MethodFault as method_fault:
         module.fail_json(changed=False, msg=method_fault.msg)
     except Exception as e:
-        module.fail_json(changed=False, msg=str(e))
+        module.fail_json(changed=False, msg=to_native(e))
 
 
 if __name__ == '__main__':
