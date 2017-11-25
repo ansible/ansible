@@ -192,14 +192,14 @@ def directory(module, content, vm):
             file_manager.MakeDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
                                               createParentDirectories=recurse)
         except Exception as e:
-            module.fail_json(msg=e)
+            module.fail_json(msg="Failed to Create directory into Vm due %s" % e)
 
     if operation == "delete":
         try:
             file_manager.DeleteDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
                                                 recursive=recurse)
         except Exception as e:
-            module.fail_json(changed=False, msg=e)
+            module.fail_json(changed=False, msg="Failed to Delete directory into Vm due %s" % e)
 
     return True
 
@@ -223,7 +223,7 @@ def fetch(module, content, vm):
         fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
                                                                       guestFilePath=src)
     except Exception as e:
-        module.fail_json(changed=False, msg=e)
+        module.fail_json(changed=False, msg="Failed to Fetch file from Vm due %s" % e)
 
     url = fileTransferInfo.url
     resp, info = urls.fetch_url(module, url, method="GET")
@@ -269,7 +269,7 @@ def copy(module, content, vm):
                                                        fileAttributes=file_attributes, overwrite=overwrite,
                                                        fileSize=file_size)
     except Exception as e:
-        module.fail_json(changed=False, msg=e)
+        module.fail_json(changed=False, msg="Failed to Copy file to Vm due %s" % e)
 
     resp, info = urls.fetch_url(module, url, data=data, method="PUT")
 
