@@ -10,6 +10,26 @@
     that:
     - so|success
 
+- name: fail missing storage type and is_system
+  cs_serviceoffer:
+    name: System Offering for Ansible
+    cpu_number: 1
+    cpu_speed: 500
+    memory: 512
+    host_tag: perf
+    storage_tag: perf
+    storage_type: shared
+    offer_ha: true
+    limit_cpu_usage: false
+    is_system: true
+  register: so
+  ignore_errors: true
+- name: verify create system service offering in check mode
+  assert:
+    that:
+    - so|failed
+    - so.msg.startswith('missing required arguments:')
+
 - name: create system service offering in check mode
   cs_serviceoffer:
     name: System Offering for Ansible
