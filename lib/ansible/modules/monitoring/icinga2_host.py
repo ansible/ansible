@@ -27,16 +27,6 @@ options:
     description:
       - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
-  force:
-    description:
-      - If C(yes) and C(dest) is not a directory, will download the file every
-        time and replace the file if the contents change. If C(no), the file
-        will only be downloaded if the destination does not exist. Generally
-        should be C(yes) only for small local files.
-      - Prior to 0.6, this module behaved as if C(yes) was the default.
-    default: 'no'
-    type: bool
-    aliases: [ thirsty ]
   use_proxy:
     description:
       - if C(no), it will not use a proxy, even if one is defined in
@@ -230,6 +220,8 @@ class icinga2_api:
 def main():
     # use the predefined argument spec for url
     argument_spec = url_argument_spec()
+    # remove unnecessary argument 'force'
+    del argument_spec['force']
     # add our own arguments
     argument_spec.update(
         state=dict(default="present", choices=["absent", "present"]),
