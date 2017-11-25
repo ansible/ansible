@@ -159,8 +159,11 @@ class CallbackModule(CallbackBase):
         if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
             status = 'failed'
 
-        if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
-            status = 'ok'
+        if 'EXPECTED FAILURE' in task_data.name:
+            if status == 'failed':
+                status = 'ok'
+            elif status == 'ok':
+                status = 'failed'
 
         task_data.add_host(HostData(host_uuid, host_name, status, result))
 
@@ -248,10 +251,7 @@ class CallbackModule(CallbackBase):
         self._start_task(task)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if ignore_errors:
-            self._finish_task('ok', result)
-        else:
-            self._finish_task('failed', result)
+        self._finish_task('failed', result)
 
     def v2_runner_on_ok(self, result):
         self._finish_task('ok', result)
