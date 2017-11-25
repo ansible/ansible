@@ -27,7 +27,7 @@
 - name: verify create system service offering in check mode
   assert:
     that:
-    - so|failed
+    - so is failed
     - so.msg.startswith('missing required arguments:')
 
 - name: create system service offering in check mode
