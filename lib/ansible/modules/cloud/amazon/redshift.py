@@ -243,11 +243,14 @@ def _collect_facts(resource):
         'db_name'           : resource['DBName'],
         'availability_zone' : resource['AvailabilityZone'],
         'maintenance_window': resource['PreferredMaintenanceWindow'],
+        'url'               : resource['Endpoint']['Address'],
+        'port'              : resource['Endpoint']['Port']
     }
 
     for node in resource['ClusterNodes']:
         if node['NodeRole'] in ('SHARED', 'LEADER'):
             facts['private_ip_address'] = node['PrivateIPAddress']
+            facts['public_ip_address'] = node['PublicIPAddress']
             break
 
     return facts
