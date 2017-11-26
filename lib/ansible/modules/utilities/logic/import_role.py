@@ -23,7 +23,7 @@ description:
   - Much like the `roles:` keyword, this task loads a role, but it allows you to control it when the role tasks run in
     between other tasks of the play.
   - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
-    you want the opposite behaviour, use M(include_role) instead.
+    you want the opposite behavior, use M(include_role) instead. To better understand the difference you can read U(https://docs.ansible.com/ansible/latest/playbooks_reuse_includes.html).
 version_added: "2.4"
 options:
   name:
@@ -63,7 +63,7 @@ EXAMPLES = """
 - hosts: all
   tasks:
     - import_role:
-       name: myrole
+        name: myrole
 
     - name: Run tasks/other.yaml instead of 'main'
       import_role:
