@@ -34,7 +34,8 @@ options:
   node_type:
     description:
       - The node type of the cluster. Must be specified when command=create.
-    choices: ['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge']
+    choices: ['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc2.large', 'dc1.8xlarge', 'dw1.xlarge',
+              'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge']
   username:
     description:
       - Master database username. Used only when command=create.
@@ -434,8 +435,9 @@ def main():
     argument_spec.update(dict(
         command                             = dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
         identifier                          = dict(required=True),
-        node_type                           = dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge',
-                                                            'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge'], required=False),
+        node_type                           = dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large',
+                                                            'dc2.large','dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge', 'dw2.large',
+                                                            'dw2.8xlarge'], required=False),
         username                            = dict(required=False),
         password                            = dict(no_log=True, required=False),
         db_name                             = dict(require=False),
