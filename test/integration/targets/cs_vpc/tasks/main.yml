@@ -206,7 +206,7 @@
     - vpc.display_text == "{{ cs_resource_prefix }}_display_text2"
     - vpc.cidr == "10.10.0.0/16"
 
-- name: test restart vpc with default offering in check mode
+- name: test restart vpc with default offering with clean up in check mode
   cs_vpc:
     name: "{{ cs_resource_prefix }}_vpc"
     display_text: "{{ cs_resource_prefix }}_display_text2"
@@ -215,7 +215,8 @@
     clean_up: true
     state: restarted
   register: vpc
-- name: verify test restart vpc in check mode
+  check_mode: true
+- name: verify test restart vpc with default offering with clean up in check mode
   assert:
     that:
     - vpc|success
@@ -224,7 +225,7 @@
     - vpc.display_text == "{{ cs_resource_prefix }}_display_text2"
     - vpc.cidr == "10.10.0.0/16"
 
-- name: test restart vpc with default offering
+- name: test restart vpc with default offering with clean up
   cs_vpc:
     name: "{{ cs_resource_prefix }}_vpc"
     display_text: "{{ cs_resource_prefix }}_display_text2"
@@ -233,7 +234,24 @@
     clean_up: true
     state: restarted
   register: vpc
-- name: verify test restart vpc with default offering
+- name: verify test restart vpc with default offering with clean up
+  assert:
+    that:
+    - vpc|success
+    - vpc|changed
+    - vpc.name == "{{ cs_resource_prefix }}_vpc"
+    - vpc.display_text == "{{ cs_resource_prefix }}_display_text2"
+    - vpc.cidr == "10.10.0.0/16"
+
+- name: test restart vpc with default offering without clean up
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    display_text: "{{ cs_resource_prefix }}_display_text2"
+    cidr: 10.10.0.0/16
+    zone: "{{ cs_common_zone_adv }}"
+    state: restarted
+  register: vpc
+- name: verify test restart vpc with default offering without clean up
   assert:
     that:
     - vpc|success
