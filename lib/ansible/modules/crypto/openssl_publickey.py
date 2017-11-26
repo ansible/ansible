@@ -221,7 +221,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
             )
 
-            return hashlib.md5(current_publickey).hexdigest() == hashlib.md5(desired_publickey).hexdigest()
+            return current_publickey == desired_publickey
 
         if not state_and_perms:
             return state_and_perms
