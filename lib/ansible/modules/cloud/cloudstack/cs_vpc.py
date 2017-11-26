@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it an/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http//www.gnu.or/license/>.
+# Copyright (c) 2016, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -40,31 +26,26 @@ options:
     description:
       - "Display text of the VPC."
       - "If not set, C(name) will be used for creating."
-    required: false
-    default: null
   cidr:
     description:
       - "CIDR of the VPC, e.g. 10.1.0.0/16"
       - "All VPC guest networks' CIDRs must be within this CIDR."
       - "Required on C(state=present)."
-    required: false
-    default: null
   network_domain:
     description:
       - "Network domain for the VPC."
       - "All networks inside the VPC will belong to this domain."
-    required: false
-    default: null
   vpc_offering:
     description:
       - "Name of the VPC offering."
       - "If not set, default VPC offering is used."
-    required: false
-    default: null
+  clean_up:
+    description:
+      - "Whether to redeploy a VPC router or not when C(state=restarted)"
+    version_added: "2.5"
   state:
     description:
       - "State of the VPC."
-    required: false
     default: present
     choices:
       - present
@@ -73,58 +54,48 @@ options:
   domain:
     description:
       - "Domain the VPC is related to."
-    required: false
-    default: null
   account:
     description:
       - "Account the VPC is related to."
-    required: false
-    default: null
   project:
     description:
       - "Name of the project the VPC is related to."
-    required: false
-    default: null
   zone:
     description:
       - "Name of the zone."
       - "If not set, default zone is used."
-    required: false
-    default: null
   tags:
     description:
       - "List of tags. Tags are a list of dictionaries having keys C(key) and C(value)."
       - "For deleting all tags, set an empty list e.g. C(tags: [])."
-    required: false
-    default: null
     aliases:
       - tag
   poll_async:
     description:
       - "Poll async jobs until job has finished."
-    required: false
     default: true
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure a VPC is present
-- local_action:
+- name: Ensure a VPC is present
+  local_action:
     module: cs_vpc
     name: my_vpc
     display_text: My example VPC
     cidr: 10.10.0.0/16
 
-# Ensure a VPC is absent
-- local_action:
+- name: Ensure a VPC is absent
+  local_action:
     module: cs_vpc
     name: my_vpc
     state: absent
 
-# Ensure a VPC is restarted
-- local_action:
+- name: Ensure a VPC is restarted with clean up
+  local_action:
     module: cs_vpc
     name: my_vpc
+    clean_up: true
     state: restarted
 '''
 
@@ -228,12 +199,8 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'restartrequired': 'restart_required',
         }
         self.vpc = None
-        self.vpc_offering = None
 
     def get_vpc_offering(self, key=None):
-        if self.vpc_offering:
-            return self._get_by_key(key, self.vpc_offering)
-
         vpc_offering = self.module.params.get('vpc_offering')
         args = {}
         if vpc_offering:
@@ -243,9 +210,8 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
 
         vpc_offerings = self.query_api('listVPCOfferings', **args)
         if vpc_offerings:
-            self.vpc_offering = vpc_offerings['vpcoffering'][0]
-            return self._get_by_key(key, self.vpc_offering)
-        self.module.fail_json(msg="VPC offering '%s' not found" % vpc_offering)
+            return self._get_by_key(key, vpc_offerings['vpcoffering'][0])
+        self.module.fail_json(msg="VPC offering not found: %s" % vpc_offering)
 
     def get_vpc(self):
         if self.vpc:
@@ -263,7 +229,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
                 if vpc_name in [v['name'], v['displaytext'], v['id']]:
                     # Fail if the identifyer matches more than one VPC
                     if self.vpc:
-                        self.module.fail_json(msg="More than one VPC found with the provided identifyer '%s'" % vpc_name)
+                        self.module.fail_json(msg="More than one VPC found with the provided identifyer: %s" % vpc_name)
                     else:
                         self.vpc = v
         return self.vpc
@@ -274,6 +240,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
         if vpc and not self.module.check_mode:
             args = {
                 'id': vpc['id'],
+                'cleanup': self.module.params.get('clean_up'),
             }
             res = self.query_api('restartVPC', **args)
 
@@ -347,16 +314,17 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        cidr=dict(default=None),
-        display_text=dict(default=None),
-        vpc_offering=dict(default=None),
-        network_domain=dict(default=None),
+        cidr=dict(),
+        display_text=dict(),
+        vpc_offering=dict(),
+        network_domain=dict(),
+        clean_up=dict(type='bool'),
         state=dict(choices=['present', 'absent', 'restarted'], default='present'),
-        domain=dict(default=None),
-        account=dict(default=None),
-        project=dict(default=None),
-        zone=dict(default=None),
-        tags=dict(type='list', aliases=['tag'], default=None),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        zone=dict(),
+        tags=dict(type='list', aliases=['tag']),
         poll_async=dict(type='bool', default=True),
     ))
 
