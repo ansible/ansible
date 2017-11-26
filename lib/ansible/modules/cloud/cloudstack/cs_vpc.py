@@ -41,9 +41,7 @@ options:
       - "If not set, default VPC offering is used."
   clean_up:
     description:
-      - "Redeploy VPC router."
-      - "Only considered when C(state=restarted)."
-    default: false
+      - "Whether to redeploy a VPC router or not when C(state=restarted)"
     version_added: "2.5"
   state:
     description:
@@ -320,7 +318,7 @@ def main():
         display_text=dict(),
         vpc_offering=dict(),
         network_domain=dict(),
-        clean_up=dict(type='bool', default=False),
+        clean_up=dict(type='bool'),
         state=dict(choices=['present', 'absent', 'restarted'], default='present'),
         domain=dict(),
         account=dict(),
