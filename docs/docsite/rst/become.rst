@@ -457,15 +457,69 @@ Be aware of the following limitations with ``become`` on Windows:
 * Running a task with ``async`` and ``become`` on Windows Server 2008, 2008 R2
   and Windows 7 does not work.
 
-* The become user logs on with an interactive session, so it must have the
-  ability to do so on the Windows host. If it does not inherit the
+* By default the become user logs on with an interactive session, so it must
+  have the ability to do so on the Windows host. If it does not inherit the
   ``SeAllowLogOnLocally`` privilege or inherits the ``SeDenyLogOnLocally``
-  privilege, the become process will fail.
+  privilege, the become process will fail. In Ansible 2.5, ``logon_type`` in
+  ``become_flags`` can be changed from ``interactive`` to ``batch`` which
+  removes this restriction.
 
 * Prior to Ansible version 2.3, become only worked when
   ``ansible_winrm_transport`` was either ``basic`` or ``credssp``. This
   restriction has been lifted since the 2.4 release of Ansible for all hosts
   except Windows Server 2008 (non R2 version).
+
+Become Flags
+------------
+With Ansible 2.5, the ``runas`` become method has the ability to set custom
+flags through the ``become_flags`` task directive or ``ansible_become_flags``
+variable. Unlike other become methods, ``become_flags`` for ``runas`` should
+have a dictionary value and not a string. The two options that are supported
+in this dictionary value are ``logon_type`` and ``logon_flags`` and should only
+be set when the ``become_user`` is not a local service account.
+
+The key ``logon_type`` sets the type of logon operation to perform. The value
+can be set to one of the following:
+
+* ``interactive``: The default logon type set, the process will be run under a
+  context that is the same as running a process locally, this bypasses all
+  WinRM restrictions and is the recommended method to use.
+
+* ``batch``: Runs the process under a batch context that is similar to a
+  scheduled task with a password set. This should bypass most WinRM
+  restrictions and is useful if the ``become_user`` is not allowed to log on
+  interactively.
+
+* ``new_credentials``: Runs under the same credentials as the calling user but
+  outbound connections are run under the context of the ``become_user`` and
+  ``become_password``, similar to ``runas.exe /netonly``. The ``logon_flags``
+  flag should also be set to ``netcredentials_only`` as well.
+
+* ``network``: Runs the process under a network context without any cached
+  credentials. This results in the same type of logon session as running a
+  normal WinRM process without credential delegation so comes under the same
+  restrictions.
+
+* ``network_cleartext``: Like the ``network`` logon type but instead it caches
+the credentials so it can access network resources. This is the same type of
+logon session as running a normal WinRM process with credential delegation.
+
+More details on these values can be read under the ``dwLogonType`` section
+`Here <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
+
+The key ``logon_flags`` sets the way Windows will log the user on when creating
+the new process. The value can be set to one of the following:
+
+* ``with_profile``: The default logon flag set, the process will load the
+  user's profile in the ``HKEY_USERS`` registry key to ``HKEY_CURRENT_USER``.
+
+* ``netcredentials_only``: The process will use the same token as the caller
+  but will use the ``become_user`` and ``become_password`` when access a remote
+  resource. This is useful in inter-domain scenarios where there is no trust
+  relationship and should be used with the ``new_credentials`` ``logon_type``.
+
+More details on these values can be read under the ``dwLogonFlags`` section
+`Here <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
 
 .. seealso::
 

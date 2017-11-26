@@ -167,7 +167,7 @@ class PlayContext(Base):
     _become_user = FieldAttribute(isa='string')
     _become_pass = FieldAttribute(isa='string')
     _become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
-    _become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
+    _become_flags = FieldAttribute(default=C.DEFAULT_BECOME_FLAGS)
     _prompt = FieldAttribute(isa='string')
 
     # DEPRECATED: backwards compatibility fields for sudo/su
