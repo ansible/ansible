@@ -325,7 +325,7 @@ class AzureRMImage(AzureRMModuleBase):
 
     def get_image(self):
         return self._get_resource(self.compute_client.images.get, self.resource_group, self.name)
-    
+
     def _get_resource(self, get_method, resource_group, name, expand=None):
         try:
             if expand:
