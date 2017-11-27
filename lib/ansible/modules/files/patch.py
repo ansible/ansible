@@ -154,6 +154,7 @@ def main():
     if p.dest and not os.access(p.dest, os.W_OK):
         module.fail_json(msg="dest %s doesn't exist or not writable" % (p.dest))
 
+    p.dest = os.path.abspath(p.dest)
     if p.basedir and not os.path.exists(p.basedir):
         module.fail_json(msg="basedir %s doesn't exist" % (p.basedir))
 
@@ -167,7 +168,7 @@ def main():
     def patch_func(opts):
         return module.run_command('%s %s' % (patch_bin, ' '.join(opts)))
 
-    # patch need an absolute file name
+    # patch needs an absolute file name
     p.src = os.path.abspath(p.src)
 
     changed = False
