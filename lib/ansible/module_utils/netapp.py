@@ -79,7 +79,7 @@ def ontap_sf_host_argument_spec():
         major_api_version=dict(require=False, type='int'),
         minor_api_version=dict(require=False, type='int'),
         port=dict(require=False, type='int'),
-        server_type=dict(require=False, type='str', choices=['FILER','DFM']),
+        server_type=dict(require=False, type='str', choices=['FILER', 'DFM']),
         transport_type=dict(require=False, type='str', choices=['HTTP', 'HTTPS']),
     )
 
