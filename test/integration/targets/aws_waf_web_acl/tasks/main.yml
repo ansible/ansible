@@ -432,9 +432,22 @@
         - web_acl_add_rule.changed
         - web_acl_add_rule.web_acl.rules|length == 1
 
-  - name: attempt to delete the inuse second rule
+  - name: swap two rules of same priority
+    aws_waf_web_acl:
+      name: "{{ resource_prefix }}_web_acl"
+      rules:
+        - name: "{{ resource_prefix }}_rule"
+          priority: 2
+          action: allow
+      purge_rules: yes
+      default_action: block
+      state: present
+      <<: *aws_connection_info
+    register: web_acl_swap_rule
+
+  - name: attempt to delete the inuse first rule
     aws_waf_rule:
-      name: "{{ resource_prefix }}_rule_2"
+      name: "{{ resource_prefix }}_rule"
       state: absent
       <<: *aws_connection_info
     ignore_errors: yes
@@ -458,9 +471,9 @@
         - delete_web_acl.changed
         - not delete_web_acl.web_acl
 
-  - name: delete the no longer in use second rule
+  - name: delete the no longer in use first rule
     aws_waf_rule:
-      name: "{{ resource_prefix }}_rule_2"
+      name: "{{ resource_prefix }}_rule"
       state: absent
       <<: *aws_connection_info
 
