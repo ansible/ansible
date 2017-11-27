@@ -296,6 +296,8 @@ def state_present(module, existing, proposed, candidate):
             if existing_commands[key] == proposed_commands[key]:
                 continue
 
+        if key == 'ip ospf passive-interface' and module.params.get('interface').upper().startswith('LO'):
+            module.fail_json(msg='loopback interface does not support passive_interface')
         if value is True:
             commands.append(key)
         elif value is False:
