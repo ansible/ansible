@@ -23,10 +23,8 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network_common import to_list, EntityCollection
 
-
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
-
 
 mlnxos_provider_spec = {
     'host': dict(),
@@ -56,10 +54,6 @@ command_spec = {
 
 def get_provider_argspec():
     return mlnxos_provider_spec
-
-
-def check_args(module, warnings):
-    pass
 
 
 def get_connection(module):

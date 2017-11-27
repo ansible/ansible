@@ -19,11 +19,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
@@ -147,8 +145,7 @@ from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
 
-from ansible.module_utils.mlnxos import mlnxos_argument_spec, check_args, \
-    run_commands
+from ansible.module_utils.mlnxos import mlnxos_argument_spec, run_commands
 
 
 def to_lines(stdout):
@@ -201,7 +198,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 
