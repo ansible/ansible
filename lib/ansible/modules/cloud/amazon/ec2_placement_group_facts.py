@@ -84,6 +84,10 @@ from ansible.module_utils.ec2 import (connect_to_aws,
                                       ec2_argument_spec,
                                       get_aws_connection_info,
                                       HAS_BOTO3)
+try:
+    from botocore.exceptions import (BotoCoreError, ClientError)
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
 
 
 def get_placement_groups_details(connection, module):
@@ -97,8 +101,7 @@ def get_placement_groups_details(connection, module):
                 }])
         else:
             response = connection.describe_placement_groups()
-    except (botocore.exceptions.BotoCoreError,
-            botocore.exceptions.ClientError) as e:
+    except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(
             e,
             msg="Couldn't find placement groups named [%s]" % names)
