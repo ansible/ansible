@@ -389,8 +389,6 @@ def parse_service(module):
             module.params.get('service_port'),
             module.params.get('tags'),
         )
-    elif not module.params.get('service_name'):
-        module.fail_json(msg="service_name is required to configure a service.")
 
 
 class ConsulService():
