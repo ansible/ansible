@@ -32,6 +32,7 @@ __metaclass__ = type
 
 import os
 import subprocess
+import traceback
 from collections import Mapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -106,11 +107,11 @@ class InventoryModule(BaseInventoryPlugin):
                     raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
 
                 try:
-                    inventory.cache[cache_key] = self.loader.load(data, file_name=path)
+                    processed = self.loader.load(data, file_name=path)
+                    inventory.cache[cache_key] = processed
                 except Exception as e:
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
-            processed = inventory.cache[cache_key]
             if not isinstance(processed, Mapping):
                 raise AnsibleError("failed to parse executable inventory script results from {0}: needs to be a json dict\n{1}".format(path, err))
 
@@ -141,7 +142,7 @@ class InventoryModule(BaseInventoryPlugin):
                 self.populate_host_vars([host], got)
 
         except Exception as e:
-            raise AnsibleParserError(to_native(e))
+            raise AnsibleParserError("str(e): {0} to_native(e): {1} type(e): {2} traceback: {3}".format(str(e), to_native(e), type(e), traceback.format_exc(e)))
 
     def _parse_group(self, group, data):
 
