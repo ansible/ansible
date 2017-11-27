@@ -87,7 +87,7 @@ EXAMPLES = '''
 # Install a specific version of Elasticsearch Head in Elasticsearch 2.x
 - elasticsearch_plugin:
     name: mobz/elasticsearch-head
-    versino: 2.0.0
+    version: 2.0.0
 
 # Uninstall Elasticsearch head plugin in Elasticsearch 2.x
 - elasticsearch_plugin:
