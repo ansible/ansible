@@ -39,7 +39,7 @@ Requires: python-crypto
 
 # RHEL >=7
 %if 0%{?rhel} >= 7
-Requires: python2-cryptography
+Requires: python-cryptography
 %endif
 
 # RHEL > 5
