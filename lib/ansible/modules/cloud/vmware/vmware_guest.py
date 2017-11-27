@@ -1127,8 +1127,12 @@ class PyVmomiHelper(PyVmomi):
                         datastore_freespace = ds.summary.freeSpace
 
             elif 'datastore_cluster' in self.params['disk'][0]:
-                podsel = vim.storageDrs.PodSelectionSpec()
-                pod = find_obj(self.content, [vim.StoragePod], self.params['disk'][0]['datastore_cluster'])
+                try:
+                    podsel = vim.storageDrs.PodSelectionSpec()
+                    pod = find_obj(self.content, [vim.StoragePod], self.params['disk'][0]['datastore_cluster'])
+                except Exception:
+                    self.module.fail_json(msg="Vmware platform seems to not be compatible with datastore cluster")
+
                 if pod:
                     podsel.storagePod = pod
                 else:
