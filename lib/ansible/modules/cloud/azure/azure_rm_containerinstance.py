@@ -30,6 +30,7 @@ options:
         description:
             - The name of the container group.
         required: true
+        default: null
     os_type:
         description:
             - The OS type of containers.
@@ -46,10 +47,9 @@ options:
             - present
     ip_address:
         description:
-            - The IP address type of the container group (default is 'none')
+            - The IP address type of the container group.
         choices:
             - public
-            - none
         default: None
     ports:
         description:
@@ -70,15 +70,18 @@ options:
     containers:
         description:
             - List of containers.
+        default: null
         suboptions:
             name:
                 description:
                     - The name of the container instance.
                 required: true
+                default: null
             image:
                 description:
                     - The container image name.
                 required: true
+                default: null
             memory:
                 description:
                     - The required memory of the containers in GB.
@@ -247,13 +250,13 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             ip_address=dict(
                 type='str',
-                default='none',
-                choices=['public', 'none']
+                required=False,
+                default=None,
+                choices=['public']
             ),
             ports=dict(
                 type='list',
-                required=False,
-                default=[]
+                required=False
             ),
             registry_login_server=dict(
                 type='str',
@@ -371,7 +374,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         ip_address = None
 
-        if self.ip_address == 'public':
+        if self.ip_address is not None:
             # get list of ports
             if self.ports:
                 ports = []
