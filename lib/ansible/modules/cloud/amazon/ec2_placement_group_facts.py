@@ -78,32 +78,29 @@ placement_groups:
 
 '''
 
-try:
-    import boto3
-    from botocore.exceptions import ClientError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError,
-                                      connect_to_aws,
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (connect_to_aws,
                                       boto3_conn,
                                       ec2_argument_spec,
-                                      get_aws_connection_info,
-                                      get_ec2_security_group_ids_from_names)
+                                      get_aws_connection_info)
+from botocore.exceptions import (BotoCoreError, ClientError)
 
 
 def get_placement_groups_details(connection, module):
     names = module.params.get("names")
-    if len(names) > 0:
-        response = connection.describe_placement_groups(
-            Filters=[{
-                "Name": "group-name",
-                "Values": names
-            }])
-    else:
-        response = connection.describe_placement_groups()
+    try:
+        if len(names) > 0:
+            response = connection.describe_placement_groups(
+                Filters=[{
+                    "Name": "group-name",
+                    "Values": names
+                }])
+        else:
+            response = connection.describe_placement_groups()
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(
+            e,
+            msg="Couldn't find placement groups named [%s]" % names)
 
     results = []
     for placement_group in response['PlacementGroups']:
@@ -123,24 +120,17 @@ def main():
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
-
     region, ec2_url, aws_connect_params = get_aws_connection_info(
         module, boto3=True)
 
-    if region:
-        try:
-            connection = boto3.client('ec2', region, **aws_connect_params)
-        except (boto3.exceptions.NoAuthHandlerFound, AnsibleAWSError) as e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module,
+                            resource='ec2', conn_type='client',
+                            region=region, **aws_connect_params)
 
     placement_groups = get_placement_groups_details(connection, module)
     module.exit_json(changed=False, placement_groups=placement_groups)
