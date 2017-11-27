@@ -4898,6 +4898,12 @@ table {
     height: inherit
 }
 
+@-moz-document url-prefix() {
+    .return-value-column td {
+        height: 100%
+    }
+}
+
 .cell-border {
     padding: 4px;
     border-left: 1px solid #000;
