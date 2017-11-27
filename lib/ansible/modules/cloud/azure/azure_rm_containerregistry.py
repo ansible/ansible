@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_acr
+module: azure_rm_containerregistry
 version_added: "2.5"
-short_description: Manage an Azure Container Registry (ACR).
+short_description: Manage an Azure Container Registry.
 description:
     - Create, update and delete an Azure Container Registry.
 
@@ -31,7 +31,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the ACR. Use 'present' to create or update an ACR and 'absent' to delete it.
+            - Assert the state of the container registry. Use 'present' to create or update an container registry and 'absent' to delete it.
         default: present
         choices:
             - absent
@@ -64,7 +64,7 @@ author:
 
 EXAMPLES = '''
     - name: Create an azure container registry
-      azure_rm_acr:
+      azure_rm_containerregistry:
         name: testacr1
         location: eastus
         resource_group: testrg
@@ -77,7 +77,7 @@ EXAMPLES = '''
 
 # Deletes the specified container registry in the specified subscription and resource group.
     - name: Remove an azure container registry
-      azure_rm_acr:
+      azure_rm_containerregistry:
         name: testacr2
         resource_group: testrg
         state: absent
@@ -113,12 +113,12 @@ except ImportError as exc:
     pass
 
 
-def create_acr_dict(registry, credentials):
+def create_contatinerregistry_dict(registry, credentials):
     '''
     Helper method to deserialize a ContainerRegistry to a dict
-    :param: registry: return ACR object from Azure rest API call
+    :param: registry: return container registry object from Azure rest API call
     :param: credentials: return credential objects from Azure rest API call
-    :return: dict of return ACR and it's credentials
+    :return: dict of return container registry and it's credentials
     '''
     results = dict(
         id=registry.id if registry is not None else "",
@@ -204,9 +204,9 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
 
-        # Check if the ACR instance already present in the RG
+        # Check if the container registry instance already present in the RG
         if self.state == 'present':
-            response = self.get_acr()
+            response = self.get_containerregistry()
             self.results['state'] = response
 
             if not response:
@@ -218,32 +218,32 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                 else:
                     to_do = Actions.NoAction
 
-            self.log("Create / Update the ACR instance")
+            self.log("Create / Update the container registry instance")
             if self.check_mode:
                 return self.results
 
-            self.results['state'] = self.create_update_acr(to_do)
+            self.results['state'] = self.create_update_containerregistry(to_do)
             if to_do != Actions.NoAction:
                 self.results['changed'] = True
             else:
                 self.results['changed'] = False
 
-            self.log("ACR instance created or updated")
+            self.log("Container registry instance created or updated")
         elif self.state == 'absent':
             if self.check_mode:
                 return self.results
-            self.delete_acr()
-            self.log("ACR instance deleted")
+            self.delete_containerregistry()
+            self.log("Container registry instance deleted")
 
         return self.results
 
-    def create_update_acr(self, to_do):
+    def create_update_containerregistry(self, to_do):
         '''
         Creates or updates a container registry.
 
-        :return: deserialized ACR instance state dictionary
+        :return: deserialized container registry instance state dictionary
         '''
-        self.log("Creating / Updating the ACR instance {0}".format(self.name))
+        self.log("Creating / Updating the container registry instance {0}".format(self.name))
 
         try:
             if to_do != Actions.NoAction:
@@ -290,40 +290,40 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                 response = None
                 credentials = None
         except (CloudError, Exception) as exc:
-            self.log('Error attempting to create / update the ACR instance.')
-            self.fail("Error creating / updating the ACR instance: {0}".format(str(exc)))
-        return create_acr_dict(response, credentials)
+            self.log('Error attempting to create / update the container registry instance.')
+            self.fail("Error creating / updating the container registry instance: {0}".format(str(exc)))
+        return create_containerregistry_dict(response, credentials)
 
-    def delete_acr(self):
+    def delete_containerregistry(self):
         '''
         Deletes the specified container registry in the specified subscription and resource group.
 
         :return: True
         '''
-        self.log("Deleting the ACR instance {0}".format(self.name))
+        self.log("Deleting the container registry instance {0}".format(self.name))
         try:
             self.containerregistry_mgmt_client.registries.delete(self.resource_group, self.name).wait()
         except CloudError as e:
-            self.log('Error attempting to delete the ACR instance.')
-            self.fail("Error deleting the ACR instance: {0}".format(str(e)))
+            self.log('Error attempting to delete the container registry instance.')
+            self.fail("Error deleting the container registry instance: {0}".format(str(e)))
 
         return True
 
-    def get_acr(self):
+    def get_containerregistry(self):
         '''
         Gets the properties of the specified container registry.
 
-        :return: deserialized ACR state dictionary
+        :return: deserialized container registry state dictionary
         '''
-        self.log("Checking if the ACR instance {0} is present".format(self.name))
+        self.log("Checking if the container registry instance {0} is present".format(self.name))
         found = False
         try:
             response = self.containerregistry_mgmt_client.registries.get(self.resource_group, self.name)
             found = True
             self.log("Response : {0}".format(response))
-            self.log("ACR instance : {0} found".format(response.name))
+            self.log("Container registry instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the ACR instance: {0}'.format(str(e)))
+            self.log('Did not find the container registry instance: {0}'.format(str(e)))
             response = None
         if found is True and self.admin_user_enabled is True:
             try:
@@ -335,7 +335,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             credentials = None
         else:
             return False
-        return create_acr_dict(response, credentials)
+        return create_containerregistry_dict(response, credentials)
 
     @property
     def containerregistry_mgmt_client(self):
