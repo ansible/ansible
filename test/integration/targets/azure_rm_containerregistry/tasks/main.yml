@@ -1,5 +1,5 @@
- - name: Create an ACR
-   azure_rm_acr:
+ - name: Create an container registry
+   azure_rm_containerregistry:
      name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
      location: eastus2
@@ -11,7 +11,7 @@
          Environment: Production
    register: output
 
- - name: Assert the ACR instance is well created
+ - name: Assert the container registry instance is well created
    assert:
      that:
        - output.changed
@@ -23,7 +23,7 @@
        - output.state.provisioning_state == 'Succeeded'
 
  - name: Update the ACS instance sku, tags and admin_user_enabled
-   azure_rm_acr:
+   azure_rm_containerregistry:
      name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
      location: eastus2
@@ -43,8 +43,8 @@
        - output.state.sku == 'Standard'
        - output.state.tags['NewTag'] == 'newtag'
 
- - name: Delete an ACR
-   azure_rm_acr:
+ - name: Delete an container registry
+   azure_rm_containerregistry:
      name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
      state: absent
