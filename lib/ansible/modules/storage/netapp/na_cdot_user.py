@@ -132,7 +132,6 @@ class NetAppCDOTUser(object):
             role_name=dict(required=False, type='str'),
 
             vserver=dict(required=True, type='str'),
-
         ))
 
         self.module = AnsibleModule(
@@ -155,7 +154,7 @@ class NetAppCDOTUser(object):
         self.role_name = p['role_name']
 
         self.vserver = p['vserver']
-        
+
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:

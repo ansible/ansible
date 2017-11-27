@@ -112,7 +112,7 @@ def setup_ontap_zapi(module, vserver=None):
         if vserver:
             server.set_vserver(vserver)
         if module.params['major_api_version'] and module.params['minor_api_version']:
-            server.set_api_version(major=major_api_version, minor=minor_api_version)
+            server.set_api_version(major=module.params['major_api_version'], minor=module.params['minor_api_version'])
         else:
             server.set_api_version(major=1, minor=21)
 
