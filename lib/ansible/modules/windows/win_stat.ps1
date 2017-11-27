@@ -1,21 +1,11 @@
 #!powershell
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # C# code to determine link target, copied from http://chrisbensen.blogspot.com.au/2010/06/getfinalpathnamebyhandle.html
 $symlink_util = @"
@@ -85,10 +75,11 @@ $result = @{
 
 # Backward compatibility
 if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
-    Add-DeprecationWarning $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
+    Add-DeprecationWarning -obj $result -message "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'" -version 2.7
 }
 
-If (Test-Path -Path $path)
+$info = Get-FileItem -path $path
+If ($info -ne $null)
 {
     $result.stat.exists = $true
 
@@ -97,9 +88,6 @@ If (Test-Path -Path $path)
     $result.stat.islnk = $false
     $result.stat.isreg = $false
     $result.stat.isshared = $false
-
-    # Need to use -Force so it picks up hidden files
-    $info = Get-Item -Force $path
 
     $epoch_date = Get-Date -Date "01/01/1970"
     $result.stat.creationtime = (Date_To_Timestamp $epoch_date $info.CreationTime)

@@ -105,6 +105,18 @@
     - shellout|skipped
     - shellout.msg is search('exists')
 
+- name: test creates with hidden system file, should skip
+  win_shell: echo test
+  args:
+    creates: C:\pagefile.sys
+  register: shellout
+
+- name: validate result
+  assert:
+    that:
+    - shellout|skipped
+    - shellout.msg is search('exists')
+
 - name: ensure testfile is still present
   win_stat:
     path: c:\testfile.txt
@@ -188,3 +200,17 @@
     - shellout.stdout is search("doneout")
     - shellout.stderr is search("starterror")
     - shellout.stderr is search("doneerror")
+
+- name: run stdin test
+  win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'
+  args:
+    stdin: some input
+  register: shellout
+
+- name: assert run stdin test
+  assert:
+    that:
+    - shellout|changed
+    - shellout.rc == 0
+    - shellout.stderr == ""
+    - shellout.stdout == "some input\r\n"

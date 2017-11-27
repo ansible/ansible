@@ -16,11 +16,13 @@ DOCUMENTATION = """
 ---
 module: iosxr_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on Cisco IOS XR devices.
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   dest:
     description:

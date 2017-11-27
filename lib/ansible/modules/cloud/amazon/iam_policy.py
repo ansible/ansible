@@ -118,7 +118,6 @@ tasks:
 
 '''
 import json
-import urllib
 
 try:
     import boto
@@ -129,20 +128,9 @@ except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info, boto_exception
 from ansible.module_utils.six import string_types
-
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
+from ansible.module_utils.six.moves import urllib
 
 
 def user_action(module, iam, name, policy_name, skip, pdoc, state):
@@ -157,7 +145,7 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
             '''
             urllib is needed here because boto returns url encoded strings instead
             '''
-            if urllib.unquote(iam.get_user_policy(name, pol).
+            if urllib.parse.unquote(iam.get_user_policy(name, pol).
                               get_user_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
@@ -206,7 +194,7 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
     try:
         matching_policies = []
         for pol in current_policies:
-            if urllib.unquote(iam.get_role_policy(name, pol).
+            if urllib.parse.unquote(iam.get_role_policy(name, pol).
                               get_role_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)
@@ -251,7 +239,7 @@ def group_action(module, iam, name, policy_name, skip, pdoc, state):
                                             policy_names]
         matching_policies = []
         for pol in current_policies:
-            if urllib.unquote(iam.get_group_policy(name, pol).
+            if urllib.parse.unquote(iam.get_group_policy(name, pol).
                               get_group_policy_result.policy_document) == pdoc:
                 policy_match = True
                 matching_policies.append(pol)

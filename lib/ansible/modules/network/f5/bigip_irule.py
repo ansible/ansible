@@ -1,31 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_irule
-short_description: Manage iRules across different modules on a BIG-IP.
+short_description: Manage iRules across different modules on a BIG-IP
 description:
   - Manage iRules across different modules on a BIG-IP.
 version_added: "2.2"
@@ -59,6 +49,11 @@ options:
     choices:
       - present
       - absent
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as
     pip install f5-sdk.
@@ -69,55 +64,59 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the iRule contained in template irule.tcl to the LTM module
   bigip_irule:
-      content: "{{ lookup('template', 'irule.tcl') }}"
-      module: "ltm"
-      name: "MyiRule"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'irule.tcl') }}"
+    module: ltm
+    name: MyiRule
+    password: secret
+    server: lb.mydomain.com
+    state: present
+    user: admin
   delegate_to: localhost
 
 - name: Add the iRule contained in static file irule.tcl to the LTM module
   bigip_irule:
-      module: "ltm"
-      name: "MyiRule"
-      password: "secret"
-      server: "lb.mydomain.com"
-      src: "irule.tcl"
-      state: "present"
-      user: "admin"
+    module: ltm
+    name: MyiRule
+    password: secret
+    server: lb.mydomain.com
+    src: irule.tcl
+    state: present
+    user: admin
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 module:
-    description: The module that the iRule was added to
-    returned: changed and success
-    type: string
-    sample: "gtm"
+  description: The module that the iRule was added to
+  returned: changed and success
+  type: string
+  sample: gtm
 src:
-    description: The filename that included the iRule source
-    returned: changed and success, when provided
-    type: string
-    sample: "/opt/src/irules/example1.tcl"
+  description: The filename that included the iRule source
+  returned: changed and success, when provided
+  type: string
+  sample: /opt/src/irules/example1.tcl
 content:
-    description: The content of the iRule that was managed
-    returned: changed and success
-    type: string
-    sample: "when LB_FAILED { set wipHost [LB::server addr] }"
+  description: The content of the iRule that was managed
+  returned: changed and success
+  type: string
+  sample: "when LB_FAILED { set wipHost [LB::server addr] }"
 '''
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+import os
+
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -160,8 +159,11 @@ class Parameters(AnsibleF5Parameters):
     @property
     def content(self):
         if self._values['content'] is None:
-            return None
-        return str(self._values['content']).strip()
+            result = self.src_content
+        else:
+            result = self._values['content']
+
+        return str(result).strip()
 
     @property
     def src(self):
@@ -169,13 +171,15 @@ class Parameters(AnsibleF5Parameters):
             return None
         return self._values['src']
 
-    @src.setter
-    def src(self, value):
-        if value:
-            self._values['src'] = value
-            with open(value) as f:
-                result = f.read()
-            self._values['content'] = result
+    @property
+    def src_content(self):
+        if not os.path.exists(self._values['src']):
+            raise F5ModuleError(
+                "The specified 'src' was not found."
+            )
+        with open(self._values['src']) as f:
+            result = f.read()
+        return result
 
 
 class ModuleManager(object):
@@ -302,7 +306,7 @@ class LtmManager(BaseManager):
         return result
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         resource = self.client.api.tm.ltm.rules.rule.load(
             name=self.want.name,
             partition=self.want.partition
@@ -358,7 +362,7 @@ class GtmManager(BaseManager):
         return result
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         resource = self.client.api.tm.gtm.rules.rule.load(
             name=self.want.name,
             partition=self.want.partition

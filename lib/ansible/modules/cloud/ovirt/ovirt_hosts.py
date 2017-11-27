@@ -40,9 +40,10 @@ options:
     state:
         description:
             - "State which should a host to be in after successful completion."
+            - "I(iscsilogin) and I(iscsidiscover) are supported since version 2.4."
         choices: [
             'present', 'absent', 'maintenance', 'upgraded', 'started',
-            'restarted', 'stopped', 'reinstalled'
+            'restarted', 'stopped', 'reinstalled', 'iscsidiscover', 'iscsilogin'
         ]
         default: present
     comment:
@@ -108,6 +109,26 @@ options:
             - "Enable or disable power management of the host."
             - "For more comprehensive setup of PM use C(ovirt_host_pm) module."
         version_added: 2.4
+    activate:
+        description:
+            - "If C(state) is I(present) activate the host."
+            - "This parameter is good to disable, when you don't want to change
+               the state of host when using I(present) C(state)."
+        default: True
+        version_added: 2.4
+    iscsi:
+        description:
+          - "If C(state) is I(iscsidiscover) it means that the iscsi attribute is being
+             used to discover targets"
+          - "If C(state) is I(iscsilogin) it means that the iscsi attribute is being
+             used to login to the specified targets passed as part of the iscsi attribute"
+        version_added: "2.4"
+    check_upgrade:
+        description:
+            - "If I(true) and C(state) is I(upgraded) run check for upgrade
+               action before executing upgrade action."
+        default: True
+        version_added: 2.4
 extends_documentation_fragment: ovirt
 '''
 
@@ -158,6 +179,29 @@ EXAMPLES = '''
     state: upgraded
     name: myhost
 
+# discover iscsi targets
+- ovirt_hosts:
+    state: iscsidiscover
+    name: myhost
+    iscsi:
+      username: iscsi_user
+      password: secret
+      address: 10.34.61.145
+      port: 3260
+
+
+# login to iscsi targets
+- ovirt_hosts:
+    state: iscsilogin
+    name: myhost
+    iscsi:
+      username: iscsi_user
+      password: secret
+      address: 10.34.61.145
+      target: "iqn.2015-07.com.mlipchuk2.redhat:444"
+      port: 3260
+
+
 # Reinstall host using public key
 - ovirt_hosts:
     state: reinstalled
@@ -182,6 +226,10 @@ host:
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host."
     returned: On success if host is found.
     type: dict
+iscsi_targets:
+    description: "List of host iscsi targets"
+    returned: On success if host is found and state is iscsidiscover.
+    type: list
 '''
 
 import time
@@ -200,6 +248,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     equal,
+    get_id_by_name,
     ovirt_full_argument_spec,
     wait,
 )
@@ -259,12 +308,6 @@ class HostsModule(BaseModule):
             wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
         )
 
-    def post_update(self, entity):
-        if entity.status != hoststate.UP and self.param('state') == 'present':
-            if not self._module.check_mode:
-                self._service.host_service(entity.id).activate()
-            self.changed = True
-
     def post_reinstall(self, host):
         wait(
             service=self._service.service(host.id),
@@ -273,6 +316,28 @@ class HostsModule(BaseModule):
             wait=self.param('wait'),
             timeout=self.param('timeout'),
         )
+
+    def failed_state_after_reinstall(self, host, count=0):
+        if host.status in [
+            hoststate.ERROR,
+            hoststate.INSTALL_FAILED,
+            hoststate.NON_OPERATIONAL,
+        ]:
+            return True
+
+        # If host is in non-responsive state after upgrade/install
+        # let's wait for few seconds and re-check again the state:
+        if host.status == hoststate.NON_RESPONSIVE:
+            if count <= 3:
+                time.sleep(20)
+                return self.failed_state_after_reinstall(
+                    self._service.service(host.id).get(),
+                    count + 1,
+                )
+            else:
+                return True
+
+        return False
 
 
 def failed_state(host):
@@ -327,7 +392,7 @@ def main():
         state=dict(
             choices=[
                 'present', 'absent', 'maintenance', 'upgraded', 'started',
-                'restarted', 'stopped', 'reinstalled',
+                'restarted', 'stopped', 'reinstalled', 'iscsidiscover', 'iscsilogin'
             ],
             default='present',
         ),
@@ -346,10 +411,17 @@ def main():
         kernel_params=dict(default=None, type='list'),
         hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
         power_management_enabled=dict(default=None, type='bool'),
+        activate=dict(default=True, type='bool'),
+        iscsi=dict(default=None, type='dict'),
+        check_upgrade=dict(default=True, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'iscsidiscover', ['iscsi']],
+            ['state', 'iscsilogin', ['iscsi']]
+        ]
     )
     check_sdk(module)
 
@@ -366,17 +438,20 @@ def main():
         state = module.params['state']
         host = control_state(hosts_module)
         if state == 'present':
-            hosts_module.create(
+            ret = hosts_module.create(
                 deploy_hosted_engine=(
                     module.params.get('hosted_engine') == 'deploy'
                 ) if module.params.get('hosted_engine') is not None else None,
+                result_state=hoststate.UP if host is None else None,
+                fail_condition=hosts_module.failed_state_after_reinstall if host is None else lambda h: False,
             )
-            ret = hosts_module.action(
-                action='activate',
-                action_condition=lambda h: h.status == hoststate.MAINTENANCE,
-                wait_condition=lambda h: h.status == hoststate.UP,
-                fail_condition=failed_state,
-            )
+            if module.params['activate'] and host is not None:
+                ret = hosts_module.action(
+                    action='activate',
+                    action_condition=lambda h: h.status != hoststate.UP,
+                    wait_condition=lambda h: h.status == hoststate.UP,
+                    fail_condition=failed_state,
+                )
         elif state == 'absent':
             ret = hosts_module.remove()
         elif state == 'maintenance':
@@ -389,12 +464,67 @@ def main():
             ret = hosts_module.create()
         elif state == 'upgraded':
             result_state = hoststate.MAINTENANCE if host.status == hoststate.MAINTENANCE else hoststate.UP
+            events_service = connection.system_service().events_service()
+            last_event = events_service.list(max=1)[0]
+
+            if module.params['check_upgrade']:
+                hosts_module.action(
+                    action='upgrade_check',
+                    action_condition=lambda host: not host.update_available,
+                    wait_condition=lambda host: host.update_available or (
+                        len([
+                            event
+                            for event in events_service.list(
+                                from_=int(last_event.id),
+                                search='type=885 and host.name=%s' % host.name,
+                            )
+                        ]) > 0
+                    ),
+                    fail_condition=lambda host: len([
+                        event
+                        for event in events_service.list(
+                            from_=int(last_event.id),
+                            search='type=839 or type=887 and host.name=%s' % host.name,
+                        )
+                    ]) > 0,
+                )
+                # Set to False, because upgrade_check isn't 'changing' action:
+                hosts_module._changed = False
             ret = hosts_module.action(
                 action='upgrade',
                 action_condition=lambda h: h.update_available,
                 wait_condition=lambda h: h.status == result_state,
                 post_action=lambda h: time.sleep(module.params['poll_interval']),
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
+            )
+        elif state == 'iscsidiscover':
+            host_id = get_id_by_name(hosts_service, module.params['name'])
+            iscsi_param = module.params['iscsi']
+            iscsi_targets = hosts_service.service(host_id).iscsi_discover(
+                iscsi=otypes.IscsiDetails(
+                    port=int(iscsi_param.get('port', 3260)),
+                    username=iscsi_param.get('username'),
+                    password=iscsi_param.get('password'),
+                    address=iscsi_param.get('address'),
+                ),
+            )
+            ret = {
+                'changed': False,
+                'id': host_id,
+                'iscsi_targets': iscsi_targets,
+            }
+        elif state == 'iscsilogin':
+            host_id = get_id_by_name(hosts_service, module.params['name'])
+            iscsi_param = module.params['iscsi']
+            ret = hosts_module.action(
+                action='iscsi_login',
+                iscsi=otypes.IscsiDetails(
+                    port=int(iscsi_param.get('port', 3260)),
+                    username=iscsi_param.get('username'),
+                    password=iscsi_param.get('password'),
+                    address=iscsi_param.get('address'),
+                    target=iscsi_param.get('target'),
+                ),
             )
         elif state == 'started':
             ret = hosts_module.action(
@@ -440,7 +570,7 @@ def main():
                 action_condition=lambda h: h.status == hoststate.MAINTENANCE,
                 post_action=hosts_module.post_reinstall,
                 wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 host=otypes.Host(
                     override_iptables=module.params['override_iptables'],
                 ) if module.params['override_iptables'] else None,

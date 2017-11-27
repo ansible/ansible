@@ -128,7 +128,7 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP neighbors from the remote device
+  description: The list of LLDP/CDP neighbors from the remote device
   returned: when interfaces is configured
   type: dict
 
@@ -171,7 +171,7 @@ import re
 from ansible.module_utils.nxos import run_commands, get_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import string_types, iteritems
 
 
 class FactsBase(object):
@@ -209,7 +209,7 @@ class FactsBase(object):
 
 class Default(FactsBase):
 
-    VERSION_MAP = frozenset([
+    VERSION_MAP_7K = frozenset([
         ('sys_ver_str', 'version'),
         ('proc_board_id', 'serialnum'),
         ('chassis_id', 'model'),
@@ -217,10 +217,21 @@ class Default(FactsBase):
         ('host_name', 'hostname')
     ])
 
+    VERSION_MAP = frozenset([
+        ('kickstart_ver_str', 'version'),
+        ('proc_board_id', 'serialnum'),
+        ('chassis_id', 'model'),
+        ('kick_file_name', 'image'),
+        ('host_name', 'hostname')
+    ])
+
     def populate(self):
         data = self.run('show version', 'json')
         if data:
-            self.facts.update(self.transform_dict(data, self.VERSION_MAP))
+            if data.get('sys_ver_str'):
+                self.facts.update(self.transform_dict(data, self.VERSION_MAP_7K))
+            else:
+                self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
 
 class Config(FactsBase):
@@ -279,12 +290,16 @@ class Interfaces(FactsBase):
             self.facts['interfaces'] = self.populate_interfaces(data)
 
         data = self.run('show ipv6 interface', 'json')
-        if data:
+        if data and not isinstance(data, string_types):
             self.parse_ipv6_interfaces(data)
 
         data = self.run('show lldp neighbors')
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
+
+        data = self.run('show cdp neighbors detail', 'json')
+        if data:
+            self.facts['neighbors'] = self.populate_neighbors_cdp(data)
 
     def populate_interfaces(self, data):
         interfaces = dict()
@@ -336,15 +351,38 @@ class Interfaces(FactsBase):
 
         return objects
 
-    def parse_ipv6_interfaces(self, data):
-        data = data['TABLE_intf']
+    def populate_neighbors_cdp(self, data):
+        objects = dict()
+        data = data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']
+
         if isinstance(data, dict):
             data = [data]
+
         for item in data:
-            name = item['ROW_intf']['intf-name']
-            intf = self.facts['interfaces'][name]
-            intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
-            self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
+            local_intf = item['intf_id']
+            objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['port_id']
+            nbor['sysname'] = item['device_id']
+            objects[local_intf].append(nbor)
+
+        return objects
+
+    def parse_ipv6_interfaces(self, data):
+        try:
+            data = data['TABLE_intf']
+            if data:
+                if isinstance(data, dict):
+                    data = [data]
+                for item in data:
+                    name = item['ROW_intf']['intf-name']
+                    intf = self.facts['interfaces'][name]
+                    intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
+                    self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
+            else:
+                return ""
+        except TypeError:
+            return ""
 
 
 class Legacy(FactsBase):
@@ -431,7 +469,10 @@ class Legacy(FactsBase):
         return objects
 
     def parse_power_supply_info(self, data):
-        data = data['powersup']['TABLE_psinfo']['ROW_psinfo']
+        if data.get('powersup').get('TABLE_psinfo_n3k'):
+            data = data['powersup']['TABLE_psinfo_n3k']['ROW_psinfo_n3k']
+        else:
+            data = data['powersup']['TABLE_psinfo']['ROW_psinfo']
         objects = list(self.transform_iterable(data, self.POWERSUP_MAP))
         return objects
 

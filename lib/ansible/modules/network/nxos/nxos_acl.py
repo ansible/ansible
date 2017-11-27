@@ -33,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the ACE if it exists.
   - C(state=delete_acl) deletes the ACL if it exists.
   - For idempotency, use port numbers for the src/dest port
@@ -238,11 +239,20 @@ def get_acl(module, acl_name, seq_number):
     acl_body = {}
 
     body = execute_show_command(command, module)[0]
-    all_acl_body = body['TABLE_ip_ipv6_mac']['ROW_ip_ipv6_mac']
+    if body:
+        all_acl_body = body['TABLE_ip_ipv6_mac']['ROW_ip_ipv6_mac']
+    else:
+        # no access-lists configured on the device
+        return {}, []
 
-    for acl in all_acl_body:
-        if acl.get('acl_name') == acl_name:
-            acl_body = acl
+    if isinstance(all_acl_body, dict):
+        # Only 1 ACL configured.
+        if all_acl_body.get('acl_name') == acl_name:
+            acl_body = all_acl_body
+    else:
+        for acl in all_acl_body:
+            if acl.get('acl_name') == acl_name:
+                acl_body = acl
 
     try:
         acl_entries = acl_body['TABLE_seqno']['ROW_seqno']

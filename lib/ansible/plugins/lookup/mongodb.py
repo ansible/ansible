@@ -15,8 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+
+from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils.six import string_types, integer_types
+__metaclass__ = type
+
+DOCUMENTATION = '''
     author: 'Marcos Diez <marcos (at) unitron.com.br>'
     lookup: mongodb
     version_added: "2.3"
@@ -64,8 +68,10 @@ DOCUMENTATION:
     notes:
         - "Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more detais."
     requirements:
-        - pymongo >= 2.4
-EXAMPLES:
+        - pymongo >= 2.4 (python library)
+'''
+
+EXAMPLES = '''
 - hosts: all
   gather_facts: false
   vars:
@@ -87,12 +93,7 @@ EXAMPLES:
       with_mongodb: "{{mongodb_parameters}}"
 '''
 
-from __future__ import (absolute_import, division, print_function)
-from __future__ import unicode_literals
-from ansible.module_utils.six import string_types, integer_types
 import datetime
-
-__metaclass__ = type
 
 try:
     from pymongo import ASCENDING, DESCENDING
@@ -120,7 +121,7 @@ class LookupModule(LookupBase):
             return sort_parameter
 
         if not isinstance(sort_parameter, list):
-            raise AnsibleError("Error. Sort parameters must be a list, not [ {} ]".format(sort_parameter))
+            raise AnsibleError(u"Error. Sort parameters must be a list, not [ {} ]".format(sort_parameter))
 
         for item in sort_parameter:
             self._convert_sort_string_to_constant(item)
@@ -130,9 +131,9 @@ class LookupModule(LookupBase):
     def _convert_sort_string_to_constant(self, item):
         original_sort_order = item[1]
         sort_order = original_sort_order.upper()
-        if sort_order == "ASCENDING":
+        if sort_order == u"ASCENDING":
             item[1] = ASCENDING
-        elif sort_order == "DESCENDING":
+        elif sort_order == u"DESCENDING":
             item[1] = DESCENDING
         # else the user knows what s/he is doing and we won't predict. PyMongo will return an error if necessary
 
@@ -159,13 +160,13 @@ class LookupModule(LookupBase):
             return (result - datetime.datetime(1970, 1, 1)). total_seconds()
         else:
             # failsafe
-            return "{}".format(result)
+            return u"{}".format(result)
 
     def run(self, terms, variables, **kwargs):
 
         ret = []
         for term in terms:
-            '''
+            u'''
             Makes a MongoDB query and returns the output as a valid list of json.
             Timestamps are converted to epoch integers/longs.
 
@@ -206,20 +207,20 @@ class LookupModule(LookupBase):
 -------------------------------------------------------------------------------
             '''
 
-            connection_string = term.get('connection_string', "mongodb://localhost")
-            database = term["database"]
-            collection = term['collection']
-            extra_connection_parameters = term.get('extra_connection_parameters', {})
+            connection_string = term.get(u'connection_string', u"mongodb://localhost")
+            database = term[u"database"]
+            collection = term[u'collection']
+            extra_connection_parameters = term.get(u'extra_connection_parameters', {})
 
-            if "extra_connection_parameters" in term:
-                del term["extra_connection_parameters"]
-            if "connection_string" in term:
-                del term["connection_string"]
-            del term["database"]
-            del term["collection"]
+            if u"extra_connection_parameters" in term:
+                del term[u"extra_connection_parameters"]
+            if u"connection_string" in term:
+                del term[u"connection_string"]
+            del term[u"database"]
+            del term[u"collection"]
 
-            if "sort" in term:
-                term["sort"] = self._fix_sort_parameter(term["sort"])
+            if u"sort" in term:
+                term[u"sort"] = self._fix_sort_parameter(term[u"sort"])
 
             # all other parameters are sent to mongo, so we are future and past proof
 
@@ -232,6 +233,6 @@ class LookupModule(LookupBase):
                     ret.append(result)
 
             except ConnectionFailure as e:
-                raise AnsibleError('unable to connect to database: %s' % str(e))
+                raise AnsibleError(u'unable to connect to database: %s' % str(e))
 
         return ret

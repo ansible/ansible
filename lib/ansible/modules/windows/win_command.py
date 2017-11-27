@@ -50,7 +50,11 @@ options:
       - a path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
   chdir:
     description:
-      - set the specified path as the current working directory before executing a command
+      - set the specified path as the current working directory before executing a command.
+  stdin:
+    description:
+    - Set the stdin of the command directly to the specified value.
+    version_added: '2.5'
 notes:
     - If you want to run a command through a shell (say you are using C(<),
       C(>), C(|), etc), you actually want the M(win_shell) module instead. The
@@ -64,20 +68,20 @@ author:
 '''
 
 EXAMPLES = r'''
-# Example from Ansible Playbooks.
-- win_command: whoami
+- name: Save the result of 'whoami' in 'whoami_out'
+  win_command: whoami
   register: whoami_out
 
-# Run the command only if the specified file does not exist.
-- win_command: wbadmin -backupTarget:C:\backup\ creates=C:\backup\
-
-# You can also use the 'args' form to provide the options. This command
-# will change the working directory to C:\somedir\\ and will only run when
-# C:\backup\ doesn't exist.
-- win_command: wbadmin -backupTarget:C:\backup\ creates=C:\backup\
+- name: Run command that only runs if folder exists and runs from a specific folder
+  win_command: wbadmin -backupTarget:C:\backup\
   args:
     chdir: C:\somedir\
     creates: C:\backup\
+
+- name: Run an executable and send data to the stdin for the executable
+  win_command: powershell.exe -
+  args:
+    stdin: Write-Host test
 '''
 
 RETURN = r'''

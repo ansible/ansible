@@ -1,38 +1,25 @@
-# Copyright 2017 RedHat, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#############################################
-'''
-DOCUMENTATION:
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     inventory: advanced_host_list
     version_added: "2.4"
     short_description: Parses a 'host list' with ranges
     description:
         - Parses a host list string as a comma separated values of hosts and supports host ranges.
         - This plugin only applies to inventory sources that are not paths and contain at least one comma.
-EXAMPLES: |
-    # simple range
-    ansible -i 'host[1:10],' -m ping
-
-    # still supports w/o ranges also
-    ansible-playbook -i 'localhost,' play.yml
 '''
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+EXAMPLES = '''
+    # simple range
+    # ansible -i 'host[1:10],' -m ping
+
+    # still supports w/o ranges also
+    # ansible-playbook -i 'localhost,' play.yml
+'''
 
 import os
 
@@ -49,9 +36,9 @@ class InventoryModule(BaseInventoryPlugin):
     def verify_file(self, host_list):
 
         valid = False
-        b_path = to_bytes(host_list)
+        b_path = to_bytes(host_list, errors='surrogate_or_strict')
         if not os.path.exists(b_path) and ',' in host_list:
-                valid = True
+            valid = True
         return valid
 
     def parse(self, inventory, loader, host_list, cache=True):
@@ -74,7 +61,7 @@ class InventoryModule(BaseInventoryPlugin):
                         if host not in self.inventory.hosts:
                             self.inventory.add_host(host, group='ungrouped', port=port)
         except Exception as e:
-            raise AnsibleParserError("Invalid data from string, could not parse: %s" % str(e))
+            raise AnsibleParserError("Invalid data from string, could not parse: %s" % to_native(e))
 
     def _expand_hostpattern(self, hostpattern):
         '''

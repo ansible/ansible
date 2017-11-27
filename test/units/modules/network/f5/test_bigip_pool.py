@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public Liccense for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -31,30 +17,26 @@ if sys.version_info < (2, 7):
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import F5ModuleError
+from units.modules.utils import set_module_args
 
 try:
     from library.bigip_pool import Parameters
     from library.bigip_pool import ModuleManager
     from library.bigip_pool import ArgumentSpec
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_pool import Parameters
         from ansible.modules.network.f5.bigip_pool import ModuleManager
         from ansible.modules.network.f5.bigip_pool import ArgumentSpec
+        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):
@@ -82,10 +64,9 @@ class BigIpObj(object):
 
 class TestParameters(unittest.TestCase):
     def test_module_parameters(self):
-        m = ['/Common/Fake', '/Common/Fake2']
         args = dict(
             monitor_type='m_of_n',
-            monitors=m,
+            monitors=['/Common/Fake', '/Common/Fake2'],
             quorum=1,
             slow_ramp_time=200,
             reselect_tries=5,
@@ -97,8 +78,7 @@ class TestParameters(unittest.TestCase):
         p = Parameters(args)
         assert p.monitor_type == 'm_of_n'
         assert p.quorum == 1
-        assert p.monitors == m
-        assert p.monitor == 'min 1 of { /Common/Fake /Common/Fake2 }'
+        assert p.monitors == 'min 1 of { /Common/Fake /Common/Fake2 }'
         assert p.host == '192.168.1.1'
         assert p.port == 8080
         assert p.member_name == '192.168.1.1:8080'
@@ -117,7 +97,7 @@ class TestParameters(unittest.TestCase):
         )
 
         p = Parameters(args)
-        assert p.monitor == '/Common/Fake and /Common/Fake2'
+        assert p.monitors == '/Common/Fake and /Common/Fake2'
         assert p.slow_ramp_time == 200
         assert p.reselect_tries == 5
         assert p.service_down_action == 'drop'
@@ -171,8 +151,8 @@ class TestManager(unittest.TestCase):
         )
 
         mm = ModuleManager(client)
-        mm.create_on_device = lambda: True
-        mm.exists = lambda: False
+        mm.create_on_device = Mock(return_value=True)
+        mm.exists = Mock(return_value=False)
 
         results = mm.exec_module()
 
@@ -297,12 +277,12 @@ class TestManager(unittest.TestCase):
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
-        msg = "The 'monitor_type' parameter cannot be empty when " \
-              "'monitors' parameter is specified."
-        with pytest.raises(F5ModuleError) as err:
-            mm.exec_module()
+        results = mm.exec_module()
 
-        assert str(err.value) == msg
+        assert results['changed'] is True
+        assert results['name'] == 'fake_pool'
+        assert results['monitors'] == '/Common/tcp and /Common/http'
+        assert results['monitor_type'] == 'and_list'
 
     def test_create_pool_monitors_missing(self, *args):
         set_module_args(dict(
@@ -325,7 +305,7 @@ class TestManager(unittest.TestCase):
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
-        msg = "The 'monitor' parameter cannot be empty when " \
+        msg = "The 'monitors' parameter cannot be empty when " \
               "'monitor_type' parameter is specified"
         with pytest.raises(F5ModuleError) as err:
             mm.exec_module()
@@ -385,9 +365,8 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['name'] == 'fake_pool'
-        assert results['monitors'] == ['/Common/tcp', '/Common/http']
+        assert results['monitors'] == '/Common/tcp and /Common/http'
         assert results['monitor_type'] == 'and_list'
-        assert results['monitor'] == '/Common/tcp and /Common/http'
 
     def test_create_pool_monitor_m_of_n(self, *args):
         set_module_args(dict(
@@ -415,9 +394,8 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['name'] == 'fake_pool'
-        assert results['monitors'] == ['/Common/tcp', '/Common/http']
+        assert results['monitors'] == 'min 1 of { /Common/tcp /Common/http }'
         assert results['monitor_type'] == 'm_of_n'
-        assert results['monitor'] == 'min 1 of { /Common/tcp /Common/http }'
 
     def test_update_monitors(self, *args):
         set_module_args(dict(
@@ -452,9 +430,8 @@ class TestManager(unittest.TestCase):
         results = mm.exec_module()
 
         assert results['changed'] is True
-        assert results['monitors'] == ['/Common/http', '/Common/tcp']
         assert results['monitor_type'] == 'and_list'
-        assert results['monitor'] == '/Common/http and /Common/tcp'
+        assert results['monitors'] == '/Common/http and /Common/tcp'
 
     def test_update_pool_new_member(self, *args):
         set_module_args(dict(
@@ -552,9 +529,8 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['name'] == 'fake_pool'
-        assert results['monitors'] == ['/Common/tcp', '/Common/http']
+        assert results['monitors'] == '/Common/tcp and /Common/http'
         assert results['monitor_type'] == 'and_list'
-        assert results['monitor'] == '/Common/tcp and /Common/http'
 
     def test_create_pool_monitor_m_of_n_no_partition(self, *args):
         set_module_args(dict(
@@ -581,9 +557,8 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['name'] == 'fake_pool'
-        assert results['monitors'] == ['/Common/tcp', '/Common/http']
+        assert results['monitors'] == 'min 1 of { /Common/tcp /Common/http }'
         assert results['monitor_type'] == 'm_of_n'
-        assert results['monitor'] == 'min 1 of { /Common/tcp /Common/http }'
 
     def test_create_pool_monitor_and_list_custom_partition(self, *args):
         set_module_args(dict(
@@ -610,9 +585,8 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['name'] == 'fake_pool'
-        assert results['monitors'] == ['/Testing/tcp', '/Testing/http']
+        assert results['monitors'] == '/Testing/tcp and /Testing/http'
         assert results['monitor_type'] == 'and_list'
-        assert results['monitor'] == '/Testing/tcp and /Testing/http'
 
     def test_create_pool_monitor_m_of_n_custom_partition(self, *args):
         set_module_args(dict(
@@ -640,6 +614,5 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['name'] == 'fake_pool'
-        assert results['monitors'] == ['/Testing/tcp', '/Testing/http']
+        assert results['monitors'] == 'min 1 of { /Testing/tcp /Testing/http }'
         assert results['monitor_type'] == 'm_of_n'
-        assert results['monitor'] == 'min 1 of { /Testing/tcp /Testing/http }'

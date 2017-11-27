@@ -1,18 +1,20 @@
 ---
 - debug: msg="START {{ connection.transport }}/set_mtu.yaml"
 
+- set_fact: testint="{{ nxos_int1 }}"
+
 - name: setup
   nxos_config:
     lines:
       - no switchport
       - no mtu
-    parents: interface Ethernet3/1
+    parents: "interface {{ testint }}"
     match: none
     provider: "{{ connection }}"
 
 - name: configure interface mtu
   nxos_mtu:
-    interface: Ethernet3/1
+    interface: "{{ testint }}"
     mtu: 2000
     provider: "{{ connection }}"
   register: result
@@ -23,7 +25,7 @@
 
 - name: verify interface mtu
   nxos_mtu:
-    interface: Ethernet3/1
+    interface: "{{ testint }}"
     mtu: 2000
     provider: "{{ connection }}"
   register: result
@@ -34,7 +36,7 @@
 
 - name: configure invalid (odd) interface mtu
   nxos_mtu:
-    interface: Ethernet3/1
+    interface: "{{ testint }}"
     mtu: 2001
     provider: "{{ connection }}"
   register: result
@@ -46,7 +48,7 @@
 
 - name: configure invalid (large) mtu setting
   nxos_mtu:
-    interface: Ethernet3/1
+    interface: "{{ testint }}"
     mtu: 100000
     provider: "{{ connection }}"
   register: result
@@ -59,7 +61,7 @@
 - name: teardown
   nxos_config:
     lines: no mtu
-    parents: interface Ethernet3/1
+    parents: "interface {{ testint }}"
     match: none
     provider: "{{ connection }}"
 

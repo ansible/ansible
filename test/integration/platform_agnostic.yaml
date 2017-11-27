@@ -31,13 +31,6 @@
 
     - block:
       - include_role:
-          name: net_command
-        when: "limit_to in ['*', 'net_command']"
-      rescue:
-        - set_fact: test_failed=true
-
-    - block:
-      - include_role:
           name: net_user
         when: "limit_to in ['*', 'net_user']"
       rescue:

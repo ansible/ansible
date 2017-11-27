@@ -112,7 +112,6 @@ import os
 import time
 from xml.etree import ElementTree
 import paramiko
-from ansible.module_utils.shell import ShellError
 from ansible.module_utils.basic import get_exception, AnsibleModule
 from ansible.module_utils.ce import ce_argument_spec, run_commands, get_nc_config
 
@@ -359,13 +358,8 @@ class FileCopy(object):
             self.transfer_result = 'The local file already exists on the device.'
 
         if not file_exists:
-            try:
-                self.transfer_file(dest)
-                self.transfer_result = 'The local file has been successfully ' \
-                                       'transferred to the device.'
-            except ShellError:
-                clie = get_exception()
-                self.module.fail_json(msg=get_cli_exception(clie))
+            self.transfer_file(dest)
+            self.transfer_result = 'The local file has been successfully transferred to the device.'
 
         if self.remote_file is None:
             self.remote_file = '/' + os.path.basename(self.local_file)

@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_bgp_neighbor_af
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
     module = nxos_bgp_neighbor_af
 
     def setUp(self):
+        super(TestNxosBgpNeighborAfModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_bgp_neighbor_af.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosBgpNeighborAfModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
@@ -70,15 +71,15 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
                              advertise_map_exist=['my_advertise_map', 'my_exist_map']))
         self.execute_module(
             changed=True, sort=False,
-            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map exist my_exist_map']
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map exist-map my_exist_map']
         )
 
     def test_nxos_bgp_neighbor_af_advertise_map_non_exist(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4', safi='unicast',
-                             advertise_map_non_exist=['my_advertise_map', 'my_exist_map']))
+                             advertise_map_non_exist=['my_advertise_map', 'my_non_exist_map']))
         self.execute_module(
             changed=True, sort=False,
-            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map non-exist my_exist_map']
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'advertise-map my_advertise_map non-exist-map my_non_exist_map']
         )
 
     def test_nxos_bgp_neighbor_af_max_prefix_limit_default(self):
@@ -96,4 +97,12 @@ class TestNxosBgpNeighborAfModule(TestNxosModule):
         self.execute_module(
             changed=True, sort=False,
             commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'maximum-prefix 20 20']
+        )
+
+    def test_nxos_bgp_neighbor_af_disable_peer_as_check(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.5', afi='ipv4',
+                             safi='unicast', disable_peer_as_check=True))
+        self.execute_module(
+            changed=True,
+            commands=['router bgp 65535', 'neighbor 3.3.3.5', 'address-family ipv4 unicast', 'disable-peer-as-check']
         )

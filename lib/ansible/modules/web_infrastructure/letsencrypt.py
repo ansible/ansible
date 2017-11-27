@@ -20,9 +20,9 @@ author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
 short_description: Create SSL certificates with Let's Encrypt
 description:
-   - "Create and renew SSL certificates with Let's Encrypt. Let’s Encrypt is a
+   - "Create and renew SSL certificates with Let's Encrypt. Let's Encrypt is a
       free, automated, and open certificate authority (CA), run for the
-      public’s benefit. For details see U(https://letsencrypt.org). The current
+      public's benefit. For details see U(https://letsencrypt.org). The current
       implementation supports the http-01, tls-sni-02 and dns-01 challenges."
    - "To use this module, it has to be executed at least twice. Either as two
       different tasks in the same run or during multiple runs."
@@ -50,25 +50,20 @@ options:
     description:
       - "The email address associated with this account."
       - "It will be used for certificate expiration warnings."
-    required: false
-    default: null
   acme_directory:
     description:
       - "The ACME directory to use. This is the entry point URL to access
          CA server API."
       - "For safety reasons the default is set to the Let's Encrypt staging server.
          This will create technically correct, but untrusted certificates."
-    required: false
     default: https://acme-staging.api.letsencrypt.org/directory
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
          ACME service at C(acme_directory)."
-    required: false
-    default: 'https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf'
+      - Default is latest gathered from C(acme_directory) URL.
   challenge:
     description: The challenge to be performed.
-    required: false
     choices: [ 'http-01', 'dns-01', 'tls-sni-02']
     default: 'http-01'
   csr:
@@ -85,19 +80,20 @@ options:
       - "The data to validate ongoing challenges."
       - "The value that must be used here will be provided by a previous use
          of this module."
-    required: false
-    default: null
   dest:
     description: The destination file for the certificate.
     required: true
     aliases: ['cert']
+  fullchain:
+    description: Include the full certificate chain in the destination file.
+    default: false
+    version_added: 2.5
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
          If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."
-    required: false
     default: 10
 '''
 
@@ -159,7 +155,6 @@ import binascii
 import copy
 import hashlib
 import json
-import locale
 import os
 import re
 import shutil
@@ -215,12 +210,12 @@ def get_cert_days(module, cert_file):
     _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True)
     try:
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)", out.decode('utf8')).group(1)
-        not_after = datetime.datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
+        not_after = datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
     except AttributeError:
         module.fail_json(msg="No 'Not after' date found in {0}".format(cert_file))
     except ValueError:
         module.fail_json(msg="Failed to parse 'Not after' date of {0}".format(cert_file))
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     return (not_after - now).days
 
 
@@ -310,11 +305,12 @@ class ACMEAccount(object):
     '''
     def __init__(self, module):
         self.module = module
-        self.agreement = module.params['agreement']
         self.key = module.params['account_key']
         self.email = module.params['account_email']
         self.data = module.params['data']
         self.directory = ACMEDirectory(module)
+        self.agreement = module.params['agreement'] or self.directory['meta']['terms-of-service']
+
         self.uri = None
         self.changed = False
 
@@ -408,13 +404,15 @@ class ACMEAccount(object):
 
         return result, info
 
-    def _new_reg(self, contact=[]):
+    def _new_reg(self, contact=None):
         '''
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created)
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.3
         '''
+        contact = [] if contact is None else contact
+
         if self.uri is not None:
             return True
 
@@ -712,10 +710,21 @@ class ACMEClient(object):
             "csr": nopad_b64(out),
         }
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
+
+        chain = []
+        if 'link' in info:
+            link = info['link']
+            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
+            if parsed_link and parsed_link.group(2) == "up":
+                chain_link = parsed_link.group(1)
+                chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
+                if chain_info['status'] in [200, 201]:
+                    chain = [chain_result.read()]
+
         if info['status'] not in [200, 201]:
             self.module.fail_json(msg="Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
         else:
-            return {'cert': result, 'uri': info['location']}
+            return {'cert': result, 'uri': info['location'], 'chain': chain}
 
     def _der_to_pem(self, der_cert):
         '''
@@ -767,6 +776,11 @@ class ACMEClient(object):
         cert = self._new_cert()
         if cert['cert'] is not None:
             pem_cert = self._der_to_pem(cert['cert'])
+
+            chain = [self._der_to_pem(link) for link in cert.get('chain', [])]
+            if chain and self.module.params['fullchain']:
+                pem_cert += "\n".join(chain)
+
             if write_file(self.module, self.dest, pem_cert):
                 self.cert_days = get_cert_days(self.module, self.dest)
                 self.changed = True
@@ -778,10 +792,11 @@ def main():
             account_key=dict(required=True, type='path'),
             account_email=dict(required=False, default=None, type='str'),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            agreement=dict(required=False, default='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf', type='str'),
+            agreement=dict(required=False, type='str'),
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
             data=dict(required=False, no_log=True, default=None, type='dict'),
+            fullchain=dict(required=False, default=True, type='bool'),
             dest=dict(required=True, aliases=['cert'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
         ),
@@ -789,7 +804,7 @@ def main():
     )
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
-    locale.setlocale(locale.LC_ALL, "C")
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
     cert_days = get_cert_days(module, module.params['dest'])
     if cert_days < module.params['remaining_days']:

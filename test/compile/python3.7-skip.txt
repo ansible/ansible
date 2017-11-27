@@ -1,0 +1,3 @@
+lib/ansible/cli/adhoc.py
+lib/ansible/modules/packaging/os/yum_repository.py
+test/units/modules/network/nuage/test_nuage_vspk.py

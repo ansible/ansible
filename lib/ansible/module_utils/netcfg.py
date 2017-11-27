@@ -35,9 +35,9 @@ from ansible.module_utils.network_common import to_list
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
 
 DEFAULT_IGNORE_LINES_RE = set([
-    re.compile("Using \d+ out of \d+ bytes"),
-    re.compile("Building configuration"),
-    re.compile("Current configuration : \d+ bytes")
+    re.compile(r"Using \d+ out of \d+ bytes"),
+    re.compile(r"Building configuration"),
+    re.compile(r"Current configuration : \d+ bytes")
 ])
 
 
@@ -97,7 +97,8 @@ class ConfigLine(object):
         return len(self._parents) > 0
 
     def add_child(self, obj):
-        assert isinstance(obj, ConfigLine), 'child must be of type `ConfigLine`'
+        if not isinstance(obj, ConfigLine):
+            raise AssertionError('child must be of type `ConfigLine`')
         self._children.append(obj)
 
 
@@ -263,7 +264,8 @@ class NetworkConfig(object):
                     return item
 
     def get_block(self, path):
-        assert isinstance(path, list), 'path argument must be a list object'
+        if not isinstance(path, list):
+            raise AssertionError('path argument must be a list object')
         obj = self.get_object(path)
         if not obj:
             raise ValueError('path does not exist in config')

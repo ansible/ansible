@@ -208,6 +208,25 @@ options:
         description:
             - "The compatibility version of the cluster. All hosts in this
                cluster must support at least this compatibility version."
+    mac_pool:
+        description:
+            - "MAC pool to be used by this cluster."
+            - "C(Note:)"
+            - "This is supported since oVirt version 4.1."
+        version_added: 2.4
+    external_network_providers:
+        description:
+            - "List of references to the external network providers available
+               in the cluster. If the automatic deployment of the external
+               network provider is supported, the networks of the referenced
+               network provider are available on every host in the cluster."
+            - "External network provider is described by following dictionary:"
+            - "C(name) - Name of the external network provider. Either C(name)
+               or C(id) is required."
+            - "C(id) - ID of the external network provider. Either C(name) or
+               C(id) is required."
+            - "This is supported since oVirt version 4.2."
+        version_added: 2.5
 extends_documentation_fragment: ovirt
 '''
 
@@ -244,6 +263,14 @@ EXAMPLES = '''
       - hwrng
       - random
 
+# Create cluster with default network provider
+- ovirt_cluster:
+    name: mycluster
+    data_center: Default
+    cpu_type: Intel SandyBridge Family
+    external_network_providers:
+      - name: ovirt-provider-ovn
+
 # Remove cluster
 - ovirt_cluster:
     state: absent
@@ -278,6 +305,7 @@ from ansible.module_utils.ovirt import (
     equal,
     ovirt_full_argument_spec,
     search_by_name,
+    get_id_by_name,
 )
 
 
@@ -335,6 +363,30 @@ class ClustersModule(BaseModule):
 
         return sched_policy
 
+    def _get_mac_pool(self):
+        mac_pool = None
+        if self._module.params.get('mac_pool'):
+            mac_pool = search_by_name(
+                self._connection.system_service().mac_pools_service(),
+                self._module.params.get('mac_pool'),
+            )
+
+        return mac_pool
+
+    def _get_external_network_providers(self):
+        return self.param('external_network_providers') or []
+
+    def _get_external_network_provider_id(self, external_provider):
+        return external_provider.get('id') or get_id_by_name(
+            self._connection.system_service().openstack_network_providers_service(),
+            external_provider.get('name')
+        )
+
+    def _get_external_network_providers_entity(self):
+        if self.param('external_network_providers') is not None:
+            return [otypes.ExternalProvider(id=self._get_external_network_provider_id(external_provider))
+                    for external_provider in self.param('external_network_providers')]
+
     def build_entity(self):
         sched_policy = self._get_sched_policy()
         return otypes.Cluster(
@@ -391,11 +443,7 @@ class ClustersModule(BaseModule):
                 ),
             ) if self.param('resilience_policy') else None,
             fencing_policy=otypes.FencingPolicy(
-                enabled=(
-                    self.param('fence_enabled') or
-                    self.param('fence_skip_if_connectivity_broken') or
-                    self.param('fence_skip_if_sd_active')
-                ),
+                enabled=self.param('fence_enabled'),
                 skip_if_connectivity_broken=otypes.SkipIfConnectivityBroken(
                     enabled=self.param('fence_skip_if_connectivity_broken'),
                     threshold=self.param('fence_connectivity_threshold'),
@@ -405,7 +453,7 @@ class ClustersModule(BaseModule):
                 ) else None,
                 skip_if_sd_active=otypes.SkipIfSdActive(
                     enabled=self.param('fence_skip_if_sd_active'),
-                ) if self.param('fence_skip_if_sd_active') else None,
+                ) if self.param('fence_skip_if_sd_active') is not None else None,
             ) if (
                 self.param('fence_enabled') is not None or
                 self.param('fence_skip_if_sd_active') is not None or
@@ -424,7 +472,7 @@ class ClustersModule(BaseModule):
                 ),
             ) if self.param('memory_policy') else None,
             ksm=otypes.Ksm(
-                enabled=self.param('ksm') or self.param('ksm_numa'),
+                enabled=self.param('ksm'),
                 merge_across_nodes=not self.param('ksm_numa'),
             ) if (
                 self.param('ksm_numa') is not None or
@@ -449,7 +497,34 @@ class ClustersModule(BaseModule):
             switch_type=otypes.SwitchType(
                 self.param('switch_type')
             ) if self.param('switch_type') else None,
+            mac_pool=otypes.MacPool(
+                id=get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'))
+            ) if self.param('mac_pool') else None,
+            external_network_providers=self._get_external_network_providers_entity(),
         )
+
+    def _matches_entity(self, item, entity):
+        return equal(item.get('id'), entity.id) and equal(item.get('name'), entity.name)
+
+    def _update_check_external_network_providers(self, entity):
+        if self.param('external_network_providers') is None:
+            return True
+        if entity.external_network_providers is None:
+            return not self.param('external_network_providers')
+        entity_providers = self._connection.follow_link(entity.external_network_providers)
+        entity_provider_ids = [provider.id for provider in entity_providers]
+        entity_provider_names = [provider.name for provider in entity_providers]
+        for provider in self._get_external_network_providers():
+            if provider.get('id'):
+                if provider.get('id') not in entity_provider_ids:
+                    return False
+            elif provider.get('name') and provider.get('name') not in entity_provider_names:
+                return False
+        for entity_provider in entity_providers:
+            if not any([self._matches_entity(provider, entity_provider)
+                        for provider in self._get_external_network_providers()]):
+                return False
+        return True
 
     def update_check(self, entity):
         sched_policy = self._get_sched_policy()
@@ -464,8 +539,8 @@ class ClustersModule(BaseModule):
             equal(self.param('gluster'), entity.gluster_service) and
             equal(self.param('virt'), entity.virt_service) and
             equal(self.param('threads_as_cores'), entity.threads_as_cores) and
-            equal(self.param('ksm_numa'), not entity.ksm.merge_across_nodes and entity.ksm.enabled) and
-            equal(self.param('ksm'), entity.ksm.merge_across_nodes and entity.ksm.enabled) and
+            equal(self.param('ksm_numa'), not entity.ksm.merge_across_nodes) and
+            equal(self.param('ksm'), entity.ksm.enabled) and
             equal(self.param('ha_reservation'), entity.ha_reservation) and
             equal(self.param('trusted_service'), entity.trusted_service) and
             equal(self.param('host_reason'), entity.maintenance_reason_required) and
@@ -495,7 +570,12 @@ class ClustersModule(BaseModule):
                 sorted([
                     str(source) for source in entity.required_rng_sources
                 ])
-            )
+            ) and
+            equal(
+                get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'), raise_error=False),
+                entity.mac_pool.id
+            ) and
+            self._update_check_external_network_providers(entity)
         )
 
 
@@ -516,7 +596,7 @@ def main():
         trusted_service=dict(default=None, type='bool'),
         vm_reason=dict(default=None, type='bool'),
         host_reason=dict(default=None, type='bool'),
-        memory_policy=dict(default=None, choices=['disabled', 'server', 'desktop']),
+        memory_policy=dict(default=None, choices=['disabled', 'server', 'desktop'], aliases=['performance_preset']),
         rng_sources=dict(default=None, type='list'),
         spice_proxy=dict(default=None),
         fence_enabled=dict(default=None, type='bool'),
@@ -543,6 +623,8 @@ def main():
         cpu_type=dict(default=None),
         switch_type=dict(default=None, choices=['legacy', 'ovs']),
         compatibility_version=dict(default=None),
+        mac_pool=dict(default=None),
+        external_network_providers=dict(default=None, type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

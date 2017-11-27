@@ -446,13 +446,23 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
         if self.state == 'present':
             deployment = self.deploy_template()
-            self.results['deployment'] = dict(
-                name=deployment.name,
-                group_name=self.resource_group_name,
-                id=deployment.id,
-                outputs=deployment.properties.outputs,
-                instances=self._get_instances(deployment)
-            )
+            if deployment is None:
+                self.results['deployment'] = dict(
+                    name=self.deployment_name,
+                    group_name=self.resource_group_name,
+                    id=None,
+                    outputs=None,
+                    instances=None
+                )
+            else:
+                self.results['deployment'] = dict(
+                    name=deployment.name,
+                    group_name=self.resource_group_name,
+                    id=deployment.id,
+                    outputs=deployment.properties.outputs,
+                    instances=self._get_instances(deployment)
+                )
+
             self.results['changed'] = True
             self.results['msg'] = 'deployment succeeded'
         else:
@@ -498,8 +508,9 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                                                                  self.deployment_name,
                                                                  deploy_parameter)
 
-            deployment_result = self.get_poller_result(result)
+            deployment_result = None
             if self.wait_for_deployment_completion:
+                deployment_result = self.get_poller_result(result)
                 while deployment_result.properties is None or deployment_result.properties.provisioning_state not in ['Canceled', 'Failed', 'Deleted',
                                                                               'Succeeded']:
                     time.sleep(self.wait_for_deployment_polling_period)

@@ -28,12 +28,13 @@
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, EntityCollection
-from ansible.module_utils.connection import Connection, exec_command
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
 
-asa_argument_spec = {
+asa_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -42,10 +43,27 @@ asa_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
     'context': dict(),
     'passwords': dict()
 }
+
+asa_argument_spec = {
+    'provider': dict(type='dict', options=asa_provider_spec),
+}
+
+asa_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'authorize': dict(type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+    'context': dict(),
+    'passwords': dict()
+}
+asa_argument_spec.update(asa_top_spec)
 
 command_spec = {
     'command': dict(key=True),
@@ -54,28 +72,19 @@ command_spec = {
 }
 
 
-def get_argspec():
-    return asa_argument_spec
+def get_provider_argspec():
+    return asa_provider_spec
 
 
 def check_args(module):
-    provider = module.params['provider'] or {}
-
-    for key in asa_argument_spec:
-        if key not in ['provider', 'authorize'] and module.params[key]:
-            module.warn('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
 def get_connection(module):
     global _CONNECTION
     if _CONNECTION:
         return _CONNECTION
-    _CONNECTION = Connection(module)
+    _CONNECTION = Connection(module._socket_path)
 
     context = module.params['context']
 
@@ -90,7 +99,8 @@ def get_connection(module):
 
 
 def to_commands(module, commands):
-    assert isinstance(commands, list), 'argument must be of type <list>'
+    if not isinstance(commands, list):
+        raise AssertionError('argument must be of type <list>')
 
     transform = EntityCollection(module, command_spec)
     commands = transform(commands)
@@ -117,7 +127,9 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     passwords = module.params['passwords']
     if passwords:
         cmd = 'more system:running-config'
@@ -137,8 +149,11 @@ def get_config(module, flags=[]):
 
 
 def load_config(module, config):
-    conn = get_connection(module)
-    conn.edit_config(config)
+    try:
+        conn = get_connection(module)
+        conn.edit_config(config)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
 
 def get_defaults_flag(module):

@@ -36,9 +36,9 @@ using the :func:`list <jinja2:list>` filter whenever using :meth:`dict.keys`,
       - debug:
           msg: '{{ item }}'
         # Only works with Python 2
-        #with_items: "{{ hosts.keys() }}"
+        #loop: "{{ hosts.keys() }}"
         # Works with both Python 2 and Python 3
-        with_items: "{{ hosts.keys() | list }}"
+        loop: "{{ hosts.keys() | list }}"
 
 .. _pb-py-compat-iteritems:
 
@@ -59,9 +59,9 @@ compatible with both Python2 and Python3::
       - debug:
           msg: '{{ item }}'
         # Only works with Python 2
-        #with_items: "{{ hosts.iteritems() }}"
+        #loop: "{{ hosts.iteritems() }}"
         # Works with both Python 2 and Python 3
-        with_items: "{{ hosts.items() | list }}"
+        loop: "{{ hosts.items() | list }}"
 
 .. seealso::
     * The :ref:`pb-py-compat-dict-views` entry for information on

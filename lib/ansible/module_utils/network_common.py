@@ -28,6 +28,7 @@
 import re
 import ast
 import operator
+import socket
 
 from itertools import chain
 
@@ -35,7 +36,7 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 
 try:
-    from jinja2 import Environment
+    from jinja2 import Environment, StrictUndefined
     from jinja2.exceptions import UndefinedError
     HAS_JINJA2 = True
 except ImportError:
@@ -91,7 +92,9 @@ class Entity(object):
         * default - default value
     """
 
-    def __init__(self, module, attrs=None, args=[], keys=None, from_argspec=False):
+    def __init__(self, module, attrs=None, args=None, keys=None, from_argspec=False):
+        args = [] if args is None else args
+
         self._attributes = attrs or {}
         self._module = module
 
@@ -219,8 +222,10 @@ def dict_diff(base, comparable):
 
     :returns: new dict object with differences
     """
-    assert isinstance(base, dict), "`base` must be of type <dict>"
-    assert isinstance(comparable, dict), "`comparable` must be of type <dict>"
+    if not isinstance(base, dict):
+        raise AssertionError("`base` must be of type <dict>")
+    if not isinstance(comparable, dict):
+        raise AssertionError("`comparable` must be of type <dict>")
 
     updates = dict()
 
@@ -254,8 +259,10 @@ def dict_merge(base, other):
 
     :returns: new combined dict object
     """
-    assert isinstance(base, dict), "`base` must be of type <dict>"
-    assert isinstance(other, dict), "`other` must be of type <dict>"
+    if not isinstance(base, dict):
+        raise AssertionError("`base` must be of type <dict>")
+    if not isinstance(other, dict):
+        raise AssertionError("`other` must be of type <dict>")
 
     combined = dict()
 
@@ -298,12 +305,13 @@ def dict_merge(base, other):
 
 
 def conditional(expr, val, cast=None):
-    match = re.match('^(.+)\((.+)\)$', str(expr), re.I)
+    match = re.match(r'^(.+)\((.+)\)$', str(expr), re.I)
     if match:
         op, arg = match.groups()
     else:
         op = 'eq'
-        assert (' ' not in str(expr)), 'invalid expression: cannot contain spaces'
+        if ' ' in str(expr):
+            raise AssertionError('invalid expression: cannot contain spaces')
         arg = expr
 
     if cast is None and val is not None:
@@ -335,6 +343,52 @@ def remove_default_spec(spec):
             del spec[item]['default']
 
 
+def validate_ip_address(address):
+    try:
+        socket.inet_aton(address)
+    except socket.error:
+        return False
+    return address.count('.') == 3
+
+
+def validate_prefix(prefix):
+    if prefix and not 0 <= int(prefix) <= 32:
+        return False
+    return True
+
+
+def load_provider(spec, args):
+    provider = args.get('provider', {})
+    for key, value in iteritems(spec):
+        if key not in provider:
+            if key in args:
+                provider[key] = args[key]
+            elif 'fallback' in value:
+                provider[key] = _fallback(value['fallback'])
+            elif 'default' in value:
+                provider[key] = value['default']
+            else:
+                provider[key] = None
+    args['provider'] = provider
+    return provider
+
+
+def _fallback(fallback):
+    strategy = fallback[0]
+    args = []
+    kwargs = {}
+
+    for item in fallback[1:]:
+        if isinstance(item, dict):
+            kwargs = item
+        else:
+            args = item
+    try:
+        return strategy(*args, **kwargs)
+    except AnsibleFallbackNotFound:
+        pass
+
+
 class Template:
 
     def __init__(self):
@@ -342,11 +396,12 @@ class Template:
             raise ImportError("jinja2 is required but does not appear to be installed.  "
                               "It can be installed using `pip install jinja2`")
 
-        self.env = Environment()
+        self.env = Environment(undefined=StrictUndefined)
         self.env.filters.update({'ternary': ternary})
 
     def __call__(self, value, variables=None, fail_on_undefined=True):
         variables = variables or {}
+
         if not self.contains_vars(value):
             return value
 
@@ -364,13 +419,6 @@ class Template:
                 return str(value)
         else:
             return None
-
-    def can_template(self, tmpl):
-        try:
-            self(tmpl)
-            return True
-        except:
-            return False
 
     def contains_vars(self, data):
         if isinstance(data, string_types):

@@ -394,7 +394,7 @@ class ConsulInventory(object):
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used
          as Ansible groups '''
-        return re.sub('[^A-Za-z0-9\-\.]', '_', word)
+        return re.sub(r'[^A-Za-z0-9\-\.]', '_', word)
 
     def sanitize_dict(self, d):
 
@@ -473,10 +473,7 @@ class ConsulConfig(dict):
         scheme = 'http'
 
         if hasattr(self, 'url'):
-            try:
-                from urlparse import urlparse
-            except ImportError:
-                from urllib.parse import urlparse
+            from ansible.module_utils.six.moves.urllib.parse import urlparse
             o = urlparse(self.url)
             if o.hostname:
                 host = o.hostname

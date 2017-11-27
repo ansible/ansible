@@ -1,31 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_gtm_wide_ip
-short_description: Manages F5 BIG-IP GTM wide ip.
+short_description: Manages F5 BIG-IP GTM wide ip
 description:
   - Manages F5 BIG-IP GTM wide ip.
 version_added: "2.0"
@@ -76,6 +66,11 @@ options:
       - disabled
       - enabled
     version_added: 2.4
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -86,40 +81,42 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set lb method
   bigip_gtm_wide_ip:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      lb_method: "round-robin"
-      name: "my-wide-ip.example.com"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    lb_method: round-robin
+    name: my-wide-ip.example.com
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 lb_method:
-    description: The new load balancing method used by the wide IP.
-    returned: changed
-    type: string
-    sample: "topology"
+  description: The new load balancing method used by the wide IP.
+  returned: changed
+  type: string
+  sample: topology
 state:
-    description: The new state of the wide IP.
-    returned: changed
-    type: string
-    sample: "disabled"
+  description: The new state of the wide IP.
+  returned: changed
+  type: string
+  sample: disabled
 '''
 
 import re
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
 from distutils.version import LooseVersion
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -508,23 +505,18 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         self.argument_spec = dict(
             lb_method=dict(
-                required=False,
-                choices=lb_method_choices,
-                default=None
+                choices=lb_method_choices
             ),
             name=dict(
                 required=True,
                 aliases=['wide_ip']
             ),
             type=dict(
-                required=False,
-                default=None,
                 choices=[
                     'a', 'aaaa', 'cname', 'mx', 'naptr', 'srv'
                 ]
             ),
             state=dict(
-                required=False,
                 default='present',
                 choices=['absent', 'present', 'enabled', 'disabled']
             )

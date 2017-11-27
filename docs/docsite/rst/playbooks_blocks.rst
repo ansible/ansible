@@ -1,11 +1,7 @@
 Blocks
 ======
 
-In 2.0 we added a block feature to allow for logical grouping of tasks and even
-in play error handling. Most of what you can apply to a single task can be applied
-at the block level, which also makes it much easier to set data or directives common
-to the tasks. This does not mean the directive affects the block itself, but is inherited
-by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, not the block itself.
+Blocks allow for logical grouping of tasks and in play error handling. Most of what you can apply to a single task can be applied at the block level, which also makes it much easier to set data or directives common to the tasks. This does not mean the directive affects the block itself, but is inherited by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, not the block itself.
 
 
 .. code-block:: YAML
@@ -16,7 +12,7 @@ by the tasks enclosed by a block. i.e. a `when` will be applied to the tasks, no
       - name: Install Apache
         block:
           - yum: name={{ item }} state=installed
-            with_items:
+            loop:
               - httpd
               - memcached
           - template: src=templates/src.j2 dest=/etc/foo.conf
@@ -32,7 +28,7 @@ for all the enclosed tasks.
 
 .. versionadded:: 2.3
 
-  The `name:` keyword for `blocks:` was added in Ansible 2.3.
+    The ``name:`` keyword for ``block:`` was added in Ansible 2.3.
 
 .. _block_error_handling:
 
@@ -61,7 +57,8 @@ Blocks also introduce the ability to handle errors in a way similar to exception
 
 The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
 with whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
-error did or did not occur in the ``block`` and ``rescue`` sections.
+error did or did not occur in the ``block`` and ``rescue`` sections. It should be noted that the play continues if a
+``rescue`` section completes successfully as it 'erases' the error status (but not the reporting), this means it won't trigger ``max_fail_percentage`` nor ``any_errors_fatal`` configurations but will appear in the playbook statistics.
 
 
 Another example is how to run handlers after an error occurred :

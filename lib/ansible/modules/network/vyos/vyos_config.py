@@ -34,6 +34,8 @@ description:
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
 extends_documentation_fragment: vyos
+notes:
+  - Tested against VYOS 1.1.7
 options:
   lines:
     description:
@@ -121,13 +123,18 @@ filtered:
   returned: always
   type: list
   sample: ['...', '...']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: string
+  sample: /playbooks/ansible/backup/vyos_config.2016-07-16@22:28:34
 """
 import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.vyos import load_config, get_config, run_commands
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 DEFAULT_COMMENT = 'configured by vyos_config'
@@ -258,7 +265,6 @@ def main():
     )
 
     warnings = list()
-    check_args(module, warnings)
 
     result = dict(changed=False, warnings=warnings)
 

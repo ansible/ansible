@@ -75,7 +75,7 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         dst_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
-        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all objects
+        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -84,31 +84,44 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['dst_group', 'tenant']],
+            ['state', 'present', ['dst_group', 'tenant']],
+        ],
     )
 
     dst_group = module.params['dst_group']
-    # tenant = module.params['tenant']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-
-    # TODO: This logic could be cleaner.
-    if dst_group is not None:
-        path = 'api/mo/uni/tn-%(tenant)s/destgrp-%(dst_group)s.json' % module.params
-    elif state == 'query':
-        # Query all contracts
-        path = 'api/node/class/spanDestGrp.json'
-    else:
-        module.fail_json(msg="Parameter 'dst_group' is required for state 'absent' or 'present'")
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='spanDestGrp',
+            aci_rn='destgrp-{}'.format(dst_group),
+            filter_target='(spanDestGrp.name, "{}")'.format(dst_group),
+            module_object=dst_group,
+        ),
+    )
 
     aci.get_existing()
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='spanDestGrp', class_config=dict(name=dst_group, descr=description))
+        aci.payload(
+            aci_class='spanDestGrp',
+            class_config=dict(
+                name=dst_group,
+                descr=description,
+            ),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='spanDestGrp')

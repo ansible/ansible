@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import collections
 import os
 import re
 import errno
@@ -11,7 +12,6 @@ import sys
 
 from lib.util import (
     ApplicationError,
-    ABC,
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -222,30 +222,33 @@ def walk_sanity_targets():
     return walk_test_targets(module_path='lib/ansible/modules/')
 
 
-def walk_posix_integration_targets():
+def walk_posix_integration_targets(include_hidden=False):
     """
+    :type include_hidden: bool
     :rtype: collections.Iterable[IntegrationTarget]
     """
     for target in walk_integration_targets():
-        if 'posix/' in target.aliases:
+        if 'posix/' in target.aliases or (include_hidden and 'hidden/posix/' in target.aliases):
             yield target
 
 
-def walk_network_integration_targets():
+def walk_network_integration_targets(include_hidden=False):
     """
+    :type include_hidden: bool
     :rtype: collections.Iterable[IntegrationTarget]
     """
     for target in walk_integration_targets():
-        if 'network/' in target.aliases:
+        if 'network/' in target.aliases or (include_hidden and 'hidden/network/' in target.aliases):
             yield target
 
 
-def walk_windows_integration_targets():
+def walk_windows_integration_targets(include_hidden=False):
     """
+    :type include_hidden: bool
     :rtype: collections.Iterable[IntegrationTarget]
     """
     for target in walk_integration_targets():
-        if 'windows/' in target.aliases:
+        if 'windows/' in target.aliases or (include_hidden and 'hidden/windows/' in target.aliases):
             yield target
 
 
@@ -338,7 +341,12 @@ def analyze_integration_target_dependencies(integration_targets):
     """
     hidden_role_target_names = set(t.name for t in integration_targets if t.type == 'role' and 'hidden/' in t.aliases)
     normal_role_targets = [t for t in integration_targets if t.type == 'role' and 'hidden/' not in t.aliases]
-    dependencies = dict((target_name, set()) for target_name in hidden_role_target_names)
+    dependencies = collections.defaultdict(set)
+
+    # handle setup dependencies
+    for target in integration_targets:
+        for setup_target_name in target.setup_always + target.setup_once:
+            dependencies[setup_target_name].add(target.name)
 
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
     for role_target in normal_role_targets:
@@ -511,13 +519,13 @@ class IntegrationTarget(CompletionTarget):
         # modules
 
         if self.name in modules:
-            module = self.name
+            module_name = self.name
         elif self.name.startswith('win_') and self.name[4:] in modules:
-            module = self.name[4:]
+            module_name = self.name[4:]
         else:
-            module = None
+            module_name = None
 
-        self.modules = tuple(sorted(a for a in static_aliases + tuple([module]) if a in modules))
+        self.modules = tuple(sorted(a for a in static_aliases + tuple([module_name]) if a in modules))
 
         # groups
 
@@ -575,6 +583,11 @@ class IntegrationTarget(CompletionTarget):
             aliases = ['hidden/'] + ['hidden/%s' % a for a in aliases if not a.startswith('hidden/')]
 
         self.aliases = tuple(sorted(set(aliases)))
+
+        # configuration
+
+        self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
+        self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
 
 
 class TargetPatternsNotMatched(ApplicationError):

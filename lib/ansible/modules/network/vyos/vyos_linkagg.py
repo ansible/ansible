@@ -33,6 +33,8 @@ short_description: Manage link aggregation groups on VyOS network devices
 description:
   - This module provides declarative management of link aggregation groups
     on VyOS network devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   name:
     description:
@@ -98,7 +100,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import load_config, run_commands
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def search_obj_in_list(name, lst):
@@ -238,7 +240,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 

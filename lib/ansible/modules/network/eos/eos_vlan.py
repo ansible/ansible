@@ -33,6 +33,8 @@ short_description: Manage VLANs on Arista EOS network devices
 description:
   - This module provides declarative management of VLANs
     on Arista EOS network devices.
+notes:
+  - Tested against EOS 4.15
 options:
   name:
     description:
@@ -46,13 +48,13 @@ options:
       - List of interfaces that should be associated to the VLAN.
   delay:
     description:
-      - Delay the play should wait to check for declaratie intent params values.
+      - Delay the play should wait to check for declarative intent params values.
     default: 10
   aggregate:
-    description: List of VLANs definitions
+    description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the aggregates parameter.
+      - Purge VLANs not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

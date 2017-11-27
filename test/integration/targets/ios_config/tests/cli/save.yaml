@@ -9,11 +9,13 @@
     parents:
       - interface Loopback999
     match: none
+    authorize: yes
 
 
 - name: save config
   ios_config:
     save: true
+    authorize: yes
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
@@ -27,14 +29,38 @@
 - name: save should always run
   ios_config:
     save: true
+    authorize: yes
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
 
+- name: delete config (setup)
+  ios_config:
+    replace: line
+    lines:
+      - "no ip http server"
+    save_when: modified
+    authorize: yes
+  register: result
+
+- name: save should always run
+  ios_config:
+    replace: line
+    lines:
+      - "ip http server"
+    save_when: modified
+    authorize: yes
+  register: result
+
 - assert:
     that:
       - "result.changed == true"
-# FIXME https://github.com/ansible/ansible-modules-core/issues/5008
-  ignore_errors: true
+
+- name: teardown
+  ios_config:
+    lines:
+      - "no ip http server"
+    authorize: yes
+  register: result
 
 - debug: msg="END cli/save.yaml"

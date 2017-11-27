@@ -151,7 +151,7 @@ EXAMPLES = '''
     volumes:
     - device_name: /dev/sda1
       volume_size: 100
-      device_type: io1
+      volume_type: io1
       iops: 3000
       delete_on_termination: true
       encrypted: true
@@ -168,7 +168,7 @@ EXAMPLES = '''
     volumes:
     - device_name: /dev/sda1
       volume_size: 120
-      device_type: io1
+      volume_type: io1
       iops: 3000
       delete_on_termination: true
 
@@ -188,11 +188,27 @@ except ImportError:
 
 def create_block_device_meta(module, volume):
     MAX_IOPS_TO_SIZE_RATIO = 30
+
+    # device_type has been used historically to represent volume_type,
+    # however ec2_vol uses volume_type, as does the BlockDeviceType, so
+    # we add handling for either/or but not both
+    if 'device_type' in volume:
+        if 'volume_type' in volume:
+            module.fail_json(msg='device_type is a deprecated name for volume_type. '
+                             'Do not use both device_type and volume_type')
+        else:
+            module.deprecate('device_type is deprecated for block devices - use volume_type instead',
+                             version=2.9)
+
+    # rewrite device_type key to volume_type
+    if 'device_type' in volume:
+        volume['volume_type'] = volume.pop('device_type')
+
     if 'snapshot' not in volume and 'ephemeral' not in volume:
         if 'volume_size' not in volume:
             module.fail_json(msg='Size must be specified when creating a new volume or modifying the root volume')
     if 'snapshot' in volume:
-        if 'device_type' in volume and volume.get('device_type') == 'io1' and 'iops' not in volume:
+        if volume.get('volume_type') == 'io1' and 'iops' not in volume:
             module.fail_json(msg='io1 volumes must have an iops value set')
     if 'ephemeral' in volume:
         if 'snapshot' in volume:
@@ -216,7 +232,7 @@ def create_block_device_meta(module, volume):
         return_object['Ebs']['SnapshotId'] = volume.get('snapshot')
 
     if 'volume_size' in volume:
-        return_object['Ebs']['VolumeSize'] = volume.get('volume_size')
+        return_object['Ebs']['VolumeSize'] = int(volume.get('volume_size', 0))
 
     if 'volume_type' in volume:
         return_object['Ebs']['VolumeType'] = volume.get('volume_type')
@@ -254,10 +270,9 @@ def create_launch_config(connection, module):
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
 
-    block_device_mapping = {}
+    block_device_mapping = []
 
-    convert_list = ['image_id', 'instance_type', 'instance_type', 'instance_id', 'placement_tenancy', 'key_name', 'kernel_id', 'ramdisk_id',
-                    'instance_profile_name', 'spot_price']
+    convert_list = ['image_id', 'instance_type', 'instance_type', 'instance_id', 'placement_tenancy', 'key_name', 'kernel_id', 'ramdisk_id', 'spot_price']
 
     launch_config = (snake_dict_to_camel_dict(dict((k.capitalize(), str(v)) for k, v in module.params.items() if v is not None and k in convert_list)))
 
@@ -274,7 +289,7 @@ def create_launch_config(connection, module):
                 module.fail_json(msg='Device name must be set for volume')
             # Minimum volume size is 1GB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
             if 'volume_size' not in volume or int(volume['volume_size']) > 0:
-                block_device_mapping.update(create_block_device_meta(module, volume))
+                block_device_mapping.append(create_block_device_meta(module, volume))
 
     try:
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
@@ -299,7 +314,7 @@ def create_launch_config(connection, module):
         launch_config['ClassicLinkVPCSecurityGroups'] = classic_link_vpc_security_groups
 
     if block_device_mapping:
-        launch_config['BlockDeviceMappings'] = [block_device_mapping]
+        launch_config['BlockDeviceMappings'] = block_device_mapping
 
     if instance_profile_name is not None:
         launch_config['IamInstanceProfile'] = instance_profile_name
@@ -395,7 +410,7 @@ def main():
             classic_link_vpc_security_groups=dict(type='list'),
             classic_link_vpc_id=dict(),
             vpc_id=dict(),
-            placement_tenancy=dict(default='default', choices=['default', 'dedicated'])
+            placement_tenancy=dict(choices=['default', 'dedicated'])
         )
     )
 

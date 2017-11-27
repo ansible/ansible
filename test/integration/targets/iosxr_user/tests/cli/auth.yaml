@@ -1,0 +1,89 @@
+---
+- block:
+  - name: Create user with password
+    iosxr_user:
+      name: auth_user
+      state: present
+      configured_password: pass123
+
+  - name: test login
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
+      responses:
+        (?i)password: "pass123"
+
+  - name: test login with invalid password (should fail)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
+      responses:
+        (?i)password: "badpass"
+    ignore_errors: yes
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  - name: create user with private key (contents input)
+    iosxr_user:
+      name: auth_user
+      state: present
+      public_key_contents: "{{ lookup('file', \"{{ output_dir }}/public.pub\") }}"
+
+  - name: test login with private key
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{output_dir}}/private show version"
+    responses:
+      (?i)passphrase: 'pass123'
+
+  - name: remove user and key
+    iosxr_user:
+      name: auth_user
+      state: absent
+
+  - name: test login with private key (should fail, no user)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{output_dir}}/private show version"
+    responses:
+      (?i)passphrase: 'pass123'
+    ignore_errors: yes
+    register: results
+
+  - name: create user with private key (path input)
+    iosxr_user:
+      name: auth_user
+      state: present
+      public_key: "{{ output_dir }}/public.pub"
+
+  - name: test login with private key
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{output_dir}}/private show version"
+    responses:
+      (?i)passphrase: 'pass123'
+
+  - name: change private key for user
+    iosxr_user:
+      name: auth_user
+      state: present
+      public_key_contents: "{{ lookup('file', \"{{ output_dir }}/public2.pub\") }}"
+
+  - name: test login with invalid private key (should fail)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i {{output_dir}}/private show version"
+      responses:
+        (?i)passphrase: "pass123"
+    ignore_errors: yes
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  always:
+  - name: delete user
+    iosxr_user:
+      name: auth_user
+      state: absent
+    register: result

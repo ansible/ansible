@@ -34,7 +34,7 @@ description:
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - This module is not idempotent when C(state=present).
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(state=absent) removes the whole profile.
 options:
     commands:
@@ -69,7 +69,7 @@ options:
 
 EXAMPLES = '''
 # Create a maintenance-mode profile
-- nxos_gir_profile:
+- nxos_gir_profile_management:
     mode: maintenance
     commands:
       - router eigrp 11
@@ -78,7 +78,7 @@ EXAMPLES = '''
     username: "{{ un }}"
     password: "{{ pwd }}"
 # Remove the maintenance-mode profile
-- nxos_gir_profile:
+- nxos_gir_profile_management:
     mode: maintenance
     state: absent
     host: "{{ inventory_hostname }}"
@@ -145,6 +145,9 @@ def get_existing(module):
 
 def state_present(module, existing, commands):
     cmds = list()
+    if existing == commands:
+        # Idempotent case
+        return cmds
     cmds.extend(commands)
     if module.params['mode'] == 'maintenance':
         cmds.insert(0, 'configure maintenance profile maintenance-mode')
@@ -205,9 +208,10 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            load_config(module, cmds)
-            changed = True
-            end_state = invoke('get_existing', module)
+            if cmds:
+                load_config(module, cmds)
+                changed = True
+                end_state = invoke('get_existing', module)
 
     result['changed'] = changed
     if module._verbosity > 0:
@@ -224,4 +228,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

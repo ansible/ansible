@@ -1,23 +1,9 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com> and others
 # (c) 2017, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -56,12 +42,15 @@ class PluginLoader:
     The first match is used.
     '''
 
-    def __init__(self, class_name, package, config, subdir, aliases={}, required_base_class=None):
+    def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
+        aliases = {} if aliases is None else aliases
 
         self.class_name = class_name
         self.base_class = required_base_class
         self.package = package
         self.subdir = subdir
+
+        # FIXME: remove alias dict in favor of alias by symlink?
         self.aliases = aliases
 
         if config and not isinstance(config, list):
@@ -217,14 +206,17 @@ class PluginLoader:
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
 
         # plugins w/o class name don't support config
-        if self.class_name and self.class_name in ('Connection'):
-            # FIXME: expand from just connection
-            type_name = get_plugin_class(self)
-            dstring = read_docstring(path, verbose=False, ignore_errors=False)
-            if dstring.get('doc', False):
-                if 'options' in dstring['doc'] and isinstance(dstring['doc']['options'], dict):
-                    C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['doc']['options'])
-                    display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
+        if self.class_name:
+            type_name = get_plugin_class(self.class_name)
+
+            # FIXME: expand from just connection and callback
+            if type_name in ('callback', 'connection', 'inventory', 'lookup'):
+                dstring = read_docstring(path, verbose=False, ignore_errors=False)
+
+                if dstring.get('doc', False):
+                    if 'options' in dstring['doc'] and isinstance(dstring['doc']['options'], dict):
+                        C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['doc']['options'])
+                        display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
 
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
@@ -238,8 +230,9 @@ class PluginLoader:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
                 self._paths = None
+                display.debug('Added %s to loader search path' % (directory))
 
-    def find_plugin(self, name, mod_type='', ignore_deprecated=False):
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''
 
         if mod_type:
@@ -251,6 +244,9 @@ class PluginLoader:
             # Only Ansible Modules.  Ansible modules can be any executable so
             # they can have any suffix
             suffix = ''
+
+        if check_aliases:
+            name = self.aliases.get(name, name)
 
         # The particular cache to look for modules within.  This matches the
         # requested mod_type
@@ -417,7 +413,7 @@ class PluginLoader:
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
-        for path in sorted(all_matches, key=lambda match: os.path.basename(match)):
+        for path in sorted(all_matches, key=os.path.basename):
             name = os.path.basename(os.path.splitext(path)[0])
 
             if '__init__' in name:
@@ -585,4 +581,11 @@ netconf_loader = PluginLoader(
     'netconf_plugins',
     'netconf_plugins',
     required_base_class='NetconfBase'
+)
+
+inventory_loader = PluginLoader(
+    'InventoryModule',
+    'ansible.plugins.inventory',
+    C.DEFAULT_INVENTORY_PLUGIN_PATH,
+    'inventory_plugins'
 )

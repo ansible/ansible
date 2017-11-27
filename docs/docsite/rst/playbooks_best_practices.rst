@@ -216,15 +216,15 @@ variables from the file "group_vars/ec2_tag_class_webserver" automatically.
 Top Level Playbooks Are Separated By Role
 `````````````````````````````````````````
 
-In site.yml, we include a playbook that defines our entire infrastructure.  Note this is SUPER short, because it's just including
-some other playbooks.  Remember, playbooks are nothing more than lists of plays::
+In site.yml, we import a playbook that defines our entire infrastructure.  This is a very short example, because it's just importing
+some other playbooks::
 
     ---
     # file: site.yml
-    - include: webservers.yml
-    - include: dbservers.yml
+    - import_playbook: webservers.yml
+    - import_playbook: dbservers.yml
 
-In a file like webservers.yml (also at the top level), we simply map the configuration of the webservers group to the roles performed by the webservers group.  Also notice this is incredibly short.  For example::
+In a file like webservers.yml (also at the top level), we map the configuration of the webservers group to the roles performed by the webservers group::
 
     ---
     # file: webservers.yml
@@ -285,29 +285,29 @@ Now what sort of use cases does this layout enable?  Lots!  If I want to reconfi
 
     ansible-playbook -i production site.yml
 
-What about just reconfiguring NTP on everything?  Easy.::
+To reconfigure NTP on everything::
 
     ansible-playbook -i production site.yml --tags ntp
 
-What about just reconfiguring my webservers?::
+To reconfigure just my webservers::
 
     ansible-playbook -i production webservers.yml
 
-What about just my webservers in Boston?::
+For just my webservers in Boston::
 
     ansible-playbook -i production webservers.yml --limit boston
 
-What about just the first 10, and then the next 10?::
+Forjust the first 10, and then the next 10::
    
     ansible-playbook -i production webservers.yml --limit boston[1:10]
     ansible-playbook -i production webservers.yml --limit boston[11:20]
 
-And of course just basic ad-hoc stuff is also possible.::
+And of course just basic ad-hoc stuff is also possible::
 
     ansible boston -i production -m ping
     ansible boston -i production -m command -a '/sbin/reboot'
 
-And there are some useful commands to know (at least in 1.1 and higher)::
+And there are some useful commands to know::
 
     # confirm what task names would be run if I ran this command and said "just ntp tasks"
     ansible-playbook -i production webservers.yml --tags ntp --list-tasks
@@ -473,7 +473,7 @@ Variables and Vaults
 
 For general maintenance, it is often easier to use ``grep``, or similar tools, to find variables in your Ansible setup. Since vaults obscure these variables, it is best to work with a layer of indirection. When running a playbook, Ansible finds the variables in the unencrypted file and all sensitive variables come from the encrypted file.
 
-A best practice approach for this is to start with a ``group_vars/`` subdirectory named after the group. Inside of this subdirectory, create two files named ``vars`` and ``vault``. Inside of the ``vars`` file, define all of the variables needed, including any sensitive ones. Next, copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``. You should adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables and ensure that the ``vault`` file is vault encrypted.
+A best practice approach for this is to start with a ``group_vars/`` subdirectory named after the group. Inside of this subdirectory, create two files named ``vars`` and ``vault``. Inside of the ``vars`` file, define all of the variables needed, including any sensitive ones. Next, copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``. You should adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables using jinja2 syntax, and ensure that the ``vault`` file is vault encrypted.
 
 This best practice has no limit on the amount of variable and vault files or their names.
 

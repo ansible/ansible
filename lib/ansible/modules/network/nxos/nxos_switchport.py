@@ -30,6 +30,7 @@ description:
   - Manages Layer 2 interfaces
 author: Jason Edelman (@jedelman8)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - When C(state=absent), VLANs can be added/removed from trunk links and
     the existing access VLAN can be 'unconfigured' to just having VLAN 1
     on that interface.
@@ -433,11 +434,12 @@ def apply_value_map(value_map, resource):
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 

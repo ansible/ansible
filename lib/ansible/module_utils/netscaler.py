@@ -39,7 +39,11 @@ from ansible.module_utils._text import to_native
 
 class ConfigProxy(object):
 
-    def __init__(self, actual, client, attribute_values_dict, readwrite_attrs, transforms={}, readonly_attrs=[], immutable_attrs=[], json_encodes=[]):
+    def __init__(self, actual, client, attribute_values_dict, readwrite_attrs, transforms=None, readonly_attrs=None, immutable_attrs=None, json_encodes=None):
+        transforms = {} if transforms is None else transforms
+        readonly_attrs = [] if readonly_attrs is None else readonly_attrs
+        immutable_attrs = [] if immutable_attrs is None else immutable_attrs
+        json_encodes = [] if json_encodes is None else json_encodes
 
         # Actual config object from nitro sdk
         self.actual = actual

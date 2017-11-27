@@ -33,6 +33,8 @@ description:
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   commands:
     description:
@@ -163,12 +165,14 @@ def parse_commands(module, warnings):
     transform = ComplexList(spec, module)
     commands = transform(module.params['commands'])
 
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
-                'Only show commands are supported when using check_mode, not '
-                'executing %s' % item['command']
-            )
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check_mode, not '
+                    'executing %s' % item['command']
+                )
+                commands.remove(item)
 
     return commands
 

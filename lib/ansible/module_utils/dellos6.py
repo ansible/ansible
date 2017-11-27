@@ -44,7 +44,7 @@ WARNING_PROMPTS_RE = [
     r"[\r\n]?\[yes/no\]:\s?$"
 ]
 
-dellos6_argument_spec = {
+dellos6_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
@@ -53,24 +53,30 @@ dellos6_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+dellos6_argument_spec = {
+    'provider': dict(type='dict', options=dellos6_provider_spec),
+}
+dellos6_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+    'authorize': dict(removed_in_version=2.9, type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+}
+dellos6_argument_spec.update(dellos6_top_spec)
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in dellos6_argument_spec:
-        if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                            'removed in a future version' % key)
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = [] if flags is None else flags
+
     cmd = 'show running-config '
     cmd += ' '.join(flags)
     cmd = cmd.strip()
@@ -162,7 +168,7 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'support-assist.*$'),
         re.compile(r'template.*$'),
         re.compile(r'address-family.*$'),
-        re.compile(r'spanning-tree mst.*$'),
+        re.compile(r'spanning-tree mst configuration.*$'),
         re.compile(r'logging.*$'),
         re.compile(r'(radius-server|tacacs-server) host.*$')]
 
@@ -208,7 +214,7 @@ def os6_parse(lines, indent=None, comment_tokens=None):
                     if parent:
                         cfg._parents.extend(parent)
                     parent = list()
-                    config.append(cfg)
+                config.append(cfg)
             # handle sublevel children
             elif parent_match is False and len(parent) > 0:
                 if not children:
@@ -234,7 +240,11 @@ class Dellos6NetworkConfig(NetworkConfig):
         for item in self.items:
             if str(item) == "exit":
                 for diff_item in diff:
-                    if item._parents == diff_item._parents:
+                    if diff_item._parents:
+                        if item._parents == diff_item._parents:
+                            diff.append(item)
+                            break
+                    else:
                         diff.append(item)
                         break
             elif item not in other:

@@ -193,6 +193,7 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
+            # 'ncpus active' is SPARC attribute
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
@@ -216,6 +217,8 @@ class LinuxHardware(Hardware):
                 cores[coreid] = int(data[1].strip())
             elif key == '# processors':
                 cpu_facts['processor_cores'] = int(data[1].strip())
+            elif key == 'ncpus active':
+                i = int(data[1].strip())
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
@@ -565,7 +568,7 @@ class LinuxHardware(Hardware):
                 device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
                 if rc == 0:
-                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
 
@@ -582,7 +585,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + "\d+)", folder)
+                m = re.search("(" + diskname + r"\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)
@@ -608,7 +611,7 @@ class LinuxHardware(Hardware):
             d['scheduler_mode'] = ""
             scheduler = get_file_content(sysdir + "/queue/scheduler")
             if scheduler is not None:
-                m = re.match(".*?(\[(.*)\])", scheduler)
+                m = re.match(r".*?(\[(.*)\])", scheduler)
                 if m:
                     d['scheduler_mode'] = m.group(2)
 
@@ -623,11 +626,11 @@ class LinuxHardware(Hardware):
             d['host'] = ""
 
             # domains are numbered (0 to ffff), bus (0 to ff), slot (0 to 1f), and function (0 to 7).
-            m = re.match(".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
+            m = re.match(r".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
             if m and pcidata:
                 pciid = m.group(1)
                 did = re.escape(pciid)
-                m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
+                m = re.search("^" + did + r"\s(.*)$", pcidata, re.MULTILINE)
                 if m:
                     d['host'] = m.group(1)
 
@@ -663,7 +666,7 @@ class LinuxHardware(Hardware):
         lvm_facts = {}
 
         if os.getuid() == 0 and self.module.get_bin_path('vgs'):
-            lvm_util_options = '--noheadings --nosuffix --units g'
+            lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
 
             vgs_path = self.module.get_bin_path('vgs')
             # vgs fields: VG #PV #LV #SN Attr VSize VFree
@@ -671,7 +674,7 @@ class LinuxHardware(Hardware):
             if vgs_path:
                 rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
                 for vg_line in vg_lines.splitlines():
-                    items = vg_line.split()
+                    items = vg_line.strip().split(',')
                     vgs[items[0]] = {'size_g': items[-2],
                                      'free_g': items[-1],
                                      'num_lvs': items[2],
@@ -684,7 +687,7 @@ class LinuxHardware(Hardware):
             if lvs_path:
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
-                    items = lv_line.split()
+                    items = lv_line.strip().split(',')
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
             pvs_path = self.module.get_bin_path('pvs')
@@ -693,7 +696,7 @@ class LinuxHardware(Hardware):
             if pvs_path:
                 rc, pv_lines, err = self.module.run_command('%s %s' % (pvs_path, lvm_util_options))
                 for pv_line in pv_lines.splitlines():
-                    items = pv_line.split()
+                    items = pv_line.strip().split(',')
                     pvs[self._find_mapper_device_name(items[0])] = {
                         'size_g': items[4],
                         'free_g': items[5],

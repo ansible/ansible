@@ -426,6 +426,9 @@ def compare_rules(r, rule):
         if rule['direction'] != r['direction']:
             changed = True
             r['direction'] = rule['direction']
+        if rule['source_address_prefix'] != str(r['source_address_prefix']):
+            changed = True
+            r['source_address_prefix'] = rule['source_address_prefix']
     return matched, changed
 
 

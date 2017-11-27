@@ -125,7 +125,11 @@ Function Join-Domain {
     }
     $argstr = $add_args | Out-String
     Write-DebugLog "calling Add-Computer with args: $argstr"
-    $add_result = Add-Computer @add_args
+    try {
+        $add_result = Add-Computer @add_args
+    } catch {
+        Fail-Json -obj $result -message "failed to join domain: $($_.Exception.Message)"
+    }
 
     Write-DebugLog ("Add-Computer result was \n{0}" -f $add_result | Out-String)
 }
@@ -140,8 +144,16 @@ Function Set-Workgroup {
     )
 
     Write-DebugLog ("Calling JoinDomainOrWorkgroup with workgroup {0}" -f $workgroup_name)
+    try {
+        $swg_result = (Get-WmiObject -ClassName Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
+    } catch {
+        Fail-Json -obj $result -message "failed to call Win32_ComputerSystem.JoinDomainOrWorkgroup($workgroup_name): $($_.Exception.Message)"
+    }
 
-    return (Get-WmiObject Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
+    if ($swg_result.ReturnValue -ne 0) {
+        Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
+    
+    return $swg_result}
 }
 
 Function Join-Workgroup {
@@ -155,7 +167,11 @@ Function Join-Workgroup {
         $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
-        $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+        try {
+            $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+        } catch {
+            Fail-Json -obj $result -message "failed to remove computer from domain: $($_.Exception.Message)"
+        }
     }
 
     # we're already on a workgroup- change it.
@@ -235,6 +251,9 @@ Try {
                     }
 
                     $join_result = Join-Domain @join_args
+
+                    # this change requires a reboot
+                    $result.reboot_required = $true
                 }
                 ElseIf(-not $hostname_match) { # domain matches but hostname doesn't, just do a rename
                     Write-DebugLog ("domain matches, setting hostname to {0}" -f $hostname)
@@ -247,10 +266,13 @@ Try {
                     }
 
                     $rename_result = Rename-Computer @rename_args
+
+                    # this change requires a reboot
+                    $result.reboot_required = $true
+                } Else {
+                    # no change is needed
                 }
 
-                # all these changes require a reboot
-                $result.reboot_required = $true
             }
             Else {
                 Write-DebugLog "check mode, exiting early..."
@@ -267,11 +289,15 @@ Try {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
                     $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+
+                    # this change requires a reboot
                     $result.reboot_required = $true
                 }
                 If(-not $hostname_match) {
                     Write-DebugLog ("setting hostname to {0}" -f $hostname)
                     $rename_result = Rename-Computer -NewName $hostname
+
+                    # this change requires a reboot
                     $result.reboot_required = $true
                 }
             }

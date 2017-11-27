@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: net_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage the aggregate of local users on network device
 description:
   - This module provides declarative management of the local usernames
@@ -106,8 +106,8 @@ EXAMPLES = """
 - name: set multiple users to privilege level 15
   net_user:
     aggregate:
-      - name: netop
-      - name: netend
+      - { name: netop }
+      - { name: netend }
     privilege: 15
     state: present
 

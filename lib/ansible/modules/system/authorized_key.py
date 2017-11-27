@@ -404,7 +404,7 @@ def parsekey(module, raw_key, rank=None):
     type_index = None   # index of keytype in key string|list
 
     # remove comment yaml escapes
-    raw_key = raw_key.replace('\#', '#')
+    raw_key = raw_key.replace(r'\#', '#')
 
     # split key safely
     lex = shlex.shlex(raw_key)

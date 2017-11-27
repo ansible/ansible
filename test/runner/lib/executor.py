@@ -4,16 +4,14 @@ from __future__ import absolute_import, print_function
 
 import json
 import os
+import collections
+import datetime
 import re
 import tempfile
 import time
 import textwrap
 import functools
-import shutil
-import stat
-import random
-import string
-import atexit
+import pipes
 import hashlib
 
 import lib.pytar
@@ -42,13 +40,15 @@ from lib.util import (
     SubprocessError,
     display,
     run_command,
-    common_environment,
+    intercept_command,
     remove_tree,
     make_dirs,
     is_shippable,
     is_binary_file,
+    find_pip,
     find_executable,
     raw_command,
+    get_coverage_path,
 )
 
 from lib.ansible_util import (
@@ -103,11 +103,10 @@ SUPPORTED_PYTHON_VERSIONS = (
     '2.7',
     '3.5',
     '3.6',
+    '3.7',
 )
 
 COMPILE_PYTHON_VERSIONS = SUPPORTED_PYTHON_VERSIONS
-
-coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
 
 
 def check_startup():
@@ -160,30 +159,84 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    extras = []
+    pip = find_pip(version=args.python_version)
+
+    commands = [generate_pip_install(pip, args.command, packages=packages)]
 
     if isinstance(args, IntegrationConfig):
-        extras += ['cloud.%s' % cp for cp in get_cloud_platforms(args)]
+        for cloud_platform in get_cloud_platforms(args):
+            commands.append(generate_pip_install(pip, '%s.cloud.%s' % (args.command, cloud_platform)))
 
-    cmd = generate_pip_install(args.command, packages, extras)
+    commands = [cmd for cmd in commands if cmd]
 
-    if not cmd:
-        return
+    # only look for changes when more than one requirements file is needed
+    detect_pip_changes = len(commands) > 1
 
-    try:
-        run_command(args, cmd)
-    except SubprocessError as ex:
-        if ex.status != 2:
-            raise
+    # first pass to install requirements, changes expected unless environment is already set up
+    changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
-        # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
+    if not changes:
+        return  # no changes means we can stop early
 
-        # Installing "coverage" on ubuntu 16.04 fails with the error:
-        # AttributeError: 'Requirement' object has no attribute 'project_name'
-        # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
-        # Upgrading pip works around the issue.
-        run_command(args, ['pip', 'install', '--upgrade', 'pip'])
-        run_command(args, cmd)
+    # second pass to check for conflicts in requirements, changes are not expected here
+    changes = run_pip_commands(args, pip, commands, detect_pip_changes)
+
+    if not changes:
+        return  # no changes means no conflicts
+
+    raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
+                           '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+
+
+def run_pip_commands(args, pip, commands, detect_pip_changes=False):
+    """
+    :type args: EnvironmentConfig
+    :type pip: str
+    :type commands: list[list[str]]
+    :type detect_pip_changes: bool
+    :rtype: list[list[str]]
+    """
+    changes = []
+
+    after_list = pip_list(args, pip) if detect_pip_changes else None
+
+    for cmd in commands:
+        if not cmd:
+            continue
+
+        before_list = after_list
+
+        try:
+            run_command(args, cmd)
+        except SubprocessError as ex:
+            if ex.status != 2:
+                raise
+
+            # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
+
+            # Installing "coverage" on ubuntu 16.04 fails with the error:
+            # AttributeError: 'Requirement' object has no attribute 'project_name'
+            # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
+            # Upgrading pip works around the issue.
+            run_command(args, [pip, 'install', '--upgrade', 'pip'])
+            run_command(args, cmd)
+
+        after_list = pip_list(args, pip) if detect_pip_changes else None
+
+        if before_list != after_list:
+            changes.append(cmd)
+
+    return changes
+
+
+def pip_list(args, pip):
+    """
+    :type args: EnvironmentConfig
+    :type pip: str
+    :rtype: str
+    """
+    stdout, _ = run_command(args, [pip, 'list'], capture=True)
+    return stdout
 
 
 def generate_egg_info(args):
@@ -193,14 +246,14 @@ def generate_egg_info(args):
     if os.path.isdir('lib/ansible.egg-info'):
         return
 
-    run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
+    run_command(args, ['python%s' % args.python_version, 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(command, packages=None, extras=None):
+def generate_pip_install(pip, command, packages=None):
     """
+    :type pip: str
     :type command: str
     :type packages: list[str] | None
-    :type extras: list[str] | None
     :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
@@ -208,15 +261,8 @@ def generate_pip_install(command, packages=None, extras=None):
 
     options = []
 
-    requirements_list = [requirements]
-
-    if extras:
-        for extra in extras:
-            requirements_list.append('test/runner/requirements/%s.%s.txt' % (command, extra))
-
-    for requirements in requirements_list:
-        if os.path.exists(requirements) and os.path.getsize(requirements):
-            options += ['-r', requirements]
+    if os.path.exists(requirements) and os.path.getsize(requirements):
+        options += ['-r', requirements]
 
     if packages:
         options += packages
@@ -224,7 +270,7 @@ def generate_pip_install(command, packages=None, extras=None):
     if not options:
         return None
 
-    return ['pip', 'install', '--disable-pip-version-check', '-c', constraints] + options
+    return [pip, 'install', '--disable-pip-version-check', '-c', constraints] + options
 
 
 def command_shell(args):
@@ -244,8 +290,9 @@ def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
     """
-    internal_targets = command_integration_filter(args, walk_posix_integration_targets())
-    command_integration_filtered(args, internal_targets)
+    all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
+    internal_targets = command_integration_filter(args, all_targets)
+    command_integration_filtered(args, internal_targets, all_targets)
 
 
 def command_network_integration(args):
@@ -270,30 +317,26 @@ def command_network_integration(args):
             'See also inventory template: %s.template' % (filename, default_filename)
         )
 
-    internal_targets = command_integration_filter(args, walk_network_integration_targets())
-    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+    all_targets = tuple(walk_network_integration_targets(include_hidden=True))
+    internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
-        instances = []  # type: list [lib.thread.WrappedThread]
+        get_coverage_path(args)  # initialize before starting threads
 
-        # generate an ssh key (if needed) up front once, instead of for each instance
-        SshKey(args)
+        configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
-            platform_target = 'network/%s/' % platform
+            config = configs.get(platform_version)
 
-            if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
-                display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
-                    platform_version, platform))
+            if not config:
                 continue
 
-            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version))
+            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
-
-        install_command_requirements(args)
 
         while any(instance.is_alive() for instance in instances):
             time.sleep(1)
@@ -306,22 +349,79 @@ def command_network_integration(args):
         if not args.explain:
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
-    else:
-        install_command_requirements(args)
 
-    command_integration_filtered(args, internal_targets)
+    success = False
+
+    try:
+        command_integration_filtered(args, internal_targets, all_targets)
+        success = True
+    finally:
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            for instance in instances:
+                instance.result.stop()
 
 
-def network_run(args, platform, version):
+def network_init(args, internal_targets):
+    """
+    :type args: NetworkIntegrationConfig
+    :type internal_targets: tuple[IntegrationTarget]
+    """
+    if not args.platform:
+        return
+
+    if args.metadata.instance_config is not None:
+        return
+
+    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+
+    instances = []  # type: list [lib.thread.WrappedThread]
+
+    # generate an ssh key (if needed) up front once, instead of for each instance
+    SshKey(args)
+
+    for platform_version in args.platform:
+        platform, version = platform_version.split('/', 1)
+        platform_target = 'network/%s/' % platform
+
+        if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+            display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
+                platform_version, platform))
+            continue
+
+        instance = lib.thread.WrappedThread(functools.partial(network_start, args, platform, version))
+        instance.daemon = True
+        instance.start()
+        instances.append(instance)
+
+    while any(instance.is_alive() for instance in instances):
+        time.sleep(1)
+
+    args.metadata.instance_config = [instance.wait_for_result() for instance in instances]
+
+
+def network_start(args, platform, version):
     """
     :type args: NetworkIntegrationConfig
     :type platform: str
     :type version: str
     :rtype: AnsibleCoreCI
     """
-
     core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
     core_ci.start()
+
+    return core_ci.save()
+
+
+def network_run(args, platform, version, config):
+    """
+    :type args: NetworkIntegrationConfig
+    :type platform: str
+    :type version: str
+    :type config: dict[str, str]
+    :rtype: AnsibleCoreCI
+    """
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, load=False)
+    core_ci.load(config)
     core_ci.wait()
 
     manage = ManageNetworkCI(core_ci)
@@ -341,7 +441,7 @@ def network_inventory(remotes):
         options = dict(
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
-            ansible_ssh_private_key_file=remote.ssh_key.key,
+            ansible_ssh_private_key_file=os.path.abspath(remote.ssh_key.key),
             ansible_network_os=remote.platform,
             ansible_connection='local'
         )
@@ -377,18 +477,22 @@ def command_windows_integration(args):
     if not args.explain and not args.windows and not os.path.isfile(filename):
         raise ApplicationError('Use the --windows option or provide an inventory file (see %s.template).' % filename)
 
-    internal_targets = command_integration_filter(args, walk_windows_integration_targets())
+    all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
+    internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.windows:
-        instances = []  # type: list [lib.thread.WrappedThread]
+        get_coverage_path(args)  # initialize before starting threads
+
+        configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
         for version in args.windows:
-            instance = lib.thread.WrappedThread(functools.partial(windows_run, args, version))
+            config = configs['windows/%s' % version]
+
+            instance = lib.thread.WrappedThread(functools.partial(windows_run, args, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
-
-        install_command_requirements(args)
 
         while any(instance.is_alive() for instance in instances):
             time.sleep(1)
@@ -401,16 +505,44 @@ def command_windows_integration(args):
         if not args.explain:
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
-    else:
-        install_command_requirements(args)
+
+    success = False
 
     try:
-        command_integration_filtered(args, internal_targets)
+        command_integration_filtered(args, internal_targets, all_targets)
+        success = True
     finally:
-        pass
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            for instance in instances:
+                instance.result.stop()
 
 
-def windows_run(args, version):
+def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, unused-argument
+    """
+    :type args: WindowsIntegrationConfig
+    :type internal_targets: tuple[IntegrationTarget]
+    """
+    if not args.windows:
+        return
+
+    if args.metadata.instance_config is not None:
+        return
+
+    instances = []  # type: list [lib.thread.WrappedThread]
+
+    for version in args.windows:
+        instance = lib.thread.WrappedThread(functools.partial(windows_start, args, version))
+        instance.daemon = True
+        instance.start()
+        instances.append(instance)
+
+    while any(instance.is_alive() for instance in instances):
+        time.sleep(1)
+
+    args.metadata.instance_config = [instance.wait_for_result() for instance in instances]
+
+
+def windows_start(args, version):
     """
     :type args: WindowsIntegrationConfig
     :type version: str
@@ -418,6 +550,19 @@ def windows_run(args, version):
     """
     core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage)
     core_ci.start()
+
+    return core_ci.save()
+
+
+def windows_run(args, version, config):
+    """
+    :type args: WindowsIntegrationConfig
+    :type version: str
+    :type config: dict[str, str]
+    :rtype: AnsibleCoreCI
+    """
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, load=False)
+    core_ci.load(config)
     core_ci.wait()
 
     manage = ManageWindowsCI(core_ci)
@@ -471,13 +616,14 @@ def windows_inventory(remotes):
     return inventory
 
 
-def command_integration_filter(args, targets):
+def command_integration_filter(args, targets, init_callback=None):
     """
     :type args: IntegrationConfig
     :type targets: collections.Iterable[IntegrationTarget]
+    :type init_callback: (IntegrationConfig, tuple[IntegrationTarget]) -> None
     :rtype: tuple[IntegrationTarget]
     """
-    targets = tuple(targets)
+    targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
     require = (args.require or []) + changes
     exclude = (args.exclude or [])
@@ -497,6 +643,9 @@ def command_integration_filter(args, targets):
     if args.start_at and not any(t.name == args.start_at for t in internal_targets):
         raise ApplicationError('Start at target matches nothing: %s' % args.start_at)
 
+    if init_callback:
+        init_callback(args, internal_targets)
+
     cloud_init(args, internal_targets)
 
     if args.delegate:
@@ -507,16 +656,29 @@ def command_integration_filter(args, targets):
     return internal_targets
 
 
-def command_integration_filtered(args, targets):
+def command_integration_filtered(args, targets, all_targets):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
+    :type all_targets: tuple[IntegrationTarget]
     """
     found = False
     passed = []
     failed = []
 
     targets_iter = iter(targets)
+    all_targets_dict = dict((target.name, target) for target in all_targets)
+
+    setup_errors = []
+    setup_targets_executed = set()
+
+    for target in all_targets:
+        for setup_target in target.setup_once + target.setup_always:
+            if setup_target not in all_targets_dict:
+                setup_errors.append('Target "%s" contains invalid setup target: %s' % (target.name, setup_target))
+
+    if setup_errors:
+        raise ApplicationError('Found %d invalid setup aliases:\n%s' % (len(setup_errors), '\n'.join(setup_errors)))
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
@@ -536,6 +698,8 @@ def command_integration_filtered(args, targets):
                 time.sleep(seconds)
 
     start_at_task = args.start_at_task
+
+    results = {}
 
     for target in targets_iter:
         if args.start_at and not found:
@@ -561,17 +725,39 @@ def command_integration_filtered(args, targets):
             while tries:
                 tries -= 1
 
-                if not args.explain:
-                    # create a fresh test directory for each test target
-                    remove_tree(test_dir)
-                    make_dirs(test_dir)
-
                 try:
+                    run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, False)
+
+                    start_time = time.time()
+
+                    run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, True)
+
+                    if not args.explain:
+                        # create a fresh test directory for each test target
+                        remove_tree(test_dir)
+                        make_dirs(test_dir)
+
                     if target.script_path:
                         command_integration_script(args, target)
                     else:
                         command_integration_role(args, target, start_at_task)
                         start_at_task = None
+
+                    end_time = time.time()
+
+                    results[target.name] = dict(
+                        name=target.name,
+                        type=target.type,
+                        aliases=target.aliases,
+                        modules=target.modules,
+                        run_time_seconds=int(end_time - start_time),
+                        setup_once=target.setup_once,
+                        setup_always=target.setup_always,
+                        coverage=args.coverage,
+                        coverage_label=args.coverage_label,
+                        python_version=args.python_version,
+                    )
+
                     break
                 except SubprocessError:
                     if cloud_environment:
@@ -606,9 +792,47 @@ def command_integration_filtered(args, targets):
         finally:
             display.verbosity = args.verbosity = verbosity
 
+    if not args.explain:
+        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+
+        data = dict(
+            targets=results,
+        )
+
+        with open(results_path, 'w') as results_fd:
+            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
+
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
             len(failed), len(passed) + len(failed), '\n'.join(target.name for target in failed)))
+
+
+def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, always):
+    """
+    :param args: IntegrationConfig
+    :param test_dir: str
+    :param target_names: list[str]
+    :param targets_dict: dict[str, IntegrationTarget]
+    :param targets_executed: set[str]
+    :param always: bool
+    """
+    for target_name in target_names:
+        if not always and target_name in targets_executed:
+            continue
+
+        target = targets_dict[target_name]
+
+        if not args.explain:
+            # create a fresh test directory for each test target
+            remove_tree(test_dir)
+            make_dirs(test_dir)
+
+        if target.script_path:
+            command_integration_script(args, target)
+        else:
+            command_integration_role(args, target, None)
+
+        targets_executed.add(target_name)
 
 
 def integration_environment(args, target, cmd):
@@ -667,7 +891,7 @@ def command_integration_role(args, target, start_at_task):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
-    :type start_at_task: str
+    :type start_at_task: str | None
     """
     display.info('Running %s integration test role' % target.name)
 
@@ -751,7 +975,7 @@ def command_units(args):
 
     for version in SUPPORTED_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
-        if args.python and version != args.python:
+        if args.python and version != args.python_version:
             continue
 
         env = ansible_environment(args)
@@ -811,7 +1035,7 @@ def command_compile(args):
 
     for version in COMPILE_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
-        if args.python and version != args.python:
+        if args.python and version != args.python_version:
             continue
 
         display.info('Compile with Python %s' % version)
@@ -898,104 +1122,6 @@ def compile_version(args, python_version, include, exclude):
     return TestSuccess(command, test, python_version=python_version)
 
 
-def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
-    """
-    :type args: TestConfig
-    :type cmd: collections.Iterable[str]
-    :type target_name: str
-    :type capture: bool
-    :type env: dict[str, str] | None
-    :type data: str | None
-    :type cwd: str | None
-    :type python_version: str | None
-    :type path: str | None
-    :rtype: str | None, str | None
-    """
-    if not env:
-        env = common_environment()
-
-    cmd = list(cmd)
-    inject_path = get_coverage_path(args)
-    config_path = os.path.join(inject_path, 'injector.json')
-    version = python_version or args.python_version
-    interpreter = find_executable('python%s' % version, path=path)
-    coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
-        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
-
-    env['PATH'] = inject_path + os.pathsep + env['PATH']
-    env['ANSIBLE_TEST_PYTHON_VERSION'] = version
-    env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
-
-    config = dict(
-        python_interpreter=interpreter,
-        coverage_file=coverage_file if args.coverage else None,
-    )
-
-    if not args.explain:
-        with open(config_path, 'w') as config_fd:
-            json.dump(config, config_fd, indent=4, sort_keys=True)
-
-    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
-
-
-def get_coverage_path(args):
-    """
-    :type args: TestConfig
-    :rtype: str
-    """
-    global coverage_path  # pylint: disable=locally-disabled, global-statement, invalid-name
-
-    if coverage_path:
-        return os.path.join(coverage_path, 'coverage')
-
-    prefix = 'ansible-test-coverage-'
-    tmp_dir = '/tmp'
-
-    if args.explain:
-        return os.path.join(tmp_dir, '%stmp' % prefix, 'coverage')
-
-    src = os.path.abspath(os.path.join(os.getcwd(), 'test/runner/injector/'))
-
-    coverage_path = tempfile.mkdtemp('', prefix, dir=tmp_dir)
-    os.chmod(coverage_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-
-    shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
-    shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
-
-    for root, dir_names, file_names in os.walk(coverage_path):
-        for name in dir_names + file_names:
-            os.chmod(os.path.join(root, name), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-
-    for directory in 'output', 'logs':
-        os.mkdir(os.path.join(coverage_path, directory))
-        os.chmod(os.path.join(coverage_path, directory), stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
-
-    atexit.register(cleanup_coverage_dir)
-
-    return os.path.join(coverage_path, 'coverage')
-
-
-def cleanup_coverage_dir():
-    """Copy over coverage data from temporary directory and purge temporary directory."""
-    output_dir = os.path.join(coverage_path, 'output')
-
-    for filename in os.listdir(output_dir):
-        src = os.path.join(output_dir, filename)
-        dst = os.path.join(os.getcwd(), 'test', 'results', 'coverage')
-        shutil.copy(src, dst)
-
-    logs_dir = os.path.join(coverage_path, 'logs')
-
-    for filename in os.listdir(logs_dir):
-        random_suffix = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
-        new_name = '%s.%s.log' % (os.path.splitext(os.path.basename(filename))[0], random_suffix)
-        src = os.path.join(logs_dir, filename)
-        dst = os.path.join(os.getcwd(), 'test', 'results', 'logs', new_name)
-        shutil.copy(src, dst)
-
-    shutil.rmtree(coverage_path)
-
-
 def get_changes_filter(args):
     """
     :type args: TestConfig
@@ -1040,6 +1166,9 @@ def detect_changes(args):
     else:
         return None  # change detection not enabled
 
+    if paths is None:
+        return None  # act as though change detection not enabled, do not filter targets
+
     display.info('Detected changes in %d file(s).' % len(paths))
 
     for path in paths:
@@ -1051,7 +1180,7 @@ def detect_changes(args):
 def detect_changes_shippable(args):
     """Initialize change detection on Shippable.
     :type args: TestConfig
-    :rtype: list[str]
+    :rtype: list[str] | None
     """
     git = Git(args)
     result = ShippableChanges(args, git)
@@ -1174,12 +1303,16 @@ def get_integration_local_filter(args, targets):
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
     if args.python_version.startswith('3'):
-        skip = 'skip/python3/'
-        skipped = [target.name for target in targets if skip in target.aliases]
-        if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which are not yet supported on python 3: %s'
-                            % (skip.rstrip('/'), ', '.join(skipped)))
+        python_version = 3
+    else:
+        python_version = 2
+
+    skip = 'skip/python%d/' % python_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
     return exclude
 
@@ -1200,13 +1333,26 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    python_version = 2  # images are expected to default to python 2 unless otherwise specified
+
     if args.docker.endswith('py3'):
-        skip = 'skip/python3/'
-        skipped = [target.name for target in targets if skip in target.aliases]
-        if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which are not yet supported on python 3: %s'
-                            % (skip.rstrip('/'), ', '.join(skipped)))
+        python_version = 3  # docker images ending in 'py3' are expected to default to python 3
+
+    if args.docker.endswith(':default'):
+        python_version = 3  # docker images tagged 'default' are expected to default to python 3
+
+    if args.python:  # specifying a numeric --python option overrides the default python
+        if args.python.startswith('3'):
+            python_version = 3
+        elif args.python.startswith('2'):
+            python_version = 2
+
+    skip = 'skip/python%d/' % python_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
     return exclude
 
@@ -1227,8 +1373,17 @@ def get_integration_remote_filter(args, targets):
     skipped = [target.name for target in targets if skip in target.aliases]
     if skipped:
         exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not yet supported on %s: %s'
+        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
+
+    python_version = 2  # remotes are expected to default to python 2
+
+    skip = 'skip/python%d/' % python_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
     return exclude
 

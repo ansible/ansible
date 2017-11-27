@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: ios_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage the aggregate of local users on Cisco IOS device
 description:
   - This module provides declarative management of the local usernames
@@ -35,6 +35,8 @@ description:
     either individual usernames or the aggregate of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+notes:
+  - Tested against IOS 15.6
 options:
   aggregate:
     description:

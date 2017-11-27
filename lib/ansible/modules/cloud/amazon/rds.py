@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -126,7 +118,7 @@ options:
     description:
       - Port number that the DB instance uses for connections. Used only when command=create or command=replicate.
       - Prior to 2.0 it always defaults to null and the API would use 3306, it had to be set to other DB default values when not using MySql.
-        Starting at 2.0 it automatically defaults to what is expected for each c(db_engine).
+        Starting at 2.0 it automatically defaults to what is expected for each C(db_engine).
     required: false
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
@@ -517,22 +509,25 @@ db_subnet_groups:
                     sample: "active"
 '''
 
-import sys
 import time
-
-from ansible.module_utils.ec2 import AWSRetry
 
 try:
     import boto.rds
-    HAS_BOTO = True
+    import boto.exception
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
 
 try:
     import boto.rds2
-    has_rds2 = True
+    import boto.rds2.exceptions
+    HAS_RDS2 = True
 except ImportError:
-    has_rds2 = False
+    HAS_RDS2 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
 
 DEFAULT_PORTS = {
     'aurora': 3306,
@@ -567,13 +562,13 @@ class RDSConnection:
     def get_db_instance(self, instancename):
         try:
             return RDSDBInstance(self.connection.get_all_dbinstances(instancename)[0])
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError:
             return None
 
     def get_db_snapshot(self, snapshotid):
         try:
             return RDSSnapshot(self.connection.get_all_dbsnapshots(snapshot_id=snapshotid)[0])
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
@@ -670,7 +665,7 @@ class RDS2Connection:
             )['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
             result = RDS2Snapshot(snapshots[0])
             return result
-        except boto.rds2.exceptions.DBSnapshotNotFound as e:
+        except boto.rds2.exceptions.DBSnapshotNotFound:
             return None
 
     def create_db_instance(self, instance_name, size, instance_class, db_engine,
@@ -780,11 +775,12 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-
+        if self.instance.DBName:
+            d['DBName'] = self.instance.DBName
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
-        except Exception as e:
+        except Exception:
             d["replication_source"] = None
         return d
 
@@ -873,7 +869,8 @@ class RDS2DBInstance:
         else:
             d['endpoint'] = None
             d['port'] = None
-
+        if self.instance["DBName"]:
+            d['DBName'] = self.instance['DBName']
         return d
 
 
@@ -953,7 +950,6 @@ def await_resource(conn, resource, status, module):
 
 
 def create_db_instance(module, conn):
-    subnet = module.params.get('subnet')
     required_vars = ['instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password']
     valid_vars = ['backup_retention', 'backup_window',
                   'character_set_name', 'db_name', 'engine_version',
@@ -964,7 +960,7 @@ def create_db_instance(module, conn):
         valid_vars.append('vpc_security_groups')
     else:
         valid_vars.append('security_groups')
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.extend(['publicly_accessible', 'tags'])
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
@@ -992,7 +988,7 @@ def create_db_instance(module, conn):
 def replicate_db_instance(module, conn):
     required_vars = ['instance_name', 'source_instance']
     valid_vars = ['instance_type', 'port', 'upgrade', 'zone']
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.extend(['iops', 'option_group', 'publicly_accessible', 'tags'])
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
@@ -1035,7 +1031,7 @@ def delete_db_instance_or_snapshot(module, conn):
         if instance_name:
             if snapshot:
                 params["skip_final_snapshot"] = False
-                if has_rds2:
+                if HAS_RDS2:
                     params["final_db_snapshot_identifier"] = snapshot
                 else:
                     params["final_snapshot_id"] = snapshot
@@ -1052,7 +1048,7 @@ def delete_db_instance_or_snapshot(module, conn):
     if not module.params.get('wait'):
         module.exit_json(changed=True)
     try:
-        resource = await_resource(conn, result, 'deleted', module)
+        await_resource(conn, result, 'deleted', module)
         module.exit_json(changed=True)
     except RDSException as e:
         if e.code == 'DBInstanceNotFound':
@@ -1064,9 +1060,6 @@ def delete_db_instance_or_snapshot(module, conn):
 
 
 def facts_db_instance_or_snapshot(module, conn):
-    required_vars = []
-    valid_vars = ['instance_name', 'snapshot']
-    params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
     snapshot = module.params.get('snapshot')
 
@@ -1175,7 +1168,7 @@ def reboot_db_instance(module, conn):
     required_vars = ['instance_name']
     valid_vars = []
 
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.append('force_failover')
 
     params = validate_parameters(required_vars, valid_vars, module)
@@ -1201,7 +1194,7 @@ def restore_db_instance(module, conn):
     valid_vars = ['db_name', 'iops', 'license_model', 'multi_zone',
                   'option_group', 'port', 'publicly_accessible',
                   'subnet', 'tags', 'upgrade', 'zone']
-    if has_rds2:
+    if HAS_RDS2:
         valid_vars.append('instance_type')
     else:
         required_vars.append('instance_type')
@@ -1270,7 +1263,7 @@ def validate_parameters(required_vars, valid_vars, module):
         'new_instance_name': 'new_db_instance_identifier',
         'force_failover': 'force_failover',
     }
-    if has_rds2:
+    if HAS_RDS2:
         optional_params.update(optional_params_rds2)
         sec_group = 'db_security_groups'
     else:
@@ -1297,7 +1290,7 @@ def validate_parameters(required_vars, valid_vars, module):
 
     vpc_groups = module.params.get('vpc_security_groups')
     if vpc_groups:
-        if has_rds2:
+        if HAS_RDS2:
             params['vpc_security_group_ids'] = vpc_groups
         else:
             groups_list = []
@@ -1383,16 +1376,13 @@ def main():
         module.params['port'] = DEFAULT_PORTS[engine.lower()]
 
     # connect to the rds endpoint
-    if has_rds2:
+    if HAS_RDS2:
         conn = RDS2Connection(module, region, **aws_connect_params)
     else:
         conn = RDSConnection(module, region, **aws_connect_params)
 
     invocations[module.params.get('command')](module, conn)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

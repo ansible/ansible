@@ -36,11 +36,11 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.connection import Connection
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.manager import remove_internal_keys
+from ansible.vars.clean import remove_internal_keys
 
 
 try:
@@ -93,11 +93,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         result = {}
 
-        if self._task.async and not self._supports_async:
+        if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
         elif self._play_context.check_mode and not self._supports_check_mode:
             raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async and self._play_context.check_mode:
+        elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         return result
@@ -159,14 +159,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
                                                                     task_vars=task_vars, module_compression=self._play_context.module_compression,
-                                                                    async_timeout=self._task.async, become=self._play_context.become,
+                                                                    async_timeout=self._task.async_val, become=self._play_context.become,
                                                                     become_method=self._play_context.become_method, become_user=self._play_context.become_user,
                                                                     become_password=self._play_context.become_pass,
                                                                     environment=final_environment)
 
         return (module_style, module_shebang, module_data, module_path)
 
-    def _compute_environment_string(self, raw_environment_out=dict()):
+    def _compute_environment_string(self, raw_environment_out=None):
         '''
         Builds the environment string to be used when executing the remote task.
         '''
@@ -392,7 +392,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
+        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in ('root', remote_user):
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -532,7 +532,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif 'json' in errormsg or 'simplejson' in errormsg:
                 x = "5"  # json or simplejson modules needed
         finally:
-            return x
+            return x  # pylint: disable=lost-exception
 
     def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
@@ -605,7 +605,27 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
         # give the module the socket for persistent connections
-        module_args['_ansible_socket'] = task_vars.get('ansible_socket')
+        module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')
+        if not module_args['_ansible_socket']:
+            module_args['_ansible_socket'] = task_vars.get('ansible_socket')
+
+        # make sure all commands use the designated shell executable
+        module_args['_ansible_shell_executable'] = self._play_context.executable
+
+    def _update_connection_options(self, options, variables=None):
+        ''' ensures connections have the appropriate information '''
+        update = {}
+
+        if getattr(self.connection, 'glob_option_vars', False):
+            # if the connection allows for it, pass any variables matching it.
+            if variables is not None:
+                for varname in variables:
+                    if varname.match('ansible_%s_' % self.connection._load_name):
+                        update[varname] = variables[varname]
+
+        # always override existing with options
+        update.update(options)
+        self.connection.set_options(update)
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
         '''
@@ -683,7 +703,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            async_limit = self._task.async
+            async_limit = self._task.async_val
             async_jid = str(random.randint(0, 999999999999))
 
             # call the interpreter for async_wrapper directly
@@ -721,11 +741,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     rm_tmp = tmp
 
             cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp).strip()
-
-            if module_name == "accelerate":
-                # always run the accelerate module as the user
-                # specified in the play, not the sudo_user
-                sudoable = False
 
         # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
         if remote_files:
@@ -767,48 +782,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _clean_returned_data(self, data):
-        remove_keys = set()
-        fact_keys = set(data.keys())
-        # first we add all of our magic variable names to the set of
-        # keys we want to remove from facts
-        for magic_var in MAGIC_VARIABLE_MAPPING:
-            remove_keys.update(fact_keys.intersection(MAGIC_VARIABLE_MAPPING[magic_var]))
-        # next we remove any connection plugin specific vars
-        for conn_path in self._shared_loader_obj.connection_loader.all(path_only=True):
-            try:
-                conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-                re_key = re.compile('^ansible_%s_' % conn_name)
-                for fact_key in fact_keys:
-                    if re_key.match(fact_key):
-                        remove_keys.add(fact_key)
-            except AttributeError:
-                pass
-
-        # remove some KNOWN keys
-        for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:
-            if hard in fact_keys:
-                remove_keys.add(hard)
-
-        # finally, we search for interpreter keys to remove
-        re_interp = re.compile('^ansible_.*_interpreter$')
-        for fact_key in fact_keys:
-            if re_interp.match(fact_key):
-                remove_keys.add(fact_key)
-        # then we remove them (except for ssh host keys)
-        for r_key in remove_keys:
-            if not r_key.startswith('ansible_ssh_host_key_'):
-                try:
-                    r_val = to_text(data[r_key])
-                    if len(r_val) > 24:
-                        r_val = '%s ... %s' % (r_val[:13], r_val[-6:])
-                except:
-                    r_val = ' <failed to convert value to a string> '
-                display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
-                del data[r_key]
-
-        remove_internal_keys(data)
-
     def _parse_returned_data(self, res):
         try:
             filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
@@ -818,7 +791,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = json.loads(filtered_output)
 
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                self._clean_returned_data(data['ansible_facts'])
                 data['ansible_facts'] = wrap_var(data['ansible_facts'])
             data['_ansible_parsed'] = True
         except ValueError:
@@ -864,7 +836,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         same_user = self._play_context.become_user == self._play_context.remote_user
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
-            cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+            if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
+                cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         if self._connection.allow_executable:
             if executable is None:

@@ -36,10 +36,6 @@ import traceback
 
 try:
     from hpOneView.oneview_client import OneViewClient
-    from hpOneView.exceptions import (HPOneViewException,
-                                      HPOneViewTaskError,
-                                      HPOneViewValueError,
-                                      HPOneViewResourceNotFound)
     HAS_HPE_ONEVIEW = True
 except ImportError:
     HAS_HPE_ONEVIEW = False
@@ -71,7 +67,7 @@ def transform_list_to_dict(list_):
     return ret
 
 
-def merge_list_by_key(original_list, updated_list, key, ignore_when_null=[]):
+def merge_list_by_key(original_list, updated_list, key, ignore_when_null=None):
     """
     Merge two lists by the key. It basically:
 
@@ -88,6 +84,8 @@ def merge_list_by_key(original_list, updated_list, key, ignore_when_null=[]):
         if its values are null.
     :return: list: Lists merged.
     """
+    ignore_when_null = [] if ignore_when_null is None else ignore_when_null
+
     if not original_list:
         return updated_list
 
@@ -132,6 +130,69 @@ def _standardize_value(value):
     return str(value)
 
 
+class OneViewModuleException(Exception):
+    """
+    OneView base Exception.
+
+    Attributes:
+       msg (str): Exception message.
+       oneview_response (dict): OneView rest response.
+   """
+
+    def __init__(self, data):
+        self.msg = None
+        self.oneview_response = None
+
+        if isinstance(data, six.string_types):
+            self.msg = data
+        else:
+            self.oneview_response = data
+
+            if data and isinstance(data, dict):
+                self.msg = data.get('message')
+
+        if self.oneview_response:
+            Exception.__init__(self, self.msg, self.oneview_response)
+        else:
+            Exception.__init__(self, self.msg)
+
+
+class OneViewModuleTaskError(OneViewModuleException):
+    """
+    OneView Task Error Exception.
+
+    Attributes:
+       msg (str): Exception message.
+       error_code (str): A code which uniquely identifies the specific error.
+    """
+
+    def __init__(self, msg, error_code=None):
+        super(OneViewModuleTaskError, self).__init__(msg)
+        self.error_code = error_code
+
+
+class OneViewModuleValueError(OneViewModuleException):
+    """
+    OneView Value Error.
+    The exception is raised when the data contains an inappropriate value.
+
+    Attributes:
+       msg (str): Exception message.
+    """
+    pass
+
+
+class OneViewModuleResourceNotFound(OneViewModuleException):
+    """
+    OneView Resource Not Found Exception.
+    The exception is raised when an associated resource was not found.
+
+    Attributes:
+       msg (str): Exception message.
+    """
+    pass
+
+
 @six.add_metaclass(abc.ABCMeta)
 class OneViewModuleBase(object):
     MSG_CREATED = 'Resource created successfully.'
@@ -143,15 +204,15 @@ class OneViewModuleBase(object):
     HPE_ONEVIEW_SDK_REQUIRED = 'HPE OneView Python SDK is required for this module.'
 
     ONEVIEW_COMMON_ARGS = dict(
-        config=dict(required=False, type='str')
+        config=dict(type='path'),
+        hostname=dict(type='str'),
+        username=dict(type='str'),
+        password=dict(type='str'),
+        api_version=dict(type='int'),
+        image_streamer_hostname=dict(type='str')
     )
 
-    ONEVIEW_VALIDATE_ETAG_ARGS = dict(
-        validate_etag=dict(
-            required=False,
-            type='bool',
-            default=True)
-    )
+    ONEVIEW_VALIDATE_ETAG_ARGS = dict(validate_etag=dict(type='bool', default=True))
 
     resource_client = None
 
@@ -198,7 +259,13 @@ class OneViewModuleBase(object):
             self.module.fail_json(msg=self.HPE_ONEVIEW_SDK_REQUIRED)
 
     def _create_oneview_client(self):
-        if not self.module.params['config']:
+        if self.module.params.get('hostname'):
+            config = dict(ip=self.module.params['hostname'],
+                          credentials=dict(userName=self.module.params['username'], password=self.module.params['password']),
+                          api_version=self.module.params['api_version'],
+                          image_streamer_ip=self.module.params['image_streamer_hostname'])
+            self.oneview_client = OneViewClient(config)
+        elif not self.module.params['config']:
             self.oneview_client = OneViewClient.from_environment_variables()
         else:
             self.oneview_client = OneViewClient.from_json_file(self.module.params['config'])
@@ -221,7 +288,7 @@ class OneViewModuleBase(object):
 
         It calls the inheritor 'execute_module' function and sends the return to the Ansible.
 
-        It handles any HPOneViewException in order to signal a failure to Ansible, with a descriptive error message.
+        It handles any OneViewModuleException in order to signal a failure to Ansible, with a descriptive error message.
 
         """
         try:
@@ -236,7 +303,7 @@ class OneViewModuleBase(object):
 
             self.module.exit_json(**result)
 
-        except HPOneViewException as exception:
+        except OneViewModuleException as exception:
             error_msg = '; '.join(to_native(e) for e in exception.args)
             self.module.fail_json(msg=error_msg, exception=traceback.format_exc())
 

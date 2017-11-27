@@ -169,8 +169,9 @@ class CollinsInventory(object):
         print(data_to_print)
         return successful
 
-    def find_assets(self, attributes={}, operation='AND'):
+    def find_assets(self, attributes=None, operation='AND'):
         """ Obtains Collins assets matching the provided attributes. """
+        attributes = {} if attributes is None else attributes
 
         # Formats asset search query to locate assets matching attributes, using
         # the CQL search feature as described here:
@@ -211,7 +212,7 @@ class CollinsInventory(object):
                 cur_page += 1
                 num_retries = 0
             except:
-                self.log.error("Error while communicating with Collins, retrying:\n%s" % traceback.format_exc())
+                self.log.error("Error while communicating with Collins, retrying:\n%s", traceback.format_exc())
                 num_retries += 1
         return assets
 
@@ -280,7 +281,7 @@ class CollinsInventory(object):
         try:
             server_assets = self.find_assets()
         except:
-            self.log.error("Error while locating assets from Collins:\n%s" % traceback.format_exc())
+            self.log.error("Error while locating assets from Collins:\n%s", traceback.format_exc())
             return False
 
         for asset in server_assets:
@@ -304,7 +305,7 @@ class CollinsInventory(object):
             if self.prefer_hostnames and self._asset_has_attribute(asset, 'HOSTNAME'):
                 asset_identifier = self._asset_get_attribute(asset, 'HOSTNAME')
             elif 'ADDRESSES' not in asset:
-                self.log.warning("No IP addresses found for asset '%s', skipping" % asset)
+                self.log.warning("No IP addresses found for asset '%s', skipping", asset)
                 continue
             elif len(asset['ADDRESSES']) < ip_index + 1:
                 self.log.warning(
@@ -422,7 +423,7 @@ class CollinsInventory(object):
         """ Converts 'bad' characters in a string to underscores so they
             can be used as Ansible groups """
 
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """ Converts a dict to a JSON object and dumps it as a formatted string """

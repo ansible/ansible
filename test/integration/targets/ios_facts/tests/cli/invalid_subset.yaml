@@ -6,7 +6,7 @@
   ios_facts:
     gather_subset:
       - "foobar"
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
   ignore_errors: true
 
@@ -29,7 +29,7 @@
     gather_subset:
       - "!hardware"
       - "hardware"
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
   ignore_errors: true
 

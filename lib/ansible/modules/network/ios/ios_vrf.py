@@ -33,6 +33,8 @@ description:
     the entire VRF collection.  It also supports purging VRF definitions from
     the configuration that are not explicitly defined.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   vrfs:
     description:
@@ -67,6 +69,7 @@ options:
       - Time in seconds to wait before checking for the operational state on remote
         device.
     version_added: "2.4"
+    default: 10
   purge:
     description:
       - Instructs the module to consider the
@@ -165,7 +168,11 @@ def get_interface_type(interface):
 
 def add_command_to_vrf(name, cmd, commands):
     if 'vrf definition %s' % name not in commands:
-        commands.append('vrf definition %s' % name)
+        commands.extend([
+            'vrf definition %s' % name,
+            'address-family ipv4', 'exit',
+            'address-family ipv6', 'exit',
+        ])
     commands.append(cmd)
 
 def map_obj_to_commands(updates, module):
@@ -183,7 +190,11 @@ def map_obj_to_commands(updates, module):
             continue
 
         if not have.get('state'):
-            commands.append('vrf definition %s' % want['name'])
+            commands.extend([
+                'vrf definition %s' % want['name'],
+                'address-family ipv4', 'exit',
+                'address-family ipv6', 'exit',
+            ])
 
         if needs_update(want, have, 'description'):
             cmd = 'description %s' % want['description']
@@ -335,6 +346,9 @@ def check_declarative_intent_params(want, module):
 
         if rc == 0:
             data = out.strip().split()
+            # data will be empty if the vrf was just added
+            if not data:
+                return
             vrf = data[0]
             interface = data[-1]
 
@@ -354,6 +368,7 @@ def main():
         name=dict(),
         description=dict(),
         rd=dict(),
+
         interfaces=dict(type='list'),
 
         delay=dict(default=10, type='int'),

@@ -32,7 +32,7 @@ from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
 
-vyos_argument_spec = {
+vyos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
 
@@ -41,28 +41,25 @@ vyos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
 }
+vyos_argument_spec = {
+    'provider': dict(type='dict', options=vyos_provider_spec),
+}
+vyos_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+
+    'timeout': dict(removed_in_version=2.9, type='int'),
+}
+vyos_argument_spec.update(vyos_top_spec)
 
 
-def get_argspec():
-    return vyos_argument_spec
-
-
-def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in vyos_argument_spec:
-        if module._name == 'vyos_user':
-            if key not in ['password', 'provider'] and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be in a future version' % key)
-        else:
-            if key != 'provider' and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    if provider:
-        for param in ('password',):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+def get_provider_argspec():
+    return vyos_provider_spec
 
 
 def get_config(module, target='commands'):

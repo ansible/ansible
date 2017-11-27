@@ -1,29 +1,19 @@
-# This file is part of Ansible,
-# (c) 2012-2017, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#############################################
-'''
-DOCUMENTATION:
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     name: virtualbox
     plugin_type: inventory
     short_description: virtualbox inventory source
     description:
         - Get inventory hosts from the local virtualbox installation.
         - Uses a <name>.vbox.yaml (or .vbox.yml) YAML configuration file.
+        - The inventory_hostname is always the 'Name' of the virtualbox instance.
+    extends_documentation_fragment:
+      - constructed
     options:
         running_only:
             description: toggles showing all vms vs only those currently running
@@ -38,11 +28,9 @@ DOCUMENTATION:
             description: create vars from virtualbox properties
             type: dictionary
             default: {}
-        compose:
-            description: create vars from jinja2 expressions, these are created AFTER the query block
-            type: dictionary
-            default: {}
-EXAMPLES:
+'''
+
+EXAMPLES = '''
 # file must be named vbox.yaml or vbox.yml
 simple_config_file:
     plugin: virtualbox
@@ -52,30 +40,29 @@ simple_config_file:
     compose:
       ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 
+from collections import MutableMapping
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory parser for ansible using local virtualbox. '''
 
     NAME = 'virtualbox'
-    VBOX = "VBoxManage"
+    VBOX = b"VBoxManage"
 
     def _query_vbox_data(self, host, property_path):
         ret = None
         try:
-            cmd = [self.VBOX, 'guestproperty', 'get', host, property_path]
+            cmd = [self.VBOX, b'guestproperty', b'get', to_bytes(host, errors='surrogate_or_strict'), to_bytes(property_path, errors='surrogate_or_strict')]
             x = Popen(cmd, stdout=PIPE)
-            ipinfo = x.stdout.read()
+            ipinfo = to_text(x.stdout.read(), errors='surrogate_or_strict')
             if 'Value' in ipinfo:
                 a, ip = ipinfo.split(':', 1)
                 ret = ip.strip()
@@ -83,32 +70,34 @@ class InventoryModule(BaseInventoryPlugin):
             pass
         return ret
 
-    def _set_variables(self, hostvars, data):
+    def _set_variables(self, hostvars):
 
         # set vars in inventory from hostvars
         for host in hostvars:
 
+            query = self._options['query']
             # create vars from vbox properties
-            if data.get('query') and isinstance(data['query'], dict):
-                for varname in data['query']:
-                    hostvars[host][varname] = self._query_vbox_data(host, data['query'][varname])
+            if query and isinstance(query, MutableMapping):
+                for varname in query:
+                    hostvars[host][varname] = self._query_vbox_data(host, query[varname])
 
             # create composite vars
-            if data.get('compose') and isinstance(data['compose'], dict):
-                for varname in data['compose']:
-                    hostvars[host][varname] = self._compose(data['compose'][varname], hostvars[host])
+            self._set_composite_vars(self._options['compose'], hostvars, host)
 
             # actually update inventory
             for key in hostvars[host]:
                 self.inventory.set_variable(host, key, hostvars[host][key])
 
-    def _populate_from_source(self, source_data, config_data):
+            # constructed groups based on conditionals
+            self._add_host_to_composed_groups(self._options['groups'], hostvars, host)
+
+    def _populate_from_source(self, source_data):
         hostvars = {}
         prevkey = pref_k = ''
         current_host = None
 
         # needed to possibly set ansible_host
-        netinfo = config_data.get('network_info_path', "/VirtualBox/GuestInfo/Net/0/V4/IP")
+        netinfo = self._options['network_info_path']
 
         for line in source_data:
             try:
@@ -155,7 +144,7 @@ class InventoryModule(BaseInventoryPlugin):
 
                 prevkey = pref_k
 
-        self._set_variables(hostvars, config_data)
+        self._set_variables(hostvars)
 
     def verify_file(self, path):
 
@@ -169,46 +158,41 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        cache_key = self.get_cache_prefix(path)
+        cache_key = self._get_cache_prefix(path)
 
-        # file is config file
-        try:
-            config_data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError(e)
+        config_data = self._read_config_data(path)
 
-        if not config_data or config_data.get('plugin') != self.NAME:
-            # this is not my config file
-            return False
+        # set _options from config data
+        self._consume_options(config_data)
 
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache and cache_key in self._cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self._cache[cache_key]
             except KeyError:
                 pass
 
         if not source_data:
-            pwfile = to_bytes(config_data.get('settings_password_file'))
-            running = config_data.get('running_only', False)
+            b_pwfile = to_bytes(self._options['settings_password_file'], errors='surrogate_or_strict')
+            running = self._options['running_only']
 
             # start getting data
-            cmd = [self.VBOX, 'list', '-l']
+            cmd = [self.VBOX, b'list', b'-l']
             if running:
-                cmd.append('runningvms')
+                cmd.append(b'runningvms')
             else:
-                cmd.append('vms')
+                cmd.append(b'vms')
 
-            if pwfile and os.path.exists(pwfile):
-                cmd.append('--settingspwfile')
-                cmd.append(pwfile)
+            if b_pwfile and os.path.exists(b_pwfile):
+                cmd.append(b'--settingspwfile')
+                cmd.append(b_pwfile)
 
             try:
                 p = Popen(cmd, stdout=PIPE)
             except Exception as e:
-                AnsibleParserError(e)
+                AnsibleParserError(to_native(e))
 
-            source_data = p.stdout.readlines()
-            inventory.cache[cache_key] = source_data
+            source_data = p.stdout.read()
+            self._cache[cache_key] = to_text(source_data, errors='surrogate_or_strict')
 
-        self._populate_from_source(source_data, config_data)
+        self._populate_from_source(source_data.splitlines())

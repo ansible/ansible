@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - The server_type parameter is always required.
     - If encrypt_type is not supplied, the global AAA server key will be
       stored as encrypted (type 7).
@@ -150,7 +151,7 @@ def get_aaa_server_info(server_type, module):
     server_command = 'show {0}-server'.format(server_type)
     request_command = 'show {0}-server directed-request'.format(server_type)
     global_key_command = 'show run | sec {0}'.format(server_type)
-    aaa_regex = '.*{0}-server\skey\s\d\s+(?P<key>\S+).*'.format(server_type)
+    aaa_regex = r'.*{0}-server\skey\s\d\s+(?P<key>\S+).*'.format(server_type)
 
     server_body = execute_show_command(
         server_command, module, command_type='cli_show_ascii')[0]

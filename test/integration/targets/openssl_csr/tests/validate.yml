@@ -15,3 +15,8 @@
     that:
       - csr_cn.stdout.split('=')[-1] == 'www.ansible.com'
       - csr_modulus.stdout == privatekey_modulus.stdout
+
+- name: Validate CSR_KU_XKU (assert idempotency)
+  assert:
+    that:
+      - csr_ku_xku.changed == False

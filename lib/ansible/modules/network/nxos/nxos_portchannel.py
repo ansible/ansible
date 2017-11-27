@@ -32,6 +32,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the portchannel config and interface if it
     already exists. If members to be removed are not explicitly
     passed, all existing members (if any), are removed.
@@ -141,12 +142,13 @@ def get_custom_value(arg, config, module):
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
+    provider = module.params['provider']
+    if provider['transport'] == 'cli':
         if 'show port-channel summary' in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif provider['transport'] == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -200,6 +202,8 @@ def get_portchannel(module, netcfg=None):
 
         for pc in pc_table:
             if pc['group'] == module.params['group']:
+                portchannel_table = pc
+            elif module.params['group'].isdigit() and pc['group'] == int(module.params['group']):
                 portchannel_table = pc
     except (KeyError, AttributeError, TypeError, IndexError):
         return {}

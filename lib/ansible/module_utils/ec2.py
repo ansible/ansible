@@ -28,10 +28,10 @@
 
 import os
 import re
-from time import sleep
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
+from ansible.module_utils.six import string_types, binary_type, text_type
 
 try:
     import boto
@@ -47,7 +47,13 @@ try:
 except:
     HAS_BOTO3 = False
 
-from ansible.module_utils.six import string_types, binary_type, text_type
+try:
+    # Although this is to allow Python 3 the ability to use the custom comparison as a key, Python 2.7 also
+    # uses this (and it works as expected). Python 2.6 will trigger the ImportError.
+    from functools import cmp_to_key
+    PY3_COMPARISON = True
+except ImportError:
+    PY3_COMPARISON = False
 
 
 class AnsibleAWSError(Exception):
@@ -72,7 +78,7 @@ class AWSRetry(CloudRetry):
         return error.response['Error']['Code']
 
     @staticmethod
-    def found(response_code):
+    def found(response_code, catch_extra_error_codes=None):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
         #
@@ -88,20 +94,23 @@ class AWSRetry(CloudRetry):
             'InternalFailure', 'InternalError', 'TooManyRequestsException',
             'Throttling'
         ]
+        if catch_extra_error_codes:
+            retry_on.extend(catch_extra_error_codes)
 
         not_found = re.compile(r'^\w+.NotFound')
-        if response_code in retry_on or not_found.search(response_code):
-            return True
-        else:
-            return False
+        return response_code in retry_on or not_found.search(response_code)
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
-    except ValueError:
-        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type '
-                             'parameter in the boto3_conn function call')
+    except ValueError as e:
+        module.fail_json(msg="Couldn't connect to AWS: " % to_native(e))
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+        module.fail_json(msg=to_native(e))
+    except botocore.exceptions.NoRegionError as e:
+        module.fail_json(msg="The %s module requires a region and none was found in configuration, "
+                         "environment variables or module parameters" % module._name)
 
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
@@ -124,7 +133,25 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
+
 boto3_inventory_conn = _boto3_conn
+
+
+def boto_exception(err):
+    """
+    Extracts the error message from a boto exception.
+
+    :param err: Exception from boto
+    :return: Error message
+    """
+    if hasattr(err, 'error_message'):
+        error = err.error_message
+    elif hasattr(err, 'message'):
+        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
+    else:
+        error = '%s: %s' % (Exception, err)
+
+    return error
 
 
 def aws_common_argument_spec():
@@ -215,7 +242,7 @@ def get_aws_connection_info(module, boto3=False):
                     module.fail_json(msg="boto is required for this module. Please install boto and try again")
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
-                region = botocore.session.get_session().get_config_variable('region')
+                region = botocore.session.Session(profile=profile_name).get_config_variable('region')
             else:
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
@@ -314,37 +341,6 @@ def ec2_connect(module):
         module.fail_json(msg="Either region or ec2_url must be specified")
 
     return ec2
-
-
-def paging(pause=0, marker_property='marker', result_key=None):
-    """ Adds paging to boto retrieval functions that support a 'marker'
-        this is configurable as not all boto functions seem to use the
-        same name.
-    """
-    def wrapper(f):
-        def page(*args, **kwargs):
-            results = []
-            marker = None
-            while True:
-                try:
-                    if marker:
-                        kwargs[marker_property] = marker
-                    new = f(*args, **kwargs)
-                    marker = new.get(marker_property)
-                    if result_key:
-                        new = new[result_key]
-                    results.extend(new)
-                    if not marker:
-                        break
-                    elif pause:
-                        sleep(pause)
-                except TypeError:
-                    # Older version of boto do not allow for marker param, just run normally
-                    results = f(*args, **kwargs)
-                    break
-            return results
-        return page
-    return wrapper
 
 
 def _camel_to_snake(name):
@@ -452,7 +448,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     return filters_list
 
 
-def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name='Key', tag_value_key_name='Value'):
+def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name=None, tag_value_key_name=None):
 
     """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
     Args:
@@ -475,12 +471,17 @@ def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name='Key', tag_value
         }
     """
 
-    tags_dict = {}
-    for tag in tags_list:
-        if tag_name_key_name in tag:
-            tags_dict[tag[tag_name_key_name]] = tag[tag_value_key_name]
+    if tag_name_key_name and tag_value_key_name:
+        tag_candidates = {tag_name_key_name: tag_value_key_name}
+    else:
+        tag_candidates = {'key': 'value', 'Key': 'Value'}
 
-    return tags_dict
+    if not tags_list:
+        return {}
+    for k, v in tag_candidates.items():
+        if k in tags_list[0] and v in tags_list[0]:
+            return dict((tag[k], tag[v]) for tag in tags_list)
+    raise ValueError("Couldn't find tag key (candidates %s) in tag list %s" % (str(tag_candidates), str(tags_list)))
 
 
 def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value_key_name='Value'):
@@ -575,6 +576,82 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
     sec_group_id_list += [str(get_sg_id(all_sg, boto3)) for all_sg in all_sec_groups if str(get_sg_name(all_sg, boto3)) in sec_group_name_list]
 
     return sec_group_id_list
+
+
+def _hashable_policy(policy, policy_list):
+    """
+        Takes a policy and returns a list, the contents of which are all hashable and sorted.
+        Example input policy:
+        {'Version': '2012-10-17',
+         'Statement': [{'Action': 's3:PutObjectAcl',
+                        'Sid': 'AddCannedAcl2',
+                        'Resource': 'arn:aws:s3:::test_policy/*',
+                        'Effect': 'Allow',
+                        'Principal': {'AWS': ['arn:aws:iam::XXXXXXXXXXXX:user/username1', 'arn:aws:iam::XXXXXXXXXXXX:user/username2']}
+                       }]}
+        Returned value:
+        [('Statement',  ((('Action', (u's3:PutObjectAcl',)),
+                          ('Effect', (u'Allow',)),
+                          ('Principal', ('AWS', ((u'arn:aws:iam::XXXXXXXXXXXX:user/username1',), (u'arn:aws:iam::XXXXXXXXXXXX:user/username2',)))),
+                          ('Resource', (u'arn:aws:s3:::test_policy/*',)), ('Sid', (u'AddCannedAcl2',)))),
+         ('Version', (u'2012-10-17',)))]
+
+    """
+    if isinstance(policy, list):
+        for each in policy:
+            tupleified = _hashable_policy(each, [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append(tupleified)
+    elif isinstance(policy, string_types):
+        return [(to_text(policy))]
+    elif isinstance(policy, dict):
+        sorted_keys = list(policy.keys())
+        sorted_keys.sort()
+        for key in sorted_keys:
+            tupleified = _hashable_policy(policy[key], [])
+            if isinstance(tupleified, list):
+                tupleified = tuple(tupleified)
+            policy_list.append((key, tupleified))
+
+    # ensure we aren't returning deeply nested structures of length 1
+    if len(policy_list) == 1 and isinstance(policy_list[0], tuple):
+        policy_list = policy_list[0]
+    if isinstance(policy_list, list):
+        if PY3_COMPARISON:
+            policy_list.sort(key=cmp_to_key(py3cmp))
+        else:
+            policy_list.sort()
+    return policy_list
+
+
+def py3cmp(a, b):
+    """ Python 2 can sort lists of mixed types. Strings < tuples. Without this function this fails on Python 3."""
+    try:
+        if a > b:
+            return 1
+        elif a < b:
+            return -1
+        else:
+            return 0
+    except TypeError as e:
+        # check to see if they're tuple-string
+        # always say strings are less than tuples (to maintain compatibility with python2)
+        str_ind = to_text(e).find('str')
+        tup_ind = to_text(e).find('tuple')
+        if -1 not in (str_ind, tup_ind):
+            if str_ind < tup_ind:
+                return -1
+            elif tup_ind < str_ind:
+                return 1
+        raise
+
+
+def compare_policies(current_policy, new_policy):
+    """ Compares the existing policy and the updated policy
+        Returns True if there is a difference between policies.
+    """
+    return set(_hashable_policy(new_policy, [])) != set(_hashable_policy(current_policy, []))
 
 
 def sort_json_policy_dict(policy_dict):

@@ -72,6 +72,54 @@ Function Get-DotNetClassForAttribute($attribute_parent) {
     }
 }
 
+Function Convert-CollectionToList($collection) {
+    $list = @()
+
+    if ($collection -is [String]) {
+        $raw_list = $collection -split ","
+        foreach ($entry in $raw_list) {
+            $list += $entry.Trim()
+        }
+    } elseif ($collection -is [Microsoft.IIs.PowerShell.Framework.ConfigurationElement]) {
+        # the collection is the value from IIS itself, we need to conver accordingly
+        foreach ($entry in $collection.Collection) {
+            $list += $entry.Value.ToString()
+        }
+    } elseif ($collection -isnot [Array]) {
+        $list += $collection
+    } else {
+        $list = $collection
+    }
+
+    return ,$list
+}
+
+Function Compare-Values($current, $new) {
+    if ($current -eq $null) {
+        return $true
+    }
+
+    if ($current -is [Array]) {
+        if ($new -isnot [Array]) {
+            return $true
+        }
+
+        if ($current.Count -ne $new.Count) {
+            return $true
+        }
+        for ($i = 0; $i -lt $current.Count; $i++) {
+            if ($current[$i] -ne $new[$i]) {
+                return $true
+            }
+        }
+    } else {
+        if ($current -ne $new) {
+            return $true
+        }
+    }
+    return $false
+}
+
 Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
     # Will convert the new value to the enum value expected and cast accordingly to the type
     if ([bool]($attribute_value.PSobject.Properties -match "Value")) {
@@ -82,13 +130,25 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
         $attribute_parent = "attributes"
         $attribute_child = $attribute_key
         $attribute_meta = $pool.Attributes | Where-Object { $_.Name -eq $attribute_child }
-    } elseif ($attribute_key_split.Length -eq 2) {
+    } elseif ($attribute_key_split.Length -gt 1) {
         $attribute_parent = $attribute_key_split[0]
-        $attribute_child = $attribute_key_split[1]
-        $attribute_meta = $pool.$attribute_parent.Attributes | Where-Object { $_.Name -eq $attribute_child }
+        $attribute_key_split = $attribute_key_split[1..$($attribute_key_split.Length - 1)]
+        $parent = $pool.$attribute_parent
+
+        foreach ($key in $attribute_key_split) {
+            $attribute_meta = $parent.Attributes | Where-Object { $_.Name -eq $key }
+            $parent = $parent.$key
+            if ($attribute_meta -eq $null) {
+                $attribute_meta = $parent
+            }
+        }
+        $attribute_child = $attribute_key_split[-1]
     }
 
     if ($attribute_meta) {
+        if (($attribute_meta.PSObject.Properties.Name -eq "Collection").Count -gt 0) {
+            return ,(Convert-CollectionToList -collection $attribute_value)
+        }
         $type = $attribute_meta.Schema.Type
         $value = $attribute_value
         if ($type -eq "enum") {
@@ -169,12 +229,27 @@ if ($state -eq "absent") {
         $current_raw_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
         $current_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $current_raw_value
 
-        # Cannot use ($current_value -or (..)) as that will fire if $current_value is 0/$null/"" when we only want $null
-        if (($current_value -eq $null) -or ($current_value -ne $new_value)) {
-            try {
-                Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
-            } catch {
-                Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
+        $changed = Compare-Values -current $current_value -new $new_value
+        if ($changed -eq $true) {
+            if ($new_value -is [Array]) {
+                try {
+                    Clear-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -WhatIf:$check_mode
+                } catch {
+                    Fail-Json -obj $result -message "Failed to clear attribute to Web App Pool $name. Attribute: $attribute_key, Exception: $($_.Exception.Message)"
+                }
+                foreach ($value in $new_value) {
+                    try {
+                        New-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode
+                    } catch {
+                        Fail-Json -obj $result -message "Failed to add new attribute to Web App Pool $name. Attribute: $attribute_key, Value: $value, Exception: $($_.Exception.Message)"
+                    }
+                }
+            } else {
+                try {
+                    Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
+                } catch {
+                    Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
+                }
             }
             $result.changed = $true
         }

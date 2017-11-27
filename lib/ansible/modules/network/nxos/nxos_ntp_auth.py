@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - If C(state=absent), the module will attempt to remove the given key configuration.
       If a matching key configuration isn't found on the device, the module will fail.
     - If C(state=absent) and C(authentication=on), authentication will be turned off.
@@ -160,8 +161,8 @@ def get_ntp_trusted_key(module):
 def get_ntp_auth_key(key_id, module):
     authentication_key = {}
     command = 'show run | inc ntp.authentication-key.{0}'.format(key_id)
-    auth_regex = (".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
-                  "md5\s(?P<md5string>\S+).*")
+    auth_regex = (r".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
+                  r"md5\s(?P<md5string>\S+).*")
 
     body = execute_show_command(command, module)[0]
 
@@ -324,4 +325,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

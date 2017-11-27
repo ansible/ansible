@@ -26,10 +26,8 @@ version_added: "0.0.2"
 options:
   name:
     description:
-      - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Name wildcards (fnmatch) like C(apt*) and version wildcards
-        like C(foo=1.0*) are also supported.  Note that the apt-get commandline supports implicit regex matches here but we do not because it can let
-        typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for
-        the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
+      - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0).
+        Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.
     required: false
     default: null
     aliases: [ 'pkg', 'package' ]
@@ -72,7 +70,10 @@ options:
     choices: [ "yes", "no" ]
   force:
     description:
-      - If C(yes), force installs/removes.
+      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes)'
+      - 'This option *is not* the equivalent of passing the C(-f) flag to I(apt-get) on the command line'
+      - '**This is a destructive operation with the potential to destroy your system, and it should almost never be used.**
+         Please also see C(man apt-get) for more information.'
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -139,9 +140,13 @@ requirements:
    - aptitude (before 2.4)
 author: "Matthew Williams (@mgwilliams)"
 notes:
-   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes))
-     required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a
-     fall-back.
+   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
+   - apt starts newly installed services by default, this is what the underlying tooling does,
+     to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
+   - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
+     (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
+     Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
+   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 '''
 
 EXAMPLES = '''
@@ -150,10 +155,13 @@ EXAMPLES = '''
     name: foo
     update_cache: yes
 
+- name: Install apache service but avoid starting it immediately
+  apt: name=apache2 state=present
+  environment:
+    RUNLEVLEL: 1
+
 - name: Remove "foo" package
-  apt:
-    name: foo
-    state: absent
+  apt: name=foo state=absent
 
 - name: Install the package "foo"
   apt:
@@ -222,6 +230,7 @@ EXAMPLES = '''
 - name: Remove dependencies that are no longer required
   apt:
     autoremove: yes
+
 '''
 
 RETURN = '''
@@ -298,10 +307,10 @@ else:
 
 def package_split(pkgspec):
     parts = pkgspec.split('=', 1)
+    version = None
     if len(parts) > 1:
-        return parts[0], parts[1]
-    else:
-        return parts[0], None
+        version = parts[1]
+    return parts[0], version
 
 
 def package_versions(pkgname, pkg, pkg_cache):
@@ -443,7 +452,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
-                if len(matches) == 0:
+                if not matches:
                     m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
@@ -491,7 +500,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         name, version = package_split(package)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
-        if not installed or (upgrade and upgradable):
+        if (not installed and not only_upgrade) or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
         if installed and upgradable and version:
             # This happens when the package is installed, a newer version is
@@ -503,7 +512,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
-    if len(packages) != 0:
+    if packages:
         if force:
             force_yes = '--force-yes'
         else:
@@ -546,10 +555,12 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             diff = parse_diff(out)
         else:
             diff = {}
+        status = True
+        data = dict(changed=True, stdout=out, stderr=err, diff=diff)
         if rc:
-            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc))
-        else:
-            return (True, dict(changed=True, stdout=out, stderr=err, diff=diff))
+            status = False
+            data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+        return (status, data)
     else:
         return (True, dict(changed=False))
 
@@ -603,7 +614,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
 
     # install the deps through apt
     retvals = {}
-    if len(deps_to_install) > 0:
+    if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
@@ -611,7 +622,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             m.fail_json(**retvals)
         changed = retvals.get('changed', False)
 
-    if len(pkgs_to_install) > 0:
+    if pkgs_to_install:
         options = ' '.join(["--%s"% x for x in dpkg_options.split(",")])
         if m.check_mode:
             options += " --simulate"
@@ -654,7 +665,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
-    if len(packages) == 0:
+    if not packages:
         m.exit_json(changed=False)
     else:
         if force:
@@ -720,7 +731,13 @@ def cleanup(m, purge=False, force=False, operation=None,
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=None):
+
+    if autoremove:
+        autoremove = '--auto-remove'
+    else:
+        autoremove = ''
+
     if m.check_mode:
         check_arg = '--simulate'
     else:
@@ -739,7 +756,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
-            upgrade_command = "upgrade --with-new-pkgs --autoremove"
+            upgrade_command = "upgrade --with-new-pkgs %s" % (autoremove)
         else:
             # aptitude safe-upgrade # mode=yes # default
             apt_cmd = APTITUDE_CMD
@@ -811,12 +828,12 @@ def get_cache_mtime():
     Stat the apt cache file and if no cache file is found return 0
     :returns: ``int``
     """
+    cache_time = 0
     if os.path.exists(APT_UPDATE_SUCCESS_STAMP_PATH):
-        return os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
+        cache_time = os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
     elif os.path.exists(APT_LISTS_PATH):
-        return os.stat(APT_LISTS_PATH).st_mtime
-    else:
-        return 0
+        cache_time = os.stat(APT_LISTS_PATH).st_mtime
+    return cache_time
 
 
 def get_updated_cache_time():
@@ -911,7 +928,7 @@ def main():
     use_apt_get = p['force_apt_get']
 
     if not use_apt_get and not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
-        module.warn("Could not find aptitude. Using apt-get instead")
+        module.warn("Could not find aptitude. Using apt-get instead.")
         use_apt_get = True
 
     updated_cache = False
@@ -924,8 +941,10 @@ def main():
 
     # Deal with deprecated aliases
     if p['state'] == 'installed':
+        module.deprecate("State 'installed' is deprecated. Using state 'present' instead.", version="2.9")
         p['state'] = 'present'
     if p['state'] == 'removed':
+        module.deprecate("State 'removed' is deprecated. Using state 'absent' instead.", version="2.9")
         p['state'] = 'absent'
 
     # Get the cache object
@@ -973,7 +992,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -993,7 +1012,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when ugrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if packages:
             for package in packages:

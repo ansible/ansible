@@ -32,6 +32,8 @@ description:
     running Cisco IOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   banner:
     description:
@@ -121,7 +123,7 @@ def map_config_to_obj(module):
                                     'show running-config | begin banner %s'
                                     % module.params['banner'])
         if out:
-            output = re.search('\^C(.*)\^C', out, re.S).group(1).strip()
+            output = re.search(r'\^C(.*)\^C', out, re.S).group(1).strip()
         else:
             output = None
     obj = {'banner': module.params['banner'], 'state': 'absent'}

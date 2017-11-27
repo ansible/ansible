@@ -35,6 +35,8 @@ description:
     either individual usernames or the collection of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   aggregate:
     description:
@@ -134,7 +136,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import get_config, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def validate_level(value, module):
@@ -306,8 +308,6 @@ def main():
             'The "password" argument is used to authenticate the current connection. ' +
             'To set a user password use "configured_password" instead.'
         )
-
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

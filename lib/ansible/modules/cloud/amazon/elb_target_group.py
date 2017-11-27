@@ -18,6 +18,7 @@ description:
     - Manage an AWS Application Elastic Load Balancer target group. See
       U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
 version_added: "2.4"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   deregistration_delay_timeout:
@@ -28,10 +29,11 @@ options:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
     required: false
-    choices: [ 'http', 'https' ]
+    choices: [ 'http', 'https', 'tcp' ]
   health_check_port:
     description:
       - The port the load balancer uses when performing health checks on targets.
+        Can be set to 'traffic-port' to match target port.
     required: false
     default: "The port on which each target receives traffic from the load balancer."
   health_check_path:
@@ -68,7 +70,7 @@ options:
     description:
       - The protocol to use for routing traffic to the targets. Required when I(state) is C(present).
     required: false
-    choices: [ 'http', 'https' ]
+    choices: [ 'http', 'https', 'tcp' ]
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then
@@ -339,6 +341,7 @@ def wait_for_status(connection, module, target_group_arn, targets, status):
 def create_or_update_target_group(connection, module):
 
     changed = False
+    new_target_group = False
     params = dict()
     params['Name'] = module.params.get("name")
     params['Protocol'] = module.params.get("protocol").upper()
@@ -359,7 +362,7 @@ def create_or_update_target_group(connection, module):
             params['HealthCheckProtocol'] = module.params.get("health_check_protocol").upper()
 
         if module.params.get("health_check_port") is not None:
-            params['HealthCheckPort'] = str(module.params.get("health_check_port"))
+            params['HealthCheckPort'] = module.params.get("health_check_port")
 
         if module.params.get("health_check_interval") is not None:
             params['HealthCheckIntervalSeconds'] = module.params.get("health_check_interval")
@@ -458,7 +461,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append(target)
+                            instances_to_add.append({'Id': target['Id'], 'Port': int(target['Port'])})
 
                     changed = True
                     try:
@@ -549,7 +552,7 @@ def create_or_update_target_group(connection, module):
     if stickiness_lb_cookie_duration is not None:
         if str(stickiness_lb_cookie_duration) != current_tg_attributes['stickiness_lb_cookie_duration_seconds']:
             update_attributes.append({'Key': 'stickiness.lb_cookie.duration_seconds', 'Value': str(stickiness_lb_cookie_duration)})
-    if stickiness_type is not None:
+    if stickiness_type is not None and "stickiness_type" in current_tg_attributes:
         if stickiness_type != current_tg_attributes['stickiness_type']:
             update_attributes.append({'Key': 'stickiness.type', 'Value': stickiness_type})
 
@@ -620,8 +623,8 @@ def main():
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
-            health_check_port=dict(type='int'),
+            health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
+            health_check_port=dict(),
             health_check_path=dict(default=None, type='str'),
             health_check_interval=dict(type='int'),
             health_check_timeout=dict(type='int'),
@@ -629,7 +632,7 @@ def main():
             modify_targets=dict(default=True, type='bool'),
             name=dict(required=True, type='str'),
             port=dict(type='int'),
-            protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
+            protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
             purge_tags=dict(default=True, type='bool'),
             stickiness_enabled=dict(type='bool'),
             stickiness_type=dict(default='lb_cookie', type='str'),

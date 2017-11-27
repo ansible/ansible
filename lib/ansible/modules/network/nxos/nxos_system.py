@@ -125,7 +125,7 @@ def has_vrf(module, vrf):
     if _CONFIGURED_VRFS is not None:
         return vrf in _CONFIGURED_VRFS
     config = get_config(module)
-    _CONFIGURED_VRFS = re.findall('vrf context (\S+)', config)
+    _CONFIGURED_VRFS = re.findall(r'vrf context (\S+)', config)
     return vrf in _CONFIGURED_VRFS
 
 def map_obj_to_commands(want, have, module):
@@ -207,13 +207,13 @@ def map_obj_to_commands(want, have, module):
     return commands
 
 def parse_hostname(config):
-    match = re.search('^hostname (\S+)', config, re.M)
+    match = re.search(r'^hostname (\S+)', config, re.M)
     if match:
         return match.group(1)
 
 def parse_domain_name(config, vrf_config):
     objects = list()
-    regex = re.compile('ip domain-name (\S+)')
+    regex = re.compile(r'ip domain-name (\S+)')
 
     match = regex.search(config, re.M)
     if match:
@@ -229,21 +229,23 @@ def parse_domain_name(config, vrf_config):
 def parse_domain_search(config, vrf_config):
     objects = list()
 
-    for item in re.findall('^ip domain-list (\S+)', config, re.M):
+    for item in re.findall(r'^ip domain-list (\S+)', config, re.M):
         objects.append({'name': item, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall('ip domain-list (\S+)', cfg, re.M):
+        for item in re.findall(r'ip domain-list (\S+)', cfg, re.M):
             objects.append({'name': item, 'vrf': vrf})
 
     return objects
 
-def parse_name_servers(config, vrf_config):
+def parse_name_servers(config, vrf_config, vrfs):
     objects = list()
 
     match = re.search('^ip name-server (.+)$', config, re.M)
     if match:
         for addr in match.group(1).split(' '):
+            if addr == 'use-vrf' or addr in vrfs:
+                continue
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
@@ -255,7 +257,7 @@ def parse_name_servers(config, vrf_config):
     return objects
 
 def parse_system_mtu(config):
-    match = re.search('^system jumbomtu (\d+)', config, re.M)
+    match = re.search(r'^system jumbomtu (\d+)', config, re.M)
     if match:
         return int(match.group(1))
 
@@ -265,7 +267,7 @@ def map_config_to_obj(module):
 
     vrf_config = {}
 
-    vrfs = re.findall('^vrf context (\S+)$', config, re.M)
+    vrfs = re.findall(r'^vrf context (\S+)$', config, re.M)
     for vrf in vrfs:
         config_data = configobj.get_block_config(path=['vrf context %s' % vrf])
         vrf_config[vrf] = config_data
@@ -275,7 +277,7 @@ def map_config_to_obj(module):
         'domain_lookup': 'no ip domain-lookup' not in config,
         'domain_name': parse_domain_name(config, vrf_config),
         'domain_search': parse_domain_search(config, vrf_config),
-        'name_servers': parse_name_servers(config, vrf_config),
+        'name_servers': parse_name_servers(config, vrf_config, vrfs),
         'system_mtu': parse_system_mtu(config)
     }
 

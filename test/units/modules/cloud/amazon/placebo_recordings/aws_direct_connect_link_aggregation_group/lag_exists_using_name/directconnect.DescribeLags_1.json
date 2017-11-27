@@ -1,0 +1,157 @@
+{
+    "data": {
+        "lags": [
+            {
+                "awsDevice": "EqSe2-9uinh2jjnuu9",
+                "connections": [],
+                "lagState": "pending",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 0,
+                "lagName": "sherteltestlag",
+                "lagId": "dxlag-fgr4lfqt"
+            },
+            {
+                "awsDevice": "EqSe2-1bwfvazist2k0",
+                "connections": [
+                    {
+                        "bandwidth": "1Gbps",
+                        "connectionName": "Requested Connection 1 for Lag dxlag-fgkk4dja",
+                        "location": "EqSe2",
+                        "ownerAccount": "448830907657",
+                        "lagId": "dxlag-fgkk4dja",
+                        "region": "us-west-2",
+                        "connectionState": "requested",
+                        "connectionId": "dxcon-ffx41o23"
+                    }
+                ],
+                "lagState": "pending",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 1,
+                "lagName": "ansible_lag_1",
+                "lagId": "dxlag-fgkk4dja"
+            },
+            {
+                "awsDevice": "EqSe2-2bii1jufy4y7p",
+                "connections": [
+                    {
+                        "bandwidth": "1Gbps",
+                        "connectionName": "Requested Connection 1 for Lag dxlag-fgytkicv",
+                        "location": "EqSe2",
+                        "ownerAccount": "448830907657",
+                        "lagId": "dxlag-fgytkicv",
+                        "region": "us-west-2",
+                        "connectionState": "requested",
+                        "connectionId": "dxcon-fgsxammv"
+                    }
+                ],
+                "lagState": "pending",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 1,
+                "lagName": "ansible_lag_2",
+                "lagId": "dxlag-fgytkicv"
+            },
+            {
+                "awsDevice": "EqSe2-1bwfvazist2k0",
+                "connections": [],
+                "lagState": "deleted",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 0,
+                "lagName": "ansible_lag_1",
+                "lagId": "dxlag-fgee5gk5"
+            },
+            {
+                "awsDevice": "EqSe2-2bii1jufy4y7p",
+                "connections": [],
+                "lagState": "deleted",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 0,
+                "lagName": "ansible_lag_2_update",
+                "lagId": "dxlag-fg0hj0n3"
+            },
+            {
+                "awsDevice": "EqSe2-1bwfvazist2k0",
+                "connections": [],
+                "lagState": "deleted",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 0,
+                "lagName": "ansible_lag_1",
+                "lagId": "dxlag-ffg1zmo4"
+            },
+            {
+                "awsDevice": "EqSe2-2oqu43nde4cs1",
+                "connections": [],
+                "lagState": "deleted",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 0,
+                "lagName": "ansible_lag_2_update",
+                "lagId": "dxlag-ffzm4jk8"
+            },
+            {
+                "awsDevice": "EqSe2-1bwfvazist2k0",
+                "connections": [],
+                "lagState": "deleted",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 0,
+                "lagName": "ansible_lag_1",
+                "lagId": "dxlag-ffuid1ql"
+            },
+            {
+                "awsDevice": "EqSe2-2oqu43nde4cs1",
+                "connections": [],
+                "lagState": "deleted",
+                "minimumLinks": 0,
+                "location": "EqSe2",
+                "connectionsBandwidth": "1Gbps",
+                "ownerAccount": "448830907657",
+                "region": "us-west-2",
+                "numberOfConnections": 0,
+                "lagName": "ansible_lag_2_update",
+                "lagId": "dxlag-ffpq2qa7"
+            }
+        ],
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "content-type": "application/x-amz-json-1.1",
+                "x-amzn-requestid": "b6a0a55a-70a7-11e7-a69f-95e467ba41d7",
+                "content-length": "2920",
+                "date": "Mon, 24 Jul 2017 19:38:49 GMT"
+            },
+            "RequestId": "b6a0a55a-70a7-11e7-a69f-95e467ba41d7"
+        }
+    },
+    "status_code": 200
+}

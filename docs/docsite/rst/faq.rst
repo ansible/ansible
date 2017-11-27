@@ -56,7 +56,7 @@ by default if OpenSSH is new enough to support ControlPersist as an option.
 
 Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
 from a machine new enough to support ControlPersist, if you are using this connection type.  You can still manage
-older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so 
+older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so
 consider managing from a Fedora or openSUSE client even though you are managing older nodes, or just use paramiko.
 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
@@ -67,7 +67,7 @@ for new users.
 How do I configure a jump host to access servers that I have no direct access to?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-With Ansible 2, you can set a `ProxyCommand` in the
+You can set a `ProxyCommand` in the
 `ansible_ssh_common_args` inventory variable. Any arguments specified in
 this variable are added to the sftp/scp/ssh command line when connecting
 to the relevant host(s). Consider the following inventory group:
@@ -116,7 +116,7 @@ By default, Ansible assumes it can find a /usr/bin/python on your remote system 
 
 Setting the inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
 used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
-system does not point to a Python 2.X interpreter.  
+system does not point to a Python 2.X interpreter.
 
 Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
 get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same language as Python 2.  Python 3
@@ -149,7 +149,7 @@ How do I disable cowsay?
 ++++++++++++++++++++++++
 
 If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
-that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable:
+that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set the :envvar:`ANSIBLE_NOCOWS` environment variable:
 
 .. code-block:: shell-session
 
@@ -269,7 +269,7 @@ environment variable on the management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Starting with Ansible 1.4, remote environment variables are available via facts in the 'ansible_env' variable:
+Remote environment variables are available via facts in the 'ansible_env' variable:
 
 .. code-block:: jinja
 
@@ -305,6 +305,20 @@ You shouldn't put plaintext passwords in your playbook or host_vars; instead, us
 
 .. _commercial_support:
 
+Ansible supports dot notation and array notation for variables. Which notation should I use?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The dot notation comes from Jinja and works fine for variables without special
+characters. If your variable contains dots (.), colons (:), or dashes (-) it is
+safer to use the array notation for variables.
+
+.. code-block:: jinja
+
+    item[0]['checksum:md5']
+    item['section']['2.1']
+    item['region']['Mid-Atlantic']
+    It is {{ temperature['Celsius']['-3'] }} outside.
+
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
@@ -334,7 +348,7 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
-In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
+If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
     - name: secret task
       shell: /usr/bin/do_something --value={{ secret_value }}
@@ -350,7 +364,7 @@ The no_log attribute can also apply to an entire play::
 Though this will make the play somewhat difficult to debug.  It's recommended that this
 be applied to single tasks only, once a playbook is completed. Note that the use of the
 no_log attribute does not prevent data from being shown when debugging Ansible itself via
-the ANSIBLE_DEBUG environment variable.
+the :envvar:`ANSIBLE_DEBUG` environment variable.
 
 
 .. _when_to_use_brackets:
@@ -364,7 +378,7 @@ A steadfast rule is 'always use {{ }} except when `when:`'.
 Conditionals are always run through Jinja2 as to resolve the expression,
 so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
 
-In most other cases you should always use the brackets, even if previously you could use variables without specifying (like `with_` clauses),
+In most other cases you should always use the brackets, even if previously you could use variables without specifying (like `loop` or `with_` clauses),
 as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:
@@ -407,6 +421,3 @@ Please see the section below for a link to IRC and the Google Group, where you c
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-

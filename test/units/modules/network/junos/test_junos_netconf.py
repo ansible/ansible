@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_netconf
-from .junos_module import TestJunosModule, set_module_args
+from units.modules.utils import set_module_args
+from .junos_module import TestJunosModule
 
 
 class TestJunosCommandModule(TestJunosModule):
@@ -29,8 +30,7 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_netconf
 
     def setUp(self):
-        self.mock_exec_command = patch('ansible.modules.network.junos.junos_netconf.exec_command')
-        self.exec_command = self.mock_exec_command.start()
+        super(TestJunosCommandModule, self).setUp()
 
         self.mock_lock_configuration = patch('ansible.module_utils.junos.lock_configuration')
         self.lock_configuration = self.mock_lock_configuration.start()
@@ -41,16 +41,33 @@ class TestJunosCommandModule(TestJunosModule):
         self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_netconf.commit_configuration')
         self.commit_configuration = self.mock_commit_configuration.start()
 
+        self.mock_conn = patch('ansible.module_utils.connection.Connection')
+        self.conn = self.mock_conn.start()
+
+        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.netconf_conn = self.mock_netconf.start()
+
+        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.netconf_rpc = self.mock_netconf_rpc.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.junos.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'netconf'}
+
     def tearDown(self):
-        self.mock_exec_command.stop()
+        super(TestJunosCommandModule, self).tearDown()
         self.mock_lock_configuration.stop()
         self.mock_unlock_configuration.stop()
         self.mock_commit_configuration.stop()
+        self.mock_conn.stop()
+        self.mock_netconf.stop()
+        self.mock_netconf_rpc.stop()
+        self.mock_get_capabilities.stop()
 
     def test_junos_netconf_enable(self):
-        self.exec_command.return_value = 0, '', None
+        self.netconf_conn().get.return_value = ''
         set_module_args(dict(state='present'))
-        result = self.execute_module()
+        result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['set system services netconf ssh port 830'])
 
     def test_junos_netconf_disable(self):
@@ -59,7 +76,7 @@ class TestJunosCommandModule(TestJunosModule):
                 port 830;
                 }
             '''
-        self.exec_command.return_value = 0, out, None
+        self.netconf_conn().get.return_value = out
         set_module_args(dict(state='absent'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['delete system services netconf'])
@@ -70,7 +87,7 @@ class TestJunosCommandModule(TestJunosModule):
                 port 830;
                 }
             '''
-        self.exec_command.return_value = 0, out, None
+        self.netconf_conn().get.return_value = out
         set_module_args(dict(state='present', netconf_port=22))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['set system services netconf ssh port 22'])
@@ -81,13 +98,13 @@ class TestJunosCommandModule(TestJunosModule):
                 port 22;
                 }
             '''
-        self.exec_command.return_value = 0, out, None
+        self.netconf_conn().get.return_value = out
         set_module_args(dict(state='present', netconf_port=0))
         result = self.execute_module(changed=True, failed=True)
         self.assertEqual(result['msg'], 'netconf_port must be between 1 and 65535')
 
     def test_junos_netconf_config_error(self):
-        self.exec_command.return_value = 1, None, None
+        self.netconf_conn().get.return_value = None
         set_module_args(dict(state='present'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'unable to retrieve current config')

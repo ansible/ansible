@@ -2178,7 +2178,8 @@ def checkVlanNameNotAssigned(
     retVal = waitForDeviceResponse(command, prompt, timeout, obj)
     if(retVal.find(vlanName) != -1):
         return "Nok"
-    return retVal
+    else:
+        return "ok"
 # EOM
 
 
@@ -2986,12 +2987,14 @@ def doImageTransfer(
     else:
         return "Error-110"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "[n]", 3, obj)
+    response = waitForDeviceResponse(command, "[n]", 3, obj)
+    if(response.lower().find("error-101")):
+        retVal = retVal
+    else:
+        retVal = retVal + response
+
     # Confirmation command happens here
     command = "y\n"
-    # debugOutput(command)
-    # retVal = retVal+ waitForDeviceResponse(command, "(yes/no)?", 3, obj)
-    # command = "Yes \n"
     # debugOutput(command)
     if(protocol == "ftp"):
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
@@ -3034,12 +3037,20 @@ def doSecureImageTransfer(
     command = "cp " + protocol + " " + protocol + "://" + username + "@" + \
         server + "/" + imgPath + " system-image " + type + " vrf management \n"
     # debugOutput(command)
-    retVal = retVal + waitForDeviceResponse(command, "[n]", 3, obj)
+    response = waitForDeviceResponse(command, "[n]", 3, obj)
+    if(response.lower().find("error-101")):
+        retVal = retVal
+    else:
+        retVal = retVal + response
     # Confirmation command happens here
     if(protocol == "scp"):
         command = "y\n"
         # debugOutput(command)
-        retVal = retVal + waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        if(response.lower().find("error-101")):
+            retVal = retVal
+        else:
+            retVal = retVal + response
         command = "Yes\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "timeout:", 3, obj)
@@ -3049,7 +3060,12 @@ def doSecureImageTransfer(
     elif(protocol == "sftp"):
         command = "y\n"
         # debugOutput(command)
-        retVal = retVal + waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        response = waitForDeviceResponse(command, "(yes/no)?", 3, obj)
+        if(response.lower().find("error-101")):
+            retVal = retVal
+        else:
+            retVal = retVal + response
+
         command = "Yes\n"
         # debugOutput(command)
         retVal = retVal + waitForDeviceResponse(command, "Password:", 3, obj)
@@ -3143,10 +3159,13 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
             if(gotit != -1):
                 flag = True
         except:
-            if prompt != "(yes/no)?":
-                retVal = retVal + "\n Error-101"
-            else:
+            # debugOutput(prompt)
+            if prompt == "(yes/no)?":
                 retVal = retVal
+            elif prompt == "Password:":
+                retVal = retVal
+            else:
+                retVal = retVal + "\n Error-101"
             flag = True
     return retVal
 # EOM
@@ -3160,13 +3179,16 @@ def checkOutputForError(output):
         index = output.lower().find("invalid")
         startIndex = index + 8
         if(index == -1):
-            index = output.lower().find("incorrect")
-            startIndex = index + 9
+            index = output.lower().find("cannot be enabled in l2 interface")
+            startIndex = index + 34
             if(index == -1):
-                index = output.lower().find("failure")
-                startIndex = index + 8
+                index = output.lower().find("incorrect")
+                startIndex = index + 10
                 if(index == -1):
-                    return None
+                    index = output.lower().find("failure")
+                    startIndex = index + 8
+                    if(index == -1):
+                        return None
 
     endIndex = startIndex + 3
     errorCode = output[startIndex:endIndex]

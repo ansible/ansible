@@ -201,7 +201,7 @@ def get_collection_from_param_map(module, aos):
             module.fail_json(msg="Python library Yaml is mandatory to use 'param_map'")
 
         try:
-            param_map = yaml.load(param_map_json)
+            param_map = yaml.safe_load(param_map_json)
         except:
             module.fail_json(msg="Unable to parse param_map information")
 

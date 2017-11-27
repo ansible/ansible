@@ -42,7 +42,7 @@ options:
     description: List of static route definitions
   purge:
     description:
-      - Purge static routes not defined in the aggregates parameter.
+      - Purge static routes not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

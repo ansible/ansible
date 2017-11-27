@@ -39,59 +39,50 @@ from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
 
-eos_argument_spec = {
+eos_provider_spec = {
     'host': dict(),
     'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
-
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-    'use_ssl': dict(type='bool'),
-    'validate_certs': dict(type='bool'),
+    'use_ssl': dict(default=True, type='bool'),
+    'validate_certs': dict(default=True, type='bool'),
     'timeout': dict(type='int'),
 
-    'provider': dict(type='dict'),
-    'transport': dict(choices=['cli', 'eapi'])
+    'transport': dict(default='cli', choices=['cli', 'eapi'])
 }
-
-# Add argument's default value here
-ARGS_DEFAULT_VALUE = {
-    'transport': 'cli',
-    'use_ssl': True,
-    'validate_certs': True
+eos_argument_spec = {
+    'provider': dict(type='dict', options=eos_provider_spec),
 }
+eos_top_spec = {
+    'host': dict(removed_in_version=2.9),
+    'port': dict(removed_in_version=2.9, type='int'),
+    'username': dict(removed_in_version=2.9),
+    'password': dict(removed_in_version=2.9, no_log=True),
+    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
+
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(removed_in_version=2.9, no_log=True),
+
+    'use_ssl': dict(removed_in_version=2.9, type='bool'),
+    'validate_certs': dict(removed_in_version=2.9, type='bool'),
+    'timeout': dict(removed_in_version=2.9, type='int'),
+
+    'transport': dict(removed_in_version=2.9, choices=['cli', 'eapi'])
+}
+eos_argument_spec.update(eos_top_spec)
 
 
-def get_argspec():
-    return eos_argument_spec
+def get_provider_argspec():
+    return eos_provider_spec
 
 
 def check_args(module, warnings):
-    provider = module.params['provider'] or {}
-    for key in eos_argument_spec:
-        if module._name == 'eos_user':
-            if (key not in ['username', 'password', 'provider', 'transport', 'authorize'] and
-                    module.params[key]):
-                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-        else:
-            if key not in ['provider', 'authorize'] and module.params[key]:
-                warnings.append('argument %s has been deprecated and will be removed in a future version' % key)
-
-    # set argument's default value if not provided in input
-    # This is done to avoid unwanted argument deprecation warning
-    # in case argument is not given as input (outside provider).
-    for key in ARGS_DEFAULT_VALUE:
-        if not module.params.get(key, None):
-            module.params[key] = ARGS_DEFAULT_VALUE[key]
-
-    if provider:
-        for param in ('auth_pass', 'password'):
-            if provider.get(param):
-                module.no_log_values.update(return_values(provider[param]))
+    pass
 
 
 def load_params(module):
@@ -134,15 +125,11 @@ class Cli:
             command = self._module.jsonify(command)
         return exec_command(self._module, command)
 
-    def check_authorization(self):
-        for cmd in ['show clock', 'prompt()']:
-            rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_then_replace')
-        return out.endswith('#')
-
-    def get_config(self, flags=[]):
+    def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
+        flags = [] if flags is None else flags
+
         cmd = 'show running-config '
         cmd += ' '.join(flags)
         cmd = cmd.strip()
@@ -183,7 +170,7 @@ class Cli:
         rc = 0
         for command in to_list(commands):
             if command == 'end':
-                pass
+                continue
 
             if command.startswith('banner') or multiline:
                 multiline = True
@@ -200,9 +187,6 @@ class Cli:
     def configure(self, commands):
         """Sends configuration commands to the remote device
         """
-        if not self.check_authorization():
-            self._module.fail_json(msg='configuration operations require privilege escalation')
-
         conn = get_connection(self)
 
         rc, out, err = self.exec_command('configure')
@@ -219,9 +203,6 @@ class Cli:
     def load_config(self, commands, commit=False, replace=False):
         """Loads the config commands onto the remote device
         """
-        if not self.check_authorization():
-            self._module.fail_json(msg='configuration operations require privilege escalation')
-
         use_session = os.getenv('ANSIBLE_EOS_USE_SESSIONS', True)
         try:
             use_session = int(use_session)
@@ -303,7 +284,7 @@ class Eapi:
         commands = to_list(commands)
 
         if self._enable:
-            commands.insert(0, 'enable')
+            commands.insert(0, self._enable)
 
         body = self._request_builder(commands, output)
         data = self._module.jsonify(body)
@@ -367,9 +348,11 @@ class Eapi:
 
         return responses
 
-    def get_config(self, flags=[]):
+    def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
+        flags = [] if flags is None else flags
+
         cmd = 'show running-config '
         cmd += ' '.join(flags)
         cmd = cmd.strip()
@@ -461,7 +444,9 @@ def to_command(module, commands):
     return transform(to_list(commands))
 
 
-def get_config(module, flags=[]):
+def get_config(module, flags=None):
+    flags = None if flags is None else flags
+
     conn = get_connection(module)
     return conn.get_config(flags)
 

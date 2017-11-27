@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -29,34 +15,32 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.module_utils import basic
 from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils._text import to_bytes
 from ansible.module_utils.f5_utils import AnsibleF5Client
+from units.modules.utils import set_module_args
 
 try:
     from library.bigip_ssl_certificate import ArgumentSpec
     from library.bigip_ssl_certificate import KeyParameters
     from library.bigip_ssl_certificate import CertParameters
     from library.bigip_ssl_certificate import CertificateManager
+    from library.bigip_ssl_certificate import HAS_F5SDK
     from library.bigip_ssl_certificate import KeyManager
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_ssl_certificate import ArgumentSpec
         from ansible.modules.network.f5.bigip_ssl_certificate import KeyParameters
         from ansible.modules.network.f5.bigip_ssl_certificate import CertParameters
         from ansible.modules.network.f5.bigip_ssl_certificate import CertificateManager
+        from ansible.modules.network.f5.bigip_ssl_certificate import HAS_F5SDK
         from ansible.modules.network.f5.bigip_ssl_certificate import KeyManager
+        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):
@@ -139,7 +123,7 @@ class TestCertificateManager(unittest.TestCase):
             cert_content=load_fixture('cert1.crt'),
             key_content=load_fixture('cert1.key'),
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -159,14 +143,12 @@ class TestCertificateManager(unittest.TestCase):
 
         assert results['changed'] is True
 
-    def test_update_certificate_new_certificate_and_key_password_protected_key(self, *args):
+    def test_import_certificate_chain(self, *args):
         set_module_args(dict(
             name='foo',
-            cert_content=load_fixture('cert2.crt'),
-            key_content=load_fixture('cert2.key'),
+            cert_content=load_fixture('chain1.crt'),
             state='present',
-            passphrase='keypass',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -200,7 +182,7 @@ class TestKeyManager(unittest.TestCase):
             cert_content=load_fixture('cert1.crt'),
             key_content=load_fixture('cert1.key'),
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -227,7 +209,7 @@ class TestKeyManager(unittest.TestCase):
             key_content=load_fixture('cert2.key'),
             state='present',
             passphrase='keypass',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

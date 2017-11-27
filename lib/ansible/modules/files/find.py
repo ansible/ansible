@@ -100,28 +100,28 @@ EXAMPLES = r'''
     recurse: yes
 
 - name: Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-- find:
+  find:
     paths: /tmp
     age: 4w
     size: 1m
     recurse: yes
 
 - name: Recursively find /var/tmp files with last access time greater than 3600 seconds
-- find:
+  find:
     paths: /var/tmp
     age: 3600
     age_stamp: atime
     recurse: yes
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-- find:
+  find:
     paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-- find:
+  find:
     paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
@@ -287,7 +287,7 @@ def main():
         age = None
     else:
         # convert age to seconds:
-        m = re.match("^(-?\d+)(s|m|h|d|w)?$", params['age'].lower())
+        m = re.match(r"^(-?\d+)(s|m|h|d|w)?$", params['age'].lower())
         seconds_per_unit = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
         if m:
             age = int(m.group(1)) * seconds_per_unit.get(m.group(2), 1)
@@ -298,7 +298,7 @@ def main():
         size = None
     else:
         # convert size to bytes:
-        m = re.match("^(-?\d+)(b|k|m|g|t)?$", params['size'].lower())
+        m = re.match(r"^(-?\d+)(b|k|m|g|t)?$", params['size'].lower())
         bytes_per_unit = {"b": 1, "k": 1024, "m": 1024**2, "g": 1024**3, "t": 1024**4}
         if m:
             size = int(m.group(1)) * bytes_per_unit.get(m.group(2), 1)

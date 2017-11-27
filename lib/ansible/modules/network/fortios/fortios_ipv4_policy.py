@@ -40,11 +40,11 @@ options:
     default: present
   src_intf:
     description:
-      - Specifies source interface name.
+      - Specifies source interface name(s).
     default: any
   dst_intf:
     description:
-      - Specifies destination interface name.
+      - Specifies destination interface name(s).
     default: any
   src_addr:
     description:
@@ -153,6 +153,31 @@ EXAMPLES = """
       - https
     state: present
     policy_action: accept
+
+- name: Some Policy
+  fortios_ipv4_policy:
+    host: 192.168.0.254
+    username: admin
+    password: password
+    id: 42
+    comment: "no comment (created by ansible)"
+    src_intf: vl1000
+    src_addr:
+      - some_serverA
+      - some_serverB
+    dst_intf:
+      - vl2000
+      - vl3000
+    dst_addr: all
+    services:
+      - HTTP
+      - HTTPS
+    nat: True
+    state: present
+    policy_action: accept
+    logtraffic: disable
+  tags:
+    - policy
 """
 
 RETURN = """
@@ -179,8 +204,8 @@ def main():
     argument_spec = dict(
         comment                   = dict(type='str'),
         id                        = dict(type='int', required=True),
-        src_intf                  = dict(default='any'),
-        dst_intf                  = dict(default='any'),
+        src_intf                  = dict(type='list', default='any'),
+        dst_intf                  = dict(type='list', default='any'),
         state                     = dict(choices=['present', 'absent'], default='present'),
         src_addr                  = dict(type='list'),
         dst_addr                  = dict(type='list'),
@@ -248,9 +273,8 @@ def main():
         new_policy = fortigate.get_empty_configuration_block(policy_id, 'edit')
 
         # src / dest / service / interfaces
-        new_policy.set_param('srcintf', '"%s"' % (module.params['src_intf']))
-        new_policy.set_param('dstintf', '"%s"' % (module.params['dst_intf']))
-
+        new_policy.set_param('srcintf', " ".join('"' + item + '"' for item in module.params['src_intf']))
+        new_policy.set_param('dstintf', " ".join('"' + item + '"' for item in module.params['dst_intf']))
 
         new_policy.set_param('srcaddr', " ".join('"' + item + '"' for item in module.params['src_addr']))
         new_policy.set_param('dstaddr', " ".join('"' + item + '"' for item in module.params['dst_addr']))

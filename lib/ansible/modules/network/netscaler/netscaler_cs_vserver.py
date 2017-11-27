@@ -128,18 +128,18 @@ options:
 
     stateupdate:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Enable state updates for a specific content switching virtual server. By default, the Content
                 Switching virtual server is always UP, regardless of the state of the Load Balancing virtual servers
                 bound to it. This parameter interacts with the global setting as follows:
             - "Global Level | Vserver Level | Result"
-            - "ENABLED ENABLED ENABLED"
-            - "ENABLED DISABLED ENABLED"
-            - "DISABLED ENABLED ENABLED"
-            - "DISABLED DISABLED DISABLED"
+            - "enabled enabled enabled"
+            - "enabled disabled enabled"
+            - "disabled enabled enabled"
+            - "disabled disabled disabled"
             - >-
                 If you want to enable state updates for only some content switching virtual servers, be sure to
                 disable the state update parameter.
@@ -202,8 +202,8 @@ options:
 
     sopersistence:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Maintain source-IP based persistence on primary and backup virtual servers."
 
@@ -233,15 +233,15 @@ options:
 
     redirectportrewrite:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "State of port rewrite while performing HTTP redirect."
 
     downstateflush:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Flush all active transactions associated with a virtual server whose state transitions from UP to
@@ -259,8 +259,8 @@ options:
 
     disableprimaryondown:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Continue forwarding the traffic to backup virtual server even after the primary server comes UP from
@@ -326,8 +326,8 @@ options:
 
     push:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - >-
                 Process traffic with the push virtual server that is bound to this content switching virtual server
@@ -423,8 +423,8 @@ options:
 
     appflowlog:
         choices:
-            - 'ENABLED'
-            - 'DISABLED'
+            - 'enabled'
+            - 'disabled'
         description:
             - "Enable logging appflow flow information."
 
@@ -667,17 +667,28 @@ def cs_policybindings_identical(client, module):
 
 def sync_cs_policybindings(client, module):
     log('Syncing cs policybindings')
+    actual_bindings = get_actual_policybindings(client, module)
+    configured_bindings = get_configured_policybindings(client, module)
 
-    # Delete all actual bindings
-    for binding in get_actual_policybindings(client, module).values():
-        log('Deleting binding for policy %s' % binding.policyname)
-        csvserver_cspolicy_binding.delete(client, binding)
+    # Delete actual bindings not in configured
+    delete_keys = list(set(actual_bindings.keys()) - set(configured_bindings.keys()))
+    for key in delete_keys:
+        log('Deleting binding for policy %s' % key)
+        csvserver_cspolicy_binding.delete(client, actual_bindings[key])
 
-    # Add all configured bindings
+    # Add configured bindings not in actual
+    add_keys = list(set(configured_bindings.keys()) - set(actual_bindings.keys()))
+    for key in add_keys:
+        log('Adding binding for policy %s' % key)
+        configured_bindings[key].add()
 
-    for binding in get_configured_policybindings(client, module).values():
-        log('Adding binding for policy %s' % binding.policyname)
-        binding.add()
+    # Update existing if changed
+    modify_keys = list(set(configured_bindings.keys()) & set(actual_bindings.keys()))
+    for key in modify_keys:
+        if not configured_bindings[key].has_equal_attributes(actual_bindings[key]):
+            log('Updating binding for policy %s' % key)
+            csvserver_cspolicy_binding.delete(client, actual_bindings[key])
+            configured_bindings[key].add()
 
 
 def ssl_certkey_bindings_identical(client, module):
@@ -788,8 +799,8 @@ def main():
         stateupdate=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         cacheable=dict(type='bool'),
@@ -816,8 +827,8 @@ def main():
         sopersistence=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         sopersistencetimeout=dict(type='float'),
@@ -833,22 +844,22 @@ def main():
         redirectportrewrite=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         downstateflush=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         disableprimaryondown=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         insertvserveripport=dict(
@@ -869,8 +880,8 @@ def main():
         push=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         pushvserver=dict(type='str'),
@@ -908,8 +919,8 @@ def main():
         appflowlog=dict(
             type='str',
             choices=[
-                'ENABLED',
-                'DISABLED',
+                'enabled',
+                'disabled',
             ]
         ),
         netprofile=dict(type='str'),
@@ -1087,6 +1098,13 @@ def main():
         'authentication': ['bool_on_off'],
         'l2conn': ['bool_on_off'],
         'pushmulticlients': ['bool_yes_no'],
+        'stateupdate': [lambda v: v.upper()],
+        'sopersistence': [lambda v: v.upper()],
+        'redirectportrewrite': [lambda v: v.upper()],
+        'downstateflush': [lambda v: v.upper()],
+        'disableprimaryondown': [lambda v: v.upper()],
+        'push': [lambda v: v.upper()],
+        'appflowlog': [lambda v: v.upper()],
     }
 
     # Instantiate config proxy

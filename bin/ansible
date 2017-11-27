@@ -37,27 +37,30 @@ import shutil
 import sys
 import traceback
 
-import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
-from ansible.utils.display import Display
 from ansible.module_utils._text import to_text
 
 
-########################################
-# OUTPUT OF LAST RESORT
 class LastResort(object):
-    def display(self, msg):
+    # OUTPUT OF LAST RESORT
+    def display(self, msg, log_only=None):
         print(msg, file=sys.stderr)
 
     def error(self, msg, wrap_text=None):
         print(msg, file=sys.stderr)
 
 
-########################################
-
 if __name__ == '__main__':
 
     display = LastResort()
+
+    try:  # bad ANSIBLE_CONFIG or config options can force ugly stacktrace
+        import ansible.constants as C
+        from ansible.utils.display import Display
+    except AnsibleOptionsError as e:
+        display.error(to_text(e), wrap_text=False)
+        sys.exit(5)
+
     cli = None
     me = os.path.basename(sys.argv[0])
 
@@ -130,6 +133,11 @@ if __name__ == '__main__':
         display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
             log_only = False
+            if hasattr(e, 'orig_exc'):
+                display.vvv('\nexception type: %s' % to_text(type(e.orig_exc)))
+                why = to_text(e.orig_exc)
+                if to_text(e) != why:
+                    display.vvv('\noriginal msg: %s' % why)
         else:
             display.display("to see the full traceback, use -vvv")
             log_only = True

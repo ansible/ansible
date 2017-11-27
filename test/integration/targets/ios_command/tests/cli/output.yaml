@@ -5,6 +5,7 @@
   ios_command:
     commands:
       - show version
+    authorize: yes
   register: result
 
 - assert:
@@ -17,6 +18,7 @@
     commands:
       - show version
       - show interfaces
+    authorize: yes
   register: result
 
 - assert:

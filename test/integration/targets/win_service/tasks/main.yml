@@ -51,3 +51,9 @@
     - '{{test_win_service_name}}'
     - TestServiceParent2
     - TestServiceDependency
+
+  - name: remove test environment variable
+    win_environment:
+      name: TEST_SERVICE_PATH
+      level: machine
+      state: absent

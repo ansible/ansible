@@ -33,6 +33,7 @@ author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(state=absent) removes the whole BGP ASN configuration when
       C(vrf=default) or the whole VRF instance within the BGP process when
       using a different VRF.
@@ -411,7 +412,6 @@ def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP.get(arg)
 
     if command.split()[0] == 'event-history':
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
         has_size = re.search(r'^\s+{0} size\s(?P<value>.*)$'.format(command), config, re.M)
 
         if command == 'event-history detail':
@@ -419,11 +419,8 @@ def get_value(arg, config):
         else:
             value = 'size_small'
 
-        if command_re.search(config):
-            if has_size:
-                value = 'size_%s' % has_size.group('value')
-            else:
-                value = True
+        if has_size:
+            value = 'size_%s' % has_size.group('value')
 
     elif arg in ['enforce_first_as', 'fast_external_fallover']:
         no_command_re = re.compile(r'no\s+{0}\s*'.format(command), re.M)
@@ -464,7 +461,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
-    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     asn_match = asn_re.match(str(netcfg))
 
     if asn_match:
@@ -686,7 +683,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        warnings.extend(load_config(module, candidate))
         result['changed'] = True
         result['commands'] = candidate
     else:

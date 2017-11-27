@@ -22,10 +22,8 @@ Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_hos
 Rolling Update Batch Size
 `````````````````````````
 
-.. versionadded:: 0.7
 
-By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
-use case, you can define how many hosts Ansible should manage at a single time by using the ''serial'' keyword::
+By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ''serial'' keyword::
 
 
     - name: test play
@@ -82,8 +80,6 @@ You can also mix and match the values::
 Maximum Failure Percentage
 ``````````````````````````
 
-.. versionadded:: 1.3
-
 By default, Ansible will continue executing actions as long as there are hosts in the group that have not yet failed.
 In some situations, such as with the rolling updates described above, it may be desirable to abort the play when a 
 certain threshold of failures have been reached. To achieve this, as of version 1.3 you can set a maximum failure 
@@ -105,7 +101,6 @@ In the above example, if more than 3 of the 10 servers in the group were to fail
 Delegation
 ``````````
 
-.. versionadded:: 0.7
 
 This isn't actually rolling update specific but comes up frequently in those cases.
 
@@ -175,7 +170,7 @@ In case you have to specify more arguments you can use the following syntax::
           to: "{{ mail_recipient }}"
           body: "{{ mail_body }}"
         run_once: True
-          
+
 The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
 
 .. _delegate_facts:
@@ -183,10 +178,8 @@ The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/parami
 Delegated facts
 ```````````````
 
-.. versionadded:: 2.0
-
 By default, any fact gathered by a delegated task are assigned to the `inventory_hostname` (the current host) instead of the host which actually produced the facts (the delegated to host).
-In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's gathered facts to the delegated host instead of the current one.::
+The directive `delegate_facts` may be set to `True` to assign the task's gathered facts to the delegated host instead of the current one.::
 
 
     - hosts: app_servers
@@ -195,7 +188,7 @@ In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's
           setup:
           delegate_to: "{{item}}"
           delegate_facts: True
-          with_items: "{{groups['dbservers']}}"
+          loop: "{{groups['dbservers']}}"
 
 The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
 This way you can lookup `hostvars['dbhost1']['default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
@@ -205,8 +198,6 @@ This way you can lookup `hostvars['dbhost1']['default_ipv4']['address']` even th
 
 Run Once
 ````````
-
-.. versionadded:: 1.7
 
 In some cases there may be a need to only run a task one time and only on one host. This can be achieved
 by configuring "run_once" on a task::

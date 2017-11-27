@@ -59,12 +59,15 @@ requirements:
 EXAMPLES = '''
 - name: "Create ssh key"
   digital_ocean_sshkey:
+    oauth_token: "{{ oauth_token }}"
     name: "My SSH Public Key"
-    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAQQDDHr/jh2Jy4yALcK4JyWbVkPRaWmhck3IgCoeOO3z1e2dBowLh64QAM+Qb72pxekALga2oi4GvT+TlWNhzPH4V example"
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAQQDDHr/jh2Jy4yALcK4JyWbVkPRaWmhck3IgCoeOO3z1e2dBowLh64QAM+Qb72pxekALga2oi4GvT+TlWNhzPH4V example"
+    state: present
   register: result
 
 - name: "Delete ssh key"
   digital_ocean_sshkey:
+    oauth_token: "{{ oauth_token }}"
     state: "absent"
     fingerprint: "3b:16:bf:e4:8b:00:8b:b8:59:8c:a9:d3:f0:19:45:fa"
 '''
@@ -87,7 +90,6 @@ data:
 '''
 
 import json
-import os
 import hashlib
 import base64
 

@@ -34,6 +34,7 @@ description:
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - C(transport=cli) may cause timeout errors.
     - The C(element_key1) and C(element_key2) parameter specify the tags used
       to distinguish among row entries. In most cases, only the element_key1
@@ -190,8 +191,8 @@ def get_existing(module):
     body = execute_show_command(command, module)[0]
     if body:
         split_body = body.splitlines()
-        snapshot_regex = ('(?P<name>\S+)\s+(?P<date>\w+\s+\w+\s+\d+\s+\d+'
-                          ':\d+:\d+\s+\d+)\s+(?P<description>.*)')
+        snapshot_regex = (r'(?P<name>\S+)\s+(?P<date>\w+\s+\w+\s+\d+\s+\d+'
+                          r':\d+:\d+\s+\d+)\s+(?P<description>.*)')
         for snapshot in split_body:
             temp = {}
             try:
@@ -228,7 +229,7 @@ def action_add(module, existing_snapshots):
     body = execute_show_command(command, module)[0]
 
     if body:
-        section_regex = '.*\[(?P<section>\S+)\].*'
+        section_regex = r'.*\[(?P<section>\S+)\].*'
         split_body = body.split('\n\n')
         for section in split_body:
             temp = {}
@@ -396,11 +397,26 @@ def main():
     if not module.check_mode:
         if action == 'compare':
             result['commands'] = []
+
+            if module.params['path'] and comparison_results_file:
+                snapshot1 = module.params['snapshot1']
+                snapshot2 = module.params['snapshot2']
+                compare_option = module.params['compare_option']
+                command = 'show snapshot compare {0} {1} {2}'.format(snapshot1, snapshot2, compare_option)
+                content = execute_show_command(command, module)[0]
+                if content:
+                    write_on_file(content, comparison_results_file, module)
         else:
             if action_results:
                 load_config(module, action_results)
                 result['commands'] = action_results
                 result['changed'] = True
+
+            if action == 'create' and module.params['path']:
+                command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
+                content = execute_show_command(command, module)[0]
+                if content:
+                    write_on_file(content, module.params['snapshot_name'], module)
 
     module.exit_json(**result)
 

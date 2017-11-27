@@ -11,14 +11,11 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
+    intercept_command,
 )
 
 from lib.ansible_util import (
     ansible_environment,
-)
-
-from lib.executor import (
-    intercept_command,
 )
 
 from lib.config import (
@@ -45,6 +42,10 @@ class AnsibleDocTest(SanityMultipleVersion):
         if not modules:
             return SanitySkipped(self.name, python_version=python_version)
 
+        # ansible-doc fails due to async syntax errors on Python 3.7 currently
+        if python_version == '3.7':
+            return SanitySkipped(self.name, python_version=python_version)
+
         env = ansible_environment(args, color=False)
         cmd = ['ansible-doc'] + modules
 
@@ -57,14 +58,14 @@ class AnsibleDocTest(SanityMultipleVersion):
             status = ex.status
 
         if status:
-            summary = str(SubprocessError(cmd=cmd, status=status, stderr=stderr))
+            summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
             return SanityFailure(self.name, summary=summary, python_version=python_version)
 
         if stdout:
             display.info(stdout.strip(), verbosity=3)
 
         if stderr:
-            summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
+            summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
             return SanityFailure(self.name, summary=summary, python_version=python_version)
 
         return SanitySuccess(self.name, python_version=python_version)

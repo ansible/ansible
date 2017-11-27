@@ -166,8 +166,11 @@ def create_apache_identifier(name):
 
     for search, reexpr in re_workarounds:
         if search in name:
-            rematch = re.search(reexpr, name)
-            return rematch.group(1) + '_module'
+            try:
+                rematch = re.search(reexpr, name)
+                return rematch.group(1) + '_module'
+            except AttributeError:
+                pass
 
     return name + '_module'
 

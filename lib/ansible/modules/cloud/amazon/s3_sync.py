@@ -89,10 +89,17 @@ options:
     - Directives are separated by commmas.
     required: false
     version_added: "2.4"
+  delete:
+    description:
+    - Remove remote files that exist in bucket but are not present in the file root.
+    required: false
+    default: no
+    version_added: "2.4"
 
 requirements:
   - boto3 >= 1.4.4
   - botocore
+  - python-dateutil
 
 author: tedder
 extends_documentation_fragment:
@@ -203,12 +210,17 @@ import mimetypes
 import os
 import stat as osstat  # os.stat constants
 import traceback
-from dateutil import tz
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3, boto_exception
+from ansible.module_utils._text import to_text
 
+try:
+    from dateutil import tz
+    HAS_DATEUTIL = True
+except ImportError:
+    HAS_DATEUTIL = False
 
 try:
     import botocore
@@ -216,17 +228,6 @@ except ImportError:
     # Handled by imported HAS_BOTO3
     pass
 
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 # the following function, calculate_multipart_etag, is from tlastowka
 # on github and is used under its (compatible) GPL license. So this
@@ -277,12 +278,12 @@ def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
             md5s.append(hashlib.md5(data))
 
     if len(md5s) == 1:
-        new_etag = '"{}"'.format(md5s[0].hexdigest())
+        new_etag = '"{0}"'.format(md5s[0].hexdigest())
     else:  # > 1
         digests = b"".join(m.digest() for m in md5s)
 
         new_md5 = hashlib.md5(digests)
-        new_etag = '"{}-{}"'.format(new_md5.hexdigest(), len(md5s))
+        new_etag = '"{0}-{1}"'.format(new_md5.hexdigest(), len(md5s))
 
     return new_etag
 
@@ -432,8 +433,8 @@ def filter_list(s3, bucket, s3filelist, strategy):
 
                 remote_size = entry['s3_head']['ContentLength']
 
-                entry['whytime'] = '{} / {}'.format(local_modified_epoch, remote_modified_epoch)
-                entry['whysize'] = '{} / {}'.format(local_size, remote_size)
+                entry['whytime'] = '{0} / {1}'.format(local_modified_epoch, remote_modified_epoch)
+                entry['whysize'] = '{0} / {1}'.format(local_size, remote_size)
 
                 if local_modified_epoch <= remote_modified_epoch or local_size == remote_size:
                     entry['skip_flag'] = True
@@ -463,6 +464,22 @@ def upload_files(s3, bucket, filelist, params):
     return ret
 
 
+def remove_files(s3, sourcelist, params):
+    bucket = params.get('bucket')
+    key_prefix = params.get('key_prefix')
+    paginator = s3.get_paginator('list_objects_v2')
+    current_keys = set(x['Key'] for x in paginator.paginate(Bucket=bucket, Prefix=key_prefix).build_full_result().get('Contents', []))
+    keep_keys = set(to_text(source_file['s3_path']) for source_file in sourcelist)
+    delete_keys = list(current_keys - keep_keys)
+
+    # can delete 1000 objects at a time
+    groups_of_keys = [delete_keys[i:i + 1000] for i in range(0, len(delete_keys), 1000)]
+    for keys in groups_of_keys:
+        s3.delete_objects(Bucket=bucket, Delete={'Objects': [{'Key': key} for key in keys]})
+
+    return delete_keys
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -478,6 +495,7 @@ def main():
         exclude=dict(required=False, default=".*"),
         include=dict(required=False, default="*"),
         cache_control=dict(required=False, default=''),
+        delete=dict(required=False, type='bool', default=False),
         # future options: encoding, metadata, storage_class, retries
     )
     )
@@ -485,6 +503,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_DATEUTIL:
+        module.fail_json(msg='dateutil required for this module')
+
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
@@ -505,8 +527,11 @@ def main():
             result['filelist_actionable'] = filter_list(s3, module.params['bucket'], result['filelist_local_etag'], module.params['file_change_strategy'])
             result['uploads'] = upload_files(s3, module.params['bucket'], result['filelist_actionable'], module.params)
 
+            if module.params['delete']:
+                result['removed'] = remove_files(s3, result['filelist_local_etag'], module.params)
+
             # mark changed if we actually upload something.
-            if result.get('uploads') and len(result.get('uploads')):
+            if result.get('uploads') or result.get('removed'):
                 result['changed'] = True
             # result.update(filelist=actionable_filelist)
         except botocore.exceptions.ClientError as err:

@@ -9,10 +9,12 @@
     parents:
       - interface Loopback999
     match: none
+    authorize: yes
 
 - name: configure device with config
   ios_config:
     src: basic/config.j2
+    authorize: yes
   register: result
 
 - name: debug, remove me
@@ -28,6 +30,7 @@
 - name: check device with config
   ios_config:
     src: basic/config.j2
+    authorize: yes
   register: result
 
 - assert:

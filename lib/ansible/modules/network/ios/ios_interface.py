@@ -22,6 +22,8 @@ short_description: Manage Interface on Cisco IOS network devices
 description:
   - This module provides declarative management of Interfaces
     on Cisco IOS network devices.
+notes:
+  - Tested against IOS 15.6
 options:
   name:
     description:
@@ -50,6 +52,17 @@ options:
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+  neighbors:
+    description:
+      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which given interface C(name) is connected."
   aggregate:
     description: List of Interfaces definitions.
   delay:
@@ -57,6 +70,7 @@ options:
       - Time in seconds to wait before checking for the operational state on remote
         device. This wait is applicable for operational state argument which are
         I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+    default: 10
   state:
     description:
       - State of the Interface configuration, C(up) means present and
@@ -95,6 +109,13 @@ EXAMPLES = """
     state: up
     tx_rate: ge(0)
     rx_rate: le(0)
+
+- name: Check neighbors intent arguments
+  ios_interface:
+    name: Gi0/0
+    neighbors:
+    - port: eth0
+      host: netdev
 
 - name: Config + intent
   ios_interface:
@@ -244,7 +265,8 @@ def map_params_to_obj(module):
             'state': module.params['state'],
             'delay': module.params['delay'],
             'tx_rate': module.params['tx_rate'],
-            'rx_rate': module.params['rx_rate']
+            'rx_rate': module.params['rx_rate'],
+            'neighbors': module.params['neighbors']
         }
 
         validate_param_values(module, params)
@@ -301,12 +323,14 @@ def map_obj_to_commands(updates):
 
 def check_declarative_intent_params(module, want, result):
     failed_conditions = []
-
+    have_neighbors = None
     for w in want:
         want_state = w.get('state')
         want_tx_rate = w.get('tx_rate')
         want_rx_rate = w.get('rx_rate')
-        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate:
+        want_neighbors = w.get('neighbors')
+
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate and not want_neighbors:
             continue
 
         if result['changed']:
@@ -343,12 +367,42 @@ def check_declarative_intent_params(module, want, result):
             if have_rx_rate is None or not conditional(want_rx_rate, have_rx_rate.strip(), cast=int):
                 failed_conditions.append('rx_rate ' + want_rx_rate)
 
+        if want_neighbors:
+            have_host = []
+            have_port = []
+            if have_neighbors is None:
+                rc, have_neighbors, err = exec_command(module, 'show lldp neighbors detail')
+                if rc != 0:
+                    module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+
+            if have_neighbors:
+                lines = have_neighbors.strip().split('Local Intf: ')
+                for line in lines:
+                    field = line.split('\n')
+                    if field[0].strip() == w['name']:
+                        for item in field:
+                            if item.startswith('System Name:'):
+                                have_host.append(item.split(':')[1].strip())
+                            if item.startswith('Port Description:'):
+                                have_port.append(item.split(':')[1].strip())
+            for item in want_neighbors:
+                host = item.get('host')
+                port = item.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
     return failed_conditions
 
 
 def main():
     """ main entry point for module execution
     """
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
     element_spec = dict(
         name=dict(),
         description=dict(),
@@ -358,6 +412,7 @@ def main():
         enabled=dict(default=True, type='bool'),
         tx_rate=dict(),
         rx_rate=dict(),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])

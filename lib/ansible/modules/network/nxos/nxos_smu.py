@@ -31,6 +31,7 @@ description:
     - Perform software maintenance upgrades (SMUs) on Cisco NX-OS devices.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - The module can only activate and commit a package,
       not remove or deactivate it.
     - Use C(transport=nxapi) to avoid connection timeout
@@ -114,8 +115,7 @@ def get_commands(module, pkg, file_system):
         commands.append('install activate {0}{1} force'.format(
             file_system, pkg))
     command = 'show install committed'
-    install_body = execute_show_command(command, module,
-                                                command_type='cli_show_ascii')
+    install_body = execute_show_command(command, module)
     if fixed_pkg not in install_body[0]:
         commands.append('install commit {0}{1}'.format(file_system, pkg))
 

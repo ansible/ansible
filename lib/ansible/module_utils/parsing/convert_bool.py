@@ -1,5 +1,5 @@
 # Copyright: 2017, Ansible Project
-# License: GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause )
 
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils._text import to_text
@@ -16,7 +16,7 @@ def boolean(value, strict=True):
 
     normalized_value = value
     if isinstance(value, (text_type, binary_type)):
-        normalized_value = to_text(value, errors='surrogate_or_strict').lower()
+        normalized_value = to_text(value, errors='surrogate_or_strict').lower().strip()
 
     if normalized_value in BOOLEANS_TRUE:
         return True

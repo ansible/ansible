@@ -25,6 +25,7 @@ short_description: Manage an Application load balancer
 description:
     - Manage an AWS Application Elastic Load Balancer. See U(https://aws.amazon.com/blogs/aws/new-aws-application-load-balancer/) for details.
 version_added: "2.4"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   access_logs_enabled:
@@ -538,9 +539,13 @@ def compare_listener(current_listener, new_listener):
         if current_listener['SslPolicy'] != new_listener['SslPolicy']:
             modified_listener['SslPolicy'] = new_listener['SslPolicy']
         if current_listener['Certificates'][0]['CertificateArn'] != new_listener['Certificates'][0]['CertificateArn']:
+            modified_listener['Certificates'] = []
+            modified_listener['Certificates'].append({})
             modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
     elif current_listener['Protocol'] != 'HTTPS' and new_listener['Protocol'] == 'HTTPS':
         modified_listener['SslPolicy'] = new_listener['SslPolicy']
+        modified_listener['Certificates'] = []
+        modified_listener['Certificates'].append({})
         modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
 
     # Default action
@@ -615,6 +620,8 @@ def compare_listeners(connection, module, current_listeners, new_listeners, purg
     Compare listeners and return listeners to add, listeners to modify and listeners to remove
     Listeners are compared based on port
 
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
     :param current_listeners:
     :param new_listeners:
     :param purge_listeners:
@@ -655,10 +662,10 @@ def compare_rules(connection, module, current_listeners, listener):
     Compare rules and return rules to add, rules to modify and rules to remove
     Rules are compared based on priority
 
-    :param connection:
-    :param module:
-    :param current_listeners:
-    :param listener:
+    :param connection: ELBv2 boto3 connection
+    :param module: Ansible module object
+    :param current_listeners: list of listeners currently associated with the ELB
+    :param listener: dict object of a listener passed by the user
     :return:
     """
 
@@ -668,8 +675,11 @@ def compare_rules(connection, module, current_listeners, listener):
             listener['ListenerArn'] = current_listener['ListenerArn']
             break
 
-    # Get rules for the listener
-    current_rules = get_listener_rules(connection, module, listener['ListenerArn'])
+    # If the listener exists (i.e. has an ARN) get rules for the listener
+    if 'ListenerArn' in listener:
+        current_rules = get_listener_rules(connection, module, listener['ListenerArn'])
+    else:
+        current_rules = []
 
     rules_to_modify = []
     rules_to_delete = []
@@ -685,8 +695,8 @@ def compare_rules(connection, module, current_listeners, listener):
                 if modified_rule:
                     modified_rule['Priority'] = int(current_rule['Priority'])
                     modified_rule['RuleArn'] = current_rule['RuleArn']
-                    modified_rule['Actions'] = current_rule['Actions']
-                    modified_rule['Conditions'] = current_rule['Conditions']
+                    modified_rule['Actions'] = new_rule['Actions']
+                    modified_rule['Conditions'] = new_rule['Conditions']
                     rules_to_modify.append(modified_rule)
                 break
 
@@ -716,7 +726,12 @@ def create_or_update_elb_listeners(connection, module, elb):
     for listener_to_add in listeners_to_add:
         try:
             listener_to_add['LoadBalancerArn'] = elb['LoadBalancerArn']
-            connection.create_listener(**listener_to_add)
+            # Rules is not a valid parameter for create_listener
+            if 'Rules' in listener_to_add:
+                listener_to_add.pop('Rules')
+            response = connection.create_listener(**listener_to_add)
+            # Add the new listener
+            current_listeners.append(response['Listeners'][0])
             listener_changed = True
         except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -724,6 +739,9 @@ def create_or_update_elb_listeners(connection, module, elb):
     # Modify listeners
     for listener_to_modify in listeners_to_modify:
         try:
+            # Rules is not a valid parameter for modify_listener
+            if 'Rules' in listener_to_modify:
+                listener_to_modify.pop('Rules')
             connection.modify_listener(**listener_to_modify)
             listener_changed = True
         except ClientError as e:
@@ -738,7 +756,7 @@ def create_or_update_elb_listeners(connection, module, elb):
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # For each listener, check rules
-    for listener in listeners:
+    for listener in deepcopy(listeners):
         if 'Rules' in listener:
             # Ensure rules are using Target Group ARN not name
             listener['Rules'] = ensure_rules_action_has_arn(connection, module, listener['Rules'])
@@ -746,6 +764,14 @@ def create_or_update_elb_listeners(connection, module, elb):
 
             # Get listener based on port so we can use ARN
             looked_up_listener = get_listener(connection, module, elb['LoadBalancerArn'], listener['Port'])
+
+            # Delete rules
+            for rule in rules_to_delete:
+                try:
+                    connection.delete_rule(RuleArn=rule)
+                    listener_changed = True
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
             # Add rules
             for rule in rules_to_add:
@@ -762,14 +788,6 @@ def create_or_update_elb_listeners(connection, module, elb):
                 try:
                     del rule['Priority']
                     connection.modify_rule(**rule)
-                    listener_changed = True
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
-            # Delete rules
-            for rule in rules_to_delete:
-                try:
-                    connection.delete_rule(RuleArn=rule)
                     listener_changed = True
                 except ClientError as e:
                     module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -985,6 +1003,9 @@ def main():
                 if key not in ['Protocol', 'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules']:
                     module.fail_json(msg="listeners parameter contains invalid dict keys. Should be one of 'Protocol', "
                                          "'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules'.")
+                # Make sure Port is always an integer
+                elif key == 'Port':
+                    listener[key] = int(listener[key])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

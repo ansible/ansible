@@ -31,6 +31,7 @@ description:
   - Manages BGP Address-family configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the whole BGP ASN configuration
   - Default, where supported, restores params default value.
 options:
@@ -448,7 +449,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.DOTALL)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.DOTALL)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:

@@ -86,6 +86,7 @@ options:
     default: 1
 
 notes:
+  - Tested against VYOS 1.1.7
   - Running C(show system boot-messages all) will cause the module to hang since
     VyOS is using a custom pager setting to display the output of that command.
 """
@@ -139,7 +140,7 @@ from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
 from ansible.module_utils.vyos import run_commands
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 def to_lines(stdout):
     for item in stdout:
@@ -155,14 +156,16 @@ def parse_commands(module, warnings):
         answer=dict(),
     ), module)
     commands = command(module.params['commands'])
+    items = []
 
-    for index, cmd in enumerate(commands):
-        if module.check_mode and not cmd['command'].startswith('show'):
+    for item in commands:
+        if module.check_mode and not item['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        commands[index] = module.jsonify(cmd)
+                            'check mode, not executing `%s`' % item['command'])
+        else:
+            items.append(module.jsonify(item))
 
-    return commands
+    return items
 
 
 def main():
@@ -181,7 +184,6 @@ def main():
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     commands = parse_commands(module, warnings)
 

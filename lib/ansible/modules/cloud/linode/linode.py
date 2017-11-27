@@ -1,137 +1,117 @@
 #!/usr/bin/python
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: linode
-short_description: create / delete / stop / restart an instance in Linode Public Cloud
+short_description: Manage instances on the Linode Public Cloud
 description:
-     - creates / deletes a Linode Public Cloud instance and optionally waits for it to be 'running'.
+     - Manage Linode Public Cloud instances and optionally wait for it to be 'running'.
 version_added: "1.3"
 options:
   state:
     description:
      - Indicate desired state of the resource
-    choices: ['present', 'active', 'started', 'absent', 'deleted', 'stopped', 'restarted']
+    choices: [ absent, active, deleted, present, restarted, started, stopped ]
     default: present
   api_key:
     description:
      - Linode API key
-    default: null
   name:
     description:
-     - Name to give the instance (alphanumeric, dashes, underscore)
-     - To keep sanity on the Linode Web Console, name is prepended with LinodeID_
-    default: null
+     - Name to give the instance (alphanumeric, dashes, underscore).
+     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID_).
   displaygroup:
     description:
-     - Add the instance to a Display Group in Linode Manager
-    default: null
+     - Add the instance to a Display Group in Linode Manager.
     version_added: "2.3"
   linode_id:
     description:
      - Unique ID of a linode server
-    aliases: [ 'lid' ]
-    default: null
+    aliases: [ lid ]
   additional_disks:
-    description: >
-      List of dictionaries for creating additional disks that are added to the Linode configuration settings.
-      Dictionary takes Size, Label, Type. Size is in MB.
-    default: null
+    description:
+      - List of dictionaries for creating additional disks that are added to the Linode configuration settings.
+      - Dictionary takes Size, Label, Type. Size is in MB.
     version_added: "2.3"
   alert_bwin_enabled:
     description:
     - Set status of bandwidth in alerts.
-    default: null
-    choices: [ "True", "False" ]
+    type: bool
     version_added: "2.3"
   alert_bwin_threshold:
     description:
     - Set threshold in MB of bandwidth in alerts.
-    default: null
     version_added: "2.3"
   alert_bwout_enabled:
     description:
     - Set status of bandwidth out alerts.
-    default: null
-    choices: [ "True", "False" ]
+    type: bool
     version_added: "2.3"
   alert_bwout_threshold:
     description:
     - Set threshold in MB of bandwidth out alerts.
-    default: null
     version_added: "2.3"
   alert_bwquota_enabled:
     description:
     - Set status of bandwidth quota alerts as percentage of network transfer quota.
-    default: null
-    choices: [ "True", "False" ]
+    type: bool
     version_added: "2.3"
   alert_bwquota_threshold:
     description:
     - Set threshold in MB of bandwidth quota alerts.
-    default: null
     version_added: "2.3"
   alert_cpu_enabled:
     description:
     - Set status of receiving CPU usage alerts.
-    default: null
-    choices: [ "True", "False" ]
+    type: bool
     version_added: "2.3"
   alert_cpu_threshold:
     description:
     - Set percentage threshold for receiving CPU usage alerts. Each CPU core adds 100% to total.
-    default: null
     version_added: "2.3"
   alert_diskio_enabled:
     description:
     - Set status of receiving disk IO alerts.
-    default: null
-    choices: [ "True", "False" ]
+    type: bool
     version_added: "2.3"
   alert_diskio_threshold:
     description:
     - Set threshold for average IO ops/sec over 2 hour period.
-    default: null
     version_added: "2.3"
   backupweeklyday:
     description:
     - Integer value for what day of the week to store weekly backups.
-    default: null
     version_added: "2.3"
   plan:
     description:
      - plan to use for the instance (Linode plan)
-    default: null
   payment_term:
     description:
      - payment term to use for the instance (payment term in months)
     default: 1
-    choices: [1, 12, 24]
+    choices: [ 1, 12, 24 ]
   password:
     description:
      - root password to apply to a new server (auto generated if missing)
-    default: null
   private_ip:
     description:
     - Add private IPv4 address when Linode is created.
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
     version_added: "2.3"
   ssh_pub_key:
     description:
      - SSH public key applied to root user
-    default: null
   swap:
     description:
      - swap size in MB
@@ -139,21 +119,18 @@ options:
   distribution:
     description:
      - distribution to use for the instance (Linode Distribution)
-    default: null
   datacenter:
     description:
      - datacenter to create an instance in (Linode Datacenter)
-    default: null
   kernel_id:
     description:
      - kernel to use for the instance (Linode Kernel)
-    default: null
     version_added: "2.4"
   wait:
     description:
-     - wait for the instance to be in state 'running' before returning
+     - wait for the instance to be in state C(running) before returning
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
   wait_timeout:
     description:
      - how long before wait gives up, in seconds
@@ -161,21 +138,22 @@ options:
   watchdog:
     description:
     - Set status of Lassie watchdog.
+    type: bool
     default: "True"
-    choices: [ "True", "False" ]
     version_added: "2.2"
 requirements:
-    - "python >= 2.6"
-    - "linode-python"
-    - "pycurl"
-author: "Vincent Viallet (@zbal)"
+    - python >= 2.6
+    - linode-python
+    - pycurl
+author:
+- Vincent Viallet (@zbal)
 notes:
-  - LINODE_API_KEY env variable can be used instead
+  - C(LINODE_API_KEY) env variable can be used instead.
 '''
 
 EXAMPLES = '''
-# Create a server with a private IP Address
-- local_action:
+- name: Create a server with a private IP Address
+  linode:
      module: linode
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
@@ -189,10 +167,10 @@ EXAMPLES = '''
      wait: yes
      wait_timeout: 600
      state: present
+  delegate_to: localhost
 
-# Fully configure new server
-- local_action:
-     module: linode
+- name: Fully configure new server
+  linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
      plan: 4
@@ -224,10 +202,10 @@ EXAMPLES = '''
       - {Label: 'disk1', Size: 2500, Type: 'raw'}
       - {Label: 'newdisk', Size: 2000}
      watchdog: True
+  delegate_to: localhost
 
-# Ensure a running server (create if missing)
-- local_action:
-     module: linode
+- name: Ensure a running server (create if missing)
+  linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
      linode_id: 12345678
@@ -240,30 +218,31 @@ EXAMPLES = '''
      wait: yes
      wait_timeout: 600
      state: present
+  delegate_to: localhost
 
-# Delete a server
-- local_action:
-     module: linode
+- name: Delete a server
+  linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
      linode_id: 12345678
      state: absent
+  delegate_to: localhost
 
-# Stop a server
-- local_action:
-     module: linode
+- name: Stop a server
+  linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
      linode_id: 12345678
      state: stopped
+  delegate_to: localhost
 
-# Reboot a server
-- local_action:
-     module: linode
+- name: Reboot a server
+  linode:
      api_key: 'longStringFromLinodeApi'
      name: linode-test1
      linode_id: 12345678
      state: restarted
+  delegate_to: localhost
 '''
 
 import os
@@ -303,6 +282,7 @@ def randompass():
     p = lower + upper + number + punct
     return ''.join(random.sample(p, len(p)))
 
+
 def getInstanceDetails(api, server):
     '''
     Return the details of an instance, populating IPs, etc.
@@ -326,6 +306,7 @@ def getInstanceDetails(api, server):
                                         'fqdn': ip['RDNS_NAME'],
                                         'ip_id': ip['IPADDRESSID']})
     return instance
+
 
 def linodeServers(module, api, state, name,
                   displaygroup, plan, additional_disks, distribution,
@@ -378,19 +359,18 @@ def linodeServers(module, api, state, name,
                 # Update linode Label to match name
                 api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
                 # Update Linode with Ansible configuration options
-                api.linode_update(LinodeId=linode_id,
-                        LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
+                api.linode_update(LinodeId=linode_id, LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
                 # Save server
                 servers = api.linode_list(LinodeId=linode_id)
             except Exception as e:
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
 
-        #Add private IP to Linode
+        # Add private IP to Linode
         if private_ip:
             try:
                 res = api.linode_ip_addprivate(LinodeID=linode_id)
             except Exception as e:
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
 
         if not disks:
             for arg in (name, linode_id, distribution):
@@ -435,7 +415,7 @@ def linodeServers(module, api, state, name,
                 jobs.append(res['JobID'])
             except Exception as e:
                 # TODO: destroy linode ?
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
 
         if not configs:
             for arg in (name, linode_id, distribution):
@@ -478,7 +458,7 @@ def linodeServers(module, api, state, name,
                                          Disklist=disks_list, Label='%s config' % name)
                 configs = api.linode_config_list(LinodeId=linode_id)
             except Exception as e:
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
 
         # Start / Ensure servers are running
         for server in servers:
@@ -503,12 +483,11 @@ def linodeServers(module, api, state, name,
                 time.sleep(5)
             if wait and wait_timeout <= time.time():
                 # waiting took too long
-                module.fail_json(msg = 'Timeout waiting on %s (lid: %s)' %
-                                 (server['LABEL'], server['LINODEID']))
+                module.fail_json(msg='Timeout waiting on %s (lid: %s)' % (server['LABEL'], server['LINODEID']))
             # Get a fresh copy of the server details
             server = api.linode_list(LinodeId=server['LINODEID'])[0]
             if server['STATUS'] == -2:
-                module.fail_json(msg = '%s (lid: %s) failed to boot' %
+                module.fail_json(msg='%s (lid: %s) failed to boot' %
                                  (server['LABEL'], server['LINODEID']))
             # From now on we know the task is a success
             # Build instance report
@@ -530,7 +509,7 @@ def linodeServers(module, api, state, name,
             module.fail_json(msg='linode_id is required for stopped state')
 
         if not servers:
-            module.fail_json(msg = 'Server (lid: %s) not found' % (linode_id))
+            module.fail_json(msg='Server (lid: %s) not found' % (linode_id))
 
         for server in servers:
             instance = getInstanceDetails(api, server)
@@ -538,7 +517,7 @@ def linodeServers(module, api, state, name,
                 try:
                     res = api.linode_shutdown(LinodeId=linode_id)
                 except Exception as e:
-                    module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                    module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
                 instance['status'] = 'Stopping'
                 changed = True
             else:
@@ -550,14 +529,14 @@ def linodeServers(module, api, state, name,
             module.fail_json(msg='linode_id is required for restarted state')
 
         if not servers:
-            module.fail_json(msg = 'Server (lid: %s) not found' % (linode_id))
+            module.fail_json(msg='Server (lid: %s) not found' % (linode_id))
 
         for server in servers:
             instance = getInstanceDetails(api, server)
             try:
                 res = api.linode_reboot(LinodeId=server['LINODEID'])
             except Exception as e:
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
             instance['status'] = 'Restarting'
             changed = True
             instances.append(instance)
@@ -568,7 +547,7 @@ def linodeServers(module, api, state, name,
             try:
                 api.linode_delete(LinodeId=server['LINODEID'], skipChecks=True)
             except Exception as e:
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
             instance['status'] = 'Deleting'
             changed = True
             instances.append(instance)
@@ -579,43 +558,43 @@ def linodeServers(module, api, state, name,
 
     module.exit_json(changed=changed, instances=instances)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['active', 'present', 'started',
-                                                     'deleted', 'absent', 'stopped',
-                                                     'restarted']),
-            api_key = dict(no_log=True),
-            name = dict(type='str'),
-            alert_bwin_enabled = dict(type='bool', default=None),
-            alert_bwin_threshold = dict(type='int', default=None),
-            alert_bwout_enabled = dict(type='bool', default=None),
-            alert_bwout_threshold = dict(type='int', default=None),
-            alert_bwquota_enabled = dict(type='bool', default=None),
-            alert_bwquota_threshold = dict(type='int', default=None),
-            alert_cpu_enabled = dict(type='bool', default=None),
-            alert_cpu_threshold = dict(type='int', default=None),
-            alert_diskio_enabled = dict(type='bool', default=None),
-            alert_diskio_threshold = dict(type='int', default=None),
-            backupsenabled = dict(type='int', default=None),
-            backupweeklyday = dict(type='int', default=None),
-            backupwindow = dict(type='int', default=None),
-            displaygroup = dict(type='str', default=''),
-            plan = dict(type='int'),
-            additional_disks= dict(type='list'),
-            distribution = dict(type='int'),
-            datacenter = dict(type='int'),
-            kernel_id = dict(type='int'),
-            linode_id = dict(type='int', aliases=['lid']),
-            payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
-            password = dict(type='str', no_log=True),
-            private_ip = dict(type='bool'),
-            ssh_pub_key = dict(type='str'),
-            swap = dict(type='int', default=512),
-            wait = dict(type='bool', default=True),
-            wait_timeout = dict(default=300),
-            watchdog = dict(type='bool', default=True),
-        )
+        argument_spec=dict(
+            state=dict(type='str', default='present',
+                       choices=['absent', 'active', 'deleted', 'present', 'restarted', 'started', 'stopped']),
+            api_key=dict(type='str', no_log=True),
+            name=dict(type='str'),
+            alert_bwin_enabled=dict(type='bool'),
+            alert_bwin_threshold=dict(type='int'),
+            alert_bwout_enabled=dict(type='bool'),
+            alert_bwout_threshold=dict(type='int'),
+            alert_bwquota_enabled=dict(type='bool'),
+            alert_bwquota_threshold=dict(type='int'),
+            alert_cpu_enabled=dict(type='bool'),
+            alert_cpu_threshold=dict(type='int'),
+            alert_diskio_enabled=dict(type='bool'),
+            alert_diskio_threshold=dict(type='int'),
+            backupsenabled=dict(type='int'),
+            backupweeklyday=dict(type='int'),
+            backupwindow=dict(type='int'),
+            displaygroup=dict(type='str', default=''),
+            plan=dict(type='int'),
+            additional_disks=dict(type='list'),
+            distribution=dict(type='int'),
+            datacenter=dict(type='int'),
+            kernel_id=dict(type='int'),
+            linode_id=dict(type='int', aliases=['lid']),
+            payment_term=dict(type='int', default=1, choices=[1, 12, 24]),
+            password=dict(type='str', no_log=True),
+            private_ip=dict(type='bool'),
+            ssh_pub_key=dict(type='str'),
+            swap=dict(type='int', default=512),
+            wait=dict(type='bool', default=True),
+            wait_timeout=dict(default=300),
+            watchdog=dict(type='bool', default=True),
+        ),
     )
 
     if not HAS_PYCURL:
@@ -655,13 +634,21 @@ def main():
     wait_timeout = int(module.params.get('wait_timeout'))
     watchdog = int(module.params.get('watchdog'))
 
-    kwargs = {}
-    check_items = {'alert_bwin_enabled': alert_bwin_enabled, 'alert_bwin_threshold': alert_bwin_threshold,
-                    'alert_bwout_enabled': alert_bwout_enabled, 'alert_bwout_threshold': alert_bwout_threshold,
-                    'alert_bwquota_enabled': alert_bwquota_enabled, 'alert_bwquota_threshold': alert_bwquota_threshold,
-                    'alert_cpu_enabled': alert_cpu_enabled, 'alert_cpu_threshold': alert_cpu_threshold,
-                    'alert_diskio_enabled': alert_diskio_enabled, 'alert_diskio_threshold': alert_diskio_threshold,
-                    'backupweeklyday': backupweeklyday, 'backupwindow': backupwindow}
+    kwargs = dict()
+    check_items = dict(
+        alert_bwin_enabled=alert_bwin_enabled,
+        alert_bwin_threshold=alert_bwin_threshold,
+        alert_bwout_enabled=alert_bwout_enabled,
+        alert_bwout_threshold=alert_bwout_threshold,
+        alert_bwquota_enabled=alert_bwquota_enabled,
+        alert_bwquota_threshold=alert_bwquota_threshold,
+        alert_cpu_enabled=alert_cpu_enabled,
+        alert_cpu_threshold=alert_cpu_threshold,
+        alert_diskio_enabled=alert_diskio_enabled,
+        alert_diskio_threshold=alert_diskio_threshold,
+        backupweeklyday=backupweeklyday,
+        backupwindow=backupwindow,
+    )
 
     for key, value in check_items.items():
         if value is not None:
@@ -672,20 +659,20 @@ def main():
         try:
             api_key = os.environ['LINODE_API_KEY']
         except KeyError as e:
-            module.fail_json(msg = 'Unable to load %s' % e.message)
+            module.fail_json(msg='Unable to load %s' % e.message)
 
     # setup the auth
     try:
         api = linode_api.Api(api_key)
         api.test_echo()
     except Exception as e:
-        module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+        module.fail_json(msg='%s' % e.value[0]['ERRORMESSAGE'])
 
     linodeServers(module, api, state, name,
-            displaygroup, plan,
-            additional_disks, distribution, datacenter, kernel_id, linode_id,
-            payment_term, password, private_ip, ssh_pub_key, swap, wait,
-            wait_timeout, watchdog, **kwargs)
+                  displaygroup, plan,
+                  additional_disks, distribution, datacenter, kernel_id, linode_id,
+                  payment_term, password, private_ip, ssh_pub_key, swap, wait,
+                  wait_timeout, watchdog, **kwargs)
 
 
 if __name__ == '__main__':

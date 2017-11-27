@@ -6,11 +6,10 @@ Conditionals
 
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), or previous task result.
 In some cases, the values of variables may depend on other variables.
-Further, additional groups can be created to manage hosts based on whether the hosts match other criteria.
-There are many options to control execution flow in Ansible.
-More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons
+Further, additional groups can be created to manage hosts based on whether the hosts match other criteria. This topic covers how conditionals are used in playbooks. 
 
-Let's dig into what they are.
+.. note:: There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons.
+
 
 .. _the_when_statement:
 
@@ -68,11 +67,10 @@ decide to do something conditionally based on success or failure::
         when: result|skipped
 
 
-.. note:: the filters have been updated in 2.1 so both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).
 
-Note that was a little bit of foreshadowing on the 'register' statement.  We'll get to it a bit later in this chapter.
 
-As a reminder, to see what facts are available on a particular system, you can do::
+As a reminder, to see what facts are available on a particular system, you can do the following::
 
     ansible hostname.example.com -m setup
 
@@ -117,24 +115,24 @@ As the examples show, you don't need to use `{{ }}` to use variables inside cond
 
 Loops and Conditionals
 ``````````````````````
-Combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+Combining `when` with loops (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
-          with_items: [ 0, 2, 4, 6, 8, 10 ]
+          loop: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
 
 If you need to skip the whole task depending on the loop variable being defined, used the `|default` filter to provide an empty iterator::
 
         - command: echo {{ item }}
-          with_items: "{{ mylist|default([]) }}"
+          loop: "{{ mylist|default([]) }}"
           when: item > 5
 
 
-If using `with_dict` which does not take a list::
+If using a dict in a loop::
 
         - command: echo {{ item.key }}
-          with_dict: "{{ mydict|default({}) }}"
+          loop: "{{ lookup('dict', mydict|default({})) }}"
           when: item.value > 5
 
 .. _loading_in_custom_facts:
@@ -154,13 +152,13 @@ there will be accessible to future tasks::
 
 .. _when_roles_and_includes:
 
-Applying 'when' to roles and includes
-`````````````````````````````````````
+Applying 'when' to roles, imports, and includes
+```````````````````````````````````````````````
 
 Note that if you have several tasks that all share the same conditional statement, you can affix the conditional
 to a task include statement as below.  All the tasks get evaluated, but the conditional is applied to each and every task::
 
-    - include: tasks/sometasks.yml
+    - import_tasks: tasks/sometasks.yml
       when: "'reticulating splines' in output"
 
 .. note:: In versions prior to 2.0 this worked with task includes but not playbook includes.  2.0 allows it to work with both.
@@ -174,12 +172,30 @@ Or with a role::
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
 
+When used with `include_*` tasks instead of imports, the conditional is applied _only_ to the include task itself and not any other
+tasks within the included file(s). A common situation where this distinction is important is as follows::
+
+    # include a file to define a variable when it is not already defined
+
+    # main.yml
+    - include_tasks: other_tasks.yml
+      when: x is not defined
+
+    # other_tasks.yml
+    - set_fact:
+        x: foo
+    - debug:
+        var: x
+
+In the above example, if ``import_tasks`` had been used instead both included tasks would have also been skipped. With ``include_tasks``
+instead, the tasks are executed as expected because the conditional is not applied to them.
+
 .. _conditional_imports:
 
 Conditional Imports
 ```````````````````
 
-.. note:: This is an advanced topic that is infrequently used.  You can probably skip this section.
+.. note:: This is an advanced topic that is infrequently used.
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
@@ -241,13 +257,12 @@ The following example shows how to template out a configuration file that was ve
 
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
-      with_first_found:
-        - files:
-           - {{ ansible_distribution }}.conf
-           - default.conf
-          paths:
-           - search_location_one/somedir/
-           - /opt/other_location/somedir/
+      loop: "{{lookup('first_found', { 'files': myfiles, 'paths': mypaths})}}"
+      vars:
+        myfiles:
+          - "{{ansible_distribution}}.conf"
+          -  default.conf
+        mypaths: ['search_location_one/somedir/', '/opt/other_location/somedir/']
 
 Register Variables
 ``````````````````
@@ -270,14 +285,13 @@ The 'register' keyword decides what variable to save a result in.  The resulting
             when: motd_contents.stdout.find('hi') != -1
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
-The registered result can be used in the "with_items" of a task if it is converted into
+The registered result can be used in the loop of a task if it is converted into
 a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
 well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other
 fields::
 
-    - name: registered variable usage as a with_items list
+    - name: registered variable usage as a loop list
       hosts: all
-
       tasks:
 
           - name: retrieve the list of home directories
@@ -286,8 +300,8 @@ fields::
 
           - name: add home dirs to the backup spooler
             file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
-            with_items: "{{ home_dirs.stdout_lines }}"
-            # same as with_items: "{{ home_dirs.stdout.split() }}"
+            loop: "{{ home_dirs.stdout_lines }}"
+            # same as loop: "{{ home_dirs.stdout.split() }}"
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
 You may check the registered variable's string contents for emptiness::

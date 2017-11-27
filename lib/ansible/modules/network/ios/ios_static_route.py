@@ -33,6 +33,8 @@ short_description: Manage static IP routes on Cisco IOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Cisco IOS network devices.
+notes:
+  - Tested against IOS 15.6
 options:
   prefix:
     description:
@@ -48,7 +50,7 @@ options:
       - Admin distance of the static route.
     default: 1
   aggregate:
-    description: List of static route definitions
+    description: List of static route definitions.
   state:
     description:
       - State of the static route configuration.
@@ -134,6 +136,11 @@ def map_config_to_obj(module):
     if match and match.group(1):
         for r in match.group(1).splitlines():
             splitted_line = r.split()
+
+            code = splitted_line[0]
+
+            if code != 'M':
+                continue
 
             cidr = ip_network(to_text(splitted_line[1]))
             prefix = str(cidr.network_address)

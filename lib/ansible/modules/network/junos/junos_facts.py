@@ -56,8 +56,10 @@ requirements:
 notes:
   - Ensure I(config_format) used to retrieve configuration from device
     is supported by junos version running on device.
+  - With I(config_format = json), configuration in the results will be a dictionary(and not a JSON string)
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -76,11 +78,12 @@ ansible_facts:
   type: dict
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args, get_param
-from ansible.module_utils.junos import get_configuration
+from ansible.module_utils.netconf import exec_rpc
+from ansible.module_utils.junos import junos_argument_spec, get_param
+from ansible.module_utils.junos import get_configuration, get_connection
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
+
 
 try:
     from lxml.etree import Element, SubElement, tostring
@@ -114,7 +117,7 @@ class FactsBase(object):
         return str(output.text).strip()
 
     def rpc(self, rpc):
-        return send_request(self.module, Element(rpc))
+        return exec_rpc(self.module, tostring(Element(rpc)))
 
     def get_text(self, ele, tag):
         try:
@@ -137,7 +140,6 @@ class Default(FactsBase):
 
         reply = self.rpc('get-chassis-inventory')
         data = reply.find('.//chassis-inventory/chassis')
-
         self.facts['serialnum'] = self.get_text(data, 'serial-number')
 
 
@@ -154,7 +156,7 @@ class Config(FactsBase):
             config = self.get_text(reply, 'configuration-text')
 
         elif config_format == 'json':
-            config = str(reply.text).strip()
+            config = self.module.from_json(reply.text.strip())
 
         elif config_format == 'set':
             config = self.get_text(reply, 'configuration-set')
@@ -182,13 +184,45 @@ class Hardware(FactsBase):
             filesystems.append(self.get_text(obj, 'filesystem-name'))
         self.facts['filesystems'] = filesystems
 
+        reply = self.rpc('get-route-engine-information')
+        data = reply.find('.//route-engine-information')
+
+        routing_engines = dict()
+        for obj in data:
+            slot = self.get_text(obj, 'slot')
+            routing_engines.update({slot: {}})
+            routing_engines[slot].update({'slot': slot})
+            for child in obj:
+                if child.text != "\n":
+                    routing_engines[slot].update({child.tag.replace("-", "_"): child.text})
+
+        self.facts['routing_engines'] = routing_engines
+
+        if len(data) > 1:
+            self.facts['has_2RE'] = True
+        else:
+            self.facts['has_2RE'] = False
+
+        reply = self.rpc('get-chassis-inventory')
+        data = reply.findall('.//chassis-module')
+
+        modules = list()
+        for obj in data:
+            mod = dict()
+            for child in obj:
+                if child.text != "\n":
+                    mod.update({child.tag.replace("-", "_"): child.text})
+            modules.append(mod)
+
+        self.facts['modules'] = modules
+
 
 class Interfaces(FactsBase):
 
     def populate(self):
         ele = Element('get-interface-information')
         SubElement(ele, 'detail')
-        reply = send_request(self.module, ele)
+        reply = exec_rpc(self.module, tostring(ele))
 
         interfaces = {}
 
@@ -275,9 +309,8 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
+    get_connection(module)
     warnings = list()
-    check_args(module, warnings)
-
     gather_subset = module.params['gather_subset']
     ofacts = False
 
@@ -337,7 +370,6 @@ def main():
         else:
             warnings += ['junos-eznc is required to gather old style facts but does not appear to be installed. '
                          'It can be installed using `pip  install junos-eznc`']
-
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 

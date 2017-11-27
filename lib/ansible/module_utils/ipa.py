@@ -32,6 +32,7 @@ try:
 except ImportError:
     import simplejson as json
 
+import re
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import quote
@@ -78,11 +79,28 @@ class IPAClient(object):
             err_string = e
         self.module.fail_json(msg='%s: %s' % (msg, err_string))
 
+    def get_ipa_version(self):
+        response = self.ping()['summary']
+        ipa_ver_regex = re.compile(r'IPA server version (\d\.\d\.\d).*')
+        version_match = ipa_ver_regex.match(response)
+        ipa_version = None
+        if version_match:
+            ipa_version = version_match.groups()[0]
+        return ipa_version
+
+    def ping(self):
+        return self._post_json(method='ping', name=None)
+
     def _post_json(self, method, name, item=None):
         if item is None:
             item = {}
         url = '%s/session/json' % self.get_base_url()
-        data = {'method': method, 'params': [[name], item]}
+        data = dict(method=method)
+        if method != 'ping':
+            data['params'] = [[name], item]
+        else:
+            data['params'] = [[], {}]
+
         try:
             resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)), headers=self.headers)
             status_code = info['status']
@@ -155,3 +173,14 @@ class IPAClient(object):
                     add_method(name=name, item=diff)
 
         return changed
+
+
+def ipa_argument_spec():
+    return dict(
+        ipa_prot=dict(type='str', default='https', choices=['http', 'https']),
+        ipa_host=dict(type='str', default='ipa.example.com'),
+        ipa_port=dict(type='int', default=443),
+        ipa_user=dict(type='str', default='admin'),
+        ipa_pass=dict(type='str', required=True, no_log=True),
+        validate_certs=dict(type='bool', default=True),
+    )

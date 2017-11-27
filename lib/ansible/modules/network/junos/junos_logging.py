@@ -72,6 +72,7 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -138,7 +139,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
 
@@ -213,8 +214,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:

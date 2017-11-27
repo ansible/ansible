@@ -22,7 +22,7 @@ __metaclass__ = type
 import collections
 import os
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -293,7 +293,8 @@ class Role(Base, Become, Conditional, Taggable):
 
     def add_parent(self, parent_role):
         ''' adds a role to the list of this roles parents '''
-        assert isinstance(parent_role, Role)
+        if not isinstance(parent_role, Role):
+            raise AnsibleAssertionError()
 
         if parent_role not in self._parents:
             self._parents.append(parent_role)
@@ -301,7 +302,9 @@ class Role(Base, Become, Conditional, Taggable):
     def get_parents(self):
         return self._parents
 
-    def get_default_vars(self, dep_chain=[]):
+    def get_default_vars(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         default_vars = dict()
         for dep in self.get_all_dependencies():
             default_vars = combine_vars(default_vars, dep.get_default_vars())
@@ -311,7 +314,9 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=[]):
+    def get_inherited_vars(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         inherited_vars = dict()
 
         if dep_chain:
@@ -319,7 +324,9 @@ class Role(Base, Become, Conditional, Taggable):
                 inherited_vars = combine_vars(inherited_vars, parent._role_vars)
         return inherited_vars
 
-    def get_role_params(self, dep_chain=[]):
+    def get_role_params(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         params = {}
         if dep_chain:
             for parent in dep_chain:
@@ -327,7 +334,9 @@ class Role(Base, Become, Conditional, Taggable):
         params = combine_vars(params, self._role_params)
         return params
 
-    def get_vars(self, dep_chain=[], include_params=True):
+    def get_vars(self, dep_chain=None, include_params=True):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():

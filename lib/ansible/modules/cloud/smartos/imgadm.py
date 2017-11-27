@@ -145,7 +145,7 @@ class Imgadm(object):
 
     # Helper method to massage stderr
     def errmsg(self, stderr):
-        match = re.match('^imgadm .*?: error \(\w+\): (.*): .*', stderr)
+        match = re.match(r'^imgadm .*?: error \(\w+\): (.*): .*', stderr)
         if match:
             return match.groups()[0]
         else:
@@ -197,17 +197,17 @@ class Imgadm(object):
                 self.changed = True
         else:
             # Type is ignored by imgadm(1M) here
-            cmd += ' -d %s' % (source)
+            cmd += ' -d %s' % source
             (rc, stdout, stderr) = self.module.run_command(cmd)
 
             if rc != 0:
                 self.module.fail_json(msg='Failed to remove source: {0}'.format(self.errmsg(stderr)))
 
-            regex = 'Do not have image source "%s", no change' % (source)
+            regex = 'Do not have image source "%s", no change' % source
             if re.match(regex, stdout):
                 self.changed = False
 
-            regex = 'Deleted ".*" image source "%s"' % (source)
+            regex = 'Deleted ".*" image source "%s"' % source
             if re.match(regex, stdout):
                 self.changed = True
 
@@ -236,7 +236,7 @@ class Imgadm(object):
             if rc != 0:
                 self.module.fail_json(msg='Failed to import image: {0}'.format(self.errmsg(stderr)))
 
-            regex = 'Image {0} \(.*\) is already installed, skipping'.format(self.uuid)
+            regex = r'Image {0} \(.*\) is already installed, skipping'.format(self.uuid)
             if re.match(regex, stdout):
                 self.changed = False
 

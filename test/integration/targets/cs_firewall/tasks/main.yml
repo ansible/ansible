@@ -43,7 +43,9 @@
     protocol: udp
     start_port: 5300
     end_port: 5333
-    cidr: 1.2.3.4/24
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: fw
@@ -73,7 +75,7 @@
   assert:
     that:
     - fw|failed
-    - "fw.msg == 'one of the following is required: ip_address,network'"
+    - "fw.msg == 'one of the following is required: ip_address, network'"
 
 - name: test fail if missing params
   cs_firewall:
@@ -97,7 +99,7 @@
   assert:
     that:
     - fw|failed
-    - "fw.msg == 'one of the following is required: ip_address,network'"
+    - "fw.msg == 'one of the following is required: ip_address, network'"
 
 - name: test present firewall rule ingress 80 in check mode
   cs_firewall:
@@ -124,6 +126,7 @@
     - fw|success
     - fw|changed
     - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "tcp"
     - fw.start_port == 80
@@ -142,6 +145,7 @@
     - fw|success
     - not fw|changed
     - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "tcp"
     - fw.start_port == 80
@@ -154,7 +158,9 @@
     protocol: udp
     start_port: 5300
     end_port: 5333
-    cidr: 1.2.3.4/24
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
     zone: "{{ cs_common_zone_adv }}"
   register: fw
   check_mode: true
@@ -170,7 +176,9 @@
     protocol: udp
     start_port: 5300
     end_port: 5333
-    cidr: 1.2.3.4/24
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
     zone: "{{ cs_common_zone_adv }}"
   register: fw
 - name: verify results of present firewall rule ingress 5300
@@ -178,7 +186,8 @@
     that:
     - fw|success
     - fw|changed
-    - fw.cidr == "1.2.3.4/24"
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "udp"
     - fw.start_port == 5300
@@ -191,7 +200,9 @@
     protocol: udp
     start_port: 5300
     end_port: 5333
-    cidr: 1.2.3.4/24
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
     zone: "{{ cs_common_zone_adv }}"
   register: fw
 - name: verify results of present firewall rule ingress 5300 idempotence
@@ -199,7 +210,8 @@
     that:
     - fw|success
     - not fw|changed
-    - fw.cidr == "1.2.3.4/24"
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "udp"
     - fw.start_port == 5300
@@ -233,6 +245,7 @@
     - fw|success
     - fw|changed
     - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
     - fw.network == "{{ cs_firewall_network }}"
     - fw.protocol == "all"
     - fw.type == "egress"
@@ -268,6 +281,7 @@
     - fw|success
     - fw|changed
     - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "tcp"
     - fw.start_port == 80
@@ -287,6 +301,7 @@
     - fw|success
     - fw|changed
     - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "tcp"
     - fw.start_port == 80
@@ -312,7 +327,9 @@
     protocol: udp
     start_port: 5300
     end_port: 5333
-    cidr: 1.2.3.4/24
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: fw
@@ -322,7 +339,8 @@
     that:
     - fw|success
     - fw|changed
-    - fw.cidr == "1.2.3.4/24"
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "udp"
     - fw.start_port == 5300
@@ -335,7 +353,9 @@
     protocol: udp
     start_port: 5300
     end_port: 5333
-    cidr: 1.2.3.4/24
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: fw
@@ -344,7 +364,8 @@
     that:
     - fw|success
     - fw|changed
-    - fw.cidr == "1.2.3.4/24"
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
     - fw.ip_address == "{{ cs_firewall_ip_address }}"
     - fw.protocol == "udp"
     - fw.start_port == 5300
@@ -357,7 +378,9 @@
     protocol: udp
     start_port: 5300
     end_port: 5333
-    cidr: 1.2.3.4/24
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: fw
@@ -382,6 +405,7 @@
     - fw|success
     - fw|changed
     - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
     - fw.network == "{{ cs_firewall_network }}"
     - fw.protocol == "all"
     - fw.type == "egress"
@@ -400,6 +424,7 @@
     - fw|success
     - fw|changed
     - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
     - fw.network == "{{ cs_firewall_network }}"
     - fw.protocol == "all"
     - fw.type == "egress"

@@ -120,18 +120,6 @@ except ImportError:
     HAS_BOTO = False
 
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
-
-
 def cert_meta(iam, name):
     certificate = iam.get_server_certificate(name).get_server_certificate_result.server_certificate
     ocert = certificate.certificate_body

@@ -64,7 +64,7 @@ def main():
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
         l3out=dict(type='str'),
-        state=dict(type='str', choices=['absent', 'present', 'query']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6')  # Deprecated starting from v2.6
     )
@@ -73,27 +73,47 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_together=[['gateway', 'mask']],
-        required_if=[['state', 'present', ['bd', 'l3out', 'tenant']],
-                     ['state', 'absent', ['bd', 'l3out', 'tenant']]]
+        required_if=[
+            ['state', 'present', ['bd', 'l3out', 'tenant']],
+            ['state', 'absent', ['bd', 'l3out', 'tenant']],
+        ],
     )
 
+    bd = module.params['bd']
     l3out = module.params['l3out']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-
-    if state != 'query':
-        path = 'api/mo/uni/tn-%(tenant)s/BD-%(bd)s/rsBDToOut-%(l3out)s.json' % module.params
-    else:
-        path = 'api/class/fvRsBDToOut.json'
-
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvBD',
+            aci_rn='BD-{}'.format(bd),
+            filter_target='(fvBD.name, "{}")'.format(bd),
+            module_object=bd,
+        ),
+        subclass_2=dict(
+            aci_class='fvRsBDToOut',
+            aci_rn='rsBDToOut-{}'.format(l3out),
+            filter_target='(fvRsBDToOut.tnL3extOutName, "{}")'.format(l3out),
+            module_object=l3out,
+        ),
+    )
 
     aci.get_existing()
 
     if state == 'present':
         # Filter out module params with null values
-        aci.payload(aci_class='fvRsBDToOut', class_config=dict(tnL3extOutName=l3out))
+        aci.payload(
+            aci_class='fvRsBDToOut',
+            class_config=dict(tnL3extOutName=l3out),
+        )
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsBDToOut')

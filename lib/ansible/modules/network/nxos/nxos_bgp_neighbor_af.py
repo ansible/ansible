@@ -31,6 +31,7 @@ description:
   - Manages BGP address-family's neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - C(state=absent) removes the whole BGP address-family's
     neighbor configuration.
   - Default, when supported, removes properties
@@ -135,6 +136,12 @@ options:
         or 'default'.
     required: false
     default: null
+  disable_peer_as_check:
+    description:
+      - Disable checking of peer AS-number while advertising
+    required: false
+    choices: ['true', 'false']
+    version_added: 2.5
   filter_list_in:
     description:
       - Valid values are a string defining a filter-list name,
@@ -293,6 +300,7 @@ BOOL_PARAMS = [
     'allowas_in',
     'as_override',
     'default_originate',
+    'disable_peer_as_check',
     'next_hop_self',
     'next_hop_third_party',
     'route_reflector_client',
@@ -304,13 +312,14 @@ PARAM_TO_COMMAND_KEYMAP = {
     'neighbor': 'neighbor',
     'additional_paths_receive': 'capability additional-paths receive',
     'additional_paths_send': 'capability additional-paths send',
-    'advertise_map_exist': 'advertise-map exist',
-    'advertise_map_non_exist': 'advertise-map non-exist',
+    'advertise_map_exist': 'advertise-map exist-map',
+    'advertise_map_non_exist': 'advertise-map non-exist-map',
     'allowas_in': 'allowas-in',
     'allowas_in_max': 'allowas-in',
     'as_override': 'as-override',
     'default_originate': 'default-originate',
     'default_originate_route_map': 'default-originate route-map',
+    'disable_peer_as_check': 'disable-peer-as-check',
     'filter_list_in': 'filter-list in',
     'filter_list_out': 'filter-list out',
     'max_prefix_limit': 'maximum-prefix',
@@ -339,8 +348,6 @@ def get_value(arg, config, module):
     custom = [
         'additional_paths_send',
         'additional_paths_receive',
-        'advertise_map_exist',
-        'advertise_map_non_exist',
         'max_prefix_limit',
         'max_prefix_interval',
         'max_prefix_threshold',
@@ -365,6 +372,12 @@ def get_value(arg, config, module):
         value = False
         if has_command:
             value = True
+
+    elif command.startswith('advertise-map'):
+        value = []
+        has_adv_map = re.search(r'{0}\s(?P<value1>.*)\s{1}\s(?P<value2>.*)$'.format(*command.split()), config, re.M)
+        if has_adv_map:
+            value = list(has_adv_map.groups())
 
     elif command.split()[0] in ['filter-list', 'prefix-list', 'route-map']:
         has_cmd_direction_val = re.search(r'{0}\s(?P<value>.*)\s{1}$'.format(*command.split()), config, re.M)
@@ -401,22 +414,6 @@ def get_custom_value(arg, config, module):
                     value = 'disable'
                 else:
                     value = 'enable'
-    elif arg == 'advertise_map_exist':
-        value = []
-        for line in splitted_config:
-            if 'advertise-map' in line and 'exist-map' in line:
-                splitted_line = line.split()
-                value = [splitted_line[1], splitted_line[3]]
-    elif command == 'advertise-map':
-        value = []
-        exclude = 'non_exist' in arg
-        for line in splitted_config:
-            if 'advertise-map' in line and (
-                (exclude and 'non-exist-map' in line) or
-                (not exclude and 'exist-map' in line)
-            ):
-                splitted_line = line.split()
-                value = [splitted_line[1], splitted_line[3]]
     elif arg.startswith('max_prefix'):
         for line in splitted_config:
             if 'maximum-prefix' in line:
@@ -449,7 +446,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:
@@ -648,6 +645,7 @@ def main():
         as_override=dict(required=False, type='bool'),
         default_originate=dict(required=False, type='bool'),
         default_originate_route_map=dict(required=False, type='str'),
+        disable_peer_as_check=dict(required=False, type='bool'),
         filter_list_in=dict(required=False, type='str'),
         filter_list_out=dict(required=False, type='str'),
         max_prefix_limit=dict(required=False, type='str'),

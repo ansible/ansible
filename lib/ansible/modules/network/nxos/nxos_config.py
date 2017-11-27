@@ -227,7 +227,7 @@ EXAMPLES = """
 - name: diff the running-config against a provided config
   nxos_config:
     diff_against: intended
-    intended: "{{ lookup('file', 'master.cfg') }}"
+    intended_config: "{{ lookup('file', 'master.cfg') }}"
 
 - nxos_config:
     lines:
@@ -273,6 +273,7 @@ from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec
 from ansible.module_utils.nxos import check_args as nxos_check_args
+from ansible.module_utils.network_common import to_list
 
 
 def get_running_config(module, config=None):
@@ -294,6 +295,17 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
+
+def execute_show_commands(module, commands, output='text'):
+    cmds = []
+    for command in to_list(commands):
+        cmd = { 'command': command,
+                'output': output,
+              }
+        cmds.append(cmd)
+    body = run_commands(module, cmds)
+    return body
 
 
 def main():
@@ -392,8 +404,11 @@ def main():
 
     diff_ignore_lines = module.params['diff_ignore_lines']
 
+    if module.params['save']:
+        module.params['save_when'] = 'always'
+
     if module.params['save_when'] != 'never':
-        output = run_commands(module, ['show running-config', 'startup-config'])
+        output = execute_show_commands(module, ['show running-config', 'show startup-config'])
 
         running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
@@ -410,7 +425,7 @@ def main():
 
     if module._diff:
         if not running_config:
-            output = run_commands(module, 'show running-config')
+            output = execute_show_commands(module, 'show running-config')
             contents = output[0]
         else:
             contents = running_config.config_text
@@ -427,7 +442,7 @@ def main():
 
         elif module.params['diff_against'] == 'startup':
             if not startup_config:
-                output = run_commands(module, 'show startup-config')
+                output = execute_show_commands(module, 'show startup-config')
                 contents = output[0]
             else:
                 contents = output[0]

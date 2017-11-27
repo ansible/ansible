@@ -14,8 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     strategy: linear
     short_description: Executes tasks in a linear fashion
     description:
@@ -24,12 +27,9 @@ DOCUMENTATION:
           the next series of hosts until the batch is done, before going on to the next task.
     version_added: "2.0"
     notes:
-     - This was the default Ansible behaviour before 'strategy plugins' were introduces in 2.0.
+     - This was the default Ansible behaviour before 'strategy plugins' were introduced in 2.0.
     author: Ansible Core Team
 '''
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
@@ -266,7 +266,6 @@ class StrategyModule(StrategyBase):
                                 # just ignore any errors during task name templating,
                                 # we don't care if it just shows the raw name
                                 display.debug("templating failed for some reason")
-                                pass
                             display.debug("here goes the callback...")
                             self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             task.name = saved_name
@@ -290,38 +289,10 @@ class StrategyModule(StrategyBase):
                 display.debug("done queuing things up, now waiting for results queue to drain")
                 if self._pending_results > 0:
                     results += self._wait_on_pending_results(iterator)
+
                 host_results.extend(results)
 
-                all_role_blocks = []
-                for hr in results:
-                    # handle include_role
-                    if hr._task.action == 'include_role':
-                        loop_var = None
-                        if hr._task.loop:
-                            loop_var = 'item'
-                            if hr._task.loop_control:
-                                loop_var = hr._task.loop_control.loop_var or 'item'
-                            include_results = hr._result.get('results', [])
-                        else:
-                            include_results = [hr._result]
-
-                        for include_result in include_results:
-                            if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
-                                continue
-
-                            display.debug("generating all_blocks data for role")
-                            new_ir = hr._task.copy()
-                            new_ir.vars.update(include_result.get('include_variables', dict()))
-                            if loop_var and loop_var in include_result:
-                                new_ir.vars[loop_var] = include_result[loop_var]
-
-                            blocks, handler_blocks = new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader)
-                            all_role_blocks.extend(blocks)
-                            self._tqm.update_handler_list([handler for handler_block in handler_blocks for handler in handler_block.block])
-
-                if len(all_role_blocks) > 0:
-                    for host in hosts_left:
-                        iterator.add_tasks(host, all_role_blocks)
+                self.update_active_connections(results)
 
                 try:
                     included_files = IncludedFile.process_include_results(
@@ -339,6 +310,8 @@ class StrategyModule(StrategyBase):
                 include_failure = False
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
+
+                    # A noop task for use in padding dynamic includes
                     noop_task = Task()
                     noop_task.action = 'meta'
                     noop_task.args['_raw_params'] = 'noop'
@@ -352,7 +325,18 @@ class StrategyModule(StrategyBase):
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
-                            new_blocks = self._load_included_file(included_file, iterator=iterator)
+                            if included_file._is_role:
+                                new_ir = included_file._task.copy()
+                                new_ir.vars.update(included_file._args)
+
+                                new_blocks, handler_blocks = new_ir.get_block_list(
+                                    play=iterator._play,
+                                    variable_manager=self._variable_manager,
+                                    loader=self._loader,
+                                )
+                                self._tqm.update_handler_list([handler for handler_block in handler_blocks for handler in handler_block.block])
+                            else:
+                                new_blocks = self._load_included_file(included_file, iterator=iterator)
 
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
@@ -419,7 +403,7 @@ class StrategyModule(StrategyBase):
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
 
-                    if (len(self._tqm._failed_hosts) / len(results)) > percentage:
+                    if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
@@ -428,6 +412,7 @@ class StrategyModule(StrategyBase):
                                 iterator.mark_host_failed(host)
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                         result |= self._tqm.RUN_FAILED_BREAK_PLAY
+                    display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
                 display.debug("done checking for max_fail_percentage")
 
                 display.debug("checking to see if all hosts have failed and the running result is not ok")

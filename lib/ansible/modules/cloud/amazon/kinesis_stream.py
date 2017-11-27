@@ -1,17 +1,10 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -27,6 +20,7 @@ description:
     - Update the retention period of a Kinesis Stream.
     - Update Tags on a Kinesis Stream.
 version_added: "2.2"
+requirements: [ boto3 ]
 author: Allen Sanabria (@linuxdynasty)
 options:
   name:
@@ -36,8 +30,7 @@ options:
     required: true
   shards:
     description:
-      - "The number of shards you want to have with this stream. This can not
-      be modified after being created."
+      - "The number of shards you want to have with this stream."
       - "This is required when state == present"
     required: false
     default: None
@@ -151,17 +144,19 @@ tags:
   }
 '''
 
-try:
-    import botocore
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 import re
 import datetime
 import time
 from functools import reduce
+
+try:
+    import botocore.exceptions
+except ImportError:
+    pass  # Taken care of by ec2.HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def convert_to_lower(data):
@@ -294,7 +289,7 @@ def get_tags(client, stream_name, check_mode=False):
             ]
         success = True
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg, results
 
@@ -333,9 +328,15 @@ def find_stream(client, stream_name, check_mode=False):
                 shards.extend(results.pop('Shards'))
                 has_more_shards = results['HasMoreShards']
             results['Shards'] = shards
+            num_closed_shards = len([s for s in shards if 'EndingSequenceNumber' in s['SequenceNumberRange']])
+            results['OpenShardsCount'] = len(shards) - num_closed_shards
+            results['ClosedShardsCount'] = num_closed_shards
             results['ShardsCount'] = len(shards)
         else:
             results = {
+                'OpenShardsCount': 5,
+                'ClosedShardsCount': 0,
+                'ShardsCount': 5,
                 'HasMoreShards': True,
                 'RetentionPeriodHours': 24,
                 'StreamName': stream_name,
@@ -344,7 +345,7 @@ def find_stream(client, stream_name, check_mode=False):
             }
         success = True
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg, results
 
@@ -400,7 +401,7 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
             else:
                 time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
-            err_msg = str(e)
+            err_msg = to_native(e)
 
     if not status_achieved:
         err_msg = "Wait time out reached, while waiting for results"
@@ -459,7 +460,7 @@ def tags_action(client, stream_name, tags, action='create', check_mode=False):
                 err_msg = 'Invalid action {0}'.format(action)
 
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg
 
@@ -626,17 +627,17 @@ def stream_action(client, stream_name, shard_count=1, action='create',
                 err_msg = 'Invalid action {0}'.format(action)
 
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg
 
 
 def retention_action(client, stream_name, retention_period=24,
                      action='increase', check_mode=False):
-    """Increase or Decreaste the retention of messages in the Kinesis stream.
+    """Increase or Decrease the retention of messages in the Kinesis stream.
     Args:
         client (botocore.client.EC2): Boto3 client.
-        stream_name (str): The
+        stream_name (str): The name of the kinesis stream.
 
     Kwargs:
         retention_period (int): This is how long messages will be kept before
@@ -651,7 +652,7 @@ def retention_action(client, stream_name, retention_period=24,
         >>> client = boto3.client('kinesis')
         >>> stream_name = 'test-stream'
         >>> retention_period = 48
-        >>> stream_action(client, stream_name, retention_period, action='create')
+        >>> retention_action(client, stream_name, retention_period, action='increase')
 
     Returns:
         Tuple (bool, str)
@@ -690,12 +691,49 @@ def retention_action(client, stream_name, retention_period=24,
                 err_msg = 'Invalid action {0}'.format(action)
 
     except botocore.exceptions.ClientError as e:
-        err_msg = str(e)
+        err_msg = to_native(e)
 
     return success, err_msg
 
 
-def update(client, current_stream, stream_name, retention_period=None,
+def update_shard_count(client, stream_name, number_of_shards=1, check_mode=False):
+    """Increase or Decrease the number of shards in the Kinesis stream.
+    Args:
+        client (botocore.client.EC2): Boto3 client.
+        stream_name (str): The name of the kinesis stream.
+
+    Kwargs:
+        number_of_shards (int): Number of shards this stream will use.
+            default=1
+        check_mode (bool): This will pass DryRun as one of the parameters to the aws api.
+            default=False
+
+    Basic Usage:
+        >>> client = boto3.client('kinesis')
+        >>> stream_name = 'test-stream'
+        >>> number_of_shards = 3
+        >>> update_shard_count(client, stream_name, number_of_shards)
+
+    Returns:
+        Tuple (bool, str)
+    """
+    success = True
+    err_msg = ''
+    params = {
+        'StreamName': stream_name,
+        'ScalingType': 'UNIFORM_SCALING'
+    }
+    if not check_mode:
+        params['TargetShardCount'] = number_of_shards
+        try:
+            client.update_shard_count(**params)
+        except botocore.exceptions.ClientError as e:
+            return False, str(e)
+
+    return success, err_msg
+
+
+def update(client, current_stream, stream_name, number_of_shards=1, retention_period=None,
            tags=None, wait=False, wait_timeout=300, check_mode=False):
     """Update an Amazon Kinesis Stream.
     Args:
@@ -703,6 +741,8 @@ def update(client, current_stream, stream_name, retention_period=None,
         stream_name (str): The name of the kinesis stream.
 
     Kwargs:
+        number_of_shards (int): Number of shards this stream will use.
+            default=1
         retention_period (int): This is how long messages will be kept before
             they are discarded. This can not be less than 24 hours.
         tags (dict): The tags you want applied.
@@ -716,6 +756,7 @@ def update(client, current_stream, stream_name, retention_period=None,
     Basic Usage:
         >>> client = boto3.client('kinesis')
         >>> current_stream = {
+            'ShardCount': 3,
             'HasMoreShards': True,
             'RetentionPeriodHours': 24,
             'StreamName': 'test-stream',
@@ -724,8 +765,9 @@ def update(client, current_stream, stream_name, retention_period=None,
         }
         >>> stream_name = 'test-stream'
         >>> retention_period = 48
-        >>> stream_action(client, current_stream, stream_name,
-                          retention_period, action='create' )
+        >>> number_of_shards = 10
+        >>> update(client, current_stream, stream_name,
+                   number_of_shards, retention_period )
 
     Returns:
         Tuple (bool, bool, str)
@@ -744,7 +786,7 @@ def update(client, current_stream, stream_name, retention_period=None,
             if not wait_success:
                 return wait_success, False, wait_msg
 
-        if current_stream['StreamStatus'] == 'ACTIVE':
+        if current_stream.get('StreamStatus') == 'ACTIVE':
             retention_changed = False
             if retention_period > current_stream['RetentionPeriodHours']:
                 retention_changed, retention_msg = (
@@ -800,9 +842,39 @@ def update(client, current_stream, stream_name, retention_period=None,
         else:
             err_msg = (
                 'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-                .format(current_stream['StreamStatus'])
+                .format(current_stream.get('StreamStatus', 'UNKNOWN'))
             )
             return success, changed, err_msg
+
+    if current_stream['OpenShardsCount'] != number_of_shards:
+        success, err_msg = (
+            update_shard_count(client, stream_name, number_of_shards, check_mode=check_mode)
+        )
+
+        if not success:
+            return success, changed, err_msg
+
+        changed = True
+
+        if wait:
+            wait_success, wait_msg, current_stream = (
+                wait_for_status(
+                    client, stream_name, 'ACTIVE', wait_timeout,
+                    check_mode=check_mode
+                )
+            )
+            if not wait_success:
+                return wait_success, changed, wait_msg
+        else:
+            stream_found, stream_msg, current_stream = (
+                find_stream(client, stream_name, check_mode=check_mode)
+            )
+            if stream_found and current_stream['StreamStatus'] != 'ACTIVE':
+                err_msg = (
+                    'Number of shards for {0} is in the process of updating'
+                    .format(stream_name)
+                )
+                return success, changed, err_msg
 
     if tags:
         _, _, err_msg = (
@@ -818,7 +890,7 @@ def update(client, current_stream, stream_name, retention_period=None,
     if success and changed:
         err_msg = 'Kinesis Stream {0} updated successfully.'.format(stream_name)
     elif success and not changed:
-        err_msg = 'Kinesis Stream {0} did not changed.'.format(stream_name)
+        err_msg = 'Kinesis Stream {0} did not change.'.format(stream_name)
 
     return success, changed, err_msg
 
@@ -862,22 +934,24 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
     stream_found, stream_msg, current_stream = (
         find_stream(client, stream_name, check_mode=check_mode)
     )
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
 
-    if stream_found and current_stream['StreamStatus'] == 'DELETING' and wait:
+    if stream_found and current_stream.get('StreamStatus') == 'DELETING' and wait:
         wait_success, wait_msg, current_stream = (
             wait_for_status(
                 client, stream_name, 'ACTIVE', wait_timeout,
                 check_mode=check_mode
             )
         )
-    if stream_found and current_stream['StreamStatus'] != 'DELETING':
+
+    if stream_found and not check_mode:
+        if current_stream['ShardsCount'] != number_of_shards:
+            err_msg = 'Can not change the number of shards in a Kinesis Stream'
+            return success, changed, err_msg, results
+
+    if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(
-            client, current_stream, stream_name, retention_period, tags,
-            wait, wait_timeout, check_mode=check_mode
+            client, current_stream, stream_name, number_of_shards,
+            retention_period, tags, wait, wait_timeout, check_mode=check_mode
         )
     else:
         create_success, create_msg = (
@@ -886,7 +960,11 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 check_mode=check_mode
             )
         )
-        if create_success:
+        if not create_success:
+            changed = True
+            err_msg = 'Failed to create Kinesis stream: {0}'.format(create_msg)
+            return False, True, err_msg, {}
+        else:
             changed = True
             if wait:
                 wait_success, wait_msg, results = (
@@ -922,7 +1000,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             stream_found, stream_msg, current_stream = (
                 find_stream(client, stream_name, check_mode=check_mode)
             )
-            if retention_period and current_stream['StreamStatus'] == 'ACTIVE':
+            if retention_period and current_stream.get('StreamStatus') == 'ACTIVE':
                 changed, err_msg = (
                     retention_action(
                         client, stream_name, retention_period, action='increase',
@@ -936,7 +1014,7 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             else:
                 err_msg = (
                     'StreamStatus has to be ACTIVE in order to modify the retention period. Current status is {0}'
-                    .format(current_stream['StreamStatus'])
+                    .format(current_stream.get('StreamStatus', 'UNKNOWN'))
                 )
                 success = create_success
                 changed = True
@@ -1069,7 +1147,7 @@ def main():
             )
         )
     except botocore.exceptions.ClientError as e:
-        err_msg = 'Boto3 Client Error - {0}'.format(str(e.msg))
+        err_msg = 'Boto3 Client Error - {0}'.format(to_native(e.msg))
         module.fail_json(
             success=False, changed=False, result={}, msg=err_msg
         )
@@ -1095,9 +1173,6 @@ def main():
             success=success, changed=changed, msg=err_msg, result=results
         )
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

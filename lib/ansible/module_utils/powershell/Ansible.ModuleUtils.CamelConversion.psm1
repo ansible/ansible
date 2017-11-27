@@ -1,5 +1,5 @@
 # Copyright (c) 2017 Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 # used by Convert-DictToSnakeCase to convert a string in camelCase
 # format to snake_case
@@ -28,17 +28,15 @@ Function Convert-ListToSnakeCase($list) {
     foreach ($value in $list) {
         if ($value -is [Hashtable]) {
             $new_value = Convert-DictToSnakeCase -dict $value
-        } elseif ($value -is [Array]) {
+        } elseif ($value -is [Array] -or $value -is [System.Collections.ArrayList]) {
             $new_value = Convert-ListToSnakeCase -list $value
-        } elseif ($value -is [String]) {
-            $new_value = Convert-StringToSnakeCase -string $value
         } else {
             $new_value = $value
         }
-        $snake_list.Add($new_value) | Out-Null
+        [void]$snake_list.Add($new_value)
     }
 
-    return $snake_list
+    return ,$snake_list
 }
 
 # converts a dict/hashtable keys from camelCase to snake_case
@@ -53,16 +51,14 @@ Function Convert-DictToSnakeCase($dict) {
         $value = $dict_entry.Value
         if ($value -is [Hashtable]) {
             $snake_dict.$snake_key = Convert-DictToSnakeCase -dict $value          
-        } elseif ($value -is [Array]) {
+        } elseif ($value -is [Array] -or $value -is [System.Collections.ArrayList]) {
             $snake_dict.$snake_key = Convert-ListToSnakeCase -list $value
-        } elseif ($value -is [String]) {
-            $snake_dict.$snake_key = Convert-StringToSnakeCase -string $value
         } else {
             $snake_dict.$snake_key = $value
         }
     }
 
-    return $snake_dict
+    return ,$snake_dict
 }
 
 # this line must stay at the bottom to ensure all defined module parts are exported

@@ -1,62 +1,118 @@
 ---
 - name: Setup test fixture
-  copy: src={{ role_path }}/fixtures/ansible-xml-beers.xml dest=/tmp/ansible-xml-beers-implicit.xml
+  copy:
+    src: fixtures/ansible-xml-beers.xml
+    dest: /tmp/ansible-xml-beers-implicit.xml
+
 
 - name: Add a phonenumber element to the business element. Implicit mkdir -p behavior where applicable
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/phonenumber value=555-555-1234
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/phonenumber
+    value: 555-555-1234
 
 - name: Add a owner element to the business element, testing implicit mkdir -p behavior 1/2
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/owner/name/last value=Smith
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/owner/name/last
+    value: Smith
 
 - name: Add a owner element to the business element, testing implicit mkdir -p behavior 2/2
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/owner/name/first value=John
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/owner/name/first
+    value: John
 
 - name: Add a validxhtml element to the website element. Note that ensure is present by default and while value defaults to null for elements, if one doesn't specify it we don't know what to do.
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/website/validxhtml
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/website/validxhtml
 
 - name: Add an empty validateon attribute to the validxhtml element. This actually makes the previous example redundant because of the implicit parent-node creation behavior.
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/website/validxhtml/@validateon
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/website/validxhtml/@validateon
 
 - name: Add an empty validateon attribute to the validxhtml element. Actually verifies the implicit parent-node creation behavior.
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/website_bis/validxhtml/@validateon
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/website_bis/validxhtml/@validateon
 
 - name: Add an attribute with a value
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/owner/@dob='1976-04-12'
+  xml:
+     file: /tmp/ansible-xml-beers-implicit.xml
+     xpath: /business/owner/@dob='1976-04-12'
 
 - name: Add an element with a value, alternate syntax
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath="/business/beers/beer/text()=\"George Killian's Irish Red\"" # note the quote within an XPath string thing
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/beers/beer/text()="George Killian's Irish Red"  # note the quote within an XPath string thing
 
 - name: Add an element without special characters
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/testnormalelement value="xml tag with no special characters" pretty_print=true
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/testnormalelement
+    value: xml tag with no special characters
+    pretty_print: yes
 
 - name: Add an element with dash
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/test-with-dash value="xml tag with dashes" pretty_print=true
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/test-with-dash
+    value: xml tag with dashes
+    pretty_print: yes
 
 - name: Add an element with dot
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/test-with-dash.and.dot value="xml tag with dashes and dots" pretty_print=true
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/test-with-dash.and.dot
+    value: xml tag with dashes and dots
+    pretty_print: yes
 
 - name: Add an element with underscore
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/test-with.dash_and.dot_and-underscores value="xml tag with dashes, dots and underscores" pretty_print=true
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/test-with.dash_and.dot_and-underscores
+    value: xml tag with dashes, dots and underscores
+    pretty_print: yes
 
 - name: Add an attribute on a conditional element
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath="/business/beers/beer[text()=\"George Killian's Irish Red\"]/@color='red'"
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/beers/beer[text()="George Killian's Irish Red"]/@color='red'
 
 - name: Add two attributes on a conditional element
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath="/business/beers/beer[text()=\"Pilsner Urquell\" and @origin='CZ']/@color='blonde'"
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/beers/beer[text()="Pilsner Urquell" and @origin='CZ']/@color='blonde'
 
 - name: Add a owner element to the business element, testing implicit mkdir -p behavior 3/2 -- complex lookup
-  xml: file=/tmp/ansible-xml-beers-implicit.xml xpath=/business/owner/name[first/text()='John']/middle value=Q
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    xpath: /business/owner/name[first/text()='John']/middle
+    value: Q
 
 - name: Pretty Print this!
-  xml: file=/tmp/ansible-xml-beers-implicit.xml pretty_print=True
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    pretty_print: yes
+
+- name: Compare to expected result
+  copy:
+    src: results/test-add-element-implicitly.yml
+    dest: /tmp/ansible-xml-beers-implicit.xml
+  check_mode: yes
+  diff: yes
+  register: comparison
 
 - name: Test expected result
-  command: diff -u {{ role_path }}/results/test-add-element-implicitly.yml /tmp/ansible-xml-beers-implicit.xml
+  assert:
+    that:
+    - comparison.changed == false  # identical
+  #command: diff -u {{ role_path }}/results/test-add-element-implicitly.yml /tmp/ansible-xml-beers-implicit.xml
 
-#
+
 # Now we repeat the same, just to ensure proper use of namespaces
-#
-
 - name: Add a phonenumber element to the business element. Implicit mkdir -p behavior where applicable
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
@@ -112,21 +168,21 @@
 - name: Add an element with a value, alternate syntax
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
-    xpath: "/business/a:beers/a:beer/text()=\"George Killian's Irish Red\"" # note the quote within an XPath string thing
+    xpath: /business/a:beers/a:beer/text()="George Killian's Irish Red"  # note the quote within an XPath string thing
     namespaces:
       a: http://example.com/some/namespace
 
 - name: Add an attribute on a conditional element
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
-    xpath: "/business/a:beers/a:beer[text()=\"George Killian's Irish Red\"]/@a:color='red'"
+    xpath: /business/a:beers/a:beer[text()="George Killian's Irish Red"]/@a:color='red'
     namespaces:
       a: http://example.com/some/namespace
 
 - name: Add two attributes on a conditional element
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
-    xpath: "/business/a:beers/a:beer[text()=\"Pilsner Urquell\" and @a:origin='CZ']/@a:color='blonde'"
+    xpath: /business/a:beers/a:beer[text()="Pilsner Urquell" and @a:origin='CZ']/@a:color='blonde'
     namespaces:
       a: http://example.com/some/namespace
 
@@ -142,8 +198,8 @@
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
     xpath: /business/testnormalelement
-    value: "xml tag with no special characters"
-    pretty_print: true
+    value: xml tag with no special characters
+    pretty_print: yes
     namespaces:
       a:  http://example.com/some/namespace
 
@@ -152,8 +208,8 @@
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
     xpath: /business/test-with-dash
-    value: "xml tag with dashes"
-    pretty_print: true
+    value: xml tag with dashes
+    pretty_print: yes
     namespaces:
       a:  http://example.com/some/namespace
 
@@ -161,8 +217,8 @@
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
     xpath: /business/test-with-dash.and.dot
-    value: "xml tag with dashes and dots"
-    pretty_print: true
+    value: xml tag with dashes and dots
+    pretty_print: yes
     namespaces:
       a:  http://example.com/some/namespace
 
@@ -170,10 +226,12 @@
   xml:
     file: /tmp/ansible-xml-beers-implicit.xml
     xpath: /business/test-with.dash_and.dot_and-underscores
-    value: "xml tag with dashes, dots and underscores"
-    pretty_print: true
+    value: xml tag with dashes, dots and underscores
+    pretty_print: yes
     namespaces:
       a:  http://example.com/some/namespace
 
 - name: Pretty Print this!
-  xml: file=/tmp/ansible-xml-beers-implicit.xml pretty_print=True
+  xml:
+    file: /tmp/ansible-xml-beers-implicit.xml
+    pretty_print: yes

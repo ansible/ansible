@@ -34,6 +34,8 @@ description:
     current running config.  It also supports purging usernames from the
     configuration that are not explicitly defined.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   aggregate:
     description:
@@ -179,15 +181,15 @@ def map_obj_to_commands(updates, module):
             commands.append('no username %s' % want['name'])
             continue
 
+        if needs_update('configured_password'):
+            if update_password == 'always' or not have:
+                add('secret %s' % want['configured_password'])
+
         if needs_update('role'):
             add('role %s' % want['role'])
 
         if needs_update('privilege'):
             add('privilege %s' % want['privilege'])
-
-        if needs_update('configured_password'):
-            if update_password == 'always' or not have:
-                add('secret %s' % want['configured_password'])
 
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
@@ -197,6 +199,11 @@ def map_obj_to_commands(updates, module):
                 add('nopassword')
             else:
                 add('no username %s nopassword' % want['name'])
+
+        if want.get('state') == 'present' and want.get('name'):
+            value = [want.get('configured_password'), want.get('nopassword'), want.get('sshkey')]
+            if all(v is None for v in value) is True:
+                module.fail_json(msg='configured_password, sshkey or nopassword should be provided')
 
     return commands
 

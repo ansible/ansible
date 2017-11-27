@@ -70,6 +70,52 @@ EXAMPLES = r'''
     src: /home/cisco/ansible/aci/configs/aci_config.xml
   delegate_to: localhost
 
+- name: Add a tenant using inline YAML
+  aci_rest:
+    hostname: '{{ inventory_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: no
+    path: /api/mo/uni/tn-[Sales].json
+    method: post
+    content:
+      fvTenant:
+        attributes:
+          name: Sales
+          descr: Sales departement
+  delegate_to: localhost
+
+- name: Add a tenant using a JSON string
+  aci_rest:
+    hostname: '{{ inventory_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: no
+    path: /api/mo/uni/tn-[Sales].json
+    method: post
+    content: |
+      {
+        "fvTenant": {
+          "attributes": {
+            "name": "Sales",
+            "descr": "Sales departement"
+          }
+        }
+      }
+  delegate_to: localhost
+
+- name: Add a tenant using an XML string
+  aci_rest:
+    hostname: '{{ inventory_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: no
+    path: /api/mo/uni/tn-[Sales].xml
+    method: post
+    content: |
+      <fvTenant name="Sales" descr="Sales departement"/>
+  delegate_to: localhost
+
 - name: Get tenants
   aci_rest:
     hostname: '{{ inventory_hostname }}'
@@ -161,29 +207,79 @@ totalCount:
   returned: always
   type: string
   sample: '0'
+url:
+  description: URL used for APIC REST call
+  returned: success
+  type: string
+  sample: https://1.2.3.4/api/mo/uni/tn-[Dag].json?rsp-subtree=modified
 '''
 
+import json
 import os
+
+try:
+    from ansible.module_utils.six.moves.urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+    HAS_URLPARSE = True
+except:
+    HAS_URLPARSE = False
 
 # Optional, only used for XML payload
 try:
-    import lxml.etree
-    assert lxml.etree  # silence pyflakes
+    import lxml.etree  # noqa
     HAS_LXML_ETREE = True
 except ImportError:
     HAS_LXML_ETREE = False
 
 # Optional, only used for XML payload
 try:
-    from xmljson import cobra
-    assert cobra  # silence pyflakes
+    from xmljson import cobra  # noqa
     HAS_XMLJSON_COBRA = True
 except ImportError:
     HAS_XMLJSON_COBRA = False
 
+# Optional, only used for YAML validation
+try:
+    import yaml
+    HAS_YAML = True
+except:
+    HAS_YAML = False
+
 from ansible.module_utils.aci import ACIModule, aci_argument_spec, aci_response_json, aci_response_xml
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
+
+
+def update_qsl(url, params):
+    ''' Add or update a URL query string '''
+
+    if HAS_URLPARSE:
+        url_parts = list(urlparse(url))
+        query = dict(parse_qsl(url_parts[4]))
+        query.update(params)
+        url_parts[4] = urlencode(query)
+        return urlunparse(url_parts)
+    elif '?' in url:
+        return url + '&' + '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
+    else:
+        return url + '?' + '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
+
+
+def aci_changed(d):
+    ''' Check ACI response for changes '''
+
+    if isinstance(d, dict):
+        for k, v in d.items():
+            if k == 'status' and v in ('created', 'modified', 'deleted'):
+                return True
+            elif aci_changed(v) is True:
+                return True
+    elif isinstance(d, list):
+        for i in d:
+            if aci_changed(i) is True:
+                return True
+
+    return False
 
 
 def aci_response(result, rawoutput, rest_type='xml'):
@@ -191,8 +287,12 @@ def aci_response(result, rawoutput, rest_type='xml'):
 
     if rest_type == 'json':
         aci_response_json(result, rawoutput)
+    else:
+        aci_response_xml(result, rawoutput)
 
-    aci_response_xml(result, rawoutput)
+    # Use APICs built-in idempotency
+    if HAS_URLPARSE:
+        result['changed'] = aci_changed(result)
 
 
 def main():
@@ -201,13 +301,12 @@ def main():
         path=dict(type='str', required=True, aliases=['uri']),
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
         src=dict(type='path', aliases=['config_file']),
-        content=dict(type='str'),
+        content=dict(type='raw'),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['content', 'src']],
-        supports_check_mode=True,
     )
 
     path = module.params['path']
@@ -239,26 +338,42 @@ def main():
 
     aci = ACIModule(module)
 
-    if method == 'get':
-        aci.request(path)
-        module.exit_json(**aci.result)
-    elif module.check_mode:
-        # In check_mode we assume it works, but we don't actually perform the requested change
-        # TODO: Could we turn this request in a GET instead ?
-        aci.result['changed'] = True
-        module.exit_json(response='OK (Check mode)', status=200, **aci.result)
-
-    # Prepare request data
-    if content:
-        # We include the payload as it may be templated
-        payload = content
-    elif file_exists:
+    # We include the payload as it may be templated
+    payload = content
+    if file_exists:
         with open(src, 'r') as config_object:
             # TODO: Would be nice to template this, requires action-plugin
             payload = config_object.read()
 
+    # Validate content
+    if rest_type == 'json':
+        if content and isinstance(content, dict):
+            # Validate inline YAML/JSON
+            payload = json.dumps(payload)
+        elif payload and isinstance(payload, str) and HAS_YAML:
+            try:
+                # Validate YAML/JSON string
+                payload = json.dumps(yaml.safe_load(payload))
+            except Exception as e:
+                module.fail_json(msg='Failed to parse provided JSON/YAML content: %s' % to_text(e), exception=to_text(e), payload=payload)
+    elif rest_type == 'xml' and HAS_LXML_ETREE:
+        if content and isinstance(content, dict) and HAS_XMLJSON_COBRA:
+            # Validate inline YAML/JSON
+            # FIXME: Converting from a dictionary to XML is unsupported at this time
+            # payload = etree.tostring(payload)
+            pass
+        elif payload and isinstance(payload, str):
+            try:
+                # Validate XML string
+                payload = lxml.etree.tostring(lxml.etree.fromstring(payload))
+            except Exception as e:
+                module.fail_json(msg='Failed to parse provided XML content: %s' % to_text(e), payload=payload)
+
     # Perform actual request using auth cookie (Same as aci_request,but also supports XML)
     url = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
+    if method != 'get':
+        url = update_qsl(url, {'rsp-subtree': 'modified'})
+    aci.result['url'] = url
 
     resp, info = fetch_url(module, url, data=payload, method=method.upper(), timeout=timeout, headers=aci.headers)
     aci.result['response'] = info['msg']
@@ -268,9 +383,9 @@ def main():
     if info['status'] != 200:
         try:
             aci_response(aci.result, info['body'], rest_type)
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
+            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, payload=payload, **aci.result)
         except KeyError:
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **aci.result)
+            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, payload=payload, **aci.result)
 
     aci_response(aci.result, resp.read(), rest_type)
 

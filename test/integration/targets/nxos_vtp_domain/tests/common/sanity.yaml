@@ -9,9 +9,22 @@
       provider: "{{ connection }}"
 
   - name: configure vtp domain
-    nxos_vtp_domain:
+    nxos_vtp_domain: &configure
       domain: ntc
       provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+  
+  - name: "Conf Idempotence"
+    nxos_vtp_domain: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
 
   always:
   - name: disable feature vtp

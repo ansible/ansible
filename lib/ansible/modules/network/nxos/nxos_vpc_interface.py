@@ -32,6 +32,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - Either vpc or peer_link param is required, but not both.
   - C(state=absent) removes whatever VPC config is on a port-channel
     if one exists.
@@ -130,7 +131,7 @@ def get_existing_portchannel_to_vpc_mappings(module):
 
 def peer_link_exists(module):
     found = False
-    run = get_config(module, flags=['section vpc'])
+    run = get_config(module, flags=['vpc'])
 
     vpc_list = run.split('\n')
     for each in vpc_list:
@@ -261,9 +262,10 @@ def main():
     active_peer_link = None
 
     if portchannel not in get_portchannel_list(module):
-        module.fail_json(msg="The portchannel you are trying to make a"
-                             " VPC or PL is not created yet. "
-                             "Create it first!")
+        if not portchannel.isdigit() or int(portchannel) not in get_portchannel_list(module):
+            module.fail_json(msg="The portchannel you are trying to make a"
+                                 " VPC or PL is not created yet. "
+                                 "Create it first!")
     if vpc:
         mapping = get_existing_portchannel_to_vpc_mappings(module)
 

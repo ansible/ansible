@@ -294,11 +294,12 @@ class Block(Base, Become, Conditional, Taggable):
 
             if self._parent and (value is None or extend):
                 try:
-                    parent_value = getattr(self._parent, attr, None)
-                    if extend:
-                        value = self._extend_value(value, parent_value, prepend)
-                    else:
-                        value = parent_value
+                    if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
+                        parent_value = getattr(self._parent, attr, None)
+                        if extend:
+                            value = self._extend_value(value, parent_value, prepend)
+                        else:
+                            value = parent_value
                 except AttributeError:
                     pass
             if self._role and (value is None or extend):
@@ -386,3 +387,11 @@ class Block(Base, Become, Conditional, Taggable):
             return self._parent.all_parents_static()
 
         return True
+
+    def get_first_parent_include(self):
+        from ansible.playbook.task_include import TaskInclude
+        if self._parent:
+            if isinstance(self._parent, TaskInclude):
+                return self._parent
+            return self._parent.get_first_parent_include()
+        return None

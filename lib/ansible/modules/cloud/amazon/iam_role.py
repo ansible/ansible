@@ -37,6 +37,11 @@ options:
     description:
       - The name of the role to create.
     required: true
+  description:
+    description:
+      - Provide a description of the new role
+    required: false
+    version_added: "2.5"
   assume_role_policy_document:
     description:
       - "The trust relationship policy document that grants an entity permission to assume the role.  This parameter is required when state: present."
@@ -60,10 +65,11 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create a role
+# Create a role with description
 - iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+    description: This is My New Role
     state: present
 
 # Create a role and attach a managed policy called "PowerUserAccess"
@@ -90,58 +96,63 @@ EXAMPLES = '''
 
 '''
 RETURN = '''
-path:
-    description: the path to the role
-    type: string
-    returned: always
-    sample: /
-role_name:
-    description: the friendly name that identifies the role
-    type: string
-    returned: always
-    sample: myrole
-role_id:
-    description: the stable and unique string identifying the role
-    type: string
-    returned: always
-    sample: ABCDEFF4EZ4ABCDEFV4ZC
-arn:
-    description: the Amazon Resource Name (ARN) specifying the role
-    type: string
-    returned: always
-    sample: "arn:aws:iam::1234567890:role/mynewrole"
-create_date:
-    description: the date and time, in ISO 8601 date-time format, when the role was created
-    type: string
-    returned: always
-    sample: "2016-08-14T04:36:28+00:00"
-assume_role_policy_document:
-    description: the policy that grants an entity permission to assume the role
-    type: string
-    returned: always
-    sample: {
-                'statement': [
-                    {
-                        'action': 'sts:AssumeRole',
-                        'effect': 'Allow',
-                        'principal': {
-                            'service': 'ec2.amazonaws.com'
-                        },
-                        'sid': ''
+iam_role:
+    description: dictionary containing the IAM Role data
+    returned: success
+    type: complex
+    contains:
+        path:
+            description: the path to the role
+            type: string
+            returned: always
+            sample: /
+        role_name:
+            description: the friendly name that identifies the role
+            type: string
+            returned: always
+            sample: myrole
+        role_id:
+            description: the stable and unique string identifying the role
+            type: string
+            returned: always
+            sample: ABCDEFF4EZ4ABCDEFV4ZC
+        arn:
+            description: the Amazon Resource Name (ARN) specifying the role
+            type: string
+            returned: always
+            sample: "arn:aws:iam::1234567890:role/mynewrole"
+        create_date:
+            description: the date and time, in ISO 8601 date-time format, when the role was created
+            type: string
+            returned: always
+            sample: "2016-08-14T04:36:28+00:00"
+        assume_role_policy_document:
+            description: the policy that grants an entity permission to assume the role
+            type: string
+            returned: always
+            sample: {
+                        'statement': [
+                            {
+                                'action': 'sts:AssumeRole',
+                                'effect': 'Allow',
+                                'principal': {
+                                    'service': 'ec2.amazonaws.com'
+                                },
+                                'sid': ''
+                            }
+                        ],
+                        'version': '2012-10-17'
                     }
-                ],
-                'version': '2012-10-17'
-            }
-attached_policies:
-    description: a list of dicts containing the name and ARN of the managed IAM policies attached to the role
-    type: list
-    returned: always
-    sample: [
-        {
-            'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess',
-            'policy_name': 'PowerUserAccess'
-        }
-    ]
+        attached_policies:
+            description: a list of dicts containing the name and ARN of the managed IAM policies attached to the role
+            type: list
+            returned: always
+            sample: [
+                {
+                    'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess',
+                    'policy_name': 'PowerUserAccess'
+                }
+            ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -203,6 +214,8 @@ def create_or_update_role(connection, module):
     params['Path'] = module.params.get('path')
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
+    if module.params.get('description') is not None:
+        params['Description'] = module.params.get('description')
     managed_policies = module.params.get('managed_policy')
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -283,7 +296,7 @@ def create_or_update_role(connection, module):
     role = get_role(connection, module, params['RoleName'])
 
     role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
-    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role))
+    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
 
 
 def destroy_role(connection, module):
@@ -355,7 +368,8 @@ def main():
             path=dict(default="/", type='str'),
             assume_role_policy_document=dict(type='json'),
             managed_policy=dict(type='list', aliases=['managed_policies']),
-            state=dict(choices=['present', 'absent'], required=True)
+            state=dict(choices=['present', 'absent'], required=True),
+            description=dict(required=False, type='str')
         )
     )
 

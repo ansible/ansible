@@ -27,11 +27,13 @@ DOCUMENTATION = """
 ---
 module: vyos_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on Vyatta Vyos devices.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   dest:
     description:
@@ -108,7 +110,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import remove_default_spec
 from ansible.module_utils.vyos import get_config, load_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.vyos import vyos_argument_spec
 
 
 def spec_to_commands(updates, module):
@@ -238,7 +240,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

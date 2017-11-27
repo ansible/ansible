@@ -29,6 +29,7 @@ import hashlib
 import os
 
 from ansible.module_utils import six
+from ansible.module_utils._text import to_bytes
 
 
 class OpenSSLObjectError(Exception):
@@ -63,7 +64,7 @@ def load_privatekey(path, passphrase=None):
         if passphrase:
             privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
                                                 open(path, 'rb').read(),
-                                                passphrase)
+                                                to_bytes(passphrase))
         else:
             privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
                                                 open(path, 'rb').read())
@@ -93,28 +94,6 @@ def load_certificate_request(path):
         return csr
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
-
-
-keyUsageLong = {
-    "digitalSignature": "Digital Signature",
-    "nonRepudiation": "Non Repudiation",
-    "keyEncipherment": "Key Encipherment",
-    "dataEncipherment": "Data Encipherment",
-    "keyAgreement": "Key Agreement",
-    "keyCertSign": "Certificate Sign",
-    "cRLSign": "CRL Sign",
-    "encipherOnly": "Encipher Only",
-    "decipherOnly": "Decipher Only",
-}
-
-extendedKeyUsageLong = {
-    "serverAuth": "TLS Web Server Authentication",
-    "clientAuth": "TLS Web Client Authentication",
-    "codeSigning": "Code Signing",
-    "emailProtection": "E-mail Protection",
-    "timeStamping": "Time Stamping",
-    "OCSPSigning": "OCSP Signing",
-}
 
 
 @six.add_metaclass(abc.ABCMeta)
