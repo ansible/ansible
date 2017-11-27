@@ -102,13 +102,8 @@ DICT_DEFAULT_STORAGE_SYSTEM_500 = yaml.load(YAML_STORAGE_SYSTEM_500)["data"]
 del DICT_DEFAULT_STORAGE_SYSTEM_500['credentials']['password']
 
 
+@pytest.mark.resource('storage_systems')
 class TestStorageSystemModule(OneViewBaseTest):
-    @pytest.fixture(autouse=True)
-    def setUp(self, mock_ansible_module, mock_ov_client):
-        self.resource = mock_ov_client.storage_systems
-        self.mock_ansible_module = mock_ansible_module
-        self.mock_ov_client = mock_ov_client
-
     def test_should_add_new_storage_system_with_credentials_from_api300(self):
         self.resource.get_by_ip_hostname.return_value = None
         self.resource.add.return_value = {"name": "name"}
