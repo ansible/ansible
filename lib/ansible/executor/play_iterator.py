@@ -431,7 +431,7 @@ class PlayIterator:
 
                             # we're advancing blocks, so if this was an end-of-role block we
                             # mark the current role complete
-                            if block._eor and host.name in block._role._had_task_run and not in_child:
+                            if block._eor and host.name in block._role._had_task_run and not in_child and not peek:
                                 block._role._completed[host.name] = True
                     else:
                         task = block.always[state.cur_always_task]
