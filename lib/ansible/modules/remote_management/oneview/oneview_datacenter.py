@@ -59,7 +59,6 @@ EXAMPLES = '''
         depth: 6000
         name: "MyDatacenter"
         width: 5000
-  no_log: true
   delegate_to: localhost
 
 - name: Update the Datacenter with specified properties (no racks)
@@ -81,7 +80,6 @@ EXAMPLES = '''
         deratingType: NaJp
         name: "MyDatacenter"
         width: 4000
-  no_log: true
   delegate_to: localhost
 
 - name: Rename the Datacenter
@@ -94,7 +92,6 @@ EXAMPLES = '''
     data:
         name: "MyDatacenter"
         newName: "My Datacenter"
-  no_log: true
   delegate_to: localhost
 
 - name: Remove the Datacenter
@@ -106,7 +103,6 @@ EXAMPLES = '''
     state: absent
     data:
         name: 'My Datacenter'
-  no_log: true
   delegate_to: localhost
 '''
 
