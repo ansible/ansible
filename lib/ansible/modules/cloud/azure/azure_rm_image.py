@@ -37,11 +37,9 @@ options:
     data_disk_sources:
         description:
             - List of data disk sources, including unmanaged blob uri, managed disk id or name, or snapshot id or name.
-        required: false
     location:
         description:
             - Location of the image.
-        required: false
     os_type:
         description: The OS type of image.
         choices:
@@ -50,7 +48,6 @@ options:
     state:
         description:
             - Assert the state of the image. Use 'present' to create or update a image and 'absent' to delete an image.
-        required: false
         default: present
         choices:
             - absent
@@ -219,43 +216,39 @@ class AzureRMImage(AzureRMModuleBase):
         self.results['changed'] = changed
         self.results['state'] = results
 
-        if not self.check_mode and changed:
-
+        if changed:
             if self.state == 'present':
+                image_instance = None
                 # create from virtual machine
                 vm = self.get_source_vm()
                 if vm:
                     if self.data_disk_sources:
                         self.fail('data_disk_sources is not allowed when capturing image from vm')
-                    image = Image(self.location, source_virtual_machine=SubResource(vm.id))
+                    image_instance = Image(self.location, source_virtual_machine=SubResource(vm.id))
                 else:
                     if not self.os_type:
                         self.fail('os_type is required to create the image')
                     os_disk = self.create_os_disk()
                     data_disks = self.create_data_disks()
                     storage_profile = ImageStorageProfile(os_disk=os_disk, data_disks=data_disks)
-                    image = Image(self.location, storage_profile=storage_profile, tags=self.tags)
-                new_image = self.create_image(image)
-                self.results['state'] = self._image_to_dict(new_image)
+                    image_instance = Image(self.location, storage_profile=storage_profile, tags=self.tags)
+
+                # finally make the change if not check mode
+                if not self.check_mode and image_instance:
+                    new_image = self.create_image(image_instance)
+                    self.results['state'] = self._image_to_dict(new_image)
 
             elif self.state == 'absent':
-                # delete image
-                self.delete_image()
-                # the delete does not actually return anything. if no exception, then we'll assume
-                # it worked.
+                if not self.check_mode:
+                    # delete image
+                    self.delete_image()
+                # the delete does not actually return anything. if no exception, then we'll assume it worked.
                 self.results['state']['status'] = 'Deleted'
 
         return self.results
 
     def _image_to_dict(self, image):
-        result = self.serialize_obj(image, 'Image', enum_modules=['azure.mgmt.compute.models'])
-        result.update({
-            'provisioning_state': image.provisioning_state,
-            'name': image.name,
-            'id': image.id,
-            'tags': image.tags or {}
-        })
-        return result
+        return image.as_dict()
 
     def resolve_storage_source(self, source):
         blob_uri = None
@@ -322,28 +315,31 @@ class AzureRMImage(AzureRMModuleBase):
         return self.get_vm(resource['resource_group'], resource['name']) if resource['type'] == 'virtualMachines' else None
 
     def get_snapshot(self, snapshot_name):
-        try:
-            return self.compute_client.snapshots.get(self.resource_group, snapshot_name)
-        except Exception:
-            return None
+        return self._get_resource(self.compute_client.snapshots.get, self.resource_group, snapshot_name)
 
     def get_disk(self, disk_name):
-        try:
-            return self.compute_client.disks.get(self.resource_group, disk_name)
-        except Exception:
-            return None
+        return self._get_resource(self.compute_client.disks.get, self.resource_group, disk_name)
 
     def get_vm(self, resource_group, vm_name):
-        try:
-            return self.compute_client.virtual_machines.get(resource_group, vm_name, expand='instanceview')
-        except Exception:
-            return None
+        return self._get_resource(self.compute_client.virtual_machines.get, resource_group, vm_name, 'instanceview')
 
     def get_image(self):
+        return self._get_resource(self.compute_client.images.get, self.resource_group, self.name)
+    
+    def _get_resource(self, get_method, resource_group, name, expand=None):
         try:
-            return self.compute_client.images.get(self.resource_group, self.name)
-        except Exception:
-            return None
+            if expand:
+                return get_method(resource_group, name, expand=expand)
+            else:
+                return get_method(resource_group, name)
+        except CloudError as cloud_err:
+            # Return None iff the resource is not found
+            if cloud_err.status_code == 404:
+                self.log('{0}'.format(str(cloud_err)))
+                return None
+            self.fail('Error: failed to get resource {0} - {1}'.format(name, str(cloud_err)))
+        except Exception as exc:
+            self.fail('Error: failed to get resource {0} - {1}'.format(name, str(exc)))
 
     def create_image(self, image):
         try:
