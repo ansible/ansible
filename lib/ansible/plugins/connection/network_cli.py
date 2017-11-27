@@ -162,7 +162,7 @@ class Connection(ConnectionBase):
             return
 
         p = connection_loader.get('paramiko', self._play_context, '/dev/null')
-        p.set_options(direct={'look_for_keys': bool(self._play_context.password and not self._play_context.private_key_file)})
+        p.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
         p.force_persistence = self.force_persistence
         ssh = p._connect()
 
@@ -260,6 +260,10 @@ class Connection(ConnectionBase):
 
         while True:
             data = self._ssh_shell.recv(256)
+
+            # when a channel stream is closed, received data will be empty
+            if not data:
+                break
 
             recv.write(data)
             offset = recv.tell() - 256 if recv.tell() > 256 else 0
