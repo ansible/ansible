@@ -125,7 +125,6 @@ options:
 '''
 
 EXAMPLES = '''
-
 - name: Add a server
   delegate_to: localhost
   netscaler_nitro_request:
@@ -225,7 +224,6 @@ EXAMPLES = '''
     nitro_pass: "{{ nitro_pass }}"
     operation: mas_login
 
-
 - name: Add resource through MAS proxy
   delegate_to: localhost
   netscaler_nitro_request:
@@ -238,7 +236,6 @@ EXAMPLES = '''
     attributes:
       name: test-server-1
       ipaddress: 192.168.1.7
-
 '''
 
 RETURN = '''
