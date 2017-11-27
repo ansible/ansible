@@ -141,12 +141,12 @@ def _get_credentials(**kwargs):
         raise AnsibleError("Insufficient boto credentials found.")
 
     boto_params = {}
-    for credential in (('aws_access_key_id', aws_access_key_id),
+    for param_name, credential in (('aws_access_key_id', aws_access_key_id),
                        ('aws_secret_access_key', aws_secret_access_key),
                        ('aws_session_token', aws_security_token),
                        ('boto_profile', boto_profile)):
-               if credential[1]:
-                   boto_params[credential[0]] = credential[1]
+        if credential:
+            boto_params[param_name] = credential
 
     return boto_params
 
