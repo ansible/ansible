@@ -31,7 +31,7 @@ module: mlnxos_command
 extends_documentation_fragment: mlnxos
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: Run commands on remote devices running MLNXOS
+short_description: Run commands on remote devices running Mellanox MLNX-OS
 description:
   - >-
        Sends arbitrary commands to an mlnxos node and returns the results
@@ -40,7 +40,7 @@ description:
        before returning or timing out if the condition is not met.
   - >-
       This module does not support running commands in configuration mode.
-      Please use M(mlnxos_config) to configure MLNXOS devices.
+      Please use M(mlnxos_config) to configure Mellanox MLNX-OS devices.
 notes:
   - tested on Mellanox OS 3.6.4000
 options:
@@ -63,7 +63,6 @@ options:
           See examples.
     required: false
     default: null
-    aliases: ['waitfor']
   match:
     description:
       - >-
@@ -187,7 +186,7 @@ def main():
     argument_spec = dict(
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
