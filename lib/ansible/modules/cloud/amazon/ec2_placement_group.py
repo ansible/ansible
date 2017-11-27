@@ -83,29 +83,26 @@ placement_group:
 
 '''
 
-try:
-    import boto3
-    from botocore.exceptions import ClientError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError,
-                                      connect_to_aws,
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (connect_to_aws,
                                       boto3_conn,
                                       ec2_argument_spec,
-                                      get_aws_connection_info,
-                                      get_ec2_security_group_ids_from_names)
+                                      get_aws_connection_info)
+from botocore.exceptions import (BotoCoreError, ClientError)
 
 
 def get_placement_group_details(connection, module):
     name = module.params.get("name")
-    response = connection.describe_placement_groups(
-        Filters=[{
-            "Name": "group-name",
-            "Values": [name]
-        }])
+    try:
+        response = connection.describe_placement_groups(
+            Filters=[{
+                "Name": "group-name",
+                "Values": [name]
+            }])
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(
+            e,
+            msg="Couldn't find placement group named [%s]" % name)
 
     if len(response['PlacementGroups']) != 1:
         return None
@@ -124,9 +121,10 @@ def create_placement_group(connection, module):
     try:
         connection.create_placement_group(
             GroupName=name, Strategy='cluster', DryRun=module.check_mode)
-
-    except ClientError as e:
-        module.fail_json(msg=e.message)
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(
+            e,
+            msg="Couldn't create placement group [%s]" % name)
 
     module.exit_json(changed=True,
                      placement_group=get_placement_group_details(
@@ -140,9 +138,10 @@ def delete_placement_group(connection, module):
     try:
         connection.delete_placement_group(
             GroupName=name, DryRun=module.check_mode)
-
-    except ClientError as e:
-        module.fail_json(msg=e.message)
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(
+            e,
+            msg="Couldn't delete placement group [%s]" % name)
 
     module.exit_json(changed=True)
 
@@ -156,24 +155,17 @@ def main():
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
-
     region, ec2_url, aws_connect_params = get_aws_connection_info(
         module, boto3=True)
 
-    if region:
-        try:
-            connection = boto3.client('ec2', region, **aws_connect_params)
-        except (boto3.exceptions.NoAuthHandlerFound, AnsibleAWSError) as e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module,
+                            resource='ec2', conn_type='client',
+                            region=region, **aws_connect_params)
 
     state = module.params.get("state")
 
