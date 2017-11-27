@@ -76,6 +76,7 @@
 - name: Check the stat results of the file
   stat:
     path: "{{ remote_file }}"
+    get_md5: yes
   register: stat_results
 
 - debug:

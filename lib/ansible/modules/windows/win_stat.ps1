@@ -62,7 +62,7 @@ function Date_To_Timestamp($start_date, $end_date)
 $params = Parse-Args $args -supports_check_mode $true
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
-$get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $true
+$get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $false
 $get_checksum = Get-AnsibleParam -obj $params -name "get_checksum" -type "bool" -default $true
 $checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -type "str" -default "sha1" -validateset "md5","sha1","sha256","sha384","sha512"
 
@@ -73,9 +73,10 @@ $result = @{
     }
 }
 
-# Backward compatibility
-if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
-    Add-DeprecationWarning -obj $result -message "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'" -version 2.7
+# get_md5 will be an undocumented option in 2.9 to be removed at a later
+# date if possible (3.0+)
+if (Get-Member -inputobject $params -name "get_md5") {
+    Add-DepreactionWarning -obj $result -message "get_md5 has been deprecated along with the md5 return value, use get_checksum=True and checksum_algorithm=md5 instead" -version 2.9
 }
 
 $info = Get-FileItem -path $path
@@ -159,7 +160,7 @@ If ($info -ne $null)
             try {
                 $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
             } catch {
-                Fail-Json -obj $result -message "failed to get MD5 hash of file, set get_md5 to False to ignore this error: $($_.Exception.Message)"
+                Fail-Json -obj $result -message "failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)"
             }
         }
 
