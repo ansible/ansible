@@ -959,7 +959,7 @@ class AzureInventory(object):
         # Caching
         cache_path = file_settings['cache_path']
         cache_max_age = file_settings['cache_max_age']
-        cache_name = 'ansible-azure_rm.cache'
+        cache_name = file_settings['cache_filename']
         self.cache = CloudInventoryCache(cache_path=cache_path,
                                          cache_max_age=cache_max_age,
                                          cache_name=cache_name)
@@ -995,6 +995,7 @@ class AzureInventory(object):
         settings = None
         try:
             config = cp.ConfigParser(defaults={
+                'cache_filename': 'ansible-azure_rm.cache',
                 'cache_path': '~/.ansible/tmp',
                 'cache_max_age': '300'
             })
@@ -1015,6 +1016,7 @@ class AzureInventory(object):
 
             settings['cache_path'] = config.get('cache', 'cache_path')
             settings['cache_max_age'] = config.getint('cache', 'cache_max_age')
+            settings['cache_filename'] = config.get('cache', 'cache_filename')
         return settings
 
     def _tags_match(self, tag_obj, tag_args):
