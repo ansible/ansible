@@ -227,10 +227,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
         response = None
         to_be_updated = False
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
 
