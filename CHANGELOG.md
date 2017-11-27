@@ -10,6 +10,10 @@ Ansible Changes By Release
 * Check if SELinux policy exists before setting (https://github.com/ansible/ansible/pull/31834)
 * Set locale to `C` in `letsencrypt` module to fix date parsing errors (https://github.com/ansible/ansible/pull/31339)
 
+* Fix include in loop when stategy=free
+  (https://github.com/ansible/ansible/pull/33094)
+
+
 <a id="2.4.2"></a>
 
 ## 2.4.2 "Dancing Days" - 2017-11-29
