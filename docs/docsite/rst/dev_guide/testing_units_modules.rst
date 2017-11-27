@@ -2,6 +2,8 @@
 Unit Testing Ansible Modules
 ****************************
 
+.. highlight:: python
+
 .. contents:: Topics
 
 Introduction
@@ -154,12 +156,12 @@ Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be 
 useful in building unit tests for special / difficult cases, but they can also
 lead to complex and confusing coding situations.  One good use for mocks would be in
 simulating an API. As for 'six', the 'mock' python package is bundled with Ansible (use
-'import ansible.compat.tests.mock'). See for example
+``import ansible.compat.tests.mock``). See for example
 
 Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
 
-Functions like module.fail_json() are normally expected to terminate execution. When you 
+Functions like :meth:`module.fail_json` are normally expected to terminate execution. When you
 run with a mock module object this doesn't happen since the mock always returns another mock 
 from a function call. You can set up the mock to raise an exception as shown above, or you can
 assert that these functions have not been called in each test. For example::
@@ -272,8 +274,8 @@ There are two problems with running the main function of a module:
 
 * Since the module is supposed to accept arguments on ``STDIN`` it is a bit difficult to
   set up the arguments correctly so that the module will get them as parameters.
-* All modules should finish by calling either the ``module.fail_json`` or
-  ``module.exit_json``, but these won't work correctly in a testing environment.
+* All modules should finish by calling either the :meth:`module.fail_json` or
+  :meth:`module.exit_json`, but these won't work correctly in a testing environment.
 
 Passing Arguments
 -----------------
@@ -283,7 +285,7 @@ Passing Arguments
 
 To pass arguments to a module correctly, use a function that stores the
 parameters in a special string variable.  Module creation and argument processing is
-handled through the AnsibleModule object in the basic section of the utilities. Normally
+handled through the :class:`AnsibleModule` object in the basic section of the utilities. Normally
 this accepts input on ``STDIN``, which is not convenient for unit testing. When the special
 variable is set it will be treated as if the input came on ``STDIN`` to the module.::
 
@@ -309,9 +311,9 @@ Handling exit correctly
 .. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
    closed since the exit and failure functions below will be provided in a library file.
 
-The ``module.exit_json()`` function won't work properly in a testing environment since it
+The :meth:`module.exit_json` function won't work properly in a testing environment since it
 writes error information to ``STDOUT`` upon exit, where it
-is difficult to examine. This can be mitigated by replacing it (and module.fail_json) with
+is difficult to examine. This can be mitigated by replacing it (and :meth:`module.fail_json`) with
 a function that raises an exception::
 
     def exit_json(*args, **kwargs):
@@ -331,7 +333,7 @@ testing for the correct exception::
        with self.assertRaises(AnsibleExitJson) as result:
            my_module.main()
 
-The same technique can be used to replace ``module.fail_json()`` (which is used for failure
+The same technique can be used to replace :meth:`module.fail_json` (which is used for failure
 returns from modules) and for the ``aws_module.fail_json_aws()`` (used in modules for Amazon
 Web Services).
 
@@ -358,11 +360,10 @@ the arguments as above, set up the appropriate exit exception and then run the m
 Handling calls to external executables
 --------------------------------------
 
-Module must use AnsibleModule.run_command in order to execute an external command. This
+Module must use :meth:`AnsibleModule.run_command` in order to execute an external command. This
 method needs to be mocked:
 
-Here is a simple mock of AnsibleModule.run_command (taken from test/units/modules/packaging/os/test_rhn_register.py and
-test/units/modules/packaging/os/rhn_utils.py)::
+Here is a simple mock of :meth:`AnsibleModule.run_command` (taken from :file:`test/units/modules/packaging/os/test_rhn_register.py`)::
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
             run_command.return_value = 0, '', ''  # successful execution, no output
@@ -379,7 +380,7 @@ A Complete Example
 ------------------
 
 The following example is a complete skeleton that reuses the mocks explained above and adds a new
-mock for Ansible.get_bin_path::
+mock for :meth:`Ansible.get_bin_path`::
     
     import json
 
@@ -466,7 +467,7 @@ mock for Ansible.get_bin_path::
 Restructuring modules to enable testing module set up and other processes
 -------------------------------------------------------------------------
 
-Often modules have a main() function which sets up the module and then performs other
+Often modules have a ``main()`` function which sets up the module and then performs other
 actions. This can make it difficult to check argument processing. This can be made easier by
 moving module configuration and initialization into a separate function. For example::
 
@@ -510,7 +511,7 @@ This now makes it possible to run tests against the module initiation function::
 
 See also ``test/units/module_utils/aws/test_rds.py``
 
-Note that the argument_spec dictionary is visible in a module variable. This has
+Note that the ``argument_spec`` dictionary is visible in a module variable. This has
 advantages, both in allowing explicit testing of the arguments and in allowing the easy
 creation of module objects for testing.
 
