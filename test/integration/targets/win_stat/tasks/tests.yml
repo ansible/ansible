@@ -21,15 +21,16 @@
     - stat_file.stat.isshared == False
     - stat_file.stat.lastaccesstime == 1477984205
     - stat_file.stat.lastwritetime == 1477984205
-    - stat_file.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
+    - stat_file.stat.md5 is not defined
     - stat_file.stat.owner == 'BUILTIN\Administrators'
     - stat_file.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file.stat.size == 3
 
-- name: test win_stat module on file without md5
+# get_md5 will be undocumented in 2.9, remove this test then
+- name: test win_stat module on file with md5
   win_stat:
     path: '{{win_stat_dir}}\nested\file.ps1'
-    get_md5: False
+    get_md5: True
   register: stat_file_md5
 
 - name: check actual for file without md5
@@ -49,7 +50,7 @@
     - stat_file_md5.stat.isshared == False
     - stat_file_md5.stat.lastaccesstime == 1477984205
     - stat_file_md5.stat.lastwritetime == 1477984205
-    - stat_file_md5.stat.md5 is not defined
+    - stat_file_md5.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
     - stat_file_md5.stat.owner == 'BUILTIN\Administrators'
     - stat_file_md5.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file_md5.stat.size == 3
@@ -77,7 +78,7 @@
     - stat_file_sha256.stat.isshared == False
     - stat_file_sha256.stat.lastaccesstime == 1477984205
     - stat_file_sha256.stat.lastwritetime == 1477984205
-    - stat_file_sha256.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
+    - stat_file_sha256.stat.md5 is not defined
     - stat_file_sha256.stat.owner == 'BUILTIN\Administrators'
     - stat_file_sha256.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file_sha256.stat.size == 3
@@ -105,7 +106,7 @@
     - stat_file_sha384.stat.isshared == False
     - stat_file_sha384.stat.lastaccesstime == 1477984205
     - stat_file_sha384.stat.lastwritetime == 1477984205
-    - stat_file_sha384.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
+    - stat_file_sha384.stat.md5 is not defined
     - stat_file_sha384.stat.owner == 'BUILTIN\Administrators'
     - stat_file_sha384.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file_sha384.stat.size == 3
@@ -133,7 +134,7 @@
     - stat_file_sha512.stat.isshared == False
     - stat_file_sha512.stat.lastaccesstime == 1477984205
     - stat_file_sha512.stat.lastwritetime == 1477984205
-    - stat_file_sha512.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
+    - stat_file_sha512.stat.md5 is not defined
     - stat_file_sha512.stat.owner == 'BUILTIN\Administrators'
     - stat_file_sha512.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file_sha512.stat.size == 3
@@ -160,7 +161,7 @@
     - stat_file_hidden.stat.isshared == False
     - stat_file_hidden.stat.lastaccesstime == 1477984205
     - stat_file_hidden.stat.lastwritetime == 1477984205
-    - stat_file_hidden.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
+    - stat_file_hidden.stat.md5 is not defined
     - stat_file_hidden.stat.owner == 'BUILTIN\Administrators'
     - stat_file_hidden.stat.path == win_stat_dir + '\\nested\\hidden.ps1'
     - stat_file_hidden.stat.size == 3
@@ -187,7 +188,7 @@
     - stat_readonly.stat.isshared == False
     - stat_readonly.stat.lastaccesstime == 1477984205
     - stat_readonly.stat.lastwritetime == 1477984205
-    - stat_readonly.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
+    - stat_readonly.stat.md5 is not defined
     - stat_readonly.stat.owner == 'BUILTIN\Administrators'
     - stat_readonly.stat.path == win_stat_dir + '\\nested\\read-only.ps1'
     - stat_readonly.stat.size == 3
@@ -214,7 +215,7 @@
     - stat_hard_link.stat.isshared == False
     - stat_hard_link.stat.lastaccesstime == 1477984205
     - stat_hard_link.stat.lastwritetime == 1477984205
-    - stat_hard_link.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
+    - stat_hard_link.stat.md5 is not defined
     - stat_hard_link.stat.owner == 'BUILTIN\Administrators'
     - stat_hard_link.stat.path == win_stat_dir + '\\nested\\hard-link.ps1'
     - stat_hard_link.stat.size == 3

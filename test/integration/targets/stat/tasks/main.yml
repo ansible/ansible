@@ -44,7 +44,7 @@
         - "'isreg' in stat_result.stat"
         - "'issock' in stat_result.stat"
         - "'isuid' in stat_result.stat"
-        - "'md5' in stat_result.stat"
+        - "'md5' not in stat_result.stat"  # Remove in 2.9
         - "'checksum' in stat_result.stat"
         - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
         - "'mode' in stat_result.stat"
@@ -63,9 +63,14 @@
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
 
+- name: check stat of file with get_md5
+  stat: path={{output_dir}}/foo.txt get_md5=True
+  register: stat_result_with_md5
+  when: ansible_fips|bool != True
+
 - assert:
     that:
-      - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
+      - "stat_result_with_md5.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
   when: ansible_fips|bool != True
 
 - name: make a symlink
@@ -144,7 +149,7 @@
         - "'isreg' in stat_result.stat"
         - "'issock' in stat_result.stat"
         - "'isuid' in stat_result.stat"
-        - "'md5' in stat_result.stat"
+        - "'md5' not in stat_result.stat"
         - "'checksum' in stat_result.stat"
         - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
         - "'mode' in stat_result.stat"
@@ -163,7 +168,15 @@
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
 
+- name: check stat of a symlink with follow on with get_md5
+  stat:
+    path: "{{ output_dir }}/foo-link"
+    follow: True
+    get_md5: yes
+  register: stat_result_with_md5
+  when: ansible_fips|bool != True
+
 - assert:
     that:
-      - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
+      - "stat_result_with_md5.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
   when: ansible_fips|bool != True
