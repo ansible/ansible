@@ -113,7 +113,7 @@ except ImportError as exc:
     pass
 
 
-def create_contatinerregistry_dict(registry, credentials):
+def create_containerregistry_dict(registry, credentials):
     '''
     Helper method to deserialize a ContainerRegistry to a dict
     :param: registry: return container registry object from Azure rest API call
