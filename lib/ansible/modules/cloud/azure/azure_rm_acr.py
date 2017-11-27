@@ -36,17 +36,14 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
     admin_user_enabled:
         description:
             - If enabled, you can use the registry name as username and admin user access key as password to docker login to your container registry.
         default: false
-        required: false
     sku:
         description:
             - Specifies the SKU to use. Currently can be either Basic, Standard or Premium.
@@ -55,7 +52,6 @@ options:
             - Basic
             - Standard
             - Premium
-        required: false
 
 extends_documentation_fragment:
     - azure
