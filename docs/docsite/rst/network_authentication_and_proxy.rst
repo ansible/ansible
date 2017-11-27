@@ -27,22 +27,23 @@ Terms
 ------
 
 :Transport:
-  FIXME
+  The communication method used to access the remote node (switch).
+
   :CLI Transport:
 
-    Over SSH
+    Communication to the remote node is done over SSH.
 
   :API:
 
-    Over HTTP(S)
+    Communication to the remote node is done over HTTP(S).
 :Platform:
 :Privilege mode:
-:Controller:
-:Remote node:
-:Jump host/Bastian:
-:Ansible_connection:
-:Connection: local:
-:Connection: network_cli:
+:Controller: The machine running ``ansible-playbook``
+:Remote node: The network switch or router we are configuring
+:Jump host/Bastian: Machine that sits between the `controller` and the `remote node`
+:Ansible_connection: Ansible "keyword" used to specify the
+:Connection local:
+:Connection network_cli:
 
 Specifying Network Credentials
 ==============================
@@ -57,11 +58,11 @@ The following table gives a summary of the connection methods supported by this 
 +-------------+---------------------------+-------------------------------+
 | Platform    | CLI connection method     | API                           |
 +=============+===========================+===============================+
-| aci         | -                         | top-level module argument     |
+| aci         |                           | top-level module argument     |
 +-------------+---------------------------+-------------------------------+
-| avi         | -                         | top-level module argument     |
+| avi         |                           | top-level module argument     |
 +-------------+---------------------------+-------------------------------+
-| bigmod      | -                         | top-level module argument     |
+| bigmod      |                           | top-level module argument     |
 +-------------+---------------------------+-------------------------------+
 | eos         | connection: network_cli   | provider: transport: eapi     |
 +-------------+---------------------------+-------------------------------+
@@ -75,7 +76,7 @@ The following table gives a summary of the connection methods supported by this 
 +-------------+---------------------------+-------------------------------+
 | junos       | connection: network_cli   |                               |
 +-------------+---------------------------+-------------------------------+
-| openvswitch | -                         |                               |
+| openvswitch |                           |                               |
 +-------------+---------------------------+-------------------------------+
 | nxos        | connection: network_cli   | provider: transport: nxapi    |
 +-------------+---------------------------+-------------------------------+
