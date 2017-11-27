@@ -30,7 +30,6 @@ options:
         description:
             - The name of the container group.
         required: true
-        default: null
     os_type:
         description:
             - The OS type of containers.
@@ -70,18 +69,15 @@ options:
     containers:
         description:
             - List of containers.
-        default: null
         suboptions:
             name:
                 description:
                     - The name of the container instance.
                 required: true
-                default: null
             image:
                 description:
                     - The container image name.
                 required: true
-                default: null
             memory:
                 description:
                     - The required memory of the containers in GB.
