@@ -76,6 +76,11 @@ def ontap_sf_host_argument_spec():
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
+        major_api_version=dict(require=False, type='int'),
+        minor_api_version=dict(require=False, type='int'),
+        port=dict(require=False, type='int'),
+        server_type=dict(require=False, type='str', choices=['FILER','DFM']),
+        transport_type=dict(require=False, type='str', choices=['HTTP', 'HTTPS']),
     )
 
 
@@ -106,11 +111,26 @@ def setup_ontap_zapi(module, vserver=None):
         server.set_password(password)
         if vserver:
             server.set_vserver(vserver)
-        # Todo : Replace hard-coded values with configurable parameters.
-        server.set_api_version(major=1, minor=21)
-        server.set_port(80)
-        server.set_server_type('FILER')
-        server.set_transport_type('HTTP')
+        if module.params['major_api_version'] and module.params['minor_api_version']:
+            server.set_api_version(major=major_api_version, minor=minor_api_version)
+        else:
+            server.set_api_version(major=1, minor=21)
+
+        if module.params['port']:
+            server.set_port(module.params['port'])
+        else:
+            server.set_port(80)
+
+        if module.params['server_type']:
+            server.set_server_type(module.params['server_type'])
+        else:
+            server.set_server_type('FILER')
+
+        if module.params['transport_type']:
+            server.set_transport_type(module.params['transport_type'])
+        else:
+            server.set_transport_type('HTTP')
+
         return server
     else:
         module.fail_json(msg="the python NetApp-Lib module is required")
