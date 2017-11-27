@@ -173,13 +173,13 @@
   - name: verify older hosts failed with become + async
     assert:
       that:
-      - whoami_out|failed
+      - whoami_out is failed
     when: os_version.stdout_lines[0] == "False"
 
   - name: verify newer hosts worked with become + async
     assert:
       that:
-      - whoami_out|success
+      - whoami_out is successful
     when: os_version.stdout_lines[0] == "True"
 
 # FUTURE: test raw + script become behavior once they're running under the exec wrapper again

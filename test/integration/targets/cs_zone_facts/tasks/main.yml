@@ -9,7 +9,7 @@
 - name: verify setup zone is present
   assert:
     that:
-      - zone|success
+      - zone is successful
 
 - name: get facts from zone in check mode
   cs_zone_facts:
@@ -19,8 +19,8 @@
 - name: verify  get facts from zone in check mode
   assert:
     that:
-      - zone|success
-      - not zone|changed
+      - zone is successful
+      - zone is not changed
       - cloudstack_zone.dns1 == "8.8.8.8"
       - cloudstack_zone.dns2 == "8.8.4.4"
       - cloudstack_zone.internal_dns1 == "8.8.8.8"
@@ -39,8 +39,8 @@
 - name: verify get facts from zone
   assert:
     that:
-      - zone|success
-      - not zone|changed
+      - zone is successful
+      - zone is not changed
       - cloudstack_zone.dns1 == "8.8.8.8"
       - cloudstack_zone.dns2 == "8.8.4.4"
       - cloudstack_zone.internal_dns1 == "8.8.8.8"

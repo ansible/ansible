@@ -12,8 +12,8 @@
 - name: verify add tags to instance in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - not instance.tags
 
 - name: test add tags to instance
@@ -28,8 +28,8 @@
 - name: verify add tags to instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.tags|length == 2
     - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
     - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
@@ -46,8 +46,8 @@
 - name: verify tags to instance idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.tags|length == 2
     - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
     - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
@@ -65,8 +65,8 @@
 - name: verify tags to instance idempotence in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.tags|length == 2
     - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
     - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
@@ -83,8 +83,8 @@
 - name: verify tags to instance idempotence
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.tags|length == 2
     - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
     - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
@@ -98,8 +98,8 @@
 - name: verify not touch tags of instance if no param tags
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.tags|length == 2
     - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
     - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
@@ -115,8 +115,8 @@
 - name: verify remove tags in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.tags|length != 0
 
 - name: test remove tags
@@ -127,6 +127,6 @@
 - name: verify remove tags
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.tags|length == 0

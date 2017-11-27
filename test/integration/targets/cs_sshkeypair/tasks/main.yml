@@ -12,7 +12,7 @@
 - name: verify results of fail on missing name
   assert:
     that:
-    - sshkey|failed
+    - sshkey is failed
     - "sshkey.msg == 'missing required arguments: name'"
 
 - name: test ssh key creation in check mode
@@ -23,8 +23,8 @@
 - name: verify results of ssh key creation in check mode
   assert:
     that:
-    - sshkey|success
-    - sshkey|changed
+    - sshkey is successful
+    - sshkey is changed
 
 - name: test ssh key creation
   cs_sshkeypair:
@@ -33,8 +33,8 @@
 - name: verify results of ssh key creation
   assert:
     that:
-    - sshkey|success
-    - sshkey|changed
+    - sshkey is successful
+    - sshkey is changed
     - sshkey.fingerprint is defined and sshkey.fingerprint != ""
     - sshkey.private_key is defined and sshkey.private_key != ""
     - sshkey.name == "first-sshkey"
@@ -46,8 +46,8 @@
 - name: verify results of ssh key creation idempotence
   assert:
     that:
-    - sshkey2|success
-    - not sshkey2|changed
+    - sshkey2 is successful
+    - sshkey2 is not changed
     - sshkey2.fingerprint is defined and sshkey2.fingerprint == sshkey.fingerprint
     - sshkey2.private_key is not defined
     - sshkey2.name == "first-sshkey"
@@ -61,8 +61,8 @@
 - name: verify results of replace ssh public key in check mode
   assert:
     that:
-    - sshkey2|success
-    - sshkey2|changed
+    - sshkey2 is successful
+    - sshkey2 is changed
     - sshkey2.fingerprint is defined and sshkey2.fingerprint == sshkey.fingerprint
     - sshkey2.private_key is not defined
     - sshkey2.name == "first-sshkey"
@@ -75,8 +75,8 @@
 - name: verify results of replace ssh public key
   assert:
     that:
-    - sshkey3|success
-    - sshkey3|changed
+    - sshkey3 is successful
+    - sshkey3 is changed
     - sshkey3.fingerprint is defined and sshkey3.fingerprint != sshkey2.fingerprint
     - sshkey3.private_key is not defined
     - sshkey3.name == "first-sshkey"
@@ -89,8 +89,8 @@
 - name: verify results of ssh public key idempotence
   assert:
     that:
-    - sshkey4|success
-    - not sshkey4|changed
+    - sshkey4 is successful
+    - sshkey4 is not changed
     - sshkey4.fingerprint is defined and sshkey4.fingerprint == sshkey3.fingerprint
     - sshkey4.private_key is not defined
     - sshkey4.name == "first-sshkey"
@@ -107,8 +107,8 @@
 - name: verify test different but exisitng name but same ssh public key as first-sshkey
   assert:
     that:
-    - sshkey|success
-    - sshkey|changed
+    - sshkey is successful
+    - sshkey is changed
     - sshkey.fingerprint is defined and sshkey.fingerprint == sshkey4.fingerprint
     - sshkey.private_key is not defined
     - sshkey.name == "second-sshkey"
@@ -120,8 +120,8 @@
 - name: verify result of key absent in check mode
   assert:
     that:
-    - sshkey5|success
-    - sshkey5|changed
+    - sshkey5 is successful
+    - sshkey5 is changed
     - sshkey5.fingerprint is defined and sshkey5.fingerprint == sshkey3.fingerprint
     - sshkey5.private_key is not defined
     - sshkey5.name == "second-sshkey"
@@ -132,8 +132,8 @@
 - name: verify result of key absent
   assert:
     that:
-    - sshkey5|success
-    - sshkey5|changed
+    - sshkey5 is successful
+    - sshkey5 is changed
     - sshkey5.fingerprint is defined and sshkey5.fingerprint == sshkey3.fingerprint
     - sshkey5.private_key is not defined
     - sshkey5.name == "second-sshkey"
@@ -144,8 +144,8 @@
 - name: verify result of ssh key absent idempotence
   assert:
     that:
-    - sshkey6|success
-    - not sshkey6|changed
+    - sshkey6 is successful
+    - sshkey6 is not changed
     - sshkey6.fingerprint is not defined
     - sshkey6.private_key is not defined
     - sshkey6.name is not defined

@@ -63,7 +63,7 @@
   assert:
     that:
       - "fetch_missing_nofail.msg"
-      - "not fetch_missing_nofail|changed"
+      - "fetch_missing_nofail is not changed"
 
 - name: attempt to fetch a non-existent file - fail on missing
   fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=yes
@@ -73,9 +73,9 @@
 - name: check fetch missing with failure
   assert:
     that:
-      - "fetch_missing|failed"
+      - "fetch_missing is failed"
       - "fetch_missing.msg"
-      - "not fetch_missing|changed"
+      - "fetch_missing is not changed"
 
 - name: attempt to fetch a directory - should not fail but return a message
   fetch: src={{ output_dir }} dest={{ output_dir }}/somedir fail_on_missing=False
@@ -84,7 +84,7 @@
 - name: check fetch directory result
   assert:
     that:
-      - "not fetch_dir|changed"
+      - "fetch_dir is not changed"
       - "fetch_dir.msg"
 
 - name: attempt to fetch a directory - should fail
@@ -95,7 +95,7 @@
 - name: check fetch directory result
   assert:
     that:
-      - "failed_fetch_dir|failed"
+      - "failed_fetch_dir is failed"
       - "fetch_dir.msg"
 
 - name: create symlink to a file that we can fetch
@@ -134,5 +134,5 @@
 - name: check that it indeed failed
   assert:
     that:
-      - "failed_fetch_dest_dir|failed"
+      - "failed_fetch_dest_dir is failed"
       - "failed_fetch_dest_dir.msg"

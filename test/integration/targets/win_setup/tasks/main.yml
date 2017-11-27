@@ -23,8 +23,8 @@
 - name: check windows setup result
   assert:
     that:
-      - "not setup_result|failed"
-      - "not setup_result|changed"
+      - "setup_result is not failed"
+      - "setup_result is not changed"
       - "setup_result.ansible_facts"
       - "setup_result.ansible_facts.ansible_os_family == 'Windows'"
       - "setup_result.ansible_facts.ansible_date_time"

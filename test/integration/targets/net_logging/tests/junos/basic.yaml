@@ -316,10 +316,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\+ *file test-1")
-      - result.diff.prepared | search("\+ *pfe critical")
-      - result.diff.prepared | search("\+ *file test-2")
-      - result.diff.prepared | search("\+ *kernel emergency")
+      - result.diff.prepared is search("\+ *file test-1")
+      - result.diff.prepared is search("\+ *pfe critical")
+      - result.diff.prepared is search("\+ *file test-2")
+      - result.diff.prepared is search("\+ *kernel emergency")
 
 - name: Deactivate file logging configuration using aggregate
   net_logging:
@@ -339,10 +339,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *inactive[:] file test-1")
-      - result.diff.prepared | search("! *inactive[:] pfe")
-      - result.diff.prepared | search("! *inactive[:] file test-2")
-      - result.diff.prepared | search("! *inactive[:] kernel")
+      - result.diff.prepared is search("! *inactive[:] file test-1")
+      - result.diff.prepared is search("! *inactive[:] pfe")
+      - result.diff.prepared is search("! *inactive[:] file test-2")
+      - result.diff.prepared is search("! *inactive[:] kernel")
 
 - name: activate file logging configuration using aggregate
   net_logging:
@@ -356,10 +356,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *active[:] file test-1")
-      - result.diff.prepared | search("! *active[:] pfe")
-      - result.diff.prepared | search("! *active[:] file test-2")
-      - result.diff.prepared | search("! *active[:] kernel")
+      - result.diff.prepared is search("! *active[:] file test-1")
+      - result.diff.prepared is search("! *active[:] pfe")
+      - result.diff.prepared is search("! *active[:] file test-2")
+      - result.diff.prepared is search("! *active[:] kernel")
 
 - name: Delete file logging using aggregate
   net_logging:
@@ -373,10 +373,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\- *file test-1")
-      - result.diff.prepared | search("\- *pfe critical")
-      - result.diff.prepared | search("\- *file test-2")
-      - result.diff.prepared | search("\- *kernel emergency")
+      - result.diff.prepared is search("\- *file test-1")
+      - result.diff.prepared is search("\- *pfe critical")
+      - result.diff.prepared is search("\- *file test-2")
+      - result.diff.prepared is search("\- *kernel emergency")
 
 - name: Delete file logging using aggregate (idempotent)
   net_logging:

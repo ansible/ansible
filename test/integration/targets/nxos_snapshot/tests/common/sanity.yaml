@@ -3,7 +3,7 @@
 
 - set_fact: snapshot_run="true"
 - set_fact: snapshot_run="false"
-  when: titanium and (connection.transport | match('nxapi'))
+  when: titanium and ( connection.transport is match('nxapi'))
 
 - block:
   - name: create snapshot

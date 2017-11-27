@@ -36,7 +36,7 @@
 - name: assert create mapped drive check
   assert:
     that:
-    - create_drive_check|changed
+    - create_drive_check is changed
     - create_drive_actual_check.rc == 2 # should fail with this error code when it isn't found
 
 - name: create mapped drive
@@ -53,7 +53,7 @@
 - name: assert create mapped drive
   assert:
     that:
-    - create_drive|changed
+    - create_drive is changed
     - create_drive_actual.rc == 0
     - create_drive_actual.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path}}"
 
@@ -67,7 +67,7 @@
 - name: assert create mapped drive again
   assert:
     that:
-    - not create_drive_again|changed
+    - create_drive_again is not changed
 
 - name: change mapped drive target check
   win_mapped_drive:
@@ -84,7 +84,7 @@
 - name: assert change mapped drive target check
   assert:
     that:
-    - change_drive_target_check|changed
+    - change_drive_target_check is changed
     - change_drive_target_actual_check.rc == 0
     - change_drive_target_actual_check.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path}}"
 
@@ -102,7 +102,7 @@
 - name: assert change mapped drive target
   assert:
     that:
-    - change_drive_target|changed
+    - change_drive_target is changed
     - change_drive_target_actual.rc == 0
     - change_drive_target_actual.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path2}}"
 
@@ -129,7 +129,7 @@
 - name: assert delete mapped drive check
   assert:
     that:
-    - delete_drive_check|changed
+    - delete_drive_check is changed
     - delete_drive_actual_check.rc == 0
     - delete_drive_actual_check.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path2}}"
 
@@ -148,7 +148,7 @@
 - name: assert delete mapped drive
   assert:
     that:
-    - delete_drive|changed
+    - delete_drive is changed
     - delete_drive_actual.rc == 2
 
 - name: delete mapped drive again
@@ -161,7 +161,7 @@
 - name: assert delete mapped drive again
   assert:
     that:
-    - not delete_drive_again|changed
+    - delete_drive_again is not changed
 
 # not much we can do to test out the credentials except that it sets it, winrm
 # makes it hard to actually test out we can still access the mapped drive
@@ -183,7 +183,7 @@
 - name: assert map drive with current credentials check
   assert:
     that:
-    - map_with_credentials_check|changed
+    - map_with_credentials_check is changed
     - map_with_credentials_actual_check.rc == 2
 
 - name: map drive with current credentials
@@ -208,7 +208,7 @@
 - name: assert map drive with current credentials
   assert:
     that:
-    - map_with_credentials|changed
+    - map_with_credentials is changed
     - map_with_credentials_actual.rc == 0
     - map_with_credential_actual_username.value == '{{ansible_hostname}}\\{{test_win_mapped_drive_temp_user}}'
 
@@ -224,7 +224,7 @@
 - name: assert map drive with current credentials again
   assert:
     that:
-    - map_with_credentials_again|changed # we expect a change as it will just delete and recreate if credentials are passed
+    - map_with_credentials_again is changed # we expect a change as it will just delete and recreate if credentials are passed
 
 - name: delete mapped drive without path check
   win_mapped_drive:
@@ -240,7 +240,7 @@
 - name: assert delete mapped drive without path check
   assert:
     that:
-    - delete_without_path_check|changed
+    - delete_without_path_check is changed
     - delete_without_path_actual_check.rc == 0
 
 - name: delete mapped drive without path
@@ -257,7 +257,7 @@
 - name: assert delete mapped drive without path check
   assert:
     that:
-    - delete_without_path|changed
+    - delete_without_path is changed
     - delete_without_path_actual.rc == 2
 
 - name: delete mapped drive without path again
@@ -269,4 +269,4 @@
 - name: assert delete mapped drive without path check again
   assert:
     that:
-    - not delete_without_path_again|changed
+    - delete_without_path_again is not changed

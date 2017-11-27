@@ -56,7 +56,7 @@
 - name: assert results of create an IIS website (check mode)
   assert:
     that:
-    - win_dsc_iis_check|changed
+    - win_dsc_iis_check is changed
     - win_dsc_iis_check_result.exists == False
 
 - name: create an IIS website with auth and binding info
@@ -92,7 +92,7 @@
 - name: assert results of create an IIS website
   assert:
     that:
-    - win_dsc_iis|changed
+    - win_dsc_iis is changed
     - win_dsc_iis_result.exists == True
     - win_dsc_iis_result.auth.anonymous == True
     - win_dsc_iis_result.auth.basic == False
@@ -132,4 +132,4 @@
 - name: assert results of create an IIS website (idempotent)
   assert:
     that:
-    - not win_dsc_iis_again|changed
+    - win_dsc_iis_again is not changed

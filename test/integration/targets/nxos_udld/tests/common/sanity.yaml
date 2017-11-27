@@ -3,7 +3,7 @@
 
 - set_fact: udld_run="true"
 - set_fact: udld_run="false"
-  when: ((platform | search('N9K-F')) and (imagetag and (imagetag | version_compare('F3', 'lt'))))
+  when: (( platform is search('N9K-F')) and (imagetag and ( imagetag is version('F3', 'lt'))))
 - set_fact: udld_run="false"
   when: titanium
 

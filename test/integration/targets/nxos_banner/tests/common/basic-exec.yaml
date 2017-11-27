@@ -33,7 +33,7 @@
           - "result.changed == false"
           - "result.commands | length == 0"
 
-  when: platform | match("N7K")
+  when: platform is match("N7K")
 
 - debug: msg="END nxos_banner exec test"
 

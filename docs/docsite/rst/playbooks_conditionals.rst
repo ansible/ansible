@@ -57,14 +57,14 @@ decide to do something conditionally based on success or failure::
         ignore_errors: True
 
       - command: /bin/something
-        when: result|failed
+        when: result is failed
 
-      # In older versions of ansible use |success, now both are valid but succeeded uses the correct tense.
+      # In older versions of ansible use ``success``, now both are valid but succeeded uses the correct tense.
       - command: /bin/something_else
-        when: result|succeeded
+        when: result is succeeded
 
       - command: /bin/still/something_else
-        when: result|skipped
+        when: result is skipped
 
 
 .. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).

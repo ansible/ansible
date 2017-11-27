@@ -2,7 +2,7 @@
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_acl sanity test"
 
 - set_fact: time_range="ans-range"
-  when: not (platform | match("N5K"))
+  when: not ( platform is match("N5K"))
 
 - name: "Setup: Cleanup possibly existing acl."
   nxos_acl: &remove

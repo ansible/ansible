@@ -23,13 +23,13 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *test-1")
-      - result.diff.prepared | search("\+ *description test-vrf-1")
-      - result.diff.prepared | search("\+ *instance-type vrf")
-      - result.diff.prepared | search("\+ *interface ge-0/0/5.0")
-      - result.diff.prepared | search("\+ *interface ge-0/0/6.0")
-      - result.diff.prepared | search("\+ *route-distinguisher 3.3.3.3:10")
-      - result.diff.prepared | search("\+ *vrf-target target:65513:111")
+      - result.diff.prepared is search("\+ *test-1")
+      - result.diff.prepared is search("\+ *description test-vrf-1")
+      - result.diff.prepared is search("\+ *instance-type vrf")
+      - result.diff.prepared is search("\+ *interface ge-0/0/5.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/6.0")
+      - result.diff.prepared is search("\+ *route-distinguisher 3.3.3.3:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65513:111")
 
 - name: Configure vrf and its parameter (idempotent)
   net_vrf:
@@ -65,11 +65,11 @@
     that:
       - "result.changed == true"
       - "'[edit routing-instances test-1]' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *interface ge-0/0/2.0")
-      - result.diff.prepared | search("\+ *interface ge-0/0/3.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/3.0")
       - "'[edit routing-instances test-1]' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *route-distinguisher 1.1.1.1:10")
-      - result.diff.prepared | search("\+ *vrf-target target:65514:113")
+      - result.diff.prepared is search("\+ *route-distinguisher 1.1.1.1:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65514:113")
 
 
 - name: Delete vrf
@@ -88,13 +88,13 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *test-1")
-      - result.diff.prepared | search("\- *description test-vrf-1")
-      - result.diff.prepared | search("\- *instance-type vrf")
-      - result.diff.prepared | search("\- *interface ge-0/0/2.0")
-      - result.diff.prepared | search("\- *interface ge-0/0/3.0")
-      - result.diff.prepared | search("\- *route-distinguisher 1.1.1.1:10")
-      - result.diff.prepared | search("\- *vrf-target target:65514:113")
+      - result.diff.prepared is search("\- *test-1")
+      - result.diff.prepared is search("\- *description test-vrf-1")
+      - result.diff.prepared is search("\- *instance-type vrf")
+      - result.diff.prepared is search("\- *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\- *interface ge-0/0/3.0")
+      - result.diff.prepared is search("\- *route-distinguisher 1.1.1.1:10")
+      - result.diff.prepared is search("\- *vrf-target target:65514:113")
 
 - name: Delete vrf (idempotent)
   net_vrf:
@@ -145,20 +145,20 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *test-1")
-      - result.diff.prepared | search("\+ *description test-vrf-1")
-      - result.diff.prepared | search("\+ *instance-type vrf")
-      - result.diff.prepared | search("\+ *interface ge-0/0/2.0")
-      - result.diff.prepared | search("\+ *interface ge-0/0/3.0")
-      - result.diff.prepared | search("\+ *route-distinguisher 1.1.1.1:10")
-      - result.diff.prepared | search("\+ *vrf-target target:65514:113")
-      - result.diff.prepared | search("\+ *test-2")
-      - result.diff.prepared | search("\+ *description test-vrf-2")
-      - result.diff.prepared | search("\+ *instance-type vrf")
-      - result.diff.prepared | search("\+ *interface ge-0/0/4.0")
-      - result.diff.prepared | search("\+ *interface ge-0/0/5.0")
-      - result.diff.prepared | search("\+ *route-distinguisher 2.2.2.2:10")
-      - result.diff.prepared | search("\+ *vrf-target target:65515:114")
+      - result.diff.prepared is search("\+ *test-1")
+      - result.diff.prepared is search("\+ *description test-vrf-1")
+      - result.diff.prepared is search("\+ *instance-type vrf")
+      - result.diff.prepared is search("\+ *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/3.0")
+      - result.diff.prepared is search("\+ *route-distinguisher 1.1.1.1:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65514:113")
+      - result.diff.prepared is search("\+ *test-2")
+      - result.diff.prepared is search("\+ *description test-vrf-2")
+      - result.diff.prepared is search("\+ *instance-type vrf")
+      - result.diff.prepared is search("\+ *interface ge-0/0/4.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/5.0")
+      - result.diff.prepared is search("\+ *route-distinguisher 2.2.2.2:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65515:114")
 
 - name: Delete vrf configuration using aggregate
   net_vrf:
@@ -172,20 +172,20 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *test-1")
-      - result.diff.prepared | search("\- *description test-vrf-1")
-      - result.diff.prepared | search("\- *instance-type vrf")
-      - result.diff.prepared | search("\- *interface ge-0/0/2.0")
-      - result.diff.prepared | search("\- *interface ge-0/0/3.0")
-      - result.diff.prepared | search("\- *route-distinguisher 1.1.1.1:10")
-      - result.diff.prepared | search("\- *vrf-target target:65514:113")
-      - result.diff.prepared | search("\- *test-2")
-      - result.diff.prepared | search("\- *description test-vrf-2")
-      - result.diff.prepared | search("\- *instance-type vrf")
-      - result.diff.prepared | search("\- *interface ge-0/0/4.0")
-      - result.diff.prepared | search("\- *interface ge-0/0/5.0")
-      - result.diff.prepared | search("\- *route-distinguisher 2.2.2.2:10")
-      - result.diff.prepared | search("\- *vrf-target target:65515:114")
+      - result.diff.prepared is search("\- *test-1")
+      - result.diff.prepared is search("\- *description test-vrf-1")
+      - result.diff.prepared is search("\- *instance-type vrf")
+      - result.diff.prepared is search("\- *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\- *interface ge-0/0/3.0")
+      - result.diff.prepared is search("\- *route-distinguisher 1.1.1.1:10")
+      - result.diff.prepared is search("\- *vrf-target target:65514:113")
+      - result.diff.prepared is search("\- *test-2")
+      - result.diff.prepared is search("\- *description test-vrf-2")
+      - result.diff.prepared is search("\- *instance-type vrf")
+      - result.diff.prepared is search("\- *interface ge-0/0/4.0")
+      - result.diff.prepared is search("\- *interface ge-0/0/5.0")
+      - result.diff.prepared is search("\- *route-distinguisher 2.2.2.2:10")
+      - result.diff.prepared is search("\- *vrf-target target:65515:114")
 
 - name: Delete vrf configuration using aggregate (idempotent)
   net_vrf:

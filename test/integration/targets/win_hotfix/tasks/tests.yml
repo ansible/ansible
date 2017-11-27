@@ -21,7 +21,7 @@
 - name: assert remove an identifier that isn't installed
   assert:
     that:
-    - not remove_missing_hotfix_identifier|changed
+    - remove_missing_hotfix_identifier is not changed
 
 - name: remove a kb that isn't installed
   win_hotfix:
@@ -32,4 +32,4 @@
 - name: assert remove a kb that isn't installed
   assert:
     that:
-    - not remove_missing_hotfix_kb|changed
+    - remove_missing_hotfix_kb is not changed

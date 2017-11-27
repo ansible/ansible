@@ -7,7 +7,7 @@
 - name: Validate results of rax_cbs with no args
   assert:
     that:
-      - rax_cbs|failed
+      - rax_cbs is failed
       - 'rax_cbs.msg == "missing required arguments: name"'
 # ============================================================
 
@@ -23,7 +23,7 @@
 - name: Validate results of rax_cbs with no args
   assert:
     that:
-      - rax_cbs|failed
+      - rax_cbs is failed
       - rax_cbs.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -41,7 +41,7 @@
 - name: Validate results of rax_cbs with name and credentials
   assert:
     that:
-      - rax_cbs|failed
+      - rax_cbs is failed
       - rax_cbs.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -61,8 +61,8 @@
 - name: Validate rax_cbs creds, region and name
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-1"
       - rax_cbs.volume.attachments == []
       - rax_cbs.volume.size == 100
@@ -81,8 +81,8 @@
 - name: Validate delete integration 1
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-1"
 # ============================================================
 
@@ -102,7 +102,7 @@
 - name: Validate rax_cbs creds, region, name and invalid size
   assert:
     that:
-      - rax_cbs|failed
+      - rax_cbs is failed
 # ============================================================
 
 
@@ -122,8 +122,8 @@
 - name: Validate rax_cbs creds, region and valid size
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-2"
       - rax_cbs.volume.attachments == []
       - rax_cbs.volume.size == 150
@@ -142,8 +142,8 @@
 - name: Validate delete integration 2
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-2"
 # ============================================================
 
@@ -163,7 +163,7 @@
 - name: Validate rax_cbs creds, region, name and invalid volume_type
   assert:
     that:
-      - rax_cbs|failed
+      - rax_cbs is failed
       - 'rax_cbs.msg == "value of volume_type must be one of: SSD,SATA, got: fail"'
 # ============================================================
 
@@ -184,8 +184,8 @@
 - name: Validate rax_cbs creds, region and valid volume_size
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-3"
       - rax_cbs.volume.attachments == []
       - rax_cbs.volume.size == 100
@@ -204,8 +204,8 @@
 - name: Validate delete integration 3
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-3"
 # ============================================================
 
@@ -226,8 +226,8 @@
 - name: Validate rax_cbs creds, region and description
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-4"
       - rax_cbs.volume.description == '{{ resource_prefix }}-4 description'
       - rax_cbs.volume.attachments == []
@@ -247,8 +247,8 @@
 - name: Validate delete integration 4
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-4"
 # ============================================================
 
@@ -270,8 +270,8 @@
 - name: Validate rax_cbs creds, region and meta
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-5"
       - rax_cbs.volume.attachments == []
       - rax_cbs.volume.size == 100
@@ -291,8 +291,8 @@
 - name: Validate delete integration 5
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-5"
 # ============================================================
 
@@ -312,8 +312,8 @@
 - name: Validate rax_cbs with idempotency 1
   assert:
     that:
-      - rax_cbs_1|success
-      - rax_cbs_1|changed
+      - rax_cbs_1 is successful
+      - rax_cbs_1 is changed
       - rax_cbs_1.volume.display_name == "{{ resource_prefix }}-6"
 
 - name: Test rax_cbs with idempotency 2
@@ -327,8 +327,8 @@
 - name: Validate rax_cbs with idempotency 2
   assert:
     that:
-      - rax_cbs_2|success
-      - not rax_cbs_2|changed
+      - rax_cbs_2 is successful
+      - rax_cbs_2 is not changed
       - rax_cbs_2.volume.display_name == "{{ resource_prefix }}-6"
       - rax_cbs_2.volume.id == rax_cbs_1.volume.id
 
@@ -344,7 +344,7 @@
 - name: Validate delete integration 6
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.name == "{{ resource_prefix }}-6"
 # ============================================================

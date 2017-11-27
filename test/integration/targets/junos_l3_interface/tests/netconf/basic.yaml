@@ -29,8 +29,8 @@
       - "result.changed == true"
       - "'<name>1.1.1.1/32</name>' in config.xml"
       - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
-      - result.diff.prepared | search("\+ *address 1.1.1.1/32")
-      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\+ *address 1.1.1.1/32")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
 
 - name: Configure interface address (idempotent)
   junos_l3_interface:
@@ -65,8 +65,8 @@
     that:
       - "result.changed == true"
       - "'<address inactive=\"inactive\">' in config.xml"
-      - result.diff.prepared | search("! *inactive[:] address 1.1.1.1/32")
-      - result.diff.prepared | search("! *inactive[:] address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("! *inactive[:] address 1.1.1.1/32")
+      - result.diff.prepared is search("! *inactive[:] address fd5d:12c9:2201:1::1/128")
 
 - name: Activate interface address
   junos_l3_interface:
@@ -81,8 +81,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("! *active[:] address 1.1.1.1/32")
-      - result.diff.prepared | search("! *active[:] address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("! *active[:] address 1.1.1.1/32")
+      - result.diff.prepared is search("! *active[:] address fd5d:12c9:2201:1::1/128")
 
 - name: Delete interface address
   junos_l3_interface:
@@ -95,8 +95,8 @@
 
 - assert:
     that:
-      - result.diff.prepared | search("\- *address 1.1.1.1/32")
-      - result.diff.prepared | search("\- *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\- *address 1.1.1.1/32")
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:1::1/128")
 
 - name: Delete interface address (idempotent)
   junos_l3_interface:
@@ -145,13 +145,13 @@
     that:
       - 'result.changed == true'
       - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address 1.1.1.1/32")
+      - result.diff.prepared is search("\+ *address 1.1.1.1/32")
       - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
       - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address 2.2.2.2/32")
+      - result.diff.prepared is search("\+ *address 2.2.2.2/32")
       - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:2::2/128")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:2::2/128")
 
 - name: Configure l3 interface in aggregate (idempotent)
   junos_l3_interface:
@@ -186,10 +186,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *inactive[:] address 1.1.1.1/32")
-      - result.diff.prepared | search("! *inactive[:] address fd5d:12c9:2201:1::1/128")
-      - result.diff.prepared | search("! *inactive[:] address 2.2.2.2/32")
-      - result.diff.prepared | search("! *inactive[:] address fd5d:12c9:2201:2::2/128")
+      - result.diff.prepared is search("! *inactive[:] address 1.1.1.1/32")
+      - result.diff.prepared is search("! *inactive[:] address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("! *inactive[:] address 2.2.2.2/32")
+      - result.diff.prepared is search("! *inactive[:] address fd5d:12c9:2201:2::2/128")
 
 - name: Activate l3 interface configuration
   junos_l3_interface:
@@ -207,10 +207,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *active[:] address 1.1.1.1/32")
-      - result.diff.prepared | search("! *active[:] address fd5d:12c9:2201:1::1/128")
-      - result.diff.prepared | search("! *active[:] address 2.2.2.2/32")
-      - result.diff.prepared | search("! *active[:] address fd5d:12c9:2201:2::2/128")
+      - result.diff.prepared is search("! *active[:] address 1.1.1.1/32")
+      - result.diff.prepared is search("! *active[:] address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("! *active[:] address 2.2.2.2/32")
+      - result.diff.prepared is search("! *active[:] address fd5d:12c9:2201:2::2/128")
 
 - name: Delete l3 interface configuration
   junos_l3_interface:
@@ -229,13 +229,13 @@
     that:
       - 'result.changed == true'
       - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address 1.1.1.1/32")
+      - result.diff.prepared is search("\- *address 1.1.1.1/32")
       - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:1::1/128")
       - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address 2.2.2.2/32")
+      - result.diff.prepared is search("\- *address 2.2.2.2/32")
       - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address fd5d:12c9:2201:2::2/128")
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:2::2/128")
 
 - name: Delete l3 interface configuration (idempotent)
   junos_l3_interface:

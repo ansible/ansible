@@ -322,7 +322,7 @@
     that:
     - add_firewall_rule_with_edge_traversal.changed == true
   # Works on windows >= Windows 7/Windows Server 2008 R2
-  when: ansible_distribution_version | version_compare('6.1', '>=')
+  when: ansible_distribution_version is version('6.1', '>=')
 
 - name: Add firewall rule with 'authenticate' secure flag
   win_firewall_rule:
@@ -341,7 +341,7 @@
     that:
     - add_firewall_rule_with_secure_flags.changed == true
   # Works on windows >= Windows 8/Windows Server 2012
-  when: ansible_distribution_version | version_compare('6.2', '>=')
+  when: ansible_distribution_version is version('6.2', '>=')
 
 - name: Add firewall rule with profiles in string format
   win_firewall_rule:

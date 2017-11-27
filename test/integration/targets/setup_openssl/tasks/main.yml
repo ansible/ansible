@@ -6,13 +6,13 @@
   become: True
   package:
     name: '{{ pyopenssl_package_name_python3 }}'
-  when: not ansible_os_family == 'Darwin' and  ansible_python_version|version_compare('3.0', '>=')
+  when: not ansible_os_family == 'Darwin' and  ansible_python_version is version('3.0', '>=')
 
 - name: Install pyOpenSSL
   become: True
   package:
     name: '{{ pyopenssl_package_name }}'
-  when: not ansible_os_family == 'Darwin' and ansible_python_version|version_compare('3.0', '<')
+  when: not ansible_os_family == 'Darwin' and ansible_python_version is version('3.0', '<')
 
 - name: Install pyOpenSSL
   become: True

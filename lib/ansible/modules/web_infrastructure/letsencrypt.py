@@ -110,7 +110,7 @@ EXAMPLES = '''
 # - copy:
 #     dest: /var/www/html/{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
 #     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
-#     when: sample_com_challenge|changed
+#     when: sample_com_challenge is changed
 
 - letsencrypt:
     account_key: /etc/pki/cert/private/account.key

@@ -13,7 +13,7 @@
 - name: Assert copy failed
   assert:
     that:
-      - 'copy_result|failed'
+      - 'copy_result is failed'
 
 - name: Stat dest path
   stat:

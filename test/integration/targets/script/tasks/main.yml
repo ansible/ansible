@@ -100,9 +100,9 @@
 - name: Assert that script report a change, file was created, second run was skipped
   assert:
     that:
-      - _create_test1 | changed
+      - _create_test1 is changed
       - _create_stat1.stat.exists
-      - _create_test2 | skipped
+      - _create_test2 is skipped
 
 
 # removes
@@ -131,9 +131,9 @@
 - name: Assert that script report a change, file was removed, second run was skipped
   assert:
     that:
-      - _remove_test1 | changed
+      - _remove_test1 is changed
       - not _remove_stat1.stat.exists
-      - _remove_test2 | skipped
+      - _remove_test2 is skipped
 
 
 # async
@@ -151,7 +151,7 @@
 - name: assert task with async param failed
   assert:
     that:
-      - script_result3 | failed
+      - script_result3 is failed
       - script_result3.msg == "async is not supported for this task."
 
 
@@ -177,7 +177,7 @@
 - name: Assert that a change was reported but the script did not make changes
   assert:
     that:
-      - _check_mode_test | changed
+      - _check_mode_test is changed
       - not _afile_stat.stat.exists
 
 - name: Run script to create a file
@@ -197,7 +197,7 @@
 - name: Assert that task was skipped and mesage was returned
   assert:
     that:
-      - _check_mode_test2 | skipped
+      - _check_mode_test2 is skipped
       - '_check_mode_test2.msg == "skipped, since {{ output_dir_test | expanduser }}/afile2.txt exists"'
 
 - name: Remove afile2.txt
@@ -219,5 +219,5 @@
 - name: Assert that task was skipped and message was returned
   assert:
     that:
-      - _check_mode_test3 | skipped
+      - _check_mode_test3 is skipped
       - '_check_mode_test3.msg == "skipped, since {{ output_dir_test | expanduser }}/afile2.txt does not exist"'

@@ -11,7 +11,7 @@
 # some dnf python files after the package is uninstalled.
 - name: uninstall python2-dnf with shell
   shell: dnf -y remove python2-dnf
-  when: rpm_result|success
+  when: rpm_result is successful
 
 # UNINSTALL
 #   With 'python2-dnf' uninstalled, the first call to 'dnf' should install
@@ -203,7 +203,7 @@
 - name: check non-existent rpm install failed
   assert:
     that:
-      - non_existent_rpm|failed
+      - non_existent_rpm is failed
 
 # Install in installroot='/'.  This should be identical to default
 - name: install sos in /
@@ -345,7 +345,7 @@
   assert:
     that:
         - "not dnf_result.changed"
-        - "dnf_result|failed"
+        - "dnf_result is failed"
 
 - name: verify dnf module outputs
   assert:
@@ -363,7 +363,7 @@
 - name: verify installation failed
   assert:
     that:
-        - "dnf_result|failed"
+        - "dnf_result is failed"
         - "not dnf_result.changed"
 
 - name: verify dnf module outputs
@@ -382,7 +382,7 @@
 - name: verify installation failed
   assert:
     that:
-        - "dnf_result|failed"
+        - "dnf_result is failed"
         - "not dnf_result.changed"
 
 - name: verify dnf module outputs

@@ -18,7 +18,7 @@
 - name: Test GMT+1 timezone
   assert:
     that:
-    - romance|changed
+    - romance is changed
     - romance.previous_timezone == 'GMT Standard Time'
     - romance.timezone == 'Romance Standard Time'
   when: not in_check_mode
@@ -26,7 +26,7 @@
 - name: Test GMT+1 timezone
   assert:
     that:
-    - romance|changed
+    - romance is changed
     - romance.previous_timezone == original.timezone
     - romance.timezone == 'Romance Standard Time'
   when: in_check_mode
@@ -39,7 +39,7 @@
 - name: Test GMT+1 timezone
   assert:
     that:
-    - not romance|changed
+    - romance is not changed
     - romance.previous_timezone == 'Romance Standard Time'
     - romance.timezone == 'Romance Standard Time'
   when: not in_check_mode
@@ -47,7 +47,7 @@
 - name: Test GMT+1 timezone
   assert:
     that:
-    - romance|changed
+    - romance is changed
     - romance.previous_timezone == original.timezone
     - romance.timezone == 'Romance Standard Time'
   when: in_check_mode
@@ -60,7 +60,7 @@
 - name: Test GMT-6 timezone
   assert:
     that:
-    - central|changed
+    - central is changed
     - central.previous_timezone == 'Romance Standard Time'
     - central.timezone == 'Central Standard Time'
   when: not in_check_mode
@@ -68,7 +68,7 @@
 - name: Test GMT+1 timezone
   assert:
     that:
-    - central|changed
+    - central is changed
     - central.previous_timezone == original.timezone
     - central.timezone == 'Central Standard Time'
   when: in_check_mode
@@ -82,7 +82,7 @@
 - name: Test GMT+666 timezone
   assert:
     that:
-    - dag|failed
+    - dag is failed
 
 - name: Restore original timezone
   win_timezone:

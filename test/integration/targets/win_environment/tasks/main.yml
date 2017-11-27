@@ -25,7 +25,7 @@
 - name: assert change test environment value for machine check
   assert:
     that:
-    - create_machine_check|changed
+    - create_machine_check is changed
     - create_machine_check_actual.stdout == ""
 
 - name: create test environment value for machine
@@ -43,7 +43,7 @@
 - name: assert test environment value for machine
   assert:
     that:
-    - create_machine|changed
+    - create_machine is changed
     - create_machine.before_value == None
     - create_machine_actual.stdout == "{{test_machine_environment_value}}\r\n"
 
@@ -62,7 +62,7 @@
 - name: assert create test environment value for machine again
   assert:
     that:
-    - not create_machine_again|changed
+    - create_machine_again is not changed
     - create_machine_again.before_value == test_machine_environment_value
     - create_machine_actual_again.stdout == "{{test_machine_environment_value}}\r\n"
 
@@ -82,7 +82,7 @@
 - name: assert change test environment value for machine check
   assert:
     that:
-    - change_machine_check|changed
+    - change_machine_check is changed
     - change_machine_check.before_value == test_machine_environment_value
     - change_machine_actual_check.stdout == "{{test_machine_environment_value}}\r\n"
 
@@ -101,7 +101,7 @@
 - name: assert change test environment value for machine
   assert:
     that:
-    - change_machine|changed
+    - change_machine is changed
     - change_machine.before_value == test_machine_environment_value
     - change_machine_actual.stdout == "{{test_new_machine_environment_value}}\r\n"
 
@@ -120,7 +120,7 @@
 - name: assert change test environment value for machine again
   assert:
     that:
-    - not change_machine_again|changed
+    - change_machine_again is not changed
     - change_machine_again.before_value == test_new_machine_environment_value
     - change_machine_actual_again.stdout == "{{test_new_machine_environment_value}}\r\n"
 
@@ -140,7 +140,7 @@
 - name: assert change test environment value for user check
   assert:
     that:
-    - create_user_check|changed
+    - create_user_check is changed
     - create_user_check_actual.stdout == ""
 
 - name: create test environment value for user
@@ -158,7 +158,7 @@
 - name: assert test environment value for user
   assert:
     that:
-    - create_user|changed
+    - create_user is changed
     - create_user.before_value == None
     - create_user_actual.stdout == "{{test_user_environment_value}}\r\n"
 
@@ -177,7 +177,7 @@
 - name: assert create test environment value for user again
   assert:
     that:
-    - not create_user_again|changed
+    - create_user_again is not changed
     - create_user_again.before_value == test_user_environment_value
     - create_user_actual_again.stdout == "{{test_user_environment_value}}\r\n"
 
@@ -197,7 +197,7 @@
 - name: assert change test environment value for user check
   assert:
     that:
-    - change_user_check|changed
+    - change_user_check is changed
     - change_user_check.before_value == test_user_environment_value
     - change_user_actual_check.stdout == "{{test_user_environment_value}}\r\n"
 
@@ -216,7 +216,7 @@
 - name: assert change test environment value for user
   assert:
     that:
-    - change_user|changed
+    - change_user is changed
     - change_user.before_value == test_user_environment_value
     - change_user_actual.stdout == "{{test_new_user_environment_value}}\r\n"
 
@@ -235,7 +235,7 @@
 - name: assert change test environment value for user again
   assert:
     that:
-    - not change_user_again|changed
+    - change_user_again is not changed
     - change_user_again.before_value == test_new_user_environment_value
     - change_user_actual_again.stdout == "{{test_new_user_environment_value}}\r\n"
 

@@ -38,9 +38,9 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *advertisement-interval 10")
-      - result.diff.prepared | search("\+ *transmit-delay 2")
-      - result.diff.prepared | search("\+ *hold-multiplier 5")
+      - result.diff.prepared is search("\+ *advertisement-interval 10")
+      - result.diff.prepared is search("\+ *transmit-delay 2")
+      - result.diff.prepared is search("\+ *hold-multiplier 5")
 
 - name: configure lldp parameters and enable lldp(idempotent)
   junos_lldp:
@@ -67,7 +67,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *disable")
+      - result.diff.prepared is search("\+ *disable")
       - "'advertisement-interval 10;' not in result.diff.prepared"
       - "'transmit-delay 2;' not in result.diff.prepared"
       - "'hold-multiplier 5;' not in result.diff.prepared"
@@ -84,7 +84,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *disable")
+      - result.diff.prepared is search("\- *disable")
       - "'advertisement-interval 10;' not in result.diff.prepared"
       - "'transmit-delay 2;' not in result.diff.prepared"
       - "'hold-multiplier 5;' not in result.diff.prepared"
@@ -101,10 +101,10 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *disable")
-      - result.diff.prepared | search("\- *advertisement-interval 10")
-      - result.diff.prepared | search("\- *transmit-delay 2")
-      - result.diff.prepared | search("\- *hold-multiplier 5")
+      - result.diff.prepared is search("\+ *disable")
+      - result.diff.prepared is search("\- *advertisement-interval 10")
+      - result.diff.prepared is search("\- *transmit-delay 2")
+      - result.diff.prepared is search("\- *hold-multiplier 5")
 
 - name: Remove lldp (idempotent)
   junos_lldp:

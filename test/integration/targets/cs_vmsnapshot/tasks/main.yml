@@ -8,7 +8,7 @@
 - name: verify create instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: ensure no snapshot exists
   cs_vmsnapshot:
@@ -19,7 +19,7 @@
 - name: verify setup
   assert:
     that:
-    - snap|success
+    - snap is successful
 
 - name: test fail if missing name
   action: cs_vmsnapshot
@@ -28,7 +28,7 @@
 - name: verify results of fail if missing params
   assert:
     that:
-    - snap|failed
+    - snap is failed
     - 'snap.msg.startswith("missing required arguments: ")'
 
 - name: test create snapshot in check mode
@@ -41,7 +41,7 @@
 - name: verify test create snapshot in check mode
   assert:
     that:
-    - snap|changed
+    - snap is changed
 
 - name: test create snapshot
   cs_vmsnapshot:
@@ -52,7 +52,7 @@
 - name: verify test create snapshot
   assert:
     that:
-    - snap|changed
+    - snap is changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
 - name: test create snapshot idempotence
@@ -64,7 +64,7 @@
 - name: verify test create snapshot idempotence
   assert:
     that:
-    - not snap|changed
+    - snap is not changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
 - name: test revert snapshot in check mode
@@ -77,7 +77,7 @@
 - name: verify test revert snapshot in check mode
   assert:
     that:
-    - snap|changed
+    - snap is changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
 - name: test fail revert unknown snapshot
@@ -90,7 +90,7 @@
 - name: verify test fail revert unknown snapshot
   assert:
     that:
-    - snap|failed
+    - snap is failed
     - snap.msg == "snapshot not found, could not revert VM"
 
 - name: test revert snapshot
@@ -102,7 +102,7 @@
 - name: verify test revert snapshot
   assert:
     that:
-    - snap|changed
+    - snap is changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
 - name: test remove snapshot in check mode
@@ -115,7 +115,7 @@
 - name: verify test remove snapshot in check mode
   assert:
     that:
-    - snap|changed
+    - snap is changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
 - name: test remove snapshot
@@ -127,7 +127,7 @@
 - name: verify test remove snapshot
   assert:
     that:
-    - snap|changed
+    - snap is changed
     - snap.display_name == "{{ cs_resource_prefix }}_snapshot"
 
 - name: test remove snapshot idempotence
@@ -139,7 +139,7 @@
 - name: verify test remove snapshot idempotence
   assert:
     that:
-    - not snap|changed
+    - snap is not changed
 
 - name: cleanup instance
   cs_instance:
@@ -149,4 +149,4 @@
 - name: verify destroy instance
   assert:
     that:
-    - instance|success
+    - instance is successful

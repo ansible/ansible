@@ -7,7 +7,7 @@
 - name: verify setup service offering
   assert:
     that:
-    - so|success
+    - so is successful
 
 - name: create service offering in check mode
   cs_serviceoffer:
@@ -26,7 +26,7 @@
 - name: verify create service offering in check mode
   assert:
     that:
-    - so|changed
+    - so is changed
 
 - name: create service offering
   cs_serviceoffer:
@@ -44,7 +44,7 @@
 - name: verify create service offering
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "Micro"
     - so.display_text == "Micro 512mb 1cpu"
     - so.cpu_number == 1
@@ -70,7 +70,7 @@
 - name: verify create service offering idempotence
   assert:
     that:
-    - not so|changed
+    - so is not changed
     - so.name == "Micro"
     - so.display_text == "Micro 512mb 1cpu"
     - so.cpu_number == 1
@@ -89,7 +89,7 @@
 - name: verify create update offering in check mode
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "Micro"
     - so.display_text == "Micro 512mb 1cpu"
     - so.cpu_number == 1
@@ -107,7 +107,7 @@
 - name: verify update service offerin
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "Micro"
     - so.display_text == "Micro RAM 512MB 1vCPU"
     - so.cpu_number == 1
@@ -125,7 +125,7 @@
 - name: verify update service offering idempotence
   assert:
     that:
-    - not so|changed
+    - so is not changed
     - so.name == "Micro"
     - so.display_text == "Micro RAM 512MB 1vCPU"
     - so.cpu_number == 1
@@ -144,7 +144,7 @@
 - name: verify remove service offering in check mode
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "Micro"
     - so.display_text == "Micro RAM 512MB 1vCPU"
     - so.cpu_number == 1
@@ -162,7 +162,7 @@
 - name: verify remove service offering
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "Micro"
     - so.display_text == "Micro RAM 512MB 1vCPU"
     - so.cpu_number == 1
@@ -180,4 +180,4 @@
 - name: verify remove service offering idempotence
   assert:
     that:
-    - not so|changed
+    - so is not changed

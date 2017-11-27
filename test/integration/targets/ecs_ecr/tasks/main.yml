@@ -17,8 +17,8 @@
     - name: it should skip, change and create
       assert:
         that:
-          - result|skipped
-          - result|changed
+          - result is skipped
+          - result is changed
           - result.created
 
 
@@ -36,7 +36,7 @@
     - name: it should fail with an AccessDeniedException
       assert:
         that:
-          - result|failed
+          - result is failed
           - '"AccessDeniedException" in result.msg'
 
 
@@ -52,7 +52,7 @@
     - name: it should change and create
       assert:
         that:
-          - result|changed
+          - result is changed
           - result.created
 
 
@@ -69,8 +69,8 @@
     - name: it should not skip, should not change
       assert:
         that:
-          - not result|skipped
-          - not result|changed
+          - result is not skipped
+          - result is not changed
 
 
     - name: When creating a repository that already exists
@@ -85,7 +85,7 @@
     - name: it should not change
       assert:
         that:
-          - not result|changed
+          - result is not changed
 
 
     - name: When in check mode, and deleting a policy that does not exists
@@ -102,8 +102,8 @@
     - name: it should not skip and not change
       assert:
         that:
-          - not result|skipped
-          - not result|changed
+          - result is not skipped
+          - result is not changed
 
 
     - name: When in check mode, setting policy on a repository that has no policy
@@ -120,8 +120,8 @@
     - name: it should skip, change and not create
       assert:
         that:
-          - result|skipped
-          - result|changed
+          - result is skipped
+          - result is changed
           - not result.created
 
 
@@ -138,7 +138,7 @@
     - name: it should change and not create
       assert:
         that:
-          - result|changed
+          - result is changed
           - not result.created
 
 
@@ -156,8 +156,8 @@
     - name: it should skip, change but not create
       assert:
         that:
-          - result|skipped
-          - result|changed
+          - result is skipped
+          - result is changed
           - not result.created
 
 
@@ -174,7 +174,7 @@
     - name: it should change and not create
       assert:
         that:
-          - result|changed
+          - result is changed
           - not result.created
 
 
@@ -191,7 +191,7 @@
     - name: it should change and not create
       assert:
         that:
-          - result|changed
+          - result is changed
           - not result.created
 
 
@@ -208,7 +208,7 @@
     - name: it should not change
       assert:
         that:
-          - not result|changed
+          - result is not changed
 
 
     - name: When omitting policy on a repository that has a policy
@@ -223,7 +223,7 @@
     - name: it should not change
       assert:
         that:
-          - not result|changed
+          - result is not changed
 
 
     - name: When specifying both policy and delete_policy
@@ -241,7 +241,7 @@
     - name: it should fail
       assert:
         that:
-          - result|failed
+          - result is failed
 
 
     - name: When specifying invalid JSON for policy
@@ -258,7 +258,7 @@
     - name: it should fail
       assert:
         that:
-          - result|failed
+          - result is failed
 
 
     - name: When in check mode, deleting a policy that exists
@@ -275,8 +275,8 @@
     - name: it should skip, change and not create
       assert:
         that:
-          - result|skipped
-          - result|changed
+          - result is skipped
+          - result is changed
           - not result.created
 
 
@@ -293,7 +293,7 @@
     - name: it should change
       assert:
         that:
-          - result|changed
+          - result is changed
 
 
     - name: When in check mode, deleting a policy that does not exist
@@ -310,8 +310,8 @@
     - name: it should not change
       assert:
         that:
-          - not result|skipped
-          - not result|changed
+          - result is not skipped
+          - result is not changed
 
 
     - name: When deleting a policy that does not exist
@@ -327,7 +327,7 @@
     - name: it should not change
       assert:
         that:
-          - not result|changed
+          - result is not changed
 
   always:
 
