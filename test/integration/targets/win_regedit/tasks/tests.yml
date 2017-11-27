@@ -44,7 +44,7 @@
 - name: assert change string to binary check
   assert:
     that:
-    - change_string_binary_check|changed
+    - change_string_binary_check is changed
     - change_string_binary_check.data_changed == True
     - change_string_binary_check.data_type_changed == True
     - change_string_binary_actual_check.type == 'REG_SZ'
@@ -68,7 +68,7 @@
 - name: assert change string to binary check
   assert:
     that:
-    - change_string_binary|changed
+    - change_string_binary is changed
     - change_string_binary.data_changed == True
     - change_string_binary.data_type_changed == True
     - change_string_binary_actual.type == 'REG_BINARY'
@@ -90,7 +90,7 @@
 - name: assert modify the (Default) key property check
   assert:
     that:
-    - modify_default_check|changed
+    - modify_default_check is changed
     - modify_default_actual_check.stdout == ""
 
 - name: modify the (Default) key property
@@ -107,7 +107,7 @@
 - name: assert modify the (Default) key property
   assert:
     that:
-    - modify_default|changed
+    - modify_default is changed
     - modify_default_actual.stdout == "default value\r\n"
 
 - name: create an actual property called (Default)
@@ -131,7 +131,7 @@
 - name: assert create specific property called (Default) check
   assert:
     that:
-    - create_specific_default_check|changed
+    - create_specific_default_check is changed
     - create_specific_default_actual_default_check.stdout == "default value\r\n"
     - create_specific_default_actual_check.stdout == ""
 
@@ -155,7 +155,7 @@
 - name: assert create specific property called (Default)
   assert:
     that:
-    - create_specific_default|changed
+    - create_specific_default is changed
     - create_specific_default_actual_default.stdout == "default value\r\n"
     - create_specific_default_actual.stdout == "custom default value\r\n"
 
@@ -176,7 +176,7 @@
 - name: assert delete property check
   assert:
     that:
-    - delete_property_check|changed
+    - delete_property_check is changed
     - delete_property_actual_check.exists == True
 
 - name: delete property
@@ -195,7 +195,7 @@
 - name: assert delete property
   assert:
     that:
-    - delete_property|changed
+    - delete_property is changed
     - delete_property_actual.exists == False
 
 - name: delete property again
@@ -208,7 +208,7 @@
 - name: assert delete property again
   assert:
     that:
-    - not delete_property_again|changed
+    - delete_property_again is not changed
 
 - name: delete the key's (Default) property check
   win_regedit:
@@ -229,7 +229,7 @@
 - name: assert delete the key's (Default) property check
   assert:
     that:
-    - delete_default_check|changed
+    - delete_default_check is changed
     - delete_default_actual_check.stdout == "default value\r\n"
     - delete_default_custom_actual_check.stdout == "custom default value\r\n"
 
@@ -251,7 +251,7 @@
 - name: assert delete the key's (Default) property
   assert:
     that:
-    - delete_default|changed
+    - delete_default is changed
     - delete_default_actual.stdout == ""
     - delete_default_custom_actual.stdout == "custom default value\r\n"
 
@@ -280,7 +280,7 @@
 - name: assert delete the custom (Default) property check
   assert:
     that:
-    - delete_custom_default_check|changed
+    - delete_custom_default_check is changed
     - delete_custom_default_actual_check.stdout == "default value\r\n"
     - delete_custom_default_custom_actual_check.stdout == "custom default value\r\n"
 
@@ -303,7 +303,7 @@
 - name: assert delete the custom (Default) property
   assert:
     that:
-    - delete_custom_default|changed
+    - delete_custom_default is changed
     - delete_custom_default_actual.stdout == "default value\r\n"
     - delete_custom_default_custom_actual.stdout == ""
 
@@ -332,7 +332,7 @@
 - name: assert delete key and it's sub keys check
   assert:
     that:
-    - delete_key_check|changed
+    - delete_key_check is changed
     - delete_key_actual_check.exists
     - delete_key_actual_check.sub_keys == ["nest1", "nest2"]
 
@@ -351,7 +351,7 @@
 - name: assert delete key and it's sub keys
   assert:
     that:
-    - delete_key|changed
+    - delete_key is changed
     - delete_key_actual.exists == False
 
 - name: delete key and it's sub keys again
@@ -364,7 +364,7 @@
 - name: assert delete key and it's sub keys again
   assert:
     that:
-    - not delete_key_again|changed
+    - delete_key_again is not changed
 
 - name: create key in HKEY_CLASSES_ROOT check
   win_regedit:
@@ -384,7 +384,7 @@
 - name: assert create key in HKEY_CLASSES_ROOT check
   assert:
     that:
-    - create_hkcr_key_check|changed
+    - create_hkcr_key_check is changed
     - create_hkcr_key_actual_check.exists == False
 
 - name: create key in HKEY_CLASSES_ROOT
@@ -404,7 +404,7 @@
 - name: assert create key in HKEY_CLASSES_ROOT
   assert:
     that:
-    - create_hkcr_key|changed
+    - create_hkcr_key is changed
     - create_hkcr_key_actual.exists == True
     - create_hkcr_key_actual.properties.test is defined
 
@@ -420,7 +420,7 @@
 - name: assert create key in HKEY_CLASSES_ROOT again
   assert:
     that:
-    - not create_hkcr_key_again|changed
+    - create_hkcr_key_again is not changed
 
 # https://github.com/ansible/ansible/issues/31782
 - name: create property like a json string
@@ -441,7 +441,7 @@
 - name: assert results of create property like a json string
   assert:
     that:
-    - create_prop_with_json|changed
+    - create_prop_with_json is changed
     - create_prop_with_json_result.exists == True
     - create_prop_with_json_result.value == 'test data'
 
@@ -457,7 +457,7 @@
 - name: assert results of create property like a json string (idempotent)
   assert:
     that:
-    - not create_prop_with_json_again|changed
+    - create_prop_with_json_again is not changed
 
 - name: create new key in loaded hive (check mode)
   win_regedit:
@@ -479,7 +479,7 @@
 - name: assert result of create new key in loaded hive (check mode)
   assert:
     that:
-    - new_key_in_hive_check|changed
+    - new_key_in_hive_check is changed
     - new_key_in_hive_result_check.stdout == "False\r\n"
 
 - name: create new key in loaded hive
@@ -501,7 +501,7 @@
 - name: assert result of create new key in loaded hive
   assert:
     that:
-    - new_key_in_hive|changed
+    - new_key_in_hive is changed
     - new_key_in_hive_result.stdout == "True\r\n"
 
 - name: create new key in loaded hive (idempotent)
@@ -514,7 +514,7 @@
 - name: assert result of create new key in loaded hive (idempotent)
   assert:
     that:
-    - not new_key_in_hive_again|changed
+    - new_key_in_hive_again is not changed
 
 - name: set hive key property (check mode)
   win_regedit:
@@ -542,7 +542,7 @@
 - name: assert result of set hive key property (check mode)
   assert:
     that:
-    - new_prop_in_hive_check|changed
+    - new_prop_in_hive_check is changed
     - new_prop_in_hive_result_check.stdout == ""
 
 - name: set hive key property
@@ -570,7 +570,7 @@
 - name: assert result of set hive key property
   assert:
     that:
-    - new_prop_in_hive|changed
+    - new_prop_in_hive is changed
     - new_prop_in_hive_result.stdout == "string\r\n"
 
 - name: set hive key property (idempotent)
@@ -586,7 +586,7 @@
 - name: assert result of set hive key property (idempotent)
   assert:
     that:
-    - not new_prop_in_hive_again|changed
+    - new_prop_in_hive_again is not changed
 
 - name: remove hive key property (check mode)
   win_regedit:
@@ -612,7 +612,7 @@
 - name: assert result of remove hive key property (check mode)
   assert:
     that:
-    - remove_prop_in_hive_check|changed
+    - remove_prop_in_hive_check is changed
     - remove_prop_in_hive_result_check.stdout == "string\r\n"
 
 - name: remove hive key property
@@ -638,7 +638,7 @@
 - name: assert result of remove hive key property
   assert:
     that:
-    - remove_prop_in_hive|changed
+    - remove_prop_in_hive is changed
     - remove_prop_in_hive_result.stdout == ""
 
 - name: remove hive key property (idempotent)
@@ -652,7 +652,7 @@
 - name: assert result of set hive key property (idempotent)
   assert:
     that:
-    - not remove_prop_in_hive_again|changed
+    - remove_prop_in_hive_again is not changed
 
 - name: remove key in loaded hive (check mode)
   win_regedit:
@@ -675,7 +675,7 @@
 - name: assert result of removekey in loaded hive (check mode)
   assert:
     that:
-    - remove_key_in_hive_check|changed
+    - remove_key_in_hive_check is changed
     - remove_key_in_hive_result_check.stdout == "True\r\n"
 
 - name: remove key in loaded hive
@@ -698,7 +698,7 @@
 - name: assert result of remove key in loaded hive
   assert:
     that:
-    - remove_key_in_hive|changed
+    - remove_key_in_hive is changed
     - remove_key_in_hive_result.stdout == "False\r\n"
 
 - name: remove key in loaded hive (idempotent)
@@ -712,4 +712,4 @@
 - name: assert result of remove key in loaded hive (idempotent)
   assert:
     that:
-    - not remove_key_in_hive_again|changed
+    - remove_key_in_hive_again is not changed

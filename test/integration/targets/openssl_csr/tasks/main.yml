@@ -44,4 +44,4 @@
 
     - import_tasks: ../tests/validate.yml
 
-  when: pyopenssl_version.stdout|version_compare('0.15', '>=')
+  when: pyopenssl_version.stdout is version('0.15', '>=')

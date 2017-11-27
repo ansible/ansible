@@ -31,7 +31,7 @@
 
 - assert:
     that:
-    - first|changed
+    - first is changed
     - first.setype == 'httpd_sys_content_t'
 
 - name: Set SELinux file context of foo/bar (again)
@@ -44,7 +44,7 @@
 
 - assert:
     that:
-    - not second|changed
+    - second is not changed
     - second.setype == 'httpd_sys_content_t'
 
 - name: Change SELinux file context of foo/bar
@@ -57,7 +57,7 @@
 
 - assert:
     that:
-    - third|changed
+    - third is changed
     - third.setype == 'unlabeled_t'
 
 - name: Change SELinux file context of foo/bar (again)
@@ -70,7 +70,7 @@
 
 - assert:
     that:
-    - not fourth|changed
+    - fourth is not changed
     - fourth.setype == 'unlabeled_t'
 
 - name: Delete SELinux file context of foo/bar
@@ -83,7 +83,7 @@
 
 - assert:
     that:
-    - fifth|changed
+    - fifth is changed
     - fifth.setype == 'httpd_sys_content_t'
 
 - name: Delete SELinux file context of foo/bar (again)
@@ -96,5 +96,5 @@
 
 - assert:
     that:
-    - not sixth|changed
+    - sixth is not changed
     - sixth.setype == 'unlabeled_t'

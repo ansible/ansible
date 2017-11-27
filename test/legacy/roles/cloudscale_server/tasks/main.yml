@@ -9,8 +9,8 @@
 - name: Verify create server
   assert:
     that:
-      - server|success
-      - server|changed
+      - server is successful
+      - server is changed
       - server.state == 'running'
 
 - name: Test create server indempotence
@@ -23,8 +23,8 @@
 - name: Verify create server
   assert:
     that:
-      - server|success
-      - not server|changed
+      - server is successful
+      - server is not changed
       - server.state == 'running'
 
 - name: Test create server stopped
@@ -38,8 +38,8 @@
 - name: Verify create server stopped
   assert:
     that:
-      - server_stopped|success
-      - server_stopped|changed
+      - server_stopped is successful
+      - server_stopped is changed
       - server_stopped.state == 'stopped'
 
 - name: Test create server failure without required parameters
@@ -50,7 +50,7 @@
 - name: Verify create server failure without required parameters
   assert:
     that:
-      - server_failed|failed
+      - server_failed is failed
       - "'Missing required parameter' in server_failed.msg"
 
 - name: Test server stopped
@@ -61,8 +61,8 @@
 - name: Verify server stopped
   assert:
     that:
-      - server|success
-      - server|changed
+      - server is successful
+      - server is changed
       - server.state == 'stopped'
 
 - name: Test server stopped indempotence
@@ -73,8 +73,8 @@
 - name: Verify server stopped indempotence
   assert:
     that:
-      - server|success
-      - not server|changed
+      - server is successful
+      - server is not changed
       - server.state == 'stopped'
 
 - name: Test server running
@@ -85,8 +85,8 @@
 - name: Verify server running
   assert:
     that:
-      - server|success
-      - server|changed
+      - server is successful
+      - server is changed
       - server.state == 'running'
 
 - name: Test server running indempotence
@@ -97,8 +97,8 @@
 - name: Verify server running indempotence
   assert:
     that:
-      - server|success
-      - not server|changed
+      - server is successful
+      - server is not changed
       - server.state == 'running'
 
 - name: Test server deletion by name
@@ -109,8 +109,8 @@
 - name: Verify server deletion
   assert:
     that:
-      - server|success
-      - server|changed
+      - server is successful
+      - server is changed
       - server.state == 'absent'
 
 - name: Test server deletion by uuid
@@ -121,8 +121,8 @@
 - name: Verify server deletion by uuid
   assert:
     that:
-      - server_stopped|success
-      - server_stopped|changed
+      - server_stopped is successful
+      - server_stopped is changed
       - server_stopped.state == 'absent'
 
 - name: Test server deletion indempotence
@@ -133,6 +133,6 @@
 - name: Verify server deletion
   assert:
     that:
-      - server|success
-      - not server|changed
+      - server is successful
+      - server is not changed
       - server.state == 'absent'

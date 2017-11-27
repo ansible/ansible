@@ -54,7 +54,7 @@
 #- name: validate tempdir response
 #  assert:
 #    that:
-#    - tempdircheck.stdout | search('False')
+#    - tempdircheck.stdout is search('False')
 
 - name: async poll retry
   async_test:
@@ -90,7 +90,7 @@
 #- name: validate tempdir response
 #  assert:
 #    that:
-#    - tempdircheck.stdout | search('False')
+#    - tempdircheck.stdout is search('False')
 
 - name: async poll timeout
   async_test:
@@ -106,7 +106,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult.changed == false
-    - asyncresult | failed == true
+    - asyncresult is failed == true
     - asyncresult.msg is search('timed out')
 
 - name: async poll graceful module failure
@@ -123,7 +123,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult.changed == true
-    - asyncresult | failed == true
+    - asyncresult is failed == true
     - asyncresult.msg == 'failed gracefully'
 
 - name: async poll exception module failure
@@ -140,7 +140,7 @@
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
     - asyncresult.changed == false
-    - asyncresult | failed == true
+    - asyncresult is failed == true
 # TODO: re-enable after catastrophic failure behavior is cleaned up
 #    - asyncresult.msg is search('failing via exception')
 

@@ -8,7 +8,7 @@
 - name: Assert that configuring a handler with missing set parameters fails
   assert:
     that:
-      - failure | failed
+      - failure is failed
       - "'the following are missing: handlers' in failure['msg']"
 
 - name: Configure a set handler
@@ -27,8 +27,8 @@
 - name: Validate set handler return data
   assert:
     that:
-      - "handler | success"
-      - "handler | changed"
+      - "handler is successful"
+      - "handler is changed"
       - "handler_stat.stat.exists == true"
       - "handler['name'] == 'set'"
       - "handler['file'] == '/etc/sensu/conf.d/handlers/set.json'"

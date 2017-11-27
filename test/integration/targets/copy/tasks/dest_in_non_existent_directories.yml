@@ -14,8 +14,8 @@
 - name: assert copy worked
   assert:
     that:
-      - 'copy_result|success'
-      - 'copy_result|changed'
+      - 'copy_result is successful'
+      - 'copy_result is changed'
 
 - name: stat copied file
   stat:

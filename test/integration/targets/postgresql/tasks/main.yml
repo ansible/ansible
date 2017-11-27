@@ -208,7 +208,7 @@
     msg: "{{ postgres_version_resp.stdout }}"
 
 - set_fact:
-    bypassrls_supported: "{{ postgres_version_resp.stdout | version_compare('9.5.0', '>=') }}"
+    bypassrls_supported: "{{ postgres_version_resp.stdout is version('9.5.0', '>=') }}"
 
 # test 'no_password_change' and 'role_attr_flags' parameters
 - include: test_no_password_change.yml

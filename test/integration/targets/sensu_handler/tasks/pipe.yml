@@ -9,7 +9,7 @@
 - name: Assert that configuring a handler with missing pipe parameters fails
   assert:
     that:
-      - failure | failed
+      - failure is failed
       - "'the following are missing: command' in failure['msg']"
 
 - name: Configure a handler with pipe parameters

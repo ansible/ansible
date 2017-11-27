@@ -296,7 +296,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
     
     - name: reboot after disabling UAC
       win_reboot:
-      when: uac_result|changed
+      when: uac_result is changed
 
 .. Note:: Granting the ``SeTcbPrivilege`` or turning UAC off can cause Windows
     security vulnerabilities and care should be given if these steps are taken.

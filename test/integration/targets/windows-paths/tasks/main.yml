@@ -43,7 +43,7 @@
 
 - assert:
     that:
-    - good_result|success
+    - good_result is successful
     - good_result.stat.attributes == 'Directory'
     - good_result.stat.exists == true
     - good_result.stat.path == good
@@ -55,7 +55,7 @@
 
 - assert:
     that:
-    - works1_result|success
+    - works1_result is successful
     - works1_result.stat.attributes == 'Directory'
     - works1_result.stat.exists == true
     - works1_result.stat.path == good
@@ -67,7 +67,7 @@
 
 - assert:
     that:
-    - works2_result|success
+    - works2_result is successful
     - works2_result.stat.attributes == 'Directory'
     - works2_result.stat.exists == true
     - works2_result.stat.path == good
@@ -79,7 +79,7 @@
 
 - assert:
     that:
-    - trailing_result|success
+    - trailing_result is successful
     - trailing_result.stat.attributes == 'Directory'
     - trailing_result.stat.exists == true
     - trailing_result.stat.path == no_quotes_single  # path is without the trailing \
@@ -139,7 +139,7 @@
 
 - assert:
     that:
-    - good_result|success
+    - good_result is successful
     - good_result.stat.attributes == 'Directory'
     - good_result.stat.exists == true
     - good_result.stat.path == good
@@ -151,7 +151,7 @@
 
 - assert:
     that:
-    - works1_result|success
+    - works1_result is successful
     - works1_result.stat.attributes == 'Directory'
     - works1_result.stat.exists == true
     - works1_result.stat.path == good
@@ -163,7 +163,7 @@
 
 - assert:
     that:
-    - works2_result|success
+    - works2_result is successful
     - works2_result.stat.attributes == 'Directory'
     - works2_result.stat.exists == true
     - works2_result.stat.path == good
@@ -175,7 +175,7 @@
 
 - assert:
     that:
-    - trailing_result|success
+    - trailing_result is successful
     - trailing_result.stat.attributes == 'Directory'
     - trailing_result.stat.exists == true
     - trailing_result.stat.path == no_quotes_single  # path is without the trailing \
@@ -188,4 +188,4 @@
 
 - assert:
     that:
-    - tab_result|failed
+    - tab_result is failed

@@ -80,10 +80,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\+ *test_vlan_1")
-      - result.diff.prepared | search("\+ *vlan-id 159")
-      - result.diff.prepared | search("\+ *test_vlan_2")
-      - result.diff.prepared | search("\+ *vlan-id 160")
+      - result.diff.prepared is search("\+ *test_vlan_1")
+      - result.diff.prepared is search("\+ *vlan-id 159")
+      - result.diff.prepared is search("\+ *test_vlan_2")
+      - result.diff.prepared is search("\+ *vlan-id 160")
 
 - name: Delete vlan configuration using aggregate
   net_vlan:
@@ -99,10 +99,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\- *test_vlan_1")
-      - result.diff.prepared | search("\- *vlan-id 159")
-      - result.diff.prepared | search("\- *test_vlan_2")
-      - result.diff.prepared | search("\- *vlan-id 160")
+      - result.diff.prepared is search("\- *test_vlan_1")
+      - result.diff.prepared is search("\- *vlan-id 159")
+      - result.diff.prepared is search("\- *test_vlan_2")
+      - result.diff.prepared is search("\- *vlan-id 160")
 
 - name: Delete vlan configuration using aggregate (idempotent)
   net_vlan:

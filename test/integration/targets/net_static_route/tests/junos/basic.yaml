@@ -88,16 +88,16 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\+ *route 4.4.4.0/24")
-      - result.diff.prepared | search("\+ *next-hop 3.3.3.3")
-      - result.diff.prepared | search("\+ *qualified-next-hop 5.5.5.5")
-      - result.diff.prepared | search("\+ *preference 30")
-      - result.diff.prepared | search("\+ *preference 10")
-      - result.diff.prepared | search("\+ *route 5.5.5.0/24")
-      - result.diff.prepared | search("\+ *next-hop 6.6.6.6")
-      - result.diff.prepared | search("\+ *qualified-next-hop 7.7.7.7")
-      - result.diff.prepared | search("\+ *preference 12")
-      - result.diff.prepared | search("\+ *preference 11")
+      - result.diff.prepared is search("\+ *route 4.4.4.0/24")
+      - result.diff.prepared is search("\+ *next-hop 3.3.3.3")
+      - result.diff.prepared is search("\+ *qualified-next-hop 5.5.5.5")
+      - result.diff.prepared is search("\+ *preference 30")
+      - result.diff.prepared is search("\+ *preference 10")
+      - result.diff.prepared is search("\+ *route 5.5.5.0/24")
+      - result.diff.prepared is search("\+ *next-hop 6.6.6.6")
+      - result.diff.prepared is search("\+ *qualified-next-hop 7.7.7.7")
+      - result.diff.prepared is search("\+ *preference 12")
+      - result.diff.prepared is search("\+ *preference 11")
 
 - name: Delete static route configuration using aggegrate
   net_static_route:
@@ -110,16 +110,16 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\- *route 4.4.4.0/24")
-      - result.diff.prepared | search("\- *next-hop 3.3.3.3")
-      - result.diff.prepared | search("\- *qualified-next-hop 5.5.5.5")
-      - result.diff.prepared | search("\- *preference 30")
-      - result.diff.prepared | search("\- *preference 10")
-      - result.diff.prepared | search("\- *route 5.5.5.0/24")
-      - result.diff.prepared | search("\- *next-hop 6.6.6.6")
-      - result.diff.prepared | search("\- *qualified-next-hop 7.7.7.7")
-      - result.diff.prepared | search("\- *preference 12")
-      - result.diff.prepared | search("\- *preference 11")
+      - result.diff.prepared is search("\- *route 4.4.4.0/24")
+      - result.diff.prepared is search("\- *next-hop 3.3.3.3")
+      - result.diff.prepared is search("\- *qualified-next-hop 5.5.5.5")
+      - result.diff.prepared is search("\- *preference 30")
+      - result.diff.prepared is search("\- *preference 10")
+      - result.diff.prepared is search("\- *route 5.5.5.0/24")
+      - result.diff.prepared is search("\- *next-hop 6.6.6.6")
+      - result.diff.prepared is search("\- *qualified-next-hop 7.7.7.7")
+      - result.diff.prepared is search("\- *preference 12")
+      - result.diff.prepared is search("\- *preference 11")
 
 - name: Delete static route configuration using aggegrate (idempotent)
   net_static_route:

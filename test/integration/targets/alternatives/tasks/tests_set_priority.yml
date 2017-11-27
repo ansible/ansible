@@ -16,7 +16,7 @@
 - name: check expected command was executed
   assert:
     that:
-      - 'alternative|changed'
+      - 'alternative is changed'
       - 'cmd.stdout == "dummy{{ item }}"'
 
 - name: check that alternative has been updated

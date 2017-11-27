@@ -10,12 +10,12 @@
 - name: Define interface name for vSRX
   set_fact:
     name: pp0
-  when: result['ansible_facts']['ansible_net_model'] | search("vSRX*")
+  when: result['ansible_facts']['ansible_net_model']  is search("vSRX*")
 
 - name: Define interface name for vQFX
   set_fact:
     name: gr-0/0/0
-  when: result['ansible_facts']['ansible_net_model'] | search("vqfx*")
+  when: result['ansible_facts']['ansible_net_model']  is search("vqfx*")
 
 - name: Check intent arguments
   net_interface:
@@ -58,7 +58,7 @@
 - assert:
     that:
       - "result.failed == false"
-      - result.diff.prepared | search("\+ *disable")
+      - result.diff.prepared is search("\+ *disable")
 
 - name: Config + intent (fail)
   net_interface:

@@ -70,7 +70,7 @@ EXAMPLES = '''
     ip_address: "192.168.1.1"
     password: "admin"
   register: result
-  until: not result|failed
+  until: result is not failed
   retries: 10
   delay: 30
 '''

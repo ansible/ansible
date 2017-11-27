@@ -2,7 +2,7 @@
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp_af sanity test"
 
 - set_fact: advertise_l2vpn_evpn="true"
-  when: platform | search('N9K')
+  when: platform is search('N9K')
 
 - name: "Enable feature BGP"
   nxos_feature:
@@ -31,7 +31,7 @@
       lines:
         - nv overlay evpn
       provider: "{{ connection }}"
-    when: platform | search('N9K')
+    when: platform is search('N9K')
 
   - name: "Configure BGP_AF defaults"
     nxos_bgp_af: &configure_default
@@ -144,6 +144,6 @@
       lines:
         - no nv overlay evpn
       provider: "{{ connection }}"
-    when: platform | search('N9K')
+    when: platform is search('N9K')
 
   - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_bgp_af sanity test"

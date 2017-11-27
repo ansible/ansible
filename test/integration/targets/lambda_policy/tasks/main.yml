@@ -71,7 +71,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - 'result|failed'
+           - 'result is failed'
            - 'result.msg != "MODULE FAILURE"'
            - 'result.changed == False'
 
@@ -150,7 +150,7 @@
     - name: assert internal server error due to permissions
       assert:
         that:
-          - unauth_uri_result|failed
+          - unauth_uri_result is failed
           - 'unauth_uri_result.status == 500'
 
     - name: give api gateway execute permissions on lambda
@@ -215,4 +215,4 @@
       assert:
         that:
            - 'destroy_result.changed == True'
-           - 'not result|failed'
+           - 'result is not failed'

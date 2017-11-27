@@ -21,7 +21,7 @@
 - name: DEPTH | make sure the old commit was not fetched
   assert:
     that: 'checkout_early.rc != 0'
-  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 # tests https://github.com/ansible/ansible/issues/14954
 - name: DEPTH | fetch repo again with depth=1
@@ -32,8 +32,8 @@
   register: checkout2
 
 - assert:
-    that: "not checkout2|changed"
-  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
+    that: "checkout2 is not changed"
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 - name: DEPTH | again try to access earlier commit
   shell: "git checkout {{git_shallow_head_1.stdout}}"
@@ -45,7 +45,7 @@
 - name: DEPTH | again make sure the old commit was not fetched
   assert:
     that: 'checkout_early.rc != 0'
-  when: git_version.stdout | version_compare(git_version_supporting_depth, '>=')
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
 # make sure we are still able to fetch other versions
 - name: DEPTH | Clone same repo with older version
@@ -57,7 +57,7 @@
   register: cloneold
 
 - assert:
-    that: cloneold | success
+    that: cloneold is successful
 
 - name: DEPTH | try to access earlier commit
   shell: "git checkout {{git_shallow_head_1.stdout}}"
@@ -79,7 +79,7 @@
   register: cloneold
 
 - assert:
-    that: cloneold | success
+    that: cloneold is successful
 
 - name: DEPTH | clear checkout_dir
   file:
@@ -107,7 +107,7 @@
 
 - name: DEPTH | ensure the fetch succeeded
   assert:
-    that: git_fetch | success
+    that: git_fetch is successful
 
 
 - name: DEPTH | clear checkout_dir
@@ -132,7 +132,7 @@
 
 - name: DEPTH | ensure the fetch succeeded
   assert:
-    that: git_fetch | success
+    that: git_fetch is successful
 
 - name: DEPTH | clear checkout_dir
   file:
@@ -165,7 +165,7 @@
   assert:
     that:
       - "{{ lookup('file', checkout_dir+'/a' )}} == 3"
-      - git_fetch | changed
+      - git_fetch is changed
 
 - name: DEPTH | clear checkout_dir
   file:

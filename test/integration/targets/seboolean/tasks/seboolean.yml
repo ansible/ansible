@@ -31,8 +31,8 @@
 - name: check output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - output.name == 'httpd_can_network_connect'
       - getsebool_output.stdout.startswith('httpd_can_network_connect      (on   ,  off)')
 ##########################################################################################
@@ -48,8 +48,8 @@
 - name: check output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - output.name == 'httpd_can_network_connect'
       - getsebool_output.stdout.startswith('httpd_can_network_connect      (off  ,  off)')
 ##########################################################################################
@@ -67,8 +67,8 @@
 - name: check output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - output.name == 'httpd_can_network_connect'
       - getsebool_output.stdout.startswith('httpd_can_network_connect      (on   ,   on)')
 ##########################################################################################

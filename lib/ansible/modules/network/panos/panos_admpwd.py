@@ -60,7 +60,7 @@ EXAMPLES = '''
     key_filename: "/tmp/ssh.key"
     newpassword: "badpassword"
   register: result
-  until: not result|failed
+  until: result is not failed
   retries: 10
   delay: 30
 '''

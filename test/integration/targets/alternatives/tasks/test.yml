@@ -12,8 +12,8 @@
   - name: check expected command was executed
     assert:
       that:
-        - 'alternative|success'
-        - 'alternative|changed'
+        - 'alternative is successful'
+        - 'alternative is changed'
   when: with_link
 
 - block:
@@ -26,8 +26,8 @@
   - name: check expected command was executed
     assert:
       that:
-        - 'alternative|success'
-        - 'alternative|changed'
+        - 'alternative is successful'
+        - 'alternative is changed'
   when: not with_link
 
 - name: execute dummy command

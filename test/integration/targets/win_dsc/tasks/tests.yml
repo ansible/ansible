@@ -42,7 +42,7 @@
 - name: assert result of add Windows feature (check mode)
   assert:
     that:
-    - win_dsc_add_feature_check|changed
+    - win_dsc_add_feature_check is changed
     - win_dsc_add_feature_result_check.stdout == "False\r\n"
 
 - name: add Windows feature
@@ -59,7 +59,7 @@
 - name: assert result of add Windows feature
   assert:
     that:
-    - win_dsc_add_feature|changed
+    - win_dsc_add_feature is changed
     - win_dsc_add_feature_result.stdout == "True\r\n"
 
 - name: add Windows feature (idempotent)
@@ -72,7 +72,7 @@
 - name: assert result of add Windows feature (idempotent)
   assert:
     that:
-    - not win_dsc_add_feature_again|changed
+    - win_dsc_add_feature_again is not changed
 
 - name: remove Windows feature (check mode)
   win_dsc:
@@ -89,7 +89,7 @@
 - name: assert result of remove Windows feature (check mode)
   assert:
     that:
-    - win_dsc_remove_feature_check|changed
+    - win_dsc_remove_feature_check is changed
     - win_dsc_remove_feature_result_check.stdout == "True\r\n"
 
 - name: remove Windows feature
@@ -106,7 +106,7 @@
 - name: assert result of remove Windows feature
   assert:
     that:
-    - win_dsc_remove_feature|changed
+    - win_dsc_remove_feature is changed
     - win_dsc_remove_feature_result.stdout == "False\r\n"
 
 - name: remove Windows feature (idempotent)
@@ -119,7 +119,7 @@
 - name: assert result of remove Windows feature (idempotent)
   assert:
     that:
-    - not win_dsc_remove_feature_again|changed
+    - win_dsc_remove_feature_again is not changed
 
 - name: ensure test folder doesn't exist before test
   win_file:
@@ -147,7 +147,7 @@
 - name: assert results of create test file (check mode)
   assert:
     that:
-    - win_dsc_create_file_check|changed
+    - win_dsc_create_file_check is changed
     - win_dsc_create_file_result_check.stat.exists == False
 
 - name: create test file
@@ -170,7 +170,7 @@
 - name: assert results of create test file
   assert:
     that:
-    - win_dsc_create_file|changed
+    - win_dsc_create_file is changed
     - win_dsc_create_file_result.stat.exists == True
     - win_dsc_create_file_result.stat.isdir == False
     - win_dsc_create_file_result.stat.ishidden == True
@@ -189,7 +189,7 @@
 - name: assert results of create test file (idempotent)
   assert:
     that:
-    - not win_dsc_create_file_again|changed
+    - win_dsc_create_file_again is not changed
 
 - name: get SID of current ansible user
   win_shell: (New-Object System.Security.Principal.NTAccount("{{ansible_user}}")).Translate([System.Security.Principal.SecurityIdentifier]).ToString()
@@ -216,7 +216,7 @@
 - name: assert results of run DSC process as another user
   assert:
     that:
-    - win_dsc_runas|changed
+    - win_dsc_runas is changed
     - win_dsc_runas_result.content|b64decode == win_dsc_actual_sid.stdout
 
 - name: create custom DSC resource folder
@@ -305,7 +305,7 @@
 - name: assert result of custom DSC resource
   assert:
     that:
-    - test_dsc_custom|changed
+    - test_dsc_custom is changed
     - test_dsc_custom_output.content|b64decode|strip_newline == test_dsc_custom_expected|strip_newline
 
 - name: run custom DSC resource with version
@@ -326,5 +326,5 @@
 - name: assert result of custom DSC resource with version
   assert:
     that:
-    - test_dsc_custom|changed
+    - test_dsc_custom is changed
     - test_dsc_custom_output_version.content|b64decode|strip_newline == test_dsc_custom_expected_version|strip_newline

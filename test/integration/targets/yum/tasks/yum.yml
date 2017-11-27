@@ -112,7 +112,7 @@
 - name: verify uninstall sos
   assert:
     that:
-        - "yum_result|success"
+        - "yum_result is successful"
 
 - name: install sos with state latest in check mode
   yum: name=sos state=latest
@@ -253,7 +253,7 @@
 - name: check non-existent rpm install failed
   assert:
     that:
-    - non_existent_rpm|failed
+    - non_existent_rpm is failed
 
 # Install in installroot='/'
 - name: install sos
@@ -380,7 +380,7 @@
     that:
         - "yum_result.rc == 1"
         - "not yum_result.changed"
-        - "yum_result|failed"
+        - "yum_result is failed"
 
 - name: verify yum module outputs
   assert:
@@ -400,7 +400,7 @@
 - name: verify installation failed
   assert:
     that:
-        - "yum_result|failed"
+        - "yum_result is failed"
         - "not yum_result.changed"
 
 - name: verify yum module outputs
@@ -419,7 +419,7 @@
 - name: verify installation failed
   assert:
     that:
-        - "yum_result|failed"
+        - "yum_result is failed"
         - "not yum_result.changed"
 
 - name: verify yum module outputs
@@ -469,7 +469,7 @@
     that:
         - "yum_result.rc == 1"
         - "not yum_result.changed"
-        - "yum_result|failed"
+        - "yum_result is failed"
 
 # setup for testing installing an RPM from url
 
@@ -501,7 +501,7 @@
     that:
         - "yum_result.rc == 0"
         - "yum_result.changed"
-        - "not yum_result|failed"
+        - "yum_result is not failed"
 
 - name: verify yum module outputs
   assert:
@@ -522,7 +522,7 @@
     that:
         - "yum_result.rc == 0"
         - "not yum_result.changed"
-        - "not yum_result|failed"
+        - "yum_result is not failed"
 
 - name: verify yum module outputs
   assert:
@@ -548,7 +548,7 @@
     that:
         - "yum_result.rc == 0"
         - "yum_result.changed"
-        - "not yum_result|failed"
+        - "yum_result is not failed"
 
 - name: verify yum module outputs
   assert:

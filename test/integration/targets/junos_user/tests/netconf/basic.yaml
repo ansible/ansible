@@ -189,5 +189,5 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *user test_user1")
-      - result.diff.prepared | search("\- *user test_user2")
+      - result.diff.prepared is search("\- *user test_user1")
+      - result.diff.prepared is search("\- *user test_user2")

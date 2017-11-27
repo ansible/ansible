@@ -20,12 +20,12 @@
 - name: python 2
   set_fact:
     python_suffix: ""
-  when: ansible_python_version | version_compare('3', '<')
+  when: ansible_python_version is version('3', '<')
 
 - name: python 3
   set_fact:
     python_suffix: "-py3"
-  when: ansible_python_version | version_compare('3', '>=')
+  when: ansible_python_version is version('3', '>=')
 
 - include_vars: '{{ item }}'
   with_first_found:
