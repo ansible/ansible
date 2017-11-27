@@ -46,7 +46,6 @@ EXAMPLES = '''
     username: administrator
     password: my_password
     api_version: 500
-  no_log: true
   delegate_to: localhost
 
 - debug: var=managed_sans
@@ -62,7 +61,6 @@ EXAMPLES = '''
       query: imported eq true
       start: 0
       sort: name:ascending
-  no_log: true
   delegate_to: localhost
 
 - debug: var=managed_sans
@@ -74,7 +72,6 @@ EXAMPLES = '''
     password: my_password
     api_version: 500
     name: "SAN1_0"
-  no_log: true
   delegate_to: localhost
 
 - debug: var=managed_sans
@@ -88,7 +85,6 @@ EXAMPLES = '''
     name: "SAN1_0"
     options:
       - endpoints
-  no_log: true
   delegate_to: localhost
 
 - debug: var=managed_sans
@@ -103,7 +99,6 @@ EXAMPLES = '''
     options:
       - wwn:
          locate: "20:00:4A:2B:21:E0:00:01"
-  no_log: true
   delegate_to: localhost
 
 - debug: var=wwn_associated_sans
