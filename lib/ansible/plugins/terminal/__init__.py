@@ -91,7 +91,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         """Called when privilege escalation is requested
 
         :kwarg passwd: String containing the password
@@ -103,7 +103,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         """Called when privilege deescalation is requested
 
         This method is called when the privilege changed from escalated
