@@ -175,7 +175,7 @@ deleted:
             "deleted":false
         }
       }
-old_record/after:
+old/new_record:
     description: Nested dictionary of the record(s) before updating/creating it/them (only when state is "present").
     type: dict
     returned: success
