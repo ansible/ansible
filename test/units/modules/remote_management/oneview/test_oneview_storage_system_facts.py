@@ -57,6 +57,7 @@ PARAMS_GET_POOL_BY_IP_HOSTNAME = dict(
 )
 
 
+@pytest.mark.resource('storage_systems')
 class TestStorageSystemFactsModule(OneViewBaseFactsTest):
     def test_should_get_all_storage_system(self):
         self.mock_ansible_module.params = PARAMS_GET_ALL

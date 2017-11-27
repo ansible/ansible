@@ -53,11 +53,6 @@ class OneViewBaseTest(object):
             raise Exception(message)
         return testing_module
 
-    def pluralize(self, word):
-        # the 'ch' is for case of resources named like the 'Switch' resource
-        suffix = 'es' if (word[-2:] == 'ch') else 's'
-        return word + suffix
-
     def underscore(self, word):
         newword = re.findall('[A-Z][^A-Z]*', word)
         newword = str.join('_', newword).lower()
