@@ -1371,7 +1371,7 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.files = vim.vm.FileInfo(logDirectory=None,
                                                         snapshotDirectory=None,
                                                         suspendDirectory=None,
-                                                        vmPathName="[" + datastore_name + "] " + self.params["name"])
+                                                        vmPathName="[" + datastore_name + "]")
 
                 clone_method = 'CreateVM_Task'
                 resource_pool = self.get_resource_pool()
