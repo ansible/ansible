@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_aci
+module: azure_rm_containerinstance
 version_added: "2.5"
-short_description: Manage an Azure Container Instance (ACI).
+short_description: Manage an Azure Container Instance.
 description:
     - Create, update and delete an Azure Container Instance.
 
@@ -38,47 +38,38 @@ options:
             - linux
             - windows
         default: linux
-        required: false
     state:
         description:
-            - Assert the state of the ACI. Use 'present' to create or update an ACI and 'absent' to delete it.
+            - Assert the state of the container instance. Use 'present' to create or update an container instance and 'absent' to delete it.
         default: present
         choices:
             - absent
             - present
-        required: false
     ip_address:
         description:
             - The IP address type of the container group.
         choices:
             - public
-        required: false
         default: None
     ports:
         description:
             - List of ports exposed within the container group.
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
     registry_login_server:
         description:
             - The container image registry login server.
-        required: false
     registry_username:
         description:
             - The username to log in container image registry server.
-        required: false
     registry_password:
         description:
             - The password to log in container image registry server.
-        required: false
     containers:
         description:
             - List of containers.
-        required: false
         default: null
         suboptions:
             name:
@@ -95,16 +86,13 @@ options:
                 description:
                     - The required memory of the containers in GB.
                 default: 1.5
-                required: false
             cpu:
                 description:
                     - The required number of CPU cores of the containers.
                 default: 1
-                required: false
             ports:
                 description:
                     - List of ports exposed within the container group.
-                required: false
 
 extends_documentation_fragment:
     - azure
@@ -117,7 +105,7 @@ author:
 
 EXAMPLES = '''
   - name: Create sample container group
-    azure_rm_aci:
+    azure_rm_containerinstance:
     resource_group: testrg
     name: mynewcontainergroup
     os_type: linux
@@ -200,32 +188,32 @@ def create_container_dict_from_obj(container):
     return results
 
 
-def create_aci_dict(aci):
+def create_containerinstance_dict(containerinstance):
     '''
     Helper method to deserialize a ContainerService to a dict
-    :param: aci: Container
+    :param: containerinstance: Container
     :return: dict with the state on Azure
     '''
     results = dict(
-        id=aci.id,
-        name=aci.name,
-        tags=aci.tags,
-        location=aci.location,
-        type=aci.type,
-        restart_policy=aci.restart_policy,
-        provisioning_state=aci.provisioning_state,
-        volumes=aci.volumes,
-        os_type=aci.os_type
+        id=containerinstance.id,
+        name=containerinstance.name,
+        tags=containerinstance.tags,
+        location=containerinstance.location,
+        type=containerinstance.type,
+        restart_policy=containerinstance.restart_policy,
+        provisioning_state=containerinstance.provisioning_state,
+        volumes=containerinstance.volumes,
+        os_type=containerinstance.os_type
     )
 
-    if aci.ip_address:
-        results['ip_address'] = dict(type=aci.ip_address.type,
-                                     ip=aci.ip_address.ip,
+    if containerinstance.ip_address:
+        results['ip_address'] = dict(type=containerinstance.ip_address.type,
+                                     ip=containerinstance.ip_address.ip,
                                      ports=[])
 
     results['containers'] = []
-    if aci.containers:
-        for container in aci.containers:
+    if containerinstance.containers:
+        for container in containerinstance.containers:
             results['containers'].append(create_container_dict_from_obj(container))
 
     return results
@@ -328,7 +316,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
 
-        response = self.get_aci()
+        response = self.get_containerinstance()
 
         if not response:
             self.log("Container Group doesn't exist")
@@ -341,26 +329,26 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             self.log("Container instance already exists")
 
             if self.state == 'absent':
-                self.delete_aci()
+                self.delete_containerinstance()
                 self.results['changed'] = True
-                self.log("ACI instance deleted")
+                self.log("Container instance deleted")
             elif self.state == 'present':
                 self.log("Need to check if container group has to be deleted or may be updated")
                 to_be_updated = True
                 if to_be_updated:
-                    self.log('Deleting ACI instance before update')
+                    self.log('Deleting container instance before update')
                     if not self.check_mode:
-                        self.delete_aci()
+                        self.delete_containerinstance()
 
         if self.state == 'present':
 
-            self.log("Need to Create / Update the ACI instance")
+            self.log("Need to Create / Update the container instance")
 
             if self.check_mode:
                 return self.results
 
             if to_be_updated:
-                self.results['state'] = self.create_update_aci()
+                self.results['state'] = self.create_update_containerinstance()
                 self.results['changed'] = True
             else:
                 self.results['state'] = response
@@ -369,13 +357,13 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         return self.results
 
-    def create_update_aci(self):
+    def create_update_containerinstance(self):
         '''
         Creates or updates a container service with the specified configuration of orchestrator, masters, and agents.
 
-        :return: deserialized ACI instance state dictionary
+        :return: deserialized container instance state dictionary
         '''
-        self.log("Creating / Updating the ACI instance {0}".format(self.name))
+        self.log("Creating / Updating the container instance {0}".format(self.name))
 
         registry_credentials = None
 
@@ -424,41 +412,41 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         except CloudError as exc:
             self.log('Error attempting to create the container instance.')
-            self.fail("Error creating the ACI instance: {0}".format(str(exc)))
-        return create_aci_dict(response)
+            self.fail("Error creating the container instance: {0}".format(str(exc)))
+        return create_containerinstance_dict(response)
 
-    def delete_aci(self):
+    def delete_containerinstance(self):
         '''
         Deletes the specified container group instance in the specified subscription and resource group.
 
         :return: True
         '''
-        self.log("Deleting the ACI instance {0}".format(self.name))
+        self.log("Deleting the container instance {0}".format(self.name))
         try:
             response = self.mgmt_client.container_groups.delete(self.resource_group, self.name)
         except CloudError as e:
-            self.log('Error attempting to delete the ACI instance.')
-            self.fail("Error deleting the ACI instance: {0}".format(str(e)))
+            self.log('Error attempting to delete the container instance.')
+            self.fail("Error deleting the container instance: {0}".format(str(e)))
 
         return True
 
-    def get_aci(self):
+    def get_containerinstance(self):
         '''
         Gets the properties of the specified container service.
 
-        :return: deserialized ACI instance state dictionary
+        :return: deserialized container instance state dictionary
         '''
-        self.log("Checking if the ACI instance {0} is present".format(self.name))
+        self.log("Checking if the container instance {0} is present".format(self.name))
         found = False
         try:
             response = self.mgmt_client.container_groups.get(self.resource_group, self.name)
             found = True
             self.log("Response : {0}".format(response))
-            self.log("ACI instance : {0} found".format(response.name))
+            self.log("Container instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the ACI instance.')
+            self.log('Did not find the container instance.')
         if found is True:
-            return create_aci_dict(response)
+            return create_containerinstance_dict(response)
 
         return False
 
