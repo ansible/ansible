@@ -252,7 +252,7 @@ idempotent and does not report changes. For example:
     - name: assert remove a file (check mode)
       assert:
         that:
-        - remove_file_check|changed
+        - remove_file_check is changed
         - remove_file_actual_check.stdout == 'true\r\n'
 
     - name: remove a file
@@ -268,7 +268,7 @@ idempotent and does not report changes. For example:
     - name: assert remove a file
       assert:
         that:
-        - remove_file|changed
+        - remove_file is changed
         - remove_file_actual.stdout == 'false\r\n'
 
     - name: remove a file (idempotent)
@@ -280,7 +280,7 @@ idempotent and does not report changes. For example:
     - name: assert remove a file (idempotent)
       assert:
         that:
-        - not remove_file_again|changed
+        - not remove_file_again is changed
 
 
 Windows communication and development support

@@ -6,7 +6,7 @@
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
-  when: not (platform | match("N5K"))
+  when: not (platform is match("N5K"))
 
 - name: Setup - Remove snmp_host if configured
   nxos_snmp_host: &remove

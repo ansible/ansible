@@ -161,7 +161,7 @@ EXAMPLES = r'''
     state: absent
   register: result
   failed_when:
-    - not result|success
+    - result is not successful
     - "'referenced by one or more applications' not in result.msg"
 
 - name: Configure a service using more complicated parameters

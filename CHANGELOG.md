@@ -14,6 +14,7 @@ Ansible Changes By Release
 
 ### Deprecations
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
+* Using Ansible provided Jinja tests as filters is deprecated and will be removed in Ansible 2.9
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
