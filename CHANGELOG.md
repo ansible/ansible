@@ -1,6 +1,16 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.4.3"></a>
+
+## 2.4.3 "Dancing Days" - TBD
+
+### Bugfixes
+
+* Fix include in loop when stategy=free
+  (https://github.com/ansible/ansible/pull/33094)
+
+
 <a id="2.4.2"></a>
 
 ## 2.4.2 "Dancing Days" - TBD
