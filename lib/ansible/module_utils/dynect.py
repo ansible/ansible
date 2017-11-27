@@ -102,6 +102,7 @@ class DynectAPI(object):
             self.module.fail_json(msg="Reached API retries limit.")
         return response
 
+
 class DynDnsZone(object):
     '''DynDNS zone control.
     attributes:
