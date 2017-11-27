@@ -29,7 +29,7 @@
 - name: LOCALMODS | check fetch with localmods failed
   assert:
     that:
-      - git_fetch|failed
+      - git_fetch is failed
 
 - name: LOCALMODS | fetch with local mods with force
   git:
@@ -43,7 +43,7 @@
   assert:
     that:
       - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
-      - git_fetch_force|changed
+      - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir
   file: state=absent path={{ checkout_dir }}
@@ -81,7 +81,7 @@
 - name: LOCALMODS | check fetch with localmods failed
   assert:
     that:
-      - git_fetch|failed
+      - git_fetch is failed
 
 - name: LOCALMODS | fetch with local mods with force
   git:
@@ -96,7 +96,7 @@
   assert:
     that:
       - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
-      - git_fetch_force|changed
+      - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir
   file: state=absent path={{ checkout_dir }}

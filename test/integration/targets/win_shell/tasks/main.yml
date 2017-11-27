@@ -5,8 +5,8 @@
 - name: validate result
   assert:
     that:
-    - shellout|success
-    - shellout|changed
+    - shellout is successful
+    - shellout is changed
     - shellout.cmd == 'Write-Output "hello from Ansible"'
     - shellout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
     - shellout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
@@ -26,8 +26,8 @@
 - name: validate result
   assert:
     that:
-    - shellout|success
-    - shellout|changed
+    - shellout is successful
+    - shellout is changed
     - shellout.cmd == 'Write-Output "hello from Ansible"; Write-Output "another line"; Write-Output "yet another line"; Write-Output "envvar was $env:taskvar"'
     - shellout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
     - shellout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
@@ -46,9 +46,9 @@
 - name: validate result
   assert:
     that:
-    - shellout|failed
+    - shellout is failed
     - shellout.failed == true # check the failure key explicitly, since failed does magic with RC
-    - shellout|changed
+    - shellout is changed
     - shellout.cmd == 'bogus_command1234'
     - shellout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
     - shellout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
@@ -65,8 +65,8 @@
 - name: validate result
   assert:
     that:
-    - shellout|success
-    - shellout|changed
+    - shellout is successful
+    - shellout is changed
     - shellout.cmd == 'Write-Error "it broke"; Write-Output "some output"'
     - shellout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
     - shellout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
@@ -90,8 +90,8 @@
 - name: validate result
   assert:
     that:
-    - shellout|success
-    - shellout|changed
+    - shellout is successful
+    - shellout is changed
 
 - name: run again with creates, should skip
   win_shell: echo $null >> c:\testfile.txt
@@ -102,7 +102,7 @@
 - name: validate result
   assert:
     that:
-    - shellout|skipped
+    - shellout is skipped
     - shellout.msg is search('exists')
 
 - name: test creates with hidden system file, should skip
@@ -114,7 +114,7 @@
 - name: validate result
   assert:
     that:
-    - shellout|skipped
+    - shellout is skipped
     - shellout.msg is search('exists')
 
 - name: ensure testfile is still present
@@ -136,8 +136,8 @@
 - name: validate result
   assert:
     that:
-    - shellout|success
-    - shellout|changed
+    - shellout is successful
+    - shellout is changed
 
 - name: run again with removes, should skip
   win_shell: echo $null >> c:\testfile.txt
@@ -148,7 +148,7 @@
 - name: validate result
   assert:
     that:
-    - shellout|skipped
+    - shellout is skipped
     - shellout.msg is search('does not exist')
 
 - name: run something with known nonzero exit code
@@ -159,7 +159,7 @@
 - name: validate result
   assert:
     that:
-    - shellout|failed
+    - shellout is failed
     - shellout.failed == True # check the failure key explicitly, since failed does magic with RC
     - shellout.rc == 254
 
@@ -172,8 +172,8 @@
 - name: validate result
   assert:
     that:
-    - shellout|success
-    - shellout|changed
+    - shellout is successful
+    - shellout is changed
     - shellout.rc == 0
     - shellout.stdout == "line1 \r\nline2\r\n"
     - shellout.stdout_lines == ["line1 ", "line2"]
@@ -186,7 +186,7 @@
 - name: check job result
   assert:
     that:
-    - shellout | succeeded
+    - shellout is successful
     - shellout.stdout_lines[0] == 'yo'
 
 - name: interleave large writes between stdout/stderr (check for buffer consumption deadlock)
@@ -210,7 +210,7 @@
 - name: assert run stdin test
   assert:
     that:
-    - shellout|changed
+    - shellout is changed
     - shellout.rc == 0
     - shellout.stderr == ""
     - shellout.stdout == "some input\r\n"

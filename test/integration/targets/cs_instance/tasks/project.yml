@@ -6,7 +6,7 @@
 - name: verify test create project
   assert:
     that:
-    - prj|success
+    - prj is successful
 
 - name: setup instance in project to be absent
   cs_instance:
@@ -17,7 +17,7 @@
 - name: verify instance in project to be absent
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: setup ssh key in project
   cs_sshkeypair:
@@ -27,7 +27,7 @@
 - name: verify setup ssh key in project
   assert:
     that:
-    - sshkey|success
+    - sshkey is successful
 
 - name: setup affinity group in project
   cs_affinitygroup:
@@ -37,7 +37,7 @@
 - name: verify setup affinity group in project
   assert:
     that:
-    - ag|success
+    - ag is successful
 
 - name: setup security group in project
   cs_securitygroup:
@@ -47,7 +47,7 @@
 - name: verify setup security group in project
   assert:
     that:
-    - sg|success
+    - sg is successful
 
 - name: test create instance in project in check mode
   cs_instance:
@@ -64,8 +64,8 @@
 - name: verify create instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
 
 - name: test create instance in project
   cs_instance:
@@ -81,8 +81,8 @@
 - name: verify create instance in project
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -105,8 +105,8 @@
 - name: verify create instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -125,8 +125,8 @@
 - name: verify running instance in project not updated in check mode
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -143,8 +143,8 @@
 - name: verify running instance in project not updated
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -161,8 +161,8 @@
 - name: verify stopping instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -178,8 +178,8 @@
 - name: verify stopping instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -195,8 +195,8 @@
 - name: verify stopping instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.state == "Stopped"
 
 - name: test updating stopped instance in project in check mode
@@ -210,8 +210,8 @@
 - name: verify updating stopped instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -228,8 +228,8 @@
 - name: verify updating stopped instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -246,8 +246,8 @@
 - name: verify updating stopped instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -264,8 +264,8 @@
 - name: verify starting instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -281,8 +281,8 @@
 - name: verify starting instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -298,8 +298,8 @@
 - name: verify starting instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -317,8 +317,8 @@
 - name: verify force update running instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -335,8 +335,8 @@
 - name: verify force update running instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -353,8 +353,8 @@
 - name: verify force update running instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -372,8 +372,8 @@
 - name: verify restore instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -389,8 +389,8 @@
 - name: verify restore instance in project
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.project == "{{ cs_resource_prefix }}-prj"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
@@ -406,8 +406,8 @@
 - name: verify destroy instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state != "Destroyed"
 
 - name: test destroy instance in project
@@ -419,8 +419,8 @@
 - name: verify destroy instance in project
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Destroyed"
 
 - name: test destroy instance in project idempotence
@@ -432,8 +432,8 @@
 - name: verify destroy instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
 
 - name: test recover in project to stopped state and update a deleted instance in project in check mode
   cs_instance:
@@ -446,8 +446,8 @@
 - name: verify test recover to stopped state and update a deleted instance in project in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
 
 - name: test recover to stopped state and update a deleted instance in project
   cs_instance:
@@ -459,8 +459,8 @@
 - name: verify test recover to stopped state and update a deleted instance in project
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -474,8 +474,8 @@
 - name: verify test recover to stopped state and update a deleted instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -489,8 +489,8 @@
 - name: verify test expunge instance in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -503,8 +503,8 @@
 - name: verify test expunge instance in project
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -517,8 +517,8 @@
 - name: verify test expunge instance in project idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
 
 - name: cleanup ssh key in project
   cs_sshkeypair:
@@ -529,7 +529,7 @@
 - name: verify cleanup ssh key in project
   assert:
     that:
-    - sshkey|success
+    - sshkey is successful
 
 - name: cleanup affinity group in project
   cs_affinitygroup:
@@ -537,13 +537,13 @@
     project: "{{ cs_resource_prefix }}-prj"
     state: absent
   register: ag
-  until: ag|success
+  until: ag is successful
   retries: 20
   delay: 5
 - name: verify cleanup affinity group in project
   assert:
     that:
-    - ag|success
+    - ag is successful
 
 - name: cleanup security group in project ...take a while unless instance in project is expunged
   cs_securitygroup:
@@ -551,10 +551,10 @@
     project: "{{ cs_resource_prefix }}-prj"
     state: absent
   register: sg
-  until: sg|success
+  until: sg is successful
   retries: 100
   delay: 10
 - name: verify cleanup security group in project
   assert:
     that:
-    - sg|success
+    - sg is successful

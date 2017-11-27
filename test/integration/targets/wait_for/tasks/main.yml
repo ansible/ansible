@@ -28,7 +28,7 @@
 - name: verify test for absent path
   assert:
     that:
-      - waitfor|success
+      - waitfor is successful
       - "waitfor.path == '/tmp/wait_for_file'"
       - waitfor.elapsed >= 5
       - waitfor.elapsed <= 15
@@ -46,7 +46,7 @@
 - name: verify test for absent path
   assert:
     that:
-      - waitfor|success
+      - waitfor is successful
       - "waitfor.path == '/tmp/wait_for_file'"
       - waitfor.elapsed >= 5
       - waitfor.elapsed <= 15
@@ -65,7 +65,7 @@
 - name: verify test wait for port timeout
   assert:
     that:
-      - waitfor|success
+      - waitfor is successful
       - "waitfor.search_regex == 'completed'"
       - waitfor.elapsed >= 5
       - waitfor.elapsed <= 15
@@ -79,7 +79,7 @@
 - name: verify test wait for port timeout
   assert:
     that:
-      - waitfor|failed
+      - waitfor is failed
       - waitfor.elapsed == 3
       - "waitfor.msg == 'Timeout when waiting for 127.0.0.1:12121'"
 
@@ -93,7 +93,7 @@
 - name: verify test fail with custom msg
   assert:
     that:
-      - waitfor|failed
+      - waitfor is failed
       - waitfor.elapsed == 3
       - "waitfor.msg == 'fail with custom message'"
 
@@ -110,8 +110,8 @@
 - name: verify test wait for port sleep
   assert:
     that:
-      - waitfor|success
-      - not waitfor|changed
+      - waitfor is successful
+      - waitfor is not changed
       - "waitfor.port == {{ http_port }}"
 
 - name: install psutil using pip (non-Linux only)
@@ -128,6 +128,6 @@
 - name: verify test wait for port
   assert:
     that:
-      - waitfor|success
-      - not waitfor|changed
+      - waitfor is successful
+      - waitfor is not changed
       - "waitfor.port == {{ http_port }}"

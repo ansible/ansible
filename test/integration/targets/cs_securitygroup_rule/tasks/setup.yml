@@ -4,7 +4,7 @@
 - name: verify setup
   assert:
     that:
-    - sg|success
+    - sg is successful
 
 - name: setup default security group
   cs_securitygroup: name=default
@@ -12,7 +12,7 @@
 - name: verify setup
   assert:
     that:
-    - sg|success
+    - sg is successful
 
 - name: setup remove icmp rule
   cs_securitygroup_rule:
@@ -26,7 +26,7 @@
 - name: verify remove icmp rule
   assert:
     that:
-    - sg_rule|success
+    - sg_rule is successful
 
 - name: setup remove http range rule
   cs_securitygroup_rule:
@@ -39,7 +39,7 @@
 - name: verify remove http range rule
   assert:
     that:
-    - sg_rule|success
+    - sg_rule is successful
 
 - name: setup remove single port udp rule
   cs_securitygroup_rule:
@@ -53,4 +53,4 @@
 - name: verify remove single port udp rule
   assert:
     that:
-    - sg_rule|success
+    - sg_rule is successful

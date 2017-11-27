@@ -5,7 +5,7 @@
 - name: verify setup
   assert:
     that:
-    - ig|success
+    - ig is successful
 
 - name: test fail if missing name
   action: cs_instancegroup
@@ -14,7 +14,7 @@
 - name: verify results of fail if missing name
   assert:
     that:
-    - ig|failed
+    - ig is failed
     - "ig.msg == 'missing required arguments: name'"
 
 - name: test present instance group in check mode
@@ -24,8 +24,8 @@
 - name: verify results of create instance group in check mode
   assert:
     that:
-    - ig|success
-    - ig|changed
+    - ig is successful
+    - ig is changed
 
 - name: test present instance group
   cs_instancegroup: name={{ cs_resource_prefix }}_ig
@@ -33,8 +33,8 @@
 - name: verify results of create instance group
   assert:
     that:
-    - ig|success
-    - ig|changed
+    - ig is successful
+    - ig is changed
     - ig.name == "{{ cs_resource_prefix }}_ig"
 
 - name: test present instance group is idempotence
@@ -43,8 +43,8 @@
 - name: verify results present instance group is idempotence
   assert:
     that:
-    - ig|success
-    - not ig|changed
+    - ig is successful
+    - ig is not changed
     - ig.name == "{{ cs_resource_prefix }}_ig"
 
 - name: test absent instance group in check mode
@@ -54,8 +54,8 @@
 - name: verify results of absent instance group in check mode
   assert:
     that:
-    - ig|success
-    - ig|changed
+    - ig is successful
+    - ig is changed
     - ig.name == "{{ cs_resource_prefix }}_ig"
 
 - name: test absent instance group
@@ -64,8 +64,8 @@
 - name: verify results of absent instance group
   assert:
     that:
-    - ig|success
-    - ig|changed
+    - ig is successful
+    - ig is changed
     - ig.name == "{{ cs_resource_prefix }}_ig"
 
 - name: test absent instance group is idempotence
@@ -74,6 +74,6 @@
 - name: verify results of absent instance group is idempotence
   assert:
     that:
-    - ig|success
-    - not ig|changed
+    - ig is successful
+    - ig is not changed
     - ig.name is undefined

@@ -7,7 +7,7 @@
 - name: verify project did not exist
   assert:
     that:
-    - prj|success
+    - prj is successful
 
 - name: test create project in check mode
   cs_project:
@@ -17,7 +17,7 @@
 - name: verify test create project in check mode
   assert:
     that:
-    - prj|changed
+    - prj is changed
 
 - name: test create project
   cs_project:
@@ -26,7 +26,7 @@
 - name: verify test create project
   assert:
     that:
-    - prj|changed
+    - prj is changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
 
 - name: test create project idempotence
@@ -36,7 +36,7 @@
 - name: verify test create project idempotence
   assert:
     that:
-    - not prj|changed
+    - prj is not changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
 
 - name: test suspend project in check mode
@@ -48,7 +48,7 @@
 - name: verify test suspend project in check mode
   assert:
     that:
-    - prj|changed
+    - prj is changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state != "Suspended"
 
@@ -60,7 +60,7 @@
 - name: verify test suspend project
   assert:
     that:
-    - prj|changed
+    - prj is changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Suspended"
 
@@ -72,7 +72,7 @@
 - name: verify test suspend project idempotence
   assert:
     that:
-    - not prj|changed
+    - prj is not changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Suspended"
 
@@ -85,7 +85,7 @@
 - name: verify test activate project in check mode
   assert:
     that:
-    - prj|changed
+    - prj is changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state != "Active"
 
@@ -97,7 +97,7 @@
 - name: verify test activate project
   assert:
     that:
-    - prj|changed
+    - prj is changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Active"
 
@@ -109,7 +109,7 @@
 - name: verify test activate project idempotence
   assert:
     that:
-    - not prj|changed
+    - prj is not changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Active"
 
@@ -122,7 +122,7 @@
 - name: verify test delete project in check mode
   assert:
     that:
-    - prj|changed
+    - prj is changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Active"
 
@@ -134,7 +134,7 @@
 - name: verify test delete project
   assert:
     that:
-    - prj|changed
+    - prj is changed
     - prj.name == "{{ cs_resource_prefix }}-prj"
     - prj.state == "Active"
 
@@ -146,4 +146,4 @@
 - name: verify test delete project idempotence
   assert:
     that:
-    - not prj|changed
+    - prj is not changed

@@ -9,7 +9,7 @@
 - name: assert run in check mode
   assert:
     that:
-    - result_check|changed
+    - result_check is changed
     - result_check.dotnet_ngen_update_exit_code == 0
     - result_check.dotnet_ngen_update_output == "check mode output for C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\ngen.exe update /force"
     - result_check.dotnet_ngen_eqi_exit_code == 0

@@ -7,7 +7,7 @@
 - name: "Validate: no args"
   assert:
     that:
-      - cloudflare_dns|failed
+      - cloudflare_dns is failed
       - "cloudflare_dns.msg.find('missing required arguments: ') != -1"
 
 - name: "Test: only credentials"
@@ -20,7 +20,7 @@
 - name: "Validate: only credentials"
   assert:
     that:
-      - cloudflare_dns|failed
+      - cloudflare_dns is failed
       - "cloudflare_dns.msg.find('missing required arguments: ') != -1"
 
 - name: "Test: credentials and zone"
@@ -34,7 +34,7 @@
 - name: "Validate: credentials and zone"
   assert:
     that:
-      - cloudflare_dns|failed
+      - cloudflare_dns is failed
       - "cloudflare_dns.msg.find('but the following are missing: ') != -1"
 
 - name: "Test: credentials, zone and type"
@@ -49,7 +49,7 @@
 - name: "Validate: credentials, zone and type"
   assert:
     that:
-      - cloudflare_dns|failed
+      - cloudflare_dns is failed
       - "cloudflare_dns.msg.find('but the following are missing: ') != -1"
 
 ######## record tests #################

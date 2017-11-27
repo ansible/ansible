@@ -30,7 +30,7 @@ from ansible import errors
 def failed(result):
     ''' Test if task result yields failed '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("|failed expects a dictionary")
+        raise errors.AnsibleFilterError("The failed test expects a dictionary")
     return result.get('failed', False)
 
 
@@ -42,7 +42,7 @@ def success(result):
 def changed(result):
     ''' Test if task result yields changed '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("|changed expects a dictionary")
+        raise errors.AnsibleFilterError("The changed test expects a dictionary")
     if 'changed' not in result:
         changed = False
         if (
@@ -62,7 +62,7 @@ def changed(result):
 def skipped(result):
     ''' Test if task result yields skipped '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("|skipped expects a dictionary")
+        raise errors.AnsibleFilterError("The skipped test expects a dictionary")
     return result.get('skipped', False)
 
 
@@ -129,6 +129,7 @@ class TestModule(object):
             'failure': failed,
             'succeeded': success,
             'success': success,
+            'successful': success,
 
             # changed testing
             'changed': changed,
@@ -145,6 +146,7 @@ class TestModule(object):
 
             # version comparison
             'version_compare': version_compare,
+            'version': version_compare,
 
             # lists
             'any': any,

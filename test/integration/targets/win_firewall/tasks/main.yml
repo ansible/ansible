@@ -46,7 +46,7 @@
   - name: Test firewall_on
     assert:
       that:
-      - firewall_on|changed
+      - firewall_on is changed
       - firewall_on.Domain.enabled
       - firewall_on.Private.enabled
       - firewall_on.Public.enabled

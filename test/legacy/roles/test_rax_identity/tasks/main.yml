@@ -7,7 +7,7 @@
 - name: Validate results of rax_identity with no args
   assert:
     that:
-      - rax_identity|failed
+      - rax_identity is failed
       - rax_identity.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -24,7 +24,7 @@
 - name: Validate results of rax_identity with name and credentials
   assert:
     that:
-      - rax_identity|failed
+      - rax_identity is failed
       - rax_identity.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -41,8 +41,8 @@
 - name: Validate results of rax_identity with name and credentials
   assert:
     that:
-      - rax_identity|success
-      - not rax_identity|changed
+      - rax_identity is successful
+      - rax_identity is not changed
       - rax_identity.identity.region == "{{ rackspace_region }}"
       - rax_identity.identity.username == "{{ rackspace_username }}"
       - rax_identity.identity.authenticated

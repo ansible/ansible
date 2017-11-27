@@ -103,7 +103,7 @@
   assert:
     that:
       - "result.failed == true"
-      - "'Failed to validate the SSL certificate' in result.msg or (result.msg | match('hostname .* doesn.t match .*'))"
+      - "'Failed to validate the SSL certificate' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
       - "stat_result.stat.exists == false"
 
 - name: Clean up any cruft from the results directory
@@ -159,7 +159,7 @@
 - name: Ensure bad SSL site reidrect fails
   assert:
     that:
-      - result|failed
+      - result is failed
       - 'badssl_host in result.msg'
 
 - name: test basic auth
@@ -216,7 +216,7 @@
 - name: Assert SNI verification succeeds on new python
   assert:
     that:
-      - result|success
+      - result is successful
       - 'sni_host in result.content'
   when: ansible_python.has_sslcontext
 
@@ -230,8 +230,8 @@
 - name: Assert SNI verification fails on old python
   assert:
     that:
-      - result|failed
-  when: not result|skipped
+      - result is failed
+  when: result is not skipped
 
 - name: install OS packages that are needed for SNI on old python
   package:
@@ -256,7 +256,7 @@
 - name: Assert SNI verification succeeds on old python
   assert:
     that:
-      - result|success
+      - result is successful
       - 'sni_host in result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
@@ -300,7 +300,7 @@
 - name: Assert SNI verification succeeds on old python with pip urllib3 contrib
   assert:
     that:
-      - result|success
+      - result is successful
       - 'sni_host in result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
@@ -371,5 +371,5 @@
     return_content: true
     validate_certs: yes
   register: result
-  failed_when: not result|failed
+  failed_when: result is not failed
   when: has_httptester

@@ -8,7 +8,7 @@
 - name: verify setup system offering
   assert:
     that:
-    - so|success
+    - so is successful
 
 - name: fail missing storage type and is_system
   cs_serviceoffer:
@@ -27,7 +27,7 @@
 - name: verify create system service offering in check mode
   assert:
     that:
-    - so|failed
+    - so is failed
     - so.msg.startswith('missing required arguments:')
 
 - name: create system service offering in check mode
@@ -48,7 +48,7 @@
 - name: verify create system service offering in check mode
   assert:
     that:
-    - so|changed
+    - so is changed
 
 - name: create system service offering
   cs_serviceoffer:
@@ -67,7 +67,7 @@
 - name: verify create system service offering
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "System Offering for Ansible"
     - so.display_text == "System Offering for Ansible"
     - so.cpu_number == 1
@@ -98,7 +98,7 @@
 - name: verify create system service offering idempotence
   assert:
     that:
-    - not so|changed
+    - so is not changed
     - so.name == "System Offering for Ansible"
     - so.display_text == "System Offering for Ansible"
     - so.cpu_number == 1
@@ -122,7 +122,7 @@
 - name: verify remove system service offering in check mode
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "System Offering for Ansible"
     - so.is_system == true
 
@@ -135,7 +135,7 @@
 - name: verify remove system service offering
   assert:
     that:
-    - so|changed
+    - so is changed
     - so.name == "System Offering for Ansible"
     - so.is_system == true
 
@@ -148,4 +148,4 @@
 - name: verify remove system service offering idempotence
   assert:
     that:
-    - not so|changed
+    - so is not changed

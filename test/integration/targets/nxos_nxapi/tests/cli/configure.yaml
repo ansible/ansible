@@ -2,7 +2,7 @@
 - debug: msg="START cli/configure.yaml"
 
 - set_fact: nxapi_sandbox_option="yes"
-  when: platform | search('N7K')
+  when: platform is search('N7K')
 
 - name: Setup - put NXAPI in stopped state
   nxos_nxapi:
@@ -25,10 +25,10 @@
   register: result
 
 - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes.yaml
-  when: platform | match('N7K')
+  when: platform is match('N7K')
 
 - include: targets/nxos_nxapi/tasks/platform/default/assert_changes.yaml
-  when: not (platform | search('N7K'))
+  when: not ( platform is search('N7K'))
 
 - name: Configure NXAPI again
   nxos_nxapi:

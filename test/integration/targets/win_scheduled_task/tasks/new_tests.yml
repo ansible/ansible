@@ -19,7 +19,7 @@
 - name: assert results of create task (check mode)
   assert:
     that:
-    - create_task_check|changed
+    - create_task_check is changed
     - create_task_result_check.task_exists == False
 
 - name: create task
@@ -41,7 +41,7 @@
 - name: assert results of create task
   assert:
     that:
-    - create_task|changed
+    - create_task is changed
     - create_task_result.task_exists == True
     - create_task_result.actions|count == 1
     - create_task_result.actions[0].path == "cmd.exe"
@@ -63,7 +63,7 @@
 - name: assert results of create task (idempotent)
   assert:
     that:
-    - not create_task_again|changed
+    - create_task_again is not changed
 
 - name: change task (check mode)
   win_scheduled_task:
@@ -86,7 +86,7 @@
 - name: assert results of change task (check mode)
   assert:
     that:
-    - change_task_check|changed
+    - change_task_check is changed
     - change_task_result_check.actions|count == 1
     - change_task_result_check.registration_info.author == None
     - change_task_result_check.registration_info.description == "Original Description"
@@ -114,7 +114,7 @@
 - name: assert results of change task
   assert:
     that:
-    - change_task|changed
+    - change_task is changed
     - change_task_result.actions|count == 1
     - change_task_result.registration_info.author == "Cow Inc."
     - change_task_result.registration_info.description == "Test for Ansible"
@@ -136,7 +136,7 @@
 - name: assert results of change task (idempotent)
   assert:
     that:
-    - not change_task_again|changed
+    - change_task_again is not changed
 
 - name: add task action (check mode)
   win_scheduled_task:
@@ -160,7 +160,7 @@
 - name: assert results of add task action (check mode)
   assert:
     that:
-    - add_task_action_check|changed
+    - add_task_action_check is changed
     - add_task_action_result_check.actions|count == 1
     - add_task_action_result_check.actions[0].path == "cmd.exe"
     - add_task_action_result_check.actions[0].arguments == "/c echo hi"
@@ -187,7 +187,7 @@
 - name: assert results of add task action
   assert:
     that:
-    - add_task_action|changed
+    - add_task_action is changed
     - add_task_action_result.actions|count == 2
     - add_task_action_result.actions[0].path == "cmd.exe"
     - add_task_action_result.actions[0].arguments == "/c echo hi"
@@ -211,7 +211,7 @@
 - name: assert results of add task action (idempotent)
   assert:
     that:
-    - not add_task_action_again|changed
+    - add_task_action_again is not changed
 
 - name: remove task action (check mode)
   win_scheduled_task:
@@ -233,7 +233,7 @@
 - name: assert results of remove task action (check mode)
   assert:
     that:
-    - remove_task_action_check|changed
+    - remove_task_action_check is changed
     - remove_task_action_result_check.actions|count == 2
     - remove_task_action_result_check.actions[0].path == "cmd.exe"
     - remove_task_action_result_check.actions[0].arguments == "/c echo hi"
@@ -261,7 +261,7 @@
 - name: assert results of remove task action
   assert:
     that:
-    - remove_task_action|changed
+    - remove_task_action is changed
     - remove_task_action_result.actions|count == 1
     - remove_task_action_result.actions[0].path == "powershell.exe"
     - remove_task_action_result.actions[0].arguments == "-File C:\\ansible\\script.ps1"
@@ -280,7 +280,7 @@
 - name: assert results of remove task action (idempotent)
   assert:
     that:
-    - not remove_task_action_again|changed
+    - remove_task_action_again is not changed
 
 - name: remove task (check mode)
   win_scheduled_task:
@@ -298,7 +298,7 @@
 - name: assert results of remove task (check mode)
   assert:
     that:
-    - remove_task_check|changed
+    - remove_task_check is changed
     - remove_task_result_check.task_exists == True
 
 - name: remove task
@@ -316,7 +316,7 @@
 - name: assert results of remove task
   assert:
     that:
-    - remove_task|changed
+    - remove_task is changed
     - remove_task_result.task_exists == False
 
 - name: remove task (idempotent)
@@ -328,7 +328,7 @@
 - name: assert results of remove task (idempotent)
   assert:
     that:
-    - not remove_task_again|changed
+    - remove_task_again is not changed
 
 - name: create sole task in folder (check mode)
   win_scheduled_task:
@@ -348,7 +348,7 @@
 - name: assert results of create sole task in folder (check mode)
   assert:
     that:
-    - create_sole_task_check|changed
+    - create_sole_task_check is changed
     - create_sole_task_result_check.folder_exists == False
     - create_sole_task_result_check.task_exists == False
 
@@ -369,7 +369,7 @@
 - name: assert results of create sole task in folder
   assert:
     that:
-    - create_sole_task|changed
+    - create_sole_task is changed
     - create_sole_task_result.folder_exists == True
     - create_sole_task_result.task_exists == True
 
@@ -384,7 +384,7 @@
 - name: assert results of create sole task in folder (idempotent)
   assert:
     that:
-    - not create_sole_task_again|changed
+    - create_sole_task_again is not changed
 
 - name: remove sole task in folder (check mode)
   win_scheduled_task:
@@ -403,7 +403,7 @@
 - name: assert results of remove sole task in folder (check mode)
   assert:
     that:
-    - remove_sole_task_check|changed
+    - remove_sole_task_check is changed
     - remove_sole_task_result_check.folder_exists == True
     - remove_sole_task_result_check.task_exists == True
 
@@ -423,7 +423,7 @@
 - name: assert results of remove sole task in folder
   assert:
     that:
-    - remove_sole_task|changed
+    - remove_sole_task is changed
     - remove_sole_task_result.folder_exists == False
     - remove_sole_task_result.task_exists == False
 
@@ -437,4 +437,4 @@
 - name: assert results of remove sole task in folder (idempotent)
   assert:
     that:
-    - not remove_sole_task_again|changed
+    - remove_sole_task_again is not changed

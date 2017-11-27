@@ -15,8 +15,8 @@
 - name: "Validate: AAAA record creation"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '::1'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'AAAA'
@@ -37,8 +37,8 @@
 - name: "Validate: AAAA record idempotency"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: AAAA record update"
   cloudflare_dns:
@@ -54,8 +54,8 @@
 - name: "Validate: AAAA record update"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.ttl == 300
 
 - name: "Test: AAAA record duplicate (create new record)"
@@ -72,8 +72,8 @@
 - name: "Validate: AAAA record duplicate (create new record)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '::2'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'AAAA'
@@ -94,8 +94,8 @@
 - name: "Validate: AAAA record duplicate (old record present)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
       - cloudflare_dns.result.record.content == '::1'
       - cloudflare_dns.result.record.ttl == 300
       - cloudflare_dns.result.record.type == 'AAAA'
@@ -117,8 +117,8 @@
 - name: "Validate: AAAA record duplicate (make new record solo)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '::2'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'AAAA'
@@ -140,8 +140,8 @@
 - name: "Validate: AAAA record duplicate (old record absent)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: AAAA record deletion"
   cloudflare_dns:
@@ -158,8 +158,8 @@
 - name: "Validate: AAAA record deletion"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
 
 - name: "Test: AAAA record deletion succeeded"
   cloudflare_dns:
@@ -176,5 +176,5 @@
 - name: "Validate: AAAA record deletion succeeded"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

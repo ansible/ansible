@@ -74,7 +74,7 @@
       that:
           - "user_test1.results|map(attribute='changed')|unique|list == [False]"
           - "user_test1.results|map(attribute='state')|unique|list == ['present']"
-  when: "jinja2_version.stdout|version_compare('2.6', '>=')"
+  when: "jinja2_version.stdout is version('2.6', '>=')"
 
 - name: validate changed results for testcase 1 (jinja >= 2.6)
   assert:
@@ -89,7 +89,7 @@
           - "user_test1.results[2]['state'] == 'present'"
           - "user_test1.results[3]['state'] == 'present'"
           - "user_test1.results[4]['state'] == 'present'"
-  when: "jinja2_version.stdout|version_compare('2.6', '<')"
+  when: "jinja2_version.stdout is version('2.6', '<')"
 
 ##
 ## user remove

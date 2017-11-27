@@ -7,7 +7,7 @@
 - name: check if module fails gracefully when older than 2008r2
   win_power_plan:
     name: "high performance"
-  when: os_version.stdout_lines[0] | version_compare('6.1','lt')
+  when: os_version.stdout_lines[0]  is version('6.1','lt')
   check_mode: yes
   register: old_os_check
   failed_when: old_os_check.msg != 'The win_power_plan Ansible module is only available on Server 2008r2 (6.1) and newer'
@@ -40,7 +40,7 @@
   - name: assert setting plan (check mode)
     assert:
       that:
-      - set_plan_check|changed
+      - set_plan_check is changed
       - set_plan_check_result.stdout == 'False\r\n'
 
   #Test that setting plan and that change is applied
@@ -57,7 +57,7 @@
   - name: assert setting plan
     assert:
       that:
-      - set_plan|changed
+      - set_plan is changed
       - set_plan_result.stdout == 'True\r\n'
 
   #Test that plan doesn't apply change if it is already set
@@ -69,9 +69,9 @@
   - name: assert setting plan (idempotent)
     assert:
       that:
-      - not set_plan_idempotent|changed
+      - set_plan_idempotent is not changed
 
-  when: os_version.stdout_lines[0] | version_compare('6.1','ge')
+  when: os_version.stdout_lines[0]  is version('6.1','ge')
   always:
   - name: always change back plan to high performance when done testing
     win_power_plan:

@@ -9,7 +9,7 @@
 - name: verify setup zone is present
   assert:
     that:
-      - zone|success
+      - zone is successful
 
 - name: setup pod is absent
   cs_pod:
@@ -20,7 +20,7 @@
 - name: verify setup pod is absent
   assert:
     that:
-      - pod|success
+      - pod is successful
 
 - name: test fail if missing name
   cs_pod:
@@ -29,7 +29,7 @@
 - name: verify results of fail if missing name
   assert:
     that:
-      - pod|failed
+      - pod is failed
       - "pod.msg == 'missing required arguments: name'"
 
 
@@ -45,7 +45,7 @@
 - name: verify test create pod  in check mode
   assert:
     that:
-      - pod_origin|changed
+      - pod_origin is changed
       - pod_origin.zone == "{{ cs_resource_prefix }}-zone"
 
 - name: test create pod
@@ -59,7 +59,7 @@
 - name: verify test create pod
   assert:
     that:
-      - pod_origin|changed
+      - pod_origin is changed
       - pod_origin.allocation_state == "Enabled"
       - pod_origin.start_ip == "10.100.10.101"
       - pod_origin.end_ip == "10.100.10.254"
@@ -78,7 +78,7 @@
 - name: verify test create pod idempotence
   assert:
     that:
-      - not pod|changed
+      - pod is not changed
       - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
@@ -98,7 +98,7 @@
 - name: verify test update pod in check mode
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.101"
       - pod.end_ip == "10.100.10.254"
@@ -117,7 +117,7 @@
 - name: verify test update pod
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.102"
       - pod.end_ip == "10.100.10.254"
@@ -136,7 +136,7 @@
 - name: verify test update pod idempotence
   assert:
     that:
-      - not pod|changed
+      - pod is not changed
       - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.102"
       - pod.end_ip == "10.100.10.254"
@@ -154,7 +154,7 @@
 - name: verify test enable pod in check mode
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.allocation_state == "Enabled"
       - pod.id == pod_origin.id
       - pod.start_ip == "10.100.10.102"
@@ -172,7 +172,7 @@
 - name: verify test enable pod
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.allocation_state == "Disabled"
       - pod.id == pod_origin.id
       - pod.start_ip == "10.100.10.102"
@@ -190,7 +190,7 @@
 - name: verify test enable pod idempotence
   assert:
     that:
-      - not pod|changed
+      - pod is not changed
       - pod.allocation_state == "Disabled"
       - pod.id == pod_origin.id
       - pod.start_ip == "10.100.10.102"
@@ -209,7 +209,7 @@
 - name: verify test disable pod in check mode
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.allocation_state == "Disabled"
       - pod.id == pod_origin.id
       - pod.start_ip == "10.100.10.102"
@@ -227,7 +227,7 @@
 - name: verify test disable pod
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.allocation_state == "Enabled"
       - pod.id == pod_origin.id
       - pod.start_ip == "10.100.10.102"
@@ -246,7 +246,7 @@
 - name: verify test enabled pod idempotence
   assert:
     that:
-      - not pod|changed
+      - pod is not changed
       - pod.allocation_state == "Enabled"
       - pod.id == pod_origin.id
       - pod.start_ip == "10.100.10.102"
@@ -265,7 +265,7 @@
 - name: verify test create pod in check mode
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.id == pod_origin.id
       - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.102"
@@ -283,7 +283,7 @@
 - name: verify test create pod
   assert:
     that:
-      - pod|changed
+      - pod is changed
       - pod.id == pod_origin.id
       - pod.allocation_state == "Enabled"
       - pod.start_ip == "10.100.10.102"
@@ -301,4 +301,4 @@
 - name: verify test absent pod idempotence
   assert:
     that:
-      - not pod|changed
+      - pod is not changed

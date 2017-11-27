@@ -55,8 +55,8 @@
 - name: verify output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - "'user:{{ ansible_user }}:r--' in output.acl"
       - "'user:{{ ansible_user }}:r--' in getfacl_output.stdout_lines"
 ##############################################################################
@@ -72,8 +72,8 @@
 - name: verify output
   assert:
     that:
-      - not output|changed
-      - not output|failed
+      - output is not changed
+      - output is not failed
       - "'user::rw-' in output.acl"
       - "'user:{{ ansible_user }}:r--' in output.acl"
       - "'group::r--' in output.acl"
@@ -100,8 +100,8 @@
 - name: verify output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - "'user:{{ ansible_user }}:r--' not in output.acl"
       - "'user:{{ ansible_user }}:r--' not in getfacl_output.stdout_lines"
 ##############################################################################
@@ -122,8 +122,8 @@
 - name: verify output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - "'user:{{ ansible_user }}:rw-' in output.acl"
       - "'default:user:{{ ansible_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
@@ -145,8 +145,8 @@
 - name: verify output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - "'user:{{ ansible_user }}:rw-' in output.acl"
       - "'default:user:{{ ansible_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
@@ -165,8 +165,8 @@
 - name: verify output
   assert:
     that:
-      - not output|changed
-      - not output|failed
+      - output is not changed
+      - output is not failed
       - "'user:{{ ansible_user }}:rw-' in output.acl"
       - "'default:user:{{ ansible_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
@@ -198,8 +198,8 @@
 - name: verify output
   assert:
     that:
-      - output|changed
-      - not output|failed
+      - output is changed
+      - output is not failed
       - "'user::rwx' in getfacl_output.stdout_lines"
       - "'group::r-x' in getfacl_output.stdout_lines"
       - "'other::r-x' in getfacl_output.stdout_lines"

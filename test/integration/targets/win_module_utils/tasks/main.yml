@@ -29,8 +29,8 @@
 
 - assert:
     that:
-    - bogus_utils | failed
-    - bogus_utils.msg | search("Could not find")
+    - bogus_utils is failed
+    - bogus_utils.msg is search("Could not find")
 
 - name: call module with camel conversion tests
   camel_conversion_test:

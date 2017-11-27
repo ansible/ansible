@@ -17,8 +17,8 @@
 - name: "Validate: CNAME record creation"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == "srv1.{{ cloudflare_zone }}"
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'CNAME'
@@ -39,8 +39,8 @@
 - name: "Validate: CNAME record idempotency"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: CNAME record update"
   cloudflare_dns:
@@ -56,8 +56,8 @@
 - name: "Validate: CNAME record update"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == "srv2.{{ cloudflare_zone }}"
       - cloudflare_dns.result.record.ttl == 300
 
@@ -76,8 +76,8 @@
 - name: "Validate: CNAME record duplicate (make new record solo)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == "srv3.{{ cloudflare_zone }}"
       - cloudflare_dns.result.record.ttl == 600
       - cloudflare_dns.result.record.type == 'CNAME'
@@ -99,8 +99,8 @@
 - name: "Validate: CNAME record duplicate (old record absent)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: CNAME record deletion"
   cloudflare_dns:
@@ -117,8 +117,8 @@
 - name: "Validate: CNAME record deletion"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
 
 - name: "Test: CNAME record deletion succeeded"
   cloudflare_dns:
@@ -135,5 +135,5 @@
 - name: "Validate: CNAME record deletion succeeded"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

@@ -7,10 +7,10 @@
   package:
     state: present
     name: nmap-ncat
-  when: ansible_distribution == 'Fedora' or (ansible_os_family == 'RedHat' and ansible_distribution_version|version_compare(7, '>='))
+  when: ansible_distribution == 'Fedora' or (ansible_os_family == 'RedHat' and ansible_distribution_version is version(7, '>='))
 
 - name: Install netcat (RHEL)
   package:
     state: present
     name: nc
-  when: ansible_distribution != 'Fedora' and (ansible_os_family == 'RedHat' and ansible_distribution_version|version_compare(7, '<'))
+  when: ansible_distribution != 'Fedora' and (ansible_os_family == 'RedHat' and ansible_distribution_version is version(7, '<'))

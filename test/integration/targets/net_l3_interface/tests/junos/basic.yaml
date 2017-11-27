@@ -29,8 +29,8 @@
       - "result.changed == true"
       - "'<name>1.1.1.1/32</name>' in config.xml"
       - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
-      - result.diff.prepared | search("\+ *address 1.1.1.1/32")
-      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\+ *address 1.1.1.1/32")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
 
 - name: Configure interface address (idempotent)
   net_l3_interface:
@@ -65,8 +65,8 @@
       - "result.changed == true"
       - "'<name>1.1.1.1/32</name>' not in config.xml"
       - "'<name>fd5d:12c9:2201:1::1/128</name>' not in config.xml"
-      - result.diff.prepared | search("\- *address 1.1.1.1/32")
-      - result.diff.prepared | search("\- *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\- *address 1.1.1.1/32")
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:1::1/128")
 
 - name: Delete interface address (idempotent)
   net_l3_interface:
@@ -115,13 +115,13 @@
     that:
       - 'result.changed == true'
       - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address 1.1.1.1/32")
+      - result.diff.prepared is search("\+ *address 1.1.1.1/32")
       - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
       - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address 2.2.2.2/32")
+      - result.diff.prepared is search("\+ *address 2.2.2.2/32")
       - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\+ *address fd5d:12c9:2201:2::2/128")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:2::2/128")
 
 - name: Configure l3 interface in aggregate (idempotent)
   net_l3_interface:
@@ -157,13 +157,13 @@
     that:
       - 'result.changed == true'
       - "'edit interfaces ge-0/0/1 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address 1.1.1.1/32")
+      - result.diff.prepared is search("\- *address 1.1.1.1/32")
       - "'edit interfaces ge-0/0/1 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address fd5d:12c9:2201:1::1/128")
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:1::1/128")
       - "'edit interfaces ge-0/0/2 unit 0 family inet' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address 2.2.2.2/32")
+      - result.diff.prepared is search("\- *address 2.2.2.2/32")
       - "'edit interfaces ge-0/0/2 unit 0 family inet6' in result.diff.prepared"
-      - result.diff.prepared | search("\- *address fd5d:12c9:2201:2::2/128")
+      - result.diff.prepared is search("\- *address fd5d:12c9:2201:2::2/128")
 
 - name: Delete l3 interface configuration (idempotent)
   net_l3_interface:

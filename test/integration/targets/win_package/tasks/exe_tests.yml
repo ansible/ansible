@@ -16,7 +16,7 @@
 - name: assert install local exe (check mode)
   assert:
     that:
-    - install_local_exe_check|changed
+    - install_local_exe_check is changed
     - install_local_exe_check.reboot_required == False
     - install_local_exe_actual_check.exists == False
 
@@ -36,7 +36,7 @@
 - name: assert install local exe
   assert:
     that:
-    - install_local_exe|changed
+    - install_local_exe is changed
     - install_local_exe.reboot_required == False
     - install_local_exe.rc == 0
     - install_local_exe_actual.exists == True
@@ -52,7 +52,7 @@
 - name: assert install local exe (idempotent)
   assert:
     that:
-    - not install_local_exe_idempotent|changed
+    - install_local_exe_idempotent is not changed
 
 - name: uninstall local exe with path (check mode)
   win_package:
@@ -71,7 +71,7 @@
 - name: assert uninstall local exe with path (check mode)
   assert:
     that:
-    - uninstall_path_local_exe_check|changed
+    - uninstall_path_local_exe_check is changed
     - uninstall_path_local_exe_check.reboot_required == False
     - uninstall_path_local_exe_actual_check.exists == True
 
@@ -91,7 +91,7 @@
 - name: assert uninstall local exe with path
   assert:
     that:
-    - uninstall_path_local_exe|changed
+    - uninstall_path_local_exe is changed
     - uninstall_path_local_exe.reboot_required == False
     - uninstall_path_local_exe.rc == 0
     - uninstall_path_local_exe_actual.exists == False
@@ -107,7 +107,7 @@
 - name: assert uninstall local exe with path (idempotent)
   assert:
     that:
-    - not uninstall_path_local_exe_idempotent|changed
+    - uninstall_path_local_exe_idempotent is not changed
 
 - name: install url exe (check mode)
   win_package:
@@ -126,7 +126,7 @@
 - name: assert install url exe (check mode)
   assert:
     that:
-    - install_url_exe_check|changed
+    - install_url_exe_check is changed
     - install_url_exe_check.reboot_required == False
     - install_url_exe_actual_check.exists == False
 
@@ -146,7 +146,7 @@
 - name: assert install url exe
   assert:
     that:
-    - install_url_exe|changed
+    - install_url_exe is changed
     - install_url_exe.reboot_required == False
     - install_url_exe.rc == 0
     - install_url_exe_actual.exists == True
@@ -162,7 +162,7 @@
 - name: assert install url exe (idempotent)
   assert:
     that:
-    - not install_url_exe_again|changed
+    - install_url_exe_again is not changed
 
 - name: uninstall local exe with product_id (check mode)
   win_package:
@@ -180,7 +180,7 @@
 - name: assert uninstall local exe with product_id (check mode)
   assert:
     that:
-    - uninstall_id_local_exe_check|changed
+    - uninstall_id_local_exe_check is changed
     - uninstall_id_local_exe_check.reboot_required == False
     - uninstall_id_local_exe_actual_check.exists == True
 
@@ -199,7 +199,7 @@
 - name: assert uninstall local exe with product_id
   assert:
     that:
-    - uninstall_id_local_exe|changed
+    - uninstall_id_local_exe is changed
     - uninstall_id_local_exe.reboot_required == False
     - uninstall_id_local_exe.rc == 0
     - uninstall_id_local_exe_actual.exists == False
@@ -214,7 +214,7 @@
 - name: assert uninstall local exe with product_id (idempotent)
   assert:
     that:
-    - not uninstall_id_local_exe_idempotent|changed
+    - uninstall_id_local_exe_idempotent is not changed
 
 - name: install exe checking path
   win_package:
@@ -257,7 +257,7 @@
 - name: assert install exe checking path and version
   assert:
     that:
-    - not install_exe_create_version_match|changed
+    - install_exe_create_version_match is not changed
 
 - name: install exe checking path and version mismatch
   win_package:
@@ -270,7 +270,7 @@
 - name: assert install exe checking path and version mistmatch
   assert:
     that:
-    - install_exe_create_version_mismatch|changed
+    - install_exe_create_version_mismatch is changed
 
 - name: install exe checking service
   win_package:
@@ -282,7 +282,7 @@
 - name: assert install exe checking service
   assert:
     that:
-    - not install_exe_create_service_match|changed
+    - install_exe_create_service_match is not changed
 
 - name: install exe checking service mismatch
   win_package:
@@ -294,7 +294,7 @@
 - name: assert install exe checking service mismatch
   assert:
     that:
-    - install_exe_create_service_mismatch|changed
+    - install_exe_create_service_mismatch is changed
  
 - name: uninstall exe post tests
   win_package:

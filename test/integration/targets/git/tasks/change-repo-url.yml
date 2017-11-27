@@ -18,7 +18,7 @@
   register: clone2
 
 - assert:
-    that: "clone2|success"
+    that: "clone2 is successful"
 
 - name: CHANGE-REPO-URL | check url updated
   shell: git remote show origin | grep Fetch
@@ -63,7 +63,7 @@
 - name: CHANGE-REPO-URL | check repo not changed
   assert:
     that:
-      - not checkout_same_url|changed
+      - checkout_same_url is not changed
 
 
 - name: CHANGE-REPO-URL | clone repo with new url to same destination
@@ -75,7 +75,7 @@
 - name: CHANGE-REPO-URL | check repo changed
   assert:
     that:
-      - checkout_new_url|changed
+      - checkout_new_url is changed
 
 
 - name: CHANGE-REPO-URL | clone repo with new url in check mode
@@ -88,8 +88,8 @@
 - name: CHANGE-REPO-URL | check repo reported changed in check mode
   assert:
     that:
-      - checkout_new_url_check_mode | changed
-  when: git_version.stdout | version_compare(git_version_supporting_ls_remote, '>=')
+      - checkout_new_url_check_mode is changed
+  when: git_version.stdout is version(git_version_supporting_ls_remote, '>=')
 
 - name: CHANGE-REPO-URL | clone repo with new url after check mode
   git:
@@ -100,7 +100,7 @@
 - name: CHANGE-REPO-URL | check repo still changed after check mode
   assert:
     that:
-      - checkout_new_url_after_check_mode|changed
+      - checkout_new_url_after_check_mode is changed
 
 
 # Test that checkout by branch works when the branch is not in our current repo but the sha is

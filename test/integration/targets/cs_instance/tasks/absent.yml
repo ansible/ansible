@@ -8,8 +8,8 @@
 - name: verify destroy instance in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state != "Destroyed"
 
 - name: test destroy instance
@@ -20,8 +20,8 @@
 - name: verify destroy instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Destroyed"
 
 - name: test destroy instance idempotence
@@ -32,8 +32,8 @@
 - name: verify destroy instance idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
 
 - name: test recover to stopped state and update a deleted instance in check mode
   cs_instance:
@@ -45,8 +45,8 @@
 - name: verify test recover to stopped state and update a deleted instance in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
 
 - name: test recover to stopped state and update a deleted instance
   cs_instance:
@@ -57,8 +57,8 @@
 - name: verify test recover to stopped state and update a deleted instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -71,8 +71,8 @@
 - name: verify test recover to stopped state and update a deleted instance idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -85,8 +85,8 @@
 - name: verify test expunge instance in check mode
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -98,8 +98,8 @@
 - name: verify test expunge instance
   assert:
     that:
-    - instance|success
-    - instance|changed
+    - instance is successful
+    - instance is changed
     - instance.state == "Stopped"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
 
@@ -111,5 +111,5 @@
 - name: verify test expunge instance idempotence
   assert:
     that:
-    - instance|success
-    - not instance|changed
+    - instance is successful
+    - instance is not changed

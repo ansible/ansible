@@ -11,8 +11,8 @@
 - name: verify create http range rule in check mode
   assert:
     that:
-    - sg_rule|success
-    - sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is changed
     - sg_rule.type == 'ingress'
     - sg_rule.security_group == 'default'
     - sg_rule.protocol == 'tcp'
@@ -31,8 +31,8 @@
 - name: verify create http range rule
   assert:
     that:
-    - sg_rule|success
-    - sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is changed
     - sg_rule.type == 'ingress'
     - sg_rule.security_group == 'default'
     - sg_rule.protocol == 'tcp'
@@ -51,8 +51,8 @@
 - name: verify create http range rule idempotence
   assert:
     that:
-    - sg_rule|success
-    - not sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is not changed
 
 - name: test remove single port udp rule in check mode
   cs_securitygroup_rule:
@@ -67,8 +67,8 @@
 - name: verify remove single port udp rule in check mode
   assert:
     that:
-    - sg_rule|success
-    - sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is changed
     - sg_rule.type == 'egress'
     - sg_rule.security_group == 'default'
     - sg_rule.protocol == 'udp'
@@ -88,8 +88,8 @@
 - name: verify remove single port udp rule
   assert:
     that:
-    - sg_rule|success
-    - sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is changed
     - sg_rule.type == 'egress'
     - sg_rule.security_group == 'default'
     - sg_rule.protocol == 'udp'
@@ -109,8 +109,8 @@
 - name: verify remove single port udp rule idempotence
   assert:
     that:
-    - sg_rule|success
-    - not sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is not changed
 
 - name: test remove icmp rule in check mode
   cs_securitygroup_rule:
@@ -125,8 +125,8 @@
 - name: verify icmp rule in check mode
   assert:
     that:
-    - sg_rule|success
-    - sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is changed
     - sg_rule.type == 'ingress'
     - sg_rule.security_group == 'default'
     - sg_rule.cidr == '0.0.0.0/0'
@@ -146,8 +146,8 @@
 - name: verify icmp rule
   assert:
     that:
-    - sg_rule|success
-    - sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is changed
     - sg_rule.type == 'ingress'
     - sg_rule.security_group == 'default'
     - sg_rule.cidr == '0.0.0.0/0'
@@ -167,5 +167,5 @@
 - name: verify icmp rule idempotence
   assert:
     that:
-    - sg_rule|success
-    - not sg_rule|changed
+    - sg_rule is successful
+    - sg_rule is not changed

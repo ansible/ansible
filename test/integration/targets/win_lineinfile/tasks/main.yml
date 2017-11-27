@@ -35,8 +35,8 @@
       - "result.stat.exists"
       - "not result.stat.isdir"
       - "result.stat.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
-      - "not result|failed"
-      - "not result|changed"
+      - "result is not failed"
+      - "result is not changed"
 
 
 - name: insert a line at the beginning of the file, and back it up
