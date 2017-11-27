@@ -23,7 +23,14 @@
        tags:
            testing: testing
            delete: never
+   register: output
    check_mode: yes
+
+ - name: Assert status succeeded (Check Mode)
+   assert:
+     that:
+       - output.changed
+       - output.state
 
  - name: Test invalid account name (should give error)
    azure_rm_managed_disk:
@@ -123,7 +130,7 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
-       storage_account_type: Premium_LRS
+       storage_account_type: "Premium_LRS"
        disk_size_gb: 2
    register: output
 
@@ -246,26 +253,99 @@
  - assert:
      that:
        - "'testvm001' in mounted.state.managed_by"
+ 
+ - name: Unmount the disk to virtual machine (check mode)
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       tags:
+           testing: testing
+           delete: never
+   check_mode: yes
+   register: mounted
+  
+ - assert:
+     that:
+       - mounted.changed
+
+ - name: Unmount the disk to virtual machine
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       tags:
+           testing: testing
+           delete: never
+   register: mounted
+
+ - assert:
+     that:
+       - mounted.changed
+       - not mounted.state.managed_by
+
+ - name: Update disk size
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 4
+       tags:
+           testing: testing
+           delete: never
+   register: output
+
+ - assert:
+    that:
+      - output.state.disk_size_gb == 4
+
+ - name: Attach the disk to virtual machine again
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 4
+       managed_by: testvm001
+       tags:
+           testing: testing
+           delete: never
+   register: mounted
+
+ - assert:
+     that:
+       - mounted.changed
+       - "'testvm001' in mounted.state.managed_by"
+
+ - name: Change disk size to incompatible size 
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ managed_disk1 }}"
+       state: absent
+       managed_by: testvm001
+   register: output
+   ignore_errors: yes
+
+ - name: Assert delete failed since disk is attached to VM
+   assert: { that: "output['failed'] == True" }
 
  - name: Delete managed disk (Check Mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk1 }}"
        state: absent
-       disk_size_gb: 2
+   register: output
    check_mode: yes
+
+ - name: Assert status succeeded 
+   assert:
+     that:
+       - output.changed
+       - output.state
 
  - name: Delete managed disk 
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}" 
        name: "{{ managed_disk2 }}"
-       disk_size_gb: 1
        state: absent
    check_mode: no
- - name: Assert status succeeded 
-   assert:
-     that:
-       - output.changed
 
  - name: Delete copied managed disk 
    azure_rm_managed_disk:

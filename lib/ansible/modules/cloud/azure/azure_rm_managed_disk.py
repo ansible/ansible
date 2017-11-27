@@ -41,19 +41,16 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
     storage_account_type:
         description:
             - "Type of storage for the managed disk: 'Standard_LRS'  or 'Premium_LRS'. If not specified the disk is created 'Standard_LRS'"
         choices:
             - Standard_LRS
             - Premium_LRS
-        required: false
     create_option:
         description:
             - "Allowed values: empty, import, copy. 'import' from a VHD file in 'source_uri' and 'copy' from previous managed disk 'source_resource_uri'."
@@ -61,35 +58,28 @@ options:
             - empty
             - import
             - copy
-        required: false
     source_uri:
         description:
             - URI to a valid VHD file to be used when 'create_option' is 'import'.
-        required: false
     source_resource_uri:
         description:
             - The resource ID of the managed disk to copy when 'create_option' is 'copy'.
-        required: false
     os_type:
         description:
             - "Type of Operating System: 'linux' or 'windows'. Used when 'create_option' is either 'copy' or 'import' and the source is an OS disk."
         choices:
             - linux
             - windows
-        required: false
     disk_size_gb:
         description:
             - Size in GB of the managed disk to be created. If 'create_option' is 'copy' then the value must be greater than or equal to the source's size.
-        required: false
     managed_by:
         description:
             - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
-        required: false
         version_added: 2.5
     tags:
         description:
             - Tags to assign to the managed disk.
-        required: false
 
 extends_documentation_fragment:
     - azure
@@ -113,6 +103,13 @@ EXAMPLES = '''
         resource_group: Testing
         disk_size_gb: 4
         managed_by: testvm001
+    
+    - name: Unmount the managed disk to VM
+      azure_rm_managed_disk:
+        name: mymanageddisk
+        location: eastus
+        resource_group: Testing
+        disk_size_gb: 4
 
     - name: Delete managed disk
       azure_rm_manage_disk:
@@ -252,27 +249,41 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         result = None
+        changed = False
+
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
 
-        result = self.get_managed_disk()
+        disk_instance = self.get_managed_disk()
+        result = disk_instance
+
+        # need create or update
         if self.state == 'present':
-            result, changed = self.create_or_update_managed_disk(result)
+            parameter = self.generate_managed_disk_property()
+            if not disk_instance or self.is_different(disk_instance, parameter):
+                changed = True
+                if not self.check_mode:
+                    result = self.create_or_update_managed_disk(parameter)
+                else:
+                    result = True
 
         # unmount from the old virtual machine and mount to the new virtual machine
-        if result:
-            vm_name = parse_resource_id(result.get('managed_by', '')).get('name')
-            if self.managed_by != vm_name:
-                changed = True
+        vm_name = parse_resource_id(disk_instance.get('managed_by', '')).get('name') if disk_instance else None
+        if self.managed_by != vm_name:
+            changed = True
+            if not self.check_mode:
                 if vm_name:
                     self.detach(vm_name, result)
                 if self.managed_by:
                     self.attach(self.managed_by, result)
                 result = self.get_managed_disk()
 
-        if self.state == 'absent':
-            changed = self.delete_managed_disk() or changed
+        if self.state == 'absent' and disk_instance:
+            changed = True
+            if not self.check_mode:
+                self.delete_managed_disk()
+            result = True
 
         self.results['changed'] = changed
         self.results['state'] = result
@@ -312,10 +323,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error getting virtual machine {0} - {1}".format(name, str(exc)))
 
-    def create_or_update_managed_disk(self, found_prev_disk):
-        # Scaffolding empty managed disk
-        changed = False
-        result = None
+    def generate_managed_disk_property(self):
         disk_params = {}
         creation_data = {}
         disk_params['location'] = self.location
@@ -332,23 +340,19 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         elif self.create_option == 'copy':
             creation_data['create_option'] = DiskCreateOption.copy
             creation_data['source_resource_id'] = self.source_resource_uri
+        disk_params['creation_data'] = creation_data
+        return disk_params
+
+    def create_or_update_managed_disk(self, parameter):
         try:
-            # CreationData cannot be changed after creation
-            disk_params['creation_data'] = creation_data
-            if found_prev_disk:
-                if not self.is_different(found_prev_disk, disk_params):
-                    return (found_prev_disk, changed)
-            if not self.check_mode:
-                poller = self.compute_client.disks.create_or_update(
-                    self.resource_group,
-                    self.name,
-                    disk_params)
-                aux = self.get_poller_result(poller)
-                result = managed_disk_to_dict(aux)
-            changed = True
+            poller = self.compute_client.disks.create_or_update(
+                self.resource_group,
+                self.name,
+                parameter)
+            aux = self.get_poller_result(poller)
+            return  managed_disk_to_dict(aux)
         except CloudError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
-        return (result, changed)
 
     # This method accounts for the difference in structure between the
     # Azure retrieved disk and the parameters for the new disk to be created.
@@ -367,19 +371,13 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         return resp
 
     def delete_managed_disk(self):
-        changed = False
         try:
-            if not self.check_mode:
-                poller = self.compute_client.disks.delete(
-                    self.resource_group,
-                    self.name)
-                result = self.get_poller_result(poller)
-            else:
-                result = True
-            changed = True
+            poller = self.compute_client.disks.delete(
+                self.resource_group,
+                self.name)
+            return self.get_poller_result(poller)
         except CloudError as e:
             self.fail("Error deleting the managed disk: {0}".format(str(e)))
-        return changed
 
     def get_managed_disk(self):
         try:
