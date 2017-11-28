@@ -415,8 +415,8 @@ class AzureRMModuleBase(object):
         '''
         try:
             return self.rm_client.resource_groups.get(resource_group)
-        except CloudError:
-            self.fail("Parameter error: resource group {0} not found".format(resource_group))
+        except CloudError as cloud_error:
+            self.fail("Error retrieving resource group {0} - {1}".format(resource_group, cloud_error.message))
         except Exception as exc:
             self.fail("Error retrieving resource group {0} - {1}".format(resource_group, str(exc)))
 
