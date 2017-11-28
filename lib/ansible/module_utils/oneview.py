@@ -207,7 +207,7 @@ class OneViewModuleBase(object):
         config=dict(type='path'),
         hostname=dict(type='str'),
         username=dict(type='str'),
-        password=dict(type='str'),
+        password=dict(type='str', no_log=True),
         api_version=dict(type='int'),
         image_streamer_hostname=dict(type='str')
     )
