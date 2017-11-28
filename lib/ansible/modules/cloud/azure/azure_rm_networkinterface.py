@@ -53,18 +53,11 @@ options:
         required: false
     virtual_network_name:
         description:
-            - Name of an existing virtual network with which the network interface will be associated. Required
+            - Name or id of an existing virtual network with which the network interface will be associated. Required
               when creating a network interface.
         aliases:
             - virtual_network
         required: true
-        default: null
-    virtual_network_resource_group:
-        description:
-            - Resource group of the virtual network. Use current resource group as default if this field not specificed.
-        required: false
-        default: null
-        version_added: 2.5
     subnet_name:
         description:
             - Name of an existing subnet within the specified virtual network. Required when creating a network
@@ -243,6 +236,7 @@ state:
 '''
 
 try:
+    from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
@@ -329,7 +323,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             public_ip=dict(type='bool', default=True),
             subnet_name=dict(type='str', aliases=['subnet']),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
-            virtual_network_resource_group=dict(type='str'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
@@ -364,7 +357,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         )
 
         super(AzureRMNetworkInterface, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                      supports_check_mode=True)
+                                                      supports_check_mode=True,
+                                                      required_if=required_if)
 
     def exec_module(self, **kwargs):
 
@@ -403,6 +397,11 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             results = nic_to_dict(nic)
             self.log(results, pretty_print=True)
 
+            # parse the virtual network resource group and name
+            virtual_network_dict = parse_resource_id(self.virtual_network_name)
+            virtual_network_name = virtual_network_dict.get('name')
+            virtual_network_resource_group = virtual_network_dict.get('resource_group', self.resource_group)
+
             nsg = None
             if self.state == 'present':
                 # check for update
@@ -416,11 +415,11 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         self.log("CHANGED: network interface {0} network security group".format(self.name))
                         changed = True
 
-                if results['ip_configurations'][0]['subnet']['virtual_network_name'] != self.virtual_network_name:
+                if results['ip_configurations'][0]['subnet']['virtual_network_name'] != virtual_network_name:
                     self.log("CHANGED: network interface {0} virtual network name".format(self.name))
                     changed = True
 
-                if results['ip_configurations'][0]['subnet']['resource_group'] != self.virtual_network_resource_group:
+                if results['ip_configurations'][0]['subnet']['resource_group'] != virtual_network_resource_group:
                     self.log("CHANGED: network interface {0} virtual network resource group".format(self.name))
                     changed = True
 
@@ -462,7 +461,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         if changed:
             if self.state == 'present':
-                subnet = self.get_subnet(self.virtual_network_resource_group or self.resource_group, self.virtual_network_name, self.subnet_name)
+                subnet = self.get_subnet(virtual_network_resource_group, virtual_network_name, self.subnet_name)
                 if not subnet:
                     self.fail('subnet {0} is not exist'.format(self.subnet_name))
                 nic_ip_configurations = [
