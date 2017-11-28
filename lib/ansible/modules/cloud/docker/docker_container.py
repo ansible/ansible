@@ -264,6 +264,12 @@ options:
       - none
     default: null
     required: false
+  userns_mode:
+     description:
+       - User namespace to use
+     default: null
+     required: false
+     version_added: "2.5"
   networks:
      description:
        - List of networks the container belongs to.
@@ -751,6 +757,7 @@ class TaskParameters(DockerBaseClass):
         self.memory_swappiness = None
         self.name = None
         self.network_mode = None
+        self.userns_mode = None
         self.networks = None
         self.oom_killer = None
         self.oom_score_adj = None
@@ -954,6 +961,7 @@ class TaskParameters(DockerBaseClass):
             binds='volume_binds',
             volumes_from='volumes_from',
             network_mode='network_mode',
+            userns_mode='userns_mode',
             cap_add='capabilities',
             extra_hosts='etc_hosts',
             read_only='read_only',
@@ -1312,6 +1320,7 @@ class Container(DockerBaseClass):
             mac_address=network.get('MacAddress'),
             memory_swappiness=host_config.get('MemorySwappiness'),
             network_mode=host_config.get('NetworkMode'),
+            userns_mode=host_config.get('UsernsMode'),
             oom_killer=host_config.get('OomKillDisable'),
             oom_score_adj=host_config.get('OomScoreAdj'),
             pid_mode=host_config.get('PidMode'),
@@ -2080,6 +2089,7 @@ def main():
         memory_swappiness=dict(type='int'),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
+        userns_mode=dict(type='str'),
         networks=dict(type='list'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
