@@ -397,7 +397,10 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             self.log("Response : {0}".format(response))
             self.log("Container registry instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the container registry instance: {0}'.format(str(e)))
+            if e.error.error == 'ResourceNotFound':
+                self.log('Did not find the container registry instance: {0}'.format(str(e)))
+            else 
+                self.log('Error while trying to get container registry instance: {0}'.format(str(e)))
             response = None
         if found is True and self.admin_user_enabled is True:
             try:
