@@ -164,9 +164,9 @@ class LookupModule(LookupBase):
 
         self.set_options(var_options=variables, direct=kwargs)
 
-        validate_certs = self._options['validate_certs']
-        url = self._options['url']
-        version = self._options['version']
+        validate_certs = self.get_option('validate_certs')
+        url = self.get_option('url')
+        version = self.get_option('version')
 
         etcd = Etcd(url=url, version=version, validate_certs=validate_certs)
 

@@ -91,7 +91,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._read_config_data(path)
 
-        strict = self._options['strict']
+        strict = self.get_option('strict')
         fact_cache = FactCache()
         try:
             # Go over hosts (less var copies)
@@ -103,7 +103,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     hostvars = combine_vars(hostvars, fact_cache[host])
 
                 # create composite vars
-                self._set_composite_vars(self._options['compose'], hostvars, host, strict=strict)
+                self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
                 hostvars = inventory.hosts[host].get_vars()
@@ -111,10 +111,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     hostvars = combine_vars(hostvars, self._cache[host])
 
                 # constructed groups based on conditionals
-                self._add_host_to_composed_groups(self._options['groups'], hostvars, host, strict=strict)
+                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict)
 
                 # constructed groups based variable values
-                self._add_host_to_keyed_groups(self._options['keyed_groups'], hostvars, host, strict=strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict)
 
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))

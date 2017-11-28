@@ -176,12 +176,12 @@ class Connection(ConnectionBase):
         self._become_user = self._play_context.become_user
         self._become_pass = self._play_context.become_pass
 
-        self._winrm_port = self._options['port']
-        self._winrm_scheme = self._options['scheme']
-        self._winrm_path = self._options['path']
-        self._kinit_cmd = self._options['kerberos_command']
-        self._winrm_transport = self._options['transport']
-        self._winrm_connection_timeout = self._options['connection_timeout']
+        self._winrm_port = self.get_option('port')
+        self._winrm_scheme = self.get_option('scheme')
+        self._winrm_path = self.get_option('path')
+        self._kinit_cmd = self.get_option('kerberos_command')
+        self._winrm_transport = self.get_option('transport')
+        self._winrm_connection_timeout = self.get_option('connection_timeout')
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
@@ -205,7 +205,7 @@ class Connection(ConnectionBase):
             raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
 
         # if kerberos is among our transports and there's a password specified, we're managing the tickets
-        kinit_mode = self._options['kerberos_mode']
+        kinit_mode = self.get_option('kerberos_mode')
         if kinit_mode is None:
             # HACK: ideally, remove multi-transport stuff
             self._kerb_managed = "kerberos" in self._winrm_transport and self._winrm_pass
@@ -221,7 +221,7 @@ class Connection(ConnectionBase):
         argspec = inspect.getargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
         supported_winrm_args.update(internal_kwarg_mask)
-        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in self._options['_extras']])
+        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in self.get_option('_extras')])
         unsupported_args = passed_winrm_args.difference(supported_winrm_args)
 
         # warn for kwargs unsupported by the installed version of pywinrm
@@ -230,7 +230,7 @@ class Connection(ConnectionBase):
 
         # pass through matching extras, excluding the list we want to treat specially
         for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
-            self._winrm_kwargs[arg] = self._options['_extras']['ansible_winrm_%s' % arg]
+            self._winrm_kwargs[arg] = self.get_option('_extras')['ansible_winrm_%s' % arg]
 
     # Until pykerberos has enough goodies to implement a rudimentary kinit/klist, simplest way is to let each connection
     # auth itself with a private CCACHE.
