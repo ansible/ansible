@@ -26,14 +26,14 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
-import ansible.modules.network.lenovo.cnos_restapi as cnos_restapi
+import ansible.modules.network.cnos.cnos_restapi as cnos_restapi
 
 
 def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
     basic._ANSIBLE_ARGS = to_bytes(args)
 
-    
+
 class AnsibleExitJson(Exception):
     pass
 
@@ -79,7 +79,7 @@ class TestCnosRestModule(unittest.TestCase):
         result = exc.exception.args[0]
         self.assertEqual(result['changed'], changed, result)
         return result
- 
+
 
 class TestCnosRestapiModule(TestCnosRestModule):
 
@@ -97,8 +97,8 @@ class TestCnosRestapiModule(TestCnosRestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
                              transport='https', urlpath='/nos/api/cfg/vlan',
-                             method='GET'))        
-        instance = RestModule.return_value 
+                             method='GET'))
+        instance = RestModule.return_value
         instance.loginurl.return_value = 1
         instance.cb_method.return_value = 1, "good"
         result = self.execute_module(changed=True)
