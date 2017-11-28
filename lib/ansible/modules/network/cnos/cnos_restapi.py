@@ -122,6 +122,7 @@ import ast
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
 
+
 class RestModule(object):
     def __init__(self, params):
         self.transport = params['transport']
