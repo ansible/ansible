@@ -15,10 +15,87 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
+import re
 import yaml
+
 from mock import Mock, patch
 from oneview_module_loader import ONEVIEW_MODULE_UTILS_PATH
 from hpOneView.oneview_client import OneViewClient
+
+
+class OneViewBaseTest(object):
+    @pytest.fixture(autouse=True)
+    def setUp(self, mock_ansible_module, mock_ov_client, request):
+        marker = request.node.get_marker('resource')
+        self.resource = getattr(mock_ov_client, "%s" % (marker.args))
+        self.mock_ov_client = mock_ov_client
+        self.mock_ansible_module = mock_ansible_module
+
+    @pytest.fixture
+    def testing_module(self):
+        resource_name = type(self).__name__.replace('Test', '')
+        resource_module_path_name = resource_name.replace('Module', '')
+        resource_module_path_name = re.findall('[A-Z][^A-Z]*', resource_module_path_name)
+        resource_module_path_name = 'oneview_' + str.join('_', resource_module_path_name).lower()
+
+        ansible = __import__('ansible')
+        oneview_module = ansible.modules.remote_management.oneview
+        resource_module = getattr(oneview_module, resource_module_path_name)
+        self.testing_class = getattr(resource_module, resource_name)
+        testing_module = self.testing_class.__module__.split('.')[-1]
+        testing_module = getattr(oneview_module, testing_module)
+        try:
+            # Load scenarios from module examples (Also checks if it is a valid yaml)
+            EXAMPLES = yaml.load(testing_module.EXAMPLES, yaml.SafeLoader)
+
+        except yaml.scanner.ScannerError:
+            message = "Something went wrong while parsing yaml from {}.EXAMPLES".format(self.testing_class.__module__)
+            raise Exception(message)
+        return testing_module
+
+    def test_main_function_should_call_run_method(self, testing_module, mock_ansible_module):
+        mock_ansible_module.params = {'config': 'config.json'}
+
+        main_func = getattr(testing_module, 'main')
+
+        with patch.object(self.testing_class, "run") as mock_run:
+            main_func()
+            mock_run.assert_called_once()
+
+
+class FactsParamsTest(OneViewBaseTest):
+    def test_should_get_all_using_filters(self, testing_module):
+        self.resource.get_all.return_value = []
+
+        params_get_all_with_filters = dict(
+            config='config.json',
+            name=None,
+            params={
+                'start': 1,
+                'count': 3,
+                'sort': 'name:descending',
+                'filter': 'purpose=General',
+                'query': 'imported eq true'
+            })
+        self.mock_ansible_module.params = params_get_all_with_filters
+
+        self.testing_class().run()
+
+        self.resource.get_all.assert_called_once_with(start=1, count=3, sort='name:descending', filter='purpose=General', query='imported eq true')
+
+    def test_should_get_all_without_params(self, testing_module):
+        self.resource.get_all.return_value = []
+
+        params_get_all_with_filters = dict(
+            config='config.json',
+            name=None
+        )
+        self.mock_ansible_module.params = params_get_all_with_filters
+
+        self.testing_class().run()
+
+        self.resource.get_all.assert_called_once_with()
 
 
 class OneViewBaseTestCase(object):
