@@ -118,12 +118,18 @@ state:
             returned: always
             type: str
             sample: Standard
-        sku:
-            provisioning_state:
+        provisioning_state:
+            description:
                 - Provisioning state
             returned: always
             type: str
             sample: Succeeded
+        login_server:
+            description:
+                - Registry login server
+            returned: always
+            type: str
+            sample: myregistry.azurecr.io
         credentials:
             provisioning_state:
                 - Credentials
@@ -199,6 +205,7 @@ def create_containerregistry_dict(registry, credentials):
         admin_user_enabled=registry.admin_user_enabled if registry is not None else "",
         sku=registry.sku.name if registry is not None else "",
         provisioning_state=registry.provisioning_state if registry is not None else "",
+        login_server=registry.login_server if registry is not None else "",
         credentials=dict(
             password_name=credentials.passwords[0].name.value if credentials is not None else "",
             password_value=credentials.passwords[0].value if credentials is not None else "",
