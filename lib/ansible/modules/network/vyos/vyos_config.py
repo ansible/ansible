@@ -177,6 +177,7 @@ def get_candidate(module):
 
 def diff_config(commands, config):
     config = [str(c).replace("'", '') for c in config.splitlines()]
+    import q;q(config)
 
     updates = list()
     visited = set()
