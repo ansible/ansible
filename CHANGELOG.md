@@ -7,6 +7,7 @@ Ansible Changes By Release
 
 ### Bugfixes
 * Fix `pamd` rule args regexp to match file paths (https://github.com/ansible/ansible/pull/33432)
+* Check if SELinux policy exists before setting (https://github.com/ansible/ansible/pull/31834)
 
 <a id="2.4.2"></a>
 
