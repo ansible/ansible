@@ -1,10 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
 #
 # This file is part of Ansible
-#
+
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -19,12 +21,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Module to run  CNOS restapi  to Lenovo Switches
+# Lenovo Networking
 #
-
-import json
-import ast
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import open_url
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -43,8 +41,6 @@ description:
      RESTAPI interface on CNOS fetches data and configures the
      Lenovo CNOS switches. "
 
-transport: https, urlpath: /nos/api/cfg/telemetry/bst/feature,
-           method: PUT, jsoninp:
 options:
     transport:
         description:
@@ -118,12 +114,18 @@ msg:
   description: Success or failure message
   returned: always
   type: string
-  sample: "RESTAPI PUT /nos/api/cfg/telemetry/bst/feature is successful"
-  sample failure  : "RESTAPI PUT /nos/api/cfg/telemetry/bst/feature failed
+  sample: "RESTAPI PUT /nos/api/cfg/telemetry/bst/feature is
+
+class RestModule(object): successful"
+  sample failure: "RESTAPI PUT /nos/api/cfg/telemetry/bst/feature failed"
 '''
 
+import json
+import ast
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import open_url
 
-class RestModule(object):
+Class RestModule(object):
     def __init__(self, params):
         self.transport = params['transport']
         self.ip = params['host']
