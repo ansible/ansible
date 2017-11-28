@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# (c) 2017, Michael DeHaan <matt@sivel.net>
+# (c) 2017, Matt Martz <matt@sivel.net>
 #
 # This file is part of Ansible
 #
