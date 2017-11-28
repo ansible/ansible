@@ -74,7 +74,7 @@ class TestConnectionClass(unittest.TestCase):
 
         conn._connect()
         self.assertTrue(conn._terminal.on_open_shell.called)
-        self.assertFalse(conn._terminal.on_authorize.called)
+        self.assertFalse(conn._terminal.on_become.called)
 
         conn._play_context.become = True
         conn._play_context.become_method = 'enable'
@@ -82,7 +82,7 @@ class TestConnectionClass(unittest.TestCase):
         conn._connected = False
 
         conn._connect()
-        conn._terminal.on_authorize.assert_called_with(passwd='password')
+        conn._terminal.on_become.assert_called_with(passwd='password')
 
     @patch("ansible.plugins.connection.paramiko_ssh.Connection.close")
     def test_network_cli_close(self, mocked_super):

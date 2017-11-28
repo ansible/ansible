@@ -67,7 +67,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().endswith(b'#'):
             return
 
@@ -87,7 +87,7 @@ class TerminalModule(TerminalBase):
             msg = 'unable to elevate privilege to enable mode'
             raise AnsibleConnectionFailure(msg)
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
             # if prompt is None most likely the terminal is hung up at a prompt
