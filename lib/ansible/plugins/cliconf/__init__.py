@@ -150,7 +150,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def get(self, *args, **kwargs):
+    def get(self, command, prompt=None, answer=None, sendonly=False):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
