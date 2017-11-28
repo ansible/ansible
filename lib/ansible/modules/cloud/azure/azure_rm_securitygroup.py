@@ -87,11 +87,15 @@ options:
                 default: "*"
             source_address_prefix:
                 description:
-                  - IP address or CIDR from which traffic originates.
+                  - The CIDR or source IP range. Asterix '*' can also be used to match all source IPs. Default tags such
+                    as 'VirtualNetwork', 'AzureLoadBalancer' and 'Internet' can also be used. If this is an ingress rule
+                    , specifies where network traffic originates from.
                 default: "*"
             destination_address_prefix:
                 description:
-                  - IP address or CIDR to which traffic is headed.
+                  - The destination address prefix. CIDR or destination IP range. Asterix '*' can also be used to match 
+                    all source IPs. Default tags such as 'VirtualNetwork', 'AzureLoadBalancer' and 'Internet' can also 
+                    be used.
                 default: "*"
             access:
                 description:
