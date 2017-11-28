@@ -144,11 +144,11 @@ class Connection(ConnectionBase):
         messages = ['updating play_context for connection']
         if self._play_context.become is False and play_context.become is True:
             auth_pass = play_context.become_pass
-            self._terminal.on_authorize(passwd=auth_pass)
+            self._terminal.on_become(passwd=auth_pass)
             messages.append('authorizing connection')
 
         elif self._play_context.become is True and not play_context.become:
-            self._terminal.on_deauthorize()
+            self._terminal.on_unbecome()
             messages.append('deauthorizing connection')
 
         self._play_context = play_context
@@ -196,9 +196,9 @@ class Connection(ConnectionBase):
         self._terminal.on_open_shell()
 
         if self._play_context.become and self._play_context.become_method == 'enable':
-            display.vvvv('firing event: on_authorize', host=self._play_context.remote_addr)
+            display.vvvv('firing event: on_become', host=self._play_context.remote_addr)
             auth_pass = self._play_context.become_pass
-            self._terminal.on_authorize(passwd=auth_pass)
+            self._terminal.on_become(passwd=auth_pass)
 
         display.vvvv('ssh connection has completed successfully', host=self._play_context.remote_addr)
         self._connected = True
