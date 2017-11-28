@@ -39,6 +39,7 @@ except ImportError:
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
+        socket_path = None
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
 
@@ -52,6 +53,9 @@ class ActionModule(ActionBase):
         module = load_module('ansible.module_utils.' + play_context.network_os, f3, p3, d3)
 
         self.provider = load_provider(module.get_provider_argspec(), self._task.args)
+        if play_context.connection != 'local' and any(self.provider.values()):
+            display.warning('provider is unnecessary when using connection=%s and will be ignored' %
+                             play_context.connection)
 
         if play_context.network_os == 'junos':
             play_context.connection = 'netconf'
@@ -69,7 +73,6 @@ class ActionModule(ActionBase):
             play_context.become = self.provider['authorize'] or False
             play_context.become_pass = self.provider['auth_pass']
 
-        socket_path = None
         if self._play_context.connection == 'local':
             socket_path = self._start_connection(play_context)
             task_vars['ansible_socket'] = socket_path
