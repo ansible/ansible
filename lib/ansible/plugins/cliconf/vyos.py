@@ -52,7 +52,7 @@ class Cliconf(CliconfBase):
         return device_info
 
     def get_config(self):
-        return self.send_command(b'show configuration all')
+        return self.send_command(b'show configuration commands')
 
     def edit_config(self, command):
         for cmd in chain([b'configure'], to_list(command)):
