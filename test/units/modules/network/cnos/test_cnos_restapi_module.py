@@ -83,7 +83,7 @@ class TestCnosRestModule(unittest.TestCase):
 
 class TestCnosRestapiModule(TestCnosRestModule):
 
-    module = cnos_restapi
+    module = cnos_restapi
 
     def test_cnos_restapi_unreachable(self):        
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
