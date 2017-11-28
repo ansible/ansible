@@ -375,6 +375,11 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             # Set default location
             self.location = resource_group.location
 
+        # parse the virtual network resource group and name
+        virtual_network_dict = parse_resource_id(self.virtual_network_name)
+        virtual_network_name = virtual_network_dict.get('name')
+        virtual_network_resource_group = virtual_network_dict.get('resource_group', self.resource_group)
+
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatiable
             self.ip_configurations = [
@@ -396,11 +401,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             self.check_provisioning_state(nic, self.state)
             results = nic_to_dict(nic)
             self.log(results, pretty_print=True)
-
-            # parse the virtual network resource group and name
-            virtual_network_dict = parse_resource_id(self.virtual_network_name)
-            virtual_network_name = virtual_network_dict.get('name')
-            virtual_network_resource_group = virtual_network_dict.get('resource_group', self.resource_group)
 
             nsg = None
             if self.state == 'present':
