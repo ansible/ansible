@@ -87,6 +87,8 @@ The following table gives a summary of the connection methods supported by this 
 |             |                           |                               |
 +-------------+---------------------------+-------------------------------+
 
+.. _network-cli:
+
 connection: network_cli
 -----------------------
 
@@ -193,20 +195,8 @@ API (HTTP) Proxy
 Privilege Mode
 ==============
 
-Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible 2.5 added support for ``become`` when using ``connection=network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
 
-.. code-block:: yaml
-
-   - name: Gather facts (eos)
-     eos_facts:
-       gather_subset:
-         - "!hardware"
-     become: true
-     become_method: enable
-     when: "'eos' in group_names"
-
-
-For more information see the :doc:`Ansible Privilege Escalation<become>` guide.
+For more information see the :ref:`become-network guide.
 
 
 
@@ -261,3 +251,4 @@ FIXME
 ======
 
 * network debug page should link to this
+* Link to _become-network
