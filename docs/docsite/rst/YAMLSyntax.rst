@@ -141,8 +141,8 @@ You will want to quote hash values using colons followed by a space or the end o
 
 ...and then the colon will be preserved.
 
-Further, Ansible uses ``"{{ var }}"`` for variables.  If a value after a colon starts
-with a ``"{"``, YAML will think it is a dictionary, so you must quote it, like so::
+Ansible uses ``"{{ var }}"`` for variables.  If a value after a colon starts
+with a ``"{"``, YAML will think it is a dictionary, so you must quote it. For example::
 
     foo: "{{ variable }}"
 
