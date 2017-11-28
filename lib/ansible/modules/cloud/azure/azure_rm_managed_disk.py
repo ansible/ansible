@@ -234,12 +234,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         results = dict()
         resource_group = None
         response = None
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail(
-                'resource group {} not found'
-                .format(self.resource_group))
+
+        resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
         if self.state == 'present':
