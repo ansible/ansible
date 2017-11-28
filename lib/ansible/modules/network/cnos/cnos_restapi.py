@@ -18,6 +18,7 @@ __metaclass__ = type
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
+
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Module to run  CNOS restapi  to Lenovo Switches
@@ -42,16 +43,19 @@ description:
      Lenovo CNOS switches. "
 
 options:
-    transport:
+
+transport:
         description:
             - Transport layer used by the RESTAPI
                - http  plaintext communication over port 8090
                - https secured encrypted comminication
         required: true
+        default: Null
     urlpath:
         description:
             - URL Path of the RESTAPI
         required:true
+        default: Null
     method:
         description:
             - The HTTP method of the request
@@ -60,12 +64,13 @@ options:
                  - POST is typically used for creating/querying objects
                  - PUT is typically used for modifying objects
         required: true
+        default: Null
     jsoninp:
         description:
             - input json dictionary
                  - Used by POST, PUT method to input request paramters
         required: false
-
+        default: Null
 author:
     - Arun Kumar (@arunktele)
 '''
