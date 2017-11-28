@@ -400,13 +400,13 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             if e.error.error == 'ResourceNotFound':
                 self.log('Did not find the container registry instance: {0}'.format(str(e)))
             else 
-                self.log('Error while trying to get container registry instance: {0}'.format(str(e)))
+                self.fail('Error while trying to get container registry instance: {0}'.format(str(e)))
             response = None
         if found is True and self.admin_user_enabled is True:
             try:
                 credentials = self.containerregistry_mgmt_client.registries.list_credentials(self.resource_group, self.name)
             except CloudError as e:
-                self.log('List registry credentials failed: {0}'.format(str(e)))
+                self.fail('List registry credentials failed: {0}'.format(str(e)))
                 credentials = None
         elif found is True and self.admin_user_enabled is False:
             credentials = None
