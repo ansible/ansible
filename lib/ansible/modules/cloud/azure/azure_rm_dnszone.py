@@ -143,7 +143,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
         self.results['check_mode'] = self.check_mode
 
         # retrieve resource group to make sure it exists
-        resource_group = self.get_resource_group(self.resource_group)
+        self.get_resource_group(self.resource_group)
 
         changed = False
         results = dict()
