@@ -81,7 +81,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         valid = False
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
-            if not ext or ext in self._options['yaml_extensions']:
+            if not ext or ext in self.get_option('yaml_extensions'):
                 valid = True
         return valid
 
