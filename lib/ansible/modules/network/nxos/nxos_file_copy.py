@@ -56,6 +56,12 @@ options:
         their default values.
     required: false
     default: null
+  connect_ssh_port:
+    description:
+      - SSH port to connect to server during transfer of file
+    required: false
+    default: 22
+    version_added: "2.5"
 '''
 
 EXAMPLES = '''
@@ -63,6 +69,7 @@ EXAMPLES = '''
     local_file: "./test_file.txt"
     remote_file: "test_file.txt"
     provider: "{{ cli }}"
+    connect_ssh_port: "{{ ansible_ssh_port }}"
 '''
 
 RETURN = '''
@@ -148,13 +155,15 @@ def transfer_file(module, dest):
     hostname = module.params.get('host') or provider.get('host')
     username = module.params.get('username') or provider.get('username')
     password = module.params.get('password') or provider.get('password')
+    port = module.params.get('connect_ssh_port')
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(
         hostname=hostname,
         username=username,
-        password=password)
+        password=password,
+        port=port)
 
     full_remote_path = '{}{}'.format(module.params['file_system'], dest)
     scp = SCPClient(ssh.get_transport())
@@ -181,6 +190,7 @@ def main():
         local_file=dict(required=True),
         remote_file=dict(required=False),
         file_system=dict(required=False, default='bootflash:'),
+        connect_ssh_port=dict(required=False, type='int', default=22),
     )
 
     argument_spec.update(nxos_argument_spec)
