@@ -360,26 +360,10 @@ def load_config(module, command_filter, warnings, replace=False, admin=False, co
         module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
 
 
-# For iosxr_command module
-def to_commands(module, commands):
-    spec = {
-        'command': dict(key=True),
-        'prompt': dict(),
-        'answer': dict()
-    }
-    transform = ComplexList(spec, module)
-    return transform(commands)
-
-
-def run_commands(module, commands):
+def run_command(module, commands):
     conn = get_connection(module)
     responses = list()
-    commands = to_commands(module, to_list(commands))
     for cmd in to_list(commands):
-        kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-        for key in ('prompt', 'answer', 'send_only'):
-            if cmd.get(key) is not None:
-                kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
-        out = conn.get(**kwargs)
+        out = conn.get(to_bytes(cmd['command'], errors='surrogate_or_strict'))
         responses.append(to_text(out, errors='surrogate_or_strict'))
     return responses
