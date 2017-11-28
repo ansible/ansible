@@ -40,7 +40,7 @@ version_added: "2.4"
 
 description:
   - "Provides access to the RESTAPI's on the Lenovo CNOS switches.
-     RESTAPI interface on CNOS fetches data and configures the 
+     RESTAPI interface on CNOS fetches data and configures the
      Lenovo CNOS switches. "
 
 transport: https, urlpath: /nos/api/cfg/telemetry/bst/feature,
@@ -108,7 +108,7 @@ EXAMPLES = '''
     outputfile: "./results/test_restapi_{{ inventory_hostname }}_output.txt"
     transport: https
     urlpath: /nos/api/info/telemetry/bst/congestion-drop-counters
-    method: POST 
+    method: POST
     jsoninp: '{"req-id" : 1, "request-type" : "port-drops", "request-params": {"interface-list": ["Ethernet1/1", "Ethernet1/2", "Ethernet1/3"]}}'
 
 '''
@@ -142,7 +142,7 @@ class RestModule(object):
         try:
             ret = open_url(self.url + '/nos/api/login/', method='GET',
                            use_proxy=False, timeout=10, validate_certs=False)
-        except IOError, e:
+        except IOError as e:
             if hasattr(e, 'code'):
                 if e.code == 401:
                     cookie = e.headers['Set-Cookie']
