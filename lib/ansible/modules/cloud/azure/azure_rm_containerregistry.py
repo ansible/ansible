@@ -93,7 +93,7 @@ state:
                 - Resource ID
             returned: always
             type: str
-            sample: XXXXXX
+            sample: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
         name:
             description:
                 - Registry name
@@ -117,7 +117,7 @@ state:
                 - SKU
             returned: always
             type: str
-            sample: XXXXX
+            sample: Standard
         sku:
             provisioning_state:
                 - Provisioning state
