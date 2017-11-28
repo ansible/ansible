@@ -50,15 +50,15 @@ options:
         required: true
     urlpath:
         description:
-            - URL Path of the RESTAPI.
+            - URL Path of the RESTAPI
         required:true
     method:
         description:
-            - The HTTP method of the request.
-                 - GET is typically used for querying objects.
-                 - DELETE is typically used for deleting objects.
-                 - POST is typically used for creating/querying  objects.
-                 - PUT is typically used for modifying objects.
+            - The HTTP method of the request
+                 - GET is typically used for querying objects
+                 - DELETE is typically used for deleting objects
+                 - POST is typically used for creating/querying objects
+                 - PUT is typically used for modifying objects
         required: true
     jsoninp:
         description:
