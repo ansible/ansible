@@ -5,7 +5,7 @@
   yum:
     name: "{{ item }}"
     state: present
-  with_items:
+  loop:
     - yum-utils
     - device-mapper-persistent-data
     - lvm2
