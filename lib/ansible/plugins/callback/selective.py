@@ -93,7 +93,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         global DONT_COLORIZE
-        DONT_COLORIZE = self._plugin_options['nocolor']
+        DONT_COLORIZE = self.get_option('nocolor')
 
     def _print_task(self, task_name=None):
         if task_name is None:

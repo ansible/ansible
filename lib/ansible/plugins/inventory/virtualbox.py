@@ -75,21 +75,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # set vars in inventory from hostvars
         for host in hostvars:
 
-            query = self._options['query']
+            query = self.get_option('query')
             # create vars from vbox properties
             if query and isinstance(query, MutableMapping):
                 for varname in query:
                     hostvars[host][varname] = self._query_vbox_data(host, query[varname])
 
             # create composite vars
-            self._set_composite_vars(self._options['compose'], hostvars, host)
+            self._set_composite_vars(self.get_option('compose'), hostvars, host)
 
             # actually update inventory
             for key in hostvars[host]:
                 self.inventory.set_variable(host, key, hostvars[host][key])
 
             # constructed groups based on conditionals
-            self._add_host_to_composed_groups(self._options['groups'], hostvars, host)
+            self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host)
 
     def _populate_from_source(self, source_data):
         hostvars = {}
@@ -97,7 +97,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         current_host = None
 
         # needed to possibly set ansible_host
-        netinfo = self._options['network_info_path']
+        netinfo = self.get_option('network_info_path')
 
         for line in source_data:
             try:
@@ -173,8 +173,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 pass
 
         if not source_data:
-            b_pwfile = to_bytes(self._options['settings_password_file'], errors='surrogate_or_strict')
-            running = self._options['running_only']
+            b_pwfile = to_bytes(self.get_option('settings_password_file'), errors='surrogate_or_strict')
+            running = self.get_option('running_only')
 
             # start getting data
             cmd = [self.VBOX, b'list', b'-l']
