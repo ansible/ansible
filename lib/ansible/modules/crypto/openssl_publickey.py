@@ -212,11 +212,16 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 return False
 
             try:
+                publickey_content = open(self.path, 'rb').read()
+                if self.format == 'OpenSSH':
+                    current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
+                    publickey_content = current_publickey.public_bytes(crypto_serialization.Encoding.PEM,
+                                                                       crypto_serialization.PublicFormat.SubjectPublicKeyInfo)
                 current_publickey = crypto.dump_publickey(
                     crypto.FILETYPE_ASN1,
-                    crypto.load_publickey(crypto.FILETYPE_PEM, open(self.path, 'rb').read())
+                    crypto.load_publickey(crypto.FILETYPE_PEM, publickey_content)
                 )
-            except crypto.Error:
+            except (crypto.Error, ValueError):
                 return False
 
             desired_publickey = crypto.dump_publickey(
