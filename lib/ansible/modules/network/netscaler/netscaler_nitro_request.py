@@ -371,7 +371,6 @@ class NitroAPICaller(object):
         )
 
         self._module_result = dict(
-            changed=False,
             failed=False,
         )
 
@@ -456,6 +455,7 @@ class NitroAPICaller(object):
 
     def fail_module(self, msg, **kwargs):
         self._module_result['failed'] = True
+        self._module_result['changed'] = False
         self._module_result.update(kwargs)
         self._module_result['msg'] = msg
         self._module.fail_json(**self._module_result)
@@ -535,6 +535,8 @@ class NitroAPICaller(object):
 
         if result['nitro_errorcode'] == 0:
             self._module_result['changed'] = True
+        else:
+            self._module_result['changed'] = False
 
         return result
 
@@ -568,6 +570,11 @@ class NitroAPICaller(object):
         result = {}
         self.edit_response_data(r, info, result, success_status=200)
 
+        if result['nitro_errorcode'] == 0:
+            self._module_result['changed'] = True
+        else:
+            self._module_result['changed'] = False
+
         return result
 
     def get(self):
@@ -594,6 +601,7 @@ class NitroAPICaller(object):
         self.edit_response_data(r, info, result, success_status=200)
 
         self.handle_get_return_object(result)
+        self._module_result['changed'] = False
 
         return result
 
@@ -627,6 +635,7 @@ class NitroAPICaller(object):
         self.edit_response_data(r, info, result, success_status=200)
 
         self.handle_get_return_object(result)
+        self._module_result['changed'] = False
 
         return result
 
@@ -659,6 +668,7 @@ class NitroAPICaller(object):
         result = {}
         self.edit_response_data(r, info, result, success_status=200)
         self.handle_get_return_object(result)
+        self._module_result['changed'] = False
 
         return result
 
@@ -683,6 +693,7 @@ class NitroAPICaller(object):
         result = {}
         self.edit_response_data(r, info, result, success_status=200)
         self.handle_get_return_object(result)
+        self._module_result['changed'] = False
 
         return result
 
@@ -714,6 +725,8 @@ class NitroAPICaller(object):
 
         if result['nitro_errorcode'] == 0:
             self._module_result['changed'] = True
+        else:
+            self._module_result['changed'] = False
 
         return result
 
@@ -744,6 +757,11 @@ class NitroAPICaller(object):
         )
         result = {}
         self.edit_response_data(r, info, result, success_status=200)
+
+        if result['nitro_errorcode'] == 0:
+            self._module_result['changed'] = True
+        else:
+            self._module_result['changed'] = False
 
         return result
 
@@ -776,6 +794,8 @@ class NitroAPICaller(object):
             if self._module.params['resource'] in data:
                 result['nitro_count'] = data[self._module.params['resource']][0]['__count']
 
+        self._module_result['changed'] = False
+
         return result
 
     def action(self):
@@ -807,6 +827,11 @@ class NitroAPICaller(object):
         result = {}
 
         self.edit_response_data(r, info, result, success_status=200)
+
+        if result['nitro_errorcode'] == 0:
+            self._module_result['changed'] = True
+        else:
+            self._module_result['changed'] = False
 
         return result
 
@@ -842,6 +867,8 @@ class NitroAPICaller(object):
             body_data = self._module.from_json(result['http_response_body'])
             result['nitro_auth_token'] = body_data['login'][0]['sessionid']
 
+        self._module_result['changed'] = False
+
         return result
 
     def save_config(self):
@@ -867,6 +894,7 @@ class NitroAPICaller(object):
         result = {}
 
         self.edit_response_data(r, info, result, success_status=200)
+        self._module_result['changed'] = False
 
         return result
 
