@@ -279,8 +279,8 @@ class AzureRMRecordSet(AzureRMModuleBase):
         for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
 
-        # get resource group and zone
-        resource_group = self.get_resource_group(self.resource_group)
+        # retrieve resource group to make sure it exists
+        self.get_resource_group(self.resource_group)
         zone = self.dns_client.zones.get(self.resource_group, self.zone_name)
         if not zone:
             self.fail('The zone {0} does not exist in the resource group {1}'.format(self.zone_name, self.resource_group))
