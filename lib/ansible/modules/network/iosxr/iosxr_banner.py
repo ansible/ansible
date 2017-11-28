@@ -95,6 +95,7 @@ try:
 except ImportError:
     HAS_LXML = False
 
+
 class ConfigBase(object):
     def __init__(self, module, warnings):
         self._module = module
