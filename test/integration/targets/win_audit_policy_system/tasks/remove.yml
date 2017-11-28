@@ -21,13 +21,19 @@
       - category | changed
       - subcategory | changed
 
-- name: check mode assert that audit_type is still "success" (old value)
+- name: check mode assert that audit_type is still "success" (old value) for category
   assert:
     that:
       - item == "success"
   with_items:
-    - "{{ subcategory.current_audit_policy.values() | list }}"
     - "{{ category.current_audit_policy.values() | list | unique }}"
+
+- name: check mode assert that audit_type is still "success and failure" (old value) for subcategory
+  assert:
+    that:
+      - item == "success and failure"
+  with_items:
+    - "{{ subcategory.current_audit_policy.values() | list }}"
 
 ######################
 ### disable policy ###

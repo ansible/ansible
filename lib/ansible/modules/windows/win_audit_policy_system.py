@@ -16,7 +16,7 @@ module: win_audit_policy_system
 short_description: Used to make changes to the system wide Audit Policy.
 description:
   - Used to make changes to the system wide Audit Policy.
-  - It is highly recommended to take a backup of the policies before adjusting them for the first time.
+  - It is recommended to take a backup of the policies before adjusting them for the first time.
   - See this page for in depth information U(https://technet.microsoft.com/en-us/library/cc766468.aspx).
 version_added: "2.5"
 author:
@@ -34,13 +34,12 @@ options:
   audit_type:
     description:
       - The type of event you would like to audit for.
-    choices: [ 'success', 'failure', 'success and failure', 'none' ]
+      - Accepts a list. See examples.
+    choices: [ 'success', 'failure', 'none' ]
+    required: true
 '''
 
 EXAMPLES = r'''
-- name: backup audit policy
-  win_command: auditpol /backup /file:c:\auditpolicy.csv
-
 - name: enable failure auditing for the subcategory "File System"
   win_audit_policy_system:
     subcategory: File System
@@ -49,7 +48,7 @@ EXAMPLES = r'''
 - name: enable all auditing types for the category "Account logon events"
   win_audit_policy_system:
     category: Account logon events
-    audit_type: success and failure
+    audit_type: success, failure
 
 - name: disable auditing for the subcategory "File System"
   win_audit_policy_system:
@@ -58,11 +57,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = '''
-backup_taken:
-  description: tells you whether or not a backup was taken when the module is run
-  returned: always
-  type: boolean
-  sample: true
 current_audit_policy:
   description: details on the policy being targetted
   returned: always
