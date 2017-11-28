@@ -200,8 +200,8 @@
 - name: TEST 3 | Assert that status was not changed, the task failed, the msg contains proper information and SELinux was not changed
   assert:
     that:
-      - not _state_test1 | changed
-      - _state_test1 | failed
+      - _state_test1 is not changed
+      - _state_test1 is failed
       - _state_test1.msg == 'Policy non-existing-selinux-policy does not exist in /etc/selinux/'
       - ansible_selinux.config_mode == 'enforcing'
       - ansible_selinux.type == 'targeted'

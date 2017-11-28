@@ -23,7 +23,7 @@
         path: '{{ output_dir }}/publickey-ssh.pub'
         privatekey_path: '{{ output_dir }}/privatekey.pem'
         format: OpenSSH
-      when: cryptography_version.stdout|version_compare('1.4.0', '>=')
+      when: cryptography_version.stdout is version('1.4.0', '>=')
       register: publickey_ssh_idempotence
 
     - name: Generate publickey2 - standard
