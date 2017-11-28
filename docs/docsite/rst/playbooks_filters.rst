@@ -160,7 +160,7 @@ To get a random item from a list::
     "{{ ['a','b','c']|random }}"
     # => 'c'
 
-To get a random number from 0 to supplied end, which is not included in the range::
+To get a random number between 0 and a specified number::
 
     "{{ 60 |random}} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
