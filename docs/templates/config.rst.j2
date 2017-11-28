@@ -65,11 +65,11 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {% if config['version_added'] %}
 :Version Added: {{config['version_added']}}
 {% endif %}
-{% for ini_map in config['ini']|sort %}
+{% for ini_map in config['ini']|sort(attribute='section') %}
 :Ini Section: {{ini_map['section']}}
 :Ini Key: {{ini_map['key']}}
 {% endfor %}
-{% for env_var_map in config['env']|sort %}
+{% for env_var_map in config['env']|sort(attribute='name') %}
 :Environment: :envvar:`{{env_var_map['name']}}`
 {% endfor %}
 {% if config['deprecated'] %}
