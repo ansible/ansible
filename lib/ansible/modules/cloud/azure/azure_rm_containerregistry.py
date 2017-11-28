@@ -86,7 +86,79 @@ RETURN = '''
 state:
     description: Current state of the azure container registry and it's credentials
     returned: always
-    type: dict
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID
+            returned: always
+            type: str
+            sample: XXXXXX
+        name:
+            description:
+                - Registry name
+            returned: always
+            type: str
+            sample: myregistry
+        location:
+            description:
+                - Resource location
+            returned: always
+            type: str
+            sample: westus
+        admin_user_enabled:
+            description:
+                - Is admin user enabled
+            returned: always
+            type: bool
+            sample: true
+        sku:
+            description:
+                - SKU
+            returned: always
+            type: str
+            sample: XXXXX
+        sku:
+            provisioning_state:
+                - Provisioning state
+            returned: always
+            type: str
+            sample: Succeeded
+        credentials:
+            provisioning_state:
+                - Credentials
+            returned: always
+            type: complex
+            contains:
+                password_name:
+                    provisioning_state:
+                        - Password 1 name
+                    returned: always
+                    type: str
+                    sample: pass1
+                password_value:
+                    provisioning_state:
+                        - Password 1 value
+                    returned: always
+                    type: str
+                    sample: pass1value
+                password2_name:
+                    provisioning_state:
+                        - Password 1 name
+                    returned: always
+                    type: str
+                    sample: pass2
+                password2_value:
+                    provisioning_state:
+                        - Password 2 value
+                    returned: always
+                    type: str
+                    sample: pass1value
+        tags:
+            provisioning_state:
+                - Tags
+            returned: always
+            type: complex        
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -127,10 +199,12 @@ def create_containerregistry_dict(registry, credentials):
         admin_user_enabled=registry.admin_user_enabled if registry is not None else "",
         sku=registry.sku.name if registry is not None else "",
         provisioning_state=registry.provisioning_state if registry is not None else "",
-        password_name=credentials.passwords[0].name.value if credentials is not None else "",
-        password_value=credentials.passwords[0].value if credentials is not None else "",
-        password2_name=credentials.passwords[1].name.value if credentials is not None else "",
-        password2_value=credentials.passwords[1].value if credentials is not None else "",
+        credentials=dict(
+            password_name=credentials.passwords[0].name.value if credentials is not None else "",
+            password_value=credentials.passwords[0].value if credentials is not None else "",
+            password2_name=credentials.passwords[1].name.value if credentials is not None else "",
+            password2_value=credentials.passwords[1].value if credentials is not None else ""
+        ),
         tags=registry.tags if registry is not None else ""
     )
     return results
@@ -224,7 +298,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 
             self.results['state'] = self.create_update_containerregistry(to_do)
             if to_do != Actions.NoAction:
-                self.results['changed'] = True
+                self.results['changed'] = (cmp(response, self.results['state']) != 0)
             else:
                 self.results['changed'] = False
 
