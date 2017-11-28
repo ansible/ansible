@@ -93,7 +93,7 @@ state:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
+            sample: /subscriptions/00000000-0000-0000-0000-000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
         name:
             description:
                 - Registry name
