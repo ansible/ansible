@@ -42,32 +42,32 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
         module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
-
         if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
             return super(ActionModule, self).run(tmp, task_vars)
 
+        socket_path = None
         provider = load_provider(junos_provider_spec, self._task.args)
 
-        pc = copy.deepcopy(self._play_context)
-        pc.network_os = 'junos'
+        if self._play_context.connection in ('network_cli', 'netconf'):
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using network_cli and will be ignored')
+        elif self._play_context.connection == 'local':
+            pc = copy.deepcopy(self._play_context)
+            pc.network_os = 'junos'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
+            if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
+                pc.connection = 'network_cli'
+                pc.port = int(provider['port'] or self._play_context.port or 22)
+            else:
+                pc.connection = 'netconf'
+                pc.port = int(provider['port'] or self._play_context.port or 830)
 
-        pc.remote_addr = provider['host'] or self._play_context.remote_addr
+            pc.remote_user = provider['username'] or self._play_context.connection_user
+            pc.password = provider['password'] or self._play_context.password
+            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
-        if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
-            pc.connection = 'network_cli'
-            pc.port = int(provider['port'] or self._play_context.port or 22)
-        else:
-            pc.connection = 'netconf'
-            pc.port = int(provider['port'] or self._play_context.port or 830)
-
-        pc.remote_user = provider['username'] or self._play_context.connection_user
-        pc.password = provider['password'] or self._play_context.password
-        pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
-
-        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
-        socket_path = None
-        if self._play_context.connection == 'local':
+            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             socket_path = connection.run()
@@ -79,7 +79,7 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
 
-        if pc.connection == 'network_cli':
+        if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module
             if socket_path is None:
