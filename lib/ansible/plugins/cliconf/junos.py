@@ -69,12 +69,10 @@ class Cliconf(CliconfBase):
         for cmd in chain(['configure'], to_list(command)):
             self.send_command(cmd)
 
-    def get(self, *args, **kwargs):
-        command = kwargs.get('command')
-        return self.send_command(command)
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
-    def commit(self, *args, **kwargs):
-        comment = kwargs.get('comment', None)
+    def commit(self, comment=None):
         command = b'commit'
         if comment:
             command += b' comment {0}'.format(comment)
