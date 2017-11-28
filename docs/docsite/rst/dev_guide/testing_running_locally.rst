@@ -42,6 +42,14 @@ Use the ``ansible-test shell`` command to get an interactive shell in the same e
 * ``ansible-test shell --docker`` - Open a shell in the default docker container.
 * ``ansible-test shell --tox --python 3.6`` - Open a shell in the Python 3.6 ``tox`` environment.
 
+.. note:: When using ``ansible-test shell --docker`` to run local tests inside
+          of a docker container with the testing environment pre-setup, you can
+          optionally pass `ANSIBLE_KEEP_REMOTE_FILES=1` and follow the
+          :ref:`Debugging AnsibleModule-based modules
+          <debugging_ansiblemodule_based_modules>` practices. This can be
+          useful for testing and debugging on operating systems or Linux
+          distributions other than what you have installed on your local system.
+
 Code Coverage
 =============
 
