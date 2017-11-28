@@ -566,9 +566,10 @@ class PyVmomiDeviceHelper(object):
     def __init__(self, module):
         self.module = module
         self.next_disk_unit_number = 0
+        self.next_scsi_ctrl_key = 0
+        self.next_scsi_bus_number = 0
 
-    @staticmethod
-    def create_scsi_controller(scsi_type):
+    def create_scsi_controller(self, scsi_type):
         scsi_ctl = vim.vm.device.VirtualDeviceSpec()
         scsi_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         if scsi_type == 'lsilogic':
@@ -580,15 +581,16 @@ class PyVmomiDeviceHelper(object):
         elif scsi_type == 'lsilogicsas':
             scsi_ctl.device = vim.vm.device.VirtualLsiLogicSASController()
 
-        scsi_ctl.device.deviceInfo = vim.Description()
-        scsi_ctl.device.slotInfo = vim.vm.device.VirtualDevice.PciBusSlotInfo()
-        scsi_ctl.device.slotInfo.pciSlotNumber = 16
-        scsi_ctl.device.controllerKey = 100
-        scsi_ctl.device.unitNumber = 3
-        scsi_ctl.device.busNumber = 0
+        # Required parameters for adding new SCSI controller
+        scsi_ctl.device.key = self.next_scsi_ctrl_key
+        scsi_ctl.device.busNumber = self.next_scsi_bus_number
         scsi_ctl.device.hotAddRemove = True
         scsi_ctl.device.sharedBus = 'noSharing'
-        scsi_ctl.device.scsiCtlrUnitNumber = 7
+
+        # Increment the SCSI controller counter
+        self.next_scsi_ctrl_key += 1
+        # Increment the SCSI Bus Number
+        self.next_scsi_bus_number += 1
 
         return scsi_ctl
 
@@ -653,24 +655,17 @@ class PyVmomiDeviceHelper(object):
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
         diskspec.device.controllerKey = scsi_ctl.device.key
 
-        if self.next_disk_unit_number == 7:
-            raise AssertionError()
-        if disk_index == 7:
-            raise AssertionError()
-        """
-        Configure disk unit number.
-        """
-        if disk_index is not None:
-            diskspec.device.unitNumber = disk_index
-            self.next_disk_unit_number = disk_index + 1
-        else:
-            diskspec.device.unitNumber = self.next_disk_unit_number
-            self.next_disk_unit_number += 1
+        # Configure disk unit number.
+        diskspec.device.unitNumber = self.next_disk_unit_number
+        # Increment disk unit number
+        self.next_disk_unit_number += 1
 
-        # unit number 7 is reserved to SCSI controller, increase next index
+        # SCSI Unit Number 7 is reserved for SCSI controller
         if self.next_disk_unit_number == 7:
             self.next_disk_unit_number += 1
-
+        # Only 15 disks are allowed per SCSI controller
+        elif self.next_disk_unit_number == 16:
+            self.next_disk_unit_number = 0
         return diskspec
 
     def get_device(self, device_type, name):
@@ -1635,6 +1630,14 @@ class PyVmomiHelper(PyVmomi):
         if len(self.params['disk']) == 0:
             return
 
+        if len(self.params['disk']) > 59:
+            # It is not allowed to add more than 59 disks, see documentation for further details.
+            documentation = "Please see VMware documentation for further details " \
+                            "https://www.vmware.com/pdf/vsphere6/r65/vsphere-65-configuration-maximums.pdf"
+            self.module.fail_json(msg="Virtual machine does not support more that "
+                                      "60 disks, currently provided %s" % (len(self.params['disk'])),
+                                  details=documentation)
+
         scsi_ctl = self.get_vm_scsi_controller(vm_obj)
 
         # Create scsi controller only if we are deploying a new VM, not a template or reconfiguring
@@ -1654,14 +1657,24 @@ class PyVmomiHelper(PyVmomi):
         for expected_disk_spec in self.params.get('disk'):
             disk_modified = False
             # If we are manipulating and existing objects which has disks and disk_index is in disks
-            if vm_obj is not None and disks is not None and disk_index < len(disks):
+            if vm_obj is not None and disks is not None and disk_index <= len(disks):
                 diskspec = vim.vm.device.VirtualDeviceSpec()
                 # set the operation to edit so that it knows to keep other settings
                 diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                 diskspec.device = disks[disk_index]
+                disk_index += 1
             else:
+                if disk_index in [16, 31, 46]:
+                    # Add scsi controller for every 15 disks
+                    scsi_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type())
+                    self.configspec.deviceChange.append(scsi_ctl)
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
+                # increment index for next disk search
+                disk_index += 1
+                # index 7 is reserved to SCSI controller
+                if disk_index == 7:
+                    disk_index += 1
 
             if 'disk_mode' in expected_disk_spec:
                 disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
@@ -1690,12 +1703,6 @@ class PyVmomiHelper(PyVmomi):
                 # but it needs to eventually be handled for all the
                 # other disks defined
                 pass
-
-            # increment index for next disk search
-            disk_index += 1
-            # index 7 is reserved to SCSI controller
-            if disk_index == 7:
-                disk_index += 1
 
             kb = self.get_configured_disk_size(expected_disk_spec)
             # VMWare doesn't allow to reduce disk sizes
