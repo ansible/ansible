@@ -1293,7 +1293,16 @@ class PyVmomiHelper(PyVmomi):
 
         # abort if no strategy was successful
         if f_obj is None:
-            self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
+            # Add some debugging values in failure.
+            details = {
+                'datacenter': datacenter.name,
+                'datacenter_path': dcpath,
+                'folder': self.params['folder'],
+                'full_search_path': fullpath,
+            }
+            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.params['folder'], fullpath),
+                                  details=details)
+
         destfolder = f_obj
 
         if self.params['template']:
