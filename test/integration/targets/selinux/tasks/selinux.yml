@@ -106,6 +106,11 @@
 # ##############################################################################
 # Test changing only the policy, which does not require a reboot
 
+- name: TEST 2 | Make sure the policy is present
+  package:
+    name: selinux-policy-mls
+    state: present
+
 - name: TEST 2 | Set SELinux policy
   selinux:
     state: enforcing
@@ -168,3 +173,35 @@
   selinux:
     state: enforcing
     policy: targeted
+
+
+# Third Test
+# ##############################################################################
+# Test changing non-existing policy
+
+- name: TEST 3 | Set SELinux policy
+  selinux:
+    state: enforcing
+    policy: non-existing-selinux-policy
+  register: _state_test1
+  ignore_errors: yes
+
+- debug:
+    var: _state_test1
+    verbosity: 1
+
+- name: TEST 3 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+  tags: debug
+
+- name: TEST 3 | Assert that status was not changed, the task failed, the msg contains proper information and SELinux was not changed
+  assert:
+    that:
+      - not _state_test1 | changed
+      - _state_test1 | failed
+      - _state_test1.msg == 'Policy non-existing-selinux-policy does not exist in /etc/selinux/'
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'
