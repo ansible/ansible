@@ -300,8 +300,8 @@ stat:
             sample: ../foobar/21102015-1445431274-908472971
             version_added: 2.4
         md5:
-            description: md5 hash of the path, this will be removed in Ansible 2.9 in
-                favour of the checksum return value
+            description: md5 hash of the path; this will be removed in Ansible 2.9 in
+                favor of the checksum return value
             returned: success, path exists and user can read stats and path
                 supports hashing and md5 is supported
             type: string
