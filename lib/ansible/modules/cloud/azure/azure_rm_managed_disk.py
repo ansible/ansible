@@ -103,7 +103,7 @@ EXAMPLES = '''
         resource_group: Testing
         disk_size_gb: 4
         managed_by: testvm001
-    
+
     - name: Unmount the managed disk to VM
       azure_rm_managed_disk:
         name: mymanageddisk
@@ -350,7 +350,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 self.name,
                 parameter)
             aux = self.get_poller_result(poller)
-            return  managed_disk_to_dict(aux)
+            return managed_disk_to_dict(aux)
         except CloudError as e:
             self.fail("Error creating the managed disk: {0}".format(str(e)))
 
