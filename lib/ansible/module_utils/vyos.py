@@ -104,7 +104,17 @@ def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
 
     for cmd in to_list(commands):
-        out = connection.get(cmd)
+        try:
+            cmd = json.loads(cmd)
+            command = cmd['command']
+            prompt = cmd['prompt']
+            answer = cmd['answer']
+        except:
+            command = cmd
+            prompt = None
+            answer = None
+
+        out = connection.get(command, prompt, answer)
 
         try:
             out = to_text(out, errors='surrogate_or_strict')

@@ -63,7 +63,7 @@ class Cliconf(CliconfBase):
 
     def commit(self, comment=None):
         if comment:
-            command = b'commit comment {0}'.format(comment)
+            command = b'commit comment "{0}"'.format(comment)
         else:
             command = b'commit'
         self.send_command(command)
