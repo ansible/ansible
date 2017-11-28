@@ -85,7 +85,7 @@ class TestCnosRestapiModule(TestCnosRestModule):
 
     module = cnos_restapi
 
-    def test_cnos_restapi_unreachable(self):        
+    def test_cnos_restapi_unreachable(self):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
                              transport='https', urlpath='/nos/api/cfg/vlan',
@@ -107,12 +107,11 @@ class TestCnosRestapiModule(TestCnosRestModule):
     def test_cnos_restapi_failed_at_login(self, RestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
-                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             transport='https', urlpath='/nos/api/cfg/vlan'
                              method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 0
         result = self.execute_module(failed=True)
-
     @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
     def test_cnos_restapi_failed_at_cbmethod(self, RestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
