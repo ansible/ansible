@@ -82,7 +82,6 @@ commands:
 
 import re
 import collections
-from lxml import etree
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
@@ -90,6 +89,11 @@ from ansible.module_utils.network.iosxr.iosxr import get_config_diff, commit_con
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
 from ansible.module_utils.network.iosxr.iosxr import get_device_capabilities, build_xml
 
+try:
+    from lxml import etree
+    HAS_LXML = True
+except ImportError:
+    HAS_LXML = False
 
 class ConfigBase(object):
     def __init__(self, module, warnings):
@@ -230,9 +234,11 @@ def main():
     network_api = device_capabilities.get('network_api')
 
     if network_api == 'cliconf':
-        warnings.append('cli support for \'iosxr_banner\' is deprecated and will be removed 4 releases from 2.5. Use \'netconf\' instead')
+        module.deprecate('cli support for \'iosxr_banner\' is deprecated. use netconf instead', version=2.9)
         config_object = CliConfiguration(module, warnings)
     elif network_api == 'netconf':
+        if not HAS_LXML:
+            module.fail_json(msg=('lxml is not installed'))
         config_object = NCConfiguration(module, warnings)
     else:
         module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))

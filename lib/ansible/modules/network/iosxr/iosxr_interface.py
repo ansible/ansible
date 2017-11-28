@@ -360,7 +360,7 @@ def main():
         enabled=dict(default=True, type='bool'),
         tx_rate=dict(),
         rx_rate=dict(),
-        delay=dict(default=5, type='int'),
+        delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )

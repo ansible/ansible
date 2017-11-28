@@ -29,17 +29,26 @@
 import json
 import sys
 from difflib import Differ
-from six import StringIO
 from io import BytesIO
-from lxml import etree
-from ncclient.xml_ import to_xml
 from copy import deepcopy
 
+from ansible.module_utils.six import StringIO
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.netconf import NetconfConnection
+
+try:
+    from ncclient.xml_ import to_xml
+    HAS_NCCLIENT = True
+except ImportError:
+    HAS_NCCLIENT = False
+
+try:
+    from lxml import etree
+except ImportError:
+    pass
 
 _DEVICE_CONFIGS = {}
 _EDIT_OPS = frozenset(['merge', 'create', 'replace', 'delete'])
@@ -308,6 +317,8 @@ def get_config(module, source='running', config_filter=None):
         capabilities = get_device_capabilities(module)
         network_api = capabilities.get('network_api')
         if network_api == 'netconf':
+            if not HAS_NCCLIENT:
+                module.fail_json(msg=('ncclient is not installed'))
             out = to_xml(out)
 
         cfg = to_text(out, errors='surrogate_then_replace').strip()

@@ -41,4 +41,3 @@
     that:
       - "result.changed == false"
       - "result.commands | length == 0"
-
