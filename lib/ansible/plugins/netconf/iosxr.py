@@ -40,6 +40,13 @@ except ImportError:
     raise AnsibleError("ncclient is not installed")
 
 
+def remove_ns(response):
+    ret = remove_namespaces(response)
+    if ret == 'no_lxml':
+        raise AnsibleError('lxml not installed')
+    return ret
+
+
 class Netconf(NetconfBase):
 
     @ensure_connected
@@ -57,6 +64,9 @@ class Netconf(NetconfBase):
         ])
 
         install_filter = build_xml('install', install_meta, opcode='filter')
+        if install_filter == 'no_lxml':
+            raise AnsibleError('lxml is not installed')
+
         reply = self.get(install_filter)
         ele_boot_variable = etree.fromstring(reply).find('.//boot-variable/boot-variable')
         if ele_boot_variable:
@@ -67,6 +77,9 @@ class Netconf(NetconfBase):
             device_info['network_os_version'] = re.split('-', ele_package_name.text)[-1]
 
         hostname_filter = build_xml('host-names', opcode='filter')
+        if hostname_filter == 'no_lxml':
+            raise AnsibleError('lxml is not installed')
+
         reply = self.get(hostname_filter)
         device_info['network_os_hostname'] = etree.fromstring(reply).find('.//host-name').text
 
@@ -115,7 +128,7 @@ class Netconf(NetconfBase):
     def get(self, *args, **kwargs):
         try:
             response = self.m.get(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return to_xml(remove_ns(response))
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -123,7 +136,7 @@ class Netconf(NetconfBase):
     def get_config(self, *args, **kwargs):
         try:
             response = self.m.get_config(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return to_xml(remove_ns(response))
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -131,7 +144,7 @@ class Netconf(NetconfBase):
     def edit_config(self, *args, **kwargs):
         try:
             response = self.m.edit_config(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return to_xml(remove_ns(response))
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -139,7 +152,7 @@ class Netconf(NetconfBase):
     def commit(self, *args, **kwargs):
         try:
             response = self.m.commit(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return to_xml(remove_ns(response))
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -147,7 +160,7 @@ class Netconf(NetconfBase):
     def validate(self, *args, **kwargs):
         try:
             response = self.m.validate(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return to_xml(remove_ns(response))
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -155,6 +168,6 @@ class Netconf(NetconfBase):
     def discard_changes(self, *args, **kwargs):
         try:
             response = self.m.discard_changes(*args, **kwargs)
-            return to_xml(remove_namespaces(response))
+            return to_xml(remove_ns(response))
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))

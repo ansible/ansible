@@ -166,7 +166,7 @@ class Hardware(FactsBase):
             results['dir /all'])
 
         match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
-            results['show memory summary'])
+                          results['show memory summary'])
         if match:
             self.facts['memtotal_mb'] = match.group(1)
             self.facts['memfree_mb'] = match.group(2)
@@ -188,7 +188,7 @@ class Interfaces(FactsBase):
 
     def commands(self):
         return(['show interfaces', 'show ipv6 interface',
-            'show lldp', 'show lldp neighbors detail'])
+                'show lldp', 'show lldp neighbors detail'])
 
     def populate(self, results):
         self.facts['all_ipv4_addresses'] = list()
@@ -405,7 +405,7 @@ def main():
     try:
         for inst in instances:
             commands = inst.commands()
-            responses = run_commands(module, commands)
+            responses = run_command(module, commands)
             results = dict(zip(commands, responses))
             inst.populate(results)
             facts.update(inst.facts)

@@ -35,7 +35,7 @@ from copy import deepcopy
 from ansible.module_utils.six import StringIO
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.network.common.utils import to_list 
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.netconf import NetconfConnection
 
@@ -47,8 +47,9 @@ except ImportError:
 
 try:
     from lxml import etree
+    HAS_XML = True
 except ImportError:
-    pass
+    HAS_XML = False
 
 _DEVICE_CONFIGS = {}
 _EDIT_OPS = frozenset(['merge', 'create', 'replace', 'delete'])
@@ -70,12 +71,17 @@ iosxr_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'transport': dict(),
 }
 
 iosxr_argument_spec = {
     'provider': dict(type='dict', options=iosxr_provider_spec)
+}
+
+command_spec = {
+    'command': dict(),
+    'prompt': dict(default=None),
+    'answer': dict(default=None)
 }
 
 iosxr_top_spec = {
@@ -155,6 +161,8 @@ def transform_reply():
 
 # Note: Workaround for ncclient 0.5.3
 def remove_namespaces(rpc_reply):
+    if not HAS_XML:
+        return 'no_lxml'
     xslt = transform_reply()
     parser = etree.XMLParser(remove_blank_text=True)
     xslt_doc = etree.parse(BytesIO(xslt), parser)
@@ -244,6 +252,9 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
 
 
 def build_xml(container, xmap=None, params=None, opcode=None):
+    if not HAS_XML:
+        return 'no_lxml'
+
     if opcode == 'filter':
         root = etree.Element("filter", type="subtree")
     elif opcode in ('delete', 'merge'):
@@ -275,8 +286,8 @@ def get_config_diff(module, running=None, candidate=None):
             if running_data != candidate_data:
                 d = Differ()
                 diff = list(d.compare(running_data.splitlines(), candidate_data.splitlines()))
-                return True, '\n'.join(diff).strip()
-        return False, None
+                return '\n'.join(diff).strip()
+        return None
     else:
         module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
 
@@ -364,6 +375,20 @@ def run_command(module, commands):
     conn = get_connection(module)
     responses = list()
     for cmd in to_list(commands):
-        out = conn.get(to_bytes(cmd['command'], errors='surrogate_or_strict'))
-        responses.append(to_text(out, errors='surrogate_or_strict'))
+        try:
+            cmd = json.loads(cmd)
+            command = cmd['command']
+            prompt = cmd['prompt']
+            answer = cmd['answer']
+        except:
+            command = cmd
+            prompt = None
+            answer = None
+
+        out = conn.get(command, prompt, answer)
+
+        try:
+            responses.append(to_text(out, errors='surrogate_or_strict'))
+        except UnicodeError:
+            module.fail_json(msg=u'failed to decode output from {0}:{1}'.format(cmd, to_text(out)))
     return responses

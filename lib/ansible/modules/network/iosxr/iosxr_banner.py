@@ -171,6 +171,9 @@ class NCConfiguration(ConfigBase):
     def map_obj_to_commands(self):
         state = self._module.params['state']
         _get_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode="filter")
+        if _get_filter == 'no_lxml':
+            self._module.fail_json('lxml is not installed')
+
         running = get_config(self._module, source='running', config_filter=etree.tostring(_get_filter))
 
         opcode = None
@@ -189,13 +192,16 @@ class NCConfiguration(ConfigBase):
         self._result['commands'] = []
         if opcode:
             _edit_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode=opcode)
+            if _edit_filter == 'no_lxml':
+                self._module.fail_json('lxml is not installed')
+
             if _edit_filter is not None:
                 if not self._module.check_mode:
                     load_config(self._module, etree.tostring(_edit_filter), self._result['warnings'])
                     candidate = get_config(self._module, source='candidate', config_filter=etree.tostring(_get_filter))
 
-                    rc, diff = get_config_diff(self._module, running, candidate)
-                    if rc:
+                    diff = get_config_diff(self._module, running, candidate)
+                    if diff:
                         commit_config(self._module)
                         self._result['changed'] = True
                         self._result['commands'] = etree.tostring(_edit_filter)
