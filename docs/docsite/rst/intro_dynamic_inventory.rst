@@ -321,7 +321,7 @@ In addition to Cobbler and EC2, inventory scripts are also available for::
    BSD Jails
    DigitalOcean
    Google Compute Engine
-   [Foreman](https://github.com/theforeman/foreman_ansible_inventory) / Satellite 6
+   `Foreman <https://github.com/theforeman/foreman_ansible_inventory>`_/ Satellite 6
    Linode
    OpenShift
    OpenStack Nova
