@@ -93,8 +93,8 @@ options:
                 default: "*"
             destination_address_prefix:
                 description:
-                  - The destination address prefix. CIDR or destination IP range. Asterix '*' can also be used to match 
-                    all source IPs. Default tags such as 'VirtualNetwork', 'AzureLoadBalancer' and 'Internet' can also 
+                  - The destination address prefix. CIDR or destination IP range. Asterix '*' can also be used to match
+                    all source IPs. Default tags such as 'VirtualNetwork', 'AzureLoadBalancer' and 'Internet' can also
                     be used.
                 default: "*"
             access:
