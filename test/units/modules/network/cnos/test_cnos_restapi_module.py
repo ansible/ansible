@@ -33,6 +33,7 @@ def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
     basic._ANSIBLE_ARGS = to_bytes(args)
 
+    
 class AnsibleExitJson(Exception):
     pass
 
@@ -40,9 +41,10 @@ class AnsibleExitJson(Exception):
 class AnsibleFailJson(Exception):
     pass
 
+
 class TestCnosRestModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False,  defaults=False):
+    def execute_module(self, failed=False, changed=False, defaults=False):
 
         if failed:
             result = self.failed()
@@ -77,33 +79,46 @@ class TestCnosRestModule(unittest.TestCase):
         result = exc.exception.args[0]
         self.assertEqual(result['changed'], changed, result)
         return result
+ 
 
 class TestCnosRestapiModule(TestCnosRestModule):
 
-    module = cnos_restapi
+    module = cnos_restapi
 
-    def test_cnos_restapi_unreachable(self):
-        set_module_args(dict(outputfile = 'myfile', host = '10.240.176.2', username = 'admin', password = 'admin', transport = 'https', urlpath ='/nos/api/info/telemetry/bst/congestion-drop-counters', method = 'GET'))
+    def test_cnos_restapi_unreachable(self):        
+        set_module_args(dict(outputfile='myfile', host='10.240.176.2',
+                             username='admin', password='admin',
+                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             method='GET'))
         result = self.execute_module(failed=True)
 
-    @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
+    @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
     def test_cnos_restapi_success(self, RestModule):
-        set_module_args(dict(outputfile = 'myfile', host = '10.240.176.2', username = 'admin', password = 'admin', transport = 'https', urlpath ='/nos/api/info/telemetry/bst/congestion-drop-counters', method = 'GET'))
-        instance = RestModule.return_value
+        set_module_args(dict(outputfile='myfile', host='10.240.176.2',
+                             username='admin', password='admin',
+                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             method='GET'))        
+        instance = RestModule.return_value 
         instance.loginurl.return_value = 1
         instance.cb_method.return_value = 1, "good"
         result = self.execute_module(changed=True)
-          
-    @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
+
+    @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
     def test_cnos_restapi_failed_at_login(self, RestModule):
-        set_module_args(dict(outputfile = 'myfile', host = '10.240.176.2', username = 'admin', password = 'admin', transport = 'https', urlpath ='/nos/api/info/telemetry/bst/congestion-drop-counters', method = 'GET'))
+        set_module_args(dict(outputfile='myfile', host='10.240.176.2',
+                             username='admin', password='admin',
+                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 0
         result = self.execute_module(failed=True)
 
-    @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
+    @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
     def test_cnos_restapi_failed_at_cbmethod(self, RestModule):
-        set_module_args(dict(outputfile = 'myfile', host = '10.240.176.2', username = 'admin', password = 'admin', transport = 'https', urlpath ='/nos/api/info/telemetry/bst/congestion-drop-counters', method = 'GET'))
+        set_module_args(dict(outputfile='myfile', host='10.240.176.2',
+                             username='admin', password='admin',
+                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 1
         instance.cb_method.return_value = 0, "bad"
@@ -111,15 +126,21 @@ class TestCnosRestapiModule(TestCnosRestModule):
 
     @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
     def test_cnos_restapi_failed_incorrect_method(self, RestModule):
-        set_module_args(dict(outputfile = 'myfile', host = '10.240.176.2', username = 'admin', password = 'admin', transport = 'https', urlpath ='/nos/api/info/telemetry/bst/congestion-drop-counters', method = 'GT'))
+        set_module_args(dict(outputfile='myfile', host='10.240.176.2',
+                             username='admin', password='admin',
+                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             method='GT'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 1
         instance.cb_method.return_value = 0, "bad"
         result = self.execute_module(failed=True)
 
     @patch('ansible.modules.network.lenovo.cnos_restapi.RestModule')
-    def test_cnos_restapi_failed_incorrect_trasnport(self, RestModule):
-        set_module_args(dict(outputfile = 'myfile', host = '10.240.176.2', username = 'admin', password = 'admin', transport = 'tps', urlpath ='/nos/api/info/telemetry/bst/congestion-drop-counters', method = 'GET'))
+    def test_cnos_restapi_failed_incorrect_transport(self, RestModule):
+        set_module_args(dict(outputfile='myfile', host='10.240.176.2',
+                             username='admin', password='admin',
+                             transport='tps', urlpath='/nos/api/cfg/vlan',
+                             method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 1
         instance.cb_method.return_value = 0, "bad"
