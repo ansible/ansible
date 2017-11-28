@@ -5,19 +5,19 @@
 
  - name: Clearing (if) previous disks were created (1/2)
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk2 }}"
        state: absent
 
  - name: Clearing (if) previous disks were created (2/2)
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
-       state: absent  
-       
+       state: absent
+
  - name: Create managed disk (Check Mode)
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        disk_size_gb: 1
        tags:
@@ -34,20 +34,20 @@
 
  - name: Test invalid account name (should give error)
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "invalid_char$"
        disk_size_gb: 1
        state: present
-   register: output     
-   ignore_errors: yes  
+   register: output
+   ignore_errors: yes
    check_mode: no
 
  - name: Assert task failed
    assert: { that: "output['failed'] == True" }
 
- - name: Create new managed disk succesfully 
+ - name: Create new managed disk succesfully
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        storage_account_type: "Standard_LRS"
        disk_size_gb: 1
@@ -56,7 +56,7 @@
            delete: never
    register: output
 
- - name: Assert status succeeded and results include an Id value 
+ - name: Assert status succeeded and results include an Id value
    assert:
      that:
        - output.changed
@@ -64,14 +64,14 @@
 
  - name: Copy disk to a new managed disk
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk2 }}"
        create_option: "copy"
        source_resource_uri: "{{ output.state.id }}"
        disk_size_gb: 1
    register: copy
 
- - name: Assert status succeeded and results include an Id value 
+ - name: Assert status succeeded and results include an Id value
    assert:
      that:
        - copy.changed
@@ -79,13 +79,13 @@
 
  - name: Update a new disk without changes
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        storage_account_type: "Standard_LRS"
        disk_size_gb: 1
    register: output
 
- - name: Assert status succeeded and results include an Id value 
+ - name: Assert status succeeded and results include an Id value
    assert:
      that:
        - not output.changed
@@ -93,17 +93,17 @@
 
  - name: Change storage account type to an invalid type
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        storage_account_type: "PremiumL"
        disk_size_gb: 1
    register: output
-   ignore_errors: yes 
+   ignore_errors: yes
 
- - name: Assert storage account type change failed 
+ - name: Assert storage account type change failed
    assert: { that: "output['failed'] == True" }
 
- - name: Change disk size to incompatible size 
+ - name: Change disk size to incompatible size
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
@@ -116,7 +116,7 @@
 
  - name: Change disk to bigger size
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        disk_size_gb: 2
    register: output
@@ -128,7 +128,7 @@
 
  - name: Change disk to Premium
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        storage_account_type: "Premium_LRS"
        disk_size_gb: 2
@@ -249,7 +249,7 @@
            testing: testing
            delete: never
    register: mounted
-  
+
  - assert:
      that:
        - "'testvm001' in mounted.state.managed_by"
@@ -264,7 +264,7 @@
            delete: never
    check_mode: yes
    register: mounted
-  
+
  - assert:
      that:
        - mounted.changed
@@ -314,9 +314,9 @@
        - mounted.changed
        - "'testvm001' in mounted.state.managed_by"
 
- - name: Change disk size to incompatible size 
+ - name: Change disk size to incompatible size
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        state: absent
        managed_by: testvm001
@@ -328,28 +328,28 @@
 
  - name: Delete managed disk (Check Mode)
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        state: absent
    register: output
    check_mode: yes
 
- - name: Assert status succeeded 
+ - name: Assert status succeeded
    assert:
      that:
        - output.changed
        - output.state
 
- - name: Delete managed disk 
+ - name: Delete managed disk
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk2 }}"
        state: absent
    check_mode: no
 
- - name: Delete copied managed disk 
+ - name: Delete copied managed disk
    azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}" 
+       resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        disk_size_gb: 2
        state: absent
