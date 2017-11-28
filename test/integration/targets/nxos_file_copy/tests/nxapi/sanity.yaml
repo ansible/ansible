@@ -26,7 +26,7 @@
       username: "{{ ansible_ssh_user }}"
       password: "{{ ansible_ssh_pass }}"
       host: "{{ ansible_host }}"
-      connect_port: "{{ ansible_ssh_port }}"
+      connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
   - assert: &true
@@ -55,7 +55,7 @@
       username: "{{ ansible_ssh_user }}"
       password: "{{ ansible_ssh_pass }}"
       host: "{{ ansible_host }}"
-      connect_port: "{{ ansible_ssh_port }}"
+      connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
   - assert: *true
