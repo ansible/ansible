@@ -20,7 +20,7 @@
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network_common import to_list, EntityCollection
 
 _DEVICE_CONFIGS = {}
@@ -85,3 +85,18 @@ def run_commands(module, commands, check_rc=True):
         responses.append(to_text(out, errors='surrogate_then_replace'))
 
     return responses
+
+
+def get_config(module, source='running'):
+    conn = get_connection(module)
+    out = conn.get_config(source)
+    cfg = to_text(out, errors='surrogate_then_replace').strip()
+    return cfg
+
+
+def load_config(module, config):
+    try:
+        conn = get_connection(module)
+        conn.edit_config(config)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
