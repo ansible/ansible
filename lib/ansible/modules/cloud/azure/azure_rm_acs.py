@@ -29,7 +29,6 @@ options:
         description:
             - Name of the Container Services instance.
         required: true
-        default: null
     state:
         description:
             - Assert the state of the ACS. Use 'present' to create or update an ACS and 'absent' to delete it.
@@ -51,7 +50,6 @@ options:
         description:
             - Master profile suboptions.
         required: true
-        default: null
         suboptions:
             count:
                 description:
@@ -65,7 +63,6 @@ options:
                 description:
                     - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
                 required: true
-                default: Standard_D2v2
                 version_added: 2.5
             dns_prefix:
                 description:
@@ -75,13 +72,11 @@ options:
         description:
             - The linux profile suboptions.
         required: true
-        default: null
         suboptions:
             admin_username:
                 description:
                   - The Admin Username for the Cluster.
                 required: true
-                default: azureuser
             ssh_key:
                 description:
                     - The Public SSH Key used to access the cluster.
@@ -90,7 +85,6 @@ options:
         description:
             - The agent pool profile suboptions.
         required: true
-        default: null
         suboptions:
             name:
                 description:
@@ -100,7 +94,6 @@ options:
                 description:
                     - Number of agents (VMs) to host docker containers. Allowed values must be in the range of 1 to 100 (inclusive).
                 required: true
-                default: 1
             dns_prefix:
                 description:
                     - The DNS Prefix given to Agents in this Agent Pool.
@@ -109,7 +102,6 @@ options:
                 description:
                     - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
                 required: true
-                default: Standard_D2v2
     service_principal:
         description:
             - The service principal suboptions.
@@ -128,7 +120,6 @@ options:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
         required: true
-        default: false
 
 extends_documentation_fragment:
     - azure
@@ -149,6 +140,7 @@ EXAMPLES = '''
         master_profile:
             - count: 3
               dns_prefix: acsk8smasterdns
+              vm_size: Standard_D2_v2
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -173,6 +165,7 @@ EXAMPLES = '''
         master_profile:
             - count: 3
               dns_prefix: acsdcosmasterdns
+              vm_size: Standard_D2_v2
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -194,6 +187,7 @@ EXAMPLES = '''
         master_profile:
             - count: 3
               dns_prefix: acsswarmmasterdns
+              vm_size: Standard_D2_v2
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -219,13 +213,11 @@ EXAMPLES = '''
         orchestration_platform: Swarm
         master_profile:
             - count: 1
+              vm_size: Standard_A0
               dns_prefix: acstestingmasterdns5
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
-        service_principal:
-            - client_id: 7fb4173c-3ca3-4d5b-87f8-1daac941207a
-              client_secret: MPNSuM1auUuITefiLGBrpZZnLMDKBLw2
         agent_pool_profiles:
             - name: default
               count: 4
@@ -367,6 +359,10 @@ def create_acs_dict(acs):
     :param: acs: ContainerService or AzureOperationPoller with the Azure callback object
     :return: dict with the state on Azure
     '''
+    service_principal_profile_dict = None
+    if acs.orchestrator_profile.orchestrator_type == 'Kubernetes':
+        service_principal_profile_dict = create_service_principal_profile_dict(acs.service_principal_profile)
+
     return dict(
         id=acs.id,
         name=acs.name,
@@ -375,7 +371,7 @@ def create_acs_dict(acs):
         orchestrator_profile=create_orchestrator_profile_dict(acs.orchestrator_profile),
         master_profile=create_master_profile_dict(acs.master_profile),
         linux_profile=create_linux_profile_dict(acs.linux_profile),
-        service_principal_profile=create_service_principal_profile_dict(acs.service_principal_profile),
+        service_principal_profile=service_principal_profile_dict,
         diagnostics_profile=create_diagnotstics_profile_dict(acs.diagnostics_profile),
         provisioning_state=acs.provisioning_state,
         agent_pool_profiles=create_agent_pool_profiles_dict(acs.agent_pool_profiles),
@@ -412,12 +408,12 @@ def create_master_profile_dict(masterprofile):
 def create_service_principal_profile_dict(serviceprincipalprofile):
     '''
     Helper method to deserialize a ContainerServiceServicePrincipalProfile to a dict
+    Note: For security reason, the service principal secret is skipped on purpose.
     :param: serviceprincipalprofile: ContainerServiceServicePrincipalProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
     return dict(
-        client_id=serviceprincipalprofile.client_id,
-        secret=serviceprincipalprofile.secret
+        client_id=serviceprincipalprofile.client_id
     )
 
 
@@ -681,7 +677,7 @@ class AzureRMContainerService(AzureRMModuleBase):
             location=self.location,
             tags=self.tags,
             orchestrator_profile=create_orch_platform_instance(self.orchestration_platform),
-            service_principal_profile=create_service_principal_profile_instance(self.service_principal),
+            service_principal_profile=service_principal_profile,
             linux_profile=create_linux_profile_instance(self.linux_profile),
             master_profile=create_master_profile_instance(self.master_profile),
             agent_pool_profiles=agentpools,
