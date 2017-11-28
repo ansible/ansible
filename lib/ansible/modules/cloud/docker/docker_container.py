@@ -271,7 +271,7 @@ options:
        - User namespace to use
      default: null
      required: false
-     version_added: "2.3"
+     version_added: "2.5"
   networks:
      description:
        - List of networks the container belongs to.
