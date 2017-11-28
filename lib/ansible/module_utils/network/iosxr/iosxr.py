@@ -26,12 +26,33 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+import json
+import sys
+from difflib import Differ
+from six import StringIO
+from io import BytesIO
+from lxml import etree
+from ncclient.xml_ import to_xml
+from copy import deepcopy
+
+from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.netconf import NetconfConnection
 
 _DEVICE_CONFIGS = {}
+_EDIT_OPS = frozenset(['merge', 'create', 'replace', 'delete'])
+
+BASE_1_0 = "{urn:ietf:params:xml:ns:netconf:base:1.0}"
+
+NS_DICT = {
+    'BASE_NSMAP': {"xc": "urn:ietf:params:xml:ns:netconf:base:1.0"},
+    'BANNERS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg"},
+    'INTERFACES_NSMAP': {None: "http://openconfig.net/yang/interfaces"},
+    'INSTALL_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-installmgr-admin-oper"},
+    'HOST-NAMES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-cfg"}
+}
 
 iosxr_provider_spec = {
     'host': dict(),
@@ -40,10 +61,14 @@ iosxr_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'transport': dict(),
 }
+
 iosxr_argument_spec = {
     'provider': dict(type='dict', options=iosxr_provider_spec)
 }
+
 iosxr_top_spec = {
     'host': dict(removed_in_version=2.9),
     'port': dict(removed_in_version=2.9, type='int'),
@@ -63,24 +88,268 @@ def check_args(module, warnings):
     pass
 
 
-def get_config(module, flags=None):
-    flags = [] if flags is None else flags
+def get_connection(module):
+    if hasattr(module, 'connection'):
+        return module.connection
 
-    cmd = 'show running-config '
-    cmd += ' '.join(flags)
-    cmd = cmd.strip()
+    capabilities = get_device_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
+        module.connection = Connection(module._socket_path)
+    elif network_api == 'netconf':
+        module.connection = NetconfConnection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type {!s}'.format(network_api))
 
-    try:
-        return _DEVICE_CONFIGS[cmd]
-    except KeyError:
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
-        cfg = to_text(out, errors='surrogate_or_strict').strip()
-        _DEVICE_CONFIGS[cmd] = cfg
+    return module.connection
+
+
+def get_device_capabilities(module):
+    if hasattr(module, 'capabilities'):
+        return module.capabilities
+
+    capabilities = Connection(module._socket_path).get_capabilities()
+    module.capabilities = json.loads(capabilities)
+
+    return module.capabilities
+
+
+def transform_reply():
+    reply = '''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:output method="xml" indent="no"/>
+
+    <xsl:template match="/|comment()|processing-instruction()">
+        <xsl:copy>
+            <xsl:apply-templates/>
+        </xsl:copy>
+    </xsl:template>
+
+    <xsl:template match="*">
+        <xsl:element name="{local-name()}">
+            <xsl:apply-templates select="@*|node()"/>
+        </xsl:element>
+    </xsl:template>
+
+    <xsl:template match="@*">
+        <xsl:attribute name="{local-name()}">
+            <xsl:value-of select="."/>
+        </xsl:attribute>
+    </xsl:template>
+    </xsl:stylesheet>
+    '''
+    if sys.version < '3':
+        return reply
+    else:
+        print("utf8")
+        return reply.encode('UTF-8')
+
+
+# Note: Workaround for ncclient 0.5.3
+def remove_namespaces(rpc_reply):
+    xslt = transform_reply()
+    parser = etree.XMLParser(remove_blank_text=True)
+    xslt_doc = etree.parse(BytesIO(xslt), parser)
+    transform = etree.XSLT(xslt_doc)
+
+    return etree.fromstring(str(transform(etree.parse(StringIO(str(rpc_reply))))))
+
+
+# Builds netconf xml rpc document from meta-data
+# e.g:
+#
+# Module inputs:
+# banner_params = [{'banner':'motd', 'text':'Ansible banner example', 'state':'present'}]
+#
+# Meta-data definition
+# bannermap = collections.OrderedDict()
+# bannermap.update([
+#     ('banner', {'xpath' : 'banners/banner', 'tag' : True, 'attrib' : "operation"}),
+#     ('a:banner', {'xpath' : 'banner/banner-name'}),
+#     ('a:text', {'xpath' : 'banner/banner-text', 'operation' : 'edit'})
+# ])
+#
+# Fields:
+#   key: exact match to the key expected in arg spec (prefixes --> a: values from arg_spec, m: values from meta-data)
+#   xpath: xpath of the element (based on YANG model)
+#   tag: True if no text on the element
+#   attrib: attribute to be embedded in the element (e.g. cx:operation="merge")
+#   operation: if edit --> includes the element in edit_config() query else ignore for get() queries
+#   value: if key is prefixed with "m:", provider value from here
+#   leaf: True --> if there is only one tag element under a subtree
+#
+# Output:
+# <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+#   <banners xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg">
+#     <banner xc:operation="merge">
+#       <banner-name>motd</banner-name>
+#       <banner-text>Ansible banner example</banner-text>
+#     </banner>
+#   </banners>
+# </config>
+
+def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
+    loop_root = container_ele
+    for key, meta in xmap.items():
+        candidates = meta.get('xpath', "").split("/")
+
+        if container_ele.tag == candidates[-2]:
+            parent = container_ele
+        elif loop_root.tag == candidates[-2]:
+            parent = loop_root
+        else:
+            parent = loop_root.find(".//" + candidates[-2])
+
+        if meta.get('tag', False):
+            if parent.tag == container_ele.tag:
+                child = etree.Element(candidates[-1])
+                loop_root = child
+            else:
+                child = etree.SubElement(parent, candidates[-1])
+
+            if meta.get('attrib', None) and opcode in ('delete', 'merge'):
+                child.set(BASE_1_0 + meta.get('attrib'), opcode)
+
+            if meta.get('leaf', False):
+                container_ele.append(deepcopy(loop_root))
+            continue
+
+        if (opcode in ('delete', 'merge') and meta.get('operation', 'unknown') == 'edit') \
+                or meta.get('operation', None) is None:
+            if meta.get('ns', None) is True:
+                child = etree.SubElement(parent, candidates[-1],
+                                         nsmap=NS_DICT[key.upper() + "_NSMAP"])
+            else:
+                child = etree.SubElement(parent, candidates[-1])
+
+            param_key = key.split(":")
+            if param_key[0] == 'a' and param.get(param_key[1], None):
+                child.text = param.get(param_key[1])
+
+            if param_key[0] == 'm' and meta.get('value', None):
+                child.text = meta.get('value')
+
+        if meta.get('leaf', False):
+            container_ele.append(deepcopy(loop_root))
+
+    container_ele.append(deepcopy(loop_root))
+
+
+def build_xml(container, xmap=None, params=None, opcode=None):
+    if opcode == 'filter':
+        root = etree.Element("filter", type="subtree")
+    elif opcode in ('delete', 'merge'):
+        root = etree.Element("config", nsmap=NS_DICT['BASE_NSMAP'])
+    container_ele = etree.SubElement(root, container,
+                                     nsmap=NS_DICT[container.upper() + "_NSMAP"])
+
+    if xmap:
+        if not params:
+            build_xml_subtree(container_ele, xmap)
+        else:
+            for param in to_list(params):
+                build_xml_subtree(container_ele, xmap, param, opcode=opcode)
+
+    return root
+
+
+def get_config_diff(module, running=None, candidate=None):
+    conn = get_connection(module)
+    capabilities = get_device_capabilities(module)
+    network_api = capabilities.get('network_api')
+
+    if network_api == 'cliconf':
+        return conn.get('show commit changes diff')
+    elif network_api == 'netconf':
+        if running and candidate:
+            running_data = running.split("\n", 1)[1].rsplit("\n", 1)[0]
+            candidate_data = candidate.split("\n", 1)[1].rsplit("\n", 1)[0]
+            if running_data != candidate_data:
+                d = Differ()
+                diff = list(d.compare(running_data.splitlines(), candidate_data.splitlines()))
+                return True, '\n'.join(diff).strip()
+        return False, None
+    else:
+        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
+
+
+def discard_config(module):
+    conn = get_connection(module)
+    conn.discard_changes()
+
+
+def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, persist=False, check=False):
+    conn = get_connection(module)
+    if check:
+        reply = conn.validate()
+    else:
+        capabilities = get_device_capabilities(module)
+        network_api = capabilities.get('network_api')
+        if network_api == 'netconf':
+            reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
+        elif network_api == 'cliconf':
+            reply = conn.commit(comment=comment)
+
+    return reply
+
+
+def get_config(module, source='running', config_filter=None):
+    global _DEVICE_CONFIGS
+    if config_filter:
+        key = (source + ' ' + ' '.join(config_filter)).strip().rstrip()
+    else:
+        key = source
+    config = _DEVICE_CONFIGS.get(key)
+    if config:
+        return config
+    else:
+        conn = get_connection(module)
+        out = conn.get_config(source=source, filter=config_filter)
+
+        capabilities = get_device_capabilities(module)
+        network_api = capabilities.get('network_api')
+        if network_api == 'netconf':
+            out = to_xml(out)
+
+        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        _DEVICE_CONFIGS.update({key: cfg})
         return cfg
 
 
+def load_config(module, command_filter, warnings, replace=False, admin=False, commit=False, comment=None):
+    conn = get_connection(module)
+    capabilities = get_device_capabilities(module)
+    network_api = capabilities.get('network_api')
+
+    if network_api == 'netconf':
+        # ret = conn.lock(target = 'candidate')
+        # ret = conn.discard_changes()
+        try:
+            out = conn.edit_config(command_filter)
+        finally:
+            # ret = conn.unlock(target = 'candidate')
+            pass
+
+    elif network_api == 'cliconf':
+        command_filter.insert(0, 'configure terminal')
+        if admin:
+            command_filter.insert(0, 'admin')
+        conn.edit_config(command_filter)
+        diff = get_config_diff(module)
+        if module._diff:
+            if diff:
+                module['diff'] = to_text(diff, errors='surrogate_or_strict')
+        if commit:
+            commit_config(module, comment=comment)
+            conn.edit_config('end')
+        else:
+            conn.discard_changes()
+
+        return diff
+    else:
+        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
+
+
+# For iosxr_command module
 def to_commands(module, commands):
     spec = {
         'command': dict(key=True),
@@ -91,59 +360,15 @@ def to_commands(module, commands):
     return transform(commands)
 
 
-def run_commands(module, commands, check_rc=True):
+def run_commands(module, commands):
+    conn = get_connection(module)
     responses = list()
     commands = to_commands(module, to_list(commands))
     for cmd in to_list(commands):
-        cmd = module.jsonify(cmd)
-        rc, out, err = exec_command(module, cmd)
-        if check_rc and rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
+        kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
+        for key in ('prompt', 'answer', 'send_only'):
+            if cmd.get(key) is not None:
+                kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
+        out = conn.get(**kwargs)
         responses.append(to_text(out, errors='surrogate_or_strict'))
     return responses
-
-
-def load_config(module, commands, warnings, commit=False, replace=False, comment=None, admin=False):
-    cmd = 'configure terminal'
-    if admin:
-        cmd = 'admin ' + cmd
-
-    rc, out, err = exec_command(module, cmd)
-    if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', err=to_text(err, errors='surrogate_or_strict'))
-
-    failed = False
-    for command in to_list(commands):
-        if command == 'end':
-            continue
-
-        rc, out, err = exec_command(module, command)
-        if rc != 0:
-            failed = True
-            break
-
-    if failed:
-        exec_command(module, 'abort')
-        module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), commands=commands, rc=rc)
-
-    rc, diff, err = exec_command(module, 'show commit changes diff')
-    if rc != 0:
-        # If we failed, maybe we are in an old version so
-        # we run show configuration instead
-        rc, diff, err = exec_command(module, 'show configuration')
-        if module._diff:
-            warnings.append('device platform does not support config diff')
-
-    if commit:
-        cmd = 'commit'
-        if comment:
-            cmd += ' comment {0}'.format(comment)
-    else:
-        cmd = 'abort'
-
-    rc, out, err = exec_command(module, cmd)
-    if rc != 0:
-        exec_command(module, 'abort')
-        module.fail_json(msg=err, commands=commands, rc=rc)
-
-    return to_text(diff, errors='surrogate_or_strict')

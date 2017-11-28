@@ -16,7 +16,9 @@ DOCUMENTATION = """
 ---
 module: iosxr_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha)"
+author:
+    - Trishna Guha (@trishnaguha)
+    - Kedar Kekan (@kedarX)
 short_description: Manage multiline banners on Cisco IOS XR devices
 description:
   - This will configure both exec and motd banners on remote devices
@@ -79,60 +81,129 @@ commands:
 """
 
 import re
+import collections
+from lxml import etree
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import get_config_diff, commit_config, discard_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import get_device_capabilities, build_xml
 
 
-def map_obj_to_commands(updates, module):
-    commands = list()
-    want, have = updates
-    state = module.params['state']
+class ConfigBase(object):
+    def __init__(self, module, warnings):
+        self._module = module
+        self._result = {'changed': False, 'warnings': warnings}
+        self._want = {}
+        self._have = {}
 
-    if state == 'absent':
-        if have.get('state') != 'absent' and ('text' in have.keys() and have['text']):
-            commands.append('no banner %s' % module.params['banner'])
-
-    elif state == 'present':
-        if (want['text'] and
-                want['text'].encode().decode('unicode_escape').strip("'") != have.get('text')):
-            banner_cmd = 'banner %s ' % module.params['banner']
-            banner_cmd += want['text'].strip()
-            commands.append(banner_cmd)
-
-    return commands
-
-
-def map_config_to_obj(module):
-    flags = 'banner %s' % module.params['banner']
-    output = get_config(module, flags=[flags])
-
-    match = re.search(r'banner (\S+) (.*)', output, re.DOTALL)
-    if match:
-        text = match.group(2).strip("'")
-    else:
-        text = None
-
-    obj = {'banner': module.params['banner'], 'state': 'absent'}
-
-    if output:
-        obj['text'] = text
-        obj['state'] = 'present'
-
-    return obj
+    def map_params_to_obj(self):
+        text = self._module.params['text']
+        if text:
+            text = "{!r}".format(str(text).strip())
+        self._want.update({
+            'banner': self._module.params['banner'],
+            'text': text,
+            'state': self._module.params['state']
+        })
 
 
-def map_params_to_obj(module):
-    text = module.params['text']
-    if text:
-        text = "%r" % (str(text).strip())
+class CliConfiguration(ConfigBase):
+    def __init__(self, module, warnings):
+        super(CliConfiguration, self).__init__(module, warnings)
 
-    return {
-        'banner': module.params['banner'],
-        'text': text,
-        'state': module.params['state']
-    }
+    def map_obj_to_commands(self):
+        commands = list()
+        state = self._module.params['state']
+        if state == 'absent':
+            if self._have.get('state') != 'absent' and ('text' in self._have.keys() and self._have['text']):
+                commands.append('no banner {!s}'.format(self._module.params['banner']))
+        elif state == 'present':
+            if (self._want['text'] and
+                    self._want['text'].encode().decode('unicode_escape').strip("'") != self._have.get('text')):
+                banner_cmd = 'banner {!s} '.format(self._module.params['banner'])
+                banner_cmd += self._want['text'].strip()
+                commands.append(banner_cmd)
+        self._result['commands'] = commands
+        if commands:
+            if not self._module.check_mode:
+                load_config(self._module, commands, self._result['warnings'], commit=True)
+            self._result['changed'] = True
+
+    def map_config_to_obj(self):
+        cli_filter = 'banner {!s}'.format(self._module.params['banner'])
+        output = get_config(self._module, config_filter=cli_filter)
+        match = re.search(r'banner (\S+) (.*)', output, re.DOTALL)
+        if match:
+            text = match.group(2).strip("'")
+        else:
+            text = None
+        obj = {'banner': self._module.params['banner'], 'state': 'absent'}
+        if output:
+            obj['text'] = text
+            obj['state'] = 'present'
+        self._have.update(obj)
+
+    def run(self):
+        self.map_params_to_obj()
+        self.map_config_to_obj()
+        self.map_obj_to_commands()
+
+        return self._result
+
+
+class NCConfiguration(ConfigBase):
+    def __init__(self, module, warnings):
+        super(NCConfiguration, self).__init__(module, warnings)
+        self._banners_meta = collections.OrderedDict()
+        self._banners_meta.update([
+            ('banner', {'xpath': 'banners/banner', 'tag': True, 'attrib': "operation"}),
+            ('a:banner', {'xpath': 'banner/banner-name'}),
+            ('a:text', {'xpath': 'banner/banner-text', 'operation': 'edit'})
+        ])
+
+    def map_obj_to_commands(self):
+        state = self._module.params['state']
+        _get_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode="filter")
+        running = get_config(self._module, source='running', config_filter=etree.tostring(_get_filter))
+
+        opcode = None
+        banner_name = None
+        banner_text = None
+        running_utf8 = running.encode('utf8')
+        if etree.fromstring(running_utf8).find('.//banner-text') is not None:
+            banner_name = etree.fromstring(running_utf8).find('.//banner-name').text
+            banner_text = etree.fromstring(running_utf8).find('.//banner-text').text
+
+        if state == 'absent' and banner_name == self._module.params['banner'] and len(banner_text):
+            opcode = "delete"
+        elif state == 'present':
+            opcode = 'merge'
+
+        self._result['commands'] = []
+        if opcode:
+            _edit_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode=opcode)
+            if _edit_filter is not None:
+                if not self._module.check_mode:
+                    load_config(self._module, etree.tostring(_edit_filter), self._result['warnings'])
+                    candidate = get_config(self._module, source='candidate', config_filter=etree.tostring(_get_filter))
+
+                    rc, diff = get_config_diff(self._module, running, candidate)
+                    if rc:
+                        commit_config(self._module)
+                        self._result['changed'] = True
+                        self._result['commands'] = etree.tostring(_edit_filter)
+                        if self._module._diff:
+                            self._result['diff'] = {'prepared': diff}
+                    else:
+                        discard_config(self._module)
+
+    def run(self):
+        self.map_params_to_obj()
+        self.map_obj_to_commands()
+
+        return self._result
 
 
 def main():
@@ -155,20 +226,18 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    result = {'changed': False}
-    result['warnings'] = warnings
+    device_capabilities = get_device_capabilities(module)
+    network_api = device_capabilities.get('network_api')
 
-    want = map_params_to_obj(module)
-    have = map_config_to_obj(module)
+    if network_api == 'cliconf':
+        warnings.append('cli support for \'iosxr_banner\' is deprecated and will be removed 4 releases from 2.5. Use \'netconf\' instead')
+        config_object = CliConfiguration(module, warnings)
+    elif network_api == 'netconf':
+        config_object = NCConfiguration(module, warnings)
+    else:
+        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
 
-    commands = map_obj_to_commands((want, have), module)
-    result['commands'] = commands
-
-    if commands:
-        if not module.check_mode:
-            load_config(module, commands, result['warnings'], commit=True)
-        result['changed'] = True
-
+    result = config_object.run()
     module.exit_json(**result)
 
 

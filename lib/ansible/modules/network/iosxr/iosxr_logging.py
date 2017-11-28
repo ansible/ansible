@@ -237,7 +237,7 @@ def map_config_to_obj(module):
     obj = []
     dest_group = ('console', 'hostnameprefix', 'monitor', 'buffered', 'on')
 
-    data = get_config(module, flags=['logging'])
+    data = get_config(module, config_filter='logging')
     lines = data.split("\n")
 
     for line in lines:

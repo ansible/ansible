@@ -1,9 +1,16 @@
 ---
+- name: Enable Netconf service
+  iosxr_netconf:
+    netconf_port: 830
+    netconf_vrf: 'default'
+    state: present
+  register: result
+
 - name: setup - remove motd
   iosxr_banner:
     banner: motd
     state: absent
-    provider: "{{ cli }}"
+    provider: "{{ netconf }}"
 
 - name: Set motd
   iosxr_banner:
@@ -12,7 +19,7 @@
       this is my motd banner
       that has a multiline
       string
-    provider: "{{ cli }}"
+    provider: "{{ netconf }}"
     state: present
   register: result
 
@@ -22,8 +29,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my motd banner' in result.commands[1]"
-      - "'that has a multiline' in result.commands[1]"
+      - "'this is my motd banner' in result.commands"
+      - "'that has a multiline' in result.commands"
 
 - name: Set motd again (idempotent)
   iosxr_banner:
@@ -32,7 +39,7 @@
       this is my motd banner
       that has a multiline
       string
-    provider: "{{ cli }}"
+    provider: "{{ netconf }}"
     state: present
   register: result
 
@@ -41,7 +48,3 @@
       - "result.changed == false"
       - "result.commands | length == 0"
 
-
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"

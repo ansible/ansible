@@ -228,7 +228,7 @@ def map_params_to_obj(module):
 
 
 def map_config_to_obj(module):
-    data = get_config(module, flags=['interface'])
+    data = get_config(module, config_filter='interface')
     interfaces = data.strip().rstrip('!').split('!')
 
     if not interfaces:
@@ -360,7 +360,7 @@ def main():
         enabled=dict(default=True, type='bool'),
         tx_rate=dict(),
         rx_rate=dict(),
-        delay=dict(default=10, type='int'),
+        delay=dict(default=5, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down'])
     )
@@ -402,7 +402,6 @@ def main():
     if commands:
         if not module.check_mode:
             load_config(module, commands, result['warnings'], commit=True)
-            exec_command(module, 'exit')
         result['changed'] = True
 
     failed_conditions = check_declarative_intent_params(module, want, result)

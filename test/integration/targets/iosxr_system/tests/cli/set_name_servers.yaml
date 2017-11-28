@@ -8,6 +8,7 @@
       - no ip name-server 2.2.2.2
       - no ip name-server 3.3.3.3
     match: none
+    provider: "{{ cli }}"
 
 - name: configure name_servers
   iosxr_system:
@@ -15,12 +16,13 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - result.commands|length == 3
+      - result.commands|length == 4
       - "'domain name-server 1.1.1.1' in result.commands"
       - "'domain name-server 2.2.2.2' in result.commands"
       - "'domain name-server 3.3.3.3' in result.commands"
@@ -31,6 +33,7 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -69,12 +72,13 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - result.commands|length == 1
+      - result.commands|length == 2
       - "'no domain name-server 3.3.3.3' in result.commands"
 
 # FIXME: No teardown
