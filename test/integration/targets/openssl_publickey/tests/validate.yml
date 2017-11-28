@@ -31,8 +31,8 @@
 - name: Validate public key - OpenSSH format - test idempotence (issue 33256)
   assert:
     that:
-      - not publickey_ssh_idempotence|changed
-  when: cryptography_version.stdout|version_compare('1.4.0', '>=')
+      - publickey_ssh_idempotence is not changed
+  when: cryptography_version.stdout is version('1.4.0', '>=')
 
 - name: Validate publickey2 (test - Ensure key has been removed)
   stat:
