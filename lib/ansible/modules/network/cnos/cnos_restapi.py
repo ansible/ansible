@@ -6,7 +6,7 @@ __metaclass__ = type
 # Copyright (C) 2017 Lenovo, Inc.
 #
 # This file is part of Ansible
-
+#
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -114,10 +114,7 @@ msg:
   description: Success or failure message
   returned: always
   type: string
-  sample: "RESTAPI PUT /nos/api/cfg/telemetry/bst/feature is
-
-class RestModule(object): successful"
-  sample failure: "RESTAPI PUT /nos/api/cfg/telemetry/bst/feature failed"
+  sample: "RESTAPI PUT /nos/api/cfg/telemetry/bst/feature is successful"
 '''
 
 import json
@@ -125,7 +122,7 @@ import ast
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
 
-Class RestModule(object):
+class RestModule(object):
     def __init__(self, params):
         self.transport = params['transport']
         self.ip = params['host']
