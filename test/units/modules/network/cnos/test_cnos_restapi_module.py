@@ -18,7 +18,6 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
 import os
 import json
 
@@ -40,6 +39,7 @@ class AnsibleExitJson(Exception):
 
 class AnsibleFailJson(Exception):
     pass
+
 
 class TestCnosRestModule(unittest.TestCase):
 
