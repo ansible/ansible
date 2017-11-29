@@ -21,7 +21,7 @@ description:
    - "Add or remove a host to Icinga2 through the API"
    - "( see https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/ )"
 version_added: "2.5"
-author: "Jurgen Brand"
+author: "Jurgen Brand (@t794104)"
 options:
   url:
     description:
