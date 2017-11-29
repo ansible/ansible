@@ -191,15 +191,29 @@ def directory(module, content, vm):
         try:
             file_manager.MakeDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
                                               createParentDirectories=recurse)
+        except vim.fault.FileAlreadyExists:
+            module.fail_json(msg="Directory %s already exist" % path)
+        except vim.fault.GuestPermissionDenied:
+            module.fail_json(msg="Permission denied for path %s" % path)
+        except vim.fault.InvalidGuestLogin:
+            module.fail_json(msg="Invalid guest login for user %s" % vm_username)
+        # other exceptions
         except Exception as e:
-            module.fail_json(msg="Failed to Create directory into Vm due %s" % e)
+            module.fail_json(msg="Failed to Create directory into Vm VMware exception:%s" % e)
 
     if operation == "delete":
         try:
             file_manager.DeleteDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
                                                 recursive=recurse)
+        except vim.fault.FileFault as e:
+            module.fail_json(msg="FileFault:%s" % e.msg)
+        except vim.fault.GuestPermissionDenied:
+            module.fail_json(msg="Permission denied for path %s" % path)
+        except vim.fault.InvalidGuestLogin:
+            module.fail_json(msg="Invalid guest login for user %s" % vm_username)
+        # other exceptions
         except Exception as e:
-            module.fail_json(changed=False, msg="Failed to Delete directory into Vm due %s" % e)
+            module.fail_json(changed=False, msg="Failed to Delete directory into Vm VMware exception:%s" % e)
 
     return True
 
@@ -222,8 +236,15 @@ def fetch(module, content, vm):
     try:
         fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
                                                                       guestFilePath=src)
+    except vim.fault.FileFault as e:
+        module.fail_json(msg="FileFault:%s" % e.msg)
+    except vim.fault.GuestPermissionDenied:
+        module.fail_json(msg="Permission denied to fetch file %s" % src)
+    except vim.fault.InvalidGuestLogin:
+        module.fail_json(msg="Invalid guest login for user %s" % vm_username)
+    # other exceptions
     except Exception as e:
-        module.fail_json(changed=False, msg="Failed to Fetch file from Vm due %s" % e)
+        module.fail_json(changed=False, msg="Failed to Fetch file from Vm VMware exception:%s" % e)
 
     url = fileTransferInfo.url
     resp, info = urls.fetch_url(module, url, method="GET")
@@ -268,8 +289,15 @@ def copy(module, content, vm):
         url = file_manager.InitiateFileTransferToGuest(vm=vm, auth=creds, guestFilePath=dest,
                                                        fileAttributes=file_attributes, overwrite=overwrite,
                                                        fileSize=file_size)
+    except vim.fault.FileFault as e:
+        module.fail_json(msg="FileFault:%s" % e.msg)
+    except vim.fault.GuestPermissionDenied:
+        module.fail_json(msg="Permission denied to copy file into destination %s" % dest)
+    except vim.fault.InvalidGuestLogin:
+        module.fail_json(msg="Invalid guest login for user %s" % vm_username)
+    # other exceptions
     except Exception as e:
-        module.fail_json(changed=False, msg="Failed to Copy file to Vm due %s" % e)
+        module.fail_json(changed=False, msg="Failed to Copy file to Vm VMware exception:%s" % e)
 
     resp, info = urls.fetch_url(module, url, data=data, method="PUT")
 
