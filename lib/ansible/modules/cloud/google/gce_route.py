@@ -388,7 +388,13 @@ def check_cidr_masking(params, resources):
         overlap |= net.__contains__(dest_range)
 
     # Custom / Auto mode networks
-    subnets = (subnet for region in resources['subnets']['items'] for subnet in resources['subnets']['items'][region]['subnetworks'])
+    regions = []  # regions with  subnets
+    for region in resources['subnets']['items']:
+        if 'subnetworks' in resources['subnets']['items'][region]:
+            regions.insert(-1, region)
+
+    subnets = (subnet for region in regions for subnet in resources['subnets']['items'][region]['subnetworks'])
+
     for subnet in subnets:
         net = IPNetwork(subnet['ipCidrRange'])
         overlap |= net.__contains__(dest_range)
