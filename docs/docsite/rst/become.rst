@@ -338,8 +338,8 @@ Be aware of the following limitations with ``become`` on Windows:
 
 .. seealso::
 
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/forum/#!forum/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `webchat.freenode.net <https://webchat.freenode.net>`_
        #ansible IRC chat channel
 
