@@ -14,16 +14,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: nxos_portchannel
+module: nxos_linkagg
 extends_documentation_fragment: nxos
 version_added: "2.5"
-short_description: Manages port-channel interfaces.
+short_description: Manage link aggregation groups on Cisco NXOS devices.
 description:
-  - Manages port-channel specific configuration parameters.
+  - This module provides declarative management of link aggregation groups
+    on Cisco NXOS devices.
 author:
   - Trishna Guha (@trishnaguha)
 notes:
-  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - Tested against NXOSv 7.0(3)I5(1).
   - C(state=absent) removes the portchannel config and interface if it
     already exists. If members to be removed are not explicitly
     passed, all existing members (if any), are removed.
