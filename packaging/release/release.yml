@@ -45,7 +45,7 @@
     private: no
   tasks:
   - pause:
-      prompt: "Has the CHANGELOG and any other files been updated and are ready to go?"
+      prompt: "Has the CHANGELOG, release.yml, release_and_maintenance.rst, and any other files been updated and are ready to go?"
     when: is_final|bool
 
   - name: create a combined version string from the specified values
