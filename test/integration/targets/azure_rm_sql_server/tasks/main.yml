@@ -1,13 +1,38 @@
-- name: Create Servers
+- name: Create instance of SQL Server
   azure_rm_sql_server:
     resource_group: "{{ resource_group }}"
     name: zims-server
     location: westus
-    administrator_login: mylogin
-    administrator_login_password: Testpasswordxyz12!
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
   register: output
 - name: Assert the resource instance is well created
   assert:
     that:
       - output.changed
       - output.state.state == 'Ready'
+
+- name: Update instance of SQL Server
+  azure_rm_sql_server:
+    resource_group: "{{ resource_group }}"
+    name: zims-server
+    location: westus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.state.state == 'Ready'
+
+- name: Delete instance of SQL Server
+  azure_rm_sql_server:
+    resource_group: "{{ resource_group }}"
+    name: zims-server
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
