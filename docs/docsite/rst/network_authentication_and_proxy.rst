@@ -10,7 +10,7 @@ Network getting started example
 Overview
 ========
 
-This page will explains the different ways you can authentication against the various network modules (LINKTONETWORKMODULEINDEXPAGE).
+This page will explains the different ways you can authentication against the various :doc:`list_of_network_modules`.
 
 As Ansible is a flexible tool there are a number of different ways this can be achieved, the pros and cons will be detailed.
 
@@ -19,8 +19,6 @@ By the end of this document you will know:
 * What communication methods (transports) are available for each network platforms and how to use them
 * For platforms that support privilege mode, how to use it
 * How to connect to via CLI transports (ssh) via a jump host
-
-
 
 
 Terms
@@ -37,7 +35,7 @@ Terms
 
     Communication to the remote node is done over HTTP(S).
 :Platform:
-:Privilege mode:
+:Privilege mode: Enable/EXEC mode on switches that support different levels of user privilege.
 :Controller: The machine running ``ansible-playbook``
 :Remote node: The network switch or router we are configuring
 :Jump host/Bastian: Machine that sits between the `controller` and the `remote node`
@@ -58,12 +56,6 @@ The following table gives a summary of the connection methods supported by this 
 +-------------+---------------------------+-------------------------------+
 | Platform    | CLI connection method     | API                           |
 +=============+===========================+===============================+
-| aci         |                           | top-level module argument     |
-+-------------+---------------------------+-------------------------------+
-| avi         |                           | top-level module argument     |
-+-------------+---------------------------+-------------------------------+
-| bigmod      |                           | top-level module argument     |
-+-------------+---------------------------+-------------------------------+
 | eos         | connection: network_cli   | provider: transport: eapi     |
 +-------------+---------------------------+-------------------------------+
 | ce          | provider                  | top-level module argument     |
@@ -87,17 +79,30 @@ The following table gives a summary of the connection methods supported by this 
 |             |                           |                               |
 +-------------+---------------------------+-------------------------------+
 
+
+If a platform isn't listed in the above table consult the module documentation.
+
 .. _network-cli:
 
 connection: network_cli
 -----------------------
 
-From Ansible 2.5 ``network_cli`` connections are first class citizens. Previously (in Ansible 2.2->2.4) Playbook writers had to use ``connection: local``.
+From Ansible 2.5 ``network_cli`` connections are first class citizens. Previously (in Ansible 2.2 to 2.4) Playbook writers had to use ``connection: local``.
 
-FIXME: Include group_var + playbook demonstrating this
+The ansible-connection setting tells Ansible how it should connect to a remote device. When working with Ansible Networking, setting this to ``ansible_connection: network_cli`` informs Ansible that the remote node is a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
 
-FIXME: Include link to Getting Started doc
+Along with ansible_connection in Ansible 2.5 you must specify the platform:
 
+.. code-block::
+
+   [eos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=eos
+
+
+In the task there is no need to specify any connection arguments.
+
+For a full example showing how to use ``network_cli`` as well as an overview of how Ansible can be used to manage Networking can be found in :ref:`network-getting-started-example`.
 
 provider
 --------
@@ -105,6 +110,29 @@ provider
 Although ``connection: network_cli`` is the preferred way to specifying the connection, there are two instances when ``provider`` may still need when:
 * You wish to use the API``eapi`` or ``nxapi``
 * The module hasn't been updated to support network_cli, the network-platform-connections table will show this
+
+.. code-block::
+
+   [eos:vars]
+   cli
+     username: user
+     password: VAULTEDSTRING
+     hostname: "{{ inventory_hostname }}"
+
+.. code-block:: yaml
+
+   - name: "Download switch configuration"
+     hosts: switches
+     connection: local
+     gather_facts: no
+
+
+     tasks:
+       - name: Gather facts (ios)
+         ios_facts:
+           provider: "{{ ios_credentials }}"
+         register: result_ios
+         when: "'ios' in group_names"
 
 
 
@@ -196,7 +224,7 @@ Privilege Mode
 ==============
 
 
-For more information see the :ref:`become-network guide.
+For more information see the :ref:`become-network guide`.
 
 
 
