@@ -381,7 +381,7 @@ def main():
     lvs = parse_lvs(current_lvs)
 
     if snapshot:
-        ### check snapshot pre-conditions
+        # Check snapshot pre-conditions
         for test_lv in lvs:
             if test_lv['name'] == lv or test_lv['name'] == thinpool:
                 if not test_lv['thinpool'] and not thinpool:
@@ -394,7 +394,7 @@ def main():
 
     elif thinpool:
         if lv:
-            ### check thin volume pre-conditions
+            # Check thin volume pre-conditions
             for test_lv in lvs:
                 if test_lv['name'] == thinpool:
                     break
@@ -416,7 +416,7 @@ def main():
     msg = ''
     if this_lv is None:
         if state == 'present':
-            ### require size argument except for snapshot of thin volumes
+            # Require size argument except for snapshot of thin volumes
             if (lv or thinpool) and not size:
                 for test_lv in lvs:
                     if test_lv['name'] == lv and test_lv['thinvol'] and snapshot:
@@ -424,7 +424,7 @@ def main():
                 else:
                     module.fail_json(msg="No size given.")
 
-            ### create LV
+            # create LV
             lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
             if snapshot is not None:
                 if size:
