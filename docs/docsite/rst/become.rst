@@ -23,7 +23,7 @@ Directives
 These can be set from play to task level, but are overridden by connection variables as they can be host specific.
 
 become
-    set to ``True`` (or ``Yes``) to activate privilege escalation.
+    set to ``yes`` to activate privilege escalation.
 
 become_user
     set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
@@ -40,20 +40,20 @@ For example, to manage a system service (which requires ``root`` privileges) whe
       service:
         name: httpd
         state: started
-      become: true
+      become: yes
 
 To run a command as the ``apache`` user::
 
     - name: Run a command as the apache user
       command: somecommand
-      become: true
+      become: yes
       become_user: apache
 
 To do something as the ``nobody`` user when the shell is nologin::
 
     - name: Run a command as nobody
       command: somecommand
-      become: true
+      become: yes
       become_method: su
       become_user: nobody
       become_flags: '-s /bin/sh'
@@ -69,20 +69,20 @@ ansible_become_method
     which privilege escalation method should be used
 
 ansible_become_user
-    allows to set the user you become through privilege escalation, does not imply ``ansible_become: True``
+    set the user you become through privilege escalation, does not imply ``ansible_become: yes``
 
 ansible_become_pass
-    allows you to set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
+    set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
 
-    webserver ansible_user=manager ansible_become=true
+    webserver ansible_user=manager ansible_become=yes
 
 Command line options
 --------------------
 
 --ask-become-pass, -K
-    ask for privilege escalation password, does not imply become will be used
+    ask for privilege escalation password, does not imply become will be used. Note that this password will be used for all hosts.
 
 --become, -b
     run operations with become (no password implied)
@@ -210,11 +210,15 @@ module.
 Become and Networks
 ===================
 
+
+network_cli and become
+----------------------
+
 Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
 
 This functionality requires the host connection type to be using ``connection: network_cli``, in Ansible 2.5 this is limited to ``eos`` and ``ios``.
 
-This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
+This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
 
 If a task fails with the following then it's an indicator that `enable` mode is required:
 
@@ -230,7 +234,7 @@ Which can be enabled for specific tasks as shown (task level):
      eos_facts:
        gather_subset:
          - "!hardware"
-     become: true
+     become: yes
      become_method: enable
 
 Or if you wish to be in enable mode for all tasks (play level):
@@ -238,7 +242,7 @@ Or if you wish to be in enable mode for all tasks (play level):
 .. code-block:: yaml
 
    - hosts: eos-switches
-     become: true
+     become: yes
      become_method: enable
      tasks:
        - name: Gather facts (eos)
@@ -246,8 +250,18 @@ Or if you wish to be in enable mode for all tasks (play level):
            gather_subset:
              - "!hardware"
 
+FIXME: Can be specified per host
+
+Dropping out of enable mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+FIXME: Not possible, as some platforms don't support this
+
+FIXME: Raise bug so we warn if `become: no`
+
+
 Passwords for enable mode
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If a password is required to enter enable mode this can be specified by:
 
@@ -267,13 +281,16 @@ For network platforms that do not currently support ``connection: network_cli`` 
 
 .. code-block:: yaml
 
-   - name: Gather facts (eos)
-     eos_facts:
-       gather_subset:
-         - "!hardware"
-     provider:
-       authorize: true
-       auth_pass: " {{ secret_auth_pass }}"
+   - hosts: eos-switches
+     ansible_connection: local
+     tasks:
+       - name: Gather facts (eos)
+         eos_facts:
+           gather_subset:
+             - "!hardware"
+         provider:
+           authorize: yes
+           auth_pass: " {{ secret_auth_pass }}"
 
 Note that over time more platforms will move to support ``become``. Check the :doc:`list_of_network_modules` for details.
 
