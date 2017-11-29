@@ -33,7 +33,7 @@ module: cnos_restapi
 
 short_description:  Access to  RESTAPI's on switches running Lenovo CNOS.
 
-version_added: "2.4"
+version_added: "2.5"
 
 description:
   - "Provides access to the RESTAPI's on the Lenovo CNOS switches.
@@ -57,7 +57,6 @@ options:
         description:
             - The HTTP method of the request
                  - GET is typically used for querying objects
-                 - DELETE is typically used for deleting objects
                  - POST is typically used for creating/querying objects
                  - PUT is typically used for modifying objects
         required: true
