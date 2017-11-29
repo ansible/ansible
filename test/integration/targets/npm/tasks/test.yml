@@ -1,0 +1,72 @@
+- name: 'Remove any node modules'
+  file:
+    path: '{{ remote_dir }}/node_modules'
+    state: absent
+
+- vars:
+    # sample: node-v8.2.0-linux-x64.tar.xz
+    node_path: '{{ remote_dir }}/node-v{{ nodejs_version }}-{{ ansible_system|lower }}-x{{ ansible_userspace_bits }}/bin'
+  block:
+    - shell: echo $PATH
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+
+    - shell: npm --version
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+      register: npm_version
+
+    - debug:
+        var: npm_version.stdout
+
+    - name: 'Install simple package without dependency'
+      npm:
+        path: '{{ remote_dir }}'
+        executable: '{{ node_path }}/npm'
+        state: present
+        name: iconv-lite
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+      register: npm_install
+
+    - assert:
+        that:
+          - npm_install|success
+          - npm_install|changed
+
+    - name: 'Reinstall simple package without dependency'
+      npm:
+        path: '{{ remote_dir }}'
+        executable: '{{ node_path }}/npm'
+        state: present
+        name: iconv-lite
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+      register: npm_reinstall
+
+    - name: Check there is no change
+      assert:
+        that:
+          - npm_reinstall|success
+          - not (npm_reinstall|changed)
+
+    - name: 'Manually delete package'
+      file:
+        path: '{{ remote_dir }}/node_modules/iconv-lite'
+        state: absent
+
+    - name: 'reinstall simple package'
+      npm:
+        path: '{{ remote_dir }}'
+        executable: '{{ node_path }}/npm'
+        state: present
+        name: iconv-lite
+      environment:
+        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
+      register: npm_fix_install
+
+    - name: Check result is changed and successful
+      assert:
+        that:
+          - npm_fix_install|success
+          - npm_fix_install|changed
