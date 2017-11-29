@@ -10,6 +10,7 @@ cd ~/
 
 if [ "${platform}" = "freebsd" ]; then
     while true; do
+        env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
         pkg install -y \
             bash \
             curl \
