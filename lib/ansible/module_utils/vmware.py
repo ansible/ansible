@@ -280,7 +280,7 @@ def gather_vm_facts(content, vm):
         'hw_datastores': [],
         'hw_files': [],
         'hw_esxi_host': None,
-        'hw_guest_ha_state': vm.summary.runtime.dasVmProtection,
+        'hw_guest_ha_state': None,
         'hw_is_template': vm.config.template,
         'hw_folder': None,
         'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
@@ -299,6 +299,8 @@ def gather_vm_facts(content, vm):
     if vm.summary.runtime.host:
         host = vm.summary.runtime.host
         facts['hw_esxi_host'] = host.summary.config.name
+    if vm.summary.runtime.dasVmProtection:
+        facts['hw_guest_ha_state'] = vm.summary.runtime.dasVmProtection.dasProtected
 
     datastores = vm.datastore
     for ds in datastores:
