@@ -33,8 +33,6 @@ Ansible Changes By Release
   simply remove check_invalid_arguments if they set it to the default of True.
   check_invalid_arguments will be removed in Ansible-2.9.
 * nxos_ip_interface module is deprecated in Ansible 2.5. Use nxos_l3_interface module instead.
-  and these options will be removed in Ansible 2.9. `get_md5: no` will still be
-  allowed in 2.9 but will finally be removed 2 versions after that.
 * nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
 
 ### Minor Changes
