@@ -105,6 +105,21 @@ options:
         default: 'no'
         choices: ['yes', 'no']
         version_added: "2.4"
+    verify_checksum:
+        description:
+            - If C(never), the md5 checksum will never be downloaded and verified.
+            - If C(download), the md5 checksum will be downloaded and verified only after artifact download. This is the default.
+            - If C(change), the md5 checksum will be downloaded and verified if the destination already exist,
+              to verify if they are identical. This was the behaviour before 2.5. Since it downloads the md5 before (maybe)
+              downloading the artifact, and since some repository software, when acting as a proxy/cache, return a 404 error
+              if the artifact has not been cached yet, it may fail unexpectedly.
+              If you still need it, you should consider using C(always) instead - if you deal with a checksum, it is better to
+              use it to verify integrity after download.
+            - C(always) combines C(download) and C(change).
+        required: false
+        default: 'download'
+        choices: ['never', 'download', 'change', 'always']
+        version_added: "2.5"
 extends_documentation_fragment:
     - files
 '''
@@ -338,23 +353,28 @@ class MavenDownloader:
         else:
             return f(response)
 
-    def download(self, artifact, filename=None):
+    def download(self, artifact, verify_download, filename=None):
         filename = artifact.get_filename(filename)
         if not artifact.version or artifact.version == "latest":
             artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact),
                                 artifact.classifier, artifact.extension)
 
         url = self.find_uri_for_artifact(artifact)
-        result = True
-        if not self.verify_md5(filename, url + ".md5"):
-            response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
-            if response:
-                f = open(filename, 'wb')
-                self._write_chunks(response, f, report_hook=self.chunk_report)
-                f.close()
+        error = None
+        response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
+        if response:
+            f = open(filename, 'wb')
+            self._write_chunks(response, f, report_hook=self.chunk_report)
+            f.close()
+            if verify_download and not self.verify_md5(filename, url + ".md5"):
+                # if verify_change was set, the previous file would be deleted
+                os.remove(filename)
+                error = "Checksum verification failed"
             else:
-                result = False
-        return result
+                error = None
+        else:
+            error = "Error downloading artifact " + str(artifact)
+        return error
 
     def chunk_report(self, bytes_so_far, chunk_size, total_size):
         percent = float(bytes_so_far) / total_size
@@ -417,6 +437,7 @@ def main():
             dest=dict(type="path", default=None),
             validate_certs=dict(required=False, default=True, type='bool'),
             keep_name=dict(required=False, default=False, type='bool'),
+            verify_checksum=dict(required=False, default='download', choices=['never', 'download', 'change', 'always']),
         ),
         add_file_common_args=True
     )
@@ -445,6 +466,10 @@ def main():
     dest = module.params["dest"]
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     keep_name = module.params["keep_name"]
+    verify_checksum = module.params["verify_checksum"]
+
+    verify_download = verify_checksum == 'download' or verify_checksum == 'always'
+    verify_change = verify_checksum == 'change' or verify_checksum == 'always'
 
     # downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
@@ -481,15 +506,16 @@ def main():
             dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
-    if os.path.lexists(b_dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
+    if os.path.lexists(b_dest) and ((not verify_change) or downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5')):
         prev_state = "present"
 
     if prev_state == "absent":
         try:
-            if downloader.download(artifact, b_dest):
+            download_error = downloader.download(artifact, verify_download, b_dest)
+            if download_error is None:
                 changed = True
             else:
-                module.fail_json(msg="Unable to download the artifact")
+                module.fail_json(msg="Cannot download the artifact to destination: " + download_error)
         except ValueError as e:
             module.fail_json(msg=e.args[0])
 
