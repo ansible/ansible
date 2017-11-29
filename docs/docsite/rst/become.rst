@@ -72,7 +72,7 @@ ansible_become_user
     allows to set the user you become through privilege escalation, does not imply ``ansible_become: True``
 
 ansible_become_pass
-    allows you to set the privilege escalation password
+    allows you to set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
 
@@ -210,7 +210,7 @@ module.
 Become and Networks
 ===================
 
-Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it.
+Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
 
 This functionality requires the host connection type to be using ``connection: network_cli``, in Ansible 2.5 this is limited to ``eos`` and ``ios``.
 
@@ -233,8 +233,30 @@ Which can be enabled as shown:
      become: true
      become_method: enable
 
+If a password is required to enter enable mode this can be specified by:
+
+* providing the :option:`--ask-become-pass <ansible-playbook --ask-become-pass>` command line option
+* setting the ``ansible_become_pass`` connection variable
+
+As a reminder passwords should never be stored in plain text, see how encrypt secrets in vault :doc:`playbooks_vault` for more information.
+
 For more information about ``network_cli`` see :ref:`network-cli`.
 
+.. _become-network_auth_and_auth_password
+
+authorize and auth_pass
+^^^^^^^^^^^^^^^^^^^^^^^
+
+For network platforms that do not currently support ``connection: network_cli`` then the module options ``authorize`` and ``auth_pass`` can be used.
+
+   - name: Gather facts (eos)
+     eos_facts:
+       gather_subset:
+         - "!hardware"
+     authorize: true
+     auth_pass: " {{ secret_auth_pass }}"
+
+Note that over time more platforms will move to support ``become``. Check the :doc:`list_of_network_modules` for details.
 
 .. _become-windows:
 
@@ -254,7 +276,7 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 and run commands that are not normally accessible in a WinRM session.
 
 .. note:: Prior to Ansible 2.4, become would only work when ``ansible_winrm_transport`` was
-    set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on 
+    set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on
     all transport types.
 
 Administrative Rights
@@ -305,7 +327,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
 * Grant ``SeTcbPrivilege`` to the user Ansible connects with on
   WinRM. ``SeTcbPrivilege`` is a high-level privilege that grants
   full control over the operating system. No user is given this privilege by
-  default, and care should be taken if you grant this privilege to a user or group. 
+  default, and care should be taken if you grant this privilege to a user or group.
   For more information on this privilege, please see
   `Act as part of the operating system <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
   You can use the below task to set this privilege on a Windows host::
@@ -329,7 +351,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
         type: dword
         state: present
       register: uac_result
-    
+
     - name: reboot after disabling UAC
       win_reboot:
       when: uac_result is changed
