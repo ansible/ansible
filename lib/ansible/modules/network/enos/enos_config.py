@@ -55,7 +55,6 @@ options:
         mutually exclusive with I(lines).
     required: false
     default: null
-    version_added: "2.5"
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -118,7 +117,6 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
-    version_added: "2.5"
   comment:
     description:
       - Allows a commit description to be specified to be included
@@ -126,7 +124,6 @@ options:
         not changed or committed, this argument is ignored.
     required: false
     default: 'configured by enos_config'
-    version_added: "2.5"
   admin:
     description:
       - Enters into administration configuration mode for making config
@@ -134,13 +131,12 @@ options:
     required: false
     default: false
     choices: [ "yes", "no" ]
-    version_added: "2.5"
 """
 
 EXAMPLES = """
 - name: configure top level configuration
   enos_config:
-    lines: hostname {{ inventory_hostname }}
+    "lines: hostname {{ inventory_hostname }}"
 
 - name: configure interface settings
   enos_config:
