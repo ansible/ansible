@@ -422,7 +422,10 @@ class AnsibleDockerClient(Client):
         except Exception as exc:
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
         images = response
-        lookup = "%s:%s" % (name, tag)
+        if tag.startswith("sha256:"):
+            lookup = "%s@%s" % (name, tag)        
+        else:
+            lookup = "%s:%s" % (name, tag)
         if tag and name in DOCKER_RESERVED_IMAGE_NAMES:
             images = []
             for image in response:
@@ -432,10 +435,16 @@ class AnsibleDockerClient(Client):
         elif tag:
             images = []
             for image in response:
-                tags = image.get('RepoTags')
-                if tags and lookup in tags:
-                    images = [image]
-                    break
+                if tag.startswith("sha256:"):
+                    tags = image.get('RepoDigests')
+                    if tags and lookup in tags:
+                        images = [image]
+                        break                
+                else:
+                    tags = image.get('RepoTags')
+                    if tags and lookup in tags:
+                        images = [image]
+                        break
         return images
 
     def pull_image(self, name, tag="latest"):
