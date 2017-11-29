@@ -6,42 +6,78 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Ansible Networking Team
-    connection: network_cli
-    short_description: Use network_cli to run command on network appliances
+---
+author: Ansible Networking Team
+connection: network_cli
+short_description: Use network_cli to run command on network appliances
+description:
+  - This plugin actually forces use of 'local' execution but uses paramiko to
+    establish a remote ssh shell on the network device.  This connection
+    plugin will load two additional plugins to manage the session.  It will
+    load a terminal plugin to setup terminal parameters and a cliconf plugin
+    to handle serializing requests to the remote device.  Both plugins are
+    loaded based on the network_os configuration value (see options below).  If
+    the network device needs privilege escalation (for instance 'enable' mode),
+    set the become directive in the playbook for the play or task (or configure
+    it in inventory)
+version_added: "2.3"
+options:
+  network_os:
     description:
-        - This plugin actually forces use of 'local' execution but using paramiko to establish a remote ssh shell on the appliance.
-        - Also this plugin ignores the become_method but still uses the becoe_user and become_pass to
-          do privilege escalation, method depending on network_os used.
-    version_added: "2.3"
-    options:
-      network_os:
-        description:
-            - Appliance specific OS
-        default: 'default'
-        vars:
-            - name: ansible_netconf_network_os
-      password:
-        description:
-            - Secret used to authenticate
-        vars:
-            - name: ansible_pass
-            - name: ansible_netconf_pass
-      private_key_file:
-        description:
-            - Key or certificate file used for authentication
-        ini:
-            - section: defaults
-              key: private_key_file
-        env:
-            - name: ANSIBLE_PRIVATE_KEY_FILE
-        vars:
-            - name: ansible_private_key_file
-      timeout:
+      - Configures the device platform network operating system.  This value is
+        used to load the correct terminal and cliconf plugins to communicate
+        with the remote device
+    default: null
+    vars:
+      - name: ansible_network_os
+  remote_user:
+    description:
+      - The username used to authenticate to the remote device when the SSH
+        connection is first established.  If the remote_user is not specified,
+        the connection will use the username of the logged in user.
+      - Can be configured form the CLI via the ``--user`` or ``-u`` options
+    ini:
+      - section: defaults
+        key: remote_user
+    env:
+      - name: ANSIBLE_REMOTE_USER
+    vars:
+      - name: ansible_user
+  password:
+    description:
+      - Configures the user password used to authenticate to the remote device
+        when first establishing the SSH connection.
+    vars:
+      - name: ansible_pass
+  private_key_file:
+    description:
+      - The private SSH key or certificate file used to to authenticate to the
+        remote device when first establishing the SSH connection.
+    ini:
+     section: defaults
+     key: private_key_file
+    env:
+      - name: ANSIBLE_PRIVATE_KEY_FILE
+    vars:
+      - name: ansible_private_key_file
+  timeout:
+    type: int
+    description:
+      - Sets the connection time for the communicating with the remote device.
+        This timeout is used as the default timeout value for commands when
+        issuing a command to the network CLI.  If the command does not return
+        in timeout seconds, the an error is generated.
         type: int
-        description:
-          - Connection timeout in seconds
-        default: 120
+    default: 120
+
+# TODO:
+# persistent_connection/connect_timeout
+# persistent_connection/connect_retry_timeout
+# persistent_connection/command_timeout
+# paramiko_connection/look_for_keys
+# paramiko_connection/host_key_auto_add
+# privilege_escalation/become
+# privilege_escalation/become_method
 """
 
 import json
