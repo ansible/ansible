@@ -532,7 +532,8 @@ def main():
 
             # check: instance_tags
             # Tags might not be set in the project; cast them to an empty list
-            resources['route']['tags'] = resources['route']['tags'] or []  # pylint: disable=E1137
+            if 'tags' in resources['route']:
+                resources['route']['tags'] = resources['route']['tags']  # pylint: disable=E1137
 
             # params['instance_tags'] will always be a list at this point. We
             # are converting to unordered sets for the comparison.
