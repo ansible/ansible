@@ -51,7 +51,7 @@ options:
     urlpath:
         description:
             - URL Path of the RESTAPI
-        required:true
+        required: true
         default: Null
     method:
         description:
