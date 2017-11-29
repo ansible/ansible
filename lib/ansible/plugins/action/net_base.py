@@ -54,8 +54,7 @@ class ActionModule(ActionBase):
 
         self.provider = load_provider(module.get_provider_argspec(), self._task.args)
         if play_context.connection != 'local' and any(self.provider.values()):
-            display.warning('provider is unnecessary when using connection=%s and will be ignored' %
-                             play_context.connection)
+            display.warning('provider is unnecessary when using connection=%s and will be ignored' % play_context.connection)
 
         if play_context.network_os == 'junos':
             play_context.connection = 'netconf'
