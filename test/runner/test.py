@@ -514,6 +514,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             docker=None,
             remote=None,
             remote_stage=None,
+            remote_provider=None,
             remote_aws_region=None,
             remote_terminate=None,
         )
@@ -539,6 +540,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='remote stage to use: %(choices)s',
                         choices=['prod', 'dev'],
                         default='prod')
+
+    remote.add_argument('--remote-provider',
+                        metavar='PROVIDER',
+                        help='remote provider to use: %(choices)s',
+                        choices=['default', 'aws', 'azure', 'parallels'],
+                        default='default')
 
     remote.add_argument('--remote-aws-region',
                         metavar='REGION',

@@ -406,7 +406,7 @@ def network_start(args, platform, version):
     :type version: str
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider)
     core_ci.start()
 
     return core_ci.save()
@@ -420,7 +420,7 @@ def network_run(args, platform, version, config):
     :type config: dict[str, str]
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, load=False)
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider, load=False)
     core_ci.load(config)
     core_ci.wait()
 
@@ -548,7 +548,7 @@ def windows_start(args, version):
     :type version: str
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage)
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, provider=args.remote_provider)
     core_ci.start()
 
     return core_ci.save()
@@ -561,7 +561,7 @@ def windows_run(args, version, config):
     :type config: dict[str, str]
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, load=False)
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, provider=args.remote_provider, load=False)
     core_ci.load(config)
     core_ci.wait()
 

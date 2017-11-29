@@ -131,7 +131,12 @@ class ManagePosixCI(object):
             self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
         if self.core_ci.platform == 'freebsd':
-            self.become = ['su', '-l', 'root', '-c']
+            if self.core_ci.provider == 'aws':
+                self.become = ['su', '-l', 'root', '-c']
+            elif self.core_ci.provider == 'azure':
+                self.become = ['sudo', '-in', 'sh', '-c']
+            else:
+                raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel':

@@ -7,6 +7,9 @@ IFS='/:' read -ra args <<< "$1"
 
 target="windows/ci/group${args[1]}/"
 
+stage="${S:-prod}"
+provider="${P:-default}"
+
 # python versions to test in order
 # python 2.7 runs full tests while other versions run minimal tests
 python_versions=(
@@ -76,5 +79,6 @@ for version in "${python_versions[@]}"; do
 
     # shellcheck disable=SC2086
     ansible-test windows-integration --color -v --retry-on-error "${ci}" --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-        "${platforms[@]}" --changed-all-target "${changed_all_target}" --remote-terminate "${terminate}"
+        "${platforms[@]}" --changed-all-target "${changed_all_target}" \
+        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done
