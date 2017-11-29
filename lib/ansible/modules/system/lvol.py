@@ -25,11 +25,9 @@ options:
   vg:
     description:
     - The volume group this logical volume is part of.
-    required: true
   lv:
     description:
     - The name of the logical volume.
-    required: false
   size:
     description:
     - The size of the logical volume, according to lvcreate(8) --size, by
@@ -71,7 +69,6 @@ options:
   thinpool:
     description:
     - The thin pool volume name. When you want to create a thin provisioned volume, specify a thin pool volume name.
-    required: false
     version_added: "2.5"
   shrink:
     description:
@@ -263,7 +260,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             vg=dict(type='str', required=True),
-            lv=dict(type='str', required=True),
+            lv=dict(type='str'),
             size=dict(type='str'),
             opts=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
