@@ -27,12 +27,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
-import sys
 from difflib import Differ
-from io import BytesIO
 from copy import deepcopy
 
-from ansible.module_utils.six import StringIO
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list 
@@ -129,48 +126,6 @@ def get_device_capabilities(module):
     return module.capabilities
 
 
-def transform_reply():
-    reply = '''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-    <xsl:output method="xml" indent="no"/>
-
-    <xsl:template match="/|comment()|processing-instruction()">
-        <xsl:copy>
-            <xsl:apply-templates/>
-        </xsl:copy>
-    </xsl:template>
-
-    <xsl:template match="*">
-        <xsl:element name="{local-name()}">
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:element>
-    </xsl:template>
-
-    <xsl:template match="@*">
-        <xsl:attribute name="{local-name()}">
-            <xsl:value-of select="."/>
-        </xsl:attribute>
-    </xsl:template>
-    </xsl:stylesheet>
-    '''
-    if sys.version < '3':
-        return reply
-    else:
-        print("utf8")
-        return reply.encode('UTF-8')
-
-
-# Note: Workaround for ncclient 0.5.3
-def remove_namespaces(rpc_reply):
-    if not HAS_XML:
-        return 'no_lxml'
-    xslt = transform_reply()
-    parser = etree.XMLParser(remove_blank_text=True)
-    xslt_doc = etree.parse(BytesIO(xslt), parser)
-    transform = etree.XSLT(xslt_doc)
-
-    return etree.fromstring(str(transform(etree.parse(StringIO(str(rpc_reply))))))
-
-
 # Builds netconf xml rpc document from meta-data
 # e.g:
 #
@@ -186,12 +141,13 @@ def remove_namespaces(rpc_reply):
 # ])
 #
 # Fields:
-#   key: exact match to the key expected in arg spec (prefixes --> a: values from arg_spec, m: values from meta-data)
+#   key: direct mapping to the key in arg_spec with same name
+#        (prefixes --> a: values from arg_spec, m: values from meta-data)
 #   xpath: xpath of the element (based on YANG model)
 #   tag: True if no text on the element
-#   attrib: attribute to be embedded in the element (e.g. cx:operation="merge")
+#   attrib: attribute to be embedded in the element (e.g. xc:operation="merge")
 #   operation: if edit --> includes the element in edit_config() query else ignore for get() queries
-#   value: if key is prefixed with "m:", provider value from here
+#   value: if key is prefixed with "m:", value is required in meta-data
 #   leaf: True --> if there is only one tag element under a subtree
 #
 # Output:
