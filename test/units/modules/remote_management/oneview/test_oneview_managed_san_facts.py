@@ -5,11 +5,11 @@ import pytest
 
 from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_managed_san_facts import ManagedSanFactsModule
-from hpe_test_utils import FactsParamsTest
+from hpe_test_utils import OneViewBaseFactsTest
 
 
-@pytest.mark.resource('managed_sans')
-class TestManagedSanFactsModule(FactsParamsTest):
+@pytest.mark.resource(TestManagedSanFactsModule='managed_sans')
+class TestManagedSanFactsModule(OneViewBaseFactsTest):
     """
     FactsParamsTest has common tests for the parameters support.
     """

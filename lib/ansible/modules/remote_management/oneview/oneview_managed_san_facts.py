@@ -151,12 +151,12 @@ class ManagedSanFactsModule(OneViewModuleBase):
 
         if self.options:
             if self.options.get('wwn'):
-                wwn = self.__get_sub_options(self.options['wwn'])
+                wwn = self._get_sub_options(self.options['wwn'])
                 facts['wwn_associated_sans'] = self.resource_client.get_wwn(wwn['locate'])
 
         return dict(changed=False, ansible_facts=facts)
 
-    def __get_sub_options(self, option):
+    def _get_sub_options(self, option):
         return option if isinstance(option, dict) else {}
 
 
