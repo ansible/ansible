@@ -168,11 +168,11 @@ EXAMPLES = """
 """
 
 RETURN = """
-updates:
+commands:
   description: The set of commands that will be pushed to the remote device
-  returned: Only when lines is specified.
+  returned: If there are commands to run against the host
   type: list
-  sample: ['...', '...']
+  sample: ['hostname foo', 'router ospf 1', 'router-id 1.1.1.1']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
