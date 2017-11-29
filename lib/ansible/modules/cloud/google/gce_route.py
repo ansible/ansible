@@ -240,9 +240,9 @@ def get_resources(module, client, cparams):
     # A dict to store resources retrieved from GCE. A value of 'None' means that
     # no resource was found.
     resources = {
-        'instances': None,
-        'route': None,
-        'network': None,
+        'instances': [],
+        'route': {},
+        'network': {},
     }
 
     # INSTANCE
@@ -412,7 +412,7 @@ def check_network_exists(module, resources):
     params = module.params
     msg = ''
 
-    if resources['network'] is None:
+    if resources['network'] == {}:
         msg = 'No network %s was found' % params['network']
 
     if msg:
@@ -488,7 +488,7 @@ def main():
 
     if params['state'] == 'present':
         # NEW ROUTE
-        if resources['route'] is None:
+        if resources['route'] == {}:
 
             if not module.check_mode:
 
@@ -532,8 +532,8 @@ def main():
 
             # check: instance_tags
             # Tags might not be set in the project; cast them to an empty list
-            if 'tags' in resources['route']:
-                resources['route']['tags'] = resources['route']['tags']  # pylint: disable=E1137
+            if 'tags' not in resources['route']:
+                resources['route']['tags'] = []
 
             # params['instance_tags'] will always be a list at this point. We
             # are converting to unordered sets for the comparison.
