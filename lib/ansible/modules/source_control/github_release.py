@@ -103,7 +103,7 @@ EXAMPLES = '''
     action: latest_release
 
 - name: Create a new release
-  github:
+  github_release:
     token: tokenabc1234567890
     user: testuser
     repo: testrepo
