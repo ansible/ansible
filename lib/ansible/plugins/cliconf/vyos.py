@@ -52,18 +52,18 @@ class Cliconf(CliconfBase):
         return device_info
 
     def get_config(self):
-        return self.send_command(b'show configuration all')
+        return self.send_command(b'show configuration commands')
 
     def edit_config(self, command):
         for cmd in chain([b'configure'], to_list(command)):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(to_bytes(command), prompt=to_bytes(prompt), answer=to_bytes(answer), sendonly=sendonly)
 
     def commit(self, comment=None):
         if comment:
-            command = b'commit comment {0}'.format(comment)
+            command = b'commit comment "{0}"'.format(comment)
         else:
             command = b'commit'
         self.send_command(command)
