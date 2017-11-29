@@ -460,7 +460,90 @@
 ###################################################################
 # Issue 28721
 
-# - name:
-#   module:
-#     value:
-#     value:
+- name: Deploy the testmultiple file
+  copy:
+    src: testmultiple.txt
+    dest: "{{ output_dir }}/testmultiple.txt"
+  register: result
+
+- name: Assert that the testmultiple file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '3e0090a34fb641f3c01e9011546ff586260ea0ea'
+      - result.state == 'file'
+
+# Test insertafter
+- name: Write the same line to a file inserted after different lines
+  lineinfile:
+    path: "{{ output_dir }}/testmultiple.txt"
+    insertafter: "{{ item.regex }}"
+    line: "{{ item.replace }}"
+  register: _multitest_1
+  with_items: "{{ test_regexp }}"
+
+- name: Do the same thing again to check for changes
+  lineinfile:
+    path: "{{ output_dir }}/testmultiple.txt"
+    insertafter: "{{ item.regex }}"
+    line: "{{ item.replace }}"
+  register: _multitest_2
+  with_items: "{{ test_regexp }}"
+
+- debug:
+    var: _multitest_1.results | map(attribute='changed') | unique | list
+
+- name: Assert that the file was changed the first time but not the second time
+  assert:
+    that:
+      - item.0 is changed
+      - item.1 is not changed
+  with_together:
+    - "{{ _multitest_1.results }}"
+    - "{{ _multitest_2.results }}"
+
+- name: Stat the insertafter file
+  stat:
+    path: "{{ output_dir }}/testmultiple.txt"
+  register: result
+
+- name: Assert that the insertafter file matches expected checksum
+  assert:
+    that:
+      - result.stat.checksum == '282fedf460b3ed7357667a9c8b457ec67b53b6ea'
+
+# Test insertbefore
+- name: Write the same line to a file inserted before different lines
+  lineinfile:
+    path: "{{ output_dir }}/testmultiple.txt"
+    insertbefore: "{{ item.regex }}"
+    line: "{{ item.replace }}"
+  register: _multitest_3
+  with_items: "{{ test_regexp }}"
+
+- name: Do the same thing again to check for changes
+  lineinfile:
+    path: "{{ output_dir }}/testmultiple.txt"
+    insertbefore: "{{ item.regex }}"
+    line: "{{ item.replace }}"
+  register: _multitest_4
+  with_items: "{{ test_regexp }}"
+
+- name: Assert that the file was changed the first time but not the second time
+  assert:
+    that:
+      - item.0 is changed
+      - item.1 is not changed
+  with_together:
+    - "{{ _multitest_3.results }}"
+    - "{{ _multitest_4.results }}"
+
+- name: Stat the insertbefore file
+  stat:
+    path: "{{ output_dir }}/testmultiple.txt"
+  register: result
+
+- name: Assert that the insertbefore file matches expected checksum
+  assert:
+    that:
+      - result.stat.checksum == 'a8452bb3643be8d18ba3fc212632b1633bd9f885'
