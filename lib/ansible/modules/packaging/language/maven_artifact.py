@@ -366,6 +366,9 @@ class MavenDownloader:
             f = open(filename, 'wb')
             self._write_chunks(response, f, report_hook=self.chunk_report)
             f.close()
+            with open(filename, 'wb') as f:
+                self._write_chunks(response, f, report_hook=self.chunk_report)
+
             if verify_download and not self.verify_md5(filename, url + ".md5"):
                 # if verify_change was set, the previous file would be deleted
                 os.remove(filename)
@@ -468,10 +471,10 @@ def main():
     keep_name = module.params["keep_name"]
     verify_checksum = module.params["verify_checksum"]
 
-    verify_download = verify_checksum == 'download' or verify_checksum == 'always'
-    verify_change = verify_checksum == 'change' or verify_checksum == 'always'
+    verify_download = verify_checksum in ['download', 'always']
+    verify_change = verify_checksum in ['change', 'always']
 
-    # downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
+
     downloader = MavenDownloader(module, repository_url)
 
     try:
