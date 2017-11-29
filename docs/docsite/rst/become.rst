@@ -1,29 +1,32 @@
+*****************************
 Become (Privilege Escalation)
-+++++++++++++++++++++++++++++
+*****************************
 
 Ansible can use existing privilege escalation systems to allow a user to execute tasks as another.
 
 .. contents:: Topics
 
 Become
-``````
+======
+
 Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas` and others.
 
 
 .. note:: Prior to version 1.9, Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user and execute tasks and create resources with the second user's permissions. As of Ansible version 1.9,  `become` supersedes the old sudo/su, while still being backwards compatible. This new implementation also makes it easier to add other privilege escalation tools, including `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
 
-.. note:: Become vars and directives are independent. For example, setting `become_user` does not set `become`.
+.. note:: Become vars and directives are independent. For example, setting ``become_user`` does not set ``become``.
 
 
 Directives
------------
+==========
+
 These can be set from play to task level, but are overridden by connection variables as they can be host specific.
 
 become
-    set to 'true'/'yes' to activate privilege escalation.
+    set to ``True`` (or ``Yes``) to activate privilege escalation.
 
 become_user
-    set to user with desired privileges — the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
+    set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
 
 become_method
     (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`
@@ -63,10 +66,10 @@ ansible_become
     equivalent of the become directive, decides if privilege escalation is used or not.
 
 ansible_become_method
-    allows to set privilege escalation method
+    which privilege escalation method should be used
 
 ansible_become_user
-    allows to set the user you become through privilege escalation, does not imply `ansible_become: True`
+    allows to set the user you become through privilege escalation, does not imply ``ansible_become: True``
 
 ansible_become_pass
     allows you to set the privilege escalation password
@@ -109,7 +112,7 @@ Although privilege escalation is mostly intuitive, there are a few limitations
 on how it works.  Users should be aware of these to avoid surprises.
 
 Becoming an Unprivileged User
-=============================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Ansible 2.0.x and below has a limitation with regards to becoming an
 unprivileged user that can be a security risk if users are not aware of it.
@@ -179,21 +182,21 @@ modules you want to run there to be world readable, you can turn on
 a warning and allow the task to run as it did prior to 2.1.
 
 Connection Plugin Support
-=========================
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Privilege escalation methods must also be supported by the connection plugin
 used.   Most connection plugins will warn if they do not support become.  Some
 will just ignore it as they always run as root (jail, chroot, etc).
 
 Only one method may be enabled per host
-=======================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Methods cannot be chained.  You cannot use ``sudo /bin/su -`` to become a user,
 you need to have privileges to run the command as that user in sudo or be able
 to su directly to it (the same for pbrun, pfexec or other supported methods).
 
 Can't limit escalation to certain commands
-==========================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Privilege escalation permissions have to be general.  Ansible does not always
 use a specific command to do something but runs modules (code) from
@@ -202,8 +205,41 @@ or '/bin/chmod' as the allowed commands this will fail with ansible as those
 paths won't match with the temporary file that ansible creates to run the
 module.
 
+.. _become-network:
+
+Become and Networks
+===================
+
+Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it.
+
+This functionality requires the host connection type to be using ``connection: network_cli``, in Ansible 2.5 this is limited to ``eos`` and ``ios``.
+
+This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
+
+If a task fails with the following then it's an indicator that `enable` mode is required:
+
+.. code-block:: console
+
+   Invalid input (privileged mode required)
+
+Which can be enabled as shown:
+
+.. code-block:: yaml
+
+   - name: Gather facts (eos)
+     eos_facts:
+       gather_subset:
+         - "!hardware"
+     become: true
+     become_method: enable
+
+For more information about ``network_cli`` see :ref:`network-cli`.
+
+
+.. _become-windows:
+
 Become and Windows
-``````````````````
+==================
 
 Since Ansible 2.3, ``become`` can be used on Windows hosts through the
 ``runas`` method. Become on Windows uses the same inventory setup and
