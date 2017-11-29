@@ -171,7 +171,7 @@ Here are some corner cases encountered when updating. These are mostly caused by
 
     with_items: myvar_{{rest_of_name}}
 
-  This worked 'by accident' as the errors were retemplated and ended up resolving the variable, it was never intended as valid syntax and now properly returns an error, use the following instead.::
+  This worked 'by accident' as the errors were retemplated and ended up resolving the variable, it was never intended as valid syntax and now properly returns an error, use the following instead::
 
     hostvars[inventory_hostname]['myvar_' + rest_of_name]
 
@@ -287,7 +287,7 @@ Since the ansible-2.0 plugin system is more advanced, it is easier to adapt your
 
 You may find the following tips useful:
 
-* Check whether the ansible-2.0 class(es) are available and if they are missing (ansible-1.9.x) mimic them with the needed methods (e.g. ``__init__``)
+* Check whether the ansible-2.0 class(es) are available and if they are missing (ansible-1.9.x) mimic them with the needed methods (e.g. ``__init__``).
 
 * When ansible-2.0 python modules are imported, and they fail (ansible-1.9.x), catch the ``ImportError`` exception and perform the equivalent imports for ansible-1.9.x. With possible translations (e.g. importing specific methods).
 
@@ -297,7 +297,7 @@ You may find the following tips useful:
 
 * When doing plugin development, it is very useful to have the ``warning()`` method during development, but it is also important to emit warnings for deadends (cases that you expect should never be triggered) or corner cases (e.g. cases where you expect misconfigurations).
 
-* It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes and methods are available.
+* It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes, and methods are available.
 
 
 Lookup plugins

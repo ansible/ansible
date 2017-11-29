@@ -131,14 +131,14 @@ Creating Virtual Machines
 -------------------------
 
 There are two ways to create a virtual machine, both involving the azure_rm_virtualmachine module. We can either create
-a storage account, network interface, security group and public IP address and pass the names of these objects to the
+a storage account, network interface, security group, and public IP address and pass the names of these objects to the
 module as parameters, or we can let the module do the work for us and accept the defaults it chooses.
 
 Creating Individual Components
 ..............................
 
 An Azure module is available to help you create a storage account, virtual network, subnet, network interface,
-security group and public IP. Here is a full example of creating each of these and passing the names to the
+security group, and public IP. Here is a full example of creating each of these and passing the names to the
 azure_rm_virtualmachine module at the end:
 
 .. code-block:: yaml
@@ -315,7 +315,7 @@ azure_rm.ini file in your current working directory.
 NOTE: An .ini file will take precedence over environment variables.
 
 NOTE: The name of the .ini file is the basename of the inventory script (i.e. 'azure_rm') with a '.ini'
-extension. This allows you to copy, rename and customize the inventory script and have matching .ini files all in
+extension. This allows you to copy, rename, and customize the inventory script and have matching .ini files all in
 the same directory.
 
 Control grouping using the following variables defined in the environment:

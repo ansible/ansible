@@ -59,7 +59,7 @@ Once WSL is enabled, you can open the Bash terminal. At the prompt, you can quic
     # https://github.com/Microsoft/BashOnWindows/issues/816#issuecomment-301216901 for details
     source ~/.profile
 
-After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targeting systems using the plethora of available Windows modules.
+After you've successfully run these commands, you can start to create your inventory, write example playbooks, and start targeting systems using the plethora of available Windows modules.
 
 If you want to run Ansible from source for development purposes, simply uninstall the pip-installed version (which will leave all the necessary dependencies behind), then clone the Ansible source, and run the hacking script to configure it to run from source::
 
@@ -94,7 +94,7 @@ You can specify which authentication option you wish to use by setting it to the
 Certificate
 +++++++++++
 
-Certificate authentication is similar to SSH where a certificate is assigned to a local user and instead of using a password to authenticate a certificate is used instead.
+Certificate authentication is similar to SSH where a certificate is assigned to a local user and instead of using a password to authenticate a certificate is used.
 
 
 Kerberos
@@ -142,7 +142,7 @@ Kerberos is installed and configured by default on OS X and many Linux distribut
 Configuring Kerberos
 --------------------
 
-Edit your /etc/krb5.conf (which should be installed as a result of installing packages above) and add the following information for each domain you need to connect to:
+Edit your `/etc/krb5.conf` (which should be installed as a result of installing packages above) and add the following information for each domain you need to connect to:
 
 In the section that starts with
 
@@ -204,13 +204,13 @@ If you unable to connect using kerberos, check the following:
 
 Ensure that forward and reverse DNS lookups are working properly on your domain.
 
-To test this, ping the windows host you want to control by name then use the ip address returned with nslookup.  You should get the same name back from DNS when you use nslookup on the ip address.  
+To test this, ping the Windows host you want to control by name then use the ip address returned with nslookup.  You should get the same name back from DNS when you use nslookup on the ip address.  
 
 If you get different hostnames back than the name you originally pinged, speak to your active directory administrator and get them to check that DNS Scavenging is enabled and that DNS and DHCP are updating each other.
 
 Ensure that the Ansible controller has a properly configured computer account in the domain.
 
-Check your Ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not be granted.
+Check your Ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not to be granted.
 
 Check you are using the real fully qualified domain name for the domain.  Sometimes domains are commonly known to users by aliases.  To check this run:
 
@@ -242,7 +242,7 @@ To install credssp you can use pip to install the requests-credssp library:
 CredSSP and TLS 1.2
 -------------------
 
-CredSSP requires the remote host to have TLS 1.2 configured or else the connection will fail. TLS 1.2 is installed by default from Server 2012 and Windows 8 onwards. For Server 2008, 2008 R2 and Windows 7 you can add TLS 1.2 support by:
+CredSSP requires the remote host to have TLS 1.2 configured or else the connection will fail. TLS 1.2 is installed by default from Server 2012 and Windows 8 onward. For Server 2008, 2008 R2, and Windows 7 you can add TLS 1.2 support by:
 
 * Installing the `TLS 1.2 update from Microsoft <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2>`_
 * Adding the TLS 1.2 registry keys as shown on this `page <https://technet.microsoft.com/en-us/library/dn786418.aspx#BKMK_SchannelTR_TLS12>`_
@@ -255,7 +255,7 @@ If you need to interact with a remote resource or run a process that requires th
 Inventory
 `````````
 
-Ansible's windows support relies on a few standard variables to indicate the username, password, and connection type (windows) of the remote hosts.  These variables are most easily set up in inventory.  This is used instead of SSH-keys or passwords as normally fed into Ansible::
+Ansible's Windows support relies on a few standard variables to indicate the username, password, and connection type (Windows) of the remote hosts.  These variables are most easily set up in inventory.  This is used instead of SSH-keys or passwords as normally fed into Ansible::
 
     [windows]
     winserver1.example.com
@@ -311,7 +311,7 @@ Since 2.0, the following custom inventory variables are also supported for addit
 Windows System Prep
 ```````````````````
 
-In order for Ansible to manage your windows machines, you will have to enable and configure PowerShell remoting.
+In order for Ansible to manage your Windows machines, you will have to enable and configure PowerShell remoting.
 
 To automate the setup of WinRM, you can run the `examples/scripts/ConfigureRemotingForAnsible.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ script on the remote machine in a PowerShell console as an administrator.
 
@@ -340,7 +340,7 @@ To troubleshoot the ``ConfigureRemotingForAnsible.ps1`` writes every change it m
    Management Framework 3.0, it may be necessary to install this
    hotfix http://support.microsoft.com/kb/2842230 to avoid receiving
    out of memory and stack overflow exceptions.  Newly-installed Server 2008
-   R2 systems which are not fully up to date with windows updates are known
+   R2 systems which are not fully up to date with Windows updates are known
    to have this issue.
 
    Windows 8.1 and Server 2012 R2 are not affected by this issue as they
@@ -386,9 +386,9 @@ In addition, the following core modules/action-plugins work with Windows:
 * template (also: win_template)
 * wait_for_connection
 
-Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
+Some modules can be utilised in playbooks that target Windows by delegating to localhost, depending on what you are
 attempting to achieve.  For example, ``assemble`` can be used to create a file on your ansible controller that is then 
-sent to your windows targets using ``win_copy``.
+sent to your Windows targets using ``win_copy``.
 
 In many cases, there is no need to use or write an Ansible module. In particular, the ``script`` module can be used to run arbitrary PowerShell scripts, allowing Windows administrators familiar with PowerShell a very native way to do things, as in the following playbook::
 
@@ -425,7 +425,7 @@ Modules (ps1 files) should start as follows::
 
     # code goes here, reading in stdin as JSON and outputting JSON
 
-The above magic is necessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
+The above magic is necessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the Windows equivalent.
 
 What modules you see in ``windows/`` are just a start.  Additional modules may be submitted as pull requests to github.
 
@@ -434,7 +434,7 @@ What modules you see in ``windows/`` are just a start.  Additional modules may b
 Windows Facts
 `````````````
 
-Just as with Linux/Unix, facts can be gathered for windows hosts, which will return things such as the operating system version.  To see what variables are available about a windows host, run the following::
+Just as with Linux/Unix, facts can be gathered for Windows hosts, which will return things such as the operating system version.  To see what variables are available about a Windows host, run the following::
 
     ansible winhost.example.com -m setup
 

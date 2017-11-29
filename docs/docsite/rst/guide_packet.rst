@@ -8,7 +8,7 @@ Introduction
 `Packet.net <https://packet.net>`_ is a bare metal infrastructure host that's supported by Ansible (>=2.3) via a dynamic inventory script and two cloud modules. The two modules are:
 
 - packet_sshkey: adds a public SSH key from file or value to the Packet infrastructure. Every subsequently-created device will have this public key installed in .ssh/authorized_keys.
-- packet_device: manages servers on Packet. You can use this module to create, restart and delete devices.
+- packet_device: manages servers on Packet. You can use this module to create, restart, and delete devices.
 
 Note, this guide assumes you are familiar with Ansible and how it works. If you're not, have a look at their `docs <http://docs.ansible.com/>`_ before getting started.
 
@@ -183,7 +183,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
 
 As with most Ansible modules, the default states of the Packet modules are idempotent, meaning the resources in your project will remain the same after re-runs of a playbook. Thus, we can keep the ``packet_sshkey`` module call in our playbook. If the public key is already in your Packet account, the call will have no effect.
 
-The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoresOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
+The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoreOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
 
 The ``packet_device`` module has a boolean 'wait' parameter that defaults to 'false'. If set to 'true', Ansible will wait until the GET API call for a device will contain an Internet-routeable IP address. The 'wait' parameter allows us to use the IP address of the device as soon as it's available.
 

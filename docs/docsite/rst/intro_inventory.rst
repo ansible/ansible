@@ -11,7 +11,7 @@ which defaults to being saved in the location ``/etc/ansible/hosts``.
 You can specify a different inventory file using the ``-i <path>`` option on the command line.
 
 Not only is this inventory configurable, but you can also use multiple inventory files at the same time and
-pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :doc:`intro_dynamic_inventory`.
+pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc.), as described in :doc:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
 
 .. _inventoryformat:
@@ -282,7 +282,7 @@ the 'raleigh' group might look like::
 It is okay if these files do not exist, as this is an optional feature.
 
 As an advanced use case, you can create *directories* named after your groups or hosts, and
-Ansible will read all the files in these directories. An example with the 'raleigh' group::
+Ansible will read all the files in these directories in lexicographical order. An example with the 'raleigh' group::
 
     /etc/ansible/group_vars/raleigh/db_settings
     /etc/ansible/group_vars/raleigh/cluster_settings
@@ -319,7 +319,7 @@ General for all connections:
 ansible_host
     The name of the host to connect to, if different from the alias you wish to give to it.
 ansible_port
-    The ssh port number, if not 22
+    The ssh port number, if not 22.
 ansible_user
     The default ssh user name to use.
 
@@ -327,7 +327,7 @@ ansible_user
 Specific to the SSH connection:
 
 ansible_ssh_pass
-    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`).
 ansible_ssh_private_key_file
     Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_ssh_common_args
@@ -349,17 +349,17 @@ ansible_ssh_executable (added in version 2.2)
 Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details):
 
 ansible_become
-    Equivalent to ``ansible_sudo`` or ``ansible_su``, allows to force privilege escalation
+    Equivalent to ``ansible_sudo`` or ``ansible_su``, allows to force privilege escalation.
 ansible_become_method
-    Allows to set privilege escalation method
+    Allows to set privilege escalation method.
 ansible_become_user
-    Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
+    Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation.
 ansible_become_pass
-    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`).
 ansible_become_exe
-    Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected
+    Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected.
 ansible_become_flags
-    Equivalent to ``ansible_sudo_flags`` or ``ansible_su_flags``, allows you to set the flags passed to the selected escalation method. This can be also set globally in :file:`ansible.cfg` in the ``sudo_flags`` option
+    Equivalent to ``ansible_sudo_flags`` or ``ansible_su_flags``, allows you to set the flags passed to the selected escalation method. This can be also set globally in :file:`ansible.cfg` in the ``sudo_flags`` option.
 
 Remote host environment parameters:
 
@@ -384,7 +384,7 @@ ansible_shell_executable
     overrides ``executable`` in :file:`ansible.cfg` which defaults to
     :command:`/bin/sh`.  You should really only change it if is not possible
     to use :command:`/bin/sh` (i.e. :command:`/bin/sh` is not installed on the target
-    machine or cannot be run from sudo.).
+    machine or cannot be run from sudo).
 
 Examples from an Ansible-INI host file::
 
@@ -449,7 +449,7 @@ Here is an example of how to instantly deploy to created containers::
    :doc:`intro_adhoc`
        Examples of basic commands
    :doc:`playbooks`
-       Learning Ansible's configuration, deployment, and orchestration language.
+       Learning Ansible's configuration, deployment, and orchestration language
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

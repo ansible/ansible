@@ -31,6 +31,7 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import integer_types, iteritems, string_types
 
@@ -234,7 +235,11 @@ def compile_folder_path_for_object(vobj):
     thisobj = vobj
     while hasattr(thisobj, 'parent'):
         thisobj = thisobj.parent
-        if thisobj.name == 'Datacenters':
+        try:
+            moid = thisobj._moId
+        except AttributeError:
+            moid = None
+        if moid in ['group-d1', 'ha-folder-root']:
             break
         if isinstance(thisobj, vim.Folder):
             paths.append(thisobj.name)
@@ -403,6 +408,9 @@ def connect_to_api(module, disconnect_atexit=True):
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context)
     except vim.fault.InvalidLogin as e:
         module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s as %s: %s" % (hostname, username, e.msg))
+    except vim.fault.NoPermission as e:
+        module.fail_json(msg="User %s does not have required permission"
+                             " to log on to vCenter or ESXi API at %s: %s" % (username, hostname, e.msg))
     except (requests.ConnectionError, ssl.SSLError) as e:
         module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/443: %s" % (hostname, e))
     except Exception as e:
@@ -593,21 +601,13 @@ def serialize_spec(clonespec):
         xt = type(xo)
         if xo is None:
             data[x] = None
-        elif issubclass(xt, list):
-            data[x] = []
-            for xe in xo:
-                data[x].append(serialize_spec(xe))
-        elif issubclass(xt, string_types + integer_types + (float, bool)):
-            data[x] = xo
-        elif issubclass(xt, dict):
-            data[x] = {}
-            for k, v in xo.items():
-                data[x][k] = serialize_spec(v)
         elif isinstance(xo, vim.vm.ConfigSpec):
             data[x] = serialize_spec(xo)
         elif isinstance(xo, vim.vm.RelocateSpec):
             data[x] = serialize_spec(xo)
         elif isinstance(xo, vim.vm.device.VirtualDisk):
+            data[x] = serialize_spec(xo)
+        elif isinstance(xo, vim.vm.device.VirtualDeviceSpec.FileOperation):
             data[x] = serialize_spec(xo)
         elif isinstance(xo, vim.Description):
             data[x] = {
@@ -617,9 +617,22 @@ def serialize_spec(clonespec):
                 'summary': serialize_spec(xo.summary),
             }
         elif hasattr(xo, 'name'):
-            data[x] = str(xo) + ':' + xo.name
+            data[x] = to_text(xo) + ':' + to_text(xo.name)
         elif isinstance(xo, vim.vm.ProfileSpec):
             pass
+        elif issubclass(xt, list):
+            data[x] = []
+            for xe in xo:
+                data[x].append(serialize_spec(xe))
+        elif issubclass(xt, string_types + integer_types + (float, bool)):
+            data[x] = to_text(xt)
+        elif issubclass(xt, bool):
+            data[x] = xo
+        elif issubclass(xt, dict):
+            data[to_text(x)] = {}
+            for k, v in xo.items():
+                k = to_text(k)
+                data[x][k] = serialize_spec(v)
         else:
             data[x] = str(xt)
 

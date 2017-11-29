@@ -5,6 +5,7 @@ VERSION  RELEASE     CODE NAME
 ++++++++++++++++++++++++++++++
 
 2.5.0    TBD         "Kashmir"
+2.4.2    11-29-2017  "Dancing Days"
 2.4.1    10-25-2017  "Dancing Days"
 2.4.0    09-19-2017  "Dancing Days"
 2.3.2    08-04-2017  "Ramble On"

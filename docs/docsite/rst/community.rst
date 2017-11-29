@@ -45,7 +45,7 @@ I'd Like To Help Share and Promote Ansible
 You can help share Ansible with others by telling friends and colleagues, writing a blog post,
 or presenting at user groups (like DevOps groups or the local LUG).
 
-You are also welcome to share slides on speakerdeck, sign up for a free account and tag it "Ansible". On Twitter,
+You are also welcome to share slides on speakerdeck, sign up for a free account, and tag it "Ansible". On Twitter,
 you can also share things with #ansible and may wish to `follow us <https://twitter.com/ansible>`_.
 
 I'd Like To Help Ansible Move Faster
@@ -171,7 +171,7 @@ Contributions can be for new features like modules, or to fix bugs you or others
 are interested in writing new modules to be included in the core Ansible distribution, please refer
 to the `module development documentation <http://docs.ansible.com/developing_modules.html>`_.
 
-Ansible's aesthetic encourages simple, readable code and consistent,
+Ansible's aesthetic encourages simple, readable code, and consistent,
 conservatively extending, backwards-compatible improvements. When contributing code to Ansible,
 please observe the following guidelines:
 
@@ -182,7 +182,7 @@ please observe the following guidelines:
 - We are not strictly compliant with PEP8. See :doc:`dev_guide/testing_pep8` for more information.
 
 You can also contribute by testing and revising other requests, especially if it is one you are interested
-in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
+in using. Please keep your comments clear, to the point, courteous, and constructive, tickets are not a
 good place to start discussions (ansible-devel and IRC exist for this).
 
 Tip: To easily run from a checkout, source ``./hacking/env-setup`` and that's it -- no install
@@ -194,7 +194,7 @@ Other Topics
 Ansible Staff
 -------------
 
-Ansible, Inc is a company supporting Ansible and building additional solutions based on
+Ansible, Inc. is a company supporting Ansible and building additional solutions based on
 Ansible.  We also do services and support for those that are interested. We also offer an
 enterprise web front end to Ansible (see Tower below).
 
@@ -310,7 +310,7 @@ All Ansible events and participants therein are governed by this Code of Conduct
 anti-harassment policy. We expect organizers to enforce these guidelines throughout all events,
 and we expect attendees, speakers, sponsors, and volunteers to help ensure a safe
 environment for our whole community. Specifically, this Code of Conduct covers
-participation in all Ansible-related forums and mailing lists, code and documentation
+participation in all Ansible-related forums, mailing lists, code, documentation
 contributions, public IRC channels, private correspondence, and public meetings.
 
 Ansible community members are...
@@ -341,7 +341,7 @@ rudeness, hostility, threatening behavior, abuse (verbal or physical), or person
 **Kind**
 
 Everyone should feel welcome in the Ansible community, regardless of their background.
-Please be courteous, respectful and polite to fellow community members. Do not make or
+Please be courteous, respectful, and polite to fellow community members. Do not make or
 post offensive comments related to skill level, gender, gender identity or expression,
 sexual orientation, disability, physical appearance, body size, race, or religion.
 Sexualized images or imagery, real or implied violence, intimidation, oppression,

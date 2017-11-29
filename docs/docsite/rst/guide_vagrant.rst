@@ -113,7 +113,7 @@ single machine environment may look something like this:
 
 If you want to run Ansible manually, you will want to make sure to pass
 ``ansible`` or ``ansible-playbook`` commands the correct arguments, at least
-for the *username*, the *SSH private key* and the *inventory*.
+for the *username*, the *SSH private key*, and the *inventory*.
 
 Here is an example using the Vagrant global insecure key (``config.ssh.insert_key``
 must be set to ``false`` in your ``Vagrantfile``):

@@ -28,7 +28,7 @@ if [ -s /tmp/network.txt ]; then
     echo "Running network integration tests for multiple platforms concurrently."
 
     platforms=(
-        --platform vyos/1.1.0
+        --platform vyos/1.1.8
         --platform ios/csr1000v
     )
 else
@@ -36,12 +36,19 @@ else
     echo "Running network integration tests for a single platform only."
 
     platforms=(
-        --platform vyos/1.1.0
+        --platform vyos/1.1.8
     )
 fi
 
 for version in "${python_versions[@]}"; do
+    # terminate remote instances on the final python version tested
+    if [ "${version}" = "${python_versions[-1]}" ]; then
+        terminate="always"
+    else
+        terminate="never"
+    fi
+
     # shellcheck disable=SC2086
     ansible-test network-integration --color -v --retry-on-error "${target}" --docker default --python "${version}" \
-        ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} "${platforms[@]}"
+        ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} "${platforms[@]}" --remote-terminate "${terminate}"
 done

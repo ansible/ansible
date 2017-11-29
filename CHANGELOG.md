@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 <a id="2.4.2"></a>
 
-## 2.4.2 "Dancing Days" - TBD
+## 2.4.2 "Dancing Days" - 2017-11-29
 
 ### Bugfixes
 
@@ -144,6 +144,56 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/32546)
 * Fix running with closed stdin on python 3
   (https://github.com/ansible/ansible/pull/31695)
+* Fix undefined variable in script inventory plugin
+  (https://github.com/ansible/ansible/pull/31381)
+* Fix win_copy on Python 2.x to support files greater than 4GB
+  (https://github.com/ansible/ansible/pull/32682)
+* Add extra error handling for wmare connect to correctly detect scenarios where
+  username does not have the required logon permissions
+  (https://github.com/ansible/ansible/pull/32613)
+* Fix ios_config file prompt issue while using save_when
+  (https://github.com/ansible/ansible/pull/32744)
+* Prevent host_group_vars plugin load errors when using 'path as inventory hostname'
+  https://github.com/ansible/ansible/issues/32764
+* Better errors when loading malformed vault envelopes
+  (https://github.com/ansible/ansible/issues/28038)
+* nxos_interface error handling
+  (https://github.com/ansible/ansible/pull/32846)
+* Fix snmp bugs on Nexus 3500 platform
+  (https://github.com/ansible/ansible/pull/32773)
+* nxos_config and nxos_facts - fixes for N35 platform
+  (https://github.com/ansible/ansible/pull/32762)
+* fix dci failure nxos
+  (https://github.com/ansible/ansible/pull/32877)
+* Do not execute `script` tasks is check mode (https://github.com/ansible/ansible/issues/30676)
+* Keep newlines when reading LXC container config file (https://github.com/ansible/ansible/pull/32219)
+* Fix a traceback in os_floating_ip when required instance is already present in the cloud:
+  https://github.com/ansible/ansible/pull/32887
+* Fix for modifying existing application load balancers using certificates (https://github.com/ansible/ansible/pull/28217)
+* Fix --ask-vault-pass with no tty and password from stdin
+  (https://github.com/ansible/ansible/issues/30993)
+* Fix for IIS windows modules to use hashtables instead of PSCustomObject
+  (https://github.com/ansible/ansible/pull/32710)
+* Fix nxos_snmp_host bug
+  (https://github.com/ansible/ansible/pull/32916)
+* Make IOS devices consistent ios_logging
+  (https://github.com/ansible/ansible/pull/33100)
+* restore error on orphan group:vars delcaration for ini inventories
+  https://github.com/ansible/ansible/pull/32866
+* restore host/group_vars merge order
+  https://github.com/ansible/ansible/pull/32963
+* use correct loop var when delegating
+  https://github.com/ansible/ansible/pull/32986
+* Handle sets and datetime objects in inventory sources fixing tracebacks
+  https://github.com/ansible/ansible/pull/32990
+* Fix for breaking change to Azure Python SDK DNS RecordSet constructor in azure-mgmt-dns==1.2.0
+  https://github.com/ansible/ansible/pull/33165
+* Fix for breaking change to Azure Python SDK that prevented some members from being returned in facts modules
+  https://github.com/ansible/ansible/pull/33169
+* restored glob/regex host pattern matching to traverse groups and hosts and not return after first found
+  https://github.com/ansible/ansible/pull/33158
+* change nxos_interface module to use "show interface" to support more platforms
+  https://github.com/ansible/ansible/pull/33037
 
 
 <a id="2.4.1"></a>
@@ -286,6 +336,7 @@ Ansible Changes By Release
 * Fix for hostname module on RHEL 7.5 (https://github.com/ansible/ansible/issues/31811)
 * Fix provider password leak in logs for asa modules (https://github.com/ansible/ansible/issues/32343)
 * Fix tagging for dynamodb_table if region is not explicitly passed to the module (https://github.com/ansible/ansible/pull/32557)
+* Fix Python 3 decode error in `cloudflare_dns` (https://github.com/ansible/ansible/pull/32065)
 
 ### Known Bugs
 * Implicit localhost is getting ansible_connection from all:vars instead of
@@ -325,6 +376,8 @@ Ansible Changes By Release
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 * Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
 * Windows become_method: runas now works across all authtypes and will auto-elevate under UAC if WinRM user has "Act as part of the operating system" privilege
+* Do not escape backslashes in the template lookup plugin to mirror what the template module does
+  https://github.com/ansible/ansible/issues/26397
 
 ### Deprecations
 * The behaviour when specifying `--tags` (or `--skip-tags`) multiple times on the command line
@@ -368,7 +421,7 @@ Ansible Changes By Release
 * Now deprecated configuration options issue warnings when set.
 * Removed unused and deprecated config option `pattern`
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
-* The `include_dir` var is not a global anymore, as we now allow multiple inventory sources, it is now host dependant.
+* The `inventory_dir` var is not a global anymore, as we now allow multiple inventory sources, it is now host dependant.
   This means it cannot be used wherever host vars are not permitted, for example in task/handler names.
 * Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
   was a quoted string with hash marks ("#") in it then the parsed string
@@ -919,7 +972,6 @@ Ansible Changes By Release
 ### Bugfixes
 * Fix alternatives module handlling of non existing options
 * Fix synchronize traceback with the docker connection plugin
-* Do not escape backslashes in the template lookup plugin to mirror what the template module does
 * Fix the expires option of the postgresq_user module
 * Fix for win_acl when settings permissions on registry objects that use `ALL APPLICATION PACKAGES` and `ALL RESTRICTED APPLICATION PACKAGES`
 * Python3 fixes

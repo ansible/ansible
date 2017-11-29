@@ -211,8 +211,21 @@ def main():
                     network_id = cloud.get_network(name_or_id=network)["id"]
                 else:
                     network_id = None
-                if all([(fixed_address and f_ip.fixed_ip_address == fixed_address) or
-                        (nat_destination and f_ip.internal_network == fixed_address),
+                # check if we have floting ip on given nat_destination network
+                if nat_destination:
+                    nat_floating_addrs = [addr for addr in server.addresses.get(
+                        cloud.get_network(nat_destination)['name'], [])
+                        if addr.addr == public_ip and
+                        addr['OS-EXT-IPS:type'] == 'floating']
+
+                    if len(nat_floating_addrs) == 0:
+                        module.fail_json(msg="server {server} already has a "
+                                             "floating-ip on a different "
+                                             "nat-destination than '{nat_destination}'"
+                                         .format(server=server_name_or_id,
+                                                 nat_destination=nat_destination))
+
+                if all([fixed_address, f_ip.fixed_ip_address == fixed_address,
                         network, f_ip.network != network_id]):
                     # Current state definitely conflicts with requirements
                     module.fail_json(msg="server {server} already has a "

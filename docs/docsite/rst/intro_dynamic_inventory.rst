@@ -185,7 +185,7 @@ Security Group
   ``security_group_Pete_s_Fancy_Group``
 
 Tags
-  Each instance can have a variety of key/value pairs associated with it called Tags. The most common tag key is 'Name', though anything is possible. Each key/value pair is its own group of instances, again with special characters converted to underscores, in the format ``tag_KEY_VALUE``
+  Each instance can have a variety of key/value pairs associated with it called Tags. The most common tag key is 'Name', though anything is possible. Each key/value pair is its own group of instances, again with special characters converted to underscores, in the format ``tag_KEY_VALUE``.
   e.g.
   ``tag_Name_Web`` can be used as is
   ``tag_Name_redis-master-001`` becomes ``tag_Name_redis_master_001``
@@ -265,7 +265,7 @@ Source an OpenStack RC file::
 
 .. note::
 
-    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <http://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
+    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password, and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <http://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
 
 You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it return no errors.
 
@@ -286,13 +286,13 @@ Once you confirm the dynamic inventory script is working as expected, you can te
 Implicit use of inventory script
 ++++++++++++++++++++++++++++++++
 
-Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
+Download the latest version of the OpenStack dynamic inventory script, make it executable, and copy it to `/etc/ansible/hosts`::
 
     wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
     chmod +x openstack.py
     sudo cp openstack.py /etc/ansible/hosts
 
-Download the sample configuration file, modify it to suit your needs and copy it to `/etc/ansible/openstack.yml`::
+Download the sample configuration file, modify it to suit your needs, and copy it to `/etc/ansible/openstack.yml`::
 
     wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.yml
     vi openstack.yml
