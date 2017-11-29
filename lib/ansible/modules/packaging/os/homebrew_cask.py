@@ -389,7 +389,7 @@ class HomebrewCask(object):
         if 'nothing to list' in err:
             return False
         elif rc == 0:
-            casks = [cask_.strip() for cask_ in out.split('\n') if cask_.strip()]
+            casks = [cask_.strip() for cask_ in out.split() if cask_.strip()]
             return self.current_cask in casks
         else:
             self.failed = True
