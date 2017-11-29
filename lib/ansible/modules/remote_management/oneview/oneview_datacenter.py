@@ -140,21 +140,21 @@ class DatacenterModule(OneViewModuleBase):
         resource = self.get_by_name(self.data['name'])
 
         if self.state == 'present':
-            self.__replace_name_by_uris(self.data)
+            self._replace_name_by_uris(self.data)
             return self.resource_present(resource, self.RESOURCE_FACT_NAME, 'add')
         elif self.state == 'absent':
             return self.resource_absent(resource, 'remove')
 
-    def __replace_name_by_uris(self, resource):
+    def _replace_name_by_uris(self, resource):
         contents = resource.get('contents')
 
         if contents:
             for content in contents:
                 resource_name = content.pop('resourceName', None)
                 if resource_name:
-                    content['resourceUri'] = self.__get_rack_by_name(resource_name)['uri']
+                    content['resourceUri'] = self._get_rack_by_name(resource_name)['uri']
 
-    def __get_rack_by_name(self, name):
+    def _get_rack_by_name(self, name):
         racks = self.oneview_client.racks.get_by('name', name)
         if racks:
             return racks[0]

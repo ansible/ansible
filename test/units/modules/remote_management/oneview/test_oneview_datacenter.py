@@ -50,7 +50,7 @@ DICT_DEFAULT_DATACENTER = yaml.load(YAML_DATACENTER)["data"]
 DICT_DEFAULT_DATACENTER_CHANGED = yaml.load(YAML_DATACENTER_CHANGE)["data"]
 
 
-@pytest.mark.resource('datacenters')
+@pytest.mark.resource(TestDatacenterModule='datacenters')
 class TestDatacenterModule(OneViewBaseTest):
     """
     OneViewBaseTest has tests for the main function and provides the mocks used in this test case.
