@@ -67,5 +67,5 @@
 - name: expect both to succeed
   assert:
       that:
-          - "zabbix_host1.changed"
-          - "zabbix_host2.changed"
+          - "zabbix_host1 is changed"
+          - "zabbix_host2 is changed"
