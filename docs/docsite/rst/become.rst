@@ -222,7 +222,7 @@ If a task fails with the following then it's an indicator that `enable` mode is 
 
    Invalid input (privileged mode required)
 
-Which can be enabled as shown:
+Which can be enabled for specific tasks as shown (task level):
 
 .. code-block:: yaml
 
@@ -232,6 +232,22 @@ Which can be enabled as shown:
          - "!hardware"
      become: true
      become_method: enable
+
+Or if you wish to be in enable mode for all tasks (play level):
+
+.. code-block:: yaml
+
+   - hosts: eos-switches
+     become: true
+     become_method: enable
+     tasks:
+       - name: Gather facts (eos)
+         eos_facts:
+           gather_subset:
+             - "!hardware"
+
+Passwords for enable mode
+-------------------------
 
 If a password is required to enter enable mode this can be specified by:
 
@@ -245,16 +261,19 @@ For more information about ``network_cli`` see :ref:`network-cli`.
 .. _become-network_auth_and_auth_password
 
 authorize and auth_pass
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 For network platforms that do not currently support ``connection: network_cli`` then the module options ``authorize`` and ``auth_pass`` can be used.
+
+.. code-block:: yaml
 
    - name: Gather facts (eos)
      eos_facts:
        gather_subset:
          - "!hardware"
-     authorize: true
-     auth_pass: " {{ secret_auth_pass }}"
+     provider:
+       authorize: true
+       auth_pass: " {{ secret_auth_pass }}"
 
 Note that over time more platforms will move to support ``become``. Check the :doc:`list_of_network_modules` for details.
 
