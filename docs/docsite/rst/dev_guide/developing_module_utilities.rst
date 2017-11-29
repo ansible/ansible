@@ -28,6 +28,7 @@ The following is a list of module_utils files and a general description. The mod
 - iosxr.py - Definitions and helper functions for modules that manage Cisco IOS-XR networking devices
 - ismount.py - Contains single helper function that fixes os.path.ismount
 - junos.py -  Definitions and helper functions for modules that manage Junos networking devices
+- keycloak.py - Definitions and helper functions for modules working with the Keycloak API
 - known_hosts.py - utilities for working with known_hosts file
 - manageiq.py - Functions and utilities for modules that work with ManageIQ platform and its resources.
 - mlnxos.py - Definitions and helper functions for modules that manage Mellanox MLNX-OS networking devices
