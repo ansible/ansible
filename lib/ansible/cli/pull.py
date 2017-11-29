@@ -114,7 +114,8 @@ class PullCLI(CLI):
         self.parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
                                help='adds the hostkey for the repo url if not already added')
         self.parser.add_option('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
-                               help='Repository module name, which ansible will use to check out the repo. Default is %s.' % self.DEFAULT_REPO_TYPE)
+                               help='Repository module name, which ansible will use to check out the repo. Choices are %s. Default is %s.'
+                                    % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
         self.parser.add_option('--verify-commit', dest='verify', default=False, action='store_true',
                                help='verify GPG signature of checked out commit, if it fails abort running the playbook. '
                                     'This needs the corresponding VCS module to support such an operation')
