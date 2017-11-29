@@ -8,8 +8,7 @@ __metaclass__ = type
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
+# it under the terms of the GNU General Public License as published by# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # Ansible is distributed in the hope that it will be useful,
@@ -18,7 +17,6 @@ __metaclass__ = type
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Module to run  CNOS restapi  to Lenovo Switches
@@ -43,8 +41,7 @@ description:
      Lenovo CNOS switches. "
 
 options:
-
-transport:
+    transport:
         description:
             - Transport layer used by the RESTAPI
                - http  plaintext communication over port 8090
