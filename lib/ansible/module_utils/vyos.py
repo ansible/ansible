@@ -25,10 +25,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection
 
 _DEVICE_CONFIGS = {}
 
@@ -62,64 +63,94 @@ def get_provider_argspec():
     return vyos_provider_spec
 
 
-def get_config(module, target='commands'):
-    cmd = ' '.join(['show configuration', target])
+def get_connection(module):
+    if hasattr(module, '_vyos_connection'):
+        return module._vyos_connection
 
-    try:
-        return _DEVICE_CONFIGS[cmd]
-    except KeyError:
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_or_strict'))
-        cfg = to_text(out, errors='surrogate_or_strict').strip()
-        _DEVICE_CONFIGS[cmd] = cfg
+    capabilities = get_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
+        module._vyos_connection = Connection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type %s' % network_api)
+
+    return module._vyos_connection
+
+
+def get_capabilities(module):
+    if hasattr(module, '_vyos_capabilities'):
+        return module._vyos_capabilities
+
+    capabilities = Connection(module._socket_path).get_capabilities()
+    module._vyos_capabilities = json.loads(capabilities)
+    return module._vyos_capabilities
+
+
+def get_config(module):
+    global _DEVICE_CONFIGS
+
+    if _DEVICE_CONFIGS != {}:
+        return _DEVICE_CONFIGS
+    else:
+        connection = get_connection(module)
+        out = connection.get_config()
+        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        _DEVICE_CONFIGS = cfg
         return cfg
 
 
 def run_commands(module, commands, check_rc=True):
     responses = list()
+    connection = get_connection(module)
+
     for cmd in to_list(commands):
-        rc, out, err = exec_command(module, cmd)
-        if check_rc and rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
-        responses.append(to_text(out, errors='surrogate_or_strict'))
+        try:
+            cmd = json.loads(cmd)
+            command = cmd['command']
+            prompt = cmd['prompt']
+            answer = cmd['answer']
+        except:
+            command = cmd
+            prompt = None
+            answer = None
+
+        out = connection.get(command, prompt, answer)
+
+        try:
+            out = to_text(out, errors='surrogate_or_strict')
+        except UnicodeError:
+            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+
+        responses.append(out)
+
     return responses
 
 
 def load_config(module, commands, commit=False, comment=None):
-    rc, out, err = exec_command(module, 'configure')
-    if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_or_strict'))
+    connection = get_connection(module)
 
-    for cmd in to_list(commands):
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            # discard any changes in case of failure
-            exec_command(module, 'exit discard')
-            module.fail_json(msg='configuration failed')
+    out = connection.edit_config(commands)
 
     diff = None
     if module._diff:
-        rc, out, err = exec_command(module, 'compare')
+        out = connection.get('compare')
         out = to_text(out, errors='surrogate_or_strict')
+
         if not out.startswith('No changes'):
-            rc, out, err = exec_command(module, 'show')
+            out = connection.get('show')
             diff = to_text(out, errors='surrogate_or_strict').strip()
 
     if commit:
-        cmd = 'commit'
-        if comment:
-            cmd += ' comment "%s"' % comment
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            # discard any changes in case of failure
-            exec_command(module, 'exit discard')
-            module.fail_json(msg='commit failed: %s' % err)
+        try:
+            out = connection.commit(comment)
+        except:
+            connection.discard_changes()
+            module.fail_json(msg='commit failed: %s' % out)
 
     if not commit:
-        exec_command(module, 'exit discard')
+        connection.discard_changes()
     else:
-        exec_command(module, 'exit')
+        connection.get('exit')
 
     if diff:
         return diff
