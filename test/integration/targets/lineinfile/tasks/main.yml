@@ -23,7 +23,7 @@
 - name: assert that the test file was deployed
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
     - "result.state == 'file'"
 
@@ -34,7 +34,7 @@
 - name: assert that the line was inserted at the head of the file
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line added'"
     - "result.backup != ''"
 
@@ -63,7 +63,7 @@
 - name: assert that the line was inserted at the end of the file
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line added'"
 
 - name: stat the test after the insert at the end
@@ -82,7 +82,7 @@
 - name: assert that the line was inserted after the first line
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line added'"
 
 - name: stat the test after insert after the first line
@@ -101,7 +101,7 @@
 - name: assert that the line was inserted before the last line
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line added'"
 
 - name: stat the test after the insert before the last line
@@ -120,7 +120,7 @@
 - name: assert that the line with backrefs was changed
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line replaced'"
 
 - name: stat the test after the backref line was replaced
@@ -139,7 +139,7 @@
 - name: assert that the line was removed
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == '1 line(s) removed'"
 
 - name: stat the test after the middle line was removed
@@ -158,7 +158,7 @@
 - name: assert that the file validated after removing a line
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == '1 line(s) removed'"
 
 - name: stat the test after the validation succeeded
@@ -231,7 +231,7 @@
 - name: assert that the multiple lines was inserted
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line added'"
 
 - name: testnoeof stat the no newline EOF test after the insert at the end
@@ -255,7 +255,7 @@
 - name: testempty assert that the line was inserted at the end of the file
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line added'"
 
 - name: testempty stat the test after the insert at the end
@@ -282,7 +282,7 @@
 - name: assert that the line with backrefs was changed
   assert:
     that:
-    - "result.changed == true"
+    - result is changed
     - "result.msg == 'line replaced'"
 
 - name: stat the test after the backref line was replaced
@@ -304,7 +304,7 @@
 - name: assert the new file was created
   assert:
     that:
-    - result.changed
+    - result is changed
 
 - name: use with_items to add code-like strings to the quoting txt file
   lineinfile: >
@@ -321,11 +321,11 @@
   assert:
     that:
     - result.results|length == 3
-    - result.results[0].changed
+    - result.results[0] is changed
     - result.results[0].item == "'foo'"
-    - result.results[1].changed
+    - result.results[1] is changed
     - result.results[1].item == "dotenv.load();"
-    - result.results[2].changed
+    - result.results[2] is changed
     - result.results[2].item == "var dotenv = require('dotenv');"
 
 - name: stat the quote test file
@@ -344,7 +344,7 @@
 - name: assert that the quoted file was changed
   assert:
     that:
-    - result.changed
+    - result is changed
 
 - name: stat the quote test file
   stat: path={{output_dir}}/test_quoting.txt
@@ -362,7 +362,7 @@
 - name: assert that the quoted file was changed
   assert:
     that:
-    - result.changed
+    - result is changed
 
 - name: stat the quote test file
   stat: path={{output_dir}}/test_quoting.txt
@@ -374,3 +374,9 @@
     - "result.stat.checksum == 'b10ab2a3c3b6492680c8d0b1d6f35aa6b8f9e731'"
 
 ###################################################################
+# Issue 28721
+
+# - name:
+#   module:
+#     value:
+#     value:
