@@ -329,6 +329,12 @@ To make a final major release
 To make a dot release
 ---------------------
 
+* In the ``devel`` branch edit :file:`packaging/release/vars/versions.yml` -- Update the release
+  date.  Version numbers should be listed in descending order.
+* In both ``devel`` and ``stable-2.4`` branch edit release version and date in
+  :file:`docs/docsite/rst/release_and_maintenance.rst`
+* In the stable-X.Y branch edit the CHANGELOG file to have the release date.
+
 * Step 4-16 of the :ref:`beta1 <first_release>` process
 * Build and upload the tarballs/rpm/deb packages via jenkins:
 
