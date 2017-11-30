@@ -279,7 +279,6 @@ lib/ansible/modules/packaging/os/sorcery.py
 lib/ansible/modules/packaging/os/svr4pkg.py
 lib/ansible/modules/packaging/os/swdepot.py
 lib/ansible/modules/packaging/os/urpmi.py
-lib/ansible/modules/packaging/os/yum.py
 lib/ansible/modules/packaging/os/zypper.py
 lib/ansible/modules/packaging/os/zypper_repository.py
 lib/ansible/modules/storage/infinidat/infini_export.py
