@@ -229,7 +229,7 @@ def main():
     json_data = None
     params = dict()
     use_ssl = module.params['use_ssl']
-    if (use_ssl == True):
+    if (use_ssl is True):
         params['transport'] = 'https'
     else:
         params['transport'] = 'http'
