@@ -219,6 +219,7 @@ dest:
 ...
 '''
 
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import os
@@ -259,18 +260,18 @@ class PamdRule(object):
 
         if '[' in stringline:
             pattern = re.compile(
-                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
-                    \[([A-Za-z0-9_=\s]+)\]\s*   # Rule Control
-                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
-                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                r"""([\-A-Za-z0-9_]+)\s*         # Rule Type
+                    \[([A-Za-z0-9_=\s]+)\]\s*    # Rule Control
+                    ([A-Za-z0-9_\-\.]+)\s*         # Rule Path
+                    ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
             complicated = True
         else:
             pattern = re.compile(
                 r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
                     ([A-Za-z0-9_]+)\s*          # Rule Control
-                    ([A-Za-z0-9_\.]+)\s*        # Rule Path
-                    ([A-Za-z0-9_=<>\-\s]*)""",  # Rule Args
+                    ([A-Za-z0-9_\-\.]+)\s*        # Rule Path
+                    ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
 
         result = pattern.match(stringline)
