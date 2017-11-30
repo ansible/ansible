@@ -1,0 +1,70 @@
+- name: Test import_role
+  hosts: localhost
+  connection: local
+  become: no
+
+  vars:
+    role_name: role1
+    role_vars:
+      where_am_i_defined: in the playbook
+    entire_task:
+      include_role:
+        # name: role1
+
+  tasks:
+    - name: Test basic role include
+      include_role:
+        name: role1
+
+    # FIXME Currently failing
+    # - name: Test role include with a loop
+    #   include_role:
+    #     name: "{{ item }}"
+    #   ignore_errors: yes
+    #   with_items:
+    #     - role1
+    #     - role2
+
+    - name: Test including a task file
+      include_role:
+        name: role1
+        tasks_from: tasks.yml
+
+    - name: Test including vars file and tasks file from a role
+      include_role:
+        name: role3
+        tasks_from: vartest.yml
+        vars_from: role3vars.yml
+        private: no
+
+    - name: Use variable for role name
+      include_role:
+        name: "{{ role_name }}"
+
+    - name: Pass variable to role
+      include_role:
+        name: role1
+        tasks_from: vartest.yml
+      vars:
+        where_am_i_defined: in the task
+
+    # FIXME Currently failing
+    # Not sure if this is suppsode to work
+    # - name: Pass all variables in a variable to role
+    #   include_role:
+    #     name: role1
+    #     tasks_from: vartest.yml
+    #   vars: "{{ role_vars }}"
+
+    - name: Pass templated variable to a role
+      include_role:
+        name: role1
+        tasks_from: vartest.yml
+      vars:
+        where_am_i_defined: in the playbook
+
+    # This fails gloriously
+    # - name: Include an entire task
+    #   action:
+    #     module: "{{ entire_task }}"
+
