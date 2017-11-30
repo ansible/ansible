@@ -73,7 +73,7 @@ EXAMPLES = '''
   debconf:
     name: oracle-java7-installer
     question: shared/accepted-oracle-license-v1-1
-    value: true
+    value: 'true'
     vtype: select
 
 - name: Specifying package you can register/return the list of questions and current values
