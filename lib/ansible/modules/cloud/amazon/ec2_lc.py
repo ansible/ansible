@@ -307,7 +307,7 @@ def create_launch_config(connection, module):
     if classic_link_vpc_id is not None:
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
 
-    if instance_monitoring:
+    if instance_monitoring is not None:
         launch_config['InstanceMonitoring'] = {'Enabled': instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
