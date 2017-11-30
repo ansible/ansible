@@ -213,6 +213,8 @@ class Template(object):
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
         group_ids = []
+        if group_names is None or len(group_names) == 0:
+            return group_ids
         if self.check_host_group_exist(group_names):
             group_list = self._zapi.hostgroup.get(
                 {'output': 'extend',
