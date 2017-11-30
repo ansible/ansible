@@ -77,6 +77,12 @@
       - "guest_facts_0001['instance']['hw_cores_per_socket'] is defined"
       - "guest_facts_0001['instance']['hw_datastores'] is defined"
       - "guest_facts_0001['instance']['hw_esxi_host'] == h1 | basename"
+      - "guest_facts_0001['instance']['hw_files'] is defined"
+      - "guest_facts_0001['instance']['hw_guest_ha_state'] is defined"
+      - "guest_facts_0001['instance']['hw_is_template'] is defined"
+      - "guest_facts_0001['instance']['hw_folder'] is defined"
+      - "guest_facts_0001['instance']['guest_question'] is defined"
+      - "guest_facts_0001['instance']['guest_consolidation_needed'] is defined"
 
 - set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
 
@@ -101,6 +107,14 @@
       - "guest_facts_0002['instance']['hw_product_uuid'] is defined"
       - "guest_facts_0002['instance']['hw_product_uuid'] == vm1_uuid"
       - "guest_facts_0002['instance']['hw_cores_per_socket'] is defined"
+      - "guest_facts_0001['instance']['hw_datastores'] is defined"
+      - "guest_facts_0001['instance']['hw_esxi_host'] == h1 | basename"
+      - "guest_facts_0001['instance']['hw_files'] is defined"
+      - "guest_facts_0001['instance']['hw_guest_ha_state'] is defined"
+      - "guest_facts_0001['instance']['hw_is_template'] is defined"
+      - "guest_facts_0001['instance']['hw_folder'] is defined"
+      - "guest_facts_0001['instance']['guest_question'] is defined"
+      - "guest_facts_0001['instance']['guest_consolidation_needed'] is defined"
 
 # Testcase 0003: Get details about virtual machines without snapshots using UUID
 - name: get empty list of snapshots from virtual machine using UUID
