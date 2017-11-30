@@ -41,13 +41,13 @@ description:
      Lenovo CNOS switches. "
 
 options:
-    transport:
+    use_ssl:
         description:
             - Transport layer used by the RESTAPI
-               - http  plaintext communication over port 8090
-               - https secured encrypted comminication
-        required: true
-        default: Null
+               - False plaintext communication over port 8090
+               - True secured encrypted comminication
+        type: bool
+        default: True
     urlpath:
         description:
             - URL Path of the RESTAPI
@@ -79,7 +79,7 @@ EXAMPLES = '''
     username: '{{ username }}'
     password: '{{ password }}'
     outputfile: "./results/test_restapi_{{ inventory_hostname }}_output.txt"
-    transport: https
+    use_ssl: True
     urlpath: /nos/api/cfg/telemetry/bst/feature
     method: PUT
     jsoninp: '{"collection-interval": 20, "send-async-reports": 1,
@@ -93,7 +93,7 @@ EXAMPLES = '''
     username: '{{ username }}'
     password: '{{ password }}'
     outputfile: "./results/test_restapi_{{ inventory_hostname }}_output.txt"
-    transport: https
+    use_ssl: True
     urlpath: /nos/api/cfg/telemetry/bst/feature
     method: GET
 
@@ -103,7 +103,7 @@ EXAMPLES = '''
     username: '{{ username }}'
     password: '{{ password }}'
     outputfile: "./results/test_restapi_{{ inventory_hostname }}_output.txt"
-    transport: https
+    use_ssl: True
     urlpath: /nos/api/info/telemetry/bst/congestion-drop-counters
     method: POST
     jsoninp: '{"req-id" : 1, "request-type" : "port-drops", "request-params": {"interface-list": ["Ethernet1/1", "Ethernet1/2", "Ethernet1/3"]}}'
@@ -220,7 +220,7 @@ def main():
             host=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            transport=dict(required=True),
+            use_ssl=dict(type='bool', default=True),
             urlpath=dict(required=True),
             method=dict(required=False),
             jsoninp=dict(required=False),),
@@ -228,10 +228,11 @@ def main():
 
     json_data = None
     params = dict()
-    params['transport'] = module.params['transport']
-    if (params['transport'] not in ['http', 'https']):
-        msg = " incorrect transport type"
-        module.fail_json(msg=msg)
+    use_ssl = module.params['use_ssl']
+    if (use_ssl == True):
+        params['transport'] = 'https'
+    else:
+        params['transport'] = 'http'
     params['host'] = module.params['host']
     params['username'] = module.params['username']
     params['password'] = module.params['password']
