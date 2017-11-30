@@ -145,7 +145,10 @@ method:
 import base64
 import os
 import tempfile
-import yaml
+try:
+    import yaml
+except ImportError:
+    pass
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import urls
 from ansible.module_utils._text import to_text
