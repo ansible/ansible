@@ -25,6 +25,7 @@ import copy
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
+from ansible.module_utils.six import iteritems
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network_common import load_provider
 from ansible.module_utils.nxos import nxos_provider_spec
@@ -43,7 +44,8 @@ class ActionModule(_ActionModule):
         provider = load_provider(nxos_provider_spec, self._task.args)
 
         if self._play_context.connection == 'network_cli':
-            if any(provider.values()):
+            if any([value is not None and value != nxos_provider_spec[key].get('default')
+                    for key, value in iteritems(provider)]):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
         elif self._play_context.connection == 'local':
             transport = provider['transport'] or 'cli'
