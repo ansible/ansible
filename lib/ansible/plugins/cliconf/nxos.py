@@ -60,8 +60,11 @@ class Cliconf(CliconfBase):
         return self.send_command(cmd)
 
     def edit_config(self, command):
+        responses = []
         for cmd in chain([b'configure'], to_list(command), [b'end']):
-            self.send_command(cmd)
+            responses.append(self.send_command(cmd))
+
+        return json.dumps(responses)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)

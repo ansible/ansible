@@ -163,7 +163,10 @@ class Cli:
         """Sends configuration commands to the remote device
         """
         connection = self._get_connection()
-        connection.edit_config(config)
+        out = connection.edit_config(config)
+        msg = json.loads(out)[1:-1]
+
+        return msg
 
     def get_capabilities(self):
         """Returns platform info of the remove device
