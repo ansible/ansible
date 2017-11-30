@@ -602,14 +602,6 @@ class AzureInventory(object):
 
         self._args = self._parse_cli_args()
 
-        try:
-            rm = AzureRM(self._args)
-        except Exception as e:
-            sys.exit("{0}".format(str(e)))
-
-        self._compute_client = rm.compute_client
-        self._network_client = rm.network_client
-        self._resource_client = rm.rm_client
         self._security_groups = None
 
         self.resource_groups = []
@@ -649,6 +641,15 @@ class AzureInventory(object):
         start_inventory_time = time()
         cache_used = False
         if self._args.refresh_cache or not self.cache.is_valid():
+            try:
+                rm = AzureRM(self._args)
+            except Exception as e:
+                sys.exit("{0}".format(str(e)))
+
+            self._compute_client = rm.compute_client
+            self._network_client = rm.network_client
+            self._resource_client = rm.rm_client
+
             self.get_inventory()
             self.cache.write_to_cache(self._inventory)
         else:
