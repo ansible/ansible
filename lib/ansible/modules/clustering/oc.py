@@ -56,15 +56,15 @@ options:
     required: false
   kube_config:
     description:
-      - "A path to the Kubernetes configuration file containing the cluster login credentials.  If the 'token' 
-         option isn't defined this is taken as the default login mechanism.  The 'kube_config' is mutually 
+      - "A path to the Kubernetes configuration file containing the cluster login credentials.  If the 'token'
+         option isn't defined this is taken as the default login mechanism.  The 'kube_config' is mutually
          exclusive with 'token'."
     required: false
     default: ~/.kube/config
     version_added: 2.5
   kube_context:
     description:
-      - "The login context to use when accessing the OpenShift cluster.  The last login credentials are indicated 
+      - "The login context to use when accessing the OpenShift cluster.  The last login credentials are indicated
          by 'current-context' which is the default context for the option."
     required: false
     default: current-context
@@ -375,6 +375,7 @@ class OC(object):
                 changed = True
         return destination, changed
 
+
 class KubeConfig(object):
     def __init__(self, module, config_file, context):
         self.module = module
@@ -390,7 +391,8 @@ class KubeConfig(object):
             self.context_info = [context['context'] for context in kube_data['contexts'] if context['name'] == self.context]
 
             if not self.context_info:
-                raise self.module.fail_json(msg="Could not find context info from context {0} in kube config file {1}.".format(module.params['kube_context'], module.params['kube_confg']))
+                raise self.module.fail_json(msg="Could not find context info from context {0} in kube config file {1}.".format(module.params['kube_context'], 
+                                                                                                                               module.params['kube_confg']))
 
             self.login_info = [user['user'] for user in kube_data['users'] if user['name'] in self.context_info[0]['user']]
 
