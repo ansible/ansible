@@ -87,7 +87,7 @@ class TestCnosRestapiModule(TestCnosRestModule):
     def test_cnos_restapi_unreachable(self):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
-                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             use_ssl=True, urlpath='/nos/api/cfg/vlan',
                              method='GET'))
         result = self.execute_module(failed=True)
 
@@ -95,7 +95,7 @@ class TestCnosRestapiModule(TestCnosRestModule):
     def test_cnos_restapi_success(self, RestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
-                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             use_ssl=True, urlpath='/nos/api/cfg/vlan',
                              method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 1
@@ -106,7 +106,7 @@ class TestCnosRestapiModule(TestCnosRestModule):
     def test_cnos_restapi_failed_at_login(self, RestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
-                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             urlpath='/nos/api/cfg/vlan',
                              method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 0
@@ -116,7 +116,7 @@ class TestCnosRestapiModule(TestCnosRestModule):
     def test_cnos_restapi_failed_at_cbmethod(self, RestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
-                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             urlpath='/nos/api/cfg/vlan',
                              method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 1
@@ -127,7 +127,7 @@ class TestCnosRestapiModule(TestCnosRestModule):
     def test_cnos_restapi_failed_incorrect_method(self, RestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
-                             transport='https', urlpath='/nos/api/cfg/vlan',
+                             urlpath='/nos/api/cfg/vlan',
                              method='GT'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 1
@@ -138,7 +138,7 @@ class TestCnosRestapiModule(TestCnosRestModule):
     def test_cnos_restapi_failed_incorrect_transport(self, RestModule):
         set_module_args(dict(outputfile='myfile', host='10.240.176.2',
                              username='admin', password='admin',
-                             transport='tps', urlpath='/nos/api/cfg/vlan',
+                             use_ssl=4, urlpath='/nos/api/cfg/vlan',
                              method='GET'))
         instance = RestModule.return_value
         instance.loginurl.return_value = 1
