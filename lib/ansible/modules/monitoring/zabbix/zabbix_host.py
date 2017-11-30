@@ -660,7 +660,7 @@ def main():
     ipmi_authtype = module.params['ipmi_authtype']
     ipmi_privilege = module.params['ipmi_privilege']
     ipmi_username = module.params['ipmi_username']
-    pmi_password = module.params['ipmi_password']
+    ipmi_password = module.params['ipmi_password']
     tls_connect = module.params['tls_connect']
     tls_accept = module.params['tls_accept']
     tls_psk_identity = module.params['tls_psk_identity']
