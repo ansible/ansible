@@ -19,9 +19,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import json
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
 
@@ -46,17 +45,20 @@ class TerminalModule(TerminalBase):
         if self._get_prompt().endswith('#'):
             return
 
-        cmd = {u'command': u'enable'}
+        prompt = None
+        answer = None
+
         if passwd:
-            cmd[u'prompt'] = to_text(r"[\r\n]?password:$", errors='surrogate_or_strict')
-            cmd[u'answer'] = passwd
+            prompt = to_text(r"[\r\n]?password:$", errors='surrogate_or_strict')
+            answer = passwd
         try:
-            self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
+            self.cli('enable', prompt, answer)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
+
         # in dellos6 the terminal settings are accepted after the privilege mode
         try:
-            self._exec_cli_command(b'terminal length 0')
+            self.cli('temrinal length 0')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
@@ -67,8 +69,8 @@ class TerminalModule(TerminalBase):
             return
 
         if prompt.strip().endswith(b')#'):
-            self._exec_cli_command(b'end')
-            self._exec_cli_command(b'disable')
+            for cmd in ('end', 'disable'):
+                self.cli(cmd)
 
         elif prompt.endswith(b'#'):
-            self._exec_cli_command(b'disable')
+            self.cli('disable')

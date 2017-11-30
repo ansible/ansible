@@ -25,6 +25,7 @@ from abc import ABCMeta, abstractmethod
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import with_metaclass
+from ansible.module_utils._text import to_bytes, to_text
 
 
 class TerminalBase(with_metaclass(ABCMeta, object)):
@@ -57,69 +58,110 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
     def _exec_cli_command(self, cmd, check_rc=True):
         '''
-        Executes the CLI command on the remote device and returns the output
+        Deprecated method sending commands across the connection
+
+        This method has been deprecated as of Ansible 2.5 and will be
+        removed from the code in Ansible 2.9.
+
+        Please use the cli() method instead.
 
         :arg cmd: Byte string command to be executed
         '''
         return self._connection.exec_command(cmd)
 
+    def cli(self, command, prompt=None, answer=None, send_only=False):
+        '''
+        Executes the command directly on the connection and returns the output
+
+        This is the preferred method when sending commands to the remote
+        device and supersedes the deprecated _exec_cli_command() method.
+        All terminal plugins should be updated to use this method.
+
+        :arg command: The command string to send to the device
+        :arg prompt: The regex string pattern to match a response
+        :arg answer: The answer to send if the prompt is matched
+        :arg send_only: Prevent the connection from waiting for a response
+        '''
+        kwargs = {'command': to_bytes(command), 'send_only': send_only}
+        if prompt:
+            kwargs['prompt'] = to_bytes(prompt)
+        if answer:
+            kwargs['answer'] = to_bytes(answer)
+        return to_text(self._connection.send(**kwargs))
+
     def _get_prompt(self):
-        """
+        '''
         Returns the current prompt from the device
 
         :returns: A byte string of the prompt
-        """
-        self._exec_cli_command(b'\n')
+        '''
+        self.cli(b'\n')
         return self._connection._matched_prompt
 
     def on_open_shell(self):
-        """Called after the SSH session is established
+        '''
+        Called after the SSH session is established
 
         This method is called right after the invoke_shell() is called from
         the Paramiko SSHClient instance.  It provides an opportunity to setup
         terminal parameters such as disbling paging for instance.
-        """
+        '''
         pass
 
     def on_close_shell(self):
-        """Called before the connection is closed
+        '''
+        Called before the connection is closed
 
         This method gets called once the connection close has been requested
         but before the connection is actually closed.  It provides an
         opportunity to clean up any terminal resources before the shell is
         actually closed
-        """
+        '''
         pass
 
     def on_become(self, passwd=None):
-        """Called when privilege escalation is requested
+        '''
+        Called when privilege escalation is requested
 
-        :kwarg passwd: String containing the password
+        :arg passwd: String containing the password
 
         This method is called when the privilege is requested to be elevated
         in the play context by setting become to True.  It is the responsibility
         of the terminal plugin to actually do the privilege escalation such
         as entering `enable` mode for instance
-        """
+        '''
         pass
 
     def on_unbecome(self):
-        """Called when privilege deescalation is requested
+        '''
+        Called when privilege deescalation is requested
 
         This method is called when the privilege changed from escalated
         (become=True) to non escalated (become=False).  It is the responsibility
         of this method to actually perform the deauthorization procedure
-        """
+        '''
         pass
 
     def on_authorize(self, passwd=None):
-        """Deprecated method for privilege escalation
+        '''
+        Deprecated method for privilege escalation
 
-        :kwarg passwd: String containing the password
-        """
+        This method has been deprecated as of Ansible 2.5 and will be
+        removed from the code in Ansible 2.9.
+
+        Please use on_become() instead
+
+        :arg passwd: String containing the password
+        '''
         return self.on_become(passwd)
 
     def on_deauthorize(self):
-        """Deprecated method for privilege deescalation
-        """
+        '''
+        Deprecated method for privilege deescalation
+
+        This method has been deprecated as of Ansible 2.5 and will be
+        removed from the code in Ansible 2.9.
+
+        Please use on_unbecome() instead
+        '''
         return self.on_unbecome()

@@ -49,8 +49,8 @@ class TerminalModule(TerminalBase):
             prompt = self._get_prompt()
             if prompt.strip().endswith(b'%'):
                 display.vvv('starting cli', self._connection._play_context.remote_addr)
-                self._exec_cli_command('cli')
-            for c in (b'set cli timestamp disable', b'set cli screen-length 0', b'set cli screen-width 1024'):
-                self._exec_cli_command(c)
+                self.cli('cli')
+            for c in ('set cli timestamp disable', 'set cli screen-length 0', 'set cli screen-width 1024'):
+                self.cli(c)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
