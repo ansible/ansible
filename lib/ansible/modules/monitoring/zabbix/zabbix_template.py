@@ -117,6 +117,27 @@ EXAMPLES = '''
       - Webservers
     state: present
 
+# Import a template from Ansible variable dict
+- name: Import Zabbix Template
+  zabbix_template:
+    login_user: username
+    login_password: password
+    server_url: http://127.0.0.1
+    template_name: Test Template
+    template_json:
+        zabbix_export:
+        version: '3.2'
+        templates:
+          - name: Template for Testing
+            description: 'Testing template import'
+            template: Test Template
+            groups:
+              - name: Templates
+            applications:
+              - name: Test Application
+    template_groups: Templates
+    state: present
+
 # Add a macro to a template
 - name: Set a macro on the Zabbix template
   local_action:
