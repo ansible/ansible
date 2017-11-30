@@ -34,7 +34,7 @@ options:
     aliases: [ pkg ]
   exclude:
     description:
-      - "Package name(s) to exclude when state=present, or latest"
+      - Package name(s) to exclude when state=present, or latest
     version_added: "2.0"
   list:
     description:
@@ -153,9 +153,9 @@ requirements:
 author:
     - Ansible Core Team
     - Seth Vidal
-    - Eduard Snesarev (github.com/verm666)
-    - Berend De Schouwer (github.com/berenddeschouwer)
-    - Abhijeet Kasurde (github.com/akasurde)
+    - Eduard Snesarev (@verm666)
+    - Berend De Schouwer (@berenddeschouwer)
+    - Abhijeet Kasurde (@Akasurde)
 '''
 
 EXAMPLES = '''
@@ -256,7 +256,7 @@ def yum_base(conf_file=None, installroot='/'):
     my.preconf.debuglevel = 0
     my.preconf.errorlevel = 0
     my.preconf.plugins = True
-    #my.preconf.releasever = '/'
+    # my.preconf.releasever = '/'
     if installroot != '/':
         # do not setup installroot by default, because of error
         # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
@@ -662,15 +662,18 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
 
     if stuff == 'installed':
         return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'updates':
+
+    if stuff == 'updates':
         return [pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'available':
+
+    if stuff == 'available':
         return [pkg_to_dict(p) for p in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'repos':
+
+    if stuff == 'repos':
         return [dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip()]
-    else:
-        return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
-                                                is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
+
+    return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot) +
+                                           is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
 
 
 def exec_install(module, items, action, pkgs, res, yum_basecmd):
@@ -1348,8 +1351,10 @@ def main():
                          disablerepo, disable_gpg_check, exclude, repoquery,
                          skip_broken, update_only, security, params['installroot'], allow_downgrade)
         if repoquery:
-            results['msg'] = '%s %s' % (results.get('msg', ''),
-                             'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
+            results['msg'] = '%s %s' % (
+                results.get('msg', ''),
+                'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.'
+            )
 
     module.exit_json(**results)
 
