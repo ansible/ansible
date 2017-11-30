@@ -1,0 +1,2 @@
+where_am_i_defined: role3
+role3var: defined in role3/vars/role3vars.yml
