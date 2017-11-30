@@ -195,6 +195,7 @@ class Cli:
 
         rc, out, err = self.send_config(commands)
         if rc != 0:
+            self.exec_command('abort')
             self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
 
         self.exec_command('end')
