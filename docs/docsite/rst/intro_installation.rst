@@ -101,7 +101,7 @@ Installing the Control Machine
 ``````````````````````````````
 .. _from_yum:
 
-Latest Release Via DNF or Yum
+Latest Release via DNF or Yum
 +++++++++++++++++++++++++++++
 
 On Fedora:
