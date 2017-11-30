@@ -29,6 +29,7 @@
 #
 
 import collections
+import json
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
@@ -165,20 +166,12 @@ class Cli:
         connection.edit_config(config)
 
     def get_capabilities(self):
+        """Returns platform info of the remove device
+        """
         connection = self._get_connection()
-        info = connection.get_capabilities()
-
-        try:
-            info = to_text(info, errors='surrogate_or_strict')
-        except UnicodeError:
-            self._module.fail_json(msg=u'Failed to decode output from %s' % (to_text(info)))
-
-        try:
-            info = self._module.from_json(info)
-        except ValueError:
-            info = to_text(info).strip()
-
-        return info
+        capabilities = connection.get_capabilities()
+        capabilities = json.loads(capabilities)
+        return capabilities
 
 
 class Nxapi:
