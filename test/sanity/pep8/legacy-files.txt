@@ -260,7 +260,6 @@ lib/ansible/modules/packaging/language/pear.py
 lib/ansible/modules/packaging/os/apk.py
 lib/ansible/modules/packaging/os/apt.py
 lib/ansible/modules/packaging/os/apt_key.py
-lib/ansible/modules/packaging/os/apt_repository.py
 lib/ansible/modules/packaging/os/apt_rpm.py
 lib/ansible/modules/packaging/os/dpkg_selections.py
 lib/ansible/modules/packaging/os/homebrew.py
