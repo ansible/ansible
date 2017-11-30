@@ -286,7 +286,7 @@ class PamdRule(object):
                 r"""([\-A-Za-z0-9_]+)\s*         # Rule Type
                     \[([A-Za-z0-9_=\s]+)\]\s*    # Rule Control
                     ([A-Za-z0-9_\-\.]+)\s*         # Rule Path
-                    ([A-Za-z0-9,_=<>\-\s]*)""",  # Rule Args
+                    ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
             complicated = True
         else:
@@ -294,7 +294,7 @@ class PamdRule(object):
                 r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
                     ([A-Za-z0-9_]+)\s*          # Rule Control
                     ([A-Za-z0-9_\-\.]+)\s*        # Rule Path
-                    ([A-Za-z0-9,_=<>\-\s]*)""",  # Rule Args
+                    ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
 
         result = pattern.match(stringline)
