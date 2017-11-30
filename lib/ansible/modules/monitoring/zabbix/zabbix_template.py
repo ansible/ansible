@@ -459,6 +459,7 @@ def main():
 
     template = Template(module, zbx)
     template_ids = template.get_template_ids([template_name])
+    existing_template_json = None
     if template_ids:
         existing_template_json = template.dump_template(template_ids)
 
@@ -491,6 +492,7 @@ def main():
         group_ids = None
         if template_groups is not None:
             # If the template exists, compare the already set groups
+            existing_groups = None
             if existing_template_json:
                 existing_groups = set(list(group['name'] for group in existing_template_json['zabbix_export']['groups']))
             if not existing_groups or set(template_groups) != existing_groups:
@@ -498,6 +500,7 @@ def main():
 
         macros = None
         if template_macros is not None:
+            existing_macros = None
             if existing_template_json:
                 existing_macros = set(existing_template_json['zabbix_export']['templates'][0]['macros'])
             if not existing_macros or set(template_macros) != existing_macros:
