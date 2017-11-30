@@ -316,19 +316,7 @@ def gather_vm_facts(content, vm):
     except:
         pass
 
-    folder = vm.parent
-    if folder:
-        foldername = folder.name
-        fp = folder.parent
-        # climb back up the tree to find our path, stop before the root folder
-        while fp is not None and fp.name is not None and fp != content.rootFolder:
-            foldername = fp.name + '/' + foldername
-            try:
-                fp = fp.parent
-            except:
-                break
-        foldername = '/' + foldername
-        facts['hw_folder'] = foldername
+    facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
 
     cfm = content.customFieldsManager
     # Resolve custom values
@@ -823,6 +811,23 @@ class PyVmomi(object):
 
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
+
+    @staticmethod
+    def get_vm_path(content, vm):
+        foldername = None
+        folder = vm.parent
+        if folder:
+            foldername = folder.name
+            fp = folder.parent
+            # climb back up the tree to find our path, stop before the root folder
+            while fp is not None and fp.name is not None and fp != content.rootFolder:
+                foldername = fp.name + '/' + foldername
+                try:
+                    fp = fp.parent
+                except:
+                    break
+            foldername = '/' + foldername
+        return foldername
 
     # Cluster related functions
     def find_cluster_by_name(self, cluster_name, datacenter_name=None):
