@@ -860,7 +860,7 @@ class TaskParameters(DockerBaseClass):
             cpu_shares='cpu_shares',
             cpuset_cpus='cpuset_cpus',
             mem_limit='memory',
-            mem_reservation='mem_reservation',
+            mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
             kernel_memory='kernel_memory',
         )
