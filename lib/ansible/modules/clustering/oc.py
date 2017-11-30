@@ -56,14 +56,19 @@ options:
     required: false
   kube_config:
     description:
-      - "A path to the Kubernetes configuration file containing the cluster login credentials.  If the 'token' option isn't defined this is taken as the default login mechanism.  The 'kube_config' is mutually exclusive with 'token'.  Added in Ansible 2.5."
+      - "A path to the Kubernetes configuration file containing the cluster login credentials.  If the 'token' 
+         option isn't defined this is taken as the default login mechanism.  The 'kube_config' is mutually 
+         exclusive with 'token'."
     required: false
     default: ~/.kube/config
+    version_added: 2.5
   kube_context:
     description:
-      - "The login context to use when accessing the OpenShift cluster.  The last login credentials are indicated by 'current-context' which is the default context for the option.  Added in Ansible 2.5."
+      - "The login context to use when accessing the OpenShift cluster.  The last login credentials are indicated 
+         by 'current-context' which is the default context for the option."
     required: false
     default: current-context
+    version_added: 2.5
   state:
     choices:
       - present
@@ -231,7 +236,6 @@ class OC(object):
         else:
             self.headers = {"Content-type": "application/json"}
 
-                            
         # Build Endpoints
         for api in self.apis:
             endpoint = ApiEndpoint(self.host,
@@ -384,10 +388,10 @@ class KubeConfig(object):
             else:
                 self.context = context
             self.context_info = [context['context'] for context in kube_data['contexts'] if context['name'] == self.context]
-            
+
             if not self.context_info:
                 raise self.module.fail_json(msg="Could not find context info from context {0} in kube config file {1}.".format(module.params['kube_context'], module.params['kube_confg']))
-            
+
             self.login_info = [user['user'] for user in kube_data['users'] if user['name'] in self.context_info[0]['user']]
 
             self.cluster_info = [cluster['cluster'] for cluster in kube_data['clusters'] if cluster['name'] == self.context_info[0]['cluster']]
@@ -421,7 +425,7 @@ class KubeConfig(object):
             pass
         return None
 
-    # Because Python requests doesn't take a certificate as a string, but rather a file, 
+    # Because Python requests doesn't take a certificate as a string, but rather a file,
     # we will have to create a temporary file for the client certificate.
     def user_client_cert_file(self):
         if self.user_client_cert():
@@ -431,7 +435,7 @@ class KubeConfig(object):
             return self.cert_file_name
         return None
 
-    # Because Python requests doesn't take a certificate as a string, but rather a file, 
+    # Because Python requests doesn't take a certificate as a string, but rather a file,
     # we will have to create a temporary file for the client key.
     def user_client_key_file(self):
         if self.user_client_key():
@@ -490,7 +494,7 @@ def main():
     namespace = module.params['namespace']
     token = None
     kube_config = None
-    
+
     # If the token is set in the module arguments, that takes priority.  Otherwise, the default
     # is to use the credentials in the kube/config.
     if module.params['token']:
