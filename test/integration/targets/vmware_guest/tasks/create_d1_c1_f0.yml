@@ -41,8 +41,11 @@
     guest_id: centos64Guest
     datacenter: "{{ (item|basename).split('_')[0] }}"
     hardware:
-        num_cpus: 1
+        num_cpus: 4
+        num_cpu_cores_per_socket: 2
         memory_mb: 512
+        hotadd_memory: true
+        hotadd_cpu: false
     disk:
         - size: 0gb
           type: thin
@@ -70,10 +73,9 @@
     guest_id: centos64Guest
     datacenter: "{{ (item|basename).split('_')[0] }}"
     hardware:
-        num_cpus: 1
+        num_cpus: 4
+        num_cpu_cores_per_socket: 2
         memory_mb: 512
-        hotadd_memory: true
-        hotadd_cpu: false
     disk:
         - size: 0gb
           type: thin
