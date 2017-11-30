@@ -83,7 +83,11 @@ The following modules will be removed in Ansible 2.9. Please update update your 
 Noteworthy module changes
 -------------------------
 
-No notable changes.
+* The :ref:`stat <stat>` and :ref:`win_stat <win_stat>` modules have changed the default of the option ``get_md5`` from ``true`` to ``false``.
+
+This option will be removed starting with Ansible version 2.9. The options ``get_checksum: True``
+and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
+desired.
 
 Plugins
 =======
