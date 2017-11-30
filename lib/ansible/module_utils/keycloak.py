@@ -173,7 +173,6 @@ class KeycloakAPI(object):
         else:
             return None
 
-
     def update_client(self, id, clientrep, realm="master"):
         """ Update an existing client
         :param id: id (not clientId) of client to be updated in Keycloak
