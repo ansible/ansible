@@ -394,7 +394,7 @@ class KubeConfig(object):
             self.context_info = [context['context'] for context in kube_data['contexts'] if context['name'] == self.context]
 
             if not self.context_info:
-                raise self.module.fail_json(msg="Could not find context info from context {0} in kube config file {1}.".format(module.params['kube_context'], 
+                raise self.module.fail_json(msg="Could not find context info from context {0} in kube config file {1}.".format(module.params['kube_context'],
                                                                                                                                module.params['kube_confg']))
 
             self.login_info = [user['user'] for user in kube_data['users'] if user['name'] in self.context_info[0]['user']]
