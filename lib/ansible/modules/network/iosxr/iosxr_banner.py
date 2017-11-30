@@ -172,9 +172,9 @@ class NCConfiguration(ConfigBase):
         state = self._module.params['state']
         _get_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode="filter")
         if _get_filter == 'no_lxml':
-            self._module.fail_json('lxml is not installed')
+            self._module.fail_json(msg='lxml is not installed')
 
-        running = get_config(self._module, source='running', config_filter=etree.tostring(_get_filter))
+        running = get_config(self._module, source='running', config_filter=_get_filter)
 
         opcode = None
         banner_name = None
@@ -193,12 +193,12 @@ class NCConfiguration(ConfigBase):
         if opcode:
             _edit_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode=opcode)
             if _edit_filter == 'no_lxml':
-                self._module.fail_json('lxml is not installed')
+                self._module.fail_json(msg='lxml is not installed')
 
             if _edit_filter is not None:
                 if not self._module.check_mode:
-                    load_config(self._module, etree.tostring(_edit_filter), self._result['warnings'])
-                    candidate = get_config(self._module, source='candidate', config_filter=etree.tostring(_get_filter))
+                    load_config(self._module, _edit_filter, self._result['warnings'])
+                    candidate = get_config(self._module, source='candidate', config_filter=_get_filter)
 
                     diff = get_config_diff(self._module, running, candidate)
                     if diff:
@@ -241,7 +241,7 @@ def main():
     network_api = device_capabilities.get('network_api')
 
     if network_api == 'cliconf':
-        module.deprecate('cli support for \'iosxr_banner\' is deprecated. use netconf instead', version=2.9)
+        module.deprecate('cli support for \'iosxr_banner\' is deprecated. use netconf instead', version='4 releases from v2.5')
         config_object = CliConfiguration(module, warnings)
     elif network_api == 'netconf':
         if not HAS_LXML:

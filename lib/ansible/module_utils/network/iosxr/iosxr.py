@@ -270,7 +270,19 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, p
 
 def get_config(module, source='running', config_filter=None):
     global _DEVICE_CONFIGS
-    if config_filter:
+
+    conn = get_connection(module)
+    capabilities = get_device_capabilities(module)
+    network_api = capabilities.get('network_api')
+
+    if network_api == 'netconf':
+        if not HAS_NCCLIENT:
+            module.fail_json(msg=('ncclient is not installed'))
+        if not HAS_XML:
+            module.fail_json(msg=('lxml is not installed'))
+        config_filter = etree.tostring(config_filter)
+
+    if config_filter is not None:
         key = (source + ' ' + ' '.join(config_filter)).strip().rstrip()
     else:
         key = source
@@ -278,15 +290,9 @@ def get_config(module, source='running', config_filter=None):
     if config:
         return config
     else:
-        conn = get_connection(module)
         out = conn.get_config(source=source, filter=config_filter)
-
-        capabilities = get_device_capabilities(module)
-        network_api = capabilities.get('network_api')
         if network_api == 'netconf':
-            if not HAS_NCCLIENT:
-                module.fail_json(msg=('ncclient is not installed'))
-            out = to_xml(out)
+            out = to_xml(conn.get_config(source=source, filter=config_filter))
 
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS.update({key: cfg})
@@ -299,10 +305,15 @@ def load_config(module, command_filter, warnings, replace=False, admin=False, co
     network_api = capabilities.get('network_api')
 
     if network_api == 'netconf':
+        if not HAS_NCCLIENT:
+            module.fail_json(msg=('ncclient is not installed'))
+        if not HAS_XML:
+            module.fail_json(msg=('lxml is not installed'))
+
         # ret = conn.lock(target = 'candidate')
         # ret = conn.discard_changes()
         try:
-            out = conn.edit_config(command_filter)
+            out = conn.edit_config(etree.tostring(command_filter))
         finally:
             # ret = conn.unlock(target = 'candidate')
             pass
