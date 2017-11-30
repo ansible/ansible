@@ -31,7 +31,7 @@ notes:
     of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the
     correct name or UUID exists. Only state changes will be applied.
 version_added: 2.3
-author: "Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>"
+author: "Gaudenz Steinlin (@gaudenz) <gaudenz.steinlin@cloudscale.ch>"
 options:
   state:
     description:
