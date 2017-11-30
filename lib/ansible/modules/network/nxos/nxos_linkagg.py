@@ -176,12 +176,10 @@ def map_obj_to_commands(updates, module):
 
         elif state == 'present':
             if not obj_in_have:
-                if group != 'None':
-                    module.fail_json(msg='group is a required option')
                 commands.append('interface port-channel {0}'.format(group))
                 if min_links != 'None':
                     commands.append('lacp min-links {0}'.format(min_links))
-                commands.append('end')
+                commands.append('exit')
                 if members:
                     for m in members:
                         commands.append('interface {0}'.format(m))
@@ -195,7 +193,7 @@ def map_obj_to_commands(updates, module):
                     if not obj_in_have['members']:
                         for m in members:
                             commands.append('interface port-channel {0}'.format(group))
-                            commands.append('end')
+                            commands.append('exit')
                             commands.append('interface {0}'.format(m))
                             if force:
                                 commands.append('channel-group {0} force mode {1}'.format(group, mode))
@@ -206,7 +204,7 @@ def map_obj_to_commands(updates, module):
                         missing_members = list(set(members) - set(obj_in_have['members']))
                         for m in missing_members:
                             commands.append('interface port-channel {0}'.format(group))
-                            commands.append('end')
+                            commands.append('exit')
                             commands.append('interface {0}'.format(m))
                             if force:
                                 commands.append('channel-group {0} force mode {1}'.format(group, mode))
@@ -216,7 +214,7 @@ def map_obj_to_commands(updates, module):
                         superfluous_members = list(set(obj_in_have['members']) - set(members))
                         for m in superfluous_members:
                             commands.append('interface port-channel {0}'.format(group))
-                            commands.append('end')
+                            commands.append('exit')
                             commands.append('interface {0}'.format(m))
                             commands.append('no channel-group {0}'.format(group))
     if purge:
@@ -269,7 +267,7 @@ def parse_min_links(module, group):
 def parse_mode(module, m):
     mode = None
 
-    flags = '| section interface.{0}'.format(m)
+    flags = ['| section interface.{0}'.format(m)]
     config = get_config(module, flags=flags)
     match = re.search(r'mode (\S+)', config, re.M)
     if match:
@@ -327,6 +325,9 @@ def parse_channel_options(module, output, channel):
 def map_config_to_obj(module):
     objs = list()
     output = execute_show_command('show port-channel summary', module)[0]
+    if not output:
+        return list()
+
     try:
         channels = output['TABLE_channel']['ROW_channel']
     except KeyError:
@@ -372,11 +373,9 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     required_one_of = [['group', 'aggregate']]
-    required_together = [['members', 'mode']]
     mutually_exclusive = [['group', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
-                           required_together=required_together,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
