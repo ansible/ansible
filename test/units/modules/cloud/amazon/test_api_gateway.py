@@ -20,14 +20,15 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-from nose.plugins.skip import SkipTest
-import pytest
 import sys
+
+import pytest
+
 from ansible.module_utils.ec2 import HAS_BOTO3
 from units.modules.utils import set_module_args
 
 if not HAS_BOTO3:
-    raise SkipTest("test_api_gateway.py requires the `boto3` and `botocore` modules")
+    pytestmark = pytest.mark.skip("test_api_gateway.py requires the `boto3` and `botocore` modules")
 
 import ansible.modules.cloud.amazon.aws_api_gateway as agw
 
