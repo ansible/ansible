@@ -164,7 +164,7 @@ state:
             provisioning_state:
                 - Tags
             returned: always
-            type: complex        
+            type: complex
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
