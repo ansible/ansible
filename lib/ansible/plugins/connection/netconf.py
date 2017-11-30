@@ -18,6 +18,28 @@ description:
     load a netconf plugin to handle serializing requests to the remote device.
 version_added: "2.3"
 options:
+  host:
+    description:
+      - Specifies the remote device FQDN or IP address to establish the SSH
+        connection to.
+    default: inventory_hostname
+    vars:
+      - name: ansible_host
+      - name: ansible_ssh_host
+  port:
+    type: int
+    description:
+      - Specifies the port on the remote device to listening for connections
+        when establishing the SSH connection.
+    default: 830
+    ini:
+      - section: defaults
+        key: remote_port
+    env:
+      - name: ANSIBLE_REMOTE_PORT
+    vars:
+      - name: ansible_port
+      - name: ansible_ssh_port
   network_os:
     description:
       - Configures the device platform network operating system.  This value is
@@ -74,12 +96,27 @@ options:
     ini:
       section: persistent_connection
       key: connect_timeout
+  host_key_auto_add:
+    type: boolean
+    description:
+      - By default, Ansible will prompt the user before adding SSH keys to the
+        known hosts file.  Since persistent connections such as network_cli run
+        in background processes, the user will never be prompted.  By enabling
+        this option, unknown host keys will automatically be added to the
+        known hosts file.
+      - Be sure to fully understand the security implications of enabling this
+        option on production systems as it could create a security vulnerability.
+    default: False
+    ini:
+      section: paramiko_connection
+      key: host_key_auto_add
+    env:
+      - name: ANSIBLE_HOST_KEY_AUTO_ADD
+
 
 # TODO:
 # persistent_connection/connect_retry_timeout
 # persistent_connection/command_timeout
-# paramiko_connection/look_for_keys
-# paramiko_connection/host_key_auto_add
 """
 
 import os

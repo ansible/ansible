@@ -22,6 +22,28 @@ description:
     it in inventory)
 version_added: "2.3"
 options:
+  host:
+    description:
+      - Specifies the remote device FQDN or IP address to establish the SSH
+        connection to.
+    default: inventory_hostname
+    vars:
+      - name: ansible_host
+      - name: ansible_ssh_host
+  port:
+    type: int
+    description:
+      - Specifies the port on the remote device to listening for connections
+        when establishing the SSH connection.
+    default: 22
+    ini:
+      - section: defaults
+        key: remote_port
+    env:
+      - name: ANSIBLE_REMOTE_PORT
+    vars:
+      - name: ansible_port
+      - name: ansible_ssh_port
   network_os:
     description:
       - Configures the device platform network operating system.  This value is
@@ -69,15 +91,58 @@ options:
         in timeout seconds, the an error is generated.
         type: int
     default: 120
+  become:
+    type: boolean
+    description:
+      - The become option will instruct the CLi session to attempt privilege
+        escalation on platforms that support it.  Normally this means
+        transitioning from user mode to ``enable`` mode in the CLI session.
+        If become is set to True and the remote device does not support
+        privilege escalation or the privilege has already been elevated, then
+        this option is silently ignored
+      - Can be configured form the CLI via the ``--become`` or ``-b`` options
+    default: False
+    ini:
+      section: privilege_escalation
+      key: become
+    env:
+      - name: ANSIBLE_BECOME
+    vars:
+      - name: ansible_become
+  become_method:
+    description:
+      - This option allows the become method to be specified in for handling
+        privilege escalation.  Typically the become_method value is set to
+        ``enable`` but could be defined as other values.
+    default: sudo
+    ini:
+      section: privilege_escalation
+      key: become_method
+    env:
+      - name: ANSIBLE_BECOME_METHOD
+    vars:
+      - name: ansible_become_method
+  host_key_auto_add:
+    type: boolean
+    description:
+      - By default, Ansible will prompt the user before adding SSH keys to the
+        known hosts file.  Since persistent connections such as network_cli run
+        in background processes, the user will never be prompted.  By enabling
+        this option, unknown host keys will automatically be added to the
+        known hosts file.
+      - Be sure to fully understand the security implications of enabling this
+        option on production systems as it could create a security vulnerability.
+    default: False
+    ini:
+      section: paramiko_connection
+      key: host_key_auto_add
+    env:
+      - name: ANSIBLE_HOST_KEY_AUTO_ADD
 
 # TODO:
 # persistent_connection/connect_timeout
 # persistent_connection/connect_retry_timeout
 # persistent_connection/command_timeout
-# paramiko_connection/look_for_keys
-# paramiko_connection/host_key_auto_add
-# privilege_escalation/become
-# privilege_escalation/become_method
 """
 
 import json
