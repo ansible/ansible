@@ -16,6 +16,7 @@ As Ansible is a flexible tool there are a number of different ways this can be a
 
 
 By the end of this document you will know:
+
 * What communication methods (transports) are available for each network platforms and how to use them
 * For platforms that support privilege mode, how to use it
 * How to connect to via CLI transports (ssh) via a jump host
@@ -87,28 +88,51 @@ If a platform isn't listed in the above table consult the module documentation.
 connection: network_cli
 -----------------------
 
-From Ansible 2.5 ``network_cli`` connections are first class citizens. Previously (in Ansible 2.2 to 2.4) Playbook writers had to use ``connection: local``.
+From Ansible 2.5 ``network_cli`` connections are first class citizens. Previously (in Ansible 2.2 to 2.4) playbook writers had to use ``connection: local``.
 
 The ansible-connection setting tells Ansible how it should connect to a remote device. When working with Ansible Networking, setting this to ``ansible_connection: network_cli`` informs Ansible that the remote node is a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
 
-Along with ansible_connection in Ansible 2.5 you must specify the platform:
+Along with ansible_connection in Ansible 2.5 you must specify the platform. One way to do this is via vars:
 
 .. code-block::
 
    [eos:vars]
-   ansible_connection=network_cli
-   ansible_network_os=eos
+   ansible_connection: network_cli
+   ansible_network_os: eos
+
+   [vyos:vars]
+   ansible_connection: network_cli
+   ansible_network_os: vyos
 
 
-In the task there is no need to specify any connection arguments.
+Just like using Ansible to manage your Linux machines, thee is no need to specify any connection arguments.
+
+.. code-block:: yaml
+
+   - name: "Demonstrate connecting to switches"
+     hosts: switches
+     gather_facts: no
+
+     tasks:
+       - name: Gather facts (eos)
+         eos_facts:
+         gather_subset:
+           - config
+         become: true
+         become_method: enable
+         when: "'eos' in group_names"
+
 
 For a full example showing how to use ``network_cli`` as well as an overview of how Ansible can be used to manage Networking can be found in :ref:`network-getting-started-example`.
 
 provider
 --------
 
+The ``provider:`` interface will be removed in Ansible 2.9, we encurage you to move to ``network_cli`` at your earliest convenience.
+
 Although ``connection: network_cli`` is the preferred way to specifying the connection, there are two instances when ``provider`` may still need when:
-* You wish to use the API``eapi`` or ``nxapi``
+
+* You wish to use the ``eapi`` or ``nxapi`` transport
 * The module hasn't been updated to support network_cli, the network-platform-connections table will show this
 
 .. code-block::
@@ -130,17 +154,17 @@ Although ``connection: network_cli`` is the preferred way to specifying the conn
      tasks:
        - name: Gather facts (ios)
          ios_facts:
-           provider: "{{ ios_credentials }}"
+           provider: "{{ cli }}"
          register: result_ios
          when: "'ios' in group_names"
 
 
 
 
-FIXME: Include group_var + playbook demonstrating this
 
 FIXME: Deprecation warning about top-level - Include warning, link to porting guide
 
+FIXME: Include error wrong connection specified
 
 
 Best Practice for supplying credentials
