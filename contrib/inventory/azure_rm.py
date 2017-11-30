@@ -654,7 +654,6 @@ class AzureInventory(object):
         else:
             self.load_inventory_from_cache()
             cache_used = True
-            self._inventory['_meta']['stats'] = {'use_cache': True}
 
         self._inventory['_meta']['stats'] = {
             'inventory_load_time': time() - start_inventory_time,
