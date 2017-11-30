@@ -5,13 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-# upcoming features:
-# - Ted's multifile YAML concatenation
-# - changesets (and blocking/waiting for them)
-# - finish AWSRetry conversion
-# - move create/update code out of main
-# - unit tests
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -540,9 +533,8 @@ def main():
         stack_params['NotificationARNs'] = []
 
     # can't check the policy when verifying.
-    if module.params['stack_policy'] is not None and not module.check_mode:
+    if module.params['stack_policy'] is not None and not module.check_mode and not module.params['create_changeset']:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
-
 
     template_parameters = module.params['template_parameters']
     stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
