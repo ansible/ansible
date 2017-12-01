@@ -139,3 +139,10 @@ Will result in:
    [DEPRECATION WARNING]: Param 'host' is deprecated. See the module docs for more information. This feature will be removed in version 2.9.
    Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
+Notice when using provider dictionary with new persistent connection types
+--------------------------------------------------------------------------
+
+Using a provider dictionary with one of the new persistent connection types for networking
+(network_cli, netconf, etc.) will result in a warning. When using these connections
+the standard Ansible infrastructure for controlling connections should be used.
+(Link to basic inventory documentation?)
