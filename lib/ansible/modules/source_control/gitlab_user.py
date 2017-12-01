@@ -62,6 +62,7 @@ options:
     password:
         description:
             - The password of the user.
+            - GitLab server enforces minimum password length to 8, set this value with 8 or more characters.
         required: true
     email:
         description:
@@ -301,6 +302,9 @@ def main():
     access_level = module.params['access_level']
     state = module.params['state']
     confirm = module.params['confirm']
+
+    if len(user_password) < 8:
+        module.fail_json(msg="New user's 'password' should contain more than 8 characters.")
 
     # We need both login_user and login_password or login_token, otherwise we fail.
     if login_user is not None and login_password is not None:
