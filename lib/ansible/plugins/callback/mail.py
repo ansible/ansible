@@ -23,28 +23,33 @@ options:
     ini:
         - section: callback_mail
           key: smtphost
+          version_added: '2.5'
     default: localhost
   to:
     description: Mail recipient
     ini:
         - section: callback_mail
           key: to
+          version_added: '2.5'
     default: root
   sender:
     description: Mail sender
     ini:
         - section: callback_mail
           key: sender
+          version_added: '2.5'
   cc:
     description: CC'd recipient
     ini:
         - section: callback_mail
           key: cc
+          version_added: '2.5'
   bcc:
     description: BCC'd recipient
     ini:
         - section: callback_mail
           key: bcc
+          version_added: '2.5'
 note:
 - "TODO: expand configuration options now that plugins can leverage Ansible's configuration"
 '''
