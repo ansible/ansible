@@ -416,14 +416,16 @@ class Task(Base, Conditional, Taggable, Become):
         '''
 
         value = None
+        parent_value = None
         try:
-            value = self._attributes[attr]
+            # attributes might not be inheritable for current or the partent but still should be for other ancestors
+            if self.action not in ('include_tasks', 'include_role'):
+                value = self._attributes[attr]
             if self._parent and (value is None or extend):
                 if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
-                    # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
+                    if hasattr(self._parent, '_get_parent_attribute'):
                         parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
-                    else:
+                    elif getattr(self._parent, 'action', None) not in ('include_tasks', 'include_role'):
                         parent_value = getattr(self._parent, attr, None)
 
                     if extend:
