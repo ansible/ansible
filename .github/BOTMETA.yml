@@ -928,9 +928,6 @@ files:
     labels:
       - azure
       - cloud
-  $module_utils/network/eos:
-    maintainers: $team_networking
-    labels: networking
   $module_utils/network/aruba:
     maintainers: jmighion
     labels: networking
@@ -974,37 +971,20 @@ files:
   $module_utils/network/fortios:
     maintainers: bjolivot
     labels: networking
-  $module_utils/network/ios:
-    maintainers: $team_networking
-    labels: networking
-  $module_utils/network/iosxr:
-    maintainers: $team_networking
-    labels: networking
   $module_utils/network/ironware:
     maintainers: paulquack
-    labels: networking
-  $module_utils/network/junos:
-    maintainers: $team_networking
     labels: networking
   $module_utils/network/mlnxos:
     maintainers: samerd
     labels: networking
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
-  $module_utils/network/common:
-    maintainers: $team_networking
-    labels: networking
   $module_utils/network/netscaler:
     maintainers: $team_netscaler
     labels: networking
   $module_utils/network/nso:
     maintainers: $team_nso
     labels: networking
-  $module_utils/network/nxos:
-    maintainers: $team_networking
-    labels:
-    - networking
-    - nxos
   $module_utils/openstack.py:
     maintainers: $team_openstack
     labels:
@@ -1021,14 +1001,11 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/network/sros:
-    maintainers: $team_networking
-    labels: networking
   $module_utils/vmware:
     maintainers: $team_vmware
     labels: vmware
     support: community
-  $module_utils/network/vyos:
+  $module_utils/network:
     maintainers: $team_networking
     labels: networking
   lib/ansible/playbook/handler.py:
