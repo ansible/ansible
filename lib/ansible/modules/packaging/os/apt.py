@@ -1011,7 +1011,7 @@ def main():
 
         if latest and all_installed:
             if packages:
-                module.fail_json(msg='unable to install additional packages when ugrading all installed packages')
+                module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
             upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if packages:
