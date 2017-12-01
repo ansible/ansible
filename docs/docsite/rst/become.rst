@@ -69,7 +69,7 @@ ansible_become_method
     which privilege escalation method should be used
 
 ansible_become_user
-    set the user you become through privilege escalation, does not imply ``ansible_become: yes``
+    set the user you become through privilege escalation; does not imply ``ansible_become: yes``
 
 ansible_become_pass
     set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
@@ -82,7 +82,7 @@ Command line options
 --------------------
 
 --ask-become-pass, -K
-    ask for privilege escalation password, does not imply become will be used. Note that this password will be used for all hosts.
+    ask for privilege escalation password; does not imply become will be used. Note that this password will be used for all hosts.
 
 --become, -b
     run operations with become (no password implied)
@@ -216,7 +216,7 @@ network_cli and become
 
 Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
 
-This functionality requires the host connection type to be using ``connection: network_cli``, in Ansible 2.5 this is limited to ``eos`` and ``ios``.
+This functionality requires the host connection type to be using ``connection: network_cli``. In Ansible 2.5 this is limited to ``eos`` and ``ios``.
 
 This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
 
@@ -226,7 +226,7 @@ If a task fails with the following then it's an indicator that `enable` mode is 
 
    Invalid input (privileged mode required)
 
-Which can be enabled for specific tasks as shown (task level):
+The following example shows how to set enable mode for a specific task:
 
 .. code-block:: yaml
 
@@ -237,7 +237,7 @@ Which can be enabled for specific tasks as shown (task level):
      become: yes
      become_method: enable
 
-Or if you wish to be in enable mode for all tasks (play level):
+The following example shows how to set enable mode for `all` tests in this play:
 
 .. code-block:: yaml
 
@@ -255,7 +255,7 @@ FIXME: Can be specified per host
 Dropping out of enable mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-FIXME: Not possible, as some platforms don't support this
+FIXME: Not possible, as some platforms don't support this (Maybe not universally, but ``become: no`` definitely works as expected for platforms whose terminal plugin has an ``on_unbecome()`` method)
 
 FIXME: Raise bug so we warn if `become: no`
 
@@ -263,12 +263,14 @@ FIXME: Raise bug so we warn if `become: no`
 Passwords for enable mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a password is required to enter enable mode this can be specified by:
+If a password is required to enter enable mode this can be specified by doing one of the following:
 
 * providing the :option:`--ask-become-pass <ansible-playbook --ask-become-pass>` command line option
 * setting the ``ansible_become_pass`` connection variable
 
-As a reminder passwords should never be stored in plain text, see how encrypt secrets in vault :doc:`playbooks_vault` for more information.
+.. warning::
+
+   As a reminder passwords should never be stored in plain text. See how encrypt secrets in vault :doc:`playbooks_vault` for more information.
 
 For more information about ``network_cli`` see :ref:`network-cli`.
 
