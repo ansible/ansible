@@ -41,13 +41,13 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
         socket_path = None
-        provider = load_provider(eos_provider_spec, self._task.args)
 
         if self._play_context.connection == 'network_cli':
-            if any([value is not None and value != eos_provider_spec[key].get('default')
-                    for key, value in iteritems(provider)]):
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
         elif self._play_context.connection == 'local':
+            provider = load_provider(eos_provider_spec, self._task.args)
             transport = provider['transport'] or 'cli'
 
             display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)

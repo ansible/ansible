@@ -46,9 +46,9 @@ class ActionModule(_ActionModule):
             return super(ActionModule, self).run(tmp, task_vars)
 
         socket_path = None
-        provider = load_provider(junos_provider_spec, self._task.args)
 
         if self._play_context.connection == 'local':
+            provider = load_provider(junos_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             pc.network_os = 'junos'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
@@ -75,8 +75,10 @@ class ActionModule(_ActionModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
-        elif any(provider.values()):
-            display.warning('provider is unnecessary when using connection=%s and will be ignored' % self._play_context.connection)
+        else:
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using connection=%s and will be ignored' % self._play_context.connection)
 
         if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
