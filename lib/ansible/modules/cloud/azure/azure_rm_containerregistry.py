@@ -305,7 +305,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 
             self.results['state'] = self.create_update_containerregistry(to_do)
             if to_do != Actions.NoAction:
-                self.results['changed'] = (self.results['state'].__ne__(response))
+                self.results['changed'] = (response is None) or (self.results['state'].__ne__(response))
             else:
                 self.results['changed'] = False
 
