@@ -24,7 +24,6 @@ import os
 
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
-
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
@@ -49,7 +48,7 @@ def load_fixture(name):
 
 class TestMlnxosModule(ModuleTestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None, inputs=None, sort=True, defaults=False, transport='cli'):
+    def execute_module(self, failed=False, changed=False, commands=None, is_updates=False, sort=True, transport='cli'):
 
         self.load_fixtures(commands, transport=transport)
 
@@ -61,10 +60,14 @@ class TestMlnxosModule(ModuleTestCase):
             self.assertEqual(result['changed'], changed, result)
 
         if commands is not None:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+            if is_updates:
+                commands_res = result.get('updates')
             else:
-                self.assertEqual(commands, result['commands'], result['commands'])
+                commands_res = result.get('commands')
+            if sort:
+                self.assertEqual(sorted(commands), sorted(commands_res), commands_res)
+            else:
+                self.assertEqual(commands, commands_res, commands_res)
 
         return result
 

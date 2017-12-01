@@ -29,7 +29,6 @@ from ansible.utils.display import Display
 
 from ansible.module_utils.mlnxos import mlnxos_provider_spec
 
-
 try:
     from __main__ import display
 except ImportError:
@@ -61,6 +60,8 @@ class ActionModule(_ActionModule):
             self._play_context.private_key_file
         pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
         pc.become = provider['authorize'] or False
+        if pc.become:
+            pc.become_method = 'enable'
         pc.become_pass = provider['auth_pass']
 
         display.vvv('using connection plugin %s' %
