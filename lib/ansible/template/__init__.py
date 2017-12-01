@@ -690,11 +690,10 @@ class Templar:
                     return data
 
             if disable_lookups:
-               t.globals['L'] = t.globals['lookup'] = self._fail_lookup
+                t.globals['L'] = t.globals['lookup'] = self._fail_lookup
             else:
                 t.globals['lookup'] = self._lookup
-                t.globals['L'] =  self._LOOKUP
-
+                t.globals['L'] = self._LOOKUP
 
             t.globals['finalize'] = self._finalize
 
