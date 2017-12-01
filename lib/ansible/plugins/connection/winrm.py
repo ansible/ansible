@@ -372,9 +372,9 @@ class Connection(ConnectionBase):
     def _connect(self):
 
         if not HAS_WINRM:
-            raise AnsibleError("winrm or requests is not installed: %s" % to_text(e))
+            raise AnsibleError("winrm or requests is not installed")
         elif not HAS_XMLTODICT:
-            raise AnsibleError("xmltodict is not installed: %s" % to_text(e))
+            raise AnsibleError("xmltodict is not installed")
 
         super(Connection, self)._connect()
         if not self.protocol:
