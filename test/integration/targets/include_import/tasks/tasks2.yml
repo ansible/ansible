@@ -1,0 +1,4 @@
+- debug:
+    msg: In tasks2
+  tags:
+    - task2

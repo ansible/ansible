@@ -1,5 +1,6 @@
-- hosts: testhost
+- name: Test include_tasks
+  hosts: testhost
 
   tasks:
-    - debug:
-        msg: include_tasks test
+    - name: Test basic task include
+      include_tasks: tasks1.yml
