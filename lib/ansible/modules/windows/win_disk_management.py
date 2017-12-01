@@ -13,7 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: win_disk_management
 version_added: '2.5'
-short_description: Select and manage a disk, it's partitions and file systems
+short_description: Select and manage a disk, its partitions and file systems
 description:
    - With the module you can select a disk on the target and manage it (e.g. initializing, partitioning, formatting) with several options.
 requirements:
