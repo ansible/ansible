@@ -144,7 +144,7 @@ options:
             - IPMI authentication algorithm.
             - Please review the Host object documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
-        choises: ['0', '1', '2', '4', '5', '6']
+            - Possible values are, 0 (none), 1 (MD2), 2 (MD5), 4 (straight), 5 (OEM), 6 (RMCP+).
         default: -1
         required: false
         version_added: "2.5"
@@ -153,7 +153,7 @@ options:
             - IPMI privilege level.
             - Please review the Host object documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
-        choises: ['1', '2', '4', '5']
+            - Possible values are, 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM).
         default: 2
         required: false
         version_added: "2.5"
