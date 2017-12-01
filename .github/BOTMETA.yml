@@ -453,10 +453,12 @@ files:
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/citrix/netscaler.py: $team_ansible
   $modules/network/cloudengine/: QijunPan
+  $modules/network/cnos/: dkasberg amuraleedhar
   $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
   $modules/network/dellos6/: abirami-n skg-net
   $modules/network/dellos9/: dhivyap skg-net
+  $modules/network/enos/: amuraleedhar
   $modules/network/eos/: privateip trishnaguha
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806
@@ -470,7 +472,7 @@ files:
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
-  $modules/network/lenovo/: dkasberg amuraleedhar
+  $modules/network/mlnxos/: samerd
   $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
@@ -909,106 +911,96 @@ files:
     - core inventory
     - inventory
     - inventory parsing
-  $module_utils/a10.py:
+  $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
     labels: networking
-  $module_utils/aci.py:
+  $module_utils/network/aci:
     maintainers: $team_aci
-    labels:
-    - aci
-    - networking
-  $module_utils/aireos.py:
+    labels: networking
+  $module_utils/network/aireos:
     maintainers: jmighion
+    labels: networking
+  $module_utils/network/aos:
+    maintainers: dgarros jeremyschulman
     labels: networking
   $module_utils/azure_rm_common.py:
     maintainers: $team_azure
     labels:
       - azure
       - cloud
-  $module_utils/eos.py:
+  $module_utils/network/eos:
     maintainers: $team_networking
     labels: networking
-  $module_utils/aruba.py:
+  $module_utils/network/aruba:
     maintainers: jmighion
     labels: networking
-  $module_utils/asa.py:
+  $module_utils/network/asa:
     maintainers: ogenstad
     labels: networking
-  $module_utils/avi.py:
+  $module_utils/network/avi:
     maintainers: $team_avi
-    labels:
-    - avi
-    - networking
-  $module_utils/bigswitch_utils.py:
+    labels: networking
+  $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
     labels: networking
-  $module_utils/cisco_usc.py:
-    maintainers: ragupta-git
-    labels: networking
-  $module_utils/cloudengine.py:
+  $module_utils/network/cloudengine:
     maintainers: QijunPan
     labels: networking
   $module_utils/cloudstack.py:
     maintainers: resmo
     labels: cloudstack
-  $module_utils/cnos_devicerules.py:
-    maintainers: dkasberg amuraleedhar
-    labels: networking
-  $module_utils/cnos_errorcodes.py:
-    maintainers: dkasberg amuraleedhar
-    labels: networking
-  $module_utils/cnos.py:
+  $module_utils/network/cnos:
     maintainers: dkasberg amuraleedhar
     labels: networking
   $module_utils/crypto.py:
     maintainers: Spredzy
-  $module_utils/dellos:
+  $module_utils/network/dellos6:
     maintainers: skg-net
+    labels: networking
+  $module_utils/network/dellos9:
+    maintainers: skg-net
+    labels: networking
+  $module_utils/network/dellos10:
+    maintainers: skg-net
+    labels: networking
+  $module_utils/network/enos:
+    maintainers: amuraleedhar
     labels: networking
   $module_utils/f5_utils.py:
     maintainers: caphrim007
     labels:
     - f5
     - networking
-  $module_utils/fortios.py:
+  $module_utils/network/fortios:
     maintainers: bjolivot
     labels: networking
-  $module_utils/ios.py:
+  $module_utils/network/ios:
     maintainers: $team_networking
     labels: networking
-  $module_utils/iosxr.py:
+  $module_utils/network/iosxr:
     maintainers: $team_networking
     labels: networking
-  $module_utils/ironware.py:
+  $module_utils/network/ironware:
     maintainers: paulquack
     labels: networking
-  $module_utils/junos.py:
+  $module_utils/network/junos:
     maintainers: $team_networking
+    labels: networking
+  $module_utils/network/mlnxos:
+    maintainers: samerd
     labels: networking
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
-  $module_utils/netcfg.py:
+  $module_utils/network/common:
     maintainers: $team_networking
     labels: networking
-  $module_utils/netconf.py:
-    maintainers: $team_networking
+  $module_utils/network/netscaler:
+    maintainers: $team_netscaler
     labels: networking
-  $module_utils/netcli.py:
-    maintainers: $team_networking
-    labels: networking
-  $module_utils/netscaler.py:
-    maintainers: $team_networking
-    labels: networking
-  $module_utils/network_common.py:
-    maintainers: $team_networking
-    labels: networking
-  $module_utils/network.py:
-    maintainers: $team_networking
-    labels: networking
-  $module_utils/nso.py:
+  $module_utils/network/nso:
     maintainers: $team_nso
     labels: networking
-  $module_utils/nxos.py:
+  $module_utils/network/nxos:
     maintainers: $team_networking
     labels:
     - networking
@@ -1018,7 +1010,7 @@ files:
     labels:
     - cloud
     - openstack
-  $module_utils/ordnance.py:
+  $module_utils/network/ordnance:
     maintainers: alexanderturner djh00t
     labels: networking
   $module_utils/ovirt.py:
@@ -1029,14 +1021,14 @@ files:
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
-  $module_utils/sros.py:
+  $module_utils/network/sros:
     maintainers: $team_networking
     labels: networking
   $module_utils/vmware:
     maintainers: $team_vmware
     labels: vmware
     support: community
-  $module_utils/vyos:
+  $module_utils/network/vyos:
     maintainers: $team_networking
     labels: networking
   lib/ansible/playbook/handler.py:

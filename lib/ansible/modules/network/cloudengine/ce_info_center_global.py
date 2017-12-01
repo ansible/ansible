@@ -329,7 +329,7 @@ changed:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, get_nc_config, set_nc_config, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config, set_nc_config, check_ip_addr
 
 
 CE_NC_GET_CENTER_GLOBAL_INFO_HEADER = """
