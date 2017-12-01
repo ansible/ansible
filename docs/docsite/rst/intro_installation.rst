@@ -101,8 +101,20 @@ Installing the Control Machine
 ``````````````````````````````
 .. _from_yum:
 
-Latest Release Via Yum
-++++++++++++++++++++++
+Latest Release via DNF or Yum
++++++++++++++++++++++++++++++
+
+On Fedora:
+
+.. code-block:: bash
+
+    $ sudo dnf install ansible
+
+On RHEL and CentOS:
+
+.. code-block:: bash
+
+    $ sudo yum install ansible
 
 .. note:: We've changed how the Ansible community packages are distributed.
   For users of RHEL/CentOS/Scientific Linux version 7, the Ansible community RPM
