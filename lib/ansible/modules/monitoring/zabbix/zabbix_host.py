@@ -142,25 +142,18 @@ options:
     ipmi_authtype:
         description:
             - IPMI authentication algorithm.
-        choises:
-            - 0 - none
-            - 1 - MD2 
-            - 2 - MD5 
-            - 4 - straight 
-            - 5 - OEM 
-            - 6 - RMCP+
+            - Please review the Host object documentation for more information on the supported properties
+            - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
+        choises: ['0', '1', '2', '4', '5', '6']
         default: -1
         required: false
         version_added: "2.5"
     ipmi_privilege:
         description:
             - IPMI privilege level.
-        choises:
-            - 1 - callback
-            - 2 - user
-            - 3 - operator
-            - 4 - admin
-            - 5 - OEM
+            - Please review the Host object documentation for more information on the supported properties
+            - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
+        choises: ['1', '2', '4', '5']
         default: 2
         required: false
         version_added: "2.5"
