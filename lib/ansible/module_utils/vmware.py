@@ -802,6 +802,16 @@ def set_vm_power_state(content, vm, state, force):
     return result
 
 
+def get_snapshots_by_name_recursively(snapshots, snapshot_name):
+    snap_obj = []
+    for snapshot in snapshots:
+        if snapshot.name == snapshot_name:
+            snap_obj.append(snapshot)
+        else:
+            snap_obj += get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapshot_name)
+    return snap_obj
+
+
 class PyVmomi(object):
     def __init__(self, module):
         if not HAS_PYVMOMI:

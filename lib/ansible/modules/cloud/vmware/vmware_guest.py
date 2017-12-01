@@ -330,9 +330,10 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
-                                         compile_folder_path_for_object, serialize_spec,
-                                         vmware_argument_spec, set_vm_power_state, PyVmomi)
+from ansible.module_utils.vmware import (compile_folder_path_for_object, find_obj, gather_vm_facts,
+                                         get_all_objs, get_snapshots_by_name_recursively,
+                                         PyVmomi, serialize_spec, set_vm_power_state,
+                                         vmware_argument_spec)
 
 
 class PyVmomiDeviceHelper(object):
@@ -1385,7 +1386,8 @@ class PyVmomiHelper(PyVmomi):
                     clonespec.customization = self.customspec
 
                 if self.params['snapshot_src'] is not None:
-                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList, snapname=self.params['snapshot_src'])
+                    snapshot = get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
+                                                                 snapshot_name=self.params['snapshot_src'])
                     if len(snapshot) != 1:
                         self.module.fail_json(msg='virtual machine "%(template)s" does not contain snapshot named "%(snapshot_src)s"' % self.params)
 
@@ -1447,15 +1449,6 @@ class PyVmomiHelper(PyVmomi):
 
             vm_facts = self.gather_facts(vm)
             return {'changed': self.change_detected, 'failed': False, 'instance': vm_facts}
-
-    def get_snapshots_by_name_recursively(self, snapshots, snapname):
-        snap_obj = []
-        for snapshot in snapshots:
-            if snapshot.name == snapname:
-                snap_obj.append(snapshot)
-            else:
-                snap_obj = snap_obj + self.get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapname)
-        return snap_obj
 
     def reconfigure_vm(self):
         self.configspec = vim.vm.ConfigSpec()
