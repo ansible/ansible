@@ -603,6 +603,11 @@ class Templar:
     def _fail_lookup(self, name, *args, **kwargs):
         raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
 
+    def _LOOKUP(self, name, *args, **kwargs):
+        ''' wrapper for lookup, defaults to real lists '''
+        kwargs['wantlist'] = kwargs.get('wantlist', True)
+        return self._lookup(name, *args, **kwargs)
+
     def _lookup(self, name, *args, **kwargs):
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
@@ -685,9 +690,11 @@ class Templar:
                     return data
 
             if disable_lookups:
-                t.globals['lookup'] = self._fail_lookup
+               t.globals['L'] = t.globals['lookup'] = self._fail_lookup
             else:
                 t.globals['lookup'] = self._lookup
+                t.globals['L'] =  self._LOOKUP
+
 
             t.globals['finalize'] = self._finalize
 
