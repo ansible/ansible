@@ -139,6 +139,43 @@ options:
             - Works only with >= Zabbix 3.0
         required: false
         version_added: "2.5"
+    ipmi_authtype:
+        description:
+            - IPMI authentication algorithm.
+        choises:
+            - 0 - none
+            - 1 - MD2 
+            - 2 - MD5 
+            - 4 - straight 
+            - 5 - OEM 
+            - 6 - RMCP+
+        default: -1
+        required: false
+        version_added: "2.5"
+    ipmi_privilege:
+        description:
+            - IPMI privilege level.
+        choises:
+            - 1 - callback
+            - 2 - user
+            - 3 - operator
+            - 4 - admin
+            - 5 - OEM
+        default: 2
+        required: false
+        version_added: "2.5"
+    ipmi_username:
+        description:
+            - IPMI username.
+        default: None 
+        required: false
+        version_added: "2.5"
+    ipmi_password:
+        description:
+            - IPMI password.
+        default: None 
+        required: false
+        version_added: "2.5"
     force:
         description:
             - Overwrite the host configuration, even if already present
@@ -177,6 +214,10 @@ EXAMPLES = '''
       site_rack: "{{ your_site_rack }}"
       os: "{{ your_os }}"
       hardware: "{{ your_hardware }}"
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
     interfaces:
       - type: 1
         main: 1
