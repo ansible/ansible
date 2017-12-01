@@ -1,8 +1,8 @@
 .. network-getting-started-example:
 
-*******************************
-Network getting started example
-*******************************
+***************************************
+Getting Started with Ansible Networking
+***************************************
 
 .. contents:: Topics
 
@@ -10,14 +10,11 @@ Network getting started example
 Overview
 ========
 
-Objective
----------
-
 This example shows how Ansible can be used to connect to and manage multiple network devices.
 
 .. FIXME FUTURE Gundalow - Link to examples index once created
 
-.. note:: This example is for educational purposes only and is not intended for production use, for example, passwords should NEVER be stored in cleartext.
+.. note:: This example is for educational purposes only and is not intended for production use. Example code may sometimes eliminate safe coding practices in the interest of making concepts easier to understand (for example, passwords should NEVER be stored in cleartext).
 
 Audience
 --------
@@ -41,14 +38,75 @@ This example requires the following:
 .. FIXME FUTURE Gundalow - Once created we will link to the connection table here (which platforms support network_cli & credentials through inventory)
 .. FIXME FUTURE Gundalow - Using ``ansible_ssh_pass`` will not work for REST transports such as ``eapi``, ``nxapi`` - Once documented in above FIXME add details here
 
-Solution
-=========
+Concepts
+========
+
+This section explains some fundamental concepts that you should understand when working with Ansible Networking.
+
+Inventory
+---------
+
+An ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups.
+
+In our example, the inventory file defines the groups ``eos``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
+
+
+Credentials
+^^^^^^^^^^^
+
+Although there are many ways to supply credentials in Ansible, in this example we are using ``ansible_user`` and ``ansible_ssh_pass`` for simplicity.
+
+.. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
+
+.. warning:: Never store passwords in plain text
+
+   Passwords should never be stored in plain text. The "Vault" feature of Ansible allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
+
+ansible_connection
+^^^^^^^^^^^^^^^^^^
+
+The ansible-connection setting tells Ansible how it should connect to a remote device. When working with Ansible Networking, setting this to ``ansible_connection=network_cli`` informs Ansible that the remote node is a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
+
+.. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written) - in particular eapi/nxapi
+
+Playbook
+--------
+
+Collect data
+^^^^^^^^^^^^
+
+Ansible facts modules gather system information 'facts' that are available to the rest of your playbook.
+
+Ansible Networking ships with a number of network-specific facts modules. In this example, we use the ``_facts`` modules :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote networking device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
+
+Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
+
+To ensure we call the correct mode (eos_facts or vyos_facts) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
+
+Privilege escalation
+^^^^^^^^^^^^^^^^^^^^
+
+Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible version 2.5 added support for ``become`` when using ``connection=network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
+
+.. code-block:: yaml
+
+   - name: Gather facts (eos)
+     eos_facts:
+     become: true
+     become_method: enable
+     when: "'eos' in group_names"
+
+
+For more information, see the :doc:`Ansible Privilege Escalation<become>` guide.
+
+Example
+=======
 
 In this example, we will create an inventory file containing some network switches, then run a playbook to connect to the network devices and return some information about them.
 
 **Create an inventory file**
 
-Create a file called ``inventory``, containing:
+First, create a file called ``inventory``, containing:
 
 .. code-block:: ini
 
@@ -65,7 +123,7 @@ Create a file called ``inventory``, containing:
 
 **Create a playbook**
 
-Create a file called ``fetch-facts.yml`` containing the following:
+Next, create a playbook file called ``fetch-facts.yml`` containing the following:
 
 .. code-block:: yaml
 
@@ -156,87 +214,50 @@ Create a file called ``fetch-facts.yml`` containing the following:
            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
          when: "'vyos' in group_names"
 
-Run the playbook
-----------------
+Running the playbook
+--------------------
+
+To run the playbook, run the following from a console prompt::
 
 .. code-block:: console
 
    ansible-playbook -i inventory fetch-facts.yml
-   <snip>
+
+This should return output similar to the following:
+.. code-block: console
+
    PLAY RECAP
    eos01.example.net          : ok=7    changed=2    unreachable=0    failed=0
    vyos01.example.net         : ok=6    changed=2    unreachable=0    failed=0
 
+Next, look at the contents of the file we created containing the switch facts:
+
+.. code-block: console
+
    cat /tmp/switch-facts
+
+You can also look at the backup files:
+
+.. code-block: console
+
    find /tmp/backups
+
 
 If `ansible-playbook` fails, please follow the debug steps in :doc:`network_debug_troubleshooting`.
 
-Details
-=======
 
-Inventory
----------
+Implementation Notes
+====================
 
-The ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups.
-
-The above inventory file defines the groups ``eos``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
-
-
-Credentials
-^^^^^^^^^^^
-
-Although there are many ways to supply credentials in Ansible, in this example we are using ``ansible_user`` and ``ansible_ssh_pass`` for simplicity.
-
-.. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
-
-.. warning:: Never store passwords in plain text
-
-   Passwords should never be stored in plain text. The "Vault" feature of Ansible allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
-
-ansible_connection
-^^^^^^^^^^^^^^^^^^
-
-Setting ``ansible_connection=network_cli`` informs Ansible that the remote node is a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
-
-.. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written) - in particular eapi/nxapi
-
-Playbook
---------
-
-Collect data
-^^^^^^^^^^^^
-
-Here we use the ``_facts`` modules :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
-
-Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
-
-To ensure we call the correct mode (eos_facts or vyos_facts) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
-
-Privilege escalation
-^^^^^^^^^^^^^^^^^^^^
-
-Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible 2.5 added support for ``become`` when using ``connection=network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
-
-.. code-block:: yaml
-
-   - name: Gather facts (eos)
-     eos_facts:
-     become: true
-     become_method: enable
-     when: "'eos' in group_names"
-
-
-For more information see the :doc:`Ansible Privilege Escalation<become>` guide.
 
 Demo variables
 --------------
 
-Although these tasks are not needed to write data to disk, they are used to demonstrate some methods of accessing facts about the given devices or a named host.
+Although these tasks are not needed to write data to disk, they are used in this example to demonstrate some methods of accessing facts about the given devices or a named host.
 
-Ansible ``hostvars`` allows you to access variables from a named host. Without this wed return the details for the current host
+Ansible ``hostvars`` allows you to access variables from a named host. Without this we would return the details for the current host, rather than the named host.
 
-More information on this can be found in :ref:`magic_variables_and_hostvars`.
+For more information, see :ref:`magic_variables_and_hostvars`.
 
 Get running configuration
 -------------------------
