@@ -2,6 +2,8 @@
   hosts: testhost
 
   vars:
+    run_role: yes
+    do_not_run_role: no
     role_name: role1
     test_var: templating test in playbook
     role_vars:
@@ -20,15 +22,38 @@
         that:
           - _role1_result.msg == 'In role1'
 
-    # FIXME This looks like it's running all the roles each time in the loop
+    - name: Test conditional role include
+      include_role:
+        name: role1
+      when: run_role
+      register: _conditional_check
+
+    - name: Assert that role ran
+      assert:
+        that:
+          - _conditional_check is not skipped
+
+    - name: Test conditional role include that should be skipped
+      include_role:
+        name: role1
+      when: do_not_run_role
+      register: _conditional_check
+
+    - name: Assert that role ran
+      assert:
+        that:
+          - _conditional_check is skipped
+
+    # FIXME This looks like it's running the list item in the list three time
+    # instead of running each role once
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
       register: loop_test
       with_items:
         - role1
-        - role2
         - role3
+        - role2
 
     - name: Test including a task file from a role
       include_role:
@@ -42,16 +67,23 @@
         vars_from: role3vars.yml
         private: no
 
-    - debug:
-        msg: "{{item}}"
-      with_items:
-        - role3_main
-        - role3_default
-        - role3_var
+    # FIXME Setting private: no in previous task does not make the variables
+    # available to the play
+    - name: Assert that variables defined in previous task are available to play
+      assert:
+        that:
+          - role3_default == 'defined in role3/defaults/main.yml'
+          - role3_main == 'defined in role3/vars/main.yml'
+          - role3_var == 'defined in role3/vars/role3vars.yml'
+      ignore_errors: yes
 
-    - name: Test using a variable for role name
+    - name: Test using a play variable for role name
       include_role:
         name: "{{ role_name }}"
+
+    - name: Test using a host variable for role name
+      include_role:
+        name: "{{ host_var_role_name }}"
 
     - name: Pass variable to role
       include_role:
