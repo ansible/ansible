@@ -838,10 +838,14 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
-    def customize_customvalues(self, vm_obj):
+    def customize_customvalues(self, vm_obj, config_spec):
         if len(self.params['customvalues']) == 0:
             return
 
+        vm_custom_spec = config_spec
+        vm_custom_spec.extraConfig = []
+
+        changed = False
         facts = self.gather_facts(vm_obj)
         for kv in self.params['customvalues']:
             if 'key' not in kv or 'value' not in kv:
@@ -849,12 +853,15 @@ class PyVmomiHelper(PyVmomi):
 
             # If kv is not kv fetched from facts, change it
             if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
-                try:
-                    vm_obj.setCustomValue(key=kv['key'], value=kv['value'])
-                    self.change_detected = True
-                except Exception as e:
-                    self.module.fail_json(msg="Failed to set custom value for key='%s' and value='%s'. Error was: %s"
-                                          % (kv['key'], kv['value'], to_text(e)))
+                option = vim.option.OptionValue()
+                option.key = kv['key']
+                option.value = kv['value']
+
+                vm_custom_spec.extraConfig.append(option)
+                changed = True
+
+        if changed:
+            self.change_detected = True
 
     def customize_vm(self, vm_obj):
         # Network settings
@@ -1437,7 +1444,11 @@ class PyVmomiHelper(PyVmomi):
                 task = vm.ReconfigVM_Task(annotation_spec)
                 self.wait_for_task(task)
 
-            self.customize_customvalues(vm_obj=vm)
+            if self.params['customvalues']:
+                vm_custom_spec = vim.vm.ConfigSpec()
+                self.customize_customvalues(vm_obj=vm, config_spec=vm_custom_spec)
+                task = vm.ReconfigVM_Task(vm_custom_spec)
+                self.wait_for_task(task)
 
             if self.params['wait_for_ip_address'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
@@ -1466,7 +1477,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
-        self.customize_customvalues(vm_obj=self.current_vm_obj)
+        self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
