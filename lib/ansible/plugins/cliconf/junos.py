@@ -72,7 +72,12 @@ class Cliconf(CliconfBase):
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
-    def commit(self, comment=None):
+    def commit(self, *args, **kwargs):
+        """Execute commit command on remote device.
+        :kwargs:
+            comment: Optional commit description.
+        """
+        comment = kwargs.get('comment', None)
         command = b'commit'
         if comment:
             command += b' comment {0}'.format(comment)
