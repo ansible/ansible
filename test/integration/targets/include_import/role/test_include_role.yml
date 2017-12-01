@@ -1,31 +1,36 @@
 - name: Test include_role
-  hosts: localhost
-  connection: local
-  become: no
+  hosts: testhost
 
   vars:
     role_name: role1
+    test_var: templating test in playbook
     role_vars:
       where_am_i_defined: in the playbook
     entire_task:
       include_role:
-        # name: role1
+        name: role1
 
   tasks:
     - name: Test basic role include
       include_role:
         name: role1
 
-    FIXME Currently failing
+    - name: Assert that basic include works
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+
+    # FIXME This looks like it's running all the roles each time in the loop
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
-      ignore_errors: yes
+      register: loop_test
       with_items:
         - role1
         - role2
+        - role3
 
-    - name: Test including a task file
+    - name: Test including a task file from a role
       include_role:
         name: role1
         tasks_from: tasks.yml
@@ -37,7 +42,14 @@
         vars_from: role3vars.yml
         private: no
 
-    - name: Use variable for role name
+    - debug:
+        msg: "{{item}}"
+      with_items:
+        - role3_main
+        - role3_default
+        - role3_var
+
+    - name: Test using a variable for role name
       include_role:
         name: "{{ role_name }}"
 
@@ -48,8 +60,7 @@
       vars:
         where_am_i_defined: in the task
 
-    # FIXME Currently failing
-    # Not sure if this is suppsode to work
+    ## FIXME Currently failing
     # - name: Pass all variables in a variable to role
     #   include_role:
     #     name: role1
@@ -61,10 +72,27 @@
         name: role1
         tasks_from: vartest.yml
       vars:
-        where_am_i_defined: in the playbook
+        where_am_i_defined: "{{ test_var }}"
 
-    # This fails gloriously
+    ## FIXME This fails with the following error:
+    ## The module {u'include_role': {u'name': u'role1'}} was not found in configured module paths.
     # - name: Include an entire task
     #   action:
     #     module: "{{ entire_task }}"
 
+    - block:
+        - name: Include a role that will fail
+          include_role:
+            name: role1
+            tasks_from: fail.yml
+
+      rescue:
+        - name: Include a role inside rescue
+          include_role:
+            name: role2
+
+      always:
+        # Looks like this runs role1, role2, and role3. No idea why.
+        - name: Include role inside always
+          include_role:
+            name: role3
