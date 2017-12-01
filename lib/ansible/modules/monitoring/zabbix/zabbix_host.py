@@ -160,13 +160,13 @@ options:
     ipmi_username:
         description:
             - IPMI username.
-        default: None 
+        default: None
         required: false
         version_added: "2.5"
     ipmi_password:
         description:
             - IPMI password.
-        default: None 
+        default: None
         required: false
         version_added: "2.5"
     force:
