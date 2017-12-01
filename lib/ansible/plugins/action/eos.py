@@ -26,7 +26,6 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.eos import eos_provider_spec
-from ansible.module_utils.six import iteritems
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network_common import load_provider
 
