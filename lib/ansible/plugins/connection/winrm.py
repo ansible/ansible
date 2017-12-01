@@ -126,12 +126,14 @@ try:
     HAS_WINRM = True
 except ImportError as e:
     HAS_WINRM = False
+    WINRM_IMPORT_ERR = e
 
 try:
     import xmltodict
     HAS_XMLTODICT = True
 except ImportError as e:
     HAS_XMLTODICT = False
+    XMLTODICT_IMPORT_ERR = e
 
 try:
     from __main__ import display
@@ -372,9 +374,9 @@ class Connection(ConnectionBase):
     def _connect(self):
 
         if not HAS_WINRM:
-            raise AnsibleError("winrm or requests is not installed")
+            raise AnsibleError("winrm or requests is not installed: %s" % to_text(WINRM_IMPORT_ERR))
         elif not HAS_XMLTODICT:
-            raise AnsibleError("xmltodict is not installed")
+            raise AnsibleError("xmltodict is not installed: %s" % to_text(XMLTODICT_IMPORT_ERR))
 
         super(Connection, self)._connect()
         if not self.protocol:
