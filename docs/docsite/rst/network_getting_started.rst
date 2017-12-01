@@ -217,14 +217,15 @@ Next, create a playbook file called ``fetch-facts.yml`` containing the following
 Running the playbook
 --------------------
 
-To run the playbook, run the following from a console prompt::
+To run the playbook, run the following from a console prompt:
 
 .. code-block:: console
 
    ansible-playbook -i inventory fetch-facts.yml
 
 This should return output similar to the following:
-.. code-block: console
+
+.. code-block:: console
 
    PLAY RECAP
    eos01.example.net          : ok=7    changed=2    unreachable=0    failed=0
@@ -232,13 +233,13 @@ This should return output similar to the following:
 
 Next, look at the contents of the file we created containing the switch facts:
 
-.. code-block: console
+.. code-block:: console
 
    cat /tmp/switch-facts
 
 You can also look at the backup files:
 
-.. code-block: console
+.. code-block:: console
 
    find /tmp/backups
 
