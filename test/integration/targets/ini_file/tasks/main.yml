@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: record the output directory
-  set_fact: output_file={{output_dir}}/foo.ini
+  set_fact: output_file={{output_dir}}/foo_test_ini.conf
 
 - name: add "fav=lemonade" is in section "[drinks]" in specified file
   ini_file:
@@ -121,3 +121,64 @@
       - result5.changed == True
       - result5.msg == 'section removed'
       - content5 == ""
+
+- name: Ensure "hate=coke" is created within no section
+  ini_file:
+    path: "{{ output_file }}"
+    option: hate
+    value: coke
+  register: result6
+
+- name: set expected content and get current ini file content
+  set_fact:
+    expected6: |-
+      hate = coke
+
+    content6: "{{ lookup('file', output_file) }}"
+
+- name: assert 'changed' is true and content is OK (no section)
+  assert:
+    that:
+      - result6.changed == True
+      - result6.msg == 'option added'
+      - content6 == expected6
+
+- name: Ensure "hate=coke" is modified as "hate=water" within no section
+  ini_file:
+    path: "{{ output_file }}"
+    option: hate
+    value: water
+    section: null
+  register: result7
+
+- name: set expected content and get current ini file content
+  set_fact:
+    expected7: |-
+      hate = water
+
+    content7: "{{ lookup('file', output_file) }}"
+
+- name: assert 'changed' is true and content is OK (no section)
+  assert:
+    that:
+      - result7.changed == True
+      - result7.msg == 'option modified'
+      - content7 == expected7
+
+- name: remove option 'hate' within no section
+  ini_file:
+    path: "{{ output_file }}"
+    option: hate
+    state: absent
+  register: result8
+
+- name: get current ini file content
+  set_fact:
+    content8: "{{ lookup('file', output_file) }}"
+
+- name: assert changed (no section)
+  assert:
+    that:
+      - result8.changed == True
+      - result8.msg == 'option removed'
+      - content8 == ""
