@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+# TODO: Allow for secret files
+# TODO: Update to pass all sanity checks
+# TODO: Review
+
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -125,7 +130,7 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False,
+        supports_check_mode=True,
         required_if=[
             ["mode", "put", ["type", "secret_args"]]
         ]
@@ -184,33 +189,27 @@ def run_module():
         elif module.params['mode'] == 'put':
 
             # assume nothing changes
-            changed = False
+            result['changed'] = False
 
             if secret is not None:
                 equality_test = check_secret_equality(local_secret=secret, args=module.params['secret_args'])
                 # if arguments & secret match, change nothing
                 if equality_test:
-                    changed = False
+                    result['changed'] = False
                 # if arguments & secret don't match & overwrite is true, the secret will be updated
                 elif module.params['overwrite']:
-                    changed = True
+                    result['changed'] = True
                 # if arguments & secret don't match & overwrite is false,
                 # nothing will change and the module will fail
                 else:
-                    changed = False
+                    result['changed'] = False
                     module.fail_json(msg="Secret is present & changed, and overwrite is not set", **result)
             # if secret is not present, it will be uploaded
             else:
-                changed = True
-
-
-            # if secret is present & matches the inputted args, nothing should change
-            if not changed:
-                result['changed'] = False
+                result['changed'] = True
 
             # if the secret is not present or doesn't match the argmuments,
-            else:
-                result['changed'] = True
+            if result['changed'] and not module.check_mode:
 
                 # if secret is present, update it
                 if secret is not None:
