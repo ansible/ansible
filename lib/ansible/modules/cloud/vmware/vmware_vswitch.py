@@ -52,6 +52,11 @@ options:
     - Add or remove the switch.
     default: present
     choices: [ absent, present ]
+  esxi_hostname:
+    description:
+    - Manage the vSwitch using this ESXi host system
+    version_added: "2.5"
+    aliases: [ 'host' ]
 extends_documentation_fragment:
 - vmware.documentation
 '''
@@ -88,16 +93,27 @@ EXAMPLES = '''
     - vmnic2
     mtu: 9000
   delegate_to: localhost
+
+- name: Add a VMware vSwitch to a specific host system
+  vmware_vswitch:
+    hostname: 192.168.10.1
+    username: esxi_username
+    password: esxi_password
+    esxi_hostname: DC0_H0
+    switch_name: vswitch_001
+    nic_name: vmnic0
+    mtu: 9000
+  delegate_to: localhost
 '''
 
-try:
-    from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
-except ImportError:
-    HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, get_all_objs, connect_to_api
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, get_all_objs
+try:
+    from pyVmomi import vim, vmodl
+except ImportError:
+    pass
 
 
 def find_vswitch_by_name(host, vswitch_name):
@@ -107,19 +123,17 @@ def find_vswitch_by_name(host, vswitch_name):
     return None
 
 
-class VMwareHostVirtualSwitch(object):
-
+class VMwareHostVirtualSwitch(PyVmomi):
     def __init__(self, module):
+        super(VMwareHostVirtualSwitch, self).__init__(module)
         self.host_system = None
-        self.content = None
         self.vss = None
-        self.module = module
         self.switch = module.params['switch']
         self.number_of_ports = module.params['number_of_ports']
         self.nics = module.params['nics']
         self.mtu = module.params['mtu']
         self.state = module.params['state']
-        self.content = connect_to_api(self.module)
+        self.esxi_hostname = module.params['esxi_hostname']
 
     def process_state(self):
         try:
@@ -182,11 +196,20 @@ class VMwareHostVirtualSwitch(object):
         self.module.exit_json(changed=False, msg="Currently not implemented.")
 
     def check_vswitch_configuration(self):
-        host = get_all_objs(self.content, [vim.HostSystem])
-        if not host:
+        hosts = get_all_objs(self.content, [vim.HostSystem])
+        if not hosts:
             self.module.fail_json(msg="Unable to find host")
 
-        self.host_system = list(host.keys())[0]
+        desired_host_system = None
+        if self.esxi_hostname:
+            for host_system_obj, host_system_name in iteritems(hosts):
+                if host_system_name == self.esxi_hostname:
+                    desired_host_system = host_system_obj
+
+        if desired_host_system:
+            self.host_system = desired_host_system
+        else:
+            self.host_system = list(hosts.keys())[0]
         self.vss = find_vswitch_by_name(self.host_system, self.switch)
 
         if self.vss is None:
@@ -203,12 +226,11 @@ def main():
         number_of_ports=dict(type='int', default=128),
         mtu=dict(type='int', default=1500),
         state=dict(type='str', default='present', choices=['absent', 'present'])),
+        esxi_hostname=dict(type='str', aliases=['host']),
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
-
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False)
 
     host_virtual_switch = VMwareHostVirtualSwitch(module)
     host_virtual_switch.process_state()
