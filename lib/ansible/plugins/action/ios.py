@@ -39,11 +39,14 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-
         socket_path = None
-        if self._play_context.connection == 'local':
-            provider = load_provider(ios_provider_spec, self._task.args)
 
+        if self._play_context.connection == 'network_cli':
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using network_cli and will be ignored')
+        elif self._play_context.connection == 'local':
+            provider = load_provider(ios_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'network_cli'
             pc.network_os = 'ios'
@@ -70,10 +73,6 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
 
-            if self._play_context.become_method == 'enable':
-                self._play_context.become = False
-                self._play_context.become_method = None
-
         # make sure we are in the right cli context which should be
         # enable mode and not config module
         if socket_path is None:
@@ -87,5 +86,4 @@ class ActionModule(_ActionModule):
             out = conn.get_prompt()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
         return result

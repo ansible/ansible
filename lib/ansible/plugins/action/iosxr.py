@@ -39,11 +39,14 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-
         socket_path = None
-        if self._play_context.connection == 'local':
-            provider = load_provider(iosxr_provider_spec, self._task.args)
 
+        if self._play_context.connection == 'network_cli':
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using network_cli and will be ignored')
+        elif self._play_context.connection == 'local':
+            provider = load_provider(iosxr_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'network_cli'
             pc.network_os = 'iosxr'
@@ -78,5 +81,4 @@ class ActionModule(_ActionModule):
             out = conn.get_prompt()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
         return result
