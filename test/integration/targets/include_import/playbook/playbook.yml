@@ -1,0 +1,4 @@
+- hosts: testhost2
+
+  tasks:
+    - command: hostname

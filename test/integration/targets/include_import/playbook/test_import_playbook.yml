@@ -1,0 +1,4 @@
+- import_playbook: playbook.yml
+
+- import_playbook: playbook.yml
+  when: no

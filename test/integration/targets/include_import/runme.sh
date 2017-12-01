@@ -6,8 +6,8 @@ export ANSIBLE_ROLES_PATH=./roles
 
 ## Role
 # Import
-ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i ../../inventory "$@"
-ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i ../../inventory "$@"
+# ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i ../../inventory "$@"
+# ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i ../../inventory "$@"
 
 # Include
 # ANSIBLE_STRATEGY='linear' ansible-playbook role/test_include_role.yml -i ../../inventory "$@"
@@ -26,5 +26,5 @@ ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i ../../inve
 
 ## Play
 # Import
-# ANSIBLE_STRATEGY='linear' ansible-playbook play/test_import_play.yml -i ../../inventory "$@"
-# ANSIBLE_STRATEGY='free' ansible-playbook play/test_import_play.yml -i ../../inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook.yml -i ../../inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook playbook/test_import_playbook.yml -i ../../inventory "$@"

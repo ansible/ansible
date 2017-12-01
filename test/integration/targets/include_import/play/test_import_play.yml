@@ -1,5 +1,0 @@
-- hosts: testhost
-
-  tasks:
-    - debug:
-        msg: import_play test
