@@ -374,7 +374,6 @@ class Template(object):
                 'rules': {
                     'applications': {
                         'createMissing': True,
-                        'updateExisting': True,
                         'deleteMissing': True
                     },
                     'discoveryRules': {
