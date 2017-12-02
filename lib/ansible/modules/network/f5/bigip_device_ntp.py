@@ -43,7 +43,7 @@ notes:
 extends_documentation_fragment: f5
 requirements:
   - f5-sdk
-authors:
+author:
   - Tim Rupp (@caphrim007)
   - Wojciech Wypior (@wojtek0806)
 '''
