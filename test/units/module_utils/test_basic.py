@@ -1,24 +1,10 @@
 # -*- coding: utf-8 -*-
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2016 Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import errno
@@ -36,7 +22,7 @@ from ansible.module_utils.six.moves import builtins
 realimport = builtins.__import__
 
 
-class TestModuleUtilsBasic(ModuleTestCase):
+class TestImports(ModuleTestCase):
 
     def clear_modules(self, mods):
         for mod in mods:
@@ -149,6 +135,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         mod = builtins.__import__('ansible.module_utils.basic')
         self.assertFalse(mod.module_utils.basic.has_journal)
 
+class TestPlatform(ModuleTestCase):
     def test_module_utils_basic_get_platform(self):
         with patch('platform.system', return_value='foo'):
             from ansible.module_utils.basic import get_platform
@@ -240,6 +227,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             with patch('ansible.module_utils.basic.get_distribution', return_value=None):
                 self.assertIs(type(load_platform_subclass(LinuxTest)), LinuxTest)
 
+class TestTextifyContainers(ModuleTestCase):
     def test_module_utils_basic_json_dict_converters(self):
         from ansible.module_utils.basic import json_dict_unicode_to_bytes, json_dict_bytes_to_unicode
 
@@ -255,11 +243,13 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         self.assertEqual(test_data, res2)
 
+class TestGetModulePath(ModuleTestCase):
     def test_module_utils_basic_get_module_path(self):
         from ansible.module_utils.basic import get_module_path
         with patch('os.path.realpath', return_value='/path/to/foo/'):
             self.assertEqual(get_module_path(), '/path/to/foo')
 
+class TestArgSpec(ModuleTestCase):
     def test_module_utils_basic_ansible_module_creation(self):
         from ansible.module_utils import basic
         from ansible.module_utils.parsing.convert_bool import BOOLEANS
@@ -716,6 +706,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 res = am.load_file_common_arguments(params=extended_params)
                 self.assertEqual(res, final_params)
 
+class TestSELinux(ModuleTestCase):
     def test_module_utils_basic_ansible_module_selinux_mls_enabled(self):
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
@@ -903,47 +894,6 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
                 self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
 
-    def test_module_utils_basic_ansible_module_user_and_group(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-
-        mock_stat = MagicMock()
-        mock_stat.st_uid = 0
-        mock_stat.st_gid = 0
-
-        with patch('os.lstat', return_value=mock_stat):
-            self.assertEqual(am.user_and_group('/path/to/file'), (0, 0))
-
-    def test_module_utils_basic_ansible_module_find_mount_point(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-
-        def _mock_ismount(path):
-            if path == b'/':
-                return True
-            return False
-
-        with patch('os.path.ismount', side_effect=_mock_ismount):
-            self.assertEqual(am.find_mount_point('/root/fs/../mounted/path/to/whatever'), '/')
-
-        def _mock_ismount(path):
-            if path == b'/subdir/mount':
-                return True
-            if path == b'/':
-                return True
-            return False
-
-        with patch('os.path.ismount', side_effect=_mock_ismount):
-            self.assertEqual(am.find_mount_point('/subdir/mount/path/to/whatever'), '/subdir/mount')
-
     def test_module_utils_basic_ansible_module_set_context_if_different(self):
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
@@ -988,6 +938,48 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')
+
+class TestOtherFilesystem(ModuleTestCase):
+    def test_module_utils_basic_ansible_module_user_and_group(self):
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
+
+        mock_stat = MagicMock()
+        mock_stat.st_uid = 0
+        mock_stat.st_gid = 0
+
+        with patch('os.lstat', return_value=mock_stat):
+            self.assertEqual(am.user_and_group('/path/to/file'), (0, 0))
+
+    def test_module_utils_basic_ansible_module_find_mount_point(self):
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
+
+        def _mock_ismount(path):
+            if path == b'/':
+                return True
+            return False
+
+        with patch('os.path.ismount', side_effect=_mock_ismount):
+            self.assertEqual(am.find_mount_point('/root/fs/../mounted/path/to/whatever'), '/')
+
+        def _mock_ismount(path):
+            if path == b'/subdir/mount':
+                return True
+            if path == b'/':
+                return True
+            return False
+
+        with patch('os.path.ismount', side_effect=_mock_ismount):
+            self.assertEqual(am.find_mount_point('/subdir/mount/path/to/whatever'), '/subdir/mount')
 
     def test_module_utils_basic_ansible_module_set_owner_if_different(self):
         from ansible.module_utils import basic
@@ -1067,6 +1059,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with patch('os.lchown', side_effect=OSError) as m:
             self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
 
+class TestAtomicMove(ModuleTestCase):
     @patch('tempfile.mkstemp')
     @patch('os.umask')
     @patch('shutil.copyfileobj')
