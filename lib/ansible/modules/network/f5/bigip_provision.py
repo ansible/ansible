@@ -48,7 +48,7 @@ options:
         level for one module may require modifying the level of another module.
         For example, changing one module to C(dedicated) requires setting all
         others to C(none). Setting the level of a module to C(none) means that
-        the module is not run.
+        the module is not activated.
     default: nominal
     choices:
       - dedicated
@@ -113,6 +113,7 @@ from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
 
 try:
+    from f5.bigip.contexts import TransactionContextManager
     from f5.sdk_exception import LazyAttributesRequired
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
@@ -228,6 +229,27 @@ class ModuleManager(object):
         return False
 
     def update_on_device(self):
+        if self.want.level == 'dedicated':
+            self.provision_dedicated_on_device()
+        else:
+            self.provision_non_dedicated_on_device()
+
+    def provision_dedicated_on_device(self):
+        params = self.want.api_params()
+        tx = self.client.api.tm.transactions.transaction
+        collection = self.client.api.tm.sys.provision.get_collection()
+        resources = [x['name'] for x in collection if x['name'] != self.want.module]
+        with TransactionContextManager(tx) as api:
+            provision = api.tm.sys.provision
+            for resource in resources:
+                resource = getattr(provision, resource)
+                resource = resource.load()
+                resource.update(level='none')
+            resource = getattr(provision, self.want.module)
+            resource = resource.load()
+            resource.update(**params)
+
+    def provision_non_dedicated_on_device(self):
         params = self.want.api_params()
         provision = self.client.api.tm.sys.provision
         resource = getattr(provision, self.want.module)
@@ -286,18 +308,30 @@ class ModuleManager(object):
                     nops = 0
             except Exception:
                 # This can be caused by restjavad restarting.
-                pass
+                try:
+                    self.client.reconnect()
+                except Exception:
+                    pass
             time.sleep(5)
 
     def _is_mprov_running_on_device(self):
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "ps aux | grep \'[m]prov\'"'
-        )
+        # /usr/libexec/qemu-kvm is added here to prevent vcmp provisioning
+        # from never allowing the mprov provisioning to succeed.
+        #
+        # It turns out that the 'mprov' string is found when enabling vcmp. The
+        # qemu-kvm command that is run includes it.
+        #
+        # For example,
+        #   /usr/libexec/qemu-kvm -rt-usecs 880 ... -mem-path /dev/mprov/vcmp -f5-tracing ...
+        #
         try:
+            output = self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs='-c "ps aux | grep \'[m]prov\' | grep -v /usr/libexec/qemu-kvm"'
+            )
             if hasattr(output, 'commandResult'):
                 return True
-        except LazyAttributesRequired:
+        except Exception:
             pass
         return False
 
@@ -317,19 +351,19 @@ class ModuleManager(object):
                     nops += 1
                 else:
                     nops = 0
-            except Exception:
+            except Exception as ex:
                 pass
             time.sleep(5)
 
     def _get_last_reboot(self):
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "/usr/bin/last reboot | head - 1"'
-        )
         try:
+            output = self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs='-c "/usr/bin/last reboot | head -1"'
+            )
             if hasattr(output, 'commandResult'):
                 return str(output.commandResult)
-        except LazyAttributesRequired:
+        except Exception:
             pass
         return None
 
@@ -343,6 +377,7 @@ class ModuleManager(object):
 
         while nops < 6:
             try:
+                self.client.reconnect()
                 next_reboot = self._get_last_reboot()
                 if next_reboot is None:
                     nops = 0
@@ -350,7 +385,7 @@ class ModuleManager(object):
                     nops = 0
                 else:
                     nops += 1
-            except Exception:
+            except Exception as ex:
                 # This can be caused by restjavad restarting.
                 pass
             time.sleep(10)
@@ -371,7 +406,7 @@ class ArgumentSpec(object):
             ),
             level=dict(
                 default='nominal',
-                choices=['nominal', 'dedicated', 'minimal']
+                choices=['nominal', 'dedicated', 'minimum']
             ),
             state=dict(
                 default='present',
