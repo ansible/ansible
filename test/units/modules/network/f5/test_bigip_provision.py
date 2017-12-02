@@ -15,21 +15,23 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
 from ansible.module_utils.f5_utils import AnsibleF5Client
-from units.modules.utils import set_module_args
 
 try:
     from library.bigip_provision import Parameters
     from library.bigip_provision import ModuleManager
     from library.bigip_provision import ArgumentSpec
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_provision import Parameters
         from ansible.modules.network.f5.bigip_provision import ModuleManager
         from ansible.modules.network.f5.bigip_provision import ArgumentSpec
         from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
