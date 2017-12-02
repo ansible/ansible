@@ -1,51 +1,530 @@
-# Copyright (c) 2017 Ansible Project
+# -*- coding: utf-8 -*-
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2016 Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import json
+import os
 
 import pytest
 
-from ansible.compat.tests.mock import MagicMock
+from ansible.compat.tests.mock import MagicMock, patch
 from ansible.module_utils import basic
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import builtins
+
+from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
 
-MOCK_VALIDATOR_SUCCESS = MagicMock(return_value=42)
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
 VALID_SPECS = (
-    ({'arg': {'type': int}}, {'arg': 42}, 42),
-    ({'arg': {'type': int}}, {'arg': '42'}, 42),
-    ({'arg': {'type': MOCK_VALIDATOR_SUCCESS}}, {'arg': 42}, 42),
+    # Simple type=int
+    ({'arg': {'type': 'int'}}, {'arg': 42}, 42),
+    # Type=int with conversion from string
+    ({'arg': {'type': 'int'}}, {'arg': '42'}, 42),
+    # Simple type=bool
+    ({'arg': {'type': 'bool'}}, {'arg': True}, True),
+    # Type=int with conversion from string
+    ({'arg': {'type': 'bool'}}, {'arg': 'yes'}, True),
+    # Type=str converts to string
+    ({'arg': {'type': 'str'}}, {'arg': 42}, '42'),
+    # Type is implicit, converts to string
+    ({'arg': {'type': 'str'}}, {'arg': 42}, '42'),
+    # parameter is required
+    ({'arg': {'required': True}}, {'arg': 42}, '42'),
 )
 
 INVALID_SPECS = (
-    ({'arg': {'type': int}}, {'arg': "bad"}, "invalid literal for int() with base 10: 'bad'"),
+    # Type is int; unable to convert parameter
+    ({'arg': {'type': 'int'}}, {'arg': "bad"}, "invalid literal for int() with base 10: 'bad'"),
+    # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
+    # unknown parameter
+    ({'arg': {'type': 'int'}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
+     'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg'),
+    # parameter is required
+    ({'arg': {'required': True}}, {}, 'missing required arguments: arg'),
 )
 
 
-@pytest.mark.parametrize('argspec, expected, am, stdin', [(s[0], s[2], s[0], s[1]) for s in VALID_SPECS],
-                         indirect=['am', 'stdin'])
-def test_validator_success(am, mocker, argspec, expected):
+@pytest.fixture
+def complex_argspec():
+    arg_spec = dict(
+        foo=dict(required=True, aliases=['dup']),
+        bar=dict(),
+        bam=dict(),
+        baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
+        bar1=dict(type='bool'),
+        zardoz=dict(choices=['one', 'two']),
+    )
+    mut_ex = (('bar', 'bam'),)
+    req_to = (('bam', 'baz'),)
 
-    type_ = argspec['arg']['type']
-    if isinstance(type_, MagicMock):
-        assert type_.called
+    kwargs = dict(
+        argument_spec=arg_spec,
+        mutually_exclusive=mut_ex,
+        required_together=req_to,
+        no_log=True,
+        check_invalid_arguments=False,
+        add_file_common_args=True,
+        supports_check_mode=True,
+    )
+    return kwargs
+
+
+@pytest.fixture
+def options_argspec_list():
+    options_spec = dict(
+        foo=dict(required=True, aliases=['dup']),
+        bar=dict(),
+        bam=dict(),
+        baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
+        bam1=dict(),
+        bam2=dict(default='test'),
+        bam3=dict(type='bool'),
+    )
+
+    arg_spec = dict(
+        foobar=dict(
+            type='list',
+            elements='dict',
+            options=options_spec,
+            mutually_exclusive=[
+                ['bam', 'bam1']
+            ],
+            required_if=[
+                ['foo', 'hello', ['bam']],
+                ['foo', 'bam2', ['bam2']]
+            ],
+            required_one_of=[
+                ['bar', 'bam']
+            ],
+            required_together=[
+                ['bam1', 'baz']
+            ]
+        )
+    )
+
+    kwargs = dict(
+        argument_spec=arg_spec,
+        no_log=True,
+        check_invalid_arguments=False,
+        add_file_common_args=True,
+        supports_check_mode=True
+    )
+    return kwargs
+
+
+@pytest.fixture
+def options_argspec_dict():
+    # should test ok, for options in dict format.
+    kwargs = options_argspec_list()
+    kwargs['argument_spec']['foobar']['type'] = 'dict'
+
+    return kwargs
+
+
+#
+# Tests for one aspect of arg_spec
+#
+
+@pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in VALID_SPECS],
+                         indirect=['stdin'])
+def test_validator_basic_types(argspec, expected, stdin):
+
+    am = basic.AnsibleModule(argspec)
+
+    if 'type' in argspec['arg']:
+        type_ = getattr(builtins, argspec['arg']['type'])
     else:
-        assert isinstance(am.params['arg'], type_)
+        type_ = str
+
+    assert isinstance(am.params['arg'], type_)
     assert am.params['arg'] == expected
+
+
+@pytest.mark.parametrize('stdin', [{'arg': 42}], indirect=['stdin'])
+def test_validator_function(mocker, stdin):
+    # Type is a callable
+    MOCK_VALIDATOR_SUCCESS = mocker.MagicMock(return_value=27)
+    argspec = {'arg': {'type': MOCK_VALIDATOR_SUCCESS}}
+    am = basic.AnsibleModule(argspec)
+
+    assert isinstance(am.params['arg'], int)
+    assert am.params['arg'] == 27
 
 
 @pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in INVALID_SPECS],
                          indirect=['stdin'])
 def test_validator_fail(stdin, capfd, argspec, expected):
-    with pytest.raises(SystemExit) as ecm:
-        m = basic.AnsibleModule(argument_spec=argspec)
+    with pytest.raises(SystemExit):
+        basic.AnsibleModule(argument_spec=argspec)
 
     out, err = capfd.readouterr()
     assert not err
     assert expected in json.loads(out)['msg']
     assert json.loads(out)['failed']
+
+
+class TestComplexArgSpecs:
+    """Test with a more complex arg_spec"""
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello'}, {'dup': 'hello'}], indirect=['stdin'])
+    def test_complex_required(self, stdin, complex_argspec):
+        """Test that the complex argspec works if we give it its required param as either the canonical or aliased name"""
+        am = basic.AnsibleModule(**complex_argspec)
+        assert isinstance(am.params['foo'], str)
+        assert am.params['foo'] == 'hello'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'test'}], indirect=['stdin'])
+    def test_complex_type_fallback(self, mocker, stdin, complex_argspec):
+        """Test that the complex argspec works if we get a required parameter via fallback"""
+        environ = os.environ.copy()
+        environ['BAZ'] = 'test data'
+        mocker.patch('ansible.module_utils.basic.os.environ', environ)
+
+        am = basic.AnsibleModule(**complex_argspec)
+
+        assert isinstance(am.params['baz'], str)
+        assert am.params['baz'] == 'test data'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'bad', 'bam': 'bad2'}], indirect=['stdin'])
+    def test_fail_mutually_exclusive(self, capfd, stdin, complex_argspec):
+        """Fail because of mutually exclusive parameters"""
+        with pytest.raises(SystemExit):
+            am = basic.AnsibleModule(**complex_argspec)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        assert results['failed']
+        assert results['msg'] == "parameters are mutually exclusive: bar, bam"
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'bad2'}], indirect=['stdin'])
+    def test_fail_required_together(self, capfd, stdin, complex_argspec):
+        """Fail because only one of a required_together pair of parameters was specified"""
+        with pytest.raises(SystemExit):
+            am = basic.AnsibleModule(**complex_argspec)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        assert results['failed']
+        assert results['msg'] == "parameters are required together: bam, baz"
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'hi'}], indirect=['stdin'])
+    def test_fail_required_together_and_default(self, capfd, stdin, complex_argspec):
+        """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
+        complex_argspec['argument_spec']['baz'] = {'default': 42}
+        with pytest.raises(SystemExit):
+            am = basic.AnsibleModule(**complex_argspec)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        assert results['failed']
+        assert results['msg'] == "parameters are required together: bam, baz"
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello'}], indirect=['stdin'])
+    def test_fail_required_together_and_fallback(self, capfd, mocker, stdin, complex_argspec):
+        """Fail because one of a required_together pair of parameters has a fallback and the other was not specified"""
+        environ = os.environ.copy()
+        environ['BAZ'] = 'test data'
+        mocker.patch('ansible.module_utils.basic.os.environ', environ)
+
+        with pytest.raises(SystemExit):
+            am = basic.AnsibleModule(**complex_argspec)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        assert results['failed']
+        assert results['msg'] == "parameters are required together: bam, baz"
+
+
+class TestComplexOptions:
+    """Test arg spec options"""
+
+    # (Paramaters, expected value of module.params['foobar'])
+    OPTIONS_PARAMS_LIST = (
+        ({'foobar': [{"foo": "hello", "bam": "good"}, {"foo": "test", "bar": "good"}]},
+         [{'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None},
+          {'foo': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None},
+          ]),
+        # Alias for required param
+        ({'foobar': [{"dup": "test", "bar": "good"}]},
+         [{'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None}]
+         ),
+        # Required_if utilizing default value of the requirement
+        ({'foobar': [{"foo": "bam2", "bar": "required_one_of"}]},
+         [{'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}]
+         ),
+        # Check that a bool option is converted
+        ({"foobar": [{"foo": "required", "bam": "good", "bam3": "yes"}]},
+         [{'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bar': None, 'baz': None, 'foo': 'required'}]
+         ),
+    )
+
+    # (Paramaters, expected value of module.params['foobar'])
+    OPTIONS_PARAMS_DICT = (
+        ({'foobar': {"foo": "hello", "bam": "good"}},
+         {'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None}
+         ),
+        # Alias for required param
+        ({'foobar': {"dup": "test", "bar": "good"}},
+         {'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None}
+         ),
+        # Required_if utilizing default value of the requirement
+        ({'foobar': {"foo": "bam2", "bar": "required_one_of"}},
+         {'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}
+         ),
+        # Check that a bool option is converted
+        ({"foobar": {"foo": "required", "bam": "good", "bam3": "yes"}},
+         {'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bar': None, 'baz': None, 'foo': 'required'}
+         ),
+    )
+
+    # (Paramaters, failure message)
+    FAILING_PARAMS_LIST = (
+        # Missing required option
+        ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
+        # Invalid option
+        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'bad'),
+        # Mutually exclusive options found
+        ({'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]},
+         'parameters are mutually exclusive: bam, bam1 found in foobar'),
+        # required_if fails
+        ({'foobar': [{"foo": "hello", "bar": "bad"}]},
+         'foo is hello but all of the following are missing: bam found in foobar'),
+        # Missing required_one_of option
+        ({'foobar': [{"foo": "test"}]},
+         'one of the following is required: bar, bam found in foobar'),
+        # Missing required_together option
+        ({'foobar': [{"foo": "test", "bar": "required_one_of", "bam1": "bad"}]},
+         'parameters are required together: bam1, baz found in foobar'),
+    )
+
+    # (Paramaters, failure message)
+    FAILING_PARAMS_DICT = (
+        # Missing required option
+        ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
+        # Invalid option
+        ({'foobar': {"foo": "hello", "bam": "good", "invalid": "bad"}}, 'bad'),
+        # Mutually exclusive options found
+        ({'foobar': {"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}},
+         'parameters are mutually exclusive: bam, bam1 found in foobar'),
+        # required_if fails
+        ({'foobar': {"foo": "hello", "bar": "bad"}},
+         'foo is hello but all of the following are missing: bam found in foobar'),
+        # Missing required_one_of option
+        ({'foobar': {"foo": "test"}},
+         'one of the following is required: bar, bam found in foobar'),
+        # Missing required_together option
+        ({'foobar': {"foo": "test", "bar": "required_one_of", "bam1": "bad"}},
+         'parameters are required together: bam1, baz found in foobar'),
+    )
+
+    @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_DICT, indirect=['stdin'])
+    def test_options_type_dict(self, stdin, options_argspec_dict, expected):
+        """Test that a basic creation with required and required_if works"""
+        # should test ok, tests basic foo requirement and required_if
+        am = basic.AnsibleModule(**options_argspec_dict)
+
+        assert isinstance(am.params['foobar'], dict)
+        assert am.params['foobar'] == expected
+
+    @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_LIST, indirect=['stdin'])
+    def test_options_type_list(self, stdin, options_argspec_list, expected):
+        """Test that a basic creation with required and required_if works"""
+        # should test ok, tests basic foo requirement and required_if
+        am = basic.AnsibleModule(**options_argspec_list)
+
+        assert isinstance(am.params['foobar'], list)
+        assert am.params['foobar'] == expected
+
+    @pytest.mark.parametrize('stdin, expected', FAILING_PARAMS_DICT, indirect=['stdin'])
+    def test_fail_validate_options_dict(self, capfd, stdin, options_argspec_dict, expected):
+        """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
+        with pytest.raises(SystemExit):
+            am = basic.AnsibleModule(**options_argspec_dict)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        print(results)
+        assert results['failed']
+        assert results['msg'] == expected
+
+    @pytest.mark.parametrize('stdin, expected', FAILING_PARAMS_LIST, indirect=['stdin'])
+    def test_fail_validate_options_list(self, capfd, stdin, options_argspec_list, expected):
+        """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
+        with pytest.raises(SystemExit):
+            am = basic.AnsibleModule(**options_argspec_list)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        print(results)
+        assert results['failed']
+        assert results['msg'] == expected
+
+    @pytest.mark.parametrize('stdin', [{'foobar': {'foo': 'required', 'bam1': 'test', 'bar': 'case'}}], indirect=['stdin'])
+    def test_fallback_in_option(self, mocker, stdin, options_argspec_dict):
+        """Test that the complex argspec works if we get a required parameter via fallback"""
+        environ = os.environ.copy()
+        environ['BAZ'] = 'test data'
+        mocker.patch('ansible.module_utils.basic.os.environ', environ)
+
+        am = basic.AnsibleModule(**options_argspec_dict)
+
+        assert isinstance(am.params['foobar']['baz'], str)
+        assert am.params['foobar']['baz'] == 'test data'
+
+
+class TestArgSpec(ModuleTestCase):
+
+    def test_module_utils_basic_ansible_module_type_check(self):
+        from ansible.module_utils import basic
+
+        arg_spec = dict(
+            foo=dict(type='float'),
+            foo2=dict(type='float'),
+            foo3=dict(type='float'),
+            bar=dict(type='int'),
+            bar2=dict(type='int'),
+        )
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={
+            "foo": 123.0,  # float
+            "foo2": 123,  # int
+            "foo3": "123",  # string
+            "bar": 123,  # int
+            "bar2": "123",  # string
+        }))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bar": 123.0}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+    def test_module_utils_basic_ansible_module_options_type_check(self):
+        from ansible.module_utils import basic
+
+        options_spec = dict(
+            foo=dict(type='float'),
+            foo2=dict(type='float'),
+            foo3=dict(type='float'),
+            bar=dict(type='int'),
+            bar2=dict(type='int'),
+        )
+
+        arg_spec = dict(foobar=dict(type='list', elements='dict', options=options_spec))
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{
+            "foo": 123.0,  # float
+            "foo2": 123,  # int
+            "foo3": "123",  # string
+            "bar": 123,  # int
+            "bar2": "123",  # string
+        }]}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"bar": 123.0}]}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec=arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+    def test_module_utils_basic_ansible_module_load_file_common_arguments(self):
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
+
+        am.selinux_mls_enabled = MagicMock()
+        am.selinux_mls_enabled.return_value = True
+        am.selinux_default_context = MagicMock()
+        am.selinux_default_context.return_value = 'unconfined_u:object_r:default_t:s0'.split(':', 3)
+
+        # with no params, the result should be an empty dict
+        res = am.load_file_common_arguments(params=dict())
+        self.assertEqual(res, dict())
+
+        base_params = dict(
+            path='/path/to/file',
+            mode=0o600,
+            owner='root',
+            group='root',
+            seuser='_default',
+            serole='_default',
+            setype='_default',
+            selevel='_default',
+        )
+
+        extended_params = base_params.copy()
+        extended_params.update(dict(
+            follow=True,
+            foo='bar',
+        ))
+
+        final_params = base_params.copy()
+        final_params.update(dict(
+            path='/path/to/real_file',
+            secontext=['unconfined_u', 'object_r', 'default_t', 's0'],
+            attributes=None,
+        ))
+
+        # with the proper params specified, the returned dictionary should represent
+        # only those params which have something to do with the file arguments, excluding
+        # other params and updated as required with proper values which may have been
+        # massaged by the method
+        with patch('os.path.islink', return_value=True):
+            with patch('os.path.realpath', return_value='/path/to/real_file'):
+                res = am.load_file_common_arguments(params=extended_params)
+                self.assertEqual(res, final_params)
