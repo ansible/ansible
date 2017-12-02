@@ -33,7 +33,7 @@ options:
         default: '*'
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
-            - The patterns restrict the list of files to be returned to those whose basenames match at
+            - The patterns restrict the list of files to be returned to those whose complete filenames match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
         aliases: ['pattern']
     contains:
@@ -328,17 +328,17 @@ def main():
 
                     r = {'path': fsname}
                     if params['file_type'] == 'any':
-                        if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(fsname, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
                             r.update(statinfo(st))
                             filelist.append(r)
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(fsname, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
-                        if pfilter(fsobj, params['patterns'], params['use_regex']) and \
+                        if pfilter(fsname, params['patterns'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
                            sizefilter(st, size) and \
                            contentfilter(fsname, params['contains']):
@@ -349,7 +349,7 @@ def main():
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(fsname, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
                             r.update(statinfo(st))
                             filelist.append(r)
 
