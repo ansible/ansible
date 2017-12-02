@@ -35,9 +35,6 @@ options:
         C(enabled) are required.
       - Deprecated in 2.4. Use C(state) and either C(enabled) or C(disabled)
         instead.
-    deprecated:
-      - Deprecated in 2.4. Use C(state) and either C(enabled) or C(disabled)
-        instead.
     choices:
       - yes
       - no
