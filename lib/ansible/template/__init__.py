@@ -540,6 +540,8 @@ class Templar:
                 new = self.do_template(data, fail_on_undefined=True)
             except (AnsibleUndefinedVariable, UndefinedError):
                 return True
+            except AnsibleFilterError as e:
+                return 'Mandatory variable not defined.' == to_text(e)
             except:
                 return False
             return (new != data)
