@@ -70,20 +70,17 @@ EXAMPLES = '''
 
 import os
 import re
-import subprocess
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True),
-            path=dict(required=True, type='path'),
-            link=dict(required=False, type='path'),
-            priority=dict(required=False, type='int',
-                          default=50),
+            path=dict(type='path', required=True),
+            link=dict(type='path'),
+            priority=dict(type='int', default=50),
         ),
         supports_check_mode=True,
     )
@@ -155,8 +152,8 @@ def main():
             )
 
             module.exit_json(changed=True)
-        except subprocess.CalledProcessError as cpe:
-            module.fail_json(msg=str(dir(cpe)))
+        except Exception as exc:
+            module.fail_json(msg=to_native(exc))
     else:
         module.exit_json(changed=False)
 
