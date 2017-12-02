@@ -240,10 +240,10 @@ class Parameters(AnsibleF5Parameters):
         # There is a bug in the iApp parser in the F5 SDK that prevents us from
         # using it in all cases to get the name of an iApp. So we'll use this
         # pattern for now and file a bug with the F5 SDK
-        pattern = r'sys\s+application\s+template\s+(?P<path>\/\w+\/)?(?P<name>[\w.]+)'
+        pattern = r'sys\s+application\s+template\s+(?P<path>\/[^\{}"\'*?|#]+\/)?(?P<name>[^\{}"\'*?|#]+)'
         matches = re.search(pattern, self.content)
         try:
-            result = matches.group('name')
+            result = matches.group('name').strip()
         except IndexError:
             result = None
         if result:
