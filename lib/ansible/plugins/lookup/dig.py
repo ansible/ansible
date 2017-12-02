@@ -296,6 +296,8 @@ class LookupModule(LookupBase):
             ret.append("")
         except dns.resolver.Timeout:
             ret.append('')
+        except dns.resolver.NoNameservers:
+            ret.append('')
         except dns.exception.DNSException as e:
             raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
 
