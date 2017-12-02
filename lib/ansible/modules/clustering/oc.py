@@ -52,7 +52,7 @@ options:
     required: false
   token:
     description:
-      - "The OpenShift service account token with which to authenticate agains the OpenShift cluster."
+      - "The OpenShift service account token with which to authenticate against the OpenShift cluster."
     required: false
   kube_config:
     description:
@@ -145,6 +145,7 @@ method:
 import base64
 import os
 import tempfile
+import sys
 try:
     import yaml
 except ImportError:
@@ -505,7 +506,7 @@ def main():
     if module.params['token']:
         token = module.params['token']
         module.log("Using token specified in module args.")
-    else:
+    elif 'yaml' in sys.modules:
         kube_config = KubeConfig(module, module.params['kube_config'], module.params['kube_context'])
         if kube_config.user_token():
             token = kube_config.user_token()
@@ -517,6 +518,10 @@ def main():
             module.params['client_cert'] = kube_config.user_client_cert_file()
             module.params['client_key'] = kube_config.user_client_key_file()
             module.log("Using client cert and key from config file {0}".format(module.params['kube_config']))
+    # If a token isn't specified in the module arguments, we expect to use .kube/config.  However, this
+    # requires PyYAML.  If it isn't found, we will raise an error.
+    else:
+        module.fail_json(msg="Attempted to read configuration file {0} but PyYAML isn't found on this host.  Install PyYAML or consider using the \'token\' module argument.".format(module.params['kube_config']))
 
     if definition is None:
         definition = {}
