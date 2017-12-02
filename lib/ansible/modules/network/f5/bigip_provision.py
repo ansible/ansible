@@ -306,13 +306,12 @@ class ModuleManager(object):
                     nops += 1
                 else:
                     nops = 0
-            except Exception as ex:
+            except Exception:
+                # This can be caused by restjavad restarting.
                 try:
                     self.client.reconnect()
                 except Exception:
                     pass
-                # This can be caused by restjavad restarting.
-                pass
             time.sleep(5)
 
     def _is_mprov_running_on_device(self):
