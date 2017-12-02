@@ -145,7 +145,7 @@ EXAMPLES = r'''
           path_starts_with: /HomePage/
 
 - name: Remove all rules and confitions from the rule
-  bigip_policy_rule
+  bigip_policy_rule:
     policy: Policy-Foo
     name: rule1
     conditions:
