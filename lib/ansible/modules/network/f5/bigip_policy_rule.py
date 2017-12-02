@@ -105,23 +105,6 @@ author:
 '''
 
 EXAMPLES = r'''
-vars:
-  policy_rules:
-    - name: rule1
-      actions:
-        - type: forward
-          pool: pool-svrs
-      conditions:
-        - type: http_uri
-          path_starts_with: /euro
-    - name: rule2
-      actions:
-        - type: forward
-          pool: pool-svrs
-      conditions:
-        - type: http_uri
-          path_starts_with: /HomePage/
-
 - name: Create policies
   bigip_policy:
     name: Policy-Foo
@@ -145,13 +128,26 @@ vars:
     name: "{{ item.name }}"
     conditions: "{{ item.conditions }}"
     actions: "{{ item.actions }}"
-  with_items:
-    - policy_rules
+  loop:
+    - name: rule1
+      actions:
+        - type: forward
+          pool: pool-svrs
+      conditions:
+        - type: http_uri
+          path_starts_with: /euro
+    - name: rule2
+      actions:
+        - type: forward
+          pool: pool-svrs
+      conditions:
+        - type: http_uri
+          path_starts_with: /HomePage/
 
 - name: Remove all rules and confitions from the rule
   bigip_policy_rule
     policy: Policy-Foo
-    name: "rule1"
+    name: rule1
     conditions:
       - type: all_traffic
     actions:
@@ -162,13 +158,35 @@ RETURN = r'''
 actions:
   description: The new list of actions applied to the rule
   returned: changed
-  type: complex list
-  sample: [{'type': 'forward', 'pool': 'foo-pool'}]
+  type: complex
+  contains:
+    type:
+      description: The action type
+      returned: changed
+      type: string
+      sample: forward
+    pool:
+      description: Pool for forward to
+      returned: changed
+      type: string
+      sample: foo-pool
+  sample: hash/dictionary of values
 conditions:
   description: The new list of conditions applied to the rule.
   returned: changed
-  type: complex list
-  sample: [{'type': 'http_uri', 'path_begins_with_any': ['foo','bar']}]
+  type: complex
+  contains:
+    type:
+      description: The condition type
+      returned: changed
+      type: string
+      sample: http_uri
+    path_begins_with_any:
+      description: List of strings that the URI begins with.
+      returned: changed
+      type: list
+      sample: [foo, bar]
+  sample: hash/dictionary of values
 description:
   description: The new description of the rule.
   returned: changed
