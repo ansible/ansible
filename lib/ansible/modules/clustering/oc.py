@@ -521,7 +521,8 @@ def main():
     # If a token isn't specified in the module arguments, we expect to use .kube/config.  However, this
     # requires PyYAML.  If it isn't found, we will raise an error.
     else:
-        module.fail_json(msg="Attempted to read configuration file {0} but PyYAML isn't found on this host.  Install PyYAML or consider using the \'token\' module argument.".format(module.params['kube_config']))
+        module.fail_json(msg='''Attempted to read configuration file {0} but PyYAML isn't found \
+                              on this host.  Install PyYAML or consider using the \'token\' module argument.'''.format(module.params['kube_config']))
 
     if definition is None:
         definition = {}
