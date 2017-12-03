@@ -48,6 +48,7 @@ notes:
 requirements:
   - f5-sdk >= 2.2.3
   - Requires BIG-IP >= 12.1.0
+  - The 'rpm' tool installed on the Ansible controller
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -134,14 +135,12 @@ class Parameters(AnsibleF5Parameters):
 
         :return:
         """
-        p = subprocess.Popen(
-            ['rpm', '-qp', '--queryformat', '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}', self.package],
-            stdout=subprocess.PIPE
-        )
+        cmd = ['rpm', '-qp', '--queryformat', '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}', self.package]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if not stdout:
-            return self.package_file
-        return stdout
+            return str(self.package_file)
+        return stdout.decode('utf-8')
 
     @property
     def package_root(self):
