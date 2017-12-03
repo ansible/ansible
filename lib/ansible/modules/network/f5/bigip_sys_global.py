@@ -1,17 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright (c) 2016 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_sys_global
-short_description: Manage BIG-IP global settings.
+short_description: Manage BIG-IP global settings
 description:
   - Manage BIG-IP global settings.
 version_added: "2.3"
@@ -84,75 +88,80 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Disable the setup utility
   bigip_sys_global:
-      gui_setup: "disabled"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      state: "present"
+    gui_setup: disabled
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    state: present
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 banner_text:
-    description: The new text to present in the advisory banner.
-    returned: changed
-    type: string
-    sample: "This is a corporate device. Do not touch."
+  description: The new text to present in the advisory banner.
+  returned: changed
+  type: string
+  sample: This is a corporate device. Do not touch.
 console_timeout:
-    description: >
-      The new number of seconds of inactivity before the system
-      logs off a user that is logged on.
-    returned: changed
-    type: int
-    sample: 600
+  description: >
+    The new number of seconds of inactivity before the system
+    logs off a user that is logged on.
+  returned: changed
+  type: int
+  sample: 600
 gui_setup:
-    description: The new setting for the Setup utility.
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for the Setup utility.
+  returned: changed
+  type: string
+  sample: enabled
 lcd_display:
-    description: The new setting for displaying the system menu on the LCD.
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for displaying the system menu on the LCD.
+  returned: changed
+  type: string
+  sample: enabled
 mgmt_dhcp:
-    description: >
-      The new setting for whether the mgmt interface should DHCP
-      or not
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for whether the mgmt interface should DHCP or not.
+  returned: changed
+  type: string
+  sample: enabled
 net_reboot:
-    description: >
-      The new setting for whether the system should boot to an ISO on the
-      network or not
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for whether the system should boot to an ISO on the network or not.
+  returned: changed
+  type: string
+  sample: enabled
 quiet_boot:
-    description: >
-      The new setting for whether the system should suppress information to
-      the console during boot or not.
-    returned: changed
-    type: string
-    sample: enabled
+  description: >
+    The new setting for whether the system should suppress information to
+    the console during boot or not.
+  returned: changed
+  type: string
+  sample: enabled
 security_banner:
-    description: >
-      The new setting for whether the system should display an advisory message
-      on the login screen or not
-    returned: changed
-    type: string
-    sample: enabled
+  description: >
+    The new setting for whether the system should display an advisory message
+    on the login screen or not.
+  returned: changed
+  type: string
+  sample: enabled
 '''
 
 try:
     from f5.bigip.contexts import TransactionContextManager
     from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
+except ImportError:
+    pass  # Handled via f5_utils.HAS_F5SDK
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import f5_argument_spec
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
     HAS_F5SDK = False
 
@@ -345,35 +354,23 @@ class BigIpSysGlobalModuleConfig(object):
     def initialize_meta_args(self):
         args = dict(
             security_banner=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                choices=self.on_off_choices
             ),
-            banner_text=dict(required=False, default=None),
+            banner_text=dict(),
             gui_setup=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                choices=self.on_off_choices
             ),
             lcd_display=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                choices=self.on_off_choices
             ),
             mgmt_dhcp=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                choices=self.on_off_choices
             ),
             net_reboot=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                choices=self.on_off_choices
             ),
             quiet_boot=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                choices=self.on_off_choices
             ),
             console_timeout=dict(required=False, type='int', default=None),
             state=dict(default='present', choices=['present'])
@@ -408,9 +405,6 @@ def main():
     except F5ModuleError as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()
