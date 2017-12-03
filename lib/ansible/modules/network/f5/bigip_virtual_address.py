@@ -109,6 +109,12 @@ options:
     required: False
     default: 'Common'
     version_added: 2.5
+  traffic_group:
+    description:
+      - The traffic group for the virtual address. When creating a new address,
+        if this value is not specified, the default of C(/Common/traffic-group-1)
+        will be used.
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -214,12 +220,13 @@ class Parameters(AnsibleF5Parameters):
         'connectionLimit': 'connection_limit',
         'serverScope': 'advertise_route',
         'mask': 'netmask',
-        'arp': 'arp_state'
+        'arp': 'arp_state',
+        'trafficGroup': 'traffic_group',
     }
 
     updatables = [
         'use_route_advertisement', 'auto_delete', 'icmp_echo', 'connection_limit',
-        'arp_state', 'enabled', 'advertise_route'
+        'arp_state', 'enabled', 'advertise_route', 'traffic_group'
     ]
 
     returnables = [
@@ -229,8 +236,13 @@ class Parameters(AnsibleF5Parameters):
 
     api_attributes = [
         'routeAdvertisement', 'autoDelete', 'icmpEcho', 'connectionLimit',
-        'advertiseRoute', 'arp', 'mask', 'enabled', 'serverScope'
+        'advertiseRoute', 'arp', 'mask', 'enabled', 'serverScope', 'trafficGroup'
     ]
+
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
+        return value
 
     @property
     def advertise_route(self):
@@ -317,6 +329,19 @@ class Parameters(AnsibleF5Parameters):
         else:
             return self._values['state']
 
+    @property
+    def traffic_group(self):
+        if self._values['traffic_group'] is None:
+            return None
+        else:
+            result = self._fqdn_name(self._values['traffic_group'])
+        if result.startswith('/Common/'):
+            return result
+        else:
+            raise F5ModuleError(
+                "Traffic groups can only exist in /Common"
+            )
+
     def to_return(self):
         result = {}
         for returnable in self.returnables:
@@ -336,12 +361,43 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
+class Changes(Parameters):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def traffic_group(self):
+        if self.want.traffic_group != self.have.traffic_group:
+            return self.want.traffic_group
+
+
 class ModuleManager(object):
     def __init__(self, client):
         self.client = client
         self.have = None
         self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.changes = Changes()
 
     def _set_changed_options(self):
         changed = {}
@@ -349,18 +405,23 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(changed)
             return True
         return False
 
@@ -446,6 +507,8 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
+        if self.want.traffic_group is None:
+            self.want.update({'traffic_group': '/Common/traffic-group-1'})
         if self.client.check_mode:
             return True
         self.create_on_device()
@@ -513,7 +576,8 @@ class ArgumentSpec(object):
             ),
             use_route_advertisement=dict(
                 type='bool'
-            )
+            ),
+            traffic_group=dict()
         )
         self.f5_product_name = 'bigip'
 
