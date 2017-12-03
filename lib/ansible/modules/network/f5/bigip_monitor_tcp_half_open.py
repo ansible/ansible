@@ -44,6 +44,7 @@ options:
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified
+    version_added: 2.5
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this

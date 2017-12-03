@@ -121,7 +121,7 @@ EXAMPLES = r'''
     server: lb.mydomain.com
     user: admin
     password: secret
-    name: "my_tcp_monitor
+    name: my_tcp_monitor
   delegate_to: localhost
 '''
 
