@@ -4,11 +4,15 @@
 # Copyright (c) 2017 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_vlan
 short_description: Manage VLANs on a BIG-IP system
@@ -24,27 +28,24 @@ options:
       - Specifies a list of tagged interfaces and trunks that you want to
         configure for the VLAN. Use tagged interfaces or trunks when
         you want to assign a single interface or trunk to multiple VLANs.
-    required: false
     aliases:
       - tagged_interface
   untagged_interfaces:
     description:
       - Specifies a list of untagged interfaces and trunks that you want to
         configure for the VLAN.
-    required: false
     aliases:
       - untagged_interface
   name:
     description:
       - The VLAN to manage. If the special VLAN C(ALL) is specified with
         the C(state) value of C(absent) then all VLANs will be removed.
-    required: true
+    required: True
   state:
     description:
       - The state of the VLAN on the system. When C(present), guarantees
         that the VLAN exists with the provided attributes. When C(absent),
         removes the VLAN from the system.
-    required: false
     default: present
     choices:
       - absent
@@ -63,9 +64,10 @@ requirements:
   - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create VLAN
   bigip_vlan:
       name: "net1"
@@ -110,7 +112,7 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 description:
     description: The description set on the VLAN
     returned: changed
@@ -138,255 +140,141 @@ tag:
     sample: 2345
 '''
 
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.six import iteritems
+from collections import defaultdict
+
 try:
-    from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
     HAS_F5SDK = False
 
 
-class BigIpVlan(object):
-    def __init__(self, *args, **kwargs):
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        # The params that change in the module
-        self.cparams = dict()
-
-        # Stores the params that are sent to the module
-        self.params = kwargs
-        self.api = ManagementRoot(kwargs['server'],
-                                  kwargs['user'],
-                                  kwargs['password'],
-                                  port=kwargs['server_port'])
-
-    def present(self):
-        if self.exists():
-            return self.update()
-        else:
-            return self.create()
-
-    def absent(self):
-        changed = False
-
-        if self.exists():
-            changed = self.delete()
-
-        return changed
-
-    def read(self):
-        """Read information and transform it
-
-        The values that are returned by BIG-IP in the f5-sdk can have encoding
-        attached to them as well as be completely missing in some cases.
-
-        Therefore, this method will transform the data from the BIG-IP into a
-        format that is more easily consumable by the rest of the class and the
-        parameters that are supported by the module.
-        """
-        p = dict()
-        name = self.params['name']
-        partition = self.params['partition']
-        r = self.api.tm.net.vlans.vlan.load(
-            name=name,
-            partition=partition
-        )
-        ifcs = r.interfaces_s.get_collection()
-        if hasattr(r, 'tag'):
-            p['tag'] = int(r.tag)
-        if hasattr(r, 'description'):
-            p['description'] = str(r.description)
-        if len(ifcs) is not 0:
-            untagged = []
-            tagged = []
-            for x in ifcs:
-                if hasattr(x, 'tagged'):
-                    tagged.append(str(x.name))
-                elif hasattr(x, 'untagged'):
-                    untagged.append(str(x.name))
-            if untagged:
-                p['untagged_interfaces'] = list(set(untagged))
-            if tagged:
-                p['tagged_interfaces'] = list(set(tagged))
-        p['name'] = name
-        return p
-
-    def create(self):
-        params = dict()
-
-        check_mode = self.params['check_mode']
-        description = self.params['description']
-        name = self.params['name']
-        untagged_interfaces = self.params['untagged_interfaces']
-        tagged_interfaces = self.params['tagged_interfaces']
-        partition = self.params['partition']
-        tag = self.params['tag']
-
-        if tag is not None:
-            params['tag'] = tag
-
-        if untagged_interfaces is not None or tagged_interfaces is not None:
-            tmp = []
-            ifcs = self.api.tm.net.interfaces.get_collection()
-            ifcs = [str(x.name) for x in ifcs]
-
-            if len(ifcs) is 0:
-                raise F5ModuleError(
-                    'No interfaces were found'
-                )
-
-            pinterfaces = []
-            if untagged_interfaces:
-                interfaces = untagged_interfaces
-            elif tagged_interfaces:
-                interfaces = tagged_interfaces
-
-            for ifc in interfaces:
-                ifc = str(ifc)
-                if ifc in ifcs:
-                    pinterfaces.append(ifc)
-
-            if tagged_interfaces:
-                tmp = [dict(name=x, tagged=True) for x in pinterfaces]
-            elif untagged_interfaces:
-                tmp = [dict(name=x, untagged=True) for x in pinterfaces]
-
-            if tmp:
-                params['interfaces'] = tmp
-
-        if description is not None:
-            params['description'] = self.params['description']
-
-        params['name'] = name
-        params['partition'] = partition
-
-        self.cparams = camel_dict_to_snake_dict(params)
-        if check_mode:
-            return True
-
-        d = self.api.tm.net.vlans.vlan
-        d.create(**params)
-
-        if self.exists():
-            return True
-        else:
-            raise F5ModuleError("Failed to create the VLAN")
-
-    def update(self):
-        changed = False
-        params = dict()
-        current = self.read()
-
-        check_mode = self.params['check_mode']
-        description = self.params['description']
-        name = self.params['name']
-        tag = self.params['tag']
-        partition = self.params['partition']
-        tagged_interfaces = self.params['tagged_interfaces']
-        untagged_interfaces = self.params['untagged_interfaces']
-
-        if untagged_interfaces is not None or tagged_interfaces is not None:
-            ifcs = self.api.tm.net.interfaces.get_collection()
-            ifcs = [str(x.name) for x in ifcs]
-
-            if len(ifcs) is 0:
-                raise F5ModuleError(
-                    'No interfaces were found'
-                )
-
-            pinterfaces = []
-            if untagged_interfaces:
-                interfaces = untagged_interfaces
-            elif tagged_interfaces:
-                interfaces = tagged_interfaces
-
-            for ifc in interfaces:
-                ifc = str(ifc)
-                if ifc in ifcs:
-                    pinterfaces.append(ifc)
-                else:
-                    raise F5ModuleError(
-                        'The specified interface "%s" was not found' % (ifc)
-                    )
-
-            if tagged_interfaces:
-                tmp = [dict(name=x, tagged=True) for x in pinterfaces]
-                if 'tagged_interfaces' in current:
-                    if pinterfaces != current['tagged_interfaces']:
-                        params['interfaces'] = tmp
-                else:
-                    params['interfaces'] = tmp
-            elif untagged_interfaces:
-                tmp = [dict(name=x, untagged=True) for x in pinterfaces]
-                if 'untagged_interfaces' in current:
-                    if pinterfaces != current['untagged_interfaces']:
-                        params['interfaces'] = tmp
-                else:
-                    params['interfaces'] = tmp
-
-        if description is not None:
-            if 'description' in current:
-                if description != current['description']:
-                    params['description'] = description
-            else:
-                params['description'] = description
-
-        if tag is not None:
-            if 'tag' in current:
-                if tag != current['tag']:
-                    params['tag'] = tag
-            else:
-                params['tag'] = tag
-
+class Parameters(AnsibleF5Parameters):
+    def __init__(self, params=None):
+        self._values = defaultdict(lambda: None)
         if params:
-            changed = True
-            params['name'] = name
-            params['partition'] = partition
-            if check_mode:
-                return changed
-            self.cparams = camel_dict_to_snake_dict(params)
-        else:
-            return changed
+            self.update(params=params)
 
-        r = self.api.tm.net.vlans.vlan.load(
-            name=name,
-            partition=partition
-        )
-        r.update(**params)
-        r.refresh()
+    def update(self, params=None):
+        if params:
+            for k, v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    map_key = self.api_map[k]
+                else:
+                    map_key = k
 
-        return True
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have
+                        # an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
 
-    def delete(self):
-        params = dict()
-        check_mode = self.params['check_mode']
+    updatables = [
+        'tagged_interfaces', 'untagged_interfaces', 'tag',
+        'description'
+    ]
 
-        params['name'] = self.params['name']
-        params['partition'] = self.params['partition']
+    returnables = [
+        'description', 'partition', 'name', 'tag', 'interfaces',
+        'tagged_interfaces', 'untagged_interfaces'
+    ]
 
-        self.cparams = camel_dict_to_snake_dict(params)
-        if check_mode:
-            return True
+    api_attributes = [
+        'description', 'interfaces', 'partition', 'name', 'tag'
+    ]
+    api_map = {}
 
-        dc = self.api.tm.net.vlans.vlan.load(**params)
-        dc.delete()
+    @property
+    def interfaces(self):
+        tagged = self._values['tagged_interfaces']
+        untagged = self._values['untagged_interfaces']
+        if tagged:
+            return [dict(name=x, tagged=True) for x in tagged]
+        if untagged:
+            return [dict(name=x, untagged=True) for x in untagged]
 
-        if self.exists():
-            raise F5ModuleError("Failed to delete the VLAN")
-        return True
+    @property
+    def tagged_interfaces(self):
+        value = self._values['tagged_interfaces']
+        if value is None:
+            return None
+        ifcs = self._parse_return_ifcs()
+        for ifc in value:
+            if ifc not in ifcs:
+                err = 'The specified interface "%s" was not found' % ifc
+                raise F5ModuleError(err)
+        return value
 
-    def exists(self):
-        name = self.params['name']
-        partition = self.params['partition']
-        return self.api.tm.net.vlans.vlan.exists(
-            name=name,
-            partition=partition
-        )
+    @property
+    def untagged_interfaces(self):
+        value = self._values['untagged_interfaces']
+        if value is None:
+            return None
+        ifcs = self._parse_return_ifcs()
+        for ifc in value:
+            if ifc not in ifcs:
+                err = 'The specified interface "%s" was not found' % ifc
+                raise F5ModuleError(err)
+        return value
 
-    def flush(self):
+    def _get_interfaces_from_device(self):
+        lst = self.client.api.tm.net.interfaces.get_collection()
+        return lst
+
+    def _parse_return_ifcs(self):
+        ifclst = self._get_interfaces_from_device()
+        ifcs = [str(x.name) for x in ifclst]
+        if not ifcs:
+            err = 'No interfaces were found'
+            raise F5ModuleError(err)
+        return ifcs
+
+    def to_return(self):
+        result = {}
+        for returnable in self.returnables:
+            result[returnable] = getattr(self, returnable)
+        result = self._filter_params(result)
+        return result
+
+    def api_params(self):
+        result = {}
+        for api_attribute in self.api_attributes:
+            if api_attribute in self.api_map:
+                result[api_attribute] = getattr(
+                    self, self.api_map[api_attribute])
+            else:
+                result[api_attribute] = getattr(self, api_attribute)
+        result = self._filter_params(result)
+        return result
+
+
+class ModuleManager(object):
+    def __init__(self, client):
+        self.client = client
+        self.have = None
+        self.want = Parameters()
+        self.want.client = self.client
+        self.want.update(self.client.module.params)
+        self.changes = Parameters()
+
+    def exec_module(self):
+        changed = False
         result = dict()
-        state = self.params['state']
+        state = self.want.state
 
         try:
             if state == "present":
@@ -396,42 +284,161 @@ class BigIpVlan(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        result.update(**self.cparams)
+        changes = self.changes.to_return()
+        result.update(**changes)
         result.update(dict(changed=changed))
         return result
 
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = Parameters(changed)
+
+    def _update_changed_options(self):
+        changed = {}
+        for key in Parameters.updatables:
+            if getattr(self.want, key) is not None:
+                attr1 = getattr(self.want, key)
+                attr2 = getattr(self.have, key)
+                if attr1 != attr2:
+                    changed[key] = attr1
+        if changed:
+            self.changes = Parameters(changed)
+            return True
+        return False
+
+    def _have_interfaces(self, ifcs):
+        untagged = [str(x.name) for x in ifcs if hasattr(x, 'untagged')]
+        tagged = [str(x.name) for x in ifcs if hasattr(x, 'tagged')]
+        if untagged:
+            self.have.update({'untagged_interfaces': untagged})
+        if tagged:
+            self.have.update({'tagged_interfaces': tagged})
+
+    def present(self):
+        if self.exists():
+            return self.update()
+        else:
+            return self.create()
+
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
+    def update(self):
+        self.have, ifcs = self.read_current_from_device()
+        if ifcs:
+            self._have_interfaces(ifcs)
+        if not self.should_update():
+            return False
+        if self.client.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def remove(self):
+        if self.client.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the VLAN")
+        return True
+
+    def create(self):
+        self._set_changed_options()
+        if self.client.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        self.client.api.tm.net.vlans.vlan.create(**params)
+
+    def update_on_device(self):
+        params = self.want.api_params()
+        result = self.client.api.tm.net.vlans.vlan.load(
+            name=self.want.name, partition=self.want.partition
+        )
+        result.modify(**params)
+
+    def exists(self):
+        return self.client.api.tm.net.vlans.vlan.exists(
+            name=self.want.name, partition=self.want.partition
+        )
+
+    def remove_from_device(self):
+        result = self.client.api.tm.net.vlans.vlan.load(
+            name=self.want.name, partition=self.want.partition
+        )
+        if result:
+            result.delete()
+
+    def read_current_from_device(self):
+        tmp_res = self.client.api.tm.net.vlans.vlan.load(
+            name=self.want.name, partition=self.want.partition
+        )
+        ifcs = tmp_res.interfaces_s.get_collection()
+
+        result = tmp_res.attrs
+        return Parameters(result), ifcs
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        self.argument_spec = dict(
+            name=dict(
+                required=True,
+            ),
+            tagged_interfaces=dict(
+                type='list',
+                aliases=['tagged_interface']
+            ),
+            untagged_interfaces=dict(
+                type='list',
+                aliases=['untagged_interface']
+            ),
+            description=dict(),
+            tag=dict(
+                type='int'
+            )
+        )
+        self.f5_product_name = 'bigip'
+
 
 def main():
-    argument_spec = f5_argument_spec()
+    if not HAS_F5SDK:
+        raise F5ModuleError("The python f5-sdk module is required")
 
-    meta_args = dict(
-        description=dict(required=False, default=None),
-        tagged_interfaces=dict(required=False, default=None, type='list', aliases=['tagged_interface']),
-        untagged_interfaces=dict(required=False, default=None, type='list', aliases=['untagged_interface']),
-        name=dict(required=True),
-        tag=dict(required=False, default=None, type='int')
-    )
-    argument_spec.update(meta_args)
+    spec = ArgumentSpec()
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
+    client = AnsibleF5Client(
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode,
+        f5_product_name=spec.f5_product_name,
         mutually_exclusive=[
             ['tagged_interfaces', 'untagged_interfaces']
         ]
     )
 
     try:
-        obj = BigIpVlan(check_mode=module.check_mode, **module.params)
-        result = obj.flush()
-
-        module.exit_json(**result)
+        mm = ModuleManager(client)
+        results = mm.exec_module()
+        client.module.exit_json(**results)
     except F5ModuleError as e:
-        module.fail_json(msg=str(e))
+        client.module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()
