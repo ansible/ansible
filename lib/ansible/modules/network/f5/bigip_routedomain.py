@@ -1,21 +1,31 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright (c) 2016 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_routedomain
 short_description: Manage route domains on a BIG-IP
 description:
-  - Manage route domains on a BIG-IP
+  - Manage route domains on a BIG-IP.
 version_added: "2.2"
 options:
+  name:
+    description:
+      - The name of the route domain.
+      - When creating a new route domain, if this value is not specified, then the
+        value of C(id) will be used for it.
+    version_added: 2.5
   bwc_policy:
     description:
       - The bandwidth controller for the route domain.
@@ -34,12 +44,22 @@ options:
   id:
     description:
       - The unique identifying integer representing the route domain.
-    required: true
+      - This field is required when creating a new route domain.
+      - In version 2.5, this value is no longer used to reference a route domain when
+        making modifications to it (for instance during update and delete operations).
+        Instead, the C(name) parameter is used. In version 2.6, the C(name) value will
+        become a required parameter.
   parent:
     description:
       Specifies the route domain the system searches when it cannot
       find a route in the configured domain.
     required: false
+  partition:
+    description:
+      - Partition to create the route domain on. Partitions cannot be updated
+        once they are created.
+    required: false
+    default: Common
   routing_protocol:
     description:
       - Dynamic routing protocols for the system to use in the route domain.
@@ -83,88 +103,99 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a route domain
   bigip_routedomain:
-      id: "1234"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    name: foo
+    id: 1234
+    password: secret
+    server: lb.mydomain.com
+    state: present
+    user: admin
   delegate_to: localhost
 
 - name: Set VLANs on the route domain
   bigip_routedomain:
-      id: "1234"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
-      vlans:
-          - net1
-          - foo
+    name: bar
+    password: secret
+    server: lb.mydomain.com
+    state: present
+    user: admin
+    vlans:
+      - net1
+      - foo
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 id:
-    description: The ID of the route domain that was changed
-    returned: changed
-    type: int
-    sample: 2
+  description: The ID of the route domain that was changed
+  returned: changed
+  type: int
+  sample: 2
 description:
-    description: The description of the route domain
-    returned: changed
-    type: string
-    sample: "route domain foo"
+  description: The description of the route domain
+  returned: changed
+  type: string
+  sample: route domain foo
 strict:
-    description: The new strict isolation setting
-    returned: changed
-    type: string
-    sample: "enabled"
+  description: The new strict isolation setting
+  returned: changed
+  type: string
+  sample: enabled
 parent:
-    description: The new parent route domain
-    returned: changed
-    type: int
-    sample: 0
+  description: The new parent route domain
+  returned: changed
+  type: int
+  sample: 0
 vlans:
-    description: List of new VLANs the route domain is applied to
-    returned: changed
-    type: list
-    sample: ['/Common/http-tunnel', '/Common/socks-tunnel']
+  description: List of new VLANs the route domain is applied to
+  returned: changed
+  type: list
+  sample: ['/Common/http-tunnel', '/Common/socks-tunnel']
 routing_protocol:
-    description: List of routing protocols applied to the route domain
-    returned: changed
-    type: list
-    sample: ['bfd', 'bgp']
+  description: List of routing protocols applied to the route domain
+  returned: changed
+  type: list
+  sample: ['bfd', 'bgp']
 bwc_policy:
-    description: The new bandwidth controller
-    returned: changed
-    type: string
-    sample: /Common/foo
+  description: The new bandwidth controller
+  returned: changed
+  type: string
+  sample: /Common/foo
 connection_limit:
-    description: The new connection limit for the route domain
-    returned: changed
-    type: int
-    sample: 100
+  description: The new connection limit for the route domain
+  returned: changed
+  type: integer
+  sample: 100
 flow_eviction_policy:
-    description: The new eviction policy to use with this route domain
-    returned: changed
-    type: string
-    sample: /Common/default-eviction-policy
+  description: The new eviction policy to use with this route domain
+  returned: changed
+  type: string
+  sample: /Common/default-eviction-policy
 service_policy:
-    description: The new service policy to use with this route domain
-    returned: changed
-    type: string
-    sample: /Common-my-service-policy
+  description: The new service policy to use with this route domain
+  returned: changed
+  type: string
+  sample: /Common-my-service-policy
 '''
 
 try:
     from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
+except ImportError:
+    pass  # Handled via f5_utils.HAS_F5SDK
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import f5_argument_spec
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
 except ImportError:
     HAS_F5SDK = False
+
 
 PROTOCOLS = [
     'BFD', 'BGP', 'IS-IS', 'OSPFv2', 'OSPFv3', 'PIM', 'RIP', 'RIPng'
@@ -181,14 +212,13 @@ class BigIpRouteDomain(object):
         # The params that change in the module
         self.cparams = dict()
 
-        kwargs['name'] = str(kwargs['id'])
-
         # Stores the params that are sent to the module
         self.params = kwargs
         self.api = ManagementRoot(kwargs['server'],
                                   kwargs['user'],
                                   kwargs['password'],
-                                  port=kwargs['server_port'])
+                                  port=kwargs['server_port'],
+                                  token=True)
 
     def absent(self):
         if not self.exists():
@@ -197,8 +227,12 @@ class BigIpRouteDomain(object):
         if self.params['check_mode']:
             return True
 
+        if self.params['name'] is None:
+            self.params['name'] = str(self.params['id'])
+
         rd = self.api.tm.net.route_domains.route_domain.load(
-            name=self.params['name']
+            name=self.params['name'],
+            partition=self.params['partition']
         )
         rd.delete()
 
@@ -226,8 +260,13 @@ class BigIpRouteDomain(object):
         parameters that are supported by the module.
         """
         p = dict()
+
+        if self.params['name'] is None:
+            self.params['name'] = str(self.params['id'])
+
         r = self.api.tm.net.route_domains.route_domain.load(
-            name=self.params['name']
+            name=self.params['name'],
+            partition=self.params['partition']
         )
 
         p['id'] = int(r.id)
@@ -271,6 +310,14 @@ class BigIpRouteDomain(object):
         params = dict()
         params['id'] = self.params['id']
         params['name'] = self.params['name']
+        params['partition'] = self.params['partition']
+
+        if params['name'] is None:
+            self.params['name'] = str(self.params['id'])
+        elif params['id'] is None:
+            raise F5ModuleError(
+                "The 'id' parameter is required when creating new route domains."
+            )
 
         partition = self.params['partition']
         description = self.params['description']
@@ -331,7 +378,8 @@ class BigIpRouteDomain(object):
 
         self.api.tm.net.route_domains.route_domain.create(**params)
         exists = self.api.tm.net.route_domains.route_domain.exists(
-            name=self.params['name']
+            name=self.params['name'],
+            partition=self.params['partition']
         )
 
         if exists:
@@ -345,6 +393,9 @@ class BigIpRouteDomain(object):
         changed = False
         params = dict()
         current = self.read()
+
+        if self.params['name'] is None:
+            self.params['name'] = str(self.params['id'])
 
         check_mode = self.params['check_mode']
         partition = self.params['partition']
@@ -443,7 +494,8 @@ class BigIpRouteDomain(object):
 
         try:
             rd = self.api.tm.net.route_domains.route_domain.load(
-                name=self.params['name']
+                name=self.params['name'],
+                partition=self.params['partition']
             )
             rd.update(**params)
             rd.refresh()
@@ -453,11 +505,14 @@ class BigIpRouteDomain(object):
         return True
 
     def exists(self):
+        if self.params['name'] is None:
+            self.params['name'] = str(self.params['id'])
         return self.api.tm.net.route_domains.route_domain.exists(
-            name=self.params['name']
+            name=self.params['name'],
+            partition=self.params['partition']
         )
 
-    def flush(self):
+    def exec_module(self):
         result = dict()
         state = self.params['state']
 
@@ -476,10 +531,12 @@ def main():
     argument_spec = f5_argument_spec()
 
     meta_args = dict(
-        id=dict(required=True, type='int'),
+        name=dict(required=False),
+        id=dict(required=False, type='int'),
         description=dict(required=False, default=None),
         strict=dict(required=False, default=None, choices=STRICTS),
         parent=dict(required=False, type='int', default=None),
+        partition=dict(required=False, type='str', default='Common'),
         vlans=dict(required=False, default=None, type='list'),
         routing_protocol=dict(required=False, default=None, type='list'),
         bwc_policy=dict(required=False, type='str', default=None),
@@ -491,20 +548,18 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_one_of=[['name', 'id']]
     )
 
     try:
         obj = BigIpRouteDomain(check_mode=module.check_mode, **module.params)
-        result = obj.flush()
+        result = obj.exec_module()
 
         module.exit_json(**result)
     except F5ModuleError as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()
