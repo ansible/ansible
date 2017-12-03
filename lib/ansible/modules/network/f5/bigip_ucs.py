@@ -195,7 +195,10 @@ from ansible.module_utils.six import iteritems
 try:
     from collections import OrderedDict
 except ImportError:
-    pass
+    try:
+        from ordereddict import OrderedDict
+    except ImportError:
+        pass
 
 try:
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
