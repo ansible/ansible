@@ -43,6 +43,7 @@ notes:
 extends_documentation_fragment: f5
 requirements:
   - f5-sdk >= 2.2.0
+  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -80,6 +81,8 @@ local_ip:
   type: string
   sample: 10.10.10.10
 '''
+
+import re
 
 try:
     import netaddr
@@ -163,12 +166,39 @@ class Parameters(AnsibleF5Parameters):
     @property
     def remote_host(self):
         try:
-            ip = netaddr.IPAddress(self._values['remote_host'])
-            return str(ip)
+            # Check for valid IPv4 or IPv6 entries
+            netaddr.IPAddress(self._values['remote_host'])
+            return self._values['remote_host']
         except netaddr.core.AddrFormatError:
+            # else fallback to checking reasonably well formatted hostnames
+            if self.is_valid_hostname(self._values['remote_host']):
+                return str(self._values['remote_host'])
             raise F5ModuleError(
-                "The provided 'remote_host' is not a valid IP address"
+                "The provided 'remote_host' is not a valid IP or hostname"
             )
+
+    def is_valid_hostname(self, host):
+        """Reasonable attempt at validating a hostname
+
+        Compiled from various paragraphs outlined here
+        https://tools.ietf.org/html/rfc3696#section-2
+        https://tools.ietf.org/html/rfc1123
+
+        Notably,
+        * Host software MUST handle host names of up to 63 characters and
+          SHOULD handle host names of up to 255 characters.
+        * The "LDH rule", after the characters that it permits. (letters, digits, hyphen)
+        * If the hyphen is used, it is not permitted to appear at
+          either the beginning or end of a label
+
+        :param host:
+        :return:
+        """
+        if len(host) > 255:
+            return False
+        host = host.rstrip(".")
+        allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+        return all(allowed.match(x) for x in host.split("."))
 
     @property
     def remote_port(self):
