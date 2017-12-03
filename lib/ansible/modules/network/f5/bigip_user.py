@@ -189,8 +189,7 @@ shell:
   sample: tmsh
 '''
 
-import os
-import tempfile
+import re
 
 from distutils.version import LooseVersion
 from ansible.module_utils.f5_utils import AnsibleF5Client
@@ -359,151 +358,151 @@ class ModuleManager(object):
 
 
 class BaseManager(object):
-        def __init__(self, client):
-            self.client = client
-            self.have = None
-            self.want = Parameters(self.client.module.params)
-            self.changes = Parameters()
+    def __init__(self, client):
+        self.client = client
+        self.have = None
+        self.want = Parameters(self.client.module.params)
+        self.changes = Parameters()
 
-        def exec_module(self):
-            changed = False
-            result = dict()
-            state = self.want.state
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
 
-            try:
-                if state == "present":
-                    changed = self.present()
-                elif state == "absent":
-                    changed = self.absent()
-            except iControlUnexpectedHTTPError as e:
-                raise F5ModuleError(str(e))
+        try:
+            if state == "present":
+                changed = self.present()
+            elif state == "absent":
+                changed = self.absent()
+        except iControlUnexpectedHTTPError as e:
+            raise F5ModuleError(str(e))
 
-            changes = self.changes.to_return()
-            result.update(**changes)
-            result.update(dict(changed=changed))
-            return result
+        changes = self.changes.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        return result
 
-        def _set_changed_options(self):
-            changed = {}
-            for key in Parameters.returnables:
-                if getattr(self.want, key) is not None:
-                    changed[key] = getattr(self.want, key)
-            if changed:
-                self.changes = Parameters(changed)
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = Parameters(changed)
 
-        def _update_changed_options(self):
-            changed = {}
-            for key in Parameters.updatables:
-                if getattr(self.want, key) is not None:
-                    if key == 'password_credential':
-                        new_pass = getattr(self.want, key)
-                        if self.want.update_password == 'always':
-                            changed[key] = new_pass
-                    else:
-                        # We set the shell parameter to 'none' when bigip does
-                        # not return it.
-                        if self.want.shell == 'bash':
-                            self.validate_shell_parameter()
-                        if self.want.shell == 'none' and self.have.shell is None:
-                            self.have.shell = 'none'
-                        attr1 = getattr(self.want, key)
-                        attr2 = getattr(self.have, key)
-                        if attr1 != attr2:
-                            changed[key] = attr1
+    def _update_changed_options(self):
+        changed = {}
+        for key in Parameters.updatables:
+            if getattr(self.want, key) is not None:
+                if key == 'password_credential':
+                    new_pass = getattr(self.want, key)
+                    if self.want.update_password == 'always':
+                        changed[key] = new_pass
+                else:
+                    # We set the shell parameter to 'none' when bigip does
+                    # not return it.
+                    if self.want.shell == 'bash':
+                        self.validate_shell_parameter()
+                    if self.want.shell == 'none' and self.have.shell is None:
+                        self.have.shell = 'none'
+                    attr1 = getattr(self.want, key)
+                    attr2 = getattr(self.have, key)
+                    if attr1 != attr2:
+                        changed[key] = attr1
 
-            if changed:
-                self.changes = Parameters(changed)
-                return True
-            return False
+        if changed:
+            self.changes = Parameters(changed)
+            return True
+        return False
 
-        def validate_shell_parameter(self):
-            """Method to validate shell parameters.
+    def validate_shell_parameter(self):
+        """Method to validate shell parameters.
 
-            Raise when shell attribute is set to 'bash' with roles set to
-            either 'admin' or 'resource-admin'.
+        Raise when shell attribute is set to 'bash' with roles set to
+        either 'admin' or 'resource-admin'.
 
-            NOTE: Admin and Resource-Admin roles automatically enable access to
-            all partitions, removing any other roles that the user might have
-            had. There are few other roles which do that but those roles,
-            do not allow bash.
-            """
+        NOTE: Admin and Resource-Admin roles automatically enable access to
+        all partitions, removing any other roles that the user might have
+        had. There are few other roles which do that but those roles,
+        do not allow bash.
+        """
 
-            err = "Shell access is only available to " \
-                  "'admin' or 'resource-admin' roles"
-            permit = ['admin', 'resource-admin']
+        err = "Shell access is only available to " \
+              "'admin' or 'resource-admin' roles"
+        permit = ['admin', 'resource-admin']
 
-            if self.have is not None:
-                have = self.have.partition_access
-                if not any(r['role'] for r in have if r['role'] in permit):
-                    raise F5ModuleError(err)
-
-            # This check is needed if we want to modify shell AND
-            # partition_access attribute.
-            # This check will also trigger on create.
-            if self.want.partition_access is not None:
-                want = self.want.partition_access
-                if not any(r['role'] for r in want if r['role'] in permit):
-                    raise F5ModuleError(err)
-
-        def present(self):
-            if self.exists():
-                return self.update()
-            else:
-                return self.create()
-
-        def absent(self):
-            if self.exists():
-                return self.remove()
-            return False
-
-        def should_update(self):
-            result = self._update_changed_options()
-            if result:
-                return True
-            return False
-
-        def validate_create_parameters(self):
-            """Password credentials and partition access are mandatory,
-
-            when creating a user resource.
-            """
-            if self.want.password_credential and \
-                    self.want.update_password != 'on_create':
-                err = "The 'update_password' option " \
-                      "needs to be set to 'on_create' when creating " \
-                      "a resource with a password."
-                raise F5ModuleError(err)
-            if self.want.partition_access is None:
-                err = "The 'partition_access' option " \
-                      "is required when creating a resource."
+        if self.have is not None:
+            have = self.have.partition_access
+            if not any(r['role'] for r in have if r['role'] in permit):
                 raise F5ModuleError(err)
 
-        def update(self):
-            self.have = self.read_current_from_device()
-            if not self.should_update():
-                return False
-            if self.client.check_mode:
-                return True
-            self.update_on_device()
-            return True
+        # This check is needed if we want to modify shell AND
+        # partition_access attribute.
+        # This check will also trigger on create.
+        if self.want.partition_access is not None:
+            want = self.want.partition_access
+            if not any(r['role'] for r in want if r['role'] in permit):
+                raise F5ModuleError(err)
 
-        def remove(self):
-            if self.client.check_mode:
-                return True
-            self.remove_from_device()
-            if self.exists():
-                raise F5ModuleError("Failed to delete the user")
-            return True
+    def present(self):
+        if self.exists():
+            return self.update()
+        else:
+            return self.create()
 
-        def create(self):
-            self.validate_create_parameters()
-            if self.want.shell == 'bash':
-                self.validate_shell_parameter()
-            self._set_changed_options()
-            if self.client.check_mode:
-                return True
-            self.create_on_device()
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
             return True
+        return False
+
+    def validate_create_parameters(self):
+        """Password credentials and partition access are mandatory,
+
+        when creating a user resource.
+        """
+        if self.want.password_credential and \
+                self.want.update_password != 'on_create':
+            err = "The 'update_password' option " \
+                  "needs to be set to 'on_create' when creating " \
+                  "a resource with a password."
+            raise F5ModuleError(err)
+        if self.want.partition_access is None:
+            err = "The 'partition_access' option " \
+                  "is required when creating a resource."
+            raise F5ModuleError(err)
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.client.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def remove(self):
+        if self.client.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the user")
+        return True
+
+    def create(self):
+        self.validate_create_parameters()
+        if self.want.shell == 'bash':
+            self.validate_shell_parameter()
+        self._set_changed_options()
+        if self.client.check_mode:
+            return True
+        self.create_on_device()
+        return True
 
 
 class UnparitionedManager(BaseManager):
@@ -621,40 +620,27 @@ class RootUserManager(BaseManager):
         return True
 
     def update(self):
-        file = tempfile.NamedTemporaryFile()
-        self.want.update({'tempfile': os.path.basename(file.name)})
-        self.upload_password_file_to_device()
-        self.update_on_device()
-        self.remove_password_file_from_device()
-        return True
+        result = self.update_on_device()
+        return result
 
     def update_on_device(self):
-        errors = [
-            'not confirmed',
-            'change canceled'
-        ]
-        cmd = '-c "cat /var/config/rest/downloads/{0} | tmsh modify auth password root"'.format(self.want.tempfile)
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs=cmd
-        )
-        if hasattr(output, 'commandResult'):
-            result = str(output.commandResult)
-            if any(x for x in errors if x in result):
-                raise F5ModuleError(result)
-
-    def upload_password_file_to_device(self):
+        escape_patterns = r'([$' + "'])"
+        errors = ['Bad password', 'password change canceled', 'based on a dictionary word']
         content = "{0}\n{0}\n".format(self.want.password_credential)
-        template = StringIO(content)
-        upload = self.client.api.shared.file_transfer.uploads
-        upload.upload_stringio(template, self.want.tempfile)
-        return True
-
-    def remove_password_file_from_device(self):
-        self.client.api.tm.util.unix_rm.exec_cmd(
-            'run',
-            utilCmdArgs='/var/config/rest/downloads/{0}'.format(self.want.tempfile)
-        )
+        command = re.sub(escape_patterns, r'\\\1', content)
+        cmd = '-c "printf \\\"{0}\\\" | tmsh modify auth password root"'.format(command)
+        try:
+            output = self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs=cmd
+            )
+            if hasattr(output, 'commandResult'):
+                result = str(output.commandResult)
+                if any(x for x in errors if x in result):
+                    raise F5ModuleError(result)
+            return True
+        except iControlUnexpectedHTTPError:
+            return False
 
 
 class ArgumentSpec(object):
