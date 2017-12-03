@@ -65,6 +65,7 @@ class IncludeRole(TaskInclude):
         self._role_path = None
         self._play = None
         self._role = None
+        self._cached_vars = {}
 
     def serialize(self, no_play=False):
         data = super(IncludeRole, self).serialize()
@@ -222,23 +223,47 @@ class IncludeRole(TaskInclude):
     def is_loaded(self):
         return self._role is not None
 
-    def get_default_vars(self, dep_chain=None):
-        if not self.is_loaded:
-            return dict()
-        if dep_chain is None:
-            dep_chain = self.get_dep_chain()
-        return self.get_dynamic_role().get_default_vars(dep_chain=dep_chain)
-
-    def get_vars(self, include_params=True):
-        ret = TaskInclude.get_vars(self, include_params=include_params)
-        if self.is_loaded:  # not yet loaded skip
-            ret.update(
-                self.get_dynamic_role().get_vars(include_params=include_params)
-            )
+    def cache_get(self, key, kval, func, *a, **kw):
+        try:
+            cache = self._cached_vars[key]
+        except KeyError:
+            cache = self._cached_vars[key] = {}
+        try:
+            ret = cache[kval]
+        except KeyError:
+            cache[kval] = ret = func(*a, **kw)
         return ret
 
+    def get_default_vars(self, dep_chain=None):
+        cache_key = (self.is_loaded, dep_chain and tuple(dep_chain) or None)
+
+        def func(dep_chain, *a, **kw):
+            if not self.is_loaded:
+                return dict()
+            if dep_chain is None:
+                dep_chain = self.get_dep_chain()
+            ret = self.get_dynamic_role().get_default_vars(dep_chain=dep_chain)
+            return ret
+        return self.cache_get('default', cache_key, func, dep_chain)
+
+    def get_vars(self, include_params=True):
+        cache_key = (include_params, self.is_loaded)
+
+        def func(include_params, *a, **kw):
+            ret = TaskInclude.get_vars(self, include_params=include_params)
+            if self.is_loaded:  # not yet loaded skip
+                ret.update(
+                    self.get_dynamic_role().get_vars(include_params=include_params)
+                )
+            return ret
+        return self.cache_get('vars', cache_key, func, include_params)
+
     def get_include_params(self):
-        v = super(IncludeRole, self).get_include_params()
-        if self._parent_role:
-            v.update(self._parent_role.get_role_params())
-        return v
+        cache_key = bool(self._parent_role)
+
+        def func(*a, **kw):
+            v = super(IncludeRole, self).get_include_params()
+            if self._parent_role:
+                v.update(self._parent_role.get_role_params())
+            return v
+        return self.cache_get('include_params', cache_key, func)
