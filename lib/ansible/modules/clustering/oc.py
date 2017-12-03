@@ -52,7 +52,7 @@ options:
     required: false
   token:
     description:
-      - "The OpenShift service account token with which to authenticate against the OpenShift cluster."
+      - "The token with which to authenticate against the OpenShift cluster."
     required: false
   kube_config:
     description:
@@ -432,23 +432,29 @@ class KubeConfig(object):
         return None
 
     # Because Python requests doesn't take a certificate as a string, but rather a file,
-    # we will have to create a temporary file for the client certificate.
+    # we will have to create a temporary file for the client certificate.  Alternatively the
+    # kube/config file can accept a path to the certificate.
     def user_client_cert_file(self):
         if self.user_client_cert():
             self.cert_file, self.cert_file_name = tempfile.mkstemp()
             os.write(self.cert_file, self.user_client_cert())
             self.module.log('cert file name {0}'.format(self.cert_file_name))
             return self.cert_file_name
+        elif self.login_info[0]['client-certificate']:
+            return self.login_info[0]['client-certificate']
         return None
 
     # Because Python requests doesn't take a certificate as a string, but rather a file,
-    # we will have to create a temporary file for the client key.
+    # we will have to create a temporary file for the client key.  Alternatively the
+    # kube/config file can accept a path to the key.
     def user_client_key_file(self):
         if self.user_client_key():
             self.key_file, self.key_file_name = tempfile.mkstemp()
             os.write(self.key_file, self.user_client_key())
             self.module.log('key file name {0}'.format(self.key_file_name))
             return self.key_file_name
+        elif self.login_info[0]['client-key']:
+            return self.login_info[0]['client-key']
         return None
 
     def clean(self):
@@ -580,7 +586,6 @@ def main():
         kube_config.clean()
 
     module.exit_json(changed=changed, ansible_facts=facts)
-
 
 if __name__ == '__main__':
     main()
