@@ -248,11 +248,10 @@ class KeyParameters(Parameters):
 
     @property
     def key_filename(self):
-        fname, fext = os.path.splitext(self.name)
-        if fext == '':
-            return fname + '.key'
-        else:
+        if self.name.endswith('.key'):
             return self.name
+        else:
+            return self.name + '.key'
 
     @property
     def key_checksum(self):
@@ -308,11 +307,10 @@ class CertParameters(Parameters):
 
     @property
     def cert_filename(self):
-        fname, fext = os.path.splitext(self.name)
-        if fext == '':
-            return fname + '.crt'
-        else:
+        if self.name.endswith('.crt'):
             return self.name
+        else:
+            return self.name + '.crt'
 
     @property
     def cert_src(self):
