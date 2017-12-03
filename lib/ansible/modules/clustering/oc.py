@@ -28,17 +28,14 @@ options:
   host:
     description:
       - "Hostname or address of the OpenShift API endpoint. By default, this is expected to be the current inventory host."
-    required: false
-    default: 127.0.0.1
+      - "This option can be omitted if the environment variable C(OC_HOST) is set."
   port:
     description:
       - "The port number of the API endpoint."
-    required: false
-    default: 8443
+      - "This option can be omitted if the environment variable C(OC_PORT) is set."
   inline:
     description:
       - "The inline definition of the resource. This is mutually exclusive with name, namespace and kind."
-    required: false
   kind:
     description: The kind of the resource upon which to take action.
     required: true
@@ -53,7 +50,7 @@ options:
   token:
     description:
       - "The token with which to authenticate agains the OpenShift cluster."
-    required: true
+      - "This option can be omitted if the environment variable C(OC_TOKEN) is set."
   state:
     choices:
       - present
@@ -62,6 +59,13 @@ options:
       - "If the state is present, and the resource doesn't exist, it shall be created using the inline definition. If the state is present and the
         resource exists, the definition will be updated, again using an inline definition. If the state is absent, the resource will be deleted if it exists."
     required: true
+  validate_certs:
+      description:
+          - Allows connection when SSL certificates are not valid. Set to
+            no when certificates are not trusted.
+          - This option can be omitted if the environment variable C(OC_VERIFY_SSL) is set.
+      choices: ['yes', 'no']
+      version_added: 2.5
 short_description: Manage OpenShift Resources
 version_added: 2.4
 
@@ -129,6 +133,7 @@ method:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils import urls
 
 
@@ -362,17 +367,17 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            host=dict(type='str', default='127.0.0.1'),
-            port=dict(type='int', default=8443),
+            host=dict(type='str', fallback=(env_fallback, ['OC_HOST'])),
+            port=dict(type='int', fallback=(env_fallback, ['OC_PORT'])),
             definition=dict(aliases=['def', 'inline'],
                             type='dict'),
             kind=dict(type='str'),
             name=dict(type='str'),
             namespace=dict(type='str'),
-            token=dict(required=True, type='str', no_log=True),
+            token=dict(type='str', no_log=True, fallback=(env_fallback, ['OC_TOKEN'])),
             state=dict(required=True,
                        choices=['present', 'absent']),
-            validate_certs=dict(type='bool', default='yes')
+            validate_certs=dict(type='bool', fallback=(env_fallback, ['OC_VERIFY_SSL']))
         ),
         mutually_exclusive=(['kind', 'definition'],
                             ['name', 'definition'],
