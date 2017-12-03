@@ -53,13 +53,12 @@ options:
     description:
       Specifies the route domain the system searches when it cannot
       find a route in the configured domain.
-    required: false
   partition:
     description:
       - Partition to create the route domain on. Partitions cannot be updated
         once they are created.
-    required: false
     default: Common
+    version_added: 2.5
   routing_protocol:
     description:
       - Dynamic routing protocols for the system to use in the route domain.
@@ -78,7 +77,6 @@ options:
   state:
     description:
       - Whether the route domain should exist or not.
-    required: false
     default: present
     choices:
       - present
@@ -166,7 +164,7 @@ bwc_policy:
 connection_limit:
   description: The new connection limit for the route domain
   returned: changed
-  type: integer
+  type: int
   sample: 100
 flow_eviction_policy:
   description: The new eviction policy to use with this route domain
@@ -531,18 +529,18 @@ def main():
     argument_spec = f5_argument_spec()
 
     meta_args = dict(
-        name=dict(required=False),
-        id=dict(required=False, type='int'),
-        description=dict(required=False, default=None),
-        strict=dict(required=False, default=None, choices=STRICTS),
-        parent=dict(required=False, type='int', default=None),
-        partition=dict(required=False, type='str', default='Common'),
-        vlans=dict(required=False, default=None, type='list'),
-        routing_protocol=dict(required=False, default=None, type='list'),
-        bwc_policy=dict(required=False, type='str', default=None),
-        connection_limit=dict(required=False, type='int', default=None),
-        flow_eviction_policy=dict(required=False, type='str', default=None),
-        service_policy=dict(required=False, type='str', default=None)
+        name=dict(),
+        id=dict(type='int'),
+        description=dict(),
+        strict=dict(choices=STRICTS),
+        parent=dict(type='int'),
+        partition=dict(default='Common'),
+        vlans=dict(type='list'),
+        routing_protocol=dict(type='list'),
+        bwc_policy=dict(),
+        connection_limit=dict(type='int',),
+        flow_eviction_policy=dict(),
+        service_policy=dict()
     )
     argument_spec.update(meta_args)
 
