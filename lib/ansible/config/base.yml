@@ -56,6 +56,15 @@ ANSIBLE_NOCOWS:
   - {key: nocows, section: defaults}
   type: boolean
   yaml: {key: display.i_am_no_fun}
+ANSIBLE_COWPATH:
+  name: Set path to cowsay command
+  default: null
+  description: Specify a custom cowsay path or swap in your cowsay implementation of choice
+  env: [{name: ANSIBLE_COWPATH}]
+  ini:
+  - {key: cowpath, section: defaults}
+  type: string
+  yaml: {key: display.cowpath}
 ANSIBLE_PIPELINING:
   name: Connection pipelining
   default: False

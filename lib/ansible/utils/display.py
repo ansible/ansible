@@ -98,7 +98,12 @@ class Display:
         self._set_column_width()
 
     def set_cowsay_info(self):
-        if not C.ANSIBLE_NOCOWS:
+        if C.ANSIBLE_NOCOWS:
+            return
+
+        if C.ANSIBLE_COWPATH:
+            self.b_cowsay = C.ANSIBLE_COWPATH
+        else:
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
