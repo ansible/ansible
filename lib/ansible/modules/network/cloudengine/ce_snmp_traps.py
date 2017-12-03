@@ -137,7 +137,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config, ce_argument_spec, run_commands
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec, run_commands
 
 
 class SnmpTraps(object):

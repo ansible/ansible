@@ -119,11 +119,11 @@ failed_conditions:
 """
 import time
 
-from ansible.module_utils.aireos import run_commands
-from ansible.module_utils.aireos import aireos_argument_spec, check_args
+from ansible.module_utils.network.aireos.aireos import run_commands
+from ansible.module_utils.network.aireos.aireos import aireos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
 

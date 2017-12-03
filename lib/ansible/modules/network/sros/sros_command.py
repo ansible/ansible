@@ -136,10 +136,10 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
-from ansible.module_utils.sros import run_commands, sros_argument_spec, check_args
+from ansible.module_utils.network.sros.sros import run_commands, sros_argument_spec, check_args
 
 
 def to_lines(stdout):

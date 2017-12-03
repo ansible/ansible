@@ -140,9 +140,9 @@ from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.ios import load_config, get_config
-from ansible.module_utils.ios import ios_argument_spec, check_args
-from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.network.ios.ios import load_config, get_config
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.six import iteritems
 
 

@@ -141,11 +141,11 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
 
-from ansible.module_utils.mlnxos import mlnxos_argument_spec, run_commands
+from ansible.module_utils.network.mlnxos.mlnxos import mlnxos_argument_spec, run_commands
 
 
 def to_lines(stdout):

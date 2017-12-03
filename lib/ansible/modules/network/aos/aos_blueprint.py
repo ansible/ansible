@@ -133,7 +133,7 @@ build_errors:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import get_aos_session, check_aos_version, find_collection_item
+from ansible.module_utils.network.aos.aos import get_aos_session, check_aos_version, find_collection_item
 from ansible.module_utils.pycompat24 import get_exception
 
 def create_blueprint(module, aos, name):

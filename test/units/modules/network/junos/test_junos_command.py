@@ -41,16 +41,16 @@ class TestJunosCommandModule(TestJunosModule):
     def setUp(self):
         super(TestJunosCommandModule, self).setUp()
 
-        self.mock_conn = patch('ansible.module_utils.junos.Connection')
+        self.mock_conn = patch('ansible.module_utils.network.junos.junos.Connection')
         self.conn = self.mock_conn.start()
 
-        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
         self.netconf_conn = self.mock_netconf.start()
 
         self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_command.exec_rpc')
         self.exec_rpc = self.mock_exec_rpc.start()
 
-        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
         self.netconf_rpc = self.mock_netconf_rpc.start()
 
         self.mock_get_connection = patch('ansible.modules.network.junos.junos_command.get_connection')

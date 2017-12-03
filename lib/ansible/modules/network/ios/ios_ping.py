@@ -108,8 +108,8 @@ rtt:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ios import run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 import re
 
 

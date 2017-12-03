@@ -176,7 +176,7 @@ changed:
 import copy
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, set_nc_config, get_nc_config, execute_nc_action
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, set_nc_config, get_nc_config, execute_nc_action
 
 CE_NC_ACTION_RESET_DLDP = """
 <action>

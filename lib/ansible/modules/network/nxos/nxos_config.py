@@ -269,11 +269,11 @@ backup_path:
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec
-from ansible.module_utils.nxos import check_args as nxos_check_args
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
+from ansible.module_utils.network.common.utils import to_list
 
 
 def get_running_config(module, config=None):
