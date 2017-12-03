@@ -372,12 +372,24 @@ class BaseManager(object):
                     resource.modify(ordinal=idx)
             except NonExtantPolicyRule:
                 policy.rules_s.rules.create(name=rule, ordinal=idx)
+        self._remove_rule_difference(rules, policy)
+
+    def _remove_rule_difference(self, rules, policy=None):
+        if not rules or not self.have.rules:
+            return
+        have_rules = set(self.have.rules)
+        want_rules = set(rules)
+        removable = have_rules.difference(want_rules)
+        for remove in removable:
+            resource = policy.rules_s.rules.load(name=remove)
+            resource.delete()
 
 
 class SimpleManager(BaseManager):
     def __init__(self, client):
         super(SimpleManager, self).__init__(client)
         self.want = SimpleParameters(self.client.module.params)
+        self.have = SimpleParameters()
         self.changes = SimpleChanges()
 
     def _set_changed_options(self):
@@ -510,6 +522,7 @@ class ComplexManager(BaseManager):
     def __init__(self, client):
         super(ComplexManager, self).__init__(client)
         self.want = ComplexParameters(self.client.module.params)
+        self.have = ComplexParameters()
         self.changes = ComplexChanges()
 
     def _set_changed_options(self):
