@@ -1,0 +1,31 @@
+{
+  "kind": "tm:net:vlan:vlanstate",
+  "name": "somevlan",
+  "partition": "Common",
+  "fullPath": "/Common/somevlan",
+  "description": "changed_this",
+  "generation": 1,
+  "selfLink": "https://localhost/mgmt/tm/net/vlan/~Common~somevlan?ver=12.1.0",
+  "autoLasthop": "default",
+  "cmpHash": "default",
+  "dagRoundRobin": "disabled",
+  "dagTunnel": "outer",
+  "failsafe": "disabled",
+  "failsafeAction": "failover-restart-tm",
+  "failsafeTimeout": 90,
+  "ifIndex": 480,
+  "learning": "enable-forward",
+  "mtu": 1500,
+  "sflow": {
+    "pollInterval": 0,
+    "pollIntervalGlobal": "yes",
+    "samplingRate": 0,
+    "samplingRateGlobal": "yes"
+  },
+  "sourceChecking": "disabled",
+  "tag": 4094,
+  "interfacesReference": {
+    "link": "https://localhost/mgmt/tm/net/vlan/~Common~somevlan/interfaces?ver=12.1.0",
+    "isSubcollection": true
+  }
+}
