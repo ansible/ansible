@@ -197,7 +197,7 @@ class Parameters(AnsibleF5Parameters):
         if len(host) > 255:
             return False
         host = host.rstrip(".")
-        allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+        allowed = re.compile(r'(?!-)[A-Z0-9-]{1,63}(?<!-)$', re.IGNORECASE)
         return all(allowed.match(x) for x in host.split("."))
 
     @property
