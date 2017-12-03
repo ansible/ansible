@@ -86,7 +86,7 @@ options:
         provided. This parameter cannot be updated after it is set.
     aliases:
       - hostname
-    version_added: "2.2"
+    version_added: "2.5"
   description:
     description:
       - Specifies descriptive text that identifies the node.
