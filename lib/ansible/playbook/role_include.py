@@ -21,6 +21,9 @@ __metaclass__ = type
 
 from os.path import basename
 
+import cProfile
+import tempfile
+
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task_include import TaskInclude
@@ -45,7 +48,7 @@ class IncludeRole(TaskInclude):
 
     BASE = ('name', 'role')  # directly assigned
     FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
-    OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
+    OTHER_ARGS = ('private', 'allow_duplicates', 'profiling')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
     # =================================================================================
@@ -54,6 +57,7 @@ class IncludeRole(TaskInclude):
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=None, private=True)
     _private = FieldAttribute(isa='bool', default=None, private=True)
+    _profiling = FieldAttribute(isa='bool', default=None, private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -167,6 +171,10 @@ class IncludeRole(TaskInclude):
         return new_me
 
     def load_dynamic_role(self, allow_duplicates=None):
+        pr = None
+        if self.profiling:
+            pr = cProfile.Profile()
+            pr.enable()
         if allow_duplicates is None:
             allow_duplicates = self.allow_duplicates
         play = self.get_play()
@@ -200,6 +208,10 @@ class IncludeRole(TaskInclude):
         self._role_path = role._role_path
         self.set_dynamic_role(role)
         play.register_dynamic_role(self)
+        if self.profiling:
+            pr.disable()
+            fich, fic = tempfile.mkstemp()
+            pr.dump_stats(fic+'_role_astat')
         return role
 
     def set_play(self, play):
