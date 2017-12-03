@@ -24,8 +24,8 @@ import copy
 
 from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.sros import sros_provider_spec
-from ansible.module_utils.network_common import load_provider
+from ansible.module_utils.network.sros.sros import sros_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
 
 try:
     from __main__ import display

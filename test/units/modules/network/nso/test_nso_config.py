@@ -30,11 +30,11 @@ from .nso_module import MockResponse
 class TestNsoConfig(nso_module.TestNsoModule):
     module = nso_config
 
-    @patch('ansible.module_utils.nso.open_url')
+    @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nso_config_invalid_version_short(self, open_url_mock):
         self._test_invalid_version(open_url_mock, '4.4')
 
-    @patch('ansible.module_utils.nso.open_url')
+    @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nso_config_invalid_version_long(self, open_url_mock):
         self._test_invalid_version(open_url_mock, '4.4.2')
 
@@ -56,11 +56,11 @@ class TestNsoConfig(nso_module.TestNsoModule):
 
         self.assertEqual(0, len(calls))
 
-    @patch('ansible.module_utils.nso.open_url')
+    @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nso_config_valid_version_short(self, open_url_mock):
         self._test_valid_version(open_url_mock, '4.5')
 
-    @patch('ansible.module_utils.nso.open_url')
+    @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nso_config_valid_version_long(self, open_url_mock):
         self._test_valid_version(open_url_mock, '4.4.3')
 
@@ -84,7 +84,7 @@ class TestNsoConfig(nso_module.TestNsoModule):
 
         self.assertEqual(0, len(calls))
 
-    @patch('ansible.module_utils.nso.open_url')
+    @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nso_config_changed(self, open_url_mock):
         vpn_schema = nso_module.load_fixture('l3vpn_schema.json')
         l3vpn_schema = nso_module.load_fixture('l3vpn_l3vpn_schema.json')

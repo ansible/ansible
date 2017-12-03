@@ -142,8 +142,8 @@ changed:
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config, get_nc_config
-from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, get_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 CE_NC_GET_BRIDGE_DOMAIN = """

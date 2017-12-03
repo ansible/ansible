@@ -27,7 +27,7 @@ import traceback
 from collections import Mapping
 from xml.etree.ElementTree import fromstring
 
-from ansible.module_utils.network_common import Template
+from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
 from ansible.errors import AnsibleError
 

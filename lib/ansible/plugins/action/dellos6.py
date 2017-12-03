@@ -25,8 +25,8 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.dellos6 import dellos6_provider_spec
-from ansible.module_utils.network_common import load_provider
+from ansible.module_utils.network.dellos6.dellos6 import dellos6_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
 
 try:
     from __main__ import display

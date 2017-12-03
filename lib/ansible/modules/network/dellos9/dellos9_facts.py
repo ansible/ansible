@@ -131,8 +131,8 @@ import re
 import itertools
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos9 import run_commands
-from ansible.module_utils.dellos9 import dellos9_argument_spec, check_args
+from ansible.module_utils.network.dellos9.dellos9 import run_commands
+from ansible.module_utils.network.dellos9.dellos9 import dellos9_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 

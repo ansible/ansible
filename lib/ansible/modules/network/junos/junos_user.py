@@ -146,10 +146,10 @@ from functools import partial
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.junos import junos_argument_spec, get_connection
-from ansible.module_utils.junos import commit_configuration, discard_changes
-from ansible.module_utils.junos import load_config, locked_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
+from ansible.module_utils.network.junos.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:

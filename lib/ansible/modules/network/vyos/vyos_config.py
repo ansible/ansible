@@ -132,9 +132,9 @@ backup_path:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.vyos import load_config, get_config, run_commands
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.common.config import NetworkConfig
+from ansible.module_utils.network.vyos.vyos import load_config, get_config, run_commands
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 DEFAULT_COMMENT = 'configured by vyos_config'

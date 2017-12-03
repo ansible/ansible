@@ -388,7 +388,8 @@ diff:
 from ansible.module_utils.basic import AnsibleModule
 import copy
 
-from ansible.module_utils.netscaler import ConfigProxy, get_nitro_client, netscaler_common_arguments, log, loglines, get_immutables_intersection
+from ansible.module_utils.network.netscaler.netscaler import ConfigProxy, get_nitro_client, netscaler_common_arguments, log, \
+    loglines, get_immutables_intersection
 try:
     from nssrc.com.citrix.netscaler.nitro.resource.config.basic.servicegroup import servicegroup
     from nssrc.com.citrix.netscaler.nitro.resource.config.basic.servicegroup_servicegroupmember_binding import servicegroup_servicegroupmember_binding

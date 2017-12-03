@@ -125,9 +125,9 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.iosxr import run_commands, iosxr_argument_spec, check_args
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.network.iosxr.iosxr import run_commands, iosxr_argument_spec, check_args
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 

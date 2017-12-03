@@ -75,8 +75,8 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
-from ansible.module_utils.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True

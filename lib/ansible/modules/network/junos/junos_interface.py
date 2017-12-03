@@ -185,12 +185,12 @@ from copy import deepcopy
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netconf import exec_rpc
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.network_common import conditional
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config, to_param_list
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.common.utils import conditional
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
 try:
     from lxml.etree import Element, SubElement, tostring
