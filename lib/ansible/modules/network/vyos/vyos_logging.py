@@ -108,9 +108,9 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.vyos import get_config, load_config
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.vyos.vyos import get_config, load_config
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def spec_to_commands(updates, module):

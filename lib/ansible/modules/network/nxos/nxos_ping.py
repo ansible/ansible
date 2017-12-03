@@ -104,8 +104,8 @@ packet_loss:
     type: string
     sample: "0.00%"
 '''
-from ansible.module_utils.nxos import run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
