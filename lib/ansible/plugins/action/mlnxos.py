@@ -23,11 +23,11 @@ import copy
 import sys
 
 from ansible import constants as C
-from ansible.module_utils.network_common import load_provider
+from ansible.module_utils.network.common.utils import load_provider
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.display import Display
 
-from ansible.module_utils.mlnxos import mlnxos_provider_spec
+from ansible.module_utils.network.mlnxos.mlnxos import mlnxos_provider_spec
 
 try:
     from __main__ import display

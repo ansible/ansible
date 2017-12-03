@@ -166,10 +166,10 @@ import json
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ios import get_config, load_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def validate_privilege(value, module):

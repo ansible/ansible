@@ -149,11 +149,11 @@ import re
 
 from functools import partial
 
-from ansible.module_utils.nxos import run_commands, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 
 VALID_ROLES = ['network-admin', 'network-operator', 'vdc-admin', 'vdc-operator',
                'priv-15', 'priv-14', 'priv-13', 'priv-12', 'priv-11', 'priv-10',

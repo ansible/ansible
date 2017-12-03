@@ -167,9 +167,9 @@ from time import sleep
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network_common import conditional, remove_default_spec
-from ansible.module_utils.vyos import load_config, get_config
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.common.utils import conditional, remove_default_spec
+from ansible.module_utils.network.vyos.vyos import load_config, get_config
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def search_obj_in_list(name, lst):

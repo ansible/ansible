@@ -95,8 +95,8 @@ output_lines:
   type: list
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netconf import exec_rpc
-from ansible.module_utils.junos import junos_argument_spec
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True

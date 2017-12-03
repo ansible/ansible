@@ -151,7 +151,7 @@ RETURN = '''
 
 import re
 
-from ansible.module_utils.enos import run_commands, enos_argument_spec, check_args
+from ansible.module_utils.network.enos.enos import run_commands, enos_argument_spec, check_args
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems

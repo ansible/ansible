@@ -244,7 +244,7 @@ try:
 except:
     HAS_YAML = False
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec, aci_response_json, aci_response_xml
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec, aci_response_json, aci_response_xml
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text

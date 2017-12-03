@@ -178,11 +178,11 @@ try:
 except ImportError:
     HAS_CLI_TRANSPORT = False
 
-from ansible.module_utils.netcli import FailedConditionsError
 from ansible.module_utils.six import string_types
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.parsing import FailedConditionsError
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.utils import to_list
 from collections import deque
 
 try:

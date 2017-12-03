@@ -112,8 +112,8 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos6 import run_commands
-from ansible.module_utils.dellos6 import dellos6_argument_spec, check_args
+from ansible.module_utils.network.dellos6.dellos6 import run_commands
+from ansible.module_utils.network.dellos6.dellos6 import dellos6_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 

@@ -113,7 +113,7 @@ import time
 from xml.etree import ElementTree
 import paramiko
 from ansible.module_utils.basic import get_exception, AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, run_commands, get_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
 
 try:
     from scp import SCPClient

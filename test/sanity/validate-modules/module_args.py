@@ -27,11 +27,11 @@ import mock
 MODULE_CLASSES = [
     'ansible.module_utils.basic.AnsibleModule',
     'ansible.module_utils.vca.VcaAnsibleModule',
-    'ansible.module_utils.nxos.NetworkModule',
-    'ansible.module_utils.eos.NetworkModule',
-    'ansible.module_utils.ios.NetworkModule',
-    'ansible.module_utils.iosxr.NetworkModule',
-    'ansible.module_utils.junos.NetworkModule',
+    'ansible.module_utils.network.nxos.nxos.NetworkModule',
+    'ansible.module_utils.network.eos.eos.NetworkModule',
+    'ansible.module_utils.network.ios.ios.NetworkModule',
+    'ansible.module_utils.network.iosxr.iosxr.NetworkModule',
+    'ansible.module_utils.network.junos.junos.NetworkModule',
     'ansible.module_utils.openswitch.NetworkModule',
 ]
 

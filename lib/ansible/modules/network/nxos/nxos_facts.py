@@ -168,8 +168,8 @@ vlan_list:
 """
 import re
 
-from ansible.module_utils.nxos import run_commands, get_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands, get_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
 
