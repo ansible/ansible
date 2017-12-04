@@ -38,6 +38,21 @@ Concepts
 
 This section explains some fundamental concepts that you should understand when working with Ansible Networking.
 
+Structure
+----------
+
+The examples on this page use the following structure:
+
+.. code-block:: console
+
+   .
+   ├── facts-demo.yml
+   ├── group_vars
+   │   ├── eos.yml
+   │   └── ios.yml
+   └── inventory
+
+
 Inventory
 ---------
 
@@ -186,7 +201,7 @@ First, create a file called ``inventory``, containing:
 
 **Create a playbook**
 
-Next, create a playbook file called ``fetch-facts.yml`` containing the following:
+Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
 .. code-block:: yaml
 
@@ -222,7 +237,7 @@ Next, create a playbook file called ``fetch-facts.yml`` containing the following
            var: hostvars['vyos01.example.net']
 
        - name: Write facts to disk using a template
-         copy:
+copy:
            content: |
              #jinja2: lstrip_blocks: True
              EOS device info:
@@ -292,7 +307,7 @@ To run the playbook, run the following from a console prompt:
 
 .. code-block:: console
 
-   ansible-playbook -i inventory fetch-facts.yml
+   ansible-playbook -i inventory facts-demo.yml
 
 This should return output similar to the following:
 
