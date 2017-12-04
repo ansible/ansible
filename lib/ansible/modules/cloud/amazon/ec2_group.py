@@ -289,7 +289,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import HAS_BOTO3
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 from ansible.module_utils.ec2 import AWSRetry
-from ansible.module_utils.network_common import to_ipv6_network, to_subnet
+from ansible.module_utils.network.common.utils import to_ipv6_network, to_subnet
 import traceback
 
 try:
