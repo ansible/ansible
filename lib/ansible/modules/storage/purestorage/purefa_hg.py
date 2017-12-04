@@ -148,7 +148,7 @@ def main():
             try:
                 array.get_host(h)
             except:
-                module.fail_json(msg='Host not found: ' % h)
+                module.fail_json(msg='Host not found: %s' % h)
 
     if module.params['volume']:
         for v in module.params['volume']:
