@@ -529,7 +529,7 @@ files:
     maintainers: shane-walker
   $modules/packaging/language/pear.py:
   $modules/packaging/language/pip.py: lujeni robinro
-  $modules/packaging/os/apk.py: kbrebanov tdtrask
+  $modules/packaging/os/apk.py: tdtrask
   $modules/packaging/os/apt.py: $team_ansible mgwilliams
   $modules/packaging/os/apt_key.py: jvantuyl
   $modules/packaging/os/apt_repository.py: $team_ansible sashka
