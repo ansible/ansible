@@ -295,7 +295,11 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             else:
                 self.log('Results : {0}'.format(response))
                 if response['provisioning_state'] == "Succeeded":
-                    to_do = Actions.Update
+                    to_do = Actions.NoAction
+                    if (self.location is not None) and self.location != response['location']:
+                        to_do = Actions.Update
+                    else if (self.sku is not None) and self.location != response['sku']:
+                        to_do = Actions.Update
                 else:
                     to_do = Actions.NoAction
 
@@ -305,7 +309,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
 
             self.results['state'] = self.create_update_containerregistry(to_do)
             if to_do != Actions.NoAction:
-                self.results['changed'] = (response is None) or (self.results['state'].__ne__(response))
+                self.results['changed'] = True
             else:
                 self.results['changed'] = False
 
