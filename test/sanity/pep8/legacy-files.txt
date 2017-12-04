@@ -182,10 +182,6 @@ lib/ansible/modules/network/ios/ios_command.py
 lib/ansible/modules/network/ios/ios_facts.py
 lib/ansible/modules/network/ios/ios_system.py
 lib/ansible/modules/network/ios/ios_vrf.py
-lib/ansible/modules/network/iosxr/iosxr_command.py
-lib/ansible/modules/network/iosxr/iosxr_config.py
-lib/ansible/modules/network/iosxr/iosxr_facts.py
-lib/ansible/modules/network/iosxr/iosxr_system.py
 lib/ansible/modules/network/netvisor/pn_cluster.py
 lib/ansible/modules/network/netvisor/pn_ospfarea.py
 lib/ansible/modules/network/netvisor/pn_vlag.py

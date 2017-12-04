@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -16,7 +15,8 @@ DOCUMENTATION = """
 ---
 module: iosxr_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha)"
+author:
+- Trishna Guha (@trishnaguha)
 short_description: Manage multiline banners on Cisco IOS XR devices
 description:
   - This will configure both exec and motd banners on remote devices
@@ -30,24 +30,22 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
-    choices: ['login', 'motd']
+    choices: [ login, motd ]
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration. This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is present in the current
         devices active running configuration.
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
-- name: configure the login banner
+- name: Configure the login banner
   iosxr_banner:
     banner: login
     text: |
@@ -55,10 +53,12 @@ EXAMPLES = """
       that contains a multiline
       string
     state: present
-- name: remove the motd banner
+
+- name: Remove the motd banner
   iosxr_banner:
     banner: motd
     state: absent
+
 - name: Configure banner from file
   iosxr_banner:
     banner:  motd
@@ -81,8 +81,7 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import check_args, get_config, iosxr_argument_spec, load_config
 
 
 def map_obj_to_commands(updates, module):
@@ -139,9 +138,9 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        banner=dict(required=True, choices=['login', 'motd']),
-        text=dict(),
-        state=dict(default='present', choices=['present', 'absent'])
+        banner=dict(type='str', required=True, choices=['login', 'motd']),
+        text=dict(type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     argument_spec.update(iosxr_argument_spec)

@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, Inc
+# Copyright: (c) 2017, Ansible by Red Hat, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -16,7 +15,8 @@ DOCUMENTATION = """
 ---
 module: iosxr_netconf
 version_added: "2.5"
-author: "Kedar Kekan (@kedarX)"
+author:
+- Kedar Kekan (@kedarX)
 short_description: Configures NetConf sub-system service on Cisco IOS-XR devices
 description:
   - This module provides an abstraction that enables and configures
@@ -31,14 +31,11 @@ options:
       - This argument specifies the port the netconf service should
         listen on for SSH connections.  The default port as defined
         in RFC 6242 is 830.
-    required: false
     default: 830
-    aliases: ['listens_on']
+    aliases: [ listens_on ]
   netconf_vrf:
     description:
-      - netconf vrf name
-    required: false
-    default: none
+      - netconf vrf name.
   state:
     description:
       - Specifies the state of the C(iosxr_netconf) resource on
@@ -46,20 +43,19 @@ options:
         I(present) the netconf service will be configured.  If the
         I(state) argument is set to I(absent) the netconf service
         will be removed from the configuration.
-    required: false
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 notes:
   - Tested against Cisco IOS XR Software, Version 6.1.2
 """
 
 EXAMPLES = """
-- name: enable netconf service on port 830
+- name: Enable netconf service on port 830
   iosxr_netconf:
     listens_on: 830
     state: present
 
-- name: disable netconf service
+- name: Disable netconf service
   iosxr_netconf:
     state: absent
 """
@@ -75,8 +71,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
-from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import check_args, get_config, iosxr_argument_spec, load_config
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
@@ -176,8 +171,8 @@ def main():
     """
     argument_spec = dict(
         netconf_port=dict(type='int', default=830, aliases=['listens_on']),
-        netconf_vrf=dict(aliases=['vrf']),
-        state=dict(default='present', choices=['present', 'absent']),
+        netconf_vrf=dict(type='str', aliases=['vrf']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
     argument_spec.update(iosxr_argument_spec)
 

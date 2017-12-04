@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -17,8 +16,8 @@ DOCUMENTATION = """
 module: iosxr_user
 version_added: "2.4"
 author:
-  - "Trishna Guha (@trishnaguha)"
-  - "Sebastiaan van Doesselaar (@sebasdoes)"
+- Trishna Guha (@trishnaguha)
+- Sebastiaan van Doesselaar (@sebasdoes)
 short_description: Manage the aggregate of local users on Cisco IOS XR device
 description:
   - This module provides declarative management of the local usernames
@@ -38,15 +37,15 @@ options:
   name:
     description:
       - The username to be configured on the Cisco IOS XR device.
-        This argument accepts a string value and is mutually exclusive
+      - This argument accepts a string value and is mutually exclusive
         with the C(aggregate) argument.
-        Please note that this option is not same as C(provider username).
+      - Please note that this option is not same as C(provider username).
   configured_password:
     description:
       - The password to be configured on the Cisco IOS XR device. The
         password needs to be provided in clear and it will be encrypted
         on the device.
-        Please note that this option is not same as C(provider password).
+      - Please note that this option is not same as C(provider password).
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -54,8 +53,8 @@ options:
         set to C(always), the password will always be updated in the device
         and when set to C(on_create) the password will be updated only if
         the username is created.
+    choices: [ always, on_create ]
     default: always
-    choices: ['on_create', 'always']
   group:
     description:
       - Configures the group for the username in the
@@ -77,7 +76,7 @@ options:
         configured usernames on the device with the exception of the
         `admin` user (the current defined set of users).
     type: bool
-    default: false
+    default: 'no'
   state:
     description:
       - Configures the state of the username definition
@@ -85,8 +84,8 @@ options:
         to I(present), the username(s) should be configured in the device active
         configuration and when set to I(absent) the username(s) should not be
         in the device active configuration
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
   public_key:
     version_added: "2.5"
     description:
@@ -113,22 +112,25 @@ requirements:
 """
 
 EXAMPLES = """
-- name: create a new user
+- name: Create a new user
   iosxr_user:
     name: ansible
     configured_password: test
     state: present
-- name: remove all users except admin
+
+- name: Remove all users except admin
   iosxr_user:
     purge: yes
-- name: set multiple users to group sys-admin
+
+- name: Set multiple users to group sys-admin
   iosxr_user:
     aggregate:
       - name: netop
       - name: netend
     group: sysadmin
     state: present
-- name: set multiple users to multiple groups
+
+- name: Set multiple users to multiple groups
   iosxr_user:
     aggregate:
       - name: netop
@@ -137,12 +139,14 @@ EXAMPLES = """
       - sysadmin
       - root-system
     state: present
+
 - name: Change Password for User netop
   iosxr_user:
     name: netop
     configured_password: "{{ new_password }}"
     update_password: always
     state: present
+
 - name: Add private key authentication for user netop
   iosxr_user:
     name: netop
@@ -159,14 +163,13 @@ commands:
     - username ansible secret password group sysadmin
     - username admin secret admin
 """
-from functools import partial
 
 from copy import deepcopy
+from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import check_args, get_config, iosxr_argument_spec, load_config
 
 try:
     from base64 import b64decode
@@ -402,18 +405,18 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        name=dict(),
+        name=dict(type='str'),
 
-        configured_password=dict(no_log=True),
-        update_password=dict(default='always', choices=['on_create', 'always']),
+        configured_password=dict(type='str', no_log=True),
+        update_password=dict(type='str', default='always', choices=['always', 'on_create']),
 
-        public_key=dict(),
-        public_key_contents=dict(),
+        public_key=dict(type='str'),
+        public_key_contents=dict(type='str'),
 
-        group=dict(aliases=['role']),
+        group=dict(type='str', aliases=['role']),
         groups=dict(type='list', elements='dict'),
 
-        state=dict(default='present', choices=['present', 'absent'])
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
     aggregate_spec = deepcopy(element_spec)
     aggregate_spec['name'] = dict(required=True)
@@ -423,7 +426,7 @@ def main():
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
-        purge=dict(type='bool', default=False)
+        purge=dict(type='bool', default=False),
     )
 
     argument_spec.update(element_spec)

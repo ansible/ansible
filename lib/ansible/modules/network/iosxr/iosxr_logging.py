@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -16,7 +15,8 @@ DOCUMENTATION = """
 ---
 module: iosxr_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha)"
+author:
+- Trishna Guha (@trishnaguha)
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
@@ -27,7 +27,7 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'hostnameprefix', console', 'monitor', 'buffered']
+    choices: [ buffered, console, hostnameprefix, monitor, on ]
   name:
     description:
       - If value of C(dest) is I(file) it indicates file-name,
@@ -51,35 +51,35 @@ options:
   state:
     description:
       - State of the logging configuration.
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
-- name: configure hostnameprefix logging
+- name: Configure hostnameprefix logging
   iosxr_logging:
     dest: hostnameprefix
     name: 172.16.0.1
     state: present
 
-- name: remove hostnameprefix logging configuration
+- name: Remove hostnameprefix logging configuration
   iosxr_logging:
     dest: hostnameprefix
     name: 172.16.0.1
     state: absent
 
-- name: configure console logging level and facility
+- name: Configure console logging level and facility
   iosxr_logging:
     dest: console
     facility: local7
     level: debugging
     state: present
 
-- name: enable logging to all
+- name: Enable logging to all
   iosxr_logging:
     dest : on
 
-- name: configure buffer size
+- name: Configure buffer size
   iosxr_logging:
     dest: buffered
     size: 5000
@@ -113,8 +113,7 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import check_args, get_config, iosxr_argument_spec, load_config
 from ansible.module_utils.network.common.utils import remove_default_spec
 
 
@@ -322,12 +321,12 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        dest=dict(type='str', choices=['on', 'hostnameprefix', 'console', 'monitor', 'buffered']),
+        dest=dict(type='str', choices=['buffered', 'console', 'hostnameprefix', 'monitor', 'on']),
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str', default='local7'),
         level=dict(type='str', default='debugging'),
-        state=dict(default='present', choices=['present', 'absent']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     aggregate_spec = deepcopy(element_spec)

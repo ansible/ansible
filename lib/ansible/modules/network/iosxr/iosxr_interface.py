@@ -1,23 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
 module: iosxr_interface
 version_added: "2.4"
-author: "Ganesh Nalawade (@ganeshrn)"
+author:
+- Ganesh Nalawade (@ganeshrn)
 short_description: Manage Interface on Cisco IOS XR network devices
 description:
   - This module provides declarative management of Interfaces
@@ -43,8 +42,8 @@ options:
       - Maximum size of transmit packet.
   duplex:
     description:
-      - Interface link status
-    choices: ['full', 'half']
+      - Interface link status.
+    choices: [ full, half ]
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
@@ -62,13 +61,13 @@ options:
   state:
     description:
       - State of the Interface configuration, C(up) means present and
-        operationally up and C(down) means present and operationally C(down)
+        operationally up and C(down) means present and operationally C(down).
+    choices: [ absent, down, present, up ]
     default: present
-    choices: ['present', 'absent', 'up', 'down']
 """
 
 EXAMPLES = """
-- name: configure interface
+- name: Configure interface
   iosxr_interface:
       name: GigabitEthernet0/0/0/2
       description: test-interface
@@ -76,17 +75,17 @@ EXAMPLES = """
       duplex: half
       mtu: 512
 
-- name: remove interface
+- name: Remove interface
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
     state: absent
 
-- name: make interface up
+- name: Make interface up
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
     enabled: True
 
-- name: make interface down
+- name: Make interface down
   iosxr_interface:
     name: GigabitEthernet0/0/0/2
     enabled: False
@@ -141,9 +140,8 @@ from copy import deepcopy
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
+from ansible.module_utils.network.iosxr.iosxr import check_args, get_config, iosxr_argument_spec, load_config
 
 
 def validate_mtu(value, module):
@@ -352,17 +350,16 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        name=dict(),
-        description=dict(),
-        speed=dict(),
-        mtu=dict(),
-        duplex=dict(choices=['full', 'half']),
-        enabled=dict(default=True, type='bool'),
-        tx_rate=dict(),
-        rx_rate=dict(),
-        delay=dict(default=10, type='int'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'up', 'down'])
+        name=dict(type='str'),
+        description=dict(type='str'),
+        speed=dict(type='str'),
+        mtu=dict(type='str'),
+        duplex=dict(type='str', choices=['full', 'half']),
+        enabled=dict(type='bool', default=True),
+        tx_rate=dict(type='str'),
+        rx_rate=dict(type='str'),
+        delay=dict(type='int', default=10),
+        state=dict(type='str', default='present', choices=['absent', 'down', 'present', 'up'])
     )
 
     aggregate_spec = deepcopy(element_spec)

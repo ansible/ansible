@@ -1,22 +1,22 @@
 #!/usr/bin/python
-#
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
 module: iosxr_facts
 version_added: "2.2"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+author:
+- Ricardo Carrillo Cruz (@rcarrillocruz)
 short_description: Collect facts from remote devices running IOS XR
 description:
   - Collects a base set of device facts from a remote device that
@@ -34,22 +34,21 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
     default: '!config'
 """
 
 EXAMPLES = """
-# Collect all facts from the device
-- iosxr_facts:
+- name: Collect all facts from the device
+  iosxr_facts:
     gather_subset: all
 
-# Collect only the config and default facts
-- iosxr_facts:
+- name: Collect only the config and default facts
+  iosxr_facts:
     gather_subset:
       - config
 
-# Do not collect hardware facts
-- iosxr_facts:
+- name: Do not collect hardware facts
+  iosxr_facts:
     gather_subset:
       - "!hardware"
 """
@@ -115,7 +114,7 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args, run_commands
+from ansible.module_utils.network.iosxr.iosxr import check_args, iosxr_argument_spec, run_commands
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
@@ -165,8 +164,7 @@ class Hardware(FactsBase):
         self.facts['filesystems'] = self.parse_filesystems(
             results['dir /all'])
 
-        match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
-            results['show memory summary'])
+        match = re.search(r'Physical Memory: (\d+)M total \((\d+)', results['show memory summary'])
         if match:
             self.facts['memtotal_mb'] = match.group(1)
             self.facts['memfree_mb'] = match.group(2)
@@ -188,7 +186,7 @@ class Interfaces(FactsBase):
 
     def commands(self):
         return(['show interfaces', 'show ipv6 interface',
-            'show lldp', 'show lldp neighbors detail'])
+                'show lldp', 'show lldp neighbors detail'])
 
     def populate(self, results):
         self.facts['all_ipv4_addresses'] = list()
@@ -351,7 +349,7 @@ VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 def main():
     spec = dict(
-        gather_subset=dict(default=['!config'], type='list')
+        gather_subset=dict(type='list', default=['!config']),
     )
 
     spec.update(iosxr_argument_spec)
