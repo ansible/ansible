@@ -418,7 +418,7 @@ class Template(object):
             api_version = self._zapi.api_version()
             # updateExisting for application removed from zabbix api after 3.2
             if LooseVersion(api_version) <= LooseVersion('3.2.x'):
-                 update_rules['applications']['updateExisting'] = True
+                update_rules['applications']['updateExisting'] = True
 
             self._zapi.configuration.import_({
                 'format': 'json',
