@@ -1,8 +1,8 @@
 .. network-best-practices:
 
-***************************************
+**************************************
 Network Best Practices for Ansible 2.5
-***************************************
+**************************************
 
 .. contents:: Topics
 
@@ -47,7 +47,7 @@ In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos``
 
 
 Connection & Credentials (group_vars)
--------------------------------------------
+-------------------------------------
 
 As Ansible is a flexible tool there are a number of ways of specifying connection information & credentials. We believe however that the best was is to use ``group_vars``.
 
@@ -136,6 +136,12 @@ Certain network platforms, such as eos and ios, have the concept of different pr
    ansible_become_method: enable
 
 For more information, see the :doc:`Ansible Privilege Escalation<become>` guide.
+
+
+Jump hosts
+^^^^^^^^^^
+
+If the Ansible Controller doesn't have a direct route to the remote device and you need to use a Jump Host, please see the :ref:`Ansible Network Proxy Command <network_delegate_to_vs_ProxyCommand>` guide for details on how to achieve this.
 
 Playbook
 --------
