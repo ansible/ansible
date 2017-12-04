@@ -577,7 +577,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
                 return None
             elif host['resourcestate'] != 'PrepareForMaintenance':
                 return host
-        self.fail_json("Polling for maintenance timed out")
+        self.fail_json(msg="Polling for maintenance timed out")
 
     def get_result(self, host):
         super(AnsibleCloudStackHost, self).get_result(host)
