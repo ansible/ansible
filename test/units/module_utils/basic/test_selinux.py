@@ -9,17 +9,14 @@ __metaclass__ = type
 
 import errno
 import json
-import os
-import sys
-from io import BytesIO, StringIO
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
+from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock
 from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
+
 
 class TestSELinux(ModuleTestCase):
     def test_module_utils_basic_ansible_module_selinux_mls_enabled(self):

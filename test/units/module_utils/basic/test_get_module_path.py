@@ -7,23 +7,16 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import errno
-import json
-import os
-import sys
-from io import BytesIO, StringIO
+from units.mock.procenv import ModuleTestCase
 
-from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
+from ansible.compat.tests.mock import patch
 from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
+
 
 class TestGetModulePath(ModuleTestCase):
     def test_module_utils_basic_get_module_path(self):
         from ansible.module_utils.basic import get_module_path
         with patch('os.path.realpath', return_value='/path/to/foo/'):
             self.assertEqual(get_module_path(), '/path/to/foo')
-

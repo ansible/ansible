@@ -7,19 +7,12 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import errno
-import json
-import os
-import sys
-from io import BytesIO, StringIO
+from units.mock.procenv import ModuleTestCase
 
-from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
 from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
+
 
 class TestTextifyContainers(ModuleTestCase):
     def test_module_utils_basic_json_dict_converters(self):
@@ -36,4 +29,3 @@ class TestTextifyContainers(ModuleTestCase):
         res2 = json_dict_bytes_to_unicode(res)
 
         self.assertEqual(test_data, res2)
-
