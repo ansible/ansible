@@ -104,7 +104,7 @@ options:
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
     - ' - C(type) (string): Valid values are:'
     - '   C(thin) thin disk, C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5, Default: C(None) thick disk, no eagerzero.'
-    - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+    - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, optionally specify regex to match.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore.'
   cdrom:
     description:
@@ -1140,7 +1140,7 @@ class PyVmomiHelper(PyVmomi):
                         # If datastore field is provided, filter destination datastores
                         if 'datastore' in self.params['disk'][0] and \
                                 isinstance(self.params['disk'][0]['datastore'], str) and \
-                                ds.name.find(self.params['disk'][0]['datastore']) < 0:
+                                re.match(self.params['disk'][0]['datastore'], ds.name) is None:
                             continue
 
                         datastore = ds
