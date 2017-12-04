@@ -144,18 +144,18 @@ def main():
     hostgroup = get_hostgroup(module, array)
 
     if module.params['host']:
-        try:
-            for h in module.params['host']:
+        for h in module.params['host']:
+            try:
                 array.get_host(h)
-        except:
-            module.fail_json(msg='Host not found')
+            except:
+                module.fail_json(msg='Host not found: ' % h)
 
     if module.params['volume']:
-        try:
-            for v in module.params['volume']:
+        for v in module.params['volume']:
+            try:
                 array.get_volume(v)
-        except:
-            module.fail_json(msg='Volume not found')
+            except:
+                module.fail_json(msg='Volume not found: %s' % v)
 
     if hostgroup and state == 'present':
         update_hostgroup(module, array)
