@@ -124,6 +124,12 @@ def create_placement_group(connection, module):
         connection.create_placement_group(
             GroupName=name, Strategy='cluster', DryRun=module.check_mode)
     except (BotoCoreError, ClientError) as e:
+        if e.response['Error']['Code'] == "DryRunOperation":
+            module.exit_json(changed=True, placement_group={
+                "name": name,
+                "state": 'DryRun',
+                "strategy": 'cluster',
+            })
         module.fail_json_aws(
             e,
             msg="Couldn't create placement group [%s]" % name)
