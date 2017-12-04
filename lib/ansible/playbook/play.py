@@ -54,7 +54,6 @@ class Play(Base, Taggable, Become):
     """
 
     # =================================================================================
-    _name = FieldAttribute(isa='string', default='', always_post_validate=True)
     _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
     # Facts
