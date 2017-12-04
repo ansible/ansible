@@ -313,7 +313,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO3:
-        module.fail_json('boto3 and botocore are required by this module')
+        module.fail_json(msg='boto3 and botocore are required by this module')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     client = boto3_conn(module, conn_type='client', resource='acm',

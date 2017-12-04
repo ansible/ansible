@@ -136,7 +136,7 @@ def connect(module):
         device.timeout = get_param(module, 'timeout') or 10
     except ConnectError:
         exc = get_exception()
-        module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
+        module.fail_json(msg='unable to connect to %s: %s' % (host, str(exc)))
 
     return device
 
