@@ -237,7 +237,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
            var: hostvars['vyos01.example.net']
 
        - name: Write facts to disk using a template
-copy:
+           copy:
            content: |
              #jinja2: lstrip_blocks: True
              EOS device info:
