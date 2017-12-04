@@ -1,0 +1,25 @@
+#turn off so then we can test changes occur on enable. Turning off for object access also
+#covers our subcategory test for file system
+- name: turn off auditing for category
+  win_audit_policy_system:
+    category: "{{ category_name }}"
+    audit_type: none
+
+- name: turn off auditing for subcategory
+  win_audit_policy_system:
+    subcategory: "{{ subcategory_name }}"
+    audit_type: none
+
+- block:
+    - include_tasks: add.yml
+    - include_tasks: remove.yml
+  always:
+  - name: CLEANUP turn "{{ category_name }}" back to no auditing
+    win_audit_policy_system:
+      category: "{{ category_name }}"
+      audit_type: none
+
+  - name: CLEANUP turn "{{ subcategory_name }}" back to no auditing
+    win_audit_policy_system:
+      subcategory: "{{ subcategory_name }}"
+      audit_type: none
