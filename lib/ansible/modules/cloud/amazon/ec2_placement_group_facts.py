@@ -37,7 +37,7 @@ EXAMPLES = '''
 
 # List two placement groups.
 - ec2_placement_group_facts:
-  names:
+    names:
      - my-cluster
      - my-other-cluster
   register: specific_ec2_placement_groups
