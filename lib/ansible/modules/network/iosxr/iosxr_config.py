@@ -180,10 +180,10 @@ backup_path:
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.iosxr import load_config,get_config
-from ansible.module_utils.iosxr import iosxr_argument_spec
-from ansible.module_utils.iosxr import check_args as iosxr_check_args
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.iosxr.iosxr import load_config,get_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import check_args as iosxr_check_args
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'

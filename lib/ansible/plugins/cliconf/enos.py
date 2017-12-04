@@ -40,7 +40,7 @@ import json
 from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 

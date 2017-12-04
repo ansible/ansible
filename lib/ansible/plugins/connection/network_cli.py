@@ -84,6 +84,7 @@ class Connection(ConnectionBase):
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
+        self._play_context = play_context
 
         self._local = connection_loader.get('local', play_context, '/dev/null')
         self._local.set_options()
