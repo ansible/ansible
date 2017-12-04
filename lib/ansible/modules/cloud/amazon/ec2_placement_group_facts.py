@@ -42,6 +42,7 @@ EXAMPLES = '''
      - my-other-cluster
   register: specific_ec2_placement_groups
 
+- debug: msg="{{ specific_ec2_placement_groups | json_query(\"[?name=='my-cluster']\") }}"
 
 '''
 
