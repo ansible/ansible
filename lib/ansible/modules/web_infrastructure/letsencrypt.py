@@ -370,7 +370,7 @@ class ACMEAccount(object):
 
         pub_hex, pub_exp = re.search(
             r"modulus:\n\s+00:([a-f0-9\:\s]+?)\npublicExponent: ([0-9]+)",
-            to_text(out), re.MULTILINE | re.DOTALL).groups()
+            to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL).groups()
         pub_exp = "{0:x}".format(int(pub_exp))
         if len(pub_exp) % 2:
             pub_exp = "0{0}".format(pub_exp)
@@ -554,10 +554,10 @@ class ACMEClient(object):
         _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         domains = set([])
-        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", to_text(out))
+        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
         if common_name is not None:
             domains.add(common_name.group(1))
-        subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", to_text(out), re.MULTILINE | re.DOTALL)
+        subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
         if subject_alt_names is not None:
             for san in subject_alt_names.group(1).split(", "):
                 if san.startswith("DNS:"):
