@@ -75,7 +75,6 @@ EXAMPLES = '''
             Release: beta1
             Environment: Production
 
-# Deletes the specified container registry in the specified subscription and resource group.
     - name: Remove an azure container registry
       azure_rm_containerregistry:
         name: testacr2
