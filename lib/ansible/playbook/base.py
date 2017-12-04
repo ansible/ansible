@@ -141,6 +141,8 @@ class BaseMeta(type):
 
 class Base(with_metaclass(BaseMeta, object)):
 
+    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+
     # connection/transport
     _connection = FieldAttribute(isa='string')
     _port = FieldAttribute(isa='int')

@@ -77,7 +77,6 @@ class Task(Base, Conditional, Taggable, Become):
     _failed_when = FieldAttribute(isa='list', default=[])
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
-    _name = FieldAttribute(isa='string', default='')
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
     _register = FieldAttribute(isa='string')

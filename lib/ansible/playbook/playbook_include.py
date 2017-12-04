@@ -34,7 +34,6 @@ from ansible.template import Templar
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    _name = FieldAttribute(isa='string')
     _import_playbook = FieldAttribute(isa='string')
     _vars = FieldAttribute(isa='dict', default=dict())
 
