@@ -1,31 +1,19 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
 DOCUMENTATION = """
 ---
 module: ios_config
 version_added: "2.1"
-author: "Peter Sprygada (@privateip)"
+author:
+- Peter Sprygada (@privateip)
 short_description: Manage Cisco IOS configuration sections
 description:
   - Cisco IOS configurations use a simple block indent file syntax
@@ -43,17 +31,13 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
-    aliases: ['commands']
+    aliases: [ commands ]
   parents:
     description:
       - The ordered set of parents that uniquely identify the section
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -61,8 +45,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines).
-    required: false
-    default: null
     version_added: "2.2"
   before:
     description:
@@ -71,16 +53,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -91,9 +69,8 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
+    choices: [ exact, line, none, strict ]
     default: line
-    choices: ['line', 'strict', 'exact', 'none']
   replace:
     description:
       - Instructs the module on the way to perform the configuration
@@ -102,16 +79,14 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
+    choices: [ block, line ]
     default: line
-    choices: ['line', 'block']
   multiline_delimiter:
     description:
       - This argument is used when pushing a multiline configuration
         element to the IOS device.  It specifies the character to use
         as the delimiting character.  This only applies to the
         configuration action.
-    required: false
     default: "@"
     version_added: "2.3"
   force:
@@ -123,9 +98,8 @@ options:
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
-    required: false
-    default: false
     type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -133,9 +107,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
     type: bool
+    default: 'no'
     version_added: "2.2"
   running_config:
     description:
@@ -146,9 +119,7 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
-    aliases: ['config']
+    aliases: [ config ]
     version_added: "2.4"
   defaults:
     description:
@@ -156,9 +127,8 @@ options:
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    required: false
-    default: no
     type: bool
+    default: 'no'
     version_added: "2.2"
   save:
     description:
@@ -166,9 +136,8 @@ options:
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
       - This option is deprecated as of Ansible 2.4, use C(save_when)
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   save_when:
     description:
@@ -182,9 +151,8 @@ options:
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
         startup-config
-    required: false
+    choices: [ always, modified, never ]
     default: never
-    choices: ['always', 'never', 'modified']
     version_added: "2.4"
   diff_against:
     description:
@@ -198,8 +166,7 @@ options:
       - When this option is configured as I(running), the module will
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
-    required: false
-    choices: ['running', 'startup', 'intended']
+    choices: [ intended, running, startup ]
     version_added: "2.4"
   diff_ignore_lines:
     description:
@@ -207,7 +174,6 @@ options:
         ignored during the diff.  This is used for lines in the configuration
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
-    required: false
     version_added: "2.4"
   intended_config:
     description:
@@ -218,7 +184,6 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
-    required: false
     version_added: "2.4"
 """
 
@@ -279,16 +244,15 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
 """
+
 import re
 import time
 
-from ansible.module_utils.network.ios.ios import run_commands, get_config, load_config
-from ansible.module_utils.network.ios.ios import get_defaults_flag
-from ansible.module_utils.network.ios.ios import ios_argument_spec
-from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.ios.ios import check_args as ios_check_args
+from ansible.module_utils.network.ios.ios import get_config, get_defaults_flag, ios_argument_spec, load_config, run_commands
 from ansible.module_utils.six import iteritems
 
 
@@ -372,32 +336,32 @@ def main():
     argument_spec = dict(
         src=dict(type='path'),
 
-        lines=dict(aliases=['commands'], type='list'),
+        lines=dict(type='list', aliases=['commands']),
         parents=dict(type='list'),
 
         before=dict(type='list'),
         after=dict(type='list'),
 
-        match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
-        replace=dict(default='line', choices=['line', 'block']),
-        multiline_delimiter=dict(default='@'),
+        match=dict(type='str', default='line', choices=['exact', 'line', 'none', 'strict']),
+        replace=dict(type='str', default='line', choices=['block', 'line']),
+        multiline_delimiter=dict(type='str', default='@'),
 
-        running_config=dict(aliases=['config']),
-        intended_config=dict(),
+        running_config=dict(type='str', aliases=['config']),
+        intended_config=dict(type='str'),
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+        save_when=dict(type='str', default='never', choices=['always', 'modified', 'never']),
 
-        diff_against=dict(choices=['startup', 'intended', 'running']),
+        diff_against=dict(type='list', choices=['intended', 'running', 'startup']),
         diff_ignore_lines=dict(type='list'),
 
         # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.4'),
+        save=dict(type='bool', default=False, removed_in_version='2.4'),
 
         # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.2')
+        force=dict(type='bool', default=False, removed_in_version='2.2'),
     )
 
     argument_spec.update(ios_argument_spec)

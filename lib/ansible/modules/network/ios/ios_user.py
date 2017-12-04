@@ -1,23 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -27,7 +12,8 @@ DOCUMENTATION = """
 ---
 module: ios_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha)"
+author:
+- Trishna Guha (@trishnaguha)
 short_description: Manage the aggregate of local users on Cisco IOS device
 description:
   - This module provides declarative management of the local usernames
@@ -63,8 +49,8 @@ options:
         set to C(always), the password will always be updated in the device
         and when set to C(on_create) the password will be updated only if
         the username is created.
+    choices: [ always, on_create ]
     default: always
-    choices: ['on_create', 'always']
   privilege:
     description:
       - The C(privilege) argument configures the privilege level of the
@@ -89,16 +75,16 @@ options:
         configured usernames on the device with the exception of the
         `admin` user (the current defined set of users).
     type: bool
-    default: false
+    default: 'no'
   state:
     description:
       - Configures the state of the username definition
         as it relates to the device operational configuration. When set
         to I(present), the username(s) should be configured in the device active
         configuration and when set to I(absent) the username(s) should not be
-        in the device active configuration
+        in the device active configuration.
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
@@ -158,18 +144,17 @@ commands:
     - username ansible secret password
     - username admin secret admin
 """
+
 from copy import deepcopy
-
-import re
-import json
-
 from functools import partial
+
+import json
+import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.network.ios.ios import check_args, get_config, ios_argument_spec, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def validate_privilege(value, module):
@@ -330,16 +315,16 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        name=dict(),
+        name=dict(type='str'),
 
-        configured_password=dict(no_log=True),
+        configured_password=dict(type='str', no_log=True),
         nopassword=dict(type='bool'),
-        update_password=dict(default='always', choices=['on_create', 'always']),
+        update_password=dict(type='str', default='always', choices=['always', 'on_create']),
 
         privilege=dict(type='int'),
-        view=dict(aliases=['role']),
+        view=dict(type='str', aliases=['role']),
 
-        state=dict(default='present', choices=['present', 'absent'])
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
     aggregate_spec = deepcopy(element_spec)
     aggregate_spec['name'] = dict(required=True)

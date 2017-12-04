@@ -1,30 +1,19 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
 module: ios_facts
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
+author:
+- Peter Sprygada (@privateip)
 short_description: Collect facts from remote devices running Cisco IOS
 description:
   - Collects a base set of device facts from a remote device that
@@ -44,7 +33,6 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
     default: '!config'
 """
 
@@ -146,9 +134,8 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.network.ios.ios import run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.ios.ios import check_args, ios_argument_spec, run_commands
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
@@ -162,12 +149,12 @@ class FactsBase(object):
         self.facts = dict()
         self.responses = None
 
-
     def populate(self):
         self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
         return run_commands(self.module, cmd, check_rc=False)
+
 
 class Default(FactsBase):
 
@@ -440,11 +427,12 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+
 def main():
     """main entry point for module execution
     """
     argument_spec = dict(
-        gather_subset=dict(default=['!config'], type='list')
+        gather_subset=dict(type='list', default=['!config']),
     )
 
     argument_spec.update(ios_argument_spec)

@@ -1,23 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
 module: ios_interface
 version_added: "2.4"
-author: "Ganesh Nalawade (@ganeshrn)"
+author:
+- Ganesh Nalawade (@ganeshrn)
 short_description: Manage Interface on Cisco IOS network devices
 description:
   - This module provides declarative management of Interfaces
@@ -43,9 +42,9 @@ options:
       - Maximum size of transmit packet.
   duplex:
     description:
-      - Interface link status
+      - Interface link status.
+    choices: [ auto, full, half ]
     default: auto
-    choices: ['full', 'half', 'auto']
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
@@ -59,10 +58,10 @@ options:
     suboptions:
         host:
           description:
-            - "LLDP neighbor host for given interface C(name)."
+            - LLDP neighbor host for given interface C(name).
         port:
           description:
-            - "LLDP neighbor port to which given interface C(name) is connected."
+            - LLDP neighbor port to which given interface C(name) is connected.
   aggregate:
     description: List of Interfaces definitions.
   delay:
@@ -75,8 +74,8 @@ options:
     description:
       - State of the Interface configuration, C(up) means present and
         operationally up and C(down) means present and operationally C(down)
+    choices: [ absent, down, present, up ]
     default: present
-    choices: ['present', 'absent', 'up', 'down']
 """
 
 EXAMPLES = """
@@ -159,10 +158,9 @@ from time import sleep
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
+from ansible.module_utils.network.ios.ios import check_args, get_config, ios_argument_spec, load_config
 
 
 def validate_mtu(value, module):
@@ -399,23 +397,22 @@ def main():
     """ main entry point for module execution
     """
     neighbors_spec = dict(
-        host=dict(),
-        port=dict()
+        host=dict(type='str'),
+        port=dict(type='str')
     )
 
     element_spec = dict(
-        name=dict(),
-        description=dict(),
-        speed=dict(),
-        mtu=dict(),
-        duplex=dict(choices=['full', 'half', 'auto']),
-        enabled=dict(default=True, type='bool'),
-        tx_rate=dict(),
-        rx_rate=dict(),
+        name=dict(type='str'),
+        description=dict(type='str'),
+        speed=dict(type='str'),
+        mtu=dict(type='str'),
+        duplex=dict(type='str', choices=['full', 'half', 'auto']),
+        enabled=dict(type='bool', default=True),
+        tx_rate=dict(type='str'),
+        rx_rate=dict(type='str'),
         neighbors=dict(type='list', elements='dict', options=neighbors_spec),
-        delay=dict(default=10, type='int'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'up', 'down'])
+        delay=dict(type='int', default=10),
+        state=dict(type='str', default='present', choices=['absent', 'down', 'present', 'up']),
     )
 
     aggregate_spec = deepcopy(element_spec)

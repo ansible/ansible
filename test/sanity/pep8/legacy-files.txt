@@ -177,11 +177,6 @@ lib/ansible/modules/network/fortios/fortios_config.py
 lib/ansible/modules/network/fortios/fortios_ipv4_policy.py
 lib/ansible/modules/network/illumos/dladm_iptun.py
 lib/ansible/modules/network/illumos/dladm_linkprop.py
-lib/ansible/modules/network/ios/ios_banner.py
-lib/ansible/modules/network/ios/ios_command.py
-lib/ansible/modules/network/ios/ios_facts.py
-lib/ansible/modules/network/ios/ios_system.py
-lib/ansible/modules/network/ios/ios_vrf.py
 lib/ansible/modules/network/iosxr/iosxr_command.py
 lib/ansible/modules/network/iosxr/iosxr_config.py
 lib/ansible/modules/network/iosxr/iosxr_facts.py

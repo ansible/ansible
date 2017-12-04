@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -24,7 +25,6 @@ options:
   count:
     description:
     - Number of packets to send.
-    required: false
     default: 5
   dest:
     description:
@@ -33,8 +33,6 @@ options:
   source:
     description:
     - The source IP Address.
-    required: false
-    default: null
   state:
     description:
     - Determines if the expected result is success or fail.
@@ -43,7 +41,6 @@ options:
   vrf:
     description:
     - The VRF to use for forwarding.
-    required: false
     default: default
 '''
 
@@ -108,8 +105,7 @@ rtt:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.ios.ios import run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import check_args, ios_argument_spec, run_commands
 import re
 
 
@@ -120,7 +116,7 @@ def main():
         count=dict(type="int"),
         dest=dict(type="str", required=True),
         source=dict(type="str"),
-        state=dict(type="str", choices=["absent", "present"], default="present"),
+        state=dict(type="str", default="present", choices=["absent", "present"]),
         vrf=dict(type="str")
     )
 

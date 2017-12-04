@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -16,7 +15,8 @@ DOCUMENTATION = """
 ---
 module: ios_vlan
 version_added: "2.5"
-author: "Trishna Guha (@trishnaguha)"
+author:
+- Trishna Guha (@trishnaguha)
 short_description: Manage VLANs on IOS network devices
 description:
   - This module provides declarative management of VLANs
@@ -43,13 +43,14 @@ options:
     description: List of VLANs definitions.
   purge:
     description:
-      - Purge VLANs not defined in the I(aggregate) parameter.
-    default: no
+      - Purge VLANs not defined in the I(aggregate) parameter.?
+    type: bool
+    default: 'no'
   state:
     description:
       - State of the VLAN configuration.
+    choices: [ absent, active, present, suspend ]
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
 """
 
 EXAMPLES = """
@@ -80,15 +81,14 @@ commands:
     - name test-vlan
 """
 
+from copy import deepcopy
+
 import re
 import time
 
-from copy import deepcopy
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config, run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import check_args, ios_argument_spec, load_config, run_commands
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -243,11 +243,10 @@ def main():
     """
     element_spec = dict(
         vlan_id=dict(type='int'),
-        name=dict(),
+        name=dict(type='str'),
         interfaces=dict(type='list'),
-        delay=dict(default=10, type='int'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'active', 'suspend'])
+        delay=dict(type='int', default=10),
+        state=dict(type='st', default='present', choices=['absent', 'active', 'present', 'suspend']),
     )
 
     aggregate_spec = deepcopy(element_spec)

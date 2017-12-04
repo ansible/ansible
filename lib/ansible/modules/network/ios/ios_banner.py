@@ -1,31 +1,19 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
 DOCUMENTATION = """
 ---
 module: ios_banner
 version_added: "2.3"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+author:
+- Ricardo Carrillo Cruz (@rcarrillocruz)
 short_description: Manage multiline banners on Cisco IOS devices
 description:
   - This will configure both login and motd banners on remote devices
@@ -40,20 +28,18 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
-    choices: ['login', 'motd']
+    choices: [ login,  motd ]
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration.  This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is
         present in the current devices active running configuration.
     default: present
-    choices: ['present', 'absent']
+    choices: [ absent, present ]
 """
 
 EXAMPLES = """
@@ -90,11 +76,12 @@ commands:
     - that contains a multiline
     - string
 """
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.ios.ios import load_config, run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import check_args, ios_argument_spec, load_config, run_commands
 import re
+
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -114,6 +101,7 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def map_config_to_obj(module):
     rc, out, err = exec_command(module, 'show banner %s' % module.params['banner'])
     if rc == 0:
@@ -132,6 +120,7 @@ def map_config_to_obj(module):
         obj['state'] = 'present'
     return obj
 
+
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
@@ -143,13 +132,14 @@ def map_params_to_obj(module):
         'state': module.params['state']
     }
 
+
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        banner=dict(required=True, choices=['login', 'motd']),
-        text=dict(),
-        state=dict(default='present', choices=['present', 'absent'])
+        banner=dict(type='str', required=True, choices=['login', 'motd']),
+        text=dict(type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     argument_spec.update(ios_argument_spec)

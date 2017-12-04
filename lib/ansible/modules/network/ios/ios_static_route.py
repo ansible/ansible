@@ -1,34 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
 DOCUMENTATION = """
 ---
 module: ios_static_route
 version_added: "2.4"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+author:
+- Ricardo Carrillo Cruz (@rcarrillocruz)
 short_description: Manage static IP routes on Cisco IOS network devices
 description:
   - This module provides declarative management of static
@@ -54,8 +39,8 @@ options:
   state:
     description:
       - State of the static route configuration.
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
@@ -94,14 +79,14 @@ commands:
   sample:
     - ip route 192.168.2.0 255.255.255.0 10.0.0.1
 """
+
 from copy import deepcopy
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config, run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import check_args, ios_argument_spec, load_config, run_commands
 from ipaddress import ip_network
 import re
 
@@ -189,8 +174,8 @@ def main():
         prefix=dict(type='str'),
         mask=dict(type='str'),
         next_hop=dict(type='str'),
-        admin_distance=dict(default=1, type='int'),
-        state=dict(default='present', choices=['present', 'absent'])
+        admin_distance=dict(type='int', default=1),
+        state=dict(type='str', default='present', choices=['absent', 'present'])
     )
 
     aggregate_spec = deepcopy(element_spec)

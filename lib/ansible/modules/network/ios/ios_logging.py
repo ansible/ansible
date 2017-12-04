@@ -1,23 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -27,7 +12,8 @@ DOCUMENTATION = """
 ---
 module: ios_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha)"
+author:
+- Trishna Guha (@trishnaguha)
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
@@ -38,7 +24,7 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', 'console', 'monitor', 'buffered']
+    choices: [ buffered, console, host, monitor, on ]
   name:
     description:
       - If value of C(dest) is I(file) it indicates file-name,
@@ -60,8 +46,8 @@ options:
   state:
     description:
       - State of the logging configuration.
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
@@ -123,8 +109,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import check_args, get_config, ios_argument_spec, load_config
 
 
 def validate_size(value, module):
@@ -329,12 +314,12 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
+        dest=dict(type='str', choices=['buffered', 'console', 'host', 'monitor', 'on']),
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str'),
         level=dict(type='str', default='debugging'),
-        state=dict(default='present', choices=['present', 'absent']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     aggregate_spec = deepcopy(element_spec)
