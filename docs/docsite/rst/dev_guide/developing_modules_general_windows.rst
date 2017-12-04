@@ -225,7 +225,9 @@ they do:
 - ArgvParser: Utiliy used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules.
 - CamelConversion: Utility used to convert camelCase strings/lists/dicts to snake_case.
 - CommandUtil: Utility used to execute a Windows process and return the stdout/stderr and rc as separate objects.
+- FileUtil: Utility that expands on the ``Get-ChildItem`` and ``Test-Path`` to work with special files like ``C:\pagefile.sys``.
 - Legacy: General definitions and helper utilities for Ansible module.
+- LinkUtil: Utility to create, remove, and get information about symbolic links, junction points and hard inks.
 - SID: Utilities used to convert a user or group to a Windows SID and vice versa.
 
 For more details on any specific module utility and their requirements, please see the `Ansible 
