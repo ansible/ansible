@@ -212,7 +212,7 @@ class IncludeRole(TaskInclude):
         if self.profiling:
             pr.disable()
             fich, fic = tempfile.mkstemp()
-            pr.dump_stats(fic+'_role_astat')
+            pr.dump_stats(fic + '_role_astat')
         return role
 
     def set_play(self, play):
