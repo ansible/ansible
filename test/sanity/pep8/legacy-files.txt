@@ -138,7 +138,6 @@ lib/ansible/modules/monitoring/stackdriver.py
 lib/ansible/modules/monitoring/uptimerobot.py
 lib/ansible/modules/net_tools/cloudflare_dns.py
 lib/ansible/modules/net_tools/dnsimple.py
-lib/ansible/modules/net_tools/dnsmadeeasy.py
 lib/ansible/modules/net_tools/ipinfoio_facts.py
 lib/ansible/modules/net_tools/nmcli.py
 lib/ansible/modules/net_tools/omapi_host.py

@@ -1,211 +1,190 @@
 #!/usr/bin/python
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: dnsmadeeasy
 version_added: "1.3"
-short_description: Interface with dnsmadeeasy.com (a DNS hosting service).
+short_description: Interface with dnsmadeeasy.com (a DNS hosting service)
 description:
-   - >
-     Manages DNS records via the v2 REST API of the DNS Made Easy service.  It handles records only; there is no manipulation of domains or
-     monitor/account support yet. See: U(https://www.dnsmadeeasy.com/integration/restapi/)
+   - Manages DNS records via the v2 REST API of the DNS Made Easy service.
+   - It handles records only; there is no manipulation of domains or
+     monitor/account support yet.
+   - See U(https://www.dnsmadeeasy.com/integration/restapi/)
 options:
   account_key:
     description:
-      - Account API Key.
-    required: true
-    default: null
+      - The account API key.
 
   account_secret:
     description:
-      - Account Secret Key.
-    required: true
-    default: null
+      - The account secret key.
 
   domain:
     description:
-      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster
-        resolution
-    required: true
-    default: null
+      - Domain to work with.
+      - Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster resolution.
 
   record_name:
     description:
-      - Record name to get/create/delete/update. If record_name is not specified; all records for the domain will be returned in "result" regardless
-        of the state argument.
-    required: false
-    default: null
+      - The record name to get/create/delete/update.
+      - If record_name is not specified; all records for the domain will be returned in "result" regardless of the state argument.
 
   record_type:
     description:
-      - Record type.
-    required: false
-    choices: [ 'A', 'AAAA', 'CNAME', 'ANAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT' ]
-    default: null
+      - The record type.
+    choices: [ A, AAAA, ANAME, CNAME, HTTPRED, MX, NS, PTR, SRV, TXT ]
 
   record_value:
     description:
-      - >
-        Record value. HTTPRED: <redirection URL>, MX: <priority> <target name>, NS: <name server>, PTR: <target name>,
-        SRV: <priority> <weight> <port> <target name>, TXT: <text value>"
-      - >
-        If record_value is not specified; no changes will be made and the record will be returned in 'result'
+      - The record value.
+      - HTTPRED:<redirection URL>, MX:<priority> <target name>, NS:<name server>, PTR:<target name>,
+        SRV:<priority> <weight> <port> <target name>, TXT:<text value>
+      - If record_value is not specified; no changes will be made and the record will be returned in 'result'
         (in other words, this module can be used to fetch a record's current id, type, and ttl)
-    required: false
-    default: null
 
   record_ttl:
     description:
-      - record's "Time to live".  Number of seconds the record remains cached in DNS servers.
-    required: false
+      - The record's TTL (Time to live).
+      - Number of seconds the record remains cached in DNS servers.
     default: 1800
 
   state:
     description:
-      - whether the record should exist or not
-    required: true
-    choices: [ 'present', 'absent' ]
-    default: null
+      - Whether the record should exist or not.
+    required: yes
+    choices: [ absent, present ]
 
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled sites using self-signed certificates.
-    required: false
+      - If C(no), SSL certificates will not be validated.
+      - This should only be used on personally controlled sites using self-signed certificates.
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
-    version_added: 1.5.1
+    version_added: '1.5.1'
 
   monitor:
     description:
-      - If C(yes), add or change the monitor.  This is applicable only for A records.
-    required: true
+      - If C(yes), add or change the monitor.
+      - This is applicable only for A records.
+    required: yes
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
-    version_added: 2.4
+    version_added: '2.4'
 
   systemDescription:
     description:
-      - Description used by the monitor.
-    required: true
+      - The description used by the monitor.
+    required: yes
     default: ''
-    version_added: 2.4
+    version_added: '2.4'
 
   maxEmails:
     description:
       - Number of emails sent to the contact list by the monitor.
-    required: true
+    required: yes
     default: 1
-    version_added: 2.4
+    version_added: '2.4'
 
   protocol:
     description:
       - Protocol used by the monitor.
-    required: true
-    default: 'HTTP'
-    choices: ['TCP', 'UDP', 'HTTP', 'DNS', 'SMTP', 'HTTPS']
-    version_added: 2.4
+    required: yes
+    default: HTTP
+    choices: [ DNS, HTTP, HTTPS, SMTP, TCP, UDP ]
+    version_added: '2.4'
 
   port:
     description:
       - Port used by the monitor.
-    required: true
+    required: yes
     default: 80
-    version_added: 2.4
+    version_added: '2.4'
 
   sensitivity:
     description:
       - Number of checks the monitor performs before a failover occurs where Low = 8, Medium = 5,and High = 3.
-    required: true
-    default: 'Medium'
-    choices: ['Low', 'Medium', 'High']
-    version_added: 2.4
+    required: yes
+    default: Medium
+    choices: [ Low, Medium, High ]
+    version_added: '2.4'
 
   contactList:
     description:
       - Name or id of the contact list that the monitor will notify.
       - The default C('') means the Account Owner.
-    required: true
+    required: yes
     default: ''
-    version_added: 2.4
+    version_added: '2.4'
 
   httpFqdn:
     description:
       - The fully qualified domain name used by the monitor.
-    required: false
-    version_added: 2.4
+    version_added: '2.4'
 
   httpFile:
     description:
       - The file at the Fqdn that the monitor queries for HTTP or HTTPS.
-    required: false
-    version_added: 2.4
+    version_added: '2.4'
 
   httpQueryString:
     description:
       - The string in the httpFile that the monitor queries for HTTP or HTTPS.
-    required: False
-    version_added: 2.4
+    version_added: '2.4'
 
   failover:
     description:
       - If C(yes), add or change the failover.  This is applicable only for A records.
-    required: true
+    required: yes
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
-    version_added: 2.4
+    version_added: '2.4'
 
   autoFailover:
     description:
-      - If true, fallback to the primary IP address is manual after a failover.
-      - If false, fallback to the primary IP address is automatic after a failover.
-    required: true
+      - If C(yes), fallback to the primary IP address is manual after a failover.
+      - If C(no), fallback to the primary IP address is automatic after a failover.
+    required: yes
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
-    version_added: 2.4
+    version_added: '2.4'
 
   ip1:
     description:
       - Primary IP address for the failover.
       - Required if adding or changing the monitor or failover.
-    required: false
-    version_added: 2.4
+    version_added: '2.4'
 
   ip2:
     description:
       - Secondary IP address for the failover.
       - Required if adding or changing the failover.
-    required: false
-    version_added: 2.4
+    version_added: '2.4'
 
   ip3:
     description:
       - Tertiary IP address for the failover.
-    required: false
-    version_added: 2.4
+    version_added: '2.4'
 
   ip4:
     description:
       - Quaternary IP address for the failover.
-    required: false
-    version_added: 2.4
+    version_added: '2.4'
 
   ip5:
     description:
       - Quinary IP address for the failover.
-    required: false
-    version_added: 2.4
+    version_added: '2.4'
 
 notes:
   - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few
@@ -217,21 +196,26 @@ notes:
   - To add monitor, the 'monitor', 'port', 'protocol', 'maxEmails', 'systemDescription', and 'ip1' options are required.
   - The monitor and the failover will share 'port', 'protocol', and 'ip1' options.
 
-requirements: [ hashlib, hmac ]
-author: "Brice Burgess (@briceburg)"
+requirements:
+- hashlib
+- hmac
+
+author:
+- Brice Burgess (@briceburg)
 '''
 
 EXAMPLES = '''
-# fetch my.com domain records
-- dnsmadeeasy:
+- name: Fetch my.com domain records
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
     state: present
+  delegate_to: localhost
   register: response
 
-# create / ensure the presence of a record
-- dnsmadeeasy:
+- name: Create / ensure the presence of a record
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
@@ -239,35 +223,39 @@ EXAMPLES = '''
     record_name: test
     record_type: A
     record_value: 127.0.0.1
+  delegate_to: localhost
 
-# update the previously created record
-- dnsmadeeasy:
+- name: Update the previously created record
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
     state: present
     record_name: test
     record_value: 192.0.2.23
+  delegate_to: localhost
 
-# fetch a specific record
-- dnsmadeeasy:
+- name: Fetch a specific record
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
     state: present
     record_name: test
+  delegate_to: localhost
   register: response
 
-# delete a record / ensure it is absent
-- dnsmadeeasy:
+- name: Delete a record / ensure it is absent
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
     state: absent
     record_name: test
+  delegate_to: localhost
 
-# Add a failover
-- dnsmadeeasy:
+- name: Add a failover
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
@@ -278,6 +266,7 @@ EXAMPLES = '''
     failover: True
     ip1: 127.0.0.2
     ip2: 127.0.0.3
+  delegate_to: localhost
 
 - dnsmadeeasy:
     account_key: key
@@ -293,9 +282,10 @@ EXAMPLES = '''
     ip3: 127.0.0.4
     ip4: 127.0.0.5
     ip5: 127.0.0.6
+  delegate_to: localhost
 
-# Add a monitor
-- dnsmadeeasy:
+- name: Add a monitor
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
@@ -310,9 +300,10 @@ EXAMPLES = '''
     maxEmails: 1
     systemDescription: Monitor Test A record
     contactList: my contact list
+  delegate_to: localhost
 
-# Add a monitor with http options
-- dnsmadeeasy:
+- name: Add a monitor with http options
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
@@ -330,9 +321,10 @@ EXAMPLES = '''
     httpFqdn: http://my.com
     httpFile: example
     httpQueryString: some string
+  delegate_to: localhost
 
-# Add a monitor and a failover
-- dnsmadeeasy:
+- name: Add a monitor and a failover
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
@@ -349,9 +341,10 @@ EXAMPLES = '''
     maxEmails: 1
     systemDescription: monitoring my.com status
     contactList: emergencycontacts
+  delegate_to: localhost
 
-# Remove a failover
-- dnsmadeeasy:
+- name: Remove a failover
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
@@ -360,9 +353,10 @@ EXAMPLES = '''
     record_type: A
     record_value: 127.0.0.1
     failover: no
+  delegate_to: localhost
 
-# Remove a monitor
-- dnsmadeeasy:
+- name: Remove a monitor
+  dnsmadeeasy:
     account_key: key
     account_secret: secret
     domain: my.com
@@ -371,6 +365,7 @@ EXAMPLES = '''
     record_type: A
     record_value: 127.0.0.1
     monitor: no
+  delegate_to: localhost
 '''
 
 # ============================================
@@ -383,9 +378,9 @@ import hmac
 from time import strftime, gmtime
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import fetch_url
 
 
 class DME2(object):
@@ -397,11 +392,11 @@ class DME2(object):
         self.secret = secret
         self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
         self.domain = str(domain)
-        self.domain_map = None      # ["domain_name"] => ID
-        self.record_map = None      # ["record_name"] => ID
-        self.records = None         # ["record_ID"] => <record>
+        self.domain_map = None       # ["domain_name"] => ID
+        self.record_map = None       # ["record_name"] => ID
+        self.records = None          # ["record_ID"] => <record>
         self.all_records = None
-        self.contactList_map = None # ["contactList_name"] => ID
+        self.contactList_map = None  # ["contactList_name"] => ID
 
         # Lookup the domain ID if passed as a domain name vs. ID
         if not self.domain.isdigit():
@@ -494,7 +489,7 @@ class DME2(object):
         return self.query(self.record_url, 'GET')['data']
 
     def _instMap(self, type):
-        #@TODO cache this call so it's executed only once per ansible execution
+        # TODO cache this call so it's executed only once per ansible execution
         map = {}
         results = {}
 
@@ -512,15 +507,15 @@ class DME2(object):
         return json.dumps(data, separators=(',', ':'))
 
     def createRecord(self, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url, 'POST', data)
 
     def updateRecord(self, record_id, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'PUT', data)
 
     def deleteRecord(self, record_id):
-        #@TODO remove record from the cache when impleneted
+        # TODO remove record from the cache when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'DELETE')
 
     def getMonitor(self, record_id):
@@ -547,48 +542,44 @@ class DME2(object):
 
         return self.getContactList(self.contactList_map.get(name, 0))
 
-# ===========================================
-# Module execution.
-#
 
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            account_key=dict(required=True),
-            account_secret=dict(required=True, no_log=True),
-            domain=dict(required=True),
-            state=dict(required=True, choices=['present', 'absent']),
-            record_name=dict(required=False),
-            record_type=dict(required=False, choices=[
-                             'A', 'AAAA', 'CNAME', 'ANAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
-            record_value=dict(required=False),
-            record_ttl=dict(required=False, default=1800, type='int'),
-            monitor=dict(default='no', type='bool'),
-            systemDescription=dict(default=''),
-            maxEmails=dict(default=1, type='int'),
-            protocol=dict(default='HTTP', choices=['TCP', 'UDP', 'HTTP', 'DNS', 'SMTP', 'HTTPS']),
-            port=dict(default=80, type='int'),
-            sensitivity=dict(default='Medium', choices=['Low', 'Medium', 'High']),
-            contactList=dict(default=None),
-            httpFqdn=dict(required=False),
-            httpFile=dict(required=False),
-            httpQueryString=dict(required=False),
-            failover=dict(default='no', type='bool'),
-            autoFailover=dict(default='no', type='bool'),
-            ip1=dict(required=False),
-            ip2=dict(required=False),
-            ip3=dict(required=False),
-            ip4=dict(required=False),
-            ip5=dict(required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            account_key=dict(type='str', required=True),
+            account_secret=dict(type='str', required=True, no_log=True),
+            domain=dict(type='str', required=True),
+            state=dict(type='str', required=True, choices=['absent', 'present']),
+            record_name=dict(type='str'),
+            record_type=dict(type='str', choices=['A', 'AAAA', 'ANAME', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
+            record_value=dict(type='str'),
+            record_ttl=dict(type='int', default=1800),
+            monitor=dict(type='bool', default=False),
+            systemDescription=dict(type='str', default=''),
+            maxEmails=dict(type='int', default=1),
+            protocol=dict(type='str', default='HTTP', choices=['DNS', 'HTTP', 'HTTPS', 'SMTP', 'TCP', 'UDP']),
+            port=dict(type='int', default=80),
+            sensitivity=dict(type='str', default='Medium', choices=['Low', 'Medium', 'High']),
+            contactList=dict(type='str'),
+            httpFqdn=dict(type='str'),
+            httpFile=dict(type='str'),
+            httpQueryString=dict(type='str'),
+            failover=dict(type='bool', default=False),
+            autoFailover=dict(type='bool', default=False),
+            ip1=dict(type='str'),
+            ip2=dict(type='str'),
+            ip3=dict(type='str'),
+            ip4=dict(type='str'),
+            ip5=dict(type='str'),
+            validate_certs=dict(type='bool', default=True),
         ),
         required_together=(
-            ['record_value', 'record_ttl', 'record_type']
+            ['record_value', 'record_ttl', 'record_type'],
         ),
         required_if=[
             ['failover', True, ['autoFailover', 'port', 'protocol', 'ip1', 'ip2']],
-            ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]
+            ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']],
         ]
     )
 
@@ -675,7 +666,7 @@ def main():
     # Follow Keyword Controlled Behavior
     if state == 'present':
         # return the record if no value is specified
-        if not "value" in new_record:
+        if "value" not in new_record:
             if not current_record:
                 module.fail_json(
                     msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, module.params['domain']))
@@ -710,10 +701,6 @@ def main():
 
         # record does not exist, return w/o change.
         module.exit_json(changed=changed)
-
-    else:
-        module.fail_json(
-            msg="'%s' is an unknown value for the state argument" % state)
 
 
 if __name__ == '__main__':
