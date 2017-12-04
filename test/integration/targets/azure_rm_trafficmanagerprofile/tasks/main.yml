@@ -1,0 +1,39 @@
+---
+- name: Create traffic manager
+  set_fact:
+    resource_group: "{{ resource_group }}"
+    traffic_manager_name: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
+- name: Test traffic manager creation
+  azure_rm_trafficmanagerprofile:
+    name: "{{ traffic_manager_name }}"
+    resource_group:  "{{ resource_group }}"
+    properties:
+      profile_status: "Enabled"
+      traffic_routing_method: "Performance"
+      dns_config:
+        ttl: 300
+      monitor_config:
+        protocol: "HTTP"
+        path: "/testpath.aspx"
+        port: 80
+        interval_in_seconds: 30
+        timeout_in_seconds: 10
+      location: "global"
+      tags:
+        boss: "you"
+        provider: "azure"
+    state: "present"
+  register: output
+  # ignore_errors: yes
+
+- name: Assert tm exist
+  assert:
+    that:
+      - output.changed
+
+- name: Test Traffic Manager removal
+  azure_rm_trafficmanagerprofile:
+    state: absent
+    name: "{{ traffic_manager_name }}"
+    resource_group: "{{ resource_group }}"

@@ -122,6 +122,7 @@ try:
     from azure.mgmt.web.version import VERSION as web_client_version
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
+    from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
@@ -234,6 +235,7 @@ class AzureRMModuleBase(object):
         self._storage_client = None
         self._resource_client = None
         self._compute_client = None
+        self._trafficmanager_client = None
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
@@ -758,6 +760,18 @@ class AzureRMModuleBase(object):
                                                              base_url=self._cloud_environment.endpoints.resource_manager,
                                                              api_version='2017-05-10')
         return self._resource_client
+
+    @property
+    def trafficmanager_client(self):
+        self.log('Getting traffic manager client')
+        if not self._trafficmanager_client:
+            # self.check_client_version('resource', resource_client_version, AZURE_EXPECTED_VERSIONS['resource_client_version'])
+            self._trafficmanager_client = TrafficManagerManagementClient(
+                self.azure_credentials,
+                self.subscription_id,
+                base_url=self._cloud_environment.endpoints.resource_manager
+            )
+        return self._trafficmanager_client
 
     @property
     def compute_client(self):
