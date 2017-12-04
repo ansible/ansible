@@ -38,7 +38,7 @@
  - name: Assert the ACS instance is well updated
    assert:
      that:
-       - output.changed == False
+       - output.changed == True
        - output.state.admin_user_enabled == False
        - output.state.sku == 'Standard'
        - output.state.tags['NewTag'] == 'newtag'
