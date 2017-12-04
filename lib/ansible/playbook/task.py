@@ -67,7 +67,7 @@ class Task(Base, Conditional, Taggable, Become):
     # might be possible to define others
 
     _args = FieldAttribute(isa='dict', default=dict())
-    _action = FieldAttribute(isa='string')
+    _action = FieldAttribute(isa='string', inherit=False)
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
     _changed_when = FieldAttribute(isa='list', default=[])
@@ -77,7 +77,7 @@ class Task(Base, Conditional, Taggable, Become):
     _failed_when = FieldAttribute(isa='list', default=[])
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
-    _name = FieldAttribute(isa='string', default='')
+    _name = FieldAttribute(isa='string', default='', inherit=False)
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
     _register = FieldAttribute(isa='string')
