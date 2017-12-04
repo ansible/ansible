@@ -48,10 +48,11 @@ class ActionModule(ActionBase):
             # provider argument spec in module_utils/network/common/utils.py or another
             # option is that there isn't a need to push provider into the module
             # since the connection is started in the action handler.
+            module_name = 'ansible.module_utils.network.{0}.{0}'.format(play_context.network_os)
             f, p, d = find_module('ansible')
-            for package in ('module_utils', 'network', play_context.network_os):
+            for package in module_name.split('.')[1:]:
                 f, p, d = find_module(package, [p])
-            module = load_module('ansible.module_utils.network.{0}.{0}'.format(play_context.network_os), f, p, d)
+            module = load_module(module_name, f, p, d)
 
             self.provider = load_provider(module.get_provider_argspec(), self._task.args)
             if play_context.network_os == 'junos':
