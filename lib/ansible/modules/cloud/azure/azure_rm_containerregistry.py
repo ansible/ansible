@@ -298,7 +298,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                     to_do = Actions.NoAction
                     if (self.location is not None) and self.location != response['location']:
                         to_do = Actions.Update
-                    else if (self.sku is not None) and self.location != response['sku']:
+                    elif (self.sku is not None) and self.location != response['sku']:
                         to_do = Actions.Update
                 else:
                     to_do = Actions.NoAction
