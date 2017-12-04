@@ -33,7 +33,6 @@ options:
     description:
       - The name for the placement group.
     required: true
-    default: null
   state:
     description:
       - Create or delete placement group.
