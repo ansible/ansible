@@ -48,9 +48,9 @@ class ActionModule(ActionBase):
         # option is that there isn't a need to push provider into the module
         # since the connection is started in the action handler.
         f, p, d = find_module('ansible')
-        f2, p2, d2 = find_module('module_utils', [p])
-        f3, p3, d3 = find_module(play_context.network_os, [p2])
-        module = load_module('ansible.module_utils.{0}.{1}'.format(play_context.network_os, play_context.network_os), f3, p3, d3)
+        for package in ('module_utils', 'network', play_context.network_os):
+            f, p, d = find_module(package, [p])
+        module = load_module('ansible.module_utils.network.{0}.{0}'.format(play_context.network_os), f, p, d)
 
         if play_context.connection == 'local':
 
