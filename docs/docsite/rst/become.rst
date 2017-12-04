@@ -252,12 +252,20 @@ The following example shows how to set enable mode for `all` tests in this play:
 
 FIXME: Can be specified per host
 
-Dropping out of enable mode
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Setting enable mode for all tasks
+---------------------------------
 
-FIXME: Not possible, as some platforms don't support this (Maybe not universally, but ``become: no`` definitely works as expected for platforms whose terminal plugin has an ``on_unbecome()`` method)
+Often you wish for all tasks to run using privilege mode, that is best achieved by using ``group_vars``:
 
-FIXME: Raise bug so we warn if `become: no`
+**group_vars/eos.yml**
+
+.. code-block:: yaml
+
+   ansible_connection: network_cli
+   ansible_network_os: eos
+   ansible_user: myuser
+   ansible_become: yes
+   ansible_become_method: enable
 
 
 Passwords for enable mode
