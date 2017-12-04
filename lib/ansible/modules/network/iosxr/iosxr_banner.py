@@ -176,7 +176,6 @@ class NCConfiguration(ConfigBase):
 
         running = get_config(self._module, source='running', config_filter=_get_filter)
 
-        opcode = None
         banner_name = None
         banner_text = None
         running_utf8 = running.encode('utf8')
@@ -184,6 +183,7 @@ class NCConfiguration(ConfigBase):
             banner_name = etree.fromstring(running_utf8).find('.//banner-name').text
             banner_text = etree.fromstring(running_utf8).find('.//banner-text').text
 
+        opcode = None
         if state == 'absent' and banner_name == self._module.params['banner'] and len(banner_text):
             opcode = "delete"
         elif state == 'present':

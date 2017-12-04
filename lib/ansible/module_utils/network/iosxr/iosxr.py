@@ -28,13 +28,12 @@
 #
 import json
 from difflib import Differ
-from copy import deepcopy
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.network.common.utils import to_list 
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import Connection
-from ansible.module_utils.netconf import NetconfConnection
+from ansible.module_utils.network.common.netconf import NetconfConnection
 
 try:
     from ncclient.xml_ import to_xml
@@ -58,7 +57,9 @@ NS_DICT = {
     'BANNERS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg"},
     'INTERFACES_NSMAP': {None: "http://openconfig.net/yang/interfaces"},
     'INSTALL_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-installmgr-admin-oper"},
-    'HOST-NAMES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-cfg"}
+    'HOST-NAMES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-cfg"},
+    'M:TYPE_NSMAP': {"idx": "urn:ietf:params:xml:ns:yang:iana-if-type"},
+    'ETHERNET_NSMAP': {None: "http://openconfig.net/yang/interfaces/ethernet"}
 }
 
 iosxr_provider_spec = {
@@ -141,14 +142,13 @@ def get_device_capabilities(module):
 # ])
 #
 # Fields:
-#   key: direct mapping to the key in arg_spec with same name
-#        (prefixes --> a: values from arg_spec, m: values from meta-data)
+#   key: exact match to the key in arg_spec for a parameter
+#        (prefixes --> a: value fetched from arg_spec, m: value fetched from meta-data)
 #   xpath: xpath of the element (based on YANG model)
 #   tag: True if no text on the element
 #   attrib: attribute to be embedded in the element (e.g. xc:operation="merge")
-#   operation: if edit --> includes the element in edit_config() query else ignore for get() queries
+#   operation: if edit --> includes the element in edit_config() query else ignores for get() queries
 #   value: if key is prefixed with "m:", value is required in meta-data
-#   leaf: True --> if there is only one tag element under a subtree
 #
 # Output:
 # <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
@@ -160,51 +160,65 @@ def get_device_capabilities(module):
 #   </banners>
 # </config>
 
+
 def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
-    loop_root = container_ele
-    for key, meta in xmap.items():
+    sub_root = container_ele
+    meta_subtree = list()
+
+    for key, meta in xmap.iteritems():
+
         candidates = meta.get('xpath', "").split("/")
 
         if container_ele.tag == candidates[-2]:
             parent = container_ele
-        elif loop_root.tag == candidates[-2]:
-            parent = loop_root
+        elif sub_root.tag == candidates[-2]:
+            parent = sub_root
         else:
-            parent = loop_root.find(".//" + candidates[-2])
+            parent = sub_root.find(".//" + meta.get('xpath', "").split(sub_root.tag + '/', 1)[1].rsplit('/', 1)[0])
 
-        if meta.get('tag', False):
-            if parent.tag == container_ele.tag:
-                child = etree.Element(candidates[-1])
-                loop_root = child
-            else:
-                child = etree.SubElement(parent, candidates[-1])
+        if ((opcode in ('delete', 'merge') and meta.get('operation', 'unknown') == 'edit') or
+                meta.get('operation', None) is None):
 
-            if meta.get('attrib', None) and opcode in ('delete', 'merge'):
-                child.set(BASE_1_0 + meta.get('attrib'), opcode)
+            if meta.get('tag', False):
+                if parent.tag == container_ele.tag:
+                    if meta.get('ns', None) is True:
+                        child = etree.Element(candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
+                    else:
+                        child = etree.Element(candidates[-1])
+                    meta_subtree.append(child)
+                    sub_root = child
+                else:
+                    if meta.get('ns', None) is True:
+                        child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
+                    else:
+                        child = etree.SubElement(parent, candidates[-1])
 
-            if meta.get('leaf', False):
-                container_ele.append(deepcopy(loop_root))
-            continue
+                if meta.get('attrib', None) and opcode in ('delete', 'merge'):
+                    child.set(BASE_1_0 + meta.get('attrib'), opcode)
 
-        if (opcode in ('delete', 'merge') and meta.get('operation', 'unknown') == 'edit') \
-                or meta.get('operation', None) is None:
-            if meta.get('ns', None) is True:
-                child = etree.SubElement(parent, candidates[-1],
-                                         nsmap=NS_DICT[key.upper() + "_NSMAP"])
-            else:
-                child = etree.SubElement(parent, candidates[-1])
+                continue
 
+            text = None
             param_key = key.split(":")
-            if param_key[0] == 'a' and param.get(param_key[1], None):
-                child.text = param.get(param_key[1])
+            if param_key[0] == 'a':
+                if param.get(param_key[1], None):
+                    text = param.get(param_key[1])
+            elif param_key[0] == 'm':
+                if meta.get('value', None):
+                    text = meta.get('value')
 
-            if param_key[0] == 'm' and meta.get('value', None):
-                child.text = meta.get('value')
+            if text:
+                if meta.get('ns', None) is True:
+                    child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
+                else:
+                    child = etree.SubElement(parent, candidates[-1])
+                child.text = text
 
-        if meta.get('leaf', False):
-            container_ele.append(deepcopy(loop_root))
+    if len(meta_subtree) > 1:
+        for item in meta_subtree:
+            container_ele.append(item)
 
-    container_ele.append(deepcopy(loop_root))
+    return sub_root
 
 
 def build_xml(container, xmap=None, params=None, opcode=None):
@@ -215,15 +229,20 @@ def build_xml(container, xmap=None, params=None, opcode=None):
         root = etree.Element("filter", type="subtree")
     elif opcode in ('delete', 'merge'):
         root = etree.Element("config", nsmap=NS_DICT['BASE_NSMAP'])
-    container_ele = etree.SubElement(root, container,
-                                     nsmap=NS_DICT[container.upper() + "_NSMAP"])
+
+    container_ele = etree.SubElement(root, container, nsmap=NS_DICT[container.upper() + "_NSMAP"])
 
     if xmap:
         if not params:
             build_xml_subtree(container_ele, xmap)
         else:
+            subtree_list = list()
+
             for param in to_list(params):
-                build_xml_subtree(container_ele, xmap, param, opcode=opcode)
+                subtree_list.append(build_xml_subtree(container_ele, xmap, param, opcode=opcode))
+
+            for item in subtree_list:
+                container_ele.append(item)
 
     return root
 

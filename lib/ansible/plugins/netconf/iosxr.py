@@ -28,7 +28,7 @@ from io import BytesIO
 from ansible.module_utils.six import StringIO
 
 from ansible import constants as C
-from ansible.module_utils.iosxr import build_xml
+from ansible.module_utils.network.iosxr.iosxr import build_xml
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
