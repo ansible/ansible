@@ -1,8 +1,11 @@
+***********
 YAML Syntax
-===========
+***********
+
+.. contents:: Topics
 
 This page provides a basic overview of correct YAML syntax, which is how Ansible
-playbooks (our configuration management language) are expressed.  
+playbooks (our configuration management language) are expressed.
 
 We use YAML because it is easier for humans to read and write than other common
 data formats like XML or JSON.  Further, there are libraries available in most
@@ -13,9 +16,9 @@ is used in practice.
 
 
 YAML Basics
------------
+===========
 
-For Ansible, nearly every YAML file starts with a list.   
+For Ansible, nearly every YAML file starts with a list.
 Each item in the list is a list of key/value pairs, commonly
 called a "hash" or a "dictionary".  So, we need to know how
 to write lists and dictionaries in YAML.
@@ -114,10 +117,11 @@ This really has nothing to do with Ansible, but will give you a feel for the for
         3 A-Levels
         BSc in the Internet of Things
 
-That's all you really need to know about YAML to start writing `Ansible` playbooks.
+Limitations and Workarounds
+===========================
 
-Gotchas
--------
+Colons in YAML
+--------------
 
 While YAML is generally friendly, the following is going to result in a YAML syntax error::
 
@@ -132,15 +136,18 @@ While YAML is generally friendly, the following is going to result in a YAML syn
 You will want to quote hash values using colons followed by a space or the end of the line::
 
     foo: "somebody said I should put a colon here: so I did"
-    
+
     windows_drive: "c:"
 
 ...and then the colon will be preserved.
 
-Further, Ansible uses "{{ var }}" for variables.  If a value after a colon starts
-with a "{", YAML will think it is a dictionary, so you must quote it, like so::
+Ansible uses ``"{{ var }}"`` for variables.  If a value after a colon starts
+with a ``"{"``, YAML will think it is a dictionary, so you must quote it. For example::
 
     foo: "{{ variable }}"
+
+Quotes in YAML
+--------------
 
 If your value starts with a quote the entire value must be quoted, not just part of it. Here are some additional examples of how to properly quote things::
 
@@ -152,9 +159,13 @@ Not valid::
 
     foo: "E:\\path\\"rest\\of\\path
 
-The same applies for strings that start or contain any YAML special characters ``[] {} : > |`` .
 
-Boolean conversion is helpful, but this can be a problem when you want a literal `yes` or other boolean values as a string.
+Escaping in YAML
+----------------
+
+As with quotes in YAML, the same applies for strings that start or contain any YAML special characters ``[] {} : > |`` .
+
+Boolean conversion is helpful, but this can be a problem when you want a literal ``yes`` or other boolean values as a string.
 In these cases just use quotes::
 
     non_boolean: "yes"
@@ -162,7 +173,7 @@ In these cases just use quotes::
 
 
 YAML converts certain strings into floating-point values, such as the string
-`1.0`. If you need to specify a version number (in a requirements.yml file, for
+`1.0`. If you need to specify a version number (in a ``requirements.yml`` file, for
 example), you will need to quote the value if it looks like a floating-point
 value::
 
