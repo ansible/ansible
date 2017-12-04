@@ -32,7 +32,7 @@ DOCUMENTATION = """
         default: ''
       remote_addr:
         description:
-            - The path of the chroot you want to access.
+            - The name of the container you want to access.
         default: inventory_hostname
         vars:
             - name: ansible_host
