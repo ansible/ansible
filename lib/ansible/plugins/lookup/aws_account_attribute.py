@@ -97,60 +97,6 @@ from ansible.module_utils.six import string_types
 import os
 
 
-def _find_cred(possible_env_vars):
-    for env_var in possible_env_vars:
-        if os.environ.get(env_var):
-            return os.environ.get(env_var)
-
-
-def _get_region(**kwargs):
-    region = kwargs.get('region')
-
-    if not region:
-        region = _find_cred(possible_env_vars=('AWS_REGION', 'EC2_REGION'))
-
-    return region
-
-
-def _get_credentials(**kwargs):
-    '''
-        :return A dictionary of boto client credentials
-    '''
-    boto_profile = kwargs.get('boto_profile')
-    aws_access_key_id = kwargs.get('aws_access_key')
-    aws_secret_access_key = kwargs.get('aws_secret_key')
-    aws_security_token = kwargs.get('aws_security_token')
-
-    if not boto_profile:
-        env_vars = ('AWS_PROFILE', 'AWS_DEFAULT_PROFILE')
-        boto_profile = _find_cred(env_vars)
-
-    if not aws_access_key_id:
-        env_vars = ('AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY', 'EC2_ACCESS_KEY')
-        aws_access_key_id = _find_cred(env_vars)
-
-    if not aws_secret_access_key:
-        env_vars = ('AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_KEY', 'EC2_SECRET_KEY')
-        aws_secret_access_key = _find_cred(env_vars)
-
-    if not aws_security_token:
-        env_vars = ('AWS_SECURITY_TOKEN', 'AWS_SESSION_TOKEN', 'EC2_SECURITY_TOKEN')
-        aws_security_token = _find_cred(env_vars)
-
-    if not boto_profile and not (aws_access_key_id and aws_secret_access_key):
-        raise AnsibleError("Insufficient boto credentials found.")
-
-    boto_params = {}
-    for param_name, credential in (('aws_access_key_id', aws_access_key_id),
-                       ('aws_secret_access_key', aws_secret_access_key),
-                       ('aws_session_token', aws_security_token),
-                       ('boto_profile', boto_profile)):
-        if credential:
-            boto_params[param_name] = credential
-
-    return boto_params
-
-
 def _boto3_conn(region, credentials):
     if 'boto_profile' in credentials:
         boto_profile = credentials.pop('boto_profile')
@@ -170,11 +116,23 @@ def _boto3_conn(region, credentials):
     return connection
 
 
+def _get_credentials(options):
+    credentials = {}
+    credentials['boto_profile'] = options['boto_profile']
+    credentials['aws_secret_access_key'] = options['aws_access_key']
+    credentials['aws_access_key_id'] = options['aws_secret_key']
+    credentials['aws_session_token'] = options['aws_security_token']
+
+    return credentials
+
+
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
-        boto_credentials = _get_credentials(**kwargs)
-        region = _get_region(**kwargs)
+        self.set_options(var_options=variables, direct=kwargs)
+        boto_credentials = _get_credentials(self._options)
+
+        region = self._options['region']
         client = _boto3_conn(region, boto_credentials)
 
         attribute = kwargs.get('attribute')
