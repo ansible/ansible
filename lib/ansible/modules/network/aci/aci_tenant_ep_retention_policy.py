@@ -125,7 +125,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 BOUNCE_TRIG_MAPPING = dict(coop='protocol', rarp='rarp-flood')

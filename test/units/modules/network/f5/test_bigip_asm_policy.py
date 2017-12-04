@@ -16,10 +16,10 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock, PropertyMock
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import F5ModuleError
-from units.modules.utils import set_module_args
 
 try:
     from library.bigip_asm_policy import V1Parameters
@@ -29,6 +29,7 @@ try:
     from library.bigip_asm_policy import V2Manager
     from library.bigip_asm_policy import ArgumentSpec
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_asm_policy import V1Parameters
@@ -38,6 +39,7 @@ except ImportError:
         from ansible.modules.network.f5.bigip_asm_policy import V2Manager
         from ansible.modules.network.f5.bigip_asm_policy import ArgumentSpec
         from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
@@ -151,6 +153,7 @@ class TestManager(unittest.TestCase):
         v1.read_current_from_device = Mock(return_value=current)
         v1.apply_on_device = Mock(return_value=True)
         v1.create_from_template_on_device = Mock(return_value=True)
+        v1._file_is_missing = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(client)
@@ -189,6 +192,7 @@ class TestManager(unittest.TestCase):
         v1.create_blank = Mock(return_value=True)
         v1.read_current_from_device = Mock(return_value=current)
         v1.apply_on_device = Mock(return_value=True)
+        v1._file_is_missing = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(client)
@@ -389,6 +393,7 @@ class TestManager(unittest.TestCase):
         v1.create_from_template_on_device = Mock(return_value=True)
         v1.wait_for_task = Mock(side_effect=[True, True])
         v1.read_current_from_device = Mock(return_value=current)
+        v1._file_is_missing = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(client)
@@ -426,6 +431,7 @@ class TestManager(unittest.TestCase):
         v1.create_blank = Mock(return_value=True)
         v1.read_current_from_device = Mock(return_value=current)
         v1.apply_on_device = Mock(return_value=True)
+        v1._file_is_missing = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(client)
@@ -554,6 +560,7 @@ class TestManager(unittest.TestCase):
         v1 = V1Manager(client)
         v1.exists = Mock(return_value=False)
         v1.create_on_device = Mock(return_value=False)
+        v1._file_is_missing = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(client)
@@ -561,7 +568,7 @@ class TestManager(unittest.TestCase):
         mm.get_manager = Mock(return_value=v1)
 
         with pytest.raises(F5ModuleError) as err:
-                mm.exec_module()
+            mm.exec_module()
         assert str(err.value) == msg
 
     def test_delete_policy_raises(self, *args):

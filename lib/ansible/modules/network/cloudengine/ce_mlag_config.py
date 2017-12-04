@@ -165,8 +165,8 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import load_config
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import load_config
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_DFS_GROUP_INFO = """

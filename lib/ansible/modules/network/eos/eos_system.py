@@ -129,9 +129,9 @@ session_name:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.eos import load_config, get_config
-from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.eos.eos import load_config, get_config
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 _CONFIGURED_VRFS = None
 

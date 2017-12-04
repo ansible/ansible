@@ -19,8 +19,37 @@ options:
   mta:
     description: Mail Transfer Agent, server that accepts SMTP
     env:
-    - name: SMTPHOST
+        - name: SMTPHOST
+    ini:
+        - section: callback_mail
+          key: smtphost
+          version_added: '2.5'
     default: localhost
+  to:
+    description: Mail recipient
+    ini:
+        - section: callback_mail
+          key: to
+          version_added: '2.5'
+    default: root
+  sender:
+    description: Mail sender
+    ini:
+        - section: callback_mail
+          key: sender
+          version_added: '2.5'
+  cc:
+    description: CC'd recipient
+    ini:
+        - section: callback_mail
+          key: cc
+          version_added: '2.5'
+  bcc:
+    description: BCC'd recipient
+    ini:
+        - section: callback_mail
+          key: bcc
+          version_added: '2.5'
 note:
 - "TODO: expand configuration options now that plugins can leverage Ansible's configuration"
 '''
@@ -42,36 +71,48 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'mail'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def mail(self, subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
-        if smtphost is None:
-            smtphost = os.getenv('SMTPHOST', 'localhost')
-        if sender is None:
-            sender = '<root>'
-        if to is None:
-            to = 'root'
+    def __init__(self, display=None):
+        super(CallbackModule, self).__init__(display=display)
+        self.sender = None
+        self.to = 'root'
+        self.smtphost = os.getenv('SMTPHOST', 'localhost')
+        self.cc = None
+        self.bcc = None
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.sender = self.get_option('sender')
+        self.to = self.get_option('to')
+        self.smtphost = self.get_option('mta')
+        self.cc = self.get_option('cc')
+        self.bcc = self.get_option('bcc')
+
+    def mail(self, subject='Ansible error mail', body=None):
         if body is None:
             body = subject
 
-        smtp = smtplib.SMTP(smtphost)
+        smtp = smtplib.SMTP(self.smtphost)
 
-        b_sender = to_bytes(sender)
-        b_to = to_bytes(to)
-        b_cc = to_bytes(cc)
-        b_bcc = to_bytes(bcc)
+        b_sender = to_bytes(self.sender)
+        b_to = to_bytes(self.to)
+        b_cc = to_bytes(self.cc)
+        b_bcc = to_bytes(self.bcc)
         b_subject = to_bytes(subject)
         b_body = to_bytes(body)
 
         b_content = b'From: %s\n' % b_sender
         b_content += b'To: %s\n' % b_to
-        if cc:
+        if self.cc:
             b_content += b'Cc: %s\n' % b_cc
         b_content += b'Subject: %s\n\n' % b_subject
         b_content += b_body
 
         b_addresses = b_to.split(b',')
-        if cc:
+        if self.cc:
             b_addresses += b_cc.split(b',')
-        if bcc:
+        if self.bcc:
             b_addresses += b_bcc.split(b',')
 
         for b_address in b_addresses:
@@ -95,7 +136,8 @@ class CallbackModule(CallbackBase):
 
     def mail_result(self, result, failtype):
         host = result._host.get_name()
-        sender = '"Ansible: %s" <root>' % host
+        if not self.sender:
+            self.sender = '"Ansible: %s" <root>' % host
 
         # Add subject
         if self.itembody:
@@ -156,7 +198,7 @@ class CallbackModule(CallbackBase):
         body += 'and a complete dump of the error:\n\n'
         body += self.indent('%s: %s' % (failtype, json.dumps(result._result, indent=4)))
 
-        self.mail(sender=sender, subject=subject, body=body)
+        self.mail(subject=subject, body=body)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook
