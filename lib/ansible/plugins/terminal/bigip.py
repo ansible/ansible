@@ -58,4 +58,3 @@ class TerminalModule(TerminalBase):
                     self._exec_cli_command(b'tmsh modify cli preference display-threshold 0 pager disabled')
                 except AnsibleConnectionFailure as ex:
                     raise AnsibleConnectionFailure('unable to set terminal parameters')
-
