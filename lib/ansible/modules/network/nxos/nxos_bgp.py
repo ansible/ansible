@@ -615,7 +615,7 @@ def main():
         enforce_first_as=dict(required=False, type='bool'),
         event_history_cli=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_detail=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-        event_history_events=dict(required=False, choices=['true', 'false', 'default' 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        event_history_events=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_periodic=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         fast_external_fallover=dict(required=False, type='bool'),
         flush_routes=dict(required=False, type='bool'),

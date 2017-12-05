@@ -280,7 +280,7 @@ def security_rule_exists(device, sec_rule):
         # look for only pre-rulebase ATM
         rule_base = pandevice.policies.PreRulebase.refreshall(device)
 
-    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability'
+    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability',
                    'spyware', 'url_filtering', 'file_blocking', 'data_filtering',
                    'wildfire_analysis', 'type', 'action', 'tag', 'log_start', 'log_end']
     list_check = ['tozone', 'fromzone', 'source', 'source_user', 'destination', 'category',
