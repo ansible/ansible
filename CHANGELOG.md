@@ -69,9 +69,10 @@ Ansible Changes By Release
 
 #### Windows
 
-  * win_scheduled_task_stat
-  * win_audit_rule
   * win_audit_policy_system
+  * win_audit_rule
+  * win_scheduled_task_stat
+  * win_whoami
 
 <a id="2.4.1"></a>
 
