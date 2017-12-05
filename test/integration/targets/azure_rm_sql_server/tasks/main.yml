@@ -1,8 +1,8 @@
 - name: Create instance of SQL Server
   azure_rm_sql_server:
     resource_group: "{{ resource_group }}"
-    name: zims-server
-    location: westus
+    name: sql-test-server-dauih
+    location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
   register: output
@@ -15,8 +15,8 @@
 - name: Update instance of SQL Server
   azure_rm_sql_server:
     resource_group: "{{ resource_group }}"
-    name: zims-server
-    location: westus
+    name: sql-test-server-dauih
+    location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
   register: output
@@ -29,7 +29,7 @@
 - name: Delete instance of SQL Server
   azure_rm_sql_server:
     resource_group: "{{ resource_group }}"
-    name: zims-server
+    name: sql-test-server-dauih
     state: absent
   register: output
 - name: Assert the state has changed
