@@ -21,7 +21,6 @@ description:
 - Designed to return the same information as the C(whoami /all) command.
 - Also includes information missing from C(whoami) such as logon metadata like
   logon rights, id, type.
-options:
 notes:
 - If running this module with a non admin user, the logon rights will be an
   empty list as Administrator rights are required to query LSA for the
