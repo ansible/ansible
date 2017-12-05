@@ -575,6 +575,25 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 supports_check_mode=True,
             )
 
+        # should test ok, handles key argument
+        key_spec = dict(
+        foo=dict(key=True),
+        bar=dict()
+        )
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': ['test-1', 'test-2']}))
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec=dict(foobar = dict(type='list', elements='dict', options=key_spec, required=True)),
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True
+            )
+            self.assertEqual(am.params['foobar'][0]['foo'], 'test-1')
+            self.assertEqual(am.params['foobar'][1]['foo'], 'test-2')
+
+
     def test_module_utils_basic_ansible_module_type_check(self):
         from ansible.module_utils import basic
 

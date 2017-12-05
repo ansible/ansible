@@ -127,8 +127,8 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec
-from ansible.module_utils.network.iosxr.iosxr import command_spec
 from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -142,7 +142,7 @@ def to_lines(stdout):
 
 def parse_commands(module, warnings):
     commands = module.params['commands']
-    for item in list(commands):
+    for item in to_list(commands):
         try:
             command = item['command']
         except Exception:
@@ -163,8 +163,14 @@ def parse_commands(module, warnings):
 
 
 def main():
+    command_spec = dict(
+        command=dict(key=True),
+        prompt=dict(),
+        answer=dict()
+    )
+
     spec = dict(
-        commands=dict(type='list', required=True),
+        commands=dict(type='list', elements='dict', options=command_spec, required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
@@ -175,13 +181,10 @@ def main():
 
     spec.update(iosxr_argument_spec)
 
-    spec.update(command_spec)
-
     module = AnsibleModule(argument_spec=spec,
                            supports_check_mode=True)
 
     warnings = list()
-
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()

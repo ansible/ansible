@@ -137,7 +137,6 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
 from ansible.module_utils.network.vyos.vyos import run_commands
 from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
@@ -151,12 +150,7 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict(),
-    ), module)
-    commands = command(module.params['commands'])
+    commands = module.params['commands']
     items = []
 
     for item in commands:
@@ -170,8 +164,15 @@ def parse_commands(module, warnings):
 
 
 def main():
+
+    command_spec = dict(
+        command=dict(key=True),
+        prompt=dict(),
+        answer=dict()
+    )
+
     spec = dict(
-        commands=dict(type='list', required=True),
+        commands=dict(type='list', elements='dict', options=command_spec, required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
