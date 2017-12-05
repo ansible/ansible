@@ -32,7 +32,7 @@
 - name: execute tests and ensure that test user is deleted regardless of success/failure
   block:
   - name: ensure current user is not the become user
-    test_whoami:
+    win_whoami:
     register: whoami_out
     failed_when: whoami_out.account.sid == user_limited_result.sid or whoami_out.account.sid == user_admin_result.sid
 
@@ -66,7 +66,7 @@
 
   - name: test become runas via task vars (underprivileged user)
     vars: *become_vars
-    test_whoami:
+    win_whoami:
     register: whoami_out
 
   - name: verify output
@@ -80,7 +80,7 @@
 
   - name: test become runas via task vars (privileged user)
     vars: *admin_become_vars
-    test_whoami:
+    win_whoami:
     register: whoami_out
   
   - name: verify output
@@ -98,7 +98,7 @@
     become: yes
     become_method: runas
     become_user: "{{ become_test_username }}"
-    test_whoami:
+    win_whoami:
     register: whoami_out
 
   - name: verify output
@@ -114,7 +114,7 @@
     vars: *become_vars
     block:
     - name: ask who the current user is
-      test_whoami:
+      win_whoami:
       register: whoami_out
 
     - name: verify output
@@ -131,7 +131,7 @@
     setup:
     
   - name: test become with SYSTEM account
-    test_whoami:
+    win_whoami:
     become: yes
     become_method: runas
     become_user: SYSTEM
@@ -148,7 +148,7 @@
       - whoami_out.logon_type == 'System'
 
   - name: test become with NetworkService account
-    test_whoami:
+    win_whoami:
     become: yes
     become_method: runas
     become_user: NetworkService
@@ -165,7 +165,7 @@
       - whoami_out.logon_type == 'Service'
 
   - name: test become with LocalService account
-    test_whoami:
+    win_whoami:
     become: yes
     become_method: runas
     become_user: LocalService
@@ -215,14 +215,14 @@
 
   - name: test failure with string become flags
     vars: *become_vars
-    test_whoami:
+    win_whoami:
     become_flags: broken string
     register: failed_runas_string_flags
     failed_when: failed_runas_string_flags.msg != 'become_flags for runas must be of the type dictionary not System.String'
   
   - name: test failure with string become invalid key
     vars: *become_vars
-    test_whoami:
+    win_whoami:
     become_flags:
       invalid_flags: a
       logon_type: batch
@@ -232,7 +232,7 @@
 
   - name: test failure with invalid logon_type
     vars: *become_vars
-    test_whoami:
+    win_whoami:
     become_flags:
       logon_type: invalid
     register: failed_flags_invalid_type
@@ -240,7 +240,7 @@
 
   - name: test failure with invalid logon_flag
     vars: *become_vars
-    test_whoami:
+    win_whoami:
     become_flags:
       logon_flags: invalid
     register: failed_flags_invalid_flag
@@ -249,7 +249,7 @@
   # Server 2008 doesn't work with network and network_cleartext, there isn't really a reason why you would want this anyway
   - name: become different types
     vars: *become_vars
-    test_whoami:
+    win_whoami:
     become_flags:
       logon_type: '{{item.type}}'
     register: become_logon_type
@@ -271,7 +271,7 @@
       ansible_become_password: fakepassword
       ansible_become_method: runas
       ansible_become: True
-    test_whoami:
+    win_whoami:
     become_flags:
       logon_type: new_credentials
       logon_flags: netcredentials_only
