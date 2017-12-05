@@ -1,5 +1,5 @@
 - name: Create instance of SQL Server
-  azure_rm_sql_server:
+  azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
     name: sql-test-server-dauih
     location: eastus
@@ -13,7 +13,7 @@
       - output.state.state == 'Ready'
 
 - name: Update instance of SQL Server
-  azure_rm_sql_server:
+  azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
     name: sql-test-server-dauih
     location: eastus
@@ -27,7 +27,7 @@
       - output.state.state == 'Ready'
 
 - name: Delete instance of SQL Server
-  azure_rm_sql_server:
+  azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
     name: sql-test-server-dauih
     state: absent

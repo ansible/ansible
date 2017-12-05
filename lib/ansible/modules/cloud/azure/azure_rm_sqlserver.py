@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sql_server
+module: azure_rm_sqlserver
 version_added: "2.5"
 short_description: Manage SQL Server instance
 description:
@@ -65,7 +65,7 @@ author:
 
 EXAMPLES = '''
   - name: Create (or update) SQL Server
-    azure_rm_sql_server:
+    azure_rm_sqlserver:
       resource_group: resource_group
       name: server_name
       location: westus
