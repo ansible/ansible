@@ -33,7 +33,7 @@ options:
         default: '*'
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
-            - The patterns restrict the list of files to be returned to those whose complete filenames match at
+            - The patterns restrict the list of files to be returned to those whose basenames or complete filenames (since version 2.5) match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
         aliases: ['pattern']
     contains:
