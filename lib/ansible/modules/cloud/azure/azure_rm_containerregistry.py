@@ -82,88 +82,71 @@ EXAMPLES = '''
         state: absent
 '''
 RETURN = '''
-state:
-    description: Current state of the azure container registry and it's credentials
+id:
+    description:
+        - Resource ID
+    returned: always
+    type: str
+    sample: /subscriptions/00000000-0000-0000-0000-000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
+name:
+    description:
+        - Registry name
+    returned: always
+    type: str
+    sample: myregistry
+location:
+    description:
+        - Resource location
+    returned: always
+    type: str
+    sample: westus
+admin_user_enabled:
+    description:
+        - Is admin user enabled
+    returned: always
+    type: bool
+    sample: true
+sku:
+    description:
+        - SKU
+    returned: always
+    type: str
+    sample: Standard
+provisioning_state:
+    description:
+        - Provisioning state
+    returned: always
+    type: str
+    sample: Succeeded
+login_server:
+    description:
+        - Registry login server
+    returned: always
+    type: str
+    sample: myregistry.azurecr.io
+credentials:
+    description:
+        - Passwords defined for the registry
     returned: always
     type: complex
     contains:
-        id:
+        password:
             description:
-                - Resource ID
-            returned: always
+                - password value
+            returned: when registry exists and C(admin_user_enabled) is set
             type: str
-            sample: /subscriptions/00000000-0000-0000-0000-000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
-        name:
+            sample: pass1value
+        password2:
             description:
-                - Registry name
-            returned: always
+                - password2 value
+            returned: when registry exists and C(admin_user_enabled) is set
             type: str
-            sample: myregistry
-        location:
-            description:
-                - Resource location
-            returned: always
-            type: str
-            sample: westus
-        admin_user_enabled:
-            description:
-                - Is admin user enabled
-            returned: always
-            type: bool
-            sample: true
-        sku:
-            description:
-                - SKU
-            returned: always
-            type: str
-            sample: Standard
-        provisioning_state:
-            description:
-                - Provisioning state
-            returned: always
-            type: str
-            sample: Succeeded
-        login_server:
-            description:
-                - Registry login server
-            returned: always
-            type: str
-            sample: myregistry.azurecr.io
-        credentials:
-            provisioning_state:
-                - Credentials
-            returned: always
-            type: complex
-            contains:
-                password_name:
-                    provisioning_state:
-                        - Password 1 name
-                    returned: always
-                    type: str
-                    sample: pass1
-                password_value:
-                    provisioning_state:
-                        - Password 1 value
-                    returned: always
-                    type: str
-                    sample: pass1value
-                password2_name:
-                    provisioning_state:
-                        - Password 1 name
-                    returned: always
-                    type: str
-                    sample: pass2
-                password2_value:
-                    provisioning_state:
-                        - Password 2 value
-                    returned: always
-                    type: str
-                    sample: pass1value
-        tags:
-            provisioning_state:
-                - Tags
-            returned: always
-            type: complex
+            sample: pass2value
+tags:
+    description:
+        - Tags
+    returned: always
+    type: dict
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -205,14 +188,15 @@ def create_containerregistry_dict(registry, credentials):
         sku=registry.sku.name if registry is not None else "",
         provisioning_state=registry.provisioning_state if registry is not None else "",
         login_server=registry.login_server if registry is not None else "",
-        credentials=dict(
-            password_name=credentials.passwords[0].name.value if credentials is not None else "",
-            password_value=credentials.passwords[0].value if credentials is not None else "",
-            password2_name=credentials.passwords[1].name.value if credentials is not None else "",
-            password2_value=credentials.passwords[1].value if credentials is not None else ""
-        ),
+        credentials=dict(),
         tags=registry.tags if registry is not None else ""
     )
+    if credentials:
+        results['credentials'] = dict(
+            password=credentials.passwords[0].value,
+            password2=credentials.passwords[1].value
+        )
+
     return results
 
 
@@ -287,12 +271,12 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         # Check if the container registry instance already present in the RG
         if self.state == 'present':
             response = self.get_containerregistry()
-            self.results['state'] = response
 
             if not response:
                 to_do = Actions.Create
             else:
                 self.log('Results : {0}'.format(response))
+                self.results.update(response)
                 if response['provisioning_state'] == "Succeeded":
                     to_do = Actions.NoAction
                     if (self.location is not None) and self.location != response['location']:
@@ -306,7 +290,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
 
-            self.results['state'] = self.create_update_containerregistry(to_do)
+            self.results.update(self.create_update_containerregistry(to_do))
             if to_do != Actions.NoAction:
                 self.results['changed'] = True
             else:
@@ -421,7 +405,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         elif found is True and self.admin_user_enabled is False:
             credentials = None
         else:
-            return False
+            return None
         return create_containerregistry_dict(response, credentials)
 
     @property

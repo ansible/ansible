@@ -15,12 +15,14 @@
    assert:
      that:
        - output.changed
-       - output.state.admin_user_enabled
-       - output.state.location == 'eastus2'
-       - output.state.sku == 'Premium'
-       - output.state.tags['Environment'] == 'Production'
-       - output.state.tags['Release'] == 'beta1'
-       - output.state.provisioning_state == 'Succeeded'
+       - output.admin_user_enabled
+       - output.location == 'eastus2'
+       - output.sku == 'Premium'
+       - output.tags['Environment'] == 'Production'
+       - output.tags['Release'] == 'beta1'
+       - output.provisioning_state == 'Succeeded'
+       - output.credentials['password'] is defined
+       - output.credentials['password2'] is defined
 
  - name: Update the ACS instance sku, tags and admin_user_enabled
    azure_rm_containerregistry:
@@ -39,9 +41,12 @@
    assert:
      that:
        - output.changed == True
-       - output.state.admin_user_enabled == False
-       - output.state.sku == 'Standard'
-       - output.state.tags['NewTag'] == 'newtag'
+       - output.admin_user_enabled == False
+       - output.sku == 'Standard'
+       - output.tags['NewTag'] == 'newtag'
+       - output.credentials | length == 0
+       - output.credentials['password'] is not defined
+       - output.credentials['password2'] is not defined
 
  - name: Delete an container registry
    azure_rm_containerregistry:
