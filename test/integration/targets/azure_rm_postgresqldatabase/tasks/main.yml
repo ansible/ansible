@@ -1,0 +1,50 @@
+- name: Create PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: test-postgresql-server
+    properties:
+      create_mode: Default
+      admin_username: zimxyz
+      admin_password: Testpasswordxyz12!
+    location: westus
+- name: Create instance of PostgreSQL Database
+  azure_rm_postgresqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: test-postgresql-server
+    name: testdatabase
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state.name == 'testdatabase'
+
+- name: Update instance of PostgreSQL Database
+  azure_rm_postgresqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: test-postgresql-server
+    name: testdatabase
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.state.name == 'testdatabase'
+
+- name: Delete instance of PostgreSQL Database
+  azure_rm_postgresqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: test-postgresql-server
+    name: testdatabase
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of PostgreSQL Server
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: test-postgresql-server
+    state: absent
