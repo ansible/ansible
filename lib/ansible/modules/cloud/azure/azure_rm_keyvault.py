@@ -216,7 +216,9 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.keyvault.models import Vault, VaultCreateOrUpdateParameters, VaultProperties, AccessPolicyEntry, Sku, Permissions
+    from azure.mgmt.keyvault.models import \
+    (Vault, VaultCreateOrUpdateParameters, VaultProperties, AccessPolicyEntry, Sku, Permissions,
+     KeyPermissions, SecretPermissions, CertificatePermissions, SkuName)
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -279,90 +281,72 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        # create a new vault variable in case the 'try' doesn't find a vault
-        vault = None
-
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
-
+        
         self.results['check_mode'] = self.check_mode
 
-        # retrieve resource group to make sure it exists
-        resource_group = self.get_resource_group(self.resource_group)
-        if not self.location:
-            # Set default location
-            self.location = resource_group.location
-
-        changed = False
-        results = dict()
+        # check if tenant or object id is passed via args if not pull from auth creds
+        if self.tenant_id is None:
+            if self.credentials['tenant'] is None:
+                self.fail("Please supply a tenant id")
+            else:
+                self.tenant_id = self.credentials['tenant']
+        if self.object_id is None:
+            if self.credentials['client_id'] is None:
+                self.fail("Please supply a client id")
+            else:
+                self.object_id = self.credentials['client_id']
 
         try:
-            self.log('Fetching Vault {0}'.format(self.name))
-            vault = self.keyvault_client.vaults.get(self.resource_group, self.name)
-
-            # serialize object into a dictionary
-            results = vault.as_dict()
-
-            # don't change anything if creating an existing vault (unless outdated tags), but change if deleting it
-            if self.state == 'present':
-                changed = False
-
-                update_tags, results['tags'] = self.update_tags(results['tags'])
-                if update_tags:
-                    changed = True
-
-            elif self.state == 'absent':
-                changed = True
-
+            resource_group = self.get_resource_group(self.resource_group)
         except CloudError:
-            # the vault does not exist (it's deleted) so create it
-            if self.state == 'present':
-                changed = True
+            self.fail('Unable to retrieve resource group')
 
+        self.location = self.location or resource_group.location
+
+        try:
+            vault = self.keyvault_client.vaults.get(self.resource_group, self.name)
+            exists = True
+        except CloudError as exc:
+            exists = False
+
+        if self.state == 'absent':
+            if exists:
+                if self.check_mode:
+                    self.results['changed'] = True
+                    return self.results
+                try:
+                    self.delete_vault()
+                    self.results['state']['status'] = 'Deleted'
+                    self.results['changed'] = True
+                except CloudError as exc:
+                    self.fail('Faulure while deleting keyvault: {}'.format(exc))
             else:
-                # you can't delete what is not there
-                changed = False
+                self.results['changed'] = False
+        else:
+            try:
+                use_sku = Sku(self.sku)
+                permission_preset = self.create_permissions(self.permissions)
+                access_policy_lst = [AccessPolicyEntry(self.tenant_id, self.object_id, permission_preset, application_id=self.application_id)]
+                vault_properties = VaultProperties(self.tenant_id,
+                                                    use_sku,
+                                                    access_policies=access_policy_lst,
+                                                    vault_uri=self.vault_uri,
+                                                    enabled_for_deployment=self.enabled_for_deployment,
+                                                    enabled_for_disk_encryption=self.enabled_for_disk_encryption,
+                                                    enabled_for_template_deployment=self.enabled_for_template_deployment)
+                vault = VaultCreateOrUpdateParameters(self.location, vault_properties, tags=self.tags)
+                self.results['changed'] = True
 
-        self.results['changed'] = changed
-        self.results['state'] = results
-
-        if self.tenant_id is None:
-            self.tenant_id = self.credentials['tenant']
-        if self.object_id is None:
-            self.object_id = self.credentials['client_id']
-
-        # return the results if your only gathering information
-        if self.check_mode:
-            return self.results
-
-        if changed:
-            if self.state == 'present':
-                # if you want to create or update a key vault
-                if not vault:
-                    # create new vault
-                    self.log('Creating vault {0}'.format(self.name))
-                    use_sku = Sku(self.sku)
-                    permission_preset = create_permissions(self)
-                    access_policy_lst = [AccessPolicyEntry(self.tenant_id, self.object_id, permission_preset, application_id=self.application_id)]
-                    vault_properties = VaultProperties(self.tenant_id,
-                                                       use_sku,
-                                                       access_policies=access_policy_lst,
-                                                       vault_uri=self.vault_uri,
-                                                       enabled_for_deployment=self.enabled_for_deployment,
-                                                       enabled_for_disk_encryption=self.enabled_for_disk_encryption,
-                                                       enabled_for_template_deployment=self.enabled_for_template_deployment)
-                    vault = VaultCreateOrUpdateParameters(self.location, vault_properties, tags=self.tags)
+                if self.check_mode:
+                    self.results['state'] = vault.as_dict()
+                    return self.results
                 else:
-                    # update the vault
-                    vault = VaultCreateOrUpdateParameters(self.location, results['properties'], tags=results['tags'])
-
-                self.results['state'] = self.create_or_update_vault(vault)
-            elif self.state == 'absent':
-                # delete vault
-                self.delete_vault()
-                # the delete does not actually return anything. if no exception, then we'll assume
-                # it worked.
-                self.results['state']['status'] = 'Deleted'
+                    self.results['state'] = self.create_or_update_vault(vault)
+            except CloudError as exc:
+                self.fail('Faulure while creating or updating keyvault: {}'.format(exc))
+        
         return self.results
 
     def create_or_update_vault(self, vault):
@@ -381,52 +365,56 @@ class AzureRMKeyVault(AzureRMModuleBase):
             self.fail("Error deleting vault {0} - {1}".format(self.name, str(exc)))
         return None
 
-
-def create_permissions(self):
-    # function takes in presets for permissions and returns a permissions object with the necessary/required permissions
-    fin_permissions = None
-    k_perm = []
-    s_perm = []
-    c_perm = []
-    # if they want the 'Key, Secret, & Certificate Management' permission preset, create and return a new permissions class with all the necessary information
-    if self.permissions == 'Key, Secret, & Certificate Management':
-        k_perm = ['Get', 'List', 'Update', 'Create', 'Import',
-                  'Delete', 'Recover', 'Backup', 'Restore']
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
-                  'Backup', 'Restore']
-        c_perm = ['Get', 'List', 'Update', 'Create', 'Import',
-                  'Delete', 'ManageContacts', 'ManageIssuers',
-                  'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
-    elif self.permissions == 'Key & Secret Management':
-        k_perm = ['Get', 'List', 'Update', 'Create', 'Import',
-                  'Delete', 'Recover', 'Backup', 'Restore']
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
-                  'Backup', 'Restore']
-    elif self.permissions == 'Secret & Certificate Management':
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
-                  'Backup', 'Restore']
-        c_perm = ['Get', 'List', 'Update', 'Create', 'Import',
-                  'Delete', 'ManageContacts', 'ManageIssuers',
-                  'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
-    elif self.permissions == 'Key Management':
-        k_perm = ['Get', 'List', 'Update', 'Create', 'Import',
-                  'Delete', 'Recover', 'Backup', 'Restore']
-    elif self.permissions == 'Secret Management':
-        s_perm = ['Get', 'List', 'Set', 'Delete', 'Recover',
-                  'Backup', 'Restore']
-    elif self.permissions == 'Certificate Management':
-        c_perm = ['Get', 'List', 'Update', 'Create', 'Import',
-                  'Delete', 'ManageContacts', 'ManageIssuers',
-                  'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers']
-    elif self.permissions == 'SQL Server Connector':
-        k_perm = ['Get', 'List', 'UnwrapKey', 'WrapKey']
-    elif self.permissions == 'Azure Backup':
-        k_perm = ['Get', 'List', 'Backup']
-        s_perm = ['Get', 'List', 'Backup']
-    elif self.permissions == 'Azure Data Lake Store':
-        k_perm = ['Get', 'List', 'UnwrapKey']
-    fin_permissions = Permissions(keys=k_perm, secrets=s_perm, certificates=c_perm)
-    return fin_permissions
+    def create_permissions(self, permissions):
+        # function takes in presets for permissions and returns a permissions object with the necessary/required permissions
+        k_perm = []
+        s_perm = []
+        c_perm = []
+        # if they want the 'Key, Secret, & Certificate Management' permission preset, create and return a new permissions class with all the necessary information
+        if permissions == 'Key, Secret, & Certificate Management':
+            k_perm = [KeyPermissions.get, KeyPermissions.list, KeyPermissions.update, KeyPermissions.import_enum,
+                      KeyPermissions.create, KeyPermissions.delete, KeyPermissions.recover,
+                      KeyPermissions.backup, KeyPermissions.restore]
+            s_perm = [SecretPermissions.get, SecretPermissions.list, SecretPermissions.set, SecretPermissions.delete,
+                      SecretPermissions.recover, SecretPermissions.backup, SecretPermissions.restore]
+            c_perm = [CertificatePermissions.get, CertificatePermissions.list, CertificatePermissions.update,
+                      CertificatePermissions.create, CertificatePermissions.import_enum, CertificatePermissions.delete,
+                      CertificatePermissions.managecontacts, CertificatePermissions.manageissuers, CertificatePermissions.getissuers,
+                      CertificatePermissions.listissuers, CertificatePermissions.setissuers, CertificatePermissions.deleteissuers]
+        elif permissions == 'Key & Secret Management':
+            k_perm = [KeyPermissions.get, KeyPermissions.list, KeyPermissions.update, KeyPermissions.import_enum,
+                      KeyPermissions.create, KeyPermissions.delete, KeyPermissions.recover,
+                      KeyPermissions.backup, KeyPermissions.restore]
+            s_perm = [SecretPermissions.get, SecretPermissions.list, SecretPermissions.set, SecretPermissions.delete,
+                      SecretPermissions.recover, SecretPermissions.backup, SecretPermissions.restore]
+        elif permissions == 'Secret & Certificate Management':
+            s_perm = [SecretPermissions.get, SecretPermissions.list, SecretPermissions.set, SecretPermissions.delete,
+                      SecretPermissions.recover, SecretPermissions.backup, SecretPermissions.restore]
+            c_perm = [CertificatePermissions.get, CertificatePermissions.list, CertificatePermissions.update,
+                      CertificatePermissions.create, CertificatePermissions.import_enum, CertificatePermissions.delete,
+                      CertificatePermissions.managecontacts, CertificatePermissions.manageissuers, CertificatePermissions.getissuers,
+                      CertificatePermissions.listissuers, CertificatePermissions.setissuers, CertificatePermissions.deleteissuers]
+        elif permissions == 'Key Management':
+            k_perm = [KeyPermissions.get, KeyPermissions.list, KeyPermissions.update, KeyPermissions.import_enum,
+                      KeyPermissions.create, KeyPermissions.delete, KeyPermissions.recover,
+                      KeyPermissions.backup, KeyPermissions.restore]
+        elif permissions == 'Secret Management':
+            s_perm = [SecretPermissions.get, SecretPermissions.list, SecretPermissions.set, SecretPermissions.delete,
+                      SecretPermissions.recover, SecretPermissions.backup, SecretPermissions.restore]
+        elif permissions == 'Certificate Management':
+            c_perm = [CertificatePermissions.get, CertificatePermissions.list, CertificatePermissions.update,
+                      CertificatePermissions.create, CertificatePermissions.import_enum, CertificatePermissions.delete,
+                      CertificatePermissions.managecontacts, CertificatePermissions.manageissuers, CertificatePermissions.getissuers,
+                      CertificatePermissions.listissuers, CertificatePermissions.setissuers, CertificatePermissions.deleteissuers]
+        elif permissions == 'SQL Server Connector':
+            k_perm = [KeyPermissions.get, KeyPermissions.list, KeyPermissions.backup, KeyPermissions.unwrapkey,
+                      KeyPermissions.wrapkey]
+        elif permissions == 'Azure Backup':
+            k_perm = [KeyPermissions.get, KeyPermissions.list, KeyPermissions.backup]
+            s_perm = [SecretPermissions.get, SecretPermissions.list, SecretPermissions.backup]
+        elif permissions == 'Azure Data Lake Store':
+            k_perm = [KeyPermissions.get, KeyPermissions.list, KeyPermissions.backup, KeyPermissions.unwrapkey]
+        return Permissions(keys=k_perm, secrets=s_perm, certificates=c_perm)
 
 
 def main():

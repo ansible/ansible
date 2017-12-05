@@ -166,10 +166,10 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
         except AzureHttpError as exc:
             self.fail("Failed to list for resource group {0} - {1}".format(self.resource_group, str(exc)))
 
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                results.append(item.as_dict())
+        results = [r.as_dict() for r in response if self.has_tags(r.tags, self.tags)]
+        # for item in response:
+        #     if self.has_tags(item.tags, self.tags):
+        #         results.append(item.as_dict())
         return results
 
     def list_items(self):
@@ -179,10 +179,10 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
         except AzureHttpError as exc:
             self.fail("Failed to list all items - {0}".format(str(exc)))
 
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+        results = [r.as_dict() for r in response if self.has_tags(r.tags, self.tags)]
+        # for item in response:
+        #     if self.has_tags(item.tags, self.tags):
+        #         results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
 
 
