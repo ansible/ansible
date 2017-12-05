@@ -114,7 +114,8 @@ options:
       - 'danger'
   attachments:
     description:
-      - Define a list of attachments. This list mirrors the Slack JSON API. For more information, see https://api.slack.com/docs/attachments
+      - Define a list of attachments. This list mirrors the Slack JSON API.
+      - For more information, see also in the (U(https://api.slack.com/docs/attachments)).
     required: false
     default: None
 """
