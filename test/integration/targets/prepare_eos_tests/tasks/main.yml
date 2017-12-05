@@ -6,7 +6,7 @@
     parents: int Ethernet1
     authorize: yes
     provider: "{{ cli }}"
-  connection: local
+  become: yes
 
 - name: Enable Ethernet2 interface and disable switchport
   eos_config:
@@ -16,4 +16,4 @@
     parents: int Ethernet2
     authorize: yes
     provider: "{{ cli }}"
-  connection: local
+  become: yes

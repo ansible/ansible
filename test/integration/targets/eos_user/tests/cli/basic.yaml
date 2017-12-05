@@ -90,3 +90,5 @@
       - no username ansibletest3
       - no username ansibletest4
     provider: "{{ cli }}"
+    authorize: yes
+  become: yes
