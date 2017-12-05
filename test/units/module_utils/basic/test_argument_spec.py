@@ -6,44 +6,46 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests import unittest
+import pytest
+
 from ansible.compat.tests.mock import MagicMock
-from units.mock.procenv import swap_stdin_and_argv, swap_stdout
 from ansible.module_utils import basic
 
 
-class TestCallableTypeValidation(unittest.TestCase):
-    def setUp(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS=dict(arg="42")))
-        self.stdin_swap_ctx = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap_ctx.__enter__()
+MOCK_VALIDATOR_SUCCESS = MagicMock(return_value=42)
+MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
+# Data is argspec, argument, expected
+VALID_SPECS = (
+    ({'arg': {'type': int}}, {'arg': 42}, 42),
+    ({'arg': {'type': int}}, {'arg': '42'}, 42),
+    ({'arg': {'type': MOCK_VALIDATOR_SUCCESS}}, {'arg': 42}, 42),
+)
 
-        # since we can't use context managers and "with" without overriding run(), call them directly
-        self.stdout_swap_ctx = swap_stdout()
-        self.fake_stream = self.stdout_swap_ctx.__enter__()
+INVALID_SPECS = (
+    ({'arg': {'type': int}}, {'arg': "bad"}, "invalid literal for int() with base 10: 'bad'"),
+    ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
+)
 
-        basic._ANSIBLE_ARGS = None
 
-    def tearDown(self):
-        # since we can't use context managers and "with" without overriding run(), call them directly to clean up
-        self.stdin_swap_ctx.__exit__(None, None, None)
-        self.stdout_swap_ctx.__exit__(None, None, None)
+@pytest.mark.parametrize('argspec, expected, am, stdin', [(s[0], s[2], s[0], s[1]) for s in VALID_SPECS],
+                         indirect=['am', 'stdin'])
+def test_validator_success(am, mocker, argspec, expected):
 
-    def test_validate_success(self):
-        mock_validator = MagicMock(return_value=42)
-        m = basic.AnsibleModule(argument_spec=dict(
-            arg=dict(type=mock_validator)
-        ))
+    type_ = argspec['arg']['type']
+    if isinstance(type_, MagicMock):
+        assert type_.called
+    else:
+        assert isinstance(am.params['arg'], type_)
+    assert am.params['arg'] == expected
 
-        self.assertTrue(mock_validator.called)
-        self.assertEqual(m.params['arg'], 42)
-        self.assertEqual(type(m.params['arg']), int)
 
-    def test_validate_fail(self):
-        mock_validator = MagicMock(side_effect=TypeError("bad conversion"))
-        with self.assertRaises(SystemExit) as ecm:
-            m = basic.AnsibleModule(argument_spec=dict(
-                arg=dict(type=mock_validator)
-            ))
+@pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in INVALID_SPECS],
+                         indirect=['stdin'])
+def test_validator_fail(stdin, capfd, argspec, expected):
+    with pytest.raises(SystemExit) as ecm:
+        m = basic.AnsibleModule(argument_spec=argspec)
 
-        self.assertIn("bad conversion", json.loads(self.fake_stream.getvalue())['msg'])
+    out, err = capfd.readouterr()
+    assert not err
+    assert expected in json.loads(out)['msg']
+    assert json.loads(out)['failed']
