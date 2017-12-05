@@ -422,29 +422,8 @@ class InventoryModule(BaseInventoryPlugin):
             instance = namedtuple('instance', ['region', 'instance_meta', 'instance_data'])
             instance.region = region
             instance.instance_meta = instance_meta
-            instance.instance_data = self._stringify_datetime_objects(instance_data)
+            instance.instance_data = instance_data
             yield instance
-
-    def _stringify_datetime_objects(self, instance_data):
-        instance_data['LaunchTime'] = to_text(instance_data['LaunchTime'])
-
-        # Network Interfaces
-        formatted_network_interfaces = []
-        for interface in instance_data['NetworkInterfaces']:
-            if interface.get('Attachment', {}).get('AttachTime'):
-                interface['Attachment']['AttachTime'] = to_text(interface.get('Attachment', {}).get('AttachTime'))
-            formatted_network_interfaces.append(interface)
-        instance_data['NetworkInterfaces'] = formatted_network_interfaces
-
-        # Block device mappings
-        formatted_block_device_mappings = []
-        for block_device_mapping in instance_data['BlockDeviceMappings']:
-            if block_device_mapping.get('Ebs', {}).get('AttachTime'):
-                block_device_mapping['Ebs']['AttachTime'] = to_text(block_device_mapping.get('Ebs', {}).get('AttachTime'))
-            formatted_block_device_mappings.append(block_device_mapping)
-        instance_data['BlockDeviceMappings'] = formatted_block_device_mappings
-
-        return instance_data
 
     def _get_instances_by_region(self, regions, filters, strict_permissions):
         '''
