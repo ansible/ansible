@@ -1,0 +1,44 @@
+- name: Create instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: test-mysql-server
+    properties:
+      version: 5.6
+      create_mode: Default
+      admin_username: zimxyz
+      admin_password: Testpasswordxyz12!
+    location: westus
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state.user_visible_state == 'Ready'
+
+- name: Update instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: test-mysql-server
+    properties:
+      version: 5.6
+      create_mode: Default
+      admin_username: zimxyz
+      admin_password: Testpasswordxyz12!
+    location: westus
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.state.user_visible_state == 'Ready'
+
+- name: Delete instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: test-mysql-server
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
