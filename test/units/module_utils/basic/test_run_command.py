@@ -1,38 +1,18 @@
 # -*- coding: utf-8 -*-
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import errno
-import json
-import sys
-import time
-from io import BytesIO, StringIO
+from itertools import product
+from io import BytesIO
 
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
-from ansible.module_utils.six import PY3
-import ansible.module_utils.basic
-
-from units.mock.procenv import swap_stdin_and_argv
+from ansible.module_utils._text import to_native
 
 
 class OpenBytesIO(BytesIO):
@@ -45,165 +25,182 @@ class OpenBytesIO(BytesIO):
         pass
 
 
-class TestAnsibleModuleRunCommand(unittest.TestCase):
-    @pytest.fixture(autouse=True)
-    def run_command_mocked_env(self, mocker):
-        self.cmd_out = {
-            # os.read() is returning 'bytes', not strings
-            sentinel.stdout: BytesIO(),
-            sentinel.stderr: BytesIO(),
-        }
+@pytest.fixture
+def mock_os(mocker):
+    def mock_os_read(fd, nbytes):
+        return os._cmd_out[fd].read(nbytes)
 
-        def mock_os_read(fd, nbytes):
-            return self.cmd_out[fd].read(nbytes)
+    def mock_os_chdir(path):
+        if path == '/inaccessible':
+            raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
-        def mock_select(rlist, wlist, xlist, timeout=1):
-            return (rlist, [], [])
+    def mock_os_abspath(path):
+        if path.startswith('/'):
+            return path
+        else:
+            return os.getcwd.return_value + '/' + path
 
-        def mock_os_chdir(path):
-            if path == '/inaccessible':
-                raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
+    os = mocker.patch('ansible.module_utils.basic.os')
+    os._cmd_out = {
+        # os.read() is returning 'bytes', not strings
+        mocker.sentinel.stdout: BytesIO(),
+        mocker.sentinel.stderr: BytesIO(),
+    }
 
-        def mock_os_abspath(path):
-            if path.startswith('/'):
-                return path
-            else:
-                return self.os.getcwd.return_value + '/' + path
+    os.path.expandvars.side_effect = lambda x: x
+    os.path.expanduser.side_effect = lambda x: x
+    os.environ = {'PATH': '/bin'}
+    os.getcwd.return_value = '/home/foo'
+    os.path.isdir.return_value = True
+    os.chdir.side_effect = mock_os_chdir
+    os.read.side_effect = mock_os_read
+    os.path.abspath.side_effect = mock_os_abspath
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
+    yield os
 
-        ansible.module_utils.basic._ANSIBLE_ARGS = None
-        self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
-        self.module.fail_json = MagicMock(side_effect=SystemExit)
 
-        self.os = mocker.patch('ansible.module_utils.basic.os')
-        self.os.path.expandvars.side_effect = lambda x: x
-        self.os.path.expanduser.side_effect = lambda x: x
-        self.os.environ = {'PATH': '/bin'}
-        self.os.getcwd.return_value = '/home/foo'
-        self.os.path.isdir.return_value = True
-        self.os.chdir.side_effect = mock_os_chdir
-        self.os.read.side_effect = mock_os_read
-        self.os.path.abspath.side_effect = mock_os_abspath
+@pytest.fixture
+def mock_subprocess(mocker):
+    def mock_select(rlist, wlist, xlist, timeout=1):
+        return (rlist, [], [])
 
-        self.subprocess = mocker.patch('ansible.module_utils.basic.subprocess')
-        self.cmd = Mock()
-        self.cmd.returncode = 0
-        self.cmd.stdin = OpenBytesIO()
-        self.cmd.stdout.fileno.return_value = sentinel.stdout
-        self.cmd.stderr.fileno.return_value = sentinel.stderr
-        self.subprocess.Popen.return_value = self.cmd
+    fake_select = mocker.patch('ansible.module_utils.basic.select')
+    fake_select.select.side_effect = mock_select
 
-        self.select = mocker.patch('ansible.module_utils.basic.select')
-        self.select.select.side_effect = mock_select
-        yield
+    subprocess = mocker.patch('ansible.module_utils.basic.subprocess')
+    cmd = mocker.MagicMock()
+    cmd.returncode = 0
+    cmd.stdin = OpenBytesIO()
+    cmd.stdout.fileno.return_value = mocker.sentinel.stdout
+    cmd.stderr.fileno.return_value = mocker.sentinel.stderr
+    subprocess.Popen.return_value = cmd
 
-        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap.__exit__(None, None, None)
+    yield subprocess
 
-    def test_list_as_args(self):
-        self.module.run_command(['/bin/ls', 'a', ' b', 'c '])
-        self.assertTrue(self.subprocess.Popen.called)
-        args, kwargs = self.subprocess.Popen.call_args
-        self.assertEqual(args, (['/bin/ls', 'a', ' b', 'c '], ))
-        self.assertEqual(kwargs['shell'], False)
 
-    def test_str_as_args(self):
-        self.module.run_command('/bin/ls a " b" "c "')
-        self.assertTrue(self.subprocess.Popen.called)
-        args, kwargs = self.subprocess.Popen.call_args
-        self.assertEqual(args, (['/bin/ls', 'a', ' b', 'c '], ))
-        self.assertEqual(kwargs['shell'], False)
+@pytest.fixture()
+def rc_am(mocker, am, mock_os, mock_subprocess):
+    am.fail_json = mocker.MagicMock(side_effect=SystemExit)
+    am._os = mock_os
+    am._subprocess = mock_subprocess
+    yield am
 
-    def test_tuple_as_args(self):
-        self.assertRaises(SystemExit, self.module.run_command, ('ls', '/'))
-        self.assertTrue(self.module.fail_json.called)
 
-    def test_unsafe_shell(self):
-        self.module.run_command('ls a " b" "c "', use_unsafe_shell=True)
-        self.assertTrue(self.subprocess.Popen.called)
-        args, kwargs = self.subprocess.Popen.call_args
-        self.assertEqual(args, ('ls a " b" "c "', ))
-        self.assertEqual(kwargs['shell'], True)
+class TestRunCommandArgs:
+    # Format is command as passed to run_command, command to Popen as list, command to Popen as string
+    ARGS_DATA = (
+                (['/bin/ls', 'a', 'b', 'c'], ['/bin/ls', 'a', 'b', 'c'], '/bin/ls a b c'),
+                ('/bin/ls a " b" "c "', ['/bin/ls', 'a', ' b', 'c '], '/bin/ls a " b" "c "'),
+    )
 
-    def test_cwd(self):
-        self.os.getcwd.return_value = '/old'
-        self.module.run_command('/bin/ls', cwd='/new')
-        self.assertEqual(self.os.chdir.mock_calls,
-                         [call('/new'), call('/old'), ])
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('cmd, expected, shell, stdin',
+                             ((arg, cmd_str if sh else cmd_lst, sh, {})
+                              for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
+                             indirect=['stdin'])
+    def test_args(self, cmd, expected, shell, rc_am):
+        rc_am.run_command(cmd, use_unsafe_shell=shell)
+        assert rc_am._subprocess.Popen.called
+        args, kwargs = rc_am._subprocess.Popen.call_args
+        assert args == (expected, )
+        assert kwargs['shell'] == shell
 
-    def test_cwd_relative_path(self):
-        self.os.getcwd.return_value = '/old'
-        self.module.run_command('/bin/ls', cwd='sub-dir')
-        self.assertEqual(self.os.chdir.mock_calls,
-                         [call('/old/sub-dir'), call('/old'), ])
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_tuple_as_args(self, rc_am):
+        with pytest.raises(SystemExit):
+            rc_am.run_command(('ls', '/'))
+        assert rc_am.fail_json.called
 
-    def test_cwd_not_a_dir(self):
-        self.os.getcwd.return_value = '/old'
-        self.os.path.isdir.side_effect = lambda d: d != '/not-a-dir'
-        self.module.run_command('/bin/ls', cwd='/not-a-dir')
-        self.assertEqual(self.os.chdir.mock_calls, [call('/old'), ])
 
-    def test_cwd_inaccessible(self):
-        self.assertRaises(SystemExit, self.module.run_command, '/bin/ls', cwd='/inaccessible')
-        self.assertTrue(self.module.fail_json.called)
-        args, kwargs = self.module.fail_json.call_args
-        self.assertEqual(kwargs['rc'], errno.EPERM)
+class TestRunCommandCwd:
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_cwd(self, mocker, rc_am):
+        rc_am._os.getcwd.return_value = '/old'
+        rc_am.run_command('/bin/ls', cwd='/new')
+        assert rc_am._os.chdir.mock_calls == [mocker.call('/new'), mocker.call('/old'), ]
 
-    def test_prompt_bad_regex(self):
-        self.assertRaises(SystemExit, self.module.run_command, 'foo', prompt_regex='[pP)assword:')
-        self.assertTrue(self.module.fail_json.called)
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_cwd_relative_path(self, mocker, rc_am):
+        rc_am._os.getcwd.return_value = '/old'
+        rc_am.run_command('/bin/ls', cwd='sub-dir')
+        assert rc_am._os.chdir.mock_calls == [mocker.call('/old/sub-dir'), mocker.call('/old'), ]
 
-    def test_prompt_no_match(self):
-        self.cmd_out[sentinel.stdout] = BytesIO(b'hello')
-        (rc, _, _) = self.module.run_command('foo', prompt_regex='[pP]assword:')
-        self.assertEqual(rc, 0)
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_cwd_not_a_dir(self, mocker, rc_am):
+        rc_am._os.getcwd.return_value = '/old'
+        rc_am._os.path.isdir.side_effect = lambda d: d != '/not-a-dir'
+        rc_am.run_command('/bin/ls', cwd='/not-a-dir')
+        assert rc_am._os.chdir.mock_calls == [mocker.call('/old'), ]
 
-    def test_prompt_match_wo_data(self):
-        self.cmd_out[sentinel.stdout] = BytesIO(b'Authentication required!\nEnter password: ')
-        (rc, _, _) = self.module.run_command('foo', prompt_regex=r'[pP]assword:', data=None)
-        self.assertEqual(rc, 257)
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_cwd_inaccessible(self, rc_am):
+        with pytest.raises(SystemExit):
+            rc_am.run_command('/bin/ls', cwd='/inaccessible')
+        assert rc_am.fail_json.called
+        args, kwargs = rc_am.fail_json.call_args
+        assert kwargs['rc'] == errno.EPERM
 
-    def test_check_rc_false(self):
-        self.cmd.returncode = 1
-        (rc, _, _) = self.module.run_command('/bin/false', check_rc=False)
-        self.assertEqual(rc, 1)
 
-    def test_check_rc_true(self):
-        self.cmd.returncode = 1
-        self.assertRaises(SystemExit, self.module.run_command, '/bin/false', check_rc=True)
-        self.assertTrue(self.module.fail_json.called)
-        args, kwargs = self.module.fail_json.call_args
-        self.assertEqual(kwargs['rc'], 1)
+class TestRunCommandPrompt:
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_prompt_bad_regex(self, rc_am):
+        with pytest.raises(SystemExit):
+            rc_am.run_command('foo', prompt_regex='[pP)assword:')
+        assert rc_am.fail_json.called
 
-    def test_text_stdin(self):
-        (rc, stdout, stderr) = self.module.run_command('/bin/foo', data='hello world')
-        self.assertEqual(self.cmd.stdin.getvalue(), b'hello world\n')
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_prompt_no_match(self, mocker, rc_am):
+        rc_am._os._cmd_out[mocker.sentinel.stdout] = BytesIO(b'hello')
+        (rc, _, _) = rc_am.run_command('foo', prompt_regex='[pP]assword:')
+        assert rc == 0
 
-    def test_ascii_stdout(self):
-        self.cmd_out[sentinel.stdout] = BytesIO(b'hello')
-        (rc, stdout, stderr) = self.module.run_command('/bin/cat hello.txt')
-        self.assertEqual(rc, 0)
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_prompt_match_wo_data(self, mocker, rc_am):
+        rc_am._os._cmd_out[mocker.sentinel.stdout] = BytesIO(b'Authentication required!\nEnter password: ')
+        (rc, _, _) = rc_am.run_command('foo', prompt_regex=r'[pP]assword:', data=None)
+        assert rc == 257
+
+
+class TestRunCommandRc:
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_check_rc_false(self, rc_am):
+        rc_am._subprocess.Popen.return_value.returncode = 1
+        (rc, _, _) = rc_am.run_command('/bin/false', check_rc=False)
+        assert rc == 1
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_check_rc_true(self, rc_am):
+        rc_am._subprocess.Popen.return_value.returncode = 1
+        with pytest.raises(SystemExit):
+            rc_am.run_command('/bin/false', check_rc=True)
+        assert rc_am.fail_json.called
+        args, kwargs = rc_am.fail_json.call_args
+        assert kwargs['rc'] == 1
+
+
+class TestRunCommandOutput:
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_text_stdin(self, rc_am):
+        (rc, stdout, stderr) = rc_am.run_command('/bin/foo', data='hello world')
+        assert rc_am._subprocess.Popen.return_value.stdin.getvalue() == b'hello world\n'
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_ascii_stdout(self, mocker, rc_am):
+        rc_am._os._cmd_out[mocker.sentinel.stdout] = BytesIO(b'hello')
+        (rc, stdout, stderr) = rc_am.run_command('/bin/cat hello.txt')
+        assert rc == 0
         # module_utils function.  On py3 it returns text and py2 it returns
         # bytes because it's returning native strings
-        if PY3:
-            self.assertEqual(stdout, u'hello')
-        else:
-            self.assertEqual(stdout, b'hello')
+        assert stdout == 'hello'
 
-    def test_utf8_output(self):
-        self.cmd_out[sentinel.stdout] = BytesIO(u'Žarn§'.encode('utf-8'))
-        self.cmd_out[sentinel.stderr] = BytesIO(u'لرئيسية'.encode('utf-8'))
-        (rc, stdout, stderr) = self.module.run_command('/bin/something_ugly')
-        self.assertEqual(rc, 0)
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_utf8_output(self, mocker, rc_am):
+        rc_am._os._cmd_out[mocker.sentinel.stdout] = BytesIO(u'Žarn§'.encode('utf-8'))
+        rc_am._os._cmd_out[mocker.sentinel.stderr] = BytesIO(u'لرئيسية'.encode('utf-8'))
+        (rc, stdout, stderr) = rc_am.run_command('/bin/something_ugly')
+        assert rc == 0
         # module_utils function.  On py3 it returns text and py2 it returns
         # bytes because it's returning native strings
-        if PY3:
-            self.assertEqual(stdout, u'Žarn§')
-            self.assertEqual(stderr, u'لرئيسية')
-        else:
-            self.assertEqual(stdout.decode('utf-8'), u'Žarn§')
-            self.assertEqual(stderr.decode('utf-8'), u'لرئيسية')
+        assert stdout == to_native(u'Žarn§')
+        assert stderr == to_native(u'لرئيسية')
