@@ -13,17 +13,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: oneview_storage_pool_facts
-short_description: Retrieve facts about one or more Storage Pools.
+short_description: Retrieve facts about one or more Storage Pools
 description:
     - Retrieve facts about one or more of the Storage Pools from OneView.
 version_added: "2.5"
 requirements:
     - "hpOneView >= 4.0.0"
 author:
-    - Priyanka Sood (@soodpr)
-    - Madhav Bharadwaj (@madhav-bharadwaj)
-    - Ricardo Galeno (@ricardogpsf)
     - Alex Monteiro (@aalexmonteiro)
+    - Madhav Bharadwaj (@madhav-bharadwaj)
+    - Priyanka Sood (@soodpr)
+    - Ricardo Galeno (@ricardogpsf)
 options:
     name:
       description:
@@ -117,9 +117,9 @@ from ansible.module_utils.oneview import OneViewModuleBase
 class StoragePoolFactsModule(OneViewModuleBase):
     def __init__(self):
         argument_spec = dict(
-            name=dict(required=False, type='str'),
-            params=dict(required=False, type='dict'),
-            options=dict(required=False, type='list')
+            name=dict(type='str'),
+            params=dict(type='dict'),
+            options=dict(type='list')
         )
         super(StoragePoolFactsModule, self).__init__(additional_arg_spec=argument_spec)
         self.resource_client = self.oneview_client.storage_pools

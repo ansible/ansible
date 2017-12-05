@@ -5,7 +5,7 @@ import pytest
 
 from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_datacenter_facts import DatacenterFactsModule
-from hpe_test_utils import FactsParamsTest
+from hpe_test_utils import OneViewBaseFactsTest
 
 PARAMS_GET_CONNECTED = dict(
     config='config.json',
@@ -14,14 +14,8 @@ PARAMS_GET_CONNECTED = dict(
 )
 
 
-@pytest.mark.resource('datacenters')
-class TestDatacenterFactsModule(FactsParamsTest):
-    @pytest.fixture(autouse=True)
-    def setUp(self, mock_ansible_module, mock_ov_client):
-        self.resource = mock_ov_client.datacenters
-        self.mock_ansible_module = mock_ansible_module
-        self.mock_ov_client = mock_ov_client
-
+@pytest.mark.resource(name='datacenters')
+class TestDatacenterFactsModule(OneViewBaseFactsTest):
     def test_should_get_all_datacenters(self):
         self.resource.get_all.return_value = {"name": "Data Center Name"}
 
@@ -74,3 +68,6 @@ class TestDatacenterFactsModule(FactsParamsTest):
             ansible_facts={'datacenter_visual_content': None,
                            'datacenters': []}
         )
+
+if __name__ == '__main__':
+    pytest.main([__file__])
