@@ -31,6 +31,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+from copy import deepcopy
 
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
@@ -707,7 +708,7 @@ class ACIModule(object):
         if child_configs:
             children = []
             for child in child_configs:
-                child_copy = child.copy()
+                child_copy = deepcopy(copy)
                 has_value = False
                 for root_key in child_copy.keys():
                     for final_keys, values in child_copy[root_key]['attributes'].items():
