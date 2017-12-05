@@ -92,6 +92,7 @@ options:
     - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
     - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for VM
           will always be equal to the VM's memory size. version_added: 2.5"
+    - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines. version_added: 2.5.'
   guest_id:
     description:
     - Set the guest ID (Debian, RHEL, Windows...).
@@ -226,6 +227,7 @@ EXAMPLES = r'''
       scsi: paravirtual
       memory_reservation: 512
       memory_reservation_lock: True
+      max_connections: 5
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -731,6 +733,19 @@ class PyVmomiHelper(PyVmomi):
             if cdrom_spec:
                 self.change_detected = True
                 self.configspec.deviceChange.append(cdrom_spec)
+
+    def configure_hardware_params(self, vm_obj):
+        """
+        Function to configure hardware related configuration of virtual machine
+        Args:
+            vm_obj: virtual machine object
+        """
+        # maxMksConnections == max_connections
+        if 'hardware' in self.params:
+            if 'max_connections' in self.params['hardware']:
+                self.configspec.maxMksConnections = int(self.params['hardware']['max_connections'])
+                if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.hardware.maxMksConnections:
+                    self.change_detected = True
 
     def get_vm_cdrom_device(self, vm=None):
         if vm is None:
@@ -1369,6 +1384,7 @@ class PyVmomiHelper(PyVmomi):
         self.configspec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
+        self.configure_hardware_params(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
@@ -1487,6 +1503,7 @@ class PyVmomiHelper(PyVmomi):
 
         self.configure_guestid(vm_obj=self.current_vm_obj)
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
+        self.configure_hardware_params(vm_obj=self.current_vm_obj)
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
