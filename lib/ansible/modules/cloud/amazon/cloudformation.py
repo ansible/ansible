@@ -48,8 +48,9 @@ options:
       - The local path of the cloudformation template.
       - This must be the full path to the file, relative to the working directory. If using roles this may look
         like "roles/cloudformation/files/cloudformation-example.json".
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
-        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
+        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        'template_body' nor 'template_url' are specified, the previous template will be reused.
     required: false
     default: null
   notification_arns:
@@ -75,8 +76,9 @@ options:
     description:
       - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
         as the stack.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
-        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
+        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        'template_body' nor 'template_url' are specified, the previous template will be reused.
     required: false
     version_added: "2.0"
   create_changeset:
@@ -114,6 +116,14 @@ options:
   termination_protection:
     description:
     - enable or disable termination protection on the stack. Only works with botocore >= 1.7.18.
+    version_added: "2.5"
+  template_body:
+    description:
+      - Template body. Use this to pass in the actual body of the Cloudformation template.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
+        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        'template_body' nor 'template_url' are specified, the previous template will be reused.
+    required: false
     version_added: "2.5"
 
 author: "James S. Martin (@jsmartin)"
@@ -163,6 +173,23 @@ EXAMPLES = '''
     region: us-east-1
     disable_rollback: true
     template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
+    template_parameters:
+      KeyName: jmartin
+      DiskType: ephemeral
+      InstanceType: m1.small
+      ClusterSize: 3
+    tags:
+      Stack: ansible-cloudformation
+
+# Create a stack, passing in template body using lookup of Jinja2 template, disable rollback if stack creation fails,
+# pass in some parameters to the template, provide tags for resources created
+- name: create a stack, pass in the template body via lookup template
+  cloudformation:
+    stack_name: "ansible-cloudformation"
+    state: present
+    region: us-east-1
+    disable_rollback: true
+    template_body: "{{ lookup('template', 'cloudformation.j2') }}"
     template_parameters:
       KeyName: jmartin
       DiskType: ephemeral
@@ -272,7 +299,7 @@ def get_stack_events(cfn, stack_name, token_filter=None):
 
 def create_stack(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
-        module.fail_json(msg="Either 'template' or 'template_url' is required when the stack does not exist.")
+        module.fail_json(msg="Either 'template', 'template_body' or 'template_url' is required when the stack does not exist.")
 
     # 'disablerollback' and 'EnableTerminationProtection' only
     # apply on creation, not update.
@@ -497,6 +524,7 @@ def main():
         stack_policy=dict(default=None, required=False),
         disable_rollback=dict(default=False, type='bool'),
         template_url=dict(default=None, required=False),
+        template_body=dict(default=None, require=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
         create_changeset=dict(default=False, type='bool'),
         changeset_name=dict(default=None, required=False),
@@ -508,7 +536,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[['template_url', 'template']],
+        mutually_exclusive=[['template_url', 'template', 'template_body']],
         supports_check_mode=True
     )
     if not HAS_BOTO3:
@@ -524,6 +552,8 @@ def main():
 
     if module.params['template'] is not None:
         stack_params['TemplateBody'] = open(module.params['template'], 'r').read()
+    elif module.params['template_body'] is not None:
+        stack_params['TemplateBody'] = module.params['template_body']
     elif module.params['template_url'] is not None:
         stack_params['TemplateURL'] = module.params['template_url']
 

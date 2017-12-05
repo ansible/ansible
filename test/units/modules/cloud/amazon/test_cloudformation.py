@@ -128,4 +128,4 @@ def test_missing_template_body(placeboify):
         )
     assert exc_info.match('FAIL')
     assert not m.exit_args
-    assert "Either 'template' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']
+    assert "Either 'template', 'template_body' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']
