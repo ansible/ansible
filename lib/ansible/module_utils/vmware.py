@@ -889,13 +889,20 @@ class PyVmomi(object):
         user_desired_path = None
 
         if self.params['uuid']:
-            vm = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
+            vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
 
         elif self.params['name']:
-            vms = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
+            objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
+            vms = []
+
+            for temp_vm_object in objects:
+                for tem_vm_property in temp_vm_object.propSet:
+                    if tem_vm_property.val == self.params['name']:
+                        vms.append(temp_vm_object.obj)
+                        break
 
             # get_managed_objects_properties may return multiple virtual machine,
-            # following code tries to find user desired one depending on folder specified.
+            # following code tries to find user desired one depending upon the folder specified.
             if len(vms) > 1:
                 # We have found multiple virtual machines, decide depending upon folder value
                 if self.params['folder'] is None:
@@ -955,7 +962,7 @@ class PyVmomi(object):
                     if user_desired_path in actual_vm_folder_path:
                         vm_obj = vm
                         break
-            else:
+            elif vms:
                 # Unique virtual machine found.
                 vm_obj = vms[0]
 
