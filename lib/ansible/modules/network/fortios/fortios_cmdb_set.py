@@ -36,7 +36,7 @@ description:
     or fortigate device. The module transforms the playbook into \
     the needed REST API calls.
 
-version_added: "1.2"
+version_added: "2.5"
 author: "Nicolas Thomas / thomnico / (nthomas at fortinet.com) and \
  Miguel Angel Munoz / mamunozgonzalez / (magonzalez at fortinet.com)"
 notes:
@@ -254,12 +254,44 @@ EXAMPLES = '''
           logtraffic: "all"
 '''
 
+RETURN = '''
+results:
+  description: Data returned by the endpoint operation
+  returned: on sucess
+  type: string
+  sample: {
+            "apply-to": "admin-password ipsec-preshared-key",
+            "change-4-characters": "disable",
+            "expire-day": 90,
+            "expire-status": "enable",
+            "min-lower-case-letter": 2,
+            "min-non-alphanumeric": 1,
+            "min-number": 2,
+            "min-upper-case-letter": 2,
+            "minimum-length": 8,
+            "reuse-password": "disable",
+            "status": "enable
+          }
+
+status:
+  description: Indication of the operation's result
+  returned: always
+  type: string
+  sample: "success"
+
+version:
+  description: Version of the FortiGate
+  returned: always
+  type: string
+  sample: v5.6.2
+
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 import logging
 
 try:
     from fortiosapi import FortiOSAPI
-
     HAS_FORTIOSAPI = True
 except ImportError:
     HAS_FORTIOSAPI = False

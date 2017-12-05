@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright 2017 Fortinet, Inc.
 #
-# Author: Miguel Angel Munoz (magonzalez at fortinet.com) and 
+# Author: Miguel Angel Munoz (magonzalez at fortinet.com) and
 #         Nicolas Thomas (nthomas at fortinet.com)
 #
 # This program is free software: you can redistribute it and/or modify
