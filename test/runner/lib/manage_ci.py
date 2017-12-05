@@ -82,6 +82,7 @@ class ManageNetworkCI(object):
             'ansible_port=%s' % self.core_ci.connection.port,
             'ansible_connection=%s' % connection_type,
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+            'ansible_network_os=%s' % self.core_ci.platform,
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
