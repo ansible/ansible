@@ -1174,6 +1174,8 @@ files:
     labels:
     - networking
     - nxos
+  test/sanity/pep8/legacy-files.txt:
+    labels: pep8
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
