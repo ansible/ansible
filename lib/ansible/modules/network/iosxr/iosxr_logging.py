@@ -21,6 +21,7 @@ short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on Cisco IOS XR devices.
+extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XR 6.1.2
 options:

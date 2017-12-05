@@ -15,7 +15,7 @@
   iosxr_command:
     commands:
       - show version
-      - [{commans: 'show foo', prompt: 'fooprompt', answer: 'yes'}]
+      - [{command: 'show foo', prompt: 'fooprompt', answer: 'yes'}]
   register: result
   ignore_errors: yes
 

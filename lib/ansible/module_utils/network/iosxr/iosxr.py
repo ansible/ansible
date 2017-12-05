@@ -28,6 +28,7 @@
 #
 import json
 from difflib import Differ
+from copy import deepcopy
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
@@ -165,7 +166,7 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
     sub_root = container_ele
     meta_subtree = list()
 
-    for key, meta in xmap.iteritems():
+    for key, meta in xmap.items():
 
         candidates = meta.get('xpath', "").split("/")
 
@@ -338,10 +339,12 @@ def load_config(module, command_filter, warnings, replace=False, admin=False, co
             pass
 
     elif network_api == 'cliconf':
-        command_filter.insert(0, 'configure terminal')
+        # to keep the pre-cliconf behaviour, make a copy, avoid adding commands to input list
+        cmd_filter = deepcopy(command_filter)
+        cmd_filter.insert(0, 'configure terminal')
         if admin:
-            command_filter.insert(0, 'admin')
-        conn.edit_config(command_filter)
+            cmd_filter.insert(0, 'admin')
+        conn.edit_config(cmd_filter)
         diff = get_config_diff(module)
         if module._diff:
             if diff:

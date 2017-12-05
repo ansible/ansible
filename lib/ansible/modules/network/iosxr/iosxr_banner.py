@@ -21,29 +21,27 @@ author:
     - Kedar Kekan (@kedarX)
 short_description: Manage multiline banners on Cisco IOS XR devices
 description:
-  - This will configure both exec and motd banners on remote devices
-    running Cisco IOS XR. It allows playbooks to add or remote
-    banner text from the active running configuration.
+  - This module will configure both exec and motd banners on remote device
+    running Cisco IOS XR. It allows playbooks to add or remove
+    banner text from the running configuration.
+extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XR 6.1.2
+  - Tested against IOS XRv 6.1.2
 options:
   banner:
     description:
-      - Specifies which banner that should be
-        configured on the remote device.
+      - Specifies the type of banner to configure on remote device.
     required: true
     default: null
     choices: ['login', 'motd']
   text:
     description:
-      - The banner text that should be
-        present in the remote device running configuration. This argument
-        accepts a multiline string, with no empty lines. Requires I(state=present).
+      - Banner text to be configured. Accepts multiline string,
+        without empty lines. Requires I(state=present).
     default: null
   state:
     description:
-      - Specifies whether or not the configuration is present in the current
-        devices active running configuration.
+      - Existential state of the configuration on the device.
     default: present
     choices: ['present', 'absent']
 """
@@ -241,7 +239,7 @@ def main():
     network_api = device_capabilities.get('network_api')
 
     if network_api == 'cliconf':
-        module.deprecate('cli support for \'iosxr_banner\' is deprecated. use netconf instead', version='4 releases from v2.5')
+        module.deprecate("cli support for 'iosxr_banner' is deprecated. Use transport netconf instead', version='4 releases from v2.5")
         config_object = CliConfiguration(module, warnings)
     elif network_api == 'netconf':
         if not HAS_LXML:

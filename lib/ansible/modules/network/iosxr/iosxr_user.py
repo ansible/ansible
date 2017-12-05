@@ -26,6 +26,7 @@ description:
     either individual usernames or the aggregate of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XR 6.1.2
 options:
