@@ -28,3 +28,7 @@ ncclient
 
 # requirement for aci_rest module
 xmljson
+
+# requirement for fortios
+fortiosapi
+
