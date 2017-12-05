@@ -423,7 +423,7 @@ class Task(Base, Conditional, Taggable, Become):
                     if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
                         parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
                     else:
-                        parent_value = getattr(self._parent, attr, None)
+                        parent_value = self._parent._attributes.get(attr, None)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)

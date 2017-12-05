@@ -293,7 +293,10 @@ class Block(Base, Become, Conditional, Taggable):
             if self._parent and (value is None or extend):
                 try:
                     if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
-                        parent_value = getattr(self._parent, attr, None)
+                        if hasattr(self._parent, '_get_parent_attribute'):
+                            parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
+                        else:
+                            parent_value = self._parent._attributes.get(attr, None)
                         if extend:
                             value = self._extend_value(value, parent_value, prepend)
                         else:
@@ -302,7 +305,10 @@ class Block(Base, Become, Conditional, Taggable):
                     pass
             if self._role and (value is None or extend):
                 try:
-                    parent_value = getattr(self._role, attr, None)
+                    if hasattr(self._role, '_get_parent_attribute'):
+                        parent_value = self._role.get_parent_attribute(attr, extend=extend, prepend=prepend)
+                    else:
+                        parent_value = self._role._attributes.get(attr, None)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:
@@ -312,7 +318,10 @@ class Block(Base, Become, Conditional, Taggable):
                     if dep_chain and (value is None or extend):
                         dep_chain.reverse()
                         for dep in dep_chain:
-                            dep_value = getattr(dep, attr, None)
+                            if hasattr(dep, '_get_parent_attribute'):
+                                dep_value = dep._get_parent_attribute(attr, extend=extend, prepend=prepend)
+                            else:
+                                dep_value = dep._attributes.get(attr, None)
                             if extend:
                                 value = self._extend_value(value, dep_value, prepend)
                             else:
@@ -324,7 +333,7 @@ class Block(Base, Become, Conditional, Taggable):
                     pass
             if self._play and (value is None or extend):
                 try:
-                    parent_value = getattr(self._play, attr, None)
+                    parent_value = self._play._attributes.get(attr, None)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:

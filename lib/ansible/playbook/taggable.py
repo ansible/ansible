@@ -51,9 +51,10 @@ class Taggable:
         '''
         Override for the 'tags' getattr fetcher, used from Base, allow some classes to not give their tags to their 'children'
         '''
-        tags = self._attributes.get('tags', [])
         if hasattr(self, '_get_parent_attribute'):
             tags = self._get_parent_attribute('tags', extend=True)
+        else:
+            tags = self._attributes.get('tags', [])
         return tags
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
