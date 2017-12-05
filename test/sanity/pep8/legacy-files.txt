@@ -259,8 +259,6 @@ lib/ansible/modules/packaging/language/maven_artifact.py
 lib/ansible/modules/packaging/language/pear.py
 lib/ansible/modules/packaging/os/apk.py
 lib/ansible/modules/packaging/os/dpkg_selections.py
-lib/ansible/modules/packaging/os/homebrew.py
-lib/ansible/modules/packaging/os/homebrew_cask.py
 lib/ansible/modules/packaging/os/layman.py
 lib/ansible/modules/packaging/os/macports.py
 lib/ansible/modules/packaging/os/opkg.py

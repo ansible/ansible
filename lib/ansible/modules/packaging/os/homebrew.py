@@ -1,112 +1,99 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Andrew Dunham <andrew@du.nham.ca>
-# (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
-# (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
-#
+# Copyright: (c) 2013, Andrew Dunham <andrew@du.nham.ca>
+# Copyright: (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
+# Copyright: (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
 # Based on macports (Jimmy Tang <jcftang@gmail.com>)
-#
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: homebrew
 author:
-    - "Indrajit Raychaudhuri (@indrajitr)"
-    - "Daniel Jaouen (@danieljaouen)"
-    - "Andrew Dunham (@andrew-d)"
-requirements:
-   - "python >= 2.6"
+- Indrajit Raychaudhuri (@indrajitr)
+- Daniel Jaouen (@danieljaouen)
+- Andrew Dunham (@andrew-d)
 short_description: Package manager for Homebrew
 description:
-    - Manages Homebrew packages
+    - Manages Homebrew packages.
 version_added: "1.1"
 options:
     name:
         description:
-            - list of names of packages to install/remove
-        required: false
-        default: None
-        aliases: ['pkg', 'package', 'formula']
+            - List of names of packages to install/remove.
+        aliases: [ formula, package, pkg ]
     path:
         description:
-            - "A ':' separated list of paths to search for 'brew' executable.
-              Since a package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command,
+            - A colon-separated list of paths to search for 'brew' executable.
+            - Since a package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command,
               providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
-        required: false
-        default: '/usr/local/bin'
+        default: /usr/local/bin
     state:
         description:
-            - state of the package
-        choices: [ 'head', 'latest', 'present', 'absent', 'linked', 'unlinked' ]
-        required: false
+            - State of the package.
+        choices: [ absent, head, latest, linked, present, unlinked ]
         default: present
     update_homebrew:
         description:
-            - update homebrew itself first
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
-        aliases: ['update-brew']
+            - Update homebrew itself first.
+        type: bool
+        default: 'no'
+        aliases: [ update-brew ]
     upgrade_all:
         description:
-            - upgrade all homebrew packages
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
-        aliases: ['upgrade']
+            - Upgrade all homebrew packages.
+        type: bool
+        default: 'no'
+        aliases: [ upgrade ]
     install_options:
         description:
-            - options flags to install a package
-        required: false
-        default: null
-        aliases: ['options']
+            - Options flags to install a package.
+        aliases: [ options ]
         version_added: "1.4"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
 '''
 EXAMPLES = '''
-# Install formula foo with 'brew' in default path (C(/usr/local/bin))
-- homebrew:
+- name: Install formula foo with 'brew' in default path (C(/usr/local/bin))
+  homebrew:
     name: foo
     state: present
 
-# Install formula foo with 'brew' in alternate path C(/my/other/location/bin)
-- homebrew:
+- name: Install formula foo with 'brew' in alternate path C(/my/other/location/bin)
+  homebrew:
     name: foo
     path: /my/other/location/bin
     state: present
 
-# Update homebrew first and install formula foo with 'brew' in default path
-- homebrew:
+- name: Update homebrew first and install formula foo with 'brew' in default path
+  homebrew:
     name: foo
     state: present
     update_homebrew: yes
 
-# Update homebrew first and upgrade formula foo to latest available with 'brew' in default path
-- homebrew:
+- name: Update homebrew first and upgrade formula foo to latest available with 'brew' in default path
+  homebrew:
     name: foo
     state: latest
     update_homebrew: yes
 
-# Update homebrew and upgrade all packages
-- homebrew:
+- name: Update homebrew and upgrade all packages
+  homebrew:
     update_homebrew: yes
     upgrade_all: yes
 
-# Miscellaneous other examples
-- homebrew:
+- name: Miscellaneous other examples
+  homebrew:
     name: foo
     state: head
 
@@ -181,9 +168,9 @@ class Homebrew(object):
         @                   # at-sign
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_PACKAGE_REGEX     = _create_regex_group(VALID_PACKAGE_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_PACKAGE_REGEX = _create_regex_group(VALID_PACKAGE_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -228,10 +215,7 @@ class Homebrew(object):
         if brew_path is None:
             return True
 
-        return (
-            isinstance(brew_path, string_types)
-            and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
-        )
+        return isinstance(brew_path, string_types) and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
 
     @classmethod
     def valid_package(cls, package):
@@ -240,10 +224,7 @@ class Homebrew(object):
         if package is None:
             return True
 
-        return (
-            isinstance(package, string_types)
-            and not cls.INVALID_PACKAGE_REGEX.search(package)
-        )
+        return isinstance(package, string_types) and not cls.INVALID_PACKAGE_REGEX.search(package)
 
     @classmethod
     def valid_state(cls, state):
@@ -261,17 +242,7 @@ class Homebrew(object):
         if state is None:
             return True
         else:
-            return (
-                isinstance(state, string_types)
-                and state.lower() in (
-                    'installed',
-                    'upgraded',
-                    'head',
-                    'linked',
-                    'unlinked',
-                    'absent',
-                )
-            )
+            return isinstance(state, string_types) and state.lower() in ('absent', 'head', 'installed', 'linked', 'unlinked', 'upgraded')
 
     @classmethod
     def valid_module(cls, module):
@@ -441,10 +412,7 @@ class Homebrew(object):
         ]
         rc, out, err = self.module.run_command(cmd)
         for line in out.split('\n'):
-            if (
-                re.search(r'Built from source', line)
-                or re.search(r'Poured from bottle', line)
-            ):
+            if re.search(r'Built from source', line) or re.search(r'Poured from bottle', line):
                 return True
 
         return False
@@ -576,11 +544,7 @@ class Homebrew(object):
         else:
             head = None
 
-        opts = (
-            [self.brew_path, 'install']
-            + self.install_options
-            + [self.current_package, head]
-        )
+        opts = ([self.brew_path, 'install'] + self.install_options + [self.current_package, head])
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -628,11 +592,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, command]
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = ([self.brew_path, command] + self.install_options + [self.current_package])
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -647,10 +607,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
     def _upgrade_all_packages(self):
-        opts = (
-            [self.brew_path, 'upgrade']
-            + self.install_options
-        )
+        opts = ([self.brew_path, 'upgrade'] + self.install_options)
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -694,11 +651,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, 'uninstall']
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = ([self.brew_path, 'uninstall'] + self.install_options + [self.current_package])
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -739,11 +692,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, 'link']
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = ([self.brew_path, 'link'] + self.install_options + [self.current_package])
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -785,11 +734,7 @@ class Homebrew(object):
             )
             raise HomebrewException(self.message)
 
-        opts = (
-            [self.brew_path, 'unlink']
-            + self.install_options
-            + [self.current_package]
-        )
+        opts = ([self.brew_path, 'unlink'] + self.install_options + [self.current_package])
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -817,40 +762,13 @@ class Homebrew(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(
-                aliases=["pkg", "package", "formula"],
-                required=False,
-                type='list',
-            ),
-            path=dict(
-                default="/usr/local/bin",
-                required=False,
-                type='path',
-            ),
-            state=dict(
-                default="present",
-                choices=[
-                    "present", "installed",
-                    "latest", "upgraded", "head",
-                    "linked", "unlinked",
-                    "absent", "removed", "uninstalled",
-                ],
-            ),
-            update_homebrew=dict(
-                default=False,
-                aliases=["update-brew"],
-                type='bool',
-            ),
-            upgrade_all=dict(
-                default=False,
-                aliases=["upgrade"],
-                type='bool',
-            ),
-            install_options=dict(
-                default=None,
-                aliases=['options'],
-                type='list',
-            )
+            name=dict(type='list', aliases=["pkg", "package", "formula"]),
+            path=dict(type='path', default="/usr/local/bin"),
+            state=dict(type='str', default="present",
+                       choices=["absent", "head", "installed", "latest", "linked", "present", "removed", "uninstalled", "unlinked", "upgraded"]),
+            update_homebrew=dict(type='bool', default=False, aliases=["update-brew"]),
+            upgrade_all=dict(type='bool', default=False, aliases=["upgrade"]),
+            install_options=dict(type='list', aliases=['options']),
         ),
         supports_check_mode=True,
     )
