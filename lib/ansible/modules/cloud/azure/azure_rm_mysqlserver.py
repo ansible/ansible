@@ -299,7 +299,7 @@ class AzureRMServers(AzureRMModuleBase):
         old_value = d.get(old_name, None)
         if old_value is not None:
             d.pop(old_name, None)
-            d[new_name] = old_value;
+            d[new_name] = old_value
 
     def create_update_mysqlserver(self):
         '''
