@@ -1,35 +1,17 @@
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from itertools import product
 
-# to work around basic.py reading stdin
-import json
 import pytest
 
-from units.mock.procenv import swap_stdin_and_argv
-
-# for testing
-from ansible.compat.tests.mock import patch
-
-# the module we are actually testing (sort of
+# the module we are actually testing (sort of)
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
+
 
 # to generate the testcase data, you can use the script gen_distribution_version_testcase.py in hacking/tests
 TESTSETS = [
@@ -880,8 +862,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
 ]
 
 
-@pytest.mark.parametrize("testcase", TESTSETS, ids=lambda x: x['name'])
-def test_distribution_version(testcase):
+@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x['name'], indirect=['stdin'])
+def test_distribution_version(am, mocker, testcase):
     """tests the distribution parsing code of the Facts class
 
     testsets have
@@ -891,26 +873,10 @@ def test_distribution_version(testcase):
       * all files that are not listed here are assumed to not exist at all
     * the output of pythons platform.dist()
     * results for the ansible variables distribution* and os_family
+
     """
 
-    from ansible.module_utils import basic
-
-    args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-    with swap_stdin_and_argv(stdin_data=args):
-        basic._ANSIBLE_ARGS = None
-        module = basic.AnsibleModule(argument_spec=dict())
-
-        _test_one_distribution(module, testcase)
-
-
-def _test_one_distribution(module, testcase):
-    """run the test on one distribution testcase
-
-    * prepare some mock functions to get the testdata in
-    * run Facts()
-    * compare with the expected output
-    """
-
+    # prepare some mock functions to get the testdata in
     def mock_get_file_content(fname, default=None, strip=True):
         """give fake content if it exists, otherwise pretend the file is empty"""
         data = default
@@ -922,7 +888,7 @@ def _test_one_distribution(module, testcase):
             data = data.strip()
         return data
 
-    def mock_get_uname_version(module):
+    def mock_get_uname_version(am):
         return testcase.get('uname_v', None)
 
     def mock_file_exists(fname, allow_empty=False):
@@ -942,19 +908,19 @@ def _test_one_distribution(module, testcase):
     def mock_platform_version():
         return testcase.get('platform.version', '')
 
-    @patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
-    @patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
-    @patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
-    @patch('platform.dist', lambda: testcase['platform.dist'])
-    @patch('platform.system', mock_platform_system)
-    @patch('platform.release', mock_platform_release)
-    @patch('platform.version', mock_platform_version)
-    def get_facts(testcase):
-        distro_collector = DistributionFactCollector()
-        res = distro_collector.collect(module)
-        return res
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
+    mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
+    mocker.patch('platform.dist', lambda: testcase['platform.dist'])
+    mocker.patch('platform.system', mock_platform_system)
+    mocker.patch('platform.release', mock_platform_release)
+    mocker.patch('platform.version', mock_platform_version)
 
-    generated_facts = get_facts(testcase)
+    # run Facts()
+    distro_collector = DistributionFactCollector()
+    generated_facts = distro_collector.collect(am)
+
+    # compare with the expected output
 
     # testcase['result'] has a list of variables and values it expects Facts() to set
     for key, val in testcase['result'].items():
