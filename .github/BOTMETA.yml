@@ -1166,6 +1166,8 @@ files:
     labels:
     - networking
     - nxos
+  test/integration/targets/setup_zabbix:
+    maintainers: eikef D3DeFi
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking

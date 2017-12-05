@@ -1,0 +1,6 @@
+---
+
+# This integration test is only for Ubuntu 14.04 at the moment. This makes
+# installation of a Zabbix quite a bit easier.
+- include: setup.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'trusty'
