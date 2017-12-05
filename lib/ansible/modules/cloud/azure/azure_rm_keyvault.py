@@ -216,9 +216,10 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.keyvault.models import \
-    (Vault, VaultCreateOrUpdateParameters, VaultProperties, AccessPolicyEntry, Sku, Permissions,
-     KeyPermissions, SecretPermissions, CertificatePermissions, SkuName)
+    from azure.mgmt.keyvault.models import (
+        Vault, VaultCreateOrUpdateParameters, VaultProperties, AccessPolicyEntry,
+        Sku, Permissions, KeyPermissions, SecretPermissions, CertificatePermissions, SkuName
+    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -283,7 +284,7 @@ class AzureRMKeyVault(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
-        
+
         self.results['check_mode'] = self.check_mode
 
         # check if tenant or object id is passed via args if not pull from auth creds
@@ -328,15 +329,19 @@ class AzureRMKeyVault(AzureRMModuleBase):
             try:
                 use_sku = Sku(self.sku)
                 permission_preset = self.create_permissions(self.permissions)
-                access_policy_lst = [AccessPolicyEntry(self.tenant_id, self.object_id, permission_preset, application_id=self.application_id)]
+                access_policy_lst = [AccessPolicyEntry(self.tenant_id,
+                                                       self.object_id,
+                                                       permission_preset,
+                                                       application_id=self.application_id)]
                 vault_properties = VaultProperties(self.tenant_id,
-                                                    use_sku,
-                                                    access_policies=access_policy_lst,
-                                                    vault_uri=self.vault_uri,
-                                                    enabled_for_deployment=self.enabled_for_deployment,
-                                                    enabled_for_disk_encryption=self.enabled_for_disk_encryption,
-                                                    enabled_for_template_deployment=self.enabled_for_template_deployment)
-                vault = VaultCreateOrUpdateParameters(self.location, vault_properties, tags=self.tags)
+                                                   use_sku,
+                                                   access_policies=access_policy_lst,
+                                                   vault_uri=self.vault_uri,
+                                                   enabled_for_deployment=self.enabled_for_deployment,
+                                                   enabled_for_disk_encryption=self.enabled_for_disk_encryption,
+                                                   enabled_for_template_deployment=self.enabled_for_template_deployment)
+                vault = VaultCreateOrUpdateParameters(self.location,
+                                                      vault_properties, tags=self.tags)
                 self.results['changed'] = True
 
                 if self.check_mode:
@@ -345,14 +350,16 @@ class AzureRMKeyVault(AzureRMModuleBase):
                 else:
                     self.results['state'] = self.create_or_update_vault(vault)
             except CloudError as exc:
-                self.fail('Faulure while creating or updating keyvault: {}'.format(exc))
-        
+                self.fail('Failure while creating or updating keyvault: {}'.format(exc))
+
         return self.results
 
     def create_or_update_vault(self, vault):
         try:
             # create or update the new Vault object we created
-            new_vault = self.keyvault_client.vaults.create_or_update(self.resource_group, self.name, vault)
+            new_vault = self.keyvault_client.vaults.create_or_update(
+                self.resource_group, self.name, vault
+            )
         except Exception as exc:
             self.fail("Error creating or updating vault {0} - {1}".format(self.name, str(exc)))
         return new_vault.as_dict()
@@ -370,7 +377,6 @@ class AzureRMKeyVault(AzureRMModuleBase):
         k_perm = []
         s_perm = []
         c_perm = []
-        # if they want the 'Key, Secret, & Certificate Management' permission preset, create and return a new permissions class with all the necessary information
         if permissions == 'Key, Secret, & Certificate Management':
             k_perm = [KeyPermissions.get, KeyPermissions.list, KeyPermissions.update, KeyPermissions.import_enum,
                       KeyPermissions.create, KeyPermissions.delete, KeyPermissions.recover,
