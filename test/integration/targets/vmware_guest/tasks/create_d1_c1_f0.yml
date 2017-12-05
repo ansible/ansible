@@ -46,6 +46,10 @@
         memory_mb: 512
         hotadd_memory: true
         hotadd_cpu: false
+        # vcsim does not support this changes so commenting
+        # till the time.
+        # memory_reservation: 512
+        # memory_reservation_lock: False
     disk:
         - size: 0gb
           type: thin

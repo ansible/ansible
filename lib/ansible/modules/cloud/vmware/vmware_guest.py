@@ -93,6 +93,9 @@ options:
     - '   -  C(video_memory_kb) (integer): amount of video memory in KB.'
     - '   -  C(enable_3d) (boolean): whether the 3d support shall be enabled or not.'
     - '   -  C(num_displays) (integer): number of displays to use.'
+    - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
+    - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for VM
+          will always be equal to the VM's memory size. version_added: 2.5"
   guest_id:
     description:
     - Set the guest ID (Debian, RHEL, Windows...).
@@ -225,6 +228,8 @@ EXAMPLES = r'''
       num_cpus: 6
       num_cpu_cores_per_socket: 3
       scsi: paravirtual
+      memory_reservation: 512
+      memory_reservation_lock: True
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -676,6 +681,25 @@ class PyVmomiHelper(PyVmomi):
             if 'hotadd_cpu' in self.params['hardware']:
                 self.configspec.cpuHotAddEnabled = bool(self.params['hardware']['hotadd_cpu'])
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
+                    self.change_detected = True
+
+            if 'memory_reservation' in self.params['hardware']:
+                memory_reservation_mb = 0
+                try:
+                    memory_reservation_mb = int(self.params['hardware']['memory_reservation'])
+                except ValueError as e:
+                    self.module.fail_json(msg="Failed to set memory_reservation value."
+                                              "Valid value for memory_reservation value in MB (integer): %s" % e)
+
+                mem_alloc = vim.ResourceAllocationInfo()
+                mem_alloc.reservation = memory_reservation_mb
+                self.configspec.memoryAllocation = mem_alloc
+                if vm_obj is None or self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
+                    self.change_detected = True
+
+            if 'memory_reservation_lock' in self.params['hardware']:
+                self.configspec.memoryReservationLockedToMax = bool(self.params['hardware']['memory_reservation_lock'])
+                if vm_obj is None or self.configspec.memoryReservationLockedToMax != vm_obj.config.memoryReservationLockedToMax:
                     self.change_detected = True
 
     def configure_cdrom(self, vm_obj):
