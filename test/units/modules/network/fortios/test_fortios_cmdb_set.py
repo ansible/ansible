@@ -20,21 +20,22 @@
 
 import sys
 from nose.plugins.skip import SkipTest
+
 if sys.version_info < (2, 7):
     raise SkipTest("Python >= 2.7 is required for running unit tests")
 
 try:
-	import library.fortios_cmdb_set as sut
+    import library.fortios_cmdb_set as sut
 except ImportError:
-	try:
-		import ansible.modules.network.fortios.fortios_cmdb_set as sut
-	except ImportError:
-		raise SkipTest("FortiOS Ansible module not found")
+    try:
+        import ansible.modules.network.fortios.fortios_cmdb_set as sut
+    except ImportError:
+        raise SkipTest("FortiOS Ansible module not found")
 
 try:
-	from fortiosapi import FortiOSAPI
+    from fortiosapi import FortiOSAPI
 except ImportError:
-	raise SkipTest("FortiOS Ansible module requires FortiOSapi")
+    raise SkipTest("FortiOS Ansible module requires FortiOSapi")
 
 import ansible.module_utils.basic
 import requests
@@ -183,8 +184,8 @@ def test_endpoint_properly_built(monkeypatch):
 
     def post(self, url, data=None, json=None, **kwargs):
         if url != 'https://192.168.122.40/logincheck' and \
-                        url != 'https://192.168.122.40/api/v2/cmdb/' \
-                               'firewall/policy?global=1':
+                url != 'https://192.168.122.40/api/v2/cmdb/' \
+                       'firewall/policy?global=1':
             assert False, "Url not properly built: %s" % url
         result = Result()
         result.calculate_result()

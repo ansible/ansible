@@ -26,7 +26,6 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
 
-
 DOCUMENTATION = '''
 ---
 module: fortios_cmdb_set
@@ -257,8 +256,10 @@ EXAMPLES = '''
 
 from ansible.module_utils.basic import AnsibleModule
 import logging
+
 try:
     from fortiosapi import FortiOSAPI
+
     HAS_FORTIOSAPI = True
 except ImportError:
     HAS_FORTIOSAPI = False
@@ -669,9 +670,6 @@ def fortios_cmdb_set(data):
 
 
 def main():
-    if not HAS_FORTIOSAPI:
-        module.fail_json(msg="Need FortiOSApi library installed")
-
     fields = {
         "host": {"required": True, "type": "str"},
         "password": {"required": False, "type": "str"},
