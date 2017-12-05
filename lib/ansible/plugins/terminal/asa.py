@@ -20,11 +20,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import json
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
+from ansible.module_utils._text import to_text
 
 
 class TerminalModule(TerminalBase):
@@ -44,9 +43,8 @@ class TerminalModule(TerminalBase):
             self.disable_pager()
 
     def disable_pager(self):
-        cmd = {u'command': u'no terminal pager'}
         try:
-            self._exec_cli_command(u'no terminal pager')
+            self.cli('no terminal pager')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to disable terminal pager')
 
@@ -54,15 +52,17 @@ class TerminalModule(TerminalBase):
         if self._get_prompt().strip().endswith(b'#'):
             return
 
-        cmd = {u'command': u'enable'}
+        prompt = None
+        answer = None
+
         if passwd:
             # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
             # an r string and use to_text to ensure it's text on both py2 and py3.
-            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
-            cmd[u'answer'] = passwd
+            prompt = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            answer = passwd
 
         try:
-            self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
+            self.cli('enable', prompt, answer)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
 

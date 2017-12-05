@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import re
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text
 from ansible.plugins.terminal import TerminalBase
 
 
@@ -48,7 +47,7 @@ class TerminalModule(TerminalBase):
     def on_open_shell(self):
         try:
             for cmd in (b'terminal length 0', b'terminal width 512'):
-                self._exec_cli_command(cmd)
+                self.cli(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
@@ -56,15 +55,17 @@ class TerminalModule(TerminalBase):
         if self._get_prompt().endswith(b'#'):
             return
 
-        cmd = {u'command': u'enable'}
+        prompt = None
+        answer = None
+
         if passwd:
             # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
             # an r string and use to_text to ensure it's text on both py2 and py3.
-            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
-            cmd[u'answer'] = passwd
+            prompt = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            answer = passwd
 
         try:
-            self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
+            self.cli('enable', prompt, answer)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
 
@@ -75,8 +76,8 @@ class TerminalModule(TerminalBase):
             return
 
         if b'(config' in prompt:
-            self._exec_cli_command(b'end')
-            self._exec_cli_command(b'disable')
+            for cmd in ('end', 'disable'):
+                self.cli(cmd)
 
         elif prompt.endswith(b'#'):
-            self._exec_cli_command(b'disable')
+            self.cli('disable')
