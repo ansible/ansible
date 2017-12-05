@@ -84,7 +84,7 @@
   net_logging:
     aggregate:
       - { dest: console, level: warnings, state: absent }
-      - { dest: monitor, level: debuggning, state: absent }
+      - { dest: monitor, level: debugging, state: absent }
     authorize: yes
     provider: "{{ cli }}"
   register: result
