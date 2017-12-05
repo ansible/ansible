@@ -17,11 +17,11 @@ Windows environment setup
 
 Unlike Python module development which can be run on the host that runs
 Ansible, Windows modules need to be written and tested for Windows hosts.
-While there are isos of evaluation editions that can be downloaded from
+While evaluation editions of Windows can be downloaded from
 Microsoft, these images are usually not ready to be used by Ansible out of the
-box. The easiest way to set up a Windows host is to use Vagrant and set up a
-virtual machine. Vagrant is used to download existing OS images called boxes
-and deploy that to a hypervisor like VirtualBox. These boxes can either be
+box. The easiest way to set up a Windows host is to set up a virtual machine 
+using Vagrant. Vagrant can be used to download existing OS images called *boxes*
+that are then deployed to a hypervisor like VirtualBox. These boxes can either be
 created and stored offline or they can be downloaded from a central repository
 called Vagrant Cloud.
 
@@ -30,11 +30,14 @@ repository which have also been uploaded to `Vagrant Cloud <https://app.vagrantu
 To find out more info on how these images are created, please go to the Github
 repo and look at the ``README`` file.
 
-Before you can get started, the following programs must be installed, this is
-outside the scope of this guide:
+Before you can get started, the following programs must be installed (please consult the Vagrant and
+VirtualBox documentation for installation instructions):
 
 - Vagrant
 - VirtualBox
+
+Create a Windows Server in a VM
+===============================
 
 To create a single Windows Server 2016 instance, run the following:
 
@@ -47,8 +50,10 @@ This will download the Vagrant box from Vagrant Cloud and add it to the local
 boxes on your host and then start up that instance in VirtualBox. When starting
 for the first time, the Windows VM will run through the sysprep process and
 then create a HTTP and HTTPS WinRM listener automatically. Vagrant will finish
-its process once the listeners are online and the VM can be used by Ansible
-straight after that.
+its process once the listeners are onlinem, after which the VM can be used by Ansible.
+
+Create an Ansible Inventory
+===========================
 
 The following Ansible inventory file can be used to connect to the newly
 created Windows VM:
@@ -71,7 +76,7 @@ created Windows VM:
     port then Vagrant will automatically use another one at random and display
     show that in the output.
 
-The OS that is created is based on the image set, currently the following
+The OS that is created is based on the image set. The following
 images can be used:
 
 - `jborean93/WindowsServer2008-x86 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2008-x86>`_
@@ -90,7 +95,7 @@ While this is useful when testing modules on a single Windows instance, these
 hosts won't work out of the box with domain based modules. The Vagrantfile at
 `ansible-windows <https://github.com/jborean93/ansible-windows/tree/master/vagrant>`_
 can be used to create a test domain environment to be used in Ansible. This
-repo contains 3 files which are used by both Ansible and Vagrant to create
+repo contains three files which are used by both Ansible and Vagrant to create
 multiple Windows hosts in a domain environment. These files are:
 
 - ``Vagrantfile``: The Vagrant file that reads the inventory setup of ``inventory.yml`` and provisions the hosts that are required
@@ -112,6 +117,9 @@ hosts that are defined under the ``domain_children`` key. The host variable
 ``ansible_host`` is the private IP that will be assigned to the VirtualBox host
 only network adapter while ``vagrant_box`` is the box that will be used to
 create the VM.
+
+Provisioning the Environment
+============================
 
 To provision the environment as is, run the following:
 
