@@ -63,7 +63,8 @@ class TestNetconfConnectionClass(unittest.TestCase):
         self.assertIsNone(conn._manager)
         self.assertFalse(conn._connected)
 
-    def test_netconf__connect(self):
+    @patch("ansible.plugins.connection.netconf.netconf_loader")
+    def test_netconf__connect(self, mock_netconf_loader):
         pc = PlayContext()
         new_stdin = StringIO()
 
