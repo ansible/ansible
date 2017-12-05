@@ -72,10 +72,15 @@ class ManageNetworkCI(object):
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
+        if self.core_ci.platform in ('vyos',):
+            connection_type = 'network_cli'
+        else:
+            connection_type = 'local'
+
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
             'ansible_port=%s' % self.core_ci.connection.port,
-            'ansible_connection=local',
+            'ansible_connection=%s' % connection_type,
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
         ]
 
