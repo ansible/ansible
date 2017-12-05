@@ -92,8 +92,8 @@ port may differ depending if there was a conflict. To get rid of the host, run
 any other files associated with that VM.
 
 While this is useful when testing modules on a single Windows instance, these
-hosts won't work out of the box with domain based modules. The Vagrantfile at
-`ansible-windows <https://github.com/jborean93/ansible-windows/tree/master/vagrant>`_
+host won't work without modification with domain based modules. The Vagrantfile
+at `ansible-windows <https://github.com/jborean93/ansible-windows/tree/master/vagrant>`_
 can be used to create a test domain environment to be used in Ansible. This
 repo contains three files which are used by both Ansible and Vagrant to create
 multiple Windows hosts in a domain environment. These files are:
