@@ -70,6 +70,7 @@ class ActionModule(ActionBase):
             if 'authorize' in self.provider.keys():
                 play_context.become = self.provider['authorize'] or False
                 play_context.become_pass = self.provider['auth_pass']
+                play_context.become_method = 'enable'
 
             if self._play_context.connection == 'local':
                 socket_path = self._start_connection(play_context)
