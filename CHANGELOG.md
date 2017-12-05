@@ -71,6 +71,7 @@ Ansible Changes By Release
 
   * win_scheduled_task_stat
   * win_audit_rule
+  * win_audit_policy_system
 
 <a id="2.4.1"></a>
 
