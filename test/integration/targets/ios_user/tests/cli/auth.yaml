@@ -35,3 +35,6 @@
       state: absent
       authorize: yes
     register: result
+
+  - name: reset connection
+    meta: reset_connection
