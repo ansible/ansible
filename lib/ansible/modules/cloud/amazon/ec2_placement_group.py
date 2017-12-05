@@ -74,12 +74,11 @@ placement_group:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (boto3_conn,
                                       ec2_argument_spec,
-                                      get_aws_connection_info,
-                                      HAS_BOTO3)
+                                      get_aws_connection_info)
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def get_placement_group_details(connection, module):
