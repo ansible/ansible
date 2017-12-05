@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sql_database
+module: azure_rm_sqldatabase
 version_added: "2.5"
 short_description: Manage Database instance
 description:
@@ -40,7 +40,6 @@ options:
     location:
         description:
             - Resource location.
-        required: True
     collation:
         description:
             - The collation of the database. If createMode is not Default, this value is ignored.
@@ -129,7 +128,7 @@ author:
 
 EXAMPLES = '''
   - name: Create (or update) Database
-    azure_rm_sql_database:
+    azure_rm_sqldatabase:
       resource_group: resource_group_name
       server_name: server_name
       name: database_name
@@ -726,6 +725,10 @@ except ImportError:
     pass
 
 
+class Actions:
+    NoAction, Create, Update, Delete = range(4)
+
+
 class AzureRMDatabases(AzureRMModuleBase):
     """Configuration class for an Azure RM Database resource"""
 
@@ -749,7 +752,7 @@ class AzureRMDatabases(AzureRMModuleBase):
             ),
             location=dict(
                 type='str',
-                required=True
+                required=False
             ),
             collation=dict(
                 type='str',
@@ -823,6 +826,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.results = dict(changed=False, state=dict())
         self.mgmt_client = None
         self.state = None
+        self.to_do = Actions.NoAction
 
         super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                supports_check_mode=True,
@@ -878,23 +882,26 @@ class AzureRMDatabases(AzureRMModuleBase):
         except CloudError:
             self.fail('resource group {0} not found'.format(self.resource_group))
 
+        if not self.parameters.has_key("location"):
+            self.parameters["location"] = resource_group.location
+
         old_response = self.get_database()
 
         if not old_response:
             self.log("Database instance doesn't exist")
             if self.state == 'absent':
                 self.log("Old instance didn't exist")
+            else:
+                self.to_do = Actions.Create
         else:
             self.log("Database instance already exists")
             if self.state == 'absent':
-                self.delete_database()
-                self.results['changed'] = True
-                self.log("Database instance deleted")
+                self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if Database instance has to be deleted or may be updated")
+                self.to_do = Actions.Update
 
-        if self.state == 'present':
-
+        if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Database instance")
 
             if self.check_mode:
@@ -904,9 +911,17 @@ class AzureRMDatabases(AzureRMModuleBase):
             if not old_response:
                 self.results['changed'] = True
             else:
-                self.results['changed'] = (cmp(old_response, self.results['state']) != 0)
+                self.results['changed'] = old_response.__ne__(self.results['state'])
 
             self.log("Creation / Update done")
+        elif self.to_do == Actions.Delete:
+            self.log("Database instance deleted")
+            self.delete_database()
+            self.results['changed'] = True
+        else:
+            self.log("Database instance unchanged")
+            self.results['state'] = old_response
+            self.results['changed'] = False
 
         return self.results
 

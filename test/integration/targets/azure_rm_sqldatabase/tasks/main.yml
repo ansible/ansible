@@ -1,16 +1,16 @@
 - name: Create SQL Server
-  azure_rm_sql_server:
+  azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: zims-server
-    location: westus
+    name: sql-test-server-dauih
+    location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
 - name: Create instance of Database
-  azure_rm_sql_database:
+  azure_rm_sqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: zims-server
+    server_name: sql-test-server-dauih
     name: test-database
-    location: westus
+    location: eastus
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -19,11 +19,11 @@
       - output.state.status == 'Online'
 
 - name: Update instance of Database
-  azure_rm_sql_database:
+  azure_rm_sqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: zims-server
+    server_name: sql-test-server-dauih
     name: test-database
-    location: westus
+    location: eastus
   register: output
 - name: Assert the state has not changed
   assert:
@@ -32,9 +32,9 @@
       - output.state.status == 'Online'
 
 - name: Delete instance of Database
-  azure_rm_sql_database:
+  azure_rm_sqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: zims-server
+    server_name: sql-test-server-dauih
     name: test-database
     state: absent
   register: output
@@ -42,3 +42,9 @@
   assert:
     that:
       - output.changed
+
+- name: Delete instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: sql-test-server-dauih
+    state: absent
