@@ -1,5 +1,5 @@
 #
-# (c) 2016 Red Hat Inc.
+# (c) 2017 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -35,6 +35,7 @@ class TerminalModule(TerminalBase):
 
     terminal_stderr_re = [
         re.compile(br"\n\s*command not found"),
+        re.compile(br"\nInvalid command"),
         re.compile(br"\nCommit failed"),
         re.compile(br"\n\s*Set failed"),
     ]

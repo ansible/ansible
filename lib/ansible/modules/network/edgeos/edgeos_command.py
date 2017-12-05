@@ -15,19 +15,54 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
 DOCUMENTATION = """
+module: edgeos_command
+version_added: "2.5"
+author: Chad Norgan (@BeardyMcBeards)
+short_description: Run one or more commands on EdgeOS devices
+description:
+  - This command module allows running one or more commands on a remote
+    device running the EdgeOS, such as the Ubiquiti EdgeRouter.
+options:
+  command:
+    description:
+      - The command or ordered set of commands that should be run against the
+        remote device.
+    required: true
 """
 
 EXAMPLES = """
+tasks:
+  - name: Reboot the device
+    edgeos_command:
+      command: reboot now
+
+  - name: Show the configuration for eth0 and eth1
+    edgeos_command:
+      command: show interfaces ethernet {{ item }}
+    loop:
+      - eth0
+      - eth1
 """
 
 RETURN = """
+stdout:
+  description: The set of responses from the commands
+  returned: always apart from low level errors (such as action plugin)
+  type: list
+  sample: ['...', '...']
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: always
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
 """
 
 from ansible.module_utils.basic import AnsibleModule
