@@ -96,7 +96,7 @@ ansible_net_interfaces:
 import re
 import traceback
 
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.network.common.network import NetworkModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_native

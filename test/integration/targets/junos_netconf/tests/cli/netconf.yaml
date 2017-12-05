@@ -57,7 +57,6 @@
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to open shell' in result.msg"
 
 - name: re-enable netconf
   junos_netconf:

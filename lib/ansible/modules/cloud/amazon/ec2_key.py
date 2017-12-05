@@ -62,46 +62,66 @@ author: "Vincent Viallet (@zbal)"
 '''
 
 EXAMPLES = '''
-# Note: None of these examples set aws_access_key, aws_secret_key, or region.
-# It is assumed that their matching environment variables are set.
+# Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Creates a new ec2 key pair named `example` if not present, returns generated
-# private key
-- name: example ec2 key
+- name: create a new ec2 key pair, returns generated private key
   ec2_key:
-    name: example
+    name: my_keypair
 
-# Creates a new ec2 key pair named `example` if not present using provided key
-# material.  This could use the 'file' lookup plugin to pull this off disk.
-- name: example2 ec2 key
+- name: create key pair using provided key_material
   ec2_key:
-    name: example2
+    name: my_keypair
     key_material: 'ssh-rsa AAAAxyz...== me@example.com'
-    state: present
 
-# Given example2 is already existing, the key will not be replaced because the
-# force flag was set to `false`
-- name: example2 ec2 key
+- name: create key pair using key_material obtained using 'file' lookup plugin
   ec2_key:
-    name: example2
+    name: my_keypair
+    key_material: "{{ lookup('file', '/path/to/public_key/id_rsa.pub') }}"
+
+# try creating a key pair with the name of an already existing keypair
+# but don't overwrite it even if the key is different (force=false)
+- name: try creating a key pair with name of an already existing keypair
+  ec2_key:
+    name: my_existing_keypair
     key_material: 'ssh-rsa AAAAxyz...== me@example.com'
     force: false
-    state: present
 
-# Creates a new ec2 key pair named `example` if not present using provided key
-# material
-- name: example3 ec2 key
+- name: remove key pair by name
   ec2_key:
-    name: example3
-    key_material: "{{ item }}"
-  with_file: /path/to/public_key.id_rsa.pub
-
-# Removes ec2 key pair by name
-- name: remove example key
-  ec2_key:
-    name: example
+    name: my_keypair
     state: absent
 '''
+
+RETURN = '''
+changed:
+  description: whether a keypair was created/deleted
+  returned: always
+  type: bool
+  sample: true
+key:
+  description: details of the keypair (this is set to null when state is absent)
+  returned: always
+  type: complex
+  contains:
+    fingerprint:
+      description: fingerprint of the key
+      returned: when state is present
+      type: string
+      sample: 'b0:22:49:61:d9:44:9d:0c:7e:ac:8a:32:93:21:6c:e8:fb:59:62:43'
+    name:
+      description: name of the keypair
+      returned: when state is present
+      type: string
+      sample: my_keypair
+    private_key:
+      description: private key of a newly created keypair
+      returned: when a new keypair is created by AWS (key_material is not provided)
+      type: string
+      sample: '-----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKC...
+        -----END RSA PRIVATE KEY-----'
+'''
+
 import random
 import string
 import time

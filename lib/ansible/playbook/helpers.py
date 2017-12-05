@@ -21,7 +21,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 
 try:
@@ -43,7 +43,8 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     from ansible.playbook.task_include import TaskInclude
     from ansible.playbook.role_include import IncludeRole
 
-    assert isinstance(ds, (list, type(None))), '%s should be a list or None but is %s' % (ds, type(ds))
+    if not isinstance(ds, (list, type(None))):
+        raise AnsibleAssertionError('%s should be a list or None but is %s' % (ds, type(ds)))
 
     block_list = []
     if ds:
@@ -89,11 +90,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.handler_task_include import HandlerTaskInclude
     from ansible.template import Templar
 
-    assert isinstance(ds, list), 'The ds (%s) should be a list but was a %s' % (ds, type(ds))
+    if not isinstance(ds, list):
+        raise AnsibleAssertionError('The ds (%s) should be a list but was a %s' % (ds, type(ds)))
 
     task_list = []
     for task_ds in ds:
-        assert isinstance(task_ds, dict), 'The ds (%s) should be a dict but was a %s' % (ds, type(ds))
+        if not isinstance(task_ds, dict):
+            AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
             t = Block.load(
@@ -246,6 +249,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         variable_manager=variable_manager,
                     )
 
+                    # FIXME: remove once 'include' is removed
                     # pop tags out of the include args, if they were specified there, and assign
                     # them to the include. If the include already had tags specified, we raise an
                     # error so that users know not to specify them both ways
@@ -254,6 +258,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         tags = tags.split(',')
 
                     if len(tags) > 0:
+                        if 'include_tasks' in task_ds or 'import_tasks' in task_ds:
+                            raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
                                 "Include tasks should not specify tags in more than one way (both via args and directly on the task). "
@@ -345,7 +351,8 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
-    assert isinstance(ds, list), 'ds (%s) should be a list but was a %s' % (ds, type(ds))
+    if not isinstance(ds, list):
+        raise AnsibleAssertionError('ds (%s) should be a list but was a %s' % (ds, type(ds)))
 
     roles = []
     for role_def in ds:

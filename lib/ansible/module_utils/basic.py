@@ -61,7 +61,7 @@ import errno
 import datetime
 from collections import deque
 from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
-from itertools import repeat, chain
+from itertools import chain, repeat
 
 try:
     import syslog
@@ -111,6 +111,11 @@ except ImportError:
     except SyntaxError:
         print('\n{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
         sys.exit(1)
+    else:
+        sj_version = json.__version__.split('.')
+        if sj_version < ['1', '6']:
+            # Version 1.5 released 2007-01-18 does not have the encoding parameter which we need
+            print('\n{"msg": "Error: Ansible requires the stdlib json or simplejson >= 1.6.  Neither was found!", "failed": true}')
 
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
@@ -586,7 +591,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     ex:
       human_to_bytes('10M') <=> human_to_bytes(10, 'M')
     '''
-    m = re.search('^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
+    m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
     if m is None:
         raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
     try:
@@ -736,15 +741,32 @@ def get_flags_from_attributes(attributes):
     return ''.join(flags)
 
 
+def _json_encode_fallback(obj):
+    if isinstance(obj, Set):
+        return list(obj)
+    elif isinstance(obj, datetime.datetime):
+        return obj.isoformat()
+    raise TypeError("Cannot json serialize %s" % to_native(obj))
+
+
+def jsonify(data, **kwargs):
+    for encoding in ("utf-8", "latin-1"):
+        try:
+            return json.dumps(data, encoding=encoding, default=_json_encode_fallback, **kwargs)
+        # Old systems using old simplejson module does not support encoding keyword.
+        except TypeError:
+            try:
+                new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+            except UnicodeDecodeError:
+                continue
+            return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
+        except UnicodeDecodeError:
+            continue
+    raise UnicodeError('Invalid unicode encoding encountered')
+
+
 class AnsibleFallbackNotFound(Exception):
     pass
-
-
-class _SetEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Set):
-            return list(obj)
-        return super(_SetEncoder, self).default(obj)
 
 
 class AnsibleModule(object):
@@ -781,6 +803,7 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
         self._warnings = []
         self._deprecations = []
+        self._clean = {}
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
@@ -2179,19 +2202,10 @@ class AnsibleModule(object):
             self.fail_json(msg=to_native(e))
 
     def jsonify(self, data):
-        for encoding in ("utf-8", "latin-1"):
-            try:
-                return json.dumps(data, encoding=encoding, cls=_SetEncoder)
-            # Old systems using old simplejson module does not support encoding keyword.
-            except TypeError:
-                try:
-                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
-                except UnicodeDecodeError:
-                    continue
-                return json.dumps(new_data, cls=_SetEncoder)
-            except UnicodeDecodeError:
-                continue
-        self.fail_json(msg='Invalid unicode encoding encountered')
+        try:
+            return jsonify(data)
+        except UnicodeError as e:
+            self.fail_json(msg=to_text(e))
 
     def from_json(self, data):
         return json.loads(data)
@@ -2247,7 +2261,8 @@ class AnsibleModule(object):
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
 
-        assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
+        if 'msg' not in kwargs:
+            raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
 
         # add traceback if debug or high verbosity and it is missing
@@ -2538,6 +2553,41 @@ class AnsibleModule(object):
 
         return data
 
+    def _clean_args(self, args):
+
+        if not self._clean:
+            # create a printable version of the command for use in reporting later,
+            # which strips out things like passwords from the args list
+            to_clean_args = args
+            if PY2:
+                if isinstance(args, text_type):
+                    to_clean_args = to_bytes(args)
+            else:
+                if isinstance(args, binary_type):
+                    to_clean_args = to_text(args)
+            if isinstance(args, (text_type, binary_type)):
+                to_clean_args = shlex.split(to_clean_args)
+
+            clean_args = []
+            is_passwd = False
+            for arg in (to_native(a) for a in to_clean_args):
+                if is_passwd:
+                    is_passwd = False
+                    clean_args.append('********')
+                    continue
+                if PASSWD_ARG_RE.match(arg):
+                    sep_idx = arg.find('=')
+                    if sep_idx > -1:
+                        clean_args.append('%s=********' % arg[:sep_idx])
+                        continue
+                    else:
+                        is_passwd = True
+                arg = heuristic_log_sanitize(arg, self.no_log_values)
+                clean_args.append(arg)
+            self._clean = ' '.join(shlex_quote(arg) for arg in clean_args)
+
+        return self._clean
+
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
         '''
@@ -2583,6 +2633,8 @@ class AnsibleModule(object):
             according to the encoding and errors parameters.  If you want byte
             strings on python3, use encoding=None to turn decoding to text off.
         '''
+        # used by clean args later on
+        self._clean = None
 
         if not isinstance(args, (list, binary_type, text_type)):
             msg = "Argument 'args' to run_command must be list or string"
@@ -2661,37 +2713,6 @@ class AnsibleModule(object):
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
 
-        # create a printable version of the command for use
-        # in reporting later, which strips out things like
-        # passwords from the args list
-        to_clean_args = args
-        if PY2:
-            if isinstance(args, text_type):
-                to_clean_args = to_bytes(args)
-        else:
-            if isinstance(args, binary_type):
-                to_clean_args = to_text(args)
-        if isinstance(args, (text_type, binary_type)):
-            to_clean_args = shlex.split(to_clean_args)
-
-        clean_args = []
-        is_passwd = False
-        for arg in (to_native(a) for a in to_clean_args):
-            if is_passwd:
-                is_passwd = False
-                clean_args.append('********')
-                continue
-            if PASSWD_ARG_RE.match(arg):
-                sep_idx = arg.find('=')
-                if sep_idx > -1:
-                    clean_args.append('%s=********' % arg[:sep_idx])
-                    continue
-                else:
-                    is_passwd = True
-            arg = heuristic_log_sanitize(arg, self.no_log_values)
-            clean_args.append(arg)
-        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
-
         if data:
             st_in = subprocess.PIPE
 
@@ -2723,7 +2744,7 @@ class AnsibleModule(object):
 
         try:
             if self._debug:
-                self.log('Executing: ' + clean_args)
+                self.log('Executing: ' + self._clean_args(args))
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
@@ -2772,11 +2793,11 @@ class AnsibleModule(object):
 
             rc = cmd.returncode
         except (OSError, IOError) as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
-            self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
+            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
+            self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
         except Exception as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(traceback.format_exc())))
-            self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
+            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
+            self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
 
         # Restore env settings
         for key, val in old_env_vals.items():
@@ -2790,7 +2811,7 @@ class AnsibleModule(object):
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
-            self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
+            self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd
         os.chdir(prev_dir)
@@ -2798,6 +2819,7 @@ class AnsibleModule(object):
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),
                     to_native(stderr, encoding=encoding, errors=errors))
+
         return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):

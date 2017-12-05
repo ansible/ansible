@@ -155,8 +155,8 @@ changed:
 '''
 import re
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -211,8 +211,8 @@ def get_aaa_host_info(module, server_type, address):
 
     if body[0]:
         try:
-            pattern = ('(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
-                       '(key 7 "\w+")|( port \d+)')
+            pattern = (r'(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
+                       r'(key 7 "\w+")|( port \d+)')
             raw_match = re.findall(pattern, body[0])
             aaa_host_info = _match_dict(raw_match, {'acct-port': 'acct_port',
                                                     'auth-port': 'auth_port',

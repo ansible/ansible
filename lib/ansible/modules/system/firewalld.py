@@ -158,6 +158,7 @@ try:
         fw.getDefaultZone()
     except AttributeError:
         # Firewalld is not currently running, permanent-only operations
+        fw_offline = True
 
         # Import other required parts of the firewalld API
         #
@@ -167,7 +168,6 @@ try:
         from firewall.client import FirewallClientZoneSettings
         fw = Firewall_test()
         fw.start()
-        fw_offline = True
 
 except ImportError:
     import_failure = True
@@ -749,11 +749,6 @@ def main():
         supports_check_mode=True
     )
 
-    if import_failure:
-        module.fail_json(
-            msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required (3.0.9 or newer for offline operations)'
-        )
-
     if fw_offline:
         # Pre-run version checking
         if FW_VERSION < "0.3.9":
@@ -770,6 +765,11 @@ def main():
         except AttributeError:
             module.fail_json(msg="firewalld connection can't be established,\
                     installed version (%s) likely too old. Requires firewalld >= 0.2.11" % FW_VERSION)
+
+    if import_failure:
+        module.fail_json(
+            msg='firewalld and its python module are required for this module, version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
+        )
 
     permanent = module.params['permanent']
     desired_state = module.params['state']

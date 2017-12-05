@@ -16,7 +16,9 @@ DOCUMENTATION = """
 ---
 module: iosxr_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnaguha)"
+author:
+  - "Trishna Guha (@trishnaguha)"
+  - "Sebastiaan van Doesselaar (@sebasdoes)"
 short_description: Manage the aggregate of local users on Cisco IOS XR device
 description:
   - This module provides declarative management of the local usernames
@@ -60,6 +62,14 @@ options:
         device running configuration. The argument accepts a string value
         defining the group name. This argument does not check if the group
         has been configured on the device, alias C(role).
+  groups:
+    version_added: "2.5"
+    description:
+      - Configures the groups for the username in the device running
+        configuration. The argument accepts a list of group names.
+        This argument does not check if the group has been configured
+        on the device. It is similar to the aggregrate command for
+        usernames, but lets you configure multiple groups for the user(s).
   purge:
     description:
       - Instructs the module to consider the
@@ -77,6 +87,29 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
+  public_key:
+    version_added: "2.5"
+    description:
+      - Configures the contents of the public keyfile to upload to the IOS-XR node.
+        This enables users to login using the accompanying private key. IOS-XR
+        only accepts base64 decoded files, so this will be decoded and uploaded
+        to the node. Do note that this requires an OpenSSL public key file,
+        PuTTy generated files will not work! Mutually exclusive with
+        public_key_contents. If used with multiple users in aggregates, then the
+        same key file is used for all users.
+  public_key_contents:
+    version_added: "2.5"
+    description:
+      - Configures the contents of the public keyfile to upload to the IOS-XR node.
+        This enables users to login using the accompanying private key. IOS-XR
+        only accepts base64 decoded files, so this will be decoded and uploaded
+        to the node. Do note that this requires an OpenSSL public key file,
+        PuTTy generated files will not work! Mutually exclusive with
+        public_key.If used with multiple users in aggregates, then the
+        same key file is used for all users.
+requirements:
+  - base64 when using I(public_key_contents) or I(public_key)
+  - paramiko when using I(public_key_contents) or I(public_key)
 """
 
 EXAMPLES = """
@@ -95,12 +128,26 @@ EXAMPLES = """
       - name: netend
     group: sysadmin
     state: present
+- name: set multiple users to multiple groups
+  iosxr_user:
+    aggregate:
+      - name: netop
+      - name: netend
+    groups:
+      - sysadmin
+      - root-system
+    state: present
 - name: Change Password for User netop
   iosxr_user:
     name: netop
     configured_password: "{{ new_password }}"
     update_password: always
     state: present
+- name: Add private key authentication for user netop
+  iosxr_user:
+    name: netop
+    state: present
+    public_key_contents: "{{ lookup('file', '/home/netop/.ssh/id_rsa.pub' }}"
 """
 
 RETURN = """
@@ -117,9 +164,21 @@ from functools import partial
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.iosxr import get_config, load_config
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+
+try:
+    from base64 import b64decode
+    HAS_B64 = True
+except ImportError:
+    HAS_B64 = False
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 
 def search_obj_in_list(name, lst):
@@ -150,6 +209,9 @@ def map_obj_to_commands(updates, module):
                 commands.append(user_cmd + ' secret ' + w['configured_password'])
             if w['group']:
                 commands.append(user_cmd + ' group ' + w['group'])
+            elif w['groups']:
+                for group in w['groups']:
+                    commands.append(user_cmd + ' group ' + group)
 
         elif state == 'present' and obj_in_have:
             user_cmd = 'username ' + name
@@ -158,6 +220,9 @@ def map_obj_to_commands(updates, module):
                 commands.append(user_cmd + ' secret ' + w['configured_password'])
             if w['group'] and w['group'] != obj_in_have['group']:
                 commands.append(user_cmd + ' group ' + w['group'])
+            elif w['groups']:
+                for group in w['groups']:
+                    commands.append(user_cmd + ' group ' + group)
 
     return commands
 
@@ -215,6 +280,7 @@ def get_param_value(key, item, module):
 
 def map_params_to_obj(module):
     users = module.params['aggregate']
+
     if not users:
         if not module.params['name'] and module.params['purge']:
             return list()
@@ -238,10 +304,98 @@ def map_params_to_obj(module):
         get_value = partial(get_param_value, item=item, module=module)
         item['configured_password'] = get_value('configured_password')
         item['group'] = get_value('group')
+        item['groups'] = get_value('groups')
         item['state'] = get_value('state')
         objects.append(item)
 
     return objects
+
+
+def convert_key_to_base64(module):
+    """ IOS-XR only accepts base64 decoded files, this converts the public key to a temp file.
+    """
+    if module.params['aggregate']:
+        name = 'aggregate'
+    else:
+        name = module.params['name']
+
+    if module.params['public_key_contents']:
+        key = module.params['public_key_contents']
+    elif module.params['public_key']:
+        readfile = open(module.params['public_key'], 'r')
+        key = readfile.read()
+    splitfile = key.split()[1]
+
+    base64key = b64decode(splitfile)
+    base64file = open('/tmp/publickey_%s.b64' % (name), 'w')
+    base64file.write(base64key)
+    base64file.close()
+
+    return '/tmp/publickey_%s.b64' % (name)
+
+
+def copy_key_to_node(module, base64keyfile):
+    """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
+    """
+    if (module.params['host'] is None or module.params['provider']['host'] is None):
+        return False
+
+    if (module.params['username'] is None or module.params['provider']['username'] is None):
+        return False
+
+    if module.params['aggregate']:
+        name = 'aggregate'
+    else:
+        name = module.params['name']
+
+    src = base64keyfile
+    dst = '/harddisk:/publickey_%s.b64' % (name)
+
+    user = module.params['username'] or module.params['provider']['username']
+    node = module.params['host'] or module.params['provider']['host']
+    password = module.params['password'] or module.params['provider']['password']
+    ssh_keyfile = module.params['ssh_keyfile'] or module.params['provider']['ssh_keyfile']
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    if not ssh_keyfile:
+        ssh.connect(node, username=user, password=password)
+    else:
+        ssh.connect(node, username=user, allow_agent=True)
+    sftp = ssh.open_sftp()
+    sftp.put(src, dst)
+    sftp.close()
+    ssh.close()
+
+
+def addremovekey(module, command):
+    """ Add or remove key based on command
+    """
+    if (module.params['host'] is None or module.params['provider']['host'] is None):
+        return False
+
+    if (module.params['username'] is None or module.params['provider']['username'] is None):
+        return False
+
+    user = module.params['username'] or module.params['provider']['username']
+    node = module.params['host'] or module.params['provider']['host']
+    password = module.params['password'] or module.params['provider']['password']
+    ssh_keyfile = module.params['ssh_keyfile'] or module.params['provider']['ssh_keyfile']
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    if not ssh_keyfile:
+        ssh.connect(node, username=user, password=password)
+    else:
+        ssh.connect(node, username=user, allow_agent=True)
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('%s \r' % (command))
+    readmsg = ssh_stdout.read(100)  # We need to read a bit to actually apply for some reason
+    if ('already' in readmsg) or ('removed' in readmsg) or ('really' in readmsg):
+        ssh_stdin.write('yes\r')
+    ssh_stdout.read(1)  # We need to read a bit to actually apply for some reason
+    ssh.close()
+
+    return readmsg
 
 
 def main():
@@ -253,7 +407,12 @@ def main():
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
+        public_key=dict(),
+        public_key_contents=dict(),
+
         group=dict(aliases=['role']),
+        groups=dict(type='list', elements='dict'),
+
         state=dict(default='present', choices=['present', 'absent'])
     )
     aggregate_spec = deepcopy(element_spec)
@@ -269,11 +428,23 @@ def main():
 
     argument_spec.update(element_spec)
     argument_spec.update(iosxr_argument_spec)
-    mutually_exclusive = [('name', 'aggregate')]
+    mutually_exclusive = [('name', 'aggregate'), ('public_key', 'public_key_contents'), ('group', 'groups')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
+
+    if (module.params['public_key_contents'] or module.params['public_key']):
+        if not HAS_B64:
+            module.fail_json(
+                msg='library base64 is required but does not appear to be '
+                    'installed. It can be installed using `pip install base64`'
+            )
+        if not HAS_PARAMIKO:
+            module.fail_json(
+                msg='library paramiko is required but does not appear to be '
+                    'installed. It can be installed using `pip install paramiko`'
+            )
 
     warnings = list()
     if module.params['password'] and not module.params['configured_password']:
@@ -308,6 +479,44 @@ def main():
         if not module.check_mode:
             load_config(module, commands, result['warnings'], commit=True)
         result['changed'] = True
+
+    if module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']):
+        if not module.check_mode:
+            key = convert_key_to_base64(module)
+            copykeys = copy_key_to_node(module, key)
+            if copykeys is False:
+                warnings.append('Please set up your provider before running this playbook')
+
+            if module.params['aggregate']:
+                for user in module.params['aggregate']:
+                    cmdtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_aggregate.b64" % (user)
+                    addremove = addremovekey(module, cmdtodo)
+                    if addremove is False:
+                        warnings.append('Please set up your provider before running this playbook')
+            else:
+                cmdtodo = "admin crypto key import authentication rsa username %s harddisk:/publickey_%s.b64" % (module.params['name'], module.params['name'])
+                addremove = addremovekey(module, cmdtodo)
+                if addremove is False:
+                    warnings.append('Please set up your provider before running this playbook')
+    elif module.params['state'] == 'absent':
+        if not module.check_mode:
+            if module.params['aggregate']:
+                for user in module.params['aggregate']:
+                    cmdtodo = "admin crypto key zeroize authentication rsa username %s" % (user)
+                    addremove = addremovekey(module, cmdtodo)
+                    if addremove is False:
+                        warnings.append('Please set up your provider before running this playbook')
+            else:
+                cmdtodo = "admin crypto key zeroize authentication rsa username %s" % (module.params['name'])
+                addremove = addremovekey(module, cmdtodo)
+                if addremove is False:
+                    warnings.append('Please set up your provider before running this playbook')
+    elif module.params['purge'] is True:
+        if not module.check_mode:
+            cmdtodo = "admin crypto key zeroize authentication rsa all"
+            addremove = addremovekey(module, cmdtodo)
+            if addremove is False:
+                warnings.append('Please set up your provider before running this playbook')
 
     module.exit_json(**result)
 

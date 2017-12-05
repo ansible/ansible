@@ -183,9 +183,9 @@ import re
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.eos import run_commands, load_config
+from ansible.module_utils.network.eos.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 def check_transport(module):
     transport = module.params['transport']
@@ -208,7 +208,7 @@ def validate_local_http_port(value, module):
 
 def validate_vrf(value, module):
     out = run_commands(module, ['show vrf'])
-    configured_vrfs = re.findall('^\s+(\w+)(?=\s)', out[0], re.M)
+    configured_vrfs = re.findall(r'^\s+(\w+)(?=\s)', out[0], re.M)
     configured_vrfs.append('default')
     if value not in configured_vrfs:
         module.fail_json(msg='vrf `%s` is not configured on the system' % value)
@@ -260,11 +260,17 @@ def map_obj_to_commands(updates, module, warnings):
         else:
             add('protocol unix-socket')
 
+    if needs_update('state') and not needs_update('vrf'):
+        if want['state'] == 'stopped':
+            add('shutdown')
+        elif want['state'] == 'started':
+            add('no shutdown')
+
 
     if needs_update('vrf'):
         add('vrf %s' % want['vrf'])
-
-    if needs_update('state'):
+        # switching operational vrfs here
+        # need to add the desired state as well
         if want['state'] == 'stopped':
             add('shutdown')
         elif want['state'] == 'started':

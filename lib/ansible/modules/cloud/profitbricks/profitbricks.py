@@ -215,7 +215,7 @@ LOCATIONS = ['us/las',
              'de/fkb']
 
 uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):

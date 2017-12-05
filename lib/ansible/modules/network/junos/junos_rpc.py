@@ -39,6 +39,11 @@ options:
         accepts a set of key=value arguments.
     required: false
     default: null
+  attrs:
+    description:
+      - The C(attrs) arguments defines a list of attributes and their values
+        to set for the RPC call. This accepts a dictionary of key-values.
+    version_added: "2.5"
   output:
     description:
       - The C(output) argument specifies the desired output of the
@@ -66,6 +71,13 @@ EXAMPLES = """
 - name: get system information
   junos_rpc:
     rpc: get-system-information
+
+- name: load configuration
+  junos_rpc:
+    rpc: load-configuration
+    attrs:
+      action: override
+      url: /tmp/config.conf
 """
 
 RETURN = """
@@ -83,8 +95,8 @@ output_lines:
   type: list
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import junos_argument_spec
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
@@ -101,6 +113,7 @@ def main():
     argument_spec = dict(
         rpc=dict(required=True),
         args=dict(type='dict'),
+        attrs=dict(type='dict'),
         output=dict(default='xml', choices=['xml', 'json', 'text']),
     )
 
@@ -110,8 +123,6 @@ def main():
                            supports_check_mode=False)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False, 'warnings': warnings}
 
     rpc = str(module.params['rpc']).replace('_', '-')
@@ -120,8 +131,12 @@ def main():
         module.fail_json(msg='invalid rpc for running in check_mode')
 
     args = module.params['args'] or {}
+    attrs = module.params['attrs'] or {}
 
     xattrs = {'format': module.params['output']}
+
+    for key, value in iteritems(attrs):
+        xattrs.update({key: value})
 
     element = Element(module.params['rpc'], xattrs)
 
@@ -137,7 +152,7 @@ def main():
             if value is not True:
                 child.text = value
 
-    reply = send_request(module, element)
+    reply = exec_rpc(module, tostring(element), ignore_warning=False)
 
     result['xml'] = str(tostring(reply))
 

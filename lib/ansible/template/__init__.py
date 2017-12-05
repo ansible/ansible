@@ -27,6 +27,7 @@ import pwd
 import re
 import time
 
+from functools import wraps
 from io import StringIO
 from numbers import Number
 
@@ -42,7 +43,7 @@ from jinja2.runtime import Context, StrictUndefined
 from jinja2.utils import concat as j2_concat
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
@@ -155,6 +156,26 @@ def _count_newlines_from_end(in_str):
     except IndexError:
         # Uncommon cases: zero length string and string containing only newlines
         return i
+
+
+def tests_as_filters_warning(name, func):
+    '''
+    Closure to enable displaying a deprecation warning when tests are used as a filter
+
+    This closure is only used when registering ansible provided tests as filters
+
+    This function should be removed in 2.9 along with registering ansible provided tests as filters
+    in Templar._get_filters
+    '''
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        display.deprecated(
+            'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
+            '`result is %(name)s`' % dict(name=name),
+            version='2.9'
+        )
+        return func(*args, **kwargs)
+    return wrapper
 
 
 class AnsibleContext(Context):
@@ -283,7 +304,10 @@ class Templar:
         self._filters = dict()
         for fp in plugins:
             self._filters.update(fp.filters())
-        self._filters.update(self._get_tests())
+
+        # TODO: Remove registering tests as filters in 2.9
+        for name, func in self._get_tests().items():
+            self._filters[name] = tests_as_filters_warning(name, func)
 
         return self._filters.copy()
 
@@ -387,7 +411,8 @@ class Templar:
         are being changed.
         '''
 
-        assert isinstance(variables, dict), "the type of 'variables' should be a dict but was a %s" % (type(variables))
+        if not isinstance(variables, dict):
+            raise AnsibleAssertionError("the type of 'variables' should be a dict but was a %s" % (type(variables)))
         self._available_variables = variables
         self._cached_result = {}
 

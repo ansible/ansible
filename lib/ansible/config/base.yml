@@ -1239,7 +1239,7 @@ HOST_KEY_CHECKING:
   type: boolean
 INVENTORY_ENABLED:
   name: Active Inventory plugins
-  default: ['host_list', 'script', 'yaml', 'ini']
+  default: ['host_list', 'script', 'yaml', 'ini', 'auto']
   description: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
@@ -1293,26 +1293,23 @@ MERGE_MULTIPLE_CLI_TAGS:
   version_added: "2.3"
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, mlnxos]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
   - {key: network_group_modules, section: defaults}
   type: list
   yaml: {key: defaults.network_group_modules}
-#ONLY_NAMESPACE_FACTS:
-# Deffered to 2.5
-# FIXME: reenable when we can remove ansible_ prefix from namespaced facts
-#  default: False
-#  description:
-#    - Facts normally get injected as top level variables, this setting prevents that.
-#    - Facts are still available in the `ansible_facts` variable w/o the `ansible_` prefix.
-#  env: [{name: ANSIBLE_RESTRICT_FACTS}]
-#  ini:
-#  - {key: restrict_facts_namespace, section: defaults}
-#  type: boolean
-#  yaml: {key: defaults.restrict_facts_namespace}
-#  version_added: "2.4"
+INJECT_FACTS_AS_VARS:
+  default: True
+  description:
+    - Facts are available inside the `ansible_facts` variable, this setting also pushes them as their own vars in the main namespace.
+    - Unlike inside the `ansible_facts` dictionary, these will have an `ansible_` prefix.
+  env: [{name: ANSIBLE_INJECT_FACT_VARS}]
+  ini:
+  - {key: inject_facts_as_vars, section: defaults}
+  type: boolean
+  version_added: "2.5"
 PARAMIKO_HOST_KEY_AUTO_ADD:
   # TODO: move to plugin
   default: False
@@ -1322,35 +1319,12 @@ PARAMIKO_HOST_KEY_AUTO_ADD:
   - {key: host_key_auto_add, section: paramiko_connection}
   type: boolean
 PARAMIKO_LOOK_FOR_KEYS:
-  # TODO: move to plugin
+  name: look for keys
   default: True
   description: 'TODO: write it'
   env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
   ini:
   - {key: look_for_keys, section: paramiko_connection}
-  type: boolean
-PARAMIKO_PROXY_COMMAND:
-  # TODO: move to plugin
-  default:
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
-  ini:
-  - {key: proxy_command, section: paramiko_connection}
-PARAMIKO_PTY:
-  # TODO: move to plugin
-  default: True
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_PTY}]
-  ini:
-  - {key: pty, section: paramiko_connection}
-  type: boolean
-PARAMIKO_RECORD_HOST_KEYS:
-  # TODO: move to plugin
-  default: True
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_RECORD_HOST_KEYS}]
-  ini:
-  - {key: record_host_keys, section: paramiko_connection}
   type: boolean
 PERSISTENT_CONTROL_PATH_DIR:
   name: Persistence socket path

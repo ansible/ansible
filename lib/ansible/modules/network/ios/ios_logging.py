@@ -38,7 +38,7 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', console', 'monitor', 'buffered']
+    choices: ['on', 'host', 'console', 'monitor', 'buffered']
   name:
     description:
       - If value of C(dest) is I(file) it indicates file-name,
@@ -48,6 +48,7 @@ options:
     description:
       - Size of buffer. The acceptable value is in range from 4096 to
         4294967295 bytes.
+    default: 4096
   facility:
     description:
       - Set logging facility.
@@ -121,14 +122,14 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ios import get_config, load_config
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def validate_size(value, module):
     if value:
-        if not int(4096) <= value <= int(4294967295):
+        if not int(4096) <= int(value) <= int(4294967295):
             module.fail_json(msg='size must be between 4096 and 4294967295')
         else:
             return value
@@ -148,32 +149,32 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent' and w in have:
             if dest == 'host':
-                commands.append('no logging host {}'.format(name))
+                commands.append('no logging host {0}'.format(name))
             elif dest:
-                commands.append('no logging {}'.format(dest))
+                commands.append('no logging {0}'.format(dest))
             else:
                 module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
-                commands.append('no logging facility {}'.format(facility))
+                commands.append('no logging facility {0}'.format(facility))
 
         if state == 'present' and w not in have:
             if facility:
-                commands.append('logging facility {}'.format(facility))
+                commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
-                commands.append('logging host {}'.format(name))
+                commands.append('logging host {0}'.format(name))
 
             elif dest == 'on':
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {}'.format(size))
+                commands.append('logging buffered {0}'.format(size))
 
             else:
-                dest_cmd = 'logging {}'.format(dest)
+                dest_cmd = 'logging {0}'.format(dest)
                 if level:
-                    dest_cmd += ' {}'.format(level)
+                    dest_cmd += ' {0}'.format(level)
 
                 commands.append(dest_cmd)
     return commands
@@ -228,7 +229,7 @@ def parse_level(line, dest):
         level = 'debugging'
 
     else:
-        match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
+        match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
         if match:
             if match.group(1) in level_group:
                 level = match.group(1)
@@ -244,7 +245,7 @@ def map_config_to_obj(module):
     obj = []
     dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
 
-    data = get_config(module, flags=['| section logging'])
+    data = get_config(module, flags=['| include logging'])
 
     for line in data.split('\n'):
         match = re.search(r'logging (\S+)', line, re.M)

@@ -128,8 +128,8 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-from ansible.module_utils.dellos10 import run_commands
-from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
+from ansible.module_utils.network.dellos10.dellos10 import run_commands
+from ansible.module_utils.network.dellos10.dellos10 import dellos10_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 

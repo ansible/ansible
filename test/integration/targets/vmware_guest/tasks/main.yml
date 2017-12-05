@@ -1,3 +1,7 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 - name: make sure pyvmomi is installed
   pip:
     name: pyvmomi
@@ -14,3 +18,6 @@
 - include: clone_d1_c1_f0.yml
 - include: create_d1_c1_f0.yml
 - include: cdrom_d1_c1_f0.yml
+- include: create_rp_d1_c1_f0.yml
+- include: create_guest_invalid_d1_c1_f0.yml
+- include: mac_address_d1_c1_f0.yml

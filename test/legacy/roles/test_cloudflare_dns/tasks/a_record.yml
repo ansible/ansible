@@ -15,8 +15,8 @@
 - name: "Validate: A record creation"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '127.0.0.1'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'A'
@@ -37,8 +37,8 @@
 - name: "Validate: A record idempotency"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: A record update"
   cloudflare_dns:
@@ -54,8 +54,8 @@
 - name: "Validate: A record update"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.ttl == 300
 
 - name: "Test: A record duplicate (create new record)"
@@ -72,8 +72,8 @@
 - name: "Validate: A record duplicate (create new record)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '127.0.1.1'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'A'
@@ -94,8 +94,8 @@
 - name: "Validate: A record duplicate (old record present)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
       - cloudflare_dns.result.record.content == '127.0.0.1'
       - cloudflare_dns.result.record.ttl == 300
       - cloudflare_dns.result.record.type == 'A'
@@ -117,8 +117,8 @@
 - name: "Validate: A record duplicate (make new record solo)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '127.0.1.1'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'A'
@@ -140,8 +140,8 @@
 - name: "Validate: A record duplicate (old record absent)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: A record deletion"
   cloudflare_dns:
@@ -158,8 +158,8 @@
 - name: "Validate: A record deletion"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
 
 - name: "Test: A record deletion succeeded"
   cloudflare_dns:
@@ -176,5 +176,5 @@
 - name: "Validate: A record deletion succeeded"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

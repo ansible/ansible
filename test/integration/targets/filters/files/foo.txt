@@ -20,7 +20,7 @@ Dumping the same structure to YAML, but don't pretty print
 
 
 From a recorded task, the changed, failed, success, and skipped
-filters are shortcuts to ask if those tasks produced changes, failed,
+tests are shortcuts to ask if those tasks produced changes, failed,
 succeeded, or skipped (as one might guess).
 
 Changed = True

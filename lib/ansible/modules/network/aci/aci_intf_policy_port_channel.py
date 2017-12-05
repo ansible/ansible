@@ -119,7 +119,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -178,7 +178,15 @@ def main():
         ctrl = ",".join(ctrl)
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='port_channel')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='lacpLagPol',
+            aci_rn='infra/lacplagp-{}'.format(port_channel),
+            filter_target='(lacpLagPol.name, "{}")'.format(port_channel),
+            module_object=port_channel,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

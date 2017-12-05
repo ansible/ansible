@@ -120,7 +120,7 @@ changed:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import check_args, load_config, nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import check_args, load_config, nxos_argument_spec, run_commands
 
 
 def execute_show_command(command, module, command_type='cli_show'):
@@ -179,9 +179,9 @@ def get_ntp_peer(module):
             ntp = response
         if ntp:
             ntp_regex = (
-                ".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
-                "\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
-                "(key\s(?P<key_id>\d+))?.*"
+                r".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
+                r"\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
+                r"(key\s(?P<key_id>\d+))?.*"
             )
 
             split_ntp = ntp.splitlines()

@@ -4,7 +4,7 @@
 # Ansible still belong to the author of the module, and may assign their own
 # license to the complete work.
 #
-# Copyright (C) 2018 Lenovo, Inc.
+# Copyright (C) 2017 Lenovo, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,10 @@ import copy
 
 from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.enos import enos_provider_spec
-from ansible.module_utils.network_common import load_provider
+from ansible.module_utils.network.enos.enos import enos_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
+from ansible.module_utils.connection import Connection
+from ansible.module_utils._text import to_text
 
 
 try:
@@ -54,44 +56,45 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
-        if self._play_context.connection != 'local':
-            return dict(
-                failed=True,
-                msg='invalid connection specified, expected connection=local, '
-                    'got %s' % self._play_context.connection
-            )
-        provider = load_provider(enos_provider_spec, self._task.args)
+        socket_path = None
+        if self._play_context.connection == 'local':
+            provider = load_provider(enos_provider_spec, self._task.args)
+            pc = copy.deepcopy(self._play_context)
+            pc.connection = 'network_cli'
+            pc.network_os = 'enos'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
+            pc.port = provider['port'] or self._play_context.port or 22
+            pc.remote_user = provider['username'] or self._play_context.connection_user
+            pc.password = provider['password'] or self._play_context.password
+            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+            pc.become = provider['authorize'] or True
+            pc.become_pass = provider['auth_pass']
+            pc.become_method = 'enable'
 
-        pc = copy.deepcopy(self._play_context)
-        pc.connection = 'network_cli'
-        pc.network_os = 'enos'
-        pc.remote_addr = provider['host'] or self._play_context.remote_addr
-        display.vvvv('remote_addr: %s' % pc.remote_addr)
-        pc.port = provider['port'] or self._play_context.port or 22
-        pc.remote_user = provider['username'] or self._play_context.connection_user
-        pc.password = provider['password'] or self._play_context.password
-        pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            socket_path = connection.run()
+            display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+            if not socket_path:
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
-        pc.become = provider['authorize'] or True
-        pc.become_pass = provider['auth_pass']
+            task_vars['ansible_socket'] = socket_path
 
-        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
-        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+        # make sure we are in the right cli context which should be
+        # enable mode and not config module or exec mode
+        if socket_path is None:
+            socket_path = self._connection.socket_path
 
-        socket_path = connection.run()
-
-        display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
-        if not socket_path:
-            return {'failed': True,
-                    'msg': 'unable to open shell. Please see: ' +
-                           'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
-
-        task_vars['ansible_socket'] = socket_path
-
-        if self._play_context.become_method == 'enable':
-            self._play_context.become = False
-            self._play_context.become_method = None
+        conn = Connection(socket_path)
+        out = conn.get_prompt()
+        if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+            display.vvvv('In Config mode, sending exit to device', self._play_context.remote_addr)
+            conn.send_command('exit')
+        else:
+            conn.send_command('enable')
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result

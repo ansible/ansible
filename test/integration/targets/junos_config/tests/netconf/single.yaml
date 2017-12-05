@@ -57,8 +57,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *file test1")
-      - result.diff.prepared | search("\+ *any any")
+      - result.diff.prepared is search("\+ *file test1")
+      - result.diff.prepared is search("\+ *any any")
 
 - name: Rollback junos config
   junos_config:
@@ -69,8 +69,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *file test1")
-      - result.diff.prepared | search("\+ *any any")
+      - result.diff.prepared is search("\+ *file test1")
+      - result.diff.prepared is search("\+ *any any")
 
 - name: teardown
   junos_config:

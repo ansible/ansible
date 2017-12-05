@@ -473,6 +473,9 @@ class VirtualServers(object):
     def get_list(self):
         return self.virtual_servers
 
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.virtual_servers]
+
     def get_actual_hardware_acceleration(self):
         return self.api.LocalLB.VirtualServer.get_actual_hardware_acceleration(self.virtual_servers)
 
@@ -623,6 +626,9 @@ class Pools(object):
     def get_list(self):
         return self.pool_names
 
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.pool_names]
+
     def get_action_on_service_down(self):
         return self.api.LocalLB.Pool.get_action_on_service_down(self.pool_names)
 
@@ -654,7 +660,32 @@ class Pools(object):
         return self.api.LocalLB.Pool.get_ignore_persisted_weight_state(self.pool_names)
 
     def get_lb_method(self):
-        return self.api.LocalLB.Pool.get_lb_method(self.pool_names)
+        result = []
+        lb_choice = dict(
+            LB_METHOD_DYNAMIC_RATIO_MEMBER='dynamic-ratio-member',
+            LB_METHOD_DYNAMIC_RATIO='dynamic-ratio-node',
+            LB_METHOD_FASTEST_APP_RESPONSE='fastest-app-response',
+            LB_METHOD_FASTEST_NODE_ADDRESS='fastest-node',
+            LB_METHOD_LEAST_CONNECTION_MEMBER='least-connections-member',
+            LB_METHOD_LEAST_CONNECTION_NODE_ADDRESS='least-connections-node',
+            LB_METHOD_LEAST_SESSIONS='least-sessions',
+            LB_METHOD_OBSERVED_MEMBER='observed-member',
+            LB_METHOD_OBSERVED_NODE_ADDRESS='observed-node',
+            LB_METHOD_PREDICTIVE_MEMBER='predictive-member',
+            LB_METHOD_PREDICTIVE_NODE_ADDRESS='predictive-node',
+            LB_METHOD_RATIO_LEAST_CONNECTION_MEMBER='ratio-least-connections-member',
+            LB_METHOD_RATIO_LEAST_CONNECTION_NODE_ADDRESS='ratio-least-connections-node',
+            LB_METHOD_RATIO_MEMBER='ratio-member',
+            LB_METHOD_RATIO_NODE_ADDRESS='ratio-node',
+            LB_METHOD_RATIO_SESSION='ratio-session',
+            LB_METHOD_ROUND_ROBIN='round-robin',
+            LB_METHOD_WEIGHTED_LEAST_CONNECTION_MEMBER='weighted-least-connections-member',
+            LB_METHOD_WEIGHTED_LEAST_CONNECTION_NODE_ADDRESS='weighted-least-connections-node'
+        )
+        methods = self.api.LocalLB.Pool.get_lb_method(self.pool_names)
+        for method in methods:
+            result.append(lb_choice.get(method, method))
+        return result
 
     def get_member(self):
         return self.api.LocalLB.Pool.get_member_v2(self.pool_names)
@@ -1466,7 +1497,8 @@ def generate_vs_dict(f5, regex):
               'source_address_translation_snat_pool',
               'source_address_translation_type', 'source_port_behavior',
               'staged_firewall_policy', 'translate_address_state',
-              'translate_port_state', 'type', 'vlan', 'wildmask']
+              'translate_port_state', 'type', 'vlan', 'wildmask',
+              'name']
     return generate_dict(virtual_servers, fields)
 
 
@@ -1483,7 +1515,7 @@ def generate_pool_dict(f5, regex):
               'profile', 'queue_depth_limit',
               'queue_on_connection_limit_state', 'queue_time_limit',
               'reselect_tries', 'server_ip_tos', 'server_link_qos',
-              'simple_timeout', 'slow_ramp_time']
+              'simple_timeout', 'slow_ramp_time', 'name']
     return generate_dict(pools, fields)
 
 
@@ -1711,7 +1743,10 @@ def main():
                saved_recursive_query_state != "STATE_ENABLED":
                 f5.set_recursive_query_state(saved_recursive_query_state)
 
-        result = {'ansible_facts': facts}
+        result = dict(
+            ansible_facts=facts,
+        )
+        result.update(**facts)
 
     except Exception as e:
         module.fail_json(msg="received exception: %s\ntraceback: %s" % (e, traceback.format_exc()))

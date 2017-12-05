@@ -1,0 +1,330 @@
+# slightly non-destructive tests that will run if WMF 5.0 is installed
+---
+- name: start with feature absent
+  win_feature:
+    name: '{{test_win_dsc_feature_name}}'
+    state: absent
+
+- name: fail with incorrect DSC resource name
+  win_dsc:
+    resource_name: FakeResource
+    Name: fake
+  register: fail_invalid_resource
+  failed_when: fail_invalid_resource.msg != "Resource FakeResource not found"
+
+- name: fail by not setting mandatory option
+  win_dsc:
+    resource_name: WindowsFeature
+    Ensure: Present
+  register: fail_missing_mandatory
+  failed_when: fail_missing_mandatory.msg != "Could not find mandatory property Name. Add this property and try again."
+
+- name: fail to add a non-existant feature
+  win_dsc:
+    resource_name: WindowsFeature
+    Name: InvalidFeature
+    Ensure: Present
+  register: fail_invalid_feature
+  failed_when: '"The requested feature InvalidFeature is not found on the target machine" not in fail_invalid_feature.msg'
+
+- name: add Windows feature (check mode)
+  win_dsc:
+    resource_name: WindowsFeature
+    Name: '{{test_win_dsc_feature_name}}'
+    Ensure: Present
+  register: win_dsc_add_feature_check
+  check_mode: yes
+
+- name: get result of add Windows feature (check mode)
+  win_shell: (Get-WindowsFeature -Name {{test_win_dsc_feature_name}}).Installed
+  register: win_dsc_add_feature_result_check
+
+- name: assert result of add Windows feature (check mode)
+  assert:
+    that:
+    - win_dsc_add_feature_check is changed
+    - win_dsc_add_feature_result_check.stdout == "False\r\n"
+
+- name: add Windows feature
+  win_dsc:
+    resource_name: WindowsFeature
+    Name: '{{test_win_dsc_feature_name}}'
+    Ensure: Present
+  register: win_dsc_add_feature
+
+- name: get result of add Windows feature
+  win_shell: (Get-WindowsFeature -Name {{test_win_dsc_feature_name}}).Installed
+  register: win_dsc_add_feature_result
+
+- name: assert result of add Windows feature
+  assert:
+    that:
+    - win_dsc_add_feature is changed
+    - win_dsc_add_feature_result.stdout == "True\r\n"
+
+- name: add Windows feature (idempotent)
+  win_dsc:
+    resource_name: WindowsFeature
+    Name: '{{test_win_dsc_feature_name}}'
+    Ensure: Present
+  register: win_dsc_add_feature_again
+
+- name: assert result of add Windows feature (idempotent)
+  assert:
+    that:
+    - win_dsc_add_feature_again is not changed
+
+- name: remove Windows feature (check mode)
+  win_dsc:
+    resource_name: WindowsFeature
+    Name: '{{test_win_dsc_feature_name}}'
+    Ensure: Absent
+  register: win_dsc_remove_feature_check
+  check_mode: yes
+
+- name: get result of remove Windows feature (check mode)
+  win_shell: (Get-WindowsFeature -Name {{test_win_dsc_feature_name}}).Installed
+  register: win_dsc_remove_feature_result_check
+
+- name: assert result of remove Windows feature (check mode)
+  assert:
+    that:
+    - win_dsc_remove_feature_check is changed
+    - win_dsc_remove_feature_result_check.stdout == "True\r\n"
+
+- name: remove Windows feature
+  win_dsc:
+    resource_name: WindowsFeature
+    Name: '{{test_win_dsc_feature_name}}'
+    Ensure: Absent
+  register: win_dsc_remove_feature
+
+- name: get result of remove Windows feature
+  win_shell: (Get-WindowsFeature -Name {{test_win_dsc_feature_name}}).Installed
+  register: win_dsc_remove_feature_result
+
+- name: assert result of remove Windows feature
+  assert:
+    that:
+    - win_dsc_remove_feature is changed
+    - win_dsc_remove_feature_result.stdout == "False\r\n"
+
+- name: remove Windows feature (idempotent)
+  win_dsc:
+    resource_name: WindowsFeature
+    Name: '{{test_win_dsc_feature_name}}'
+    Ensure: Absent
+  register: win_dsc_remove_feature_again
+
+- name: assert result of remove Windows feature (idempotent)
+  assert:
+    that:
+    - win_dsc_remove_feature_again is not changed
+
+- name: ensure test folder doesn't exist before test
+  win_file:
+    path: '{{test_win_dsc_folder}}'
+    state: absent
+
+- name: create test file (check mode)
+  win_dsc:
+    resource_name: File
+    DestinationPath: '{{test_win_dsc_folder}}\dsc-file'
+    Contents: file contents
+    Attributes:
+    - Hidden
+    - ReadOnly
+    Ensure: Present
+    Type: File
+  register: win_dsc_create_file_check
+  check_mode: yes
+
+- name: get result of create test file (check mode)
+  win_stat:
+    path: '{{test_win_dsc_folder}}\dsc-file'
+  register: win_dsc_create_file_result_check
+
+- name: assert results of create test file (check mode)
+  assert:
+    that:
+    - win_dsc_create_file_check is changed
+    - win_dsc_create_file_result_check.stat.exists == False
+
+- name: create test file
+  win_dsc:
+    resource_name: File
+    DestinationPath: '{{test_win_dsc_folder}}\dsc-file'
+    Contents: file contents
+    Attributes:
+    - Hidden
+    - ReadOnly
+    Ensure: Present
+    Type: File
+  register: win_dsc_create_file
+
+- name: get result of create test file
+  win_stat:
+    path: '{{test_win_dsc_folder}}\dsc-file'
+  register: win_dsc_create_file_result
+
+- name: assert results of create test file
+  assert:
+    that:
+    - win_dsc_create_file is changed
+    - win_dsc_create_file_result.stat.exists == True
+    - win_dsc_create_file_result.stat.isdir == False
+    - win_dsc_create_file_result.stat.ishidden == True
+    - win_dsc_create_file_result.stat.isreadonly == True
+
+- name: create test file (idempotent)
+  win_dsc:
+    resource_name: File
+    DestinationPath: '{{test_win_dsc_folder}}\dsc-file'
+    Contents: file contents
+    Attributes: Hidden, ReadOnly
+    Ensure: Present
+    Type: File
+  register: win_dsc_create_file_again
+
+- name: assert results of create test file (idempotent)
+  assert:
+    that:
+    - win_dsc_create_file_again is not changed
+
+- name: get SID of current ansible user
+  win_shell: (New-Object System.Security.Principal.NTAccount("{{ansible_user}}")).Translate([System.Security.Principal.SecurityIdentifier]).ToString()
+  register: win_dsc_actual_sid
+
+- name: run DSC process as another user
+  win_dsc:
+    resource_name: Script
+    GetScript: '@{ Result = "" }'
+    SetScript: |
+      $output = &whoami.exe
+      $sid = (New-Object System.Security.Principal.NTAccount($output)).Translate([System.Security.Principal.SecurityIdentifier]).ToString()
+      Set-Content -Path "{{test_win_dsc_folder}}\file" -Value $sid
+    TestScript: Test-Path -Path "{{test_win_dsc_folder}}\file"
+    PsDscRunAsCredential_username: '{{ansible_user}}'
+    PsDscRunAsCredential_password: '{{ansible_password}}'
+  register: win_dsc_runas
+
+- name: get content of script output file
+  slurp:
+    path: '{{test_win_dsc_folder}}\file'
+  register: win_dsc_runas_result
+
+- name: assert results of run DSC process as another user
+  assert:
+    that:
+    - win_dsc_runas is changed
+    - win_dsc_runas_result.content|b64decode == win_dsc_actual_sid.stdout
+
+- name: create custom DSC resource folder
+  win_file:
+    path: C:\Program Files\WindowsPowerShell\Modules\xTestDsc\{{item}}\DSCResources\ANSIBLE_xTestResource
+    state: directory
+  with_items:
+  - "1.0.0"
+  - "2.0.0"
+
+- name: template custom DSC resource files
+  win_template:
+    src: '{{item.src}}'
+    dest: C:\Program Files\WindowsPowerShell\Modules\xTestDsc\{{item.version}}\{{item.dest}}
+  with_items:
+  - src: ANSIBLE_xTestResource.schema.mof
+    dest: DSCResources\ANSIBLE_xTestResource\ANSIBLE_xTestResource.schema.mof
+    version: "1.0.0"
+  - src: ANSIBLE_xTestResource.psm1
+    dest: DSCResources\ANSIBLE_xTestResource\ANSIBLE_xTestResource.psm1
+    version: "1.0.0"
+  - src: xTestDsc.psd1
+    dest: xTestDsc.psd1
+    version: "1.0.0"
+  - src: ANSIBLE_xTestResource.schema.mof
+    dest: DSCResources\ANSIBLE_xTestResource\ANSIBLE_xTestResource.schema.mof
+    version: "2.0.0"
+  - src: ANSIBLE_xTestResource.psm1
+    dest: DSCResources\ANSIBLE_xTestResource\ANSIBLE_xTestResource.psm1
+    version: "2.0.0"
+  - src: xTestDsc.psd1
+    dest: xTestDsc.psd1
+    version: "2.0.0"
+
+- name: run custom DSC resource
+  win_dsc: &dsc_params
+    resource_name: xTestResource
+    Path: '{{test_win_dsc_folder}}\custom-output.txt'
+    Ensure: Present
+    StringParam: string param
+    UInt32Param: 1000
+    UInt64Param: 1000000
+    StringArrayParam:
+    - string 1
+    - string 2
+    UInt32ArrayParam:
+    - 1000
+    - 2000
+    UInt64ArrayParam:
+    - 1000000
+    - 2000000
+    BooleanParam: yes
+    PSCredentialParam_username: username
+    PSCredentialParam_password: password
+    CimInstanceParam:
+      StringKey: a
+      BooleanKey: yes
+      UInt32Key: 1
+      StringArrayKey:
+      - string 1
+      - string 2
+    CimInstanceArrayParam:
+    - StringKey: b
+      BooleanKey: no
+      UInt32Key: 2
+      StringArrayKey:
+      - string 3
+      - string 4
+    - StringKey: c
+      BooleanKey: no
+      UInt32Key: 3
+      StringArrayKey:
+      - string 5
+      - string 6
+  register: test_dsc_custom
+
+- name: get output of custom DSC resource
+  slurp:
+    path: '{{test_win_dsc_folder}}\custom-output.txt'
+  register: test_dsc_custom_output
+
+- name: get expected output of custom DSC resource
+  set_fact:
+    test_dsc_custom_expected: '{{lookup("file", "custom-result-normal.txt")}}'
+
+- name: assert result of custom DSC resource
+  assert:
+    that:
+    - test_dsc_custom is changed
+    - test_dsc_custom_output.content|b64decode|strip_newline == test_dsc_custom_expected|strip_newline
+
+- name: run custom DSC resource with version
+  win_dsc:
+    <<: *dsc_params
+    module_version: '1.0.0'
+  register: test_dsc_custom_version
+
+- name: get output of custom DSC resource with version
+  slurp:
+    path: '{{test_win_dsc_folder}}\custom-output.txt'
+  register: test_dsc_custom_output_version
+
+- name: get expected output of custom DSC resource with version
+  set_fact:
+    test_dsc_custom_expected_version: '{{lookup("file", "custom-result-versioned.txt")}}'
+
+- name: assert result of custom DSC resource with version
+  assert:
+    that:
+    - test_dsc_custom is changed
+    - test_dsc_custom_output_version.content|b64decode|strip_newline == test_dsc_custom_expected_version|strip_newline

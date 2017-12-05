@@ -54,7 +54,7 @@
 - name: TEST 1 | Assert that status was changed, reboot_required is True, a warning was displayed, and SELinux is configured properly
   assert:
     that:
-      - _disable_test1 | changed
+      - _disable_test1 is changed
       - _disable_test1.reboot_required
       - (_disable_test1.warnings | length ) >= 1
       - ansible_selinux.config_mode == 'disabled'
@@ -77,7 +77,7 @@
 - name: TEST 1 | Assert that no change is reported, a warnking was dispalyed, and reboot_required is True
   assert:
     that:
-      - not _disable_test2 | changed
+      - _disable_test2 is not changed
       - (_disable_test1.warnings | length ) >= 1
       - _disable_test2.reboot_required
 
@@ -93,8 +93,8 @@
   assert:
     that:
       - selinux_config_original | length == selinux_config_after | length
-      - selinux_config_after[selinux_config_after.index('SELINUX=disabled')] | search("^SELINUX=\w+$")
-      - selinux_config_after[selinux_config_after.index('SELINUXTYPE=targeted')] | search("^SELINUXTYPE=\w+$")
+      - selinux_config_after[selinux_config_after.index('SELINUX=disabled')]  is search("^SELINUX=\w+$")
+      - selinux_config_after[selinux_config_after.index('SELINUXTYPE=targeted')]  is search("^SELINUXTYPE=\w+$")
 
 - name: TEST 1 | Reset SELinux configuration for next test
   selinux:
@@ -105,6 +105,11 @@
 # Second Test
 # ##############################################################################
 # Test changing only the policy, which does not require a reboot
+
+- name: TEST 2 | Make sure the policy is present
+  package:
+    name: selinux-policy-mls
+    state: present
 
 - name: TEST 2 | Set SELinux policy
   selinux:
@@ -126,7 +131,7 @@
 - name: TEST 2 | Assert that status was changed, reboot_required is False, no warnings were displayed, and SELinux is configured properly
   assert:
     that:
-      - _state_test1 | changed
+      - _state_test1 is changed
       - not _state_test1.reboot_required
       - _state_test1.warnings is not defined
       - ansible_selinux.config_mode == 'enforcing'
@@ -145,7 +150,7 @@
 - name: TEST 2 | Assert that no change was reported, no warnings were dispalyed, and reboot_required is False
   assert:
     that:
-      - not _state_test2 | changed
+      - _state_test2 is not changed
       - _state_test2.warnings is not defined
       - not _state_test2.reboot_required
 
@@ -161,10 +166,42 @@
   assert:
     that:
       - selinux_config_original | length == selinux_config_after | length
-      - selinux_config_after[selinux_config_after.index('SELINUX=enforcing')] | search("^SELINUX=\w+$")
-      - selinux_config_after[selinux_config_after.index('SELINUXTYPE=mls')] | search("^SELINUXTYPE=\w+$")
+      - selinux_config_after[selinux_config_after.index('SELINUX=enforcing')]  is search("^SELINUX=\w+$")
+      - selinux_config_after[selinux_config_after.index('SELINUXTYPE=mls')]  is search("^SELINUXTYPE=\w+$")
 
 - name: TEST 2 | Reset SELinux configuration for next test
   selinux:
     state: enforcing
     policy: targeted
+
+
+# Third Test
+# ##############################################################################
+# Test changing non-existing policy
+
+- name: TEST 3 | Set SELinux policy
+  selinux:
+    state: enforcing
+    policy: non-existing-selinux-policy
+  register: _state_test1
+  ignore_errors: yes
+
+- debug:
+    var: _state_test1
+    verbosity: 1
+
+- name: TEST 3 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+  tags: debug
+
+- name: TEST 3 | Assert that status was not changed, the task failed, the msg contains proper information and SELinux was not changed
+  assert:
+    that:
+      - _state_test1 is not changed
+      - _state_test1 is failed
+      - _state_test1.msg == 'Policy non-existing-selinux-policy does not exist in /etc/selinux/'
+      - ansible_selinux.config_mode == 'enforcing'
+      - ansible_selinux.type == 'targeted'

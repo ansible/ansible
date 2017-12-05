@@ -236,8 +236,8 @@ changed:
     sample: true
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 import re
@@ -358,11 +358,11 @@ def get_igmp_interface(module, interface):
     staticoif = []
     if body:
         split_body = body.split('\n')
-        route_map_regex = ('.*ip igmp static-oif route-map\s+'
-                           '(?P<route_map>\S+).*')
-        prefix_source_regex = ('.*ip igmp static-oif\s+(?P<prefix>'
-                               '((\d+.){3}\d+))(\ssource\s'
-                               '(?P<source>\S+))?.*')
+        route_map_regex = (r'.*ip igmp static-oif route-map\s+'
+                           r'(?P<route_map>\S+).*')
+        prefix_source_regex = (r'.*ip igmp static-oif\s+(?P<prefix>'
+                               r'((\d+.){3}\d+))(\ssource\s'
+                               r'(?P<source>\S+))?.*')
 
         for line in split_body:
             temp = {}

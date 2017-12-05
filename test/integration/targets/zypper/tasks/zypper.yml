@@ -189,6 +189,7 @@
 - name: install empty rpm
   zypper:
     name: "{{ output_dir | expanduser }}/zypper2/rpm-build/noarch/empty-1-0.noarch.rpm"
+    disable_gpg_check: yes
   register: zypper_result
 
 - name: check empty with rpm
@@ -253,12 +254,12 @@
 - name: verify simultaneous install/remove worked
   assert:
     that:
-      - zypper_res1|success
-      - zypper_res1|changed
-      - not zypper_res1a|changed
-      - zypper_res1b|changed
-      - not zypper_res2|changed
-      - not zypper_res3|changed
+      - zypper_res1 is successful
+      - zypper_res1 is changed
+      - zypper_res1a is not changed
+      - zypper_res1b is changed
+      - zypper_res2 is not changed
+      - zypper_res3 is not changed
 
 
 - name: install and remove with state=absent
@@ -272,7 +273,7 @@
 - name: verify simultaneous install/remove failed with absent
   assert:
     that:
-      - zypper_res|failed
+      - zypper_res is failed
       - zypper_res.results[0].msg == "Can not combine '+' prefix with state=remove/absent."
 
 - name: try rm patch
@@ -281,64 +282,17 @@
   register: zypper_patch
 - assert:
     that: 
-      - zypper_patch|failed
+      - zypper_patch is failed
       - zypper_patch.msg.startswith('Can not remove patches.')
 
 - name: try rm URL
-  zypper: name=http://download.opensuse.org/repositories/openSUSE:/Leap:/42.1/standard/x86_64/hello-2.9-6.2.x86_64.rpm state=absent
+  zypper: name=http://download.opensuse.org/repositories/openSUSE:/Leap:/{{ ansible_distribution_version }}/standard/x86_64/hello-2.9-6.2.x86_64.rpm state=absent
   ignore_errors: yes
   register: zypper_rm
 - assert:
     that: 
-      - zypper_rm|failed
+      - zypper_rm is failed
       - zypper_rm.msg.startswith('Can not remove via URL.')
-
-# use of version specific (42.1) data in the following
-- block:
-  # test for #1627
-  - name: in existing patch
-    zypper: name=openSUSE-2016-128 type=patch state=present
-  - name: in existing patch again
-    zypper: name=openSUSE-2016-128 type=patch state=present
-    register: zypper_patch
-  - assert:
-      that: not zypper_patch.changed
-
-  - name: in non-existing patch
-    zypper: name=openSUSE-1800-1 type=patch state=present
-    ignore_errors: yes
-    register: zypper_patch
-  - assert:
-      that: zypper_patch|failed
-
-  - name: remove pattern update_test
-    zypper: name=update_test type=pattern state=absent
-  - name: install pattern update_test
-    zypper: name=update_test type=pattern state=present
-    register: zypper_install_pattern1
-  - name: install pattern update_test again
-    zypper: name=update_test type=pattern state=present
-    register: zypper_install_pattern2
-  - assert:
-      that:
-        - zypper_install_pattern1|changed
-        - not zypper_install_pattern2|changed
-
-  - name: remove hello
-    zypper: name=hello state=absent
-  - name: install via URL
-    zypper: state=present name=http://download.opensuse.org/repositories/openSUSE:/Leap:/42.1/standard/x86_64/hello-2.9-6.2.x86_64.rpm
-    register: zypperin1
-  - name: test install
-    zypper: name=hello state=present
-    register: zypperin2
-  - assert:
-      that:
-        - zypperin1|success
-        - zypperin1|changed
-        - not zypperin2|changed
-  when: ansible_distribution == 'openSUSE Leap' and ansible_distribution_version == '42.1'
-
 
 # check for https://github.com/ansible/ansible/issues/20139
 - name: run updatecache
@@ -359,6 +313,6 @@
 
 - assert:
     that:
-      - zypper_result_update_cache|success
-      - zypper_result_update_cache_check|success
-      - not zypper_result_update_cache_check|changed
+      - zypper_result_update_cache is successful
+      - zypper_result_update_cache_check is successful
+      - zypper_result_update_cache_check is not changed

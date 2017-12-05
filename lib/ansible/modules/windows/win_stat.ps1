@@ -1,21 +1,11 @@
 #!powershell
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # C# code to determine link target, copied from http://chrisbensen.blogspot.com.au/2010/06/getfinalpathnamebyhandle.html
 $symlink_util = @"
@@ -72,7 +62,7 @@ function Date_To_Timestamp($start_date, $end_date)
 $params = Parse-Args $args -supports_check_mode $true
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
-$get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $true
+$get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $false
 $get_checksum = Get-AnsibleParam -obj $params -name "get_checksum" -type "bool" -default $true
 $checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -type "str" -default "sha1" -validateset "md5","sha1","sha256","sha384","sha512"
 
@@ -83,12 +73,14 @@ $result = @{
     }
 }
 
-# Backward compatibility
-if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
-    Add-DeprecationWarning $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
+# get_md5 will be an undocumented option in 2.9 to be removed at a later
+# date if possible (3.0+)
+if (Get-Member -inputobject $params -name "get_md5") {
+    Add-DepreactionWarning -obj $result -message "get_md5 has been deprecated along with the md5 return value, use get_checksum=True and checksum_algorithm=md5 instead" -version 2.9
 }
 
-If (Test-Path -Path $path)
+$info = Get-FileItem -path $path
+If ($info -ne $null)
 {
     $result.stat.exists = $true
 
@@ -97,9 +89,6 @@ If (Test-Path -Path $path)
     $result.stat.islnk = $false
     $result.stat.isreg = $false
     $result.stat.isshared = $false
-
-    # Need to use -Force so it picks up hidden files
-    $info = Get-Item -Force $path
 
     $epoch_date = Get-Date -Date "01/01/1970"
     $result.stat.creationtime = (Date_To_Timestamp $epoch_date $info.CreationTime)
@@ -171,7 +160,7 @@ If (Test-Path -Path $path)
             try {
                 $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
             } catch {
-                Fail-Json -obj $result -message "failed to get MD5 hash of file, set get_md5 to False to ignore this error: $($_.Exception.Message)"
+                Fail-Json -obj $result -message "failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)"
             }
         }
 

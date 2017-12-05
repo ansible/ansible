@@ -274,8 +274,9 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
+
 
 
 class CloudflareAPI(object):
@@ -369,9 +370,9 @@ class CloudflareAPI(object):
 
         if content:
             try:
-                result = json.loads(content)
-            except json.JSONDecodeError:
-                error_msg += "; Failed to parse API response: {0}".format(content)
+                result = json.loads(to_text(content, errors='surrogate_or_strict'))
+            except (json.JSONDecodeError, UnicodeError) as e:
+                error_msg += "; Failed to parse API response with error {0}: {1}".format(to_native(e), content)
 
         # received an error status but no data with details on what failed
         if (info['status'] not in [200,304]) and (result is None):

@@ -48,7 +48,7 @@ options:
   vlan_state:
     description:
       - Manage the vlan operational state of the VLAN
-        (equivalent to state {active | suspend} command.
+        This is being deprecated in favor of state.
     required: false
     default: active
     choices: ['active','suspend']
@@ -69,9 +69,10 @@ options:
   state:
     description:
       - Manage the state of the resource.
+        Active and Suspend will assume the vlan is present.
     required: false
     default: present
-    choices: ['present','absent']
+    choices: ['present','absent', 'active', 'suspend']
   mode:
     description:
       - Set VLAN mode to classical ethernet or fabricpath.
@@ -112,8 +113,8 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -286,9 +287,10 @@ def main():
         name=dict(required=False),
         vlan_state=dict(choices=['active', 'suspend'], required=False),
         mapped_vni=dict(required=False, type='str'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
+        state=dict(choices=['present', 'absent', 'active', 'suspend'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
         mode=dict(choices=['ce', 'fabricpath'], required=False),
+
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -309,6 +311,13 @@ def main():
     admin_state = module.params['admin_state']
     mapped_vni = module.params['mapped_vni']
     state = module.params['state']
+
+    # this allows vlan_state to remain backwards compatible as we move towards
+    # pushing all 4 options into state to match net_vlan
+    if state == 'active' or state == 'suspend':
+        vlan_state = module.params['state']
+        state = 'present'
+
     mode = module.params['mode']
 
     if vlan_id:

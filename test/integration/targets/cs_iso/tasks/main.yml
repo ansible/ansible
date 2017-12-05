@@ -7,7 +7,7 @@
 - name: verify setup iso
   assert:
     that:
-    - iso|success
+    - iso is successful
 
 - name: test download iso in check mode
   cs_iso:
@@ -20,7 +20,7 @@
 - name: verify test download iso in check mode
   assert:
     that:
-    - iso|changed
+    - iso is changed
 
 - name: test download iso
   cs_iso:
@@ -32,7 +32,7 @@
 - name: verify test download iso
   assert:
     that:
-    - iso|changed
+    - iso is changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso"
     - iso.cross_zones == true
@@ -47,7 +47,7 @@
 - name: verify test download iso idempotence
   assert:
     that:
-    - not iso|changed
+    - iso is not changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso"
     - iso.cross_zones == true
@@ -64,7 +64,7 @@
 - name: verify test update iso in check mode
   assert:
     that:
-    - iso|changed
+    - iso is changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso"
     - iso.cross_zones == true
@@ -80,7 +80,7 @@
 - name: verify test update iso
   assert:
     that:
-    - iso|changed
+    - iso is changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
     - iso.cross_zones == true
@@ -96,7 +96,7 @@
 - name: verify test update iso idempotence
   assert:
     that:
-    - not iso|changed
+    - iso is not changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
     - iso.cross_zones == true
@@ -111,7 +111,7 @@
 - name: verify test remove iso in check mode
   assert:
     that:
-    - iso|changed
+    - iso is changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
     - iso.cross_zones == true
@@ -125,7 +125,7 @@
 - name: verify test remove iso
   assert:
     that:
-    - iso|changed
+    - iso is changed
     - iso.name == "{{ cs_resource_prefix }}-iso"
     - iso.display_text == "{{ cs_resource_prefix }}-iso display_text"
     - iso.cross_zones == true
@@ -139,4 +139,4 @@
 - name: verify test remove iso idempotence
   assert:
     that:
-    - not iso|changed
+    - iso is not changed

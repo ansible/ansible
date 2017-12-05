@@ -128,7 +128,7 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP neighbors from the remote device
+  description: The list of LLDP/CDP neighbors from the remote device
   returned: when interfaces is configured
   type: dict
 
@@ -168,10 +168,10 @@ vlan_list:
 """
 import re
 
-from ansible.module_utils.nxos import run_commands, get_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands, get_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import string_types, iteritems
 
 
 class FactsBase(object):
@@ -290,12 +290,16 @@ class Interfaces(FactsBase):
             self.facts['interfaces'] = self.populate_interfaces(data)
 
         data = self.run('show ipv6 interface', 'json')
-        if data:
+        if data and not isinstance(data, string_types):
             self.parse_ipv6_interfaces(data)
 
         data = self.run('show lldp neighbors')
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
+
+        data = self.run('show cdp neighbors detail', 'json')
+        if data:
+            self.facts['neighbors'] = self.populate_neighbors_cdp(data)
 
     def populate_interfaces(self, data):
         interfaces = dict()
@@ -344,6 +348,23 @@ class Interfaces(FactsBase):
                 nbor['port'] = item['port_id']
                 nbor['host'] = item['chassis_id']
                 objects[local_intf].append(nbor)
+
+        return objects
+
+    def populate_neighbors_cdp(self, data):
+        objects = dict()
+        data = data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
+            local_intf = item['intf_id']
+            objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['port_id']
+            nbor['sysname'] = item['device_id']
+            objects[local_intf].append(nbor)
 
         return objects
 

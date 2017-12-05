@@ -4,7 +4,7 @@ Release and maintenance
 .. contents:: Topics
    :local:
 
-.. _schedule:
+.. _release_cycle:
 
 Release cycle
 `````````````
@@ -13,15 +13,18 @@ Ansible is developed and released on a flexible 4 months release cycle.
 This cycle can be extended in order to allow for larger changes to be properly
 implemented and tested before a new release is made available.
 
-Ansible supports the two most recent major stable releases.
-For more information, read about the
-`development and stable version maintenance workflow`_.
+Ansible has a graduated support structure that extends to three major releases.
+For more information, read about the `development and stable version maintenance workflow`_ or see
+the chart in :ref:`schedule` for the degrees to which current releases are supported.
+
+.. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
+    are only supported for two releases.
 
 If you are using a release of Ansible that is no longer supported, we strongly
 encourage you to upgrade as soon as possible in order to benefit from the
 latest features and security fixes.
 
-Older unsupported versions of Ansible can contain unfixed security
+Older, unsupported versions of Ansible can contain unfixed security
 vulnerabilities (*CVE*).
 
 You can refer to the `porting guides`_ for tips on updating your Ansible
@@ -29,31 +32,30 @@ playbooks to run on newer versions.
 
 .. _porting guides: https://docs.ansible.com/ansible/porting_guides.html
 
+.. _release_schedule:
+
 Release status
 ``````````````
 
-+-----------------+----------------------------+----------------------------------------+
-| Ansible Release | Latest Version             | Status                                 |
-+=================+============================+========================================+
-| devel           | `2.5`_ (unreleased, trunk) | In development                         |
-+-----------------+----------------------------+----------------------------------------+
-| 2.4             | `2.4.1`_ (2017-10-25)      | Supported (bug **and** security fixes) |
-+-----------------+----------------------------+----------------------------------------+
-| 2.3             | `2.3.2`_ (2017-08-08)      | Supported (bug **and** security fixes) |
-+-----------------+----------------------------+----------------------------------------+
-| 2.2             | `2.2.3`_ (2017-05-09)      | Supported (**only** security fixes)    |
-+-----------------+----------------------------+----------------------------------------+
-| 2.1             | `2.1.6`_ (2017-06-01)      | Unsupported (end of life)              |
-+-----------------+----------------------------+----------------------------------------+
-| 2.0             | `2.0.2`_ (2016-04-19)      | Unsupported (end of life)              |
-+-----------------+----------------------------+----------------------------------------+
-| 1.9             | `1.9.6`_ (2016-04-15)      | Unsupported (end of life)              |
-+-----------------+----------------------------+----------------------------------------+
-| <1.9            | n/a                        | Unsupported (end of life)              |
-+-----------------+----------------------------+----------------------------------------+
+===============   ==========================   =================================================
+Ansible Release   Latest Version               Status
+===============   ==========================   =================================================
+devel             `2.5`_ (unreleased, trunk)   In development
+2.4               `2.4.2`_ (2017-11-29)        Supported (security **and** general bug fixes)
+2.3               `2.3.2`_ (2017-08-08)        Supported (security **and** critical bug fixes)
+2.2               `2.2.3`_ (2017-05-09)        Unsupported (end of life)
+2.1               `2.1.6`_ (2017-06-01)        Unsupported (end of life)
+2.0               `2.0.2`_ (2016-04-19)        Unsupported (end of life)
+1.9               `1.9.6`_ (2016-04-15)        Unsupported (end of life)
+<1.9              n/a                          Unsupported (end of life)
+===============   ==========================   =================================================
+
+.. note:: Starting with Ansible-2.4, support lasts for 3 releases.  Thus Ansible-2.4 will receive
+    security and general bug fixes when it is first released, security and critical bug fixes when
+    2.5 is released, and **only** security fixes once 2.6 is released.
 
 .. _2.5: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.4.1: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
+.. _2.4.2: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
 .. _2.3.2: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
 .. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
 .. _2.1.6: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
@@ -63,18 +65,23 @@ Release status
 .. _support_life:
 .. _methods:
 
+
 Development and stable version maintenance workflow
 ```````````````````````````````````````````````````
 
 The Ansible community develops and maintains Ansible on GitHub_.
 
-New modules, plugins, features and bugfixes will always be integrated in what
-will become the next major version of Ansible.
-This work is tracked on the ``devel`` git branch.
+New modules, plugins, features and bugfixes will always be integrated in what will become the next
+major version of Ansible.  This work is tracked on the ``devel`` git branch.
 
-Ansible provides bugfixes and security improvements for the most recent major
-release while the previous major release will only receive security patches.
-This work is tracked on the ``stable-<version>`` git branches.
+Ansible provides bugfixes and security improvements for the most recent major release. The previous
+major release will only receive fixes for security issues and critical bugs. Ansible only applies
+security fixes to releases which are two releases old. This work is tracked on the
+``stable-<version>`` git branches.
+
+.. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
+    are only supported for two releases with the first stage including both security and general bug
+    fixes while the second stage includes security and critical bug fixes
 
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.
@@ -87,6 +94,7 @@ releases of Ansible, there can sometimes be exceptions for critical issues.
 
 .. _GitHub: https://github.com/ansible/ansible
 .. _changelog: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+
 
 Release candidates
 ~~~~~~~~~~~~~~~~~~
@@ -111,7 +119,7 @@ More release candidates can be tagged as required, so long as there are
 bugs that the Ansible core maintainers consider should be fixed before the
 final release.
 
-.. _freezing:
+.. _release_freezing:
 
 Feature freeze
 ~~~~~~~~~~~~~~

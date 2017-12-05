@@ -3,7 +3,7 @@ Ansible Vault
 
 .. contents:: Topics
 
-New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
+Ansible Vault is a feature of ansible that allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plaintext in playbooks or roles. These vault files can then be distributed or placed in source control.
 
 To enable this feature, a command line tool - :ref:`ansible-vault` - is used to edit files, and a command line flag (:option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` or :option:`--vault-password-file <ansible-playbook --vault-password-file>`) is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
 
@@ -14,15 +14,15 @@ For best practices advice, refer to :ref:`best_practices_for_variables_and_vault
 What Can Be Encrypted With Vault
 ````````````````````````````````
 
-The vault feature can encrypt any structured data file used by Ansible.  This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with ``-e @file.yml`` or ``-e @file.json``.  Role variables and defaults are also included.
+Ansible Vault can encrypt any structured data file used by Ansible.  This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with ``-e @file.yml`` or ``-e @file.json``.  Role variables and defaults are also included.
 
 Ansible tasks, handlers, and so on are also data so these can be encrypted with vault as well. To hide the names of variables that you're using, you can encrypt the task files in their entirety.
 
-The vault feature can also encrypt arbitrary files, even binary files.  If a vault-encrypted file is
+Ansible Vault can also encrypt arbitrary files, even binary files.  If a vault-encrypted file is
 given as the ``src`` argument to the :ref:`copy <copy>`, :ref:`template <template>`,
 :ref:`unarchive <unarchive>`, :ref:`script <script>` or :ref:`assemble <assemble>` modules, the file will be placed at the destination on the target host decrypted (assuming a valid vault password is supplied when running the play).
 
-As of version 2.3, Ansible also supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details below.
+As of version 2.3, Ansible supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details below.
 
 
 .. _creating_files:
@@ -103,8 +103,6 @@ to the disk, so be sure you do not want :ref:`ansible-vault edit <ansible_vault_
 
 Viewing Encrypted Files
 ```````````````````````
-
-*Available since Ansible 1.8*
 
 If you want to view the contents of an encrypted file without editing it, you can use the :ref:`ansible-vault view <ansible_vault_view>` command:
 

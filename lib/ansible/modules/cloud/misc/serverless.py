@@ -100,7 +100,7 @@ EXAMPLES = """
 RETURN = """
 service_name:
   type: string
-  description: Most
+  description: The service name specified in the serverless.yml that was just deployed.
   returned: always
   sample: my-fancy-service-dev
 state:

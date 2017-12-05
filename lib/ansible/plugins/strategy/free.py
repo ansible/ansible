@@ -175,6 +175,8 @@ class StrategyModule(StrategyBase):
             results = self._process_pending_results(iterator)
             host_results.extend(results)
 
+            self.update_active_connections(results)
+
             try:
                 included_files = IncludedFile.process_include_results(
                     host_results,
@@ -196,7 +198,7 @@ class StrategyModule(StrategyBase):
                             new_ir = included_file._task.copy()
                             new_ir.vars.update(included_file._args)
 
-                            new_blocks, handler_blocks = new_ir.get_block_list(
+                            new_blocks, handler_blocks = included_file._task.get_block_list(
                                 play=iterator._play,
                                 variable_manager=self._variable_manager,
                                 loader=self._loader,

@@ -32,7 +32,7 @@
 - name: assert remove inheritance check
   assert:
     that:
-    - remove_check|changed
+    - remove_check is changed
     - actual_remove_check.inherited == True
 
 - name: remove inheritance
@@ -50,7 +50,7 @@
 - name: assert remove inheritance
   assert:
     that:
-    - remove|changed
+    - remove is changed
     - actual_remove.inherited == False
     - actual_remove.user_details['BUILTIN/Administrators'].isinherited == False
     - actual_remove.user_details['BUILTIN/Administrators'].isnotinherited == True
@@ -76,7 +76,7 @@
 - name: assert remove inheritance again
   assert:
     that:
-    - not remove_again|changed
+    - remove_again is not changed
     - actual_remove_again.inherited == False
     - actual_remove.user_details['BUILTIN/Administrators'].isinherited == False
     - actual_remove.user_details['BUILTIN/Administrators'].isnotinherited == True
@@ -103,7 +103,7 @@
 - name: assert add inheritance check
   assert:
     that:
-    - add_check|changed
+    - add_check is changed
     - actual_add_check.inherited == False
     - actual_add_check.user_details['BUILTIN/Administrators'].isinherited == False
     - actual_add_check.user_details['BUILTIN/Administrators'].isnotinherited == True
@@ -129,7 +129,7 @@
 - name: assert add inheritance
   assert:
     that:
-    - add|changed
+    - add is changed
     - actual_add.inherited == True
     - actual_add.user_details['BUILTIN/Administrators'].isinherited == True
     - actual_add.user_details['BUILTIN/Administrators'].isnotinherited == False
@@ -155,7 +155,7 @@
 - name: assert add inheritance again
   assert:
     that:
-    - not add_again|changed
+    - add_again is not changed
     - actual_add_again.inherited == True
     - actual_add_again.user_details['BUILTIN/Administrators'].isinherited == True
     - actual_add_again.user_details['BUILTIN/Administrators'].isnotinherited == False

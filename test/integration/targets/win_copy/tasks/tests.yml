@@ -36,7 +36,7 @@
 - name: assert failure message when copying an encrypted file without the password set
   assert:
     that:
-    - fail_copy_encrypted_file|failed
+    - fail_copy_encrypted_file is failed
     - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
 
 - name: fail to copy a directory with an encrypted file without the password
@@ -49,7 +49,7 @@
 - name: assert failure message when copying a directory that contains an encrypted file without the password set
   assert:
     that:
-    - fail_copy_directory_with_enc_file|failed
+    - fail_copy_directory_with_enc_file is failed
     - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
 
 - name: copy with content (check mode)
@@ -67,7 +67,7 @@
 - name: assert copy with content (check mode)
   assert:
     that:
-    - copy_content_check|changed
+    - copy_content_check is changed
     - copy_content_check.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8'
     - copy_content_check.operation == 'file_copy'
     - copy_content_check.size == 1
@@ -87,7 +87,7 @@
 - name: assert copy with content
   assert:
     that:
-    - copy_content|changed
+    - copy_content is changed
     - copy_content.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8'
     - copy_content.operation == 'file_copy'
     - copy_content.size == 1
@@ -103,7 +103,7 @@
 - name: assert copy with content (idempotent)
   assert:
     that:
-    - not copy_content_again|changed
+    - copy_content_again is not changed
 
 - name: copy with content change when missing
   win_copy:
@@ -115,7 +115,7 @@
 - name: assert copy with content change when missing
   assert:
     that:
-    - not copy_content_when_missing|changed
+    - copy_content_when_missing is not changed
 
 - name: copy single file (check mode)
   win_copy:
@@ -132,7 +132,7 @@
 - name: assert copy single file (check mode)
   assert:
     that:
-    - copy_file_check|changed
+    - copy_file_check is changed
     - copy_file_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - copy_file_check.operation == 'file_copy'
     - copy_file_check.size == 8
@@ -152,7 +152,7 @@
 - name: assert copy single file
   assert:
     that:
-    - copy_file|changed
+    - copy_file is changed
     - copy_file.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - copy_file.operation == 'file_copy'
     - copy_file.size == 8
@@ -168,7 +168,7 @@
 - name: assert copy single file (idempotent)
   assert:
     that:
-    - not copy_file_again|changed
+    - copy_file_again is not changed
 
 - name: copy single file to folder (check mode)
   win_copy:
@@ -185,7 +185,7 @@
 - name: assert copy single file to folder (check mode)
   assert:
     that:
-    - copy_file_to_folder_check|changed
+    - copy_file_to_folder_check is changed
     - copy_file_to_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - copy_file_to_folder_check.operation == 'file_copy'
     - copy_file_to_folder_check.size == 8
@@ -205,7 +205,7 @@
 - name: assert copy single file to folder
   assert:
     that:
-    - copy_file_to_folder|changed
+    - copy_file_to_folder is changed
     - copy_file_to_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - copy_file_to_folder.operation == 'file_copy'
     - copy_file_to_folder.size == 8
@@ -221,7 +221,7 @@
 - name: assert copy single file to folder (idempotent)
   assert:
     that:
-    - not copy_file_to_folder_again|changed
+    - copy_file_to_folder_again is not changed
 
 - name: copy single file to missing folder (check mode)
   win_copy:
@@ -238,7 +238,7 @@
 - name: assert copy single file to missing folder (check mode)
   assert:
     that:
-    - copy_file_to_missing_folder_check|changed
+    - copy_file_to_missing_folder_check is changed
     - copy_file_to_missing_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - copy_file_to_missing_folder_check.operation == 'file_copy'
     - copy_file_to_missing_folder_check.size == 8
@@ -258,7 +258,7 @@
 - name: assert copy single file to missing folder
   assert:
     that:
-    - copy_file_to_missing_folder|changed
+    - copy_file_to_missing_folder is changed
     - copy_file_to_missing_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - copy_file_to_missing_folder.operation == 'file_copy'
     - copy_file_to_missing_folder.size == 8
@@ -280,7 +280,7 @@
 - name: assert copy folder (check mode)
   assert:
     that:
-    - copy_folder_check|changed
+    - copy_folder_check is changed
     - copy_folder_check.operation == 'folder_copy'
     - copy_folder_actual_check.stat.exists == False
 
@@ -300,7 +300,7 @@
 - name: assert copy folder
   assert:
     that:
-    - copy_folder|changed
+    - copy_folder is changed
     - copy_folder.operation == 'folder_copy'
     - copy_folder_actual.examined == 11 # includes files and folders, the below is the nested order
     - copy_folder_actual.matched == 6
@@ -320,7 +320,7 @@
 - name: assert copy folder (idempotent)
   assert:
     that:
-    - not copy_folder_again|changed
+    - copy_folder_again is not changed
 
 - name: change the text of a file in the remote source
   win_copy:
@@ -348,7 +348,7 @@
 - name: assert copy folder after changes
   assert:
     that:
-    - copy_folder_after_change|changed
+    - copy_folder_after_change is changed
     - copy_folder_after_changes_actual.matched == 2
     - copy_folder_after_changes_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
     - copy_folder_after_changes_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
@@ -368,7 +368,7 @@
 - name: assert copy folder's contents (check mode)
   assert:
     that:
-    - copy_folder_contents_check|changed
+    - copy_folder_contents_check is changed
     - copy_folder_contents_check.operation == 'folder_copy'
     - copy_folder_contents_actual_check.stat.exists == False
 
@@ -388,7 +388,7 @@
 - name: assert copy folder
   assert:
     that:
-    - copy_folder_contents|changed
+    - copy_folder_contents is changed
     - copy_folder_contents.operation == 'folder_copy'
     - copy_folder_contents_actual.examined == 10 # includes files and folders, the below is the nested order
     - copy_folder_contents_actual.matched == 5
@@ -433,7 +433,7 @@
 - name: assert results of copy a file with colon as a source
   assert:
     that:
-    - copy_file_with_colon|changed
+    - copy_file_with_colon is changed
     - copy_file_with_colon_result.stat.exists == True
     - copy_file_with_colon_result.stat.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3" 
 
@@ -458,7 +458,7 @@
 - name: assert result of copy an encrypted file without decrypting
   assert:
     that:
-    - copy_encrypted_file|changed
+    - copy_encrypted_file is changed
     - copy_encrypted_file_result.stat.checksum == "74a89620002d253f38834ee5b06cddd28956a43d"
 
 - name: copy an encrypted file without decrypting (idempotent)
@@ -471,7 +471,7 @@
 - name: assert result of copy an encrypted file without decrypting (idempotent)
   assert:
     that:
-    - not copy_encrypted_file_again|changed
+    - copy_encrypted_file_again is not changed
 
 - name: copy folder with encrypted files without decrypting
   win_copy:
@@ -490,7 +490,7 @@
 - name: assert result of copy folder with encrypted files without decrypting
   assert:
     that:
-    - copy_encrypted_file|changed
+    - copy_encrypted_file is changed
     - copy_encrypted_file_result.files|count == 2
     - copy_encrypted_file_result.files[0].checksum == "834563c94127730ecfa42dfc1e1821bbda2e51da"
     - copy_encrypted_file_result.files[1].checksum == "74a89620002d253f38834ee5b06cddd28956a43d"
@@ -505,7 +505,7 @@
 - name: assert result of copy folder with encrypted files without decrypting (idempotent)
   assert:
     that:
-    - not copy_encrypted_file_again|changed
+    - copy_encrypted_file_again is not changed
 
 - name: remove test folder after local to remote tests
   win_file:

@@ -23,8 +23,10 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.module_utils.f5_utils import F5_COMMON_ARGS
-from ansible.module_utils.network_common import load_provider
+from ansible.module_utils.network.common.utils import load_provider
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 
 try:
@@ -64,12 +66,13 @@ class ActionModule(_ActionModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             # make sure we are in the right cli context which should be
-            # enable mode and not config mode
-            rc, out, err = connection.exec_command('prompt()')
-            while '(config' in str(out):
+            # enable mode and not config module
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            while '(config' in to_text(out, errors='surrogate_then_replace').strip():
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                connection.exec_command('exit')
-                rc, out, err = connection.exec_command('prompt()')
+                conn.send_command('exit')
+                out = conn.get_prompt()
 
             task_vars['ansible_socket'] = socket_path
 

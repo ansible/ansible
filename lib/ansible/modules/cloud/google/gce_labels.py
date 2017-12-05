@@ -15,9 +15,9 @@ DOCUMENTATION = '''
 ---
 module: gce_labels
 version_added: '2.4'
-short_description: Create, Update or Destory GCE Labels.
+short_description: Create, Update or Destroy GCE Labels.
 description:
-    - Create, Update or Destory GCE Labels on instances, disks, snapshots, etc.
+    - Create, Update or Destroy GCE Labels on instances, disks, snapshots, etc.
       When specifying the GCE resource, users may specifiy the full URL for
       the resource (its 'self_link'), or the individual parameters of the
       resource (type, location, name). Examples for the two options can be

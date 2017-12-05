@@ -131,8 +131,8 @@ import re
 import itertools
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos9 import run_commands
-from ansible.module_utils.dellos9 import dellos9_argument_spec, check_args
+from ansible.module_utils.network.dellos9.dellos9 import run_commands
+from ansible.module_utils.network.dellos9.dellos9 import dellos9_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 
@@ -215,7 +215,7 @@ class Hardware(FactsBase):
         self.facts['filesystems'] = self.parse_filesystems(data)
 
         data = self.responses[1]
-        match = re.findall('\s(\d+)\s', data)
+        match = re.findall(r'\s(\d+)\s', data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) // 1024
             self.facts['memfree_mb'] = int(match[2]) // 1024

@@ -74,31 +74,33 @@ class VarsModule(BaseVarsPlugin):
             else:
                 raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
-            try:
-                found_files = []
-                # load vars
-                opath = os.path.realpath(os.path.join(self._basedir, subdir))
-                key = '%s.%s' % (entity.name, opath)
-                if cache and key in FOUND:
-                    found_files = FOUND[key]
-                else:
-                    b_opath = to_bytes(opath)
-                    # no need to do much if path does not exist for basedir
-                    if os.path.exists(b_opath):
-                        if os.path.isdir(b_opath):
-                            self._display.debug("\tprocessing dir %s" % opath)
-                            found_files = self._find_vars_files(opath, entity.name)
-                            FOUND[key] = found_files
-                        else:
-                            self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+            # avoid 'chroot' type inventory hostnames /path/to/chroot
+            if not entity.name.startswith(os.path.sep):
+                try:
+                    found_files = []
+                    # load vars
+                    opath = os.path.realpath(os.path.join(self._basedir, subdir))
+                    key = '%s.%s' % (entity.name, opath)
+                    if cache and key in FOUND:
+                        found_files = FOUND[key]
+                    else:
+                        b_opath = to_bytes(opath)
+                        # no need to do much if path does not exist for basedir
+                        if os.path.exists(b_opath):
+                            if os.path.isdir(b_opath):
+                                self._display.debug("\tprocessing dir %s" % opath)
+                                found_files = self._find_vars_files(opath, entity.name)
+                                FOUND[key] = found_files
+                            else:
+                                self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
 
-                for found in found_files:
-                    new_data = loader.load_from_file(found, cache=True, unsafe=True)
-                    if new_data:  # ignore empty files
-                        data = combine_vars(data, new_data)
+                    for found in found_files:
+                        new_data = loader.load_from_file(found, cache=True, unsafe=True)
+                        if new_data:  # ignore empty files
+                            data = combine_vars(data, new_data)
 
-            except Exception as e:
-                raise AnsibleParserError(to_native(e))
+                except Exception as e:
+                    raise AnsibleParserError(to_native(e))
         return data
 
     def _find_vars_files(self, path, name):
@@ -132,7 +134,7 @@ class VarsModule(BaseVarsPlugin):
     def _get_dir_files(self, path):
 
         found = []
-        for spath in os.listdir(path):
+        for spath in sorted(os.listdir(path)):
             if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]

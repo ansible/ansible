@@ -77,7 +77,7 @@ Actions
 {% if actions[action]['options'] %}
 
 
-{% for option in actions[action]['options']|sort %}
+{% for option in actions[action]['options']|sort(attribute='options') %}
 .. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
    {{ (option['desc']) }}

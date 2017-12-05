@@ -188,11 +188,11 @@ backup_path:
   sample: /playbooks/ansible/backup/dellos6_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
-from ansible.module_utils.dellos6 import dellos6_argument_spec, check_args
-from ansible.module_utils.dellos6 import load_config, run_commands
-from ansible.module_utils.dellos6 import WARNING_PROMPTS_RE
-from ansible.module_utils.netcfg import dumps
+from ansible.module_utils.network.dellos6.dellos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
+from ansible.module_utils.network.dellos6.dellos6 import dellos6_argument_spec, check_args
+from ansible.module_utils.network.dellos6.dellos6 import load_config, run_commands
+from ansible.module_utils.network.dellos6.dellos6 import WARNING_PROMPTS_RE
+from ansible.module_utils.network.common.config import dumps
 
 
 def get_candidate(module):
@@ -254,7 +254,8 @@ def main():
     else:
         configobjs = candidate.items
     if module.params['backup']:
-        result['__backup__'] = get_config(module)
+        if not module.check_mode:
+            result['__backup__'] = get_config(module)
 
     commands = list()
 

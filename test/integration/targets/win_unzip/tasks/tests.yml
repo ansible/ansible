@@ -12,7 +12,7 @@
 - name: Test unzip_archive (check-mode)
   assert:
     that:
-    - unzip_archive|changed == true
+    - unzip_archive is changed == true
     - unzip_archive.removed == false
     - unzip_archive_file.stat.exists == false
   when: in_check_mode
@@ -20,7 +20,7 @@
 - name: Test unzip_archive (normal mode)
   assert:
     that:
-    - unzip_archive|changed == true
+    - unzip_archive is changed == true
     - unzip_archive.removed == false
     - unzip_archive_file.stat.exists == true
   when: not in_check_mode
@@ -36,14 +36,14 @@
 - name: Test unzip_archive_again_creates (normal mode)
   assert:
     that:
-    - unzip_archive_again_creates|changed == false
+    - unzip_archive_again_creates is changed == false
     - unzip_archive_again_creates.removed == false
   when: not in_check_mode
 
 - name: Test unzip_archive_again_creates (check-mode)
   assert:
     that:
-    - unzip_archive_again_creates|changed == true
+    - unzip_archive_again_creates is changed == true
     - unzip_archive_again_creates.removed == false
   when: in_check_mode
 
@@ -59,7 +59,7 @@
 - name: Test unzip_archive_again
   assert:
     that:
-    - unzip_archive_again|changed == true
+    - unzip_archive_again is changed == true
     - unzip_archive_again.removed == true
 
 

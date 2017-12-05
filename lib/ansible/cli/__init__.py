@@ -213,7 +213,9 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # if an action needs an encrypt password (create_new_password=True) and we dont
         # have other secrets setup, then automatically add a password prompt as well.
-        if ask_vault_pass or (auto_prompt and not vault_ids):
+        # prompts cant/shouldnt work without a tty, so dont add prompt secrets
+        if ask_vault_pass or (not vault_ids and auto_prompt):
+
             id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
             vault_ids.append(id_slug)
 
@@ -259,10 +261,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
-
-                # prompts cant/shouldnt work without a tty, so dont add prompt secrets
-                if not sys.stdin.isatty():
-                    continue
 
                 # --vault-id some_name@prompt_ask_vault_pass --vault-id other_name@prompt_ask_vault_pass will be a little
                 # confusing since it will use the old format without the vault id in the prompt
@@ -415,7 +413,7 @@ class CLI(with_metaclass(ABCMeta, object)):
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
                     async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
-                    runas_prompt_opts=False, desc=None):
+                    runas_prompt_opts=False, desc=None, basedir_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         # base opts
@@ -544,8 +542,12 @@ class CLI(with_metaclass(ABCMeta, object)):
             parser.add_option('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
                               help="run handlers even if a task fails")
             parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
-                              help="clear the fact cache")
+                              help="clear the fact cache for every host in inventory")
 
+        if basedir_opts:
+            parser.add_option('--playbook-dir', default=None, dest='basedir', action='store',
+                              help="Since this tool does not use playbooks, use this as a subsitute playbook directory."
+                                   "This sets the relative path for many features including roles/ group_vars/ etc.")
         return parser
 
     @abstractmethod
@@ -774,6 +776,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # all needs loader
         loader = DataLoader()
+
+        basedir = getattr(options, 'basedir', False)
+        if basedir:
+            loader.set_basedir(basedir)
 
         vault_ids = options.vault_ids
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST

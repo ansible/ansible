@@ -32,17 +32,18 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, string_types, text_type
+from ansible.module_utils.six import iteritems, text_type
 from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
+from ansible.vars.clean import namespace_facts
 
 try:
     from __main__ import display
@@ -70,39 +71,6 @@ def preprocess_vars(a):
             raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
 
     return data
-
-
-def strip_internal_keys(dirty, exceptions=None):
-    '''
-    All keys stating with _ansible_ are internal, so create a copy of the 'dirty' dict
-    and remove them from the clean one before returning it
-    '''
-
-    if exceptions is None:
-        exceptions = ()
-    clean = dirty.copy()
-    for k in dirty.keys():
-        if isinstance(k, string_types) and k.startswith('_ansible_'):
-            if k not in exceptions:
-                del clean[k]
-        elif isinstance(dirty[k], dict):
-            clean[k] = strip_internal_keys(dirty[k])
-    return clean
-
-
-def remove_internal_keys(data):
-    '''
-    More nuanced version of strip_internal_keys
-    '''
-    for key in list(data.keys()):
-        if (key.startswith('_ansible_') and key != '_ansible_parsed') or key in C.INTERNAL_RESULT_KEYS:
-            display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
-            del data[key]
-
-    # remove bad/empty internal keys
-    for key in ['warnings', 'deprecations']:
-        if key in data and not data[key]:
-            del data[key]
 
 
 class VariableManager:
@@ -164,7 +132,8 @@ class VariableManager:
     @extra_vars.setter
     def extra_vars(self, value):
         ''' ensures a clean copy of the extra_vars are used to set the value '''
-        assert isinstance(value, MutableMapping), "the type of 'value' for extra_vars should be a MutableMapping, but is a %s" % type(value)
+        if not isinstance(value, MutableMapping):
+            raise AnsibleAssertionError("the type of 'value' for extra_vars should be a MutableMapping, but is a %s" % type(value))
         self._extra_vars = value.copy()
 
     def set_inventory(self, inventory):
@@ -178,7 +147,8 @@ class VariableManager:
     @options_vars.setter
     def options_vars(self, value):
         ''' ensures a clean copy of the options_vars are used to set the value '''
-        assert isinstance(value, dict), "the type of 'value' for options_vars should be a dict, but is a %s" % type(value)
+        if not isinstance(value, dict):
+            raise AnsibleAssertionError("the type of 'value' for options_vars should be a dict, but is a %s" % type(value))
         self._options_vars = value.copy()
 
     def _preprocess_vars(self, a):
@@ -232,22 +202,23 @@ class VariableManager:
             include_delegate_to=include_delegate_to,
         )
 
+        # default for all cases
+        basedirs = [self._loader.get_basedir()]
+
         if play:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
-        basedirs = []
         if task:
             # set basedirs
             if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
                 basedirs = task.get_search_path()
-            elif C.PLAYBOOK_VARS_ROOT == 'top':  # only option pre 2.3
-                basedirs = [self._loader.get_basedir()]
             elif C.PLAYBOOK_VARS_ROOT in ('bottom', 'playbook_dir'):  # only option in 2.4.0
                 basedirs = [task.get_search_path()[0]]
-            else:
+            elif C.PLAYBOOK_VARS_ROOT != 'top':
+                # preserves default basedirs, only option pre 2.3
                 raise AnsibleError('Unkown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
 
             # if we have a task in this context, and that task has a role, make
@@ -350,10 +321,15 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                host_facts = wrap_var(self._fact_cache.get(host.name, {}))
+                facts = self._fact_cache.get(host.name, {})
+                all_vars.update(namespace_facts(facts))
 
                 # push facts to main namespace
-                all_vars = combine_vars(all_vars, host_facts)
+                if C.INJECT_FACTS_AS_VARS:
+                    all_vars = combine_vars(all_vars, wrap_var(facts))
+                else:
+                    # always 'promote' ansible_local
+                    all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
             except KeyError:
                 pass
 
@@ -430,7 +406,9 @@ class VariableManager:
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
         if host:
+            # include_vars non-persistent cache
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            # fact non-persistent cache
             all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
         # next, we merge in role params and task include params
@@ -540,10 +518,11 @@ class VariableManager:
             items = [None]
 
         delegated_host_vars = dict()
+        item_var = getattr(task.loop_control, 'loop_var', 'item')
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
-                vars_copy['item'] = item
+                vars_copy[item_var] = item
 
             templar.set_available_variables(vars_copy)
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
@@ -616,7 +595,8 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        assert isinstance(facts, dict), "the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts)
+        if not isinstance(facts, dict):
+            raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts))
 
         if host.name not in self._fact_cache:
             self._fact_cache[host.name] = facts
@@ -631,7 +611,8 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        assert isinstance(facts, dict), "the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts)
+        if not isinstance(facts, dict):
+            raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts))
 
         if host.name not in self._nonpersistent_fact_cache:
             self._nonpersistent_fact_cache[host.name] = facts

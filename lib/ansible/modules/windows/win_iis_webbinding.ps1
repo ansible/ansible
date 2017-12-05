@@ -32,7 +32,7 @@ $ip = Get-AnsibleParam $params -name "ip"
 $certificatehash = Get-AnsibleParam $params -name "certificate_hash" -default $false
 $certificateStoreName = Get-AnsibleParam $params -name "certificate_store_name" -default "MY"
 
-$binding_parameters = New-Object psobject @{
+$binding_parameters = @{
   Name = $name
 };
 
@@ -58,7 +58,7 @@ if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null){
 }
 
 function Create-Binding-Info {
-  return New-Object psobject @{
+  return @{
     "bindingInformation" = $args[0].bindingInformation
     "certificateHash" = $args[0].certificateHash
     "certificateStoreName" = $args[0].certificateStoreName
@@ -69,7 +69,7 @@ function Create-Binding-Info {
 }
 
 # Result
-$result = New-Object psobject @{
+$result = @{
   changed = $false
   parameters = $binding_parameters
   matched = @()

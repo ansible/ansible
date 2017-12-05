@@ -26,10 +26,10 @@ import warnings
 from copy import deepcopy
 
 from ansible import constants as C
-from ansible.plugins import AnsiblePlugin
+from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
-from ansible.vars.manager import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys
 
 try:
     from __main__ import display as global_display
@@ -81,8 +81,25 @@ class CallbackBase(AnsiblePlugin):
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
 
-    def set_options(self, options):
-        self._plugin_options = options
+    def set_option(self, k, v):
+        self._plugin_options[k] = v
+
+    def get_option(self, k):
+        return self._plugin_options[k]
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        ''' This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
+            Also _options was already taken for CLI args and callbacks use _plugin_options instead.
+        '''
+
+        # load from config
+        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options)
+
+        # or parse specific options
+        if direct:
+            for k in direct:
+                if k in self._plugin_options:
+                    self.set_option(k, direct[k])
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
 
@@ -310,9 +327,7 @@ class CallbackBase(AnsiblePlugin):
         host = result._host.get_name()
         self.runner_on_unreachable(host, result._result)
 
-    def v2_runner_on_no_hosts(self, task):
-        self.runner_on_no_hosts()
-
+    # FIXME: not called
     def v2_runner_on_async_poll(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
@@ -320,18 +335,17 @@ class CallbackBase(AnsiblePlugin):
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
+    # FIXME: not called
     def v2_runner_on_async_ok(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         self.runner_on_async_ok(host, result._result, jid)
 
+    # FIXME: not called
     def v2_runner_on_async_failed(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         self.runner_on_async_failed(host, result._result, jid)
-
-    def v2_runner_on_file_diff(self, result, diff):
-        pass  # no v1 correspondence
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
@@ -349,6 +363,7 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.playbook_on_task_start(task.name, is_conditional)
 
+    # FIXME: not called
     def v2_playbook_on_cleanup_task_start(self, task):
         pass  # no v1 correspondence
 
@@ -358,13 +373,12 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
         self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
 
-    def v2_playbook_on_setup(self):
-        self.playbook_on_setup()
-
+    # FIXME: not called
     def v2_playbook_on_import_for_host(self, result, imported_file):
         host = result._host.get_name()
         self.playbook_on_import_for_host(host, imported_file)
 
+    # FIXME: not called
     def v2_playbook_on_not_import_for_host(self, result, missing_file):
         host = result._host.get_name()
         self.playbook_on_not_import_for_host(host, missing_file)

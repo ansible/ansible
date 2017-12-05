@@ -29,7 +29,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
-    vars_loader, connection_loader, strategy_loader, PluginLoader
+    vars_loader, connection_loader, strategy_loader, inventory_loader
 from ansible.utils import plugin_docs
 try:
     from __main__ import display
@@ -44,6 +44,9 @@ class DocCLI(CLI):
         provides a printout of their DOCUMENTATION strings,
         and it can create a short "snippet" which can be pasted into a playbook.  '''
 
+    # default ignore list for detailed views
+    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs')
+
     def __init__(self, args):
 
         super(DocCLI, self).__init__(args)
@@ -52,12 +55,14 @@ class DocCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage='usage: %prog [-l|-s] [options] [-t <plugin type] [plugin]',
+            usage='usage: %prog [-l|-F|-s] [options] [-t <plugin type] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
 
+        self.parser.add_option("-F", "--list_files", action="store_true", default=False, dest="list_files",
+                               help='Show plugin names and their source files without summaries (implies --list)')
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
                                help='List available plugins')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
@@ -70,8 +75,8 @@ class DocCLI(CLI):
 
         super(DocCLI, self).parse()
 
-        if [self.options.all_plugins, self.options.list_dir, self.options.show_snippet].count(True) > 1:
-            raise AnsibleOptionsError("Only one of -l, -s or -a can be used at the same time.")
+        if [self.options.all_plugins, self.options.list_dir, self.options.list_files, self.options.show_snippet].count(True) > 1:
+            raise AnsibleOptionsError("Only one of -l, -F, -s or -a can be used at the same time.")
 
         display.verbosity = self.options.verbosity
 
@@ -95,7 +100,7 @@ class DocCLI(CLI):
         elif plugin_type == 'vars':
             loader = vars_loader
         elif plugin_type == 'inventory':
-            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
+            loader = inventory_loader
         else:
             loader = module_loader
 
@@ -108,6 +113,16 @@ class DocCLI(CLI):
         # save only top level paths for errors
         search_paths = DocCLI.print_paths(loader)
         loader._paths = None  # reset so we can use subdirs below
+
+        # list plugins names and filepath for type
+        if self.options.list_files:
+            paths = loader._get_paths()
+            for path in paths:
+                self.find_plugins(path, plugin_type)
+
+            list_text = self.get_plugin_list_filenames(loader)
+            self.pager(list_text)
+            return 0
 
         # list plugins for type
         if self.options.list_dir:
@@ -264,6 +279,32 @@ class DocCLI(CLI):
             text.extend(deprecated)
         return "\n".join(text)
 
+    def get_plugin_list_filenames(self, loader):
+        columns = display.columns
+        displace = max(len(x) for x in self.plugin_list)
+        linelimit = columns - displace - 5
+        text = []
+
+        for plugin in sorted(self.plugin_list):
+
+            try:
+                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+
+                if filename is None:
+                    continue
+                if filename.endswith(".ps1"):
+                    continue
+                if os.path.isdir(filename):
+                    continue
+
+                text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
+
+            except Exception as e:
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+
+        return "\n".join(text)
+
     @staticmethod
     def print_paths(finder):
         ''' Returns a string suitable for printing of the search path '''
@@ -356,6 +397,10 @@ class DocCLI(CLI):
             for config in ('env', 'ini', 'yaml', 'vars'):
                 if config in opt and opt[config]:
                     conf[config] = opt.pop(config)
+                    for ignore in self.IGNORE:
+                        for item in conf[config]:
+                            if ignore in item:
+                                del item[ignore]
 
             if conf:
                 text.append(self._dump_yaml({'set_via': conf}, opt_indent))
@@ -403,7 +448,7 @@ class DocCLI(CLI):
 
     def get_man_text(self, doc):
 
-        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', self.options.type])
+        self.IGNORE = self.IGNORE + (self.options.type,)
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
@@ -454,7 +499,7 @@ class DocCLI(CLI):
 
         # Generic handler
         for k in sorted(doc):
-            if k in IGNORE or not doc[k]:
+            if k in self.IGNORE or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
                 text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))

@@ -87,8 +87,8 @@ changed:
 '''
 
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 import re
 
@@ -123,8 +123,8 @@ def get_vtp_config(module):
     vtp_parsed = {}
 
     if body:
-        version_regex = '.*VTP version running\s+:\s+(?P<version>\d).*'
-        domain_regex = '.*VTP Domain Name\s+:\s+(?P<domain>\S+).*'
+        version_regex = r'.*VTP version running\s+:\s+(?P<version>\d).*'
+        domain_regex = r'.*VTP Domain Name\s+:\s+(?P<domain>\S+).*'
 
         try:
             match_version = re.match(version_regex, body, re.DOTALL)

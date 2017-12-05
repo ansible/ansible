@@ -18,7 +18,8 @@
 #
 
 from ansible.compat.tests.mock import patch, Mock, MagicMock, call
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 import sys
 
@@ -42,9 +43,11 @@ class TestNetscalerSaveConfigModule(TestModule):
         cls.nitro_base_patcher.stop()
 
     def setUp(self):
+        super(TestNetscalerSaveConfigModule, self).setUp()
         self.nitro_base_patcher.start()
 
     def tearDown(self):
+        super(TestNetscalerSaveConfigModule, self).tearDown()
         self.nitro_base_patcher.stop()
 
     def test_graceful_nitro_error_on_login(self):

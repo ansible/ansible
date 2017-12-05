@@ -15,7 +15,7 @@
 - name: assert result of change workgroup (check mode)
   assert:
     that:
-    - change_workgroup_check|changed
+    - change_workgroup_check is changed
     - change_workgroup_result_check.stdout == workgroup.stdout
 
 - name: change workgroup
@@ -33,7 +33,7 @@
 - name: assert result of change workgroup
   assert:
     that:
-    - change_workgroup|changed
+    - change_workgroup is changed
     - change_workgroup_result.stdout_lines[0] == "ANSIBLETEST"
 
 - name: change workgroup (idempotent)
@@ -47,7 +47,7 @@
 - name: assert result of change workgroup (idempotent)
   assert:
     that:
-    - not change_workgroup_again|changed
+    - change_workgroup_again is not changed
 
 - name: change workgroup fail invalid name
   win_domain_membership:

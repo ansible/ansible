@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -29,30 +15,28 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
 from ansible.module_utils.f5_utils import AnsibleF5Client
 
 try:
     from library.bigip_iapp_service import Parameters
     from library.bigip_iapp_service import ModuleManager
     from library.bigip_iapp_service import ArgumentSpec
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_iapp_service import Parameters
         from ansible.modules.network.f5.bigip_iapp_service import ModuleManager
         from ansible.modules.network.f5.bigip_iapp_service import ArgumentSpec
+        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):
@@ -86,7 +70,7 @@ class TestParameters(unittest.TestCase):
         assert p.deviceGroup == 'none'
         assert p.inheritedTrafficGroup == 'true'
         assert p.inheritedDevicegroup == 'true'
-        assert p.trafficGroup == '/Common/traffic-group-local-only'
+        assert p.traffic_group == '/Common/traffic-group-local-only'
 
     def test_module_parameters_lists(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
@@ -149,6 +133,70 @@ class TestParameters(unittest.TestCase):
         assert 'value' in p.variables[1]
         assert p.variables[1]['name'] == 'afm__policy'
         assert p.variables[1]['value'] == '/#do_not_use#'
+
+    def test_module_strict_updates_from_top_level(self):
+        # Assumes the user did not provide any parameters
+
+        args = dict(
+            strict_updates=True
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'enabled'
+
+        args = dict(
+            strict_updates=False
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'disabled'
+
+    def test_module_strict_updates_override_from_top_level(self):
+        args = dict(
+            strict_updates=True,
+            parameters=dict(
+                strictUpdates='disabled'
+            )
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'enabled'
+
+        args = dict(
+            strict_updates=False,
+            parameters=dict(
+                strictUpdates='enabled'
+            )
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'disabled'
+
+    def test_module_strict_updates_only_parameters(self):
+        args = dict(
+            parameters=dict(
+                strictUpdates='disabled'
+            )
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'disabled'
+
+        args = dict(
+            parameters=dict(
+                strictUpdates='enabled'
+            )
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'enabled'
+
+    def test_api_strict_updates_from_top_level(self):
+        args = dict(
+            strictUpdates='enabled'
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'enabled'
+
+        args = dict(
+            strictUpdates='disabled'
+        )
+        p = Parameters(args)
+        assert p.strict_updates == 'disabled'
 
     def test_api_parameters_variables(self):
         args = dict(
@@ -227,7 +275,7 @@ class TestParameters(unittest.TestCase):
             trafficGroup='/Common/traffic-group-local-only'
         )
         p = Parameters(args)
-        assert p.trafficGroup == '/Common/traffic-group-local-only'
+        assert p.traffic_group == '/Common/traffic-group-local-only'
 
     def test_module_template_same_partition(self):
         args = dict(

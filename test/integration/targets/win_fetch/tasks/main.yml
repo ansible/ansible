@@ -84,7 +84,7 @@
 #- name: check fetch flat to directory result
 #  assert:
 #    that:
-#      - "not fetch_flat_dir|changed"
+#      - "fetch_flat_dir is not changed"
 
 - name: fetch a large binary file
   fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
@@ -142,9 +142,9 @@
 - name: check fetch missing no fail result
   assert:
     that:
-      - "not fetch_missing_nofail|failed"
+      - "fetch_missing_nofail is not failed"
       - "fetch_missing_nofail.msg"
-      - "not fetch_missing_nofail|changed"
+      - "fetch_missing_nofail is not changed"
 
 - name: attempt to fetch a non-existent file - fail on missing
   fetch: src="~/this_file_should_not_exist.txt" dest={{ host_output_dir }} fail_on_missing=yes
@@ -154,9 +154,9 @@
 - name: check fetch missing with failure
   assert:
     that:
-      - "fetch_missing|failed"
+      - "fetch_missing is failed"
       - "fetch_missing.msg"
-      - "not fetch_missing|changed"
+      - "fetch_missing is not changed"
 
 - name: attempt to fetch a directory
   fetch: src="C:\\Windows" dest={{ host_output_dir }}
@@ -167,5 +167,5 @@
   assert:
     that:
       # Doesn't fail anymore, only returns a message.
-      - "not fetch_dir|changed"
+      - "fetch_dir is not changed"
       - "fetch_dir.msg"

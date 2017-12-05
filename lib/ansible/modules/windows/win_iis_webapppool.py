@@ -133,7 +133,7 @@ EXAMPLES = r'''
     attributes:
       managedPipelineMode: Classic
       processModel.identityType: SpecificUser
-      processModel.username: '{{ansible_user}}'
+      processModel.userName: '{{ansible_user}}'
       processModel.password: '{{ansible_password}}'
       processModel.loadUserProfile: True
 

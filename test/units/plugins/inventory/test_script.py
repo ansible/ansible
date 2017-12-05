@@ -23,17 +23,18 @@ __metaclass__ = type
 
 import pytest
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.plugins.loader import PluginLoader
 from ansible.compat.tests import mock
 from ansible.compat.tests import unittest
 from ansible.module_utils._text import to_bytes, to_native
-
-from ansible.plugins.inventory.script import InventoryModule
 
 
 class TestInventoryModule(unittest.TestCase):
 
     def setUp(self):
+
         class Inventory():
             cache = dict()
 
@@ -50,6 +51,10 @@ class TestInventoryModule(unittest.TestCase):
         self.loader = mock.MagicMock()
         self.loader.load = mock.MagicMock()
 
+        inv_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
+        self.inventory_module = inv_loader.get('script')
+        self.inventory_module.set_options()
+
         def register_patch(name):
             patcher = mock.patch(name)
             self.addCleanup(patcher.stop)
@@ -64,9 +69,8 @@ class TestInventoryModule(unittest.TestCase):
     def test_parse_subprocess_path_not_found_fail(self):
         self.popen.side_effect = OSError("dummy text")
 
-        inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
-            inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
+            self.inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
         assert e.value.message == "problem running /foo/bar/foobar.py --list (dummy text)"
 
     def test_parse_subprocess_err_code_fail(self):
@@ -75,9 +79,8 @@ class TestInventoryModule(unittest.TestCase):
 
         self.popen_result.returncode = 1
 
-        inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
-            inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
+            self.inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
         assert e.value.message == to_native("Inventory script (/foo/bar/foobar.py) had an execution error: "
                                             "dummyédata\n ")
 
@@ -86,9 +89,8 @@ class TestInventoryModule(unittest.TestCase):
         self.popen_result.stderr = to_bytes("dummyédata")
         self.loader.load.side_effect = TypeError('obj must be string')
 
-        inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
-            inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
+            self.inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
         assert e.value.message == to_native("failed to parse executable inventory script results from "
                                             "/foo/bar/foobar.py: obj must be string\ndummyédata\n")
 
@@ -97,8 +99,7 @@ class TestInventoryModule(unittest.TestCase):
         self.popen_result.stderr = to_bytes("dummyédata")
         self.loader.load.return_value = 'i am not a dict'
 
-        inventory_module = InventoryModule()
         with pytest.raises(AnsibleError) as e:
-            inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
+            self.inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
         assert e.value.message == to_native("failed to parse executable inventory script results from "
                                             "/foo/bar/foobar.py: needs to be a json dict\ndummyédata\n")

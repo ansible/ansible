@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
@@ -69,7 +69,7 @@ class Task(Base, Conditional, Taggable, Become):
     _args = FieldAttribute(isa='dict', default=dict())
     _action = FieldAttribute(isa='string')
 
-    _async = FieldAttribute(isa='int', default=0)
+    _async_val = FieldAttribute(isa='int', default=0, alias='async')
     _changed_when = FieldAttribute(isa='list', default=[])
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')
@@ -106,6 +106,8 @@ class Task(Base, Conditional, Taggable, Become):
         path = ""
         if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        elif hasattr(self._parent._play, '_ds') and hasattr(self._parent._play._ds, '_data_source') and hasattr(self._parent._play._ds, '_line_number'):
+            path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
     def get_name(self):
@@ -157,7 +159,8 @@ class Task(Base, Conditional, Taggable, Become):
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
-        display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.9")
+        # FIXME: reenable afte 2.5
+        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.10")
 
     def preprocess_data(self, ds):
         '''
@@ -165,7 +168,8 @@ class Task(Base, Conditional, Taggable, Become):
         keep it short.
         '''
 
-        assert isinstance(ds, dict), 'ds (%s) should be a dict but was a %s' % (ds, type(ds))
+        if not isinstance(ds, dict):
+            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure suitable for the
@@ -416,7 +420,12 @@ class Task(Base, Conditional, Taggable, Become):
             value = self._attributes[attr]
             if self._parent and (value is None or extend):
                 if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
-                    parent_value = getattr(self._parent, attr, None)
+                    # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
+                    if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
+                        parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
+                    else:
+                        parent_value = getattr(self._parent, attr, None)
+
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:

@@ -146,6 +146,16 @@ options:
     type: bool
     default: 'no'
     version_added: "2.0"
+  private_key:
+    description:
+      - Specify the private key to use for SSH-based rsync connections (e.g. C(~/.ssh/id_rsa))
+    version_added: "1.6"
+  link_dest:
+    description:
+      - add a destination to hard link against during the rsync.
+    default:
+    version_added: "2.5"
+
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
@@ -171,6 +181,8 @@ notes:
      rsync protocol in source or destination path.
    - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
+   - link_destination is subject to the same limitations as the underlaying rsync daemon. Hard links are only preserved if the relative subtrees
+     of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 
 author:
 - Timothy Appnel (@tima)
@@ -282,6 +294,13 @@ EXAMPLES = '''
     rsync_opts:
       - "--no-motd"
       - "--exclude=.git"
+
+# Hardlink files if they didn't change
+- name: Use hardlinks when synchronizing filesystems
+  synchronize:
+    src: /tmp/path_a/foo.txt
+    dest: /tmp/path_b/foo.txt
+    link_dest: /tmp/path_a/
 '''
 
 
@@ -331,8 +350,8 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(required=True),
-            dest=dict(required=True),
+            src=dict(type='str', required=True),
+            dest=dict(type='str', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
             private_key=dict(type='path'),
@@ -358,6 +377,7 @@ def main():
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
+            link_dest=dict(type='list')
         ),
         supports_check_mode=True,
     )
@@ -394,6 +414,7 @@ def main():
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['ssh_args']
     verify_host = module.params['verify_host']
+    link_dest = module.params['link_dest']
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
@@ -471,6 +492,18 @@ def main():
     if partial:
         cmd.append('--partial')
 
+    if link_dest:
+        cmd.append('-H')
+        # verbose required because rsync does not believe that adding a
+        # hardlink is actually a change
+        cmd.append('-vv')
+        for x in link_dest:
+            link_path = os.path.abspath(os.path.expanduser(x))
+            destination_path = os.path.abspath(os.path.dirname(dest))
+            if destination_path.find(link_path) == 0:
+                module.fail_json(msg='Hardlinking into a subdirectory of the source would cause recursion. %s and %s' % (destination_path, dest))
+            cmd.append('--link-dest=%s' % link_path)
+
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=' + changed_marker + '%i %n%L')
 
@@ -487,7 +520,12 @@ def main():
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
 
-    changed = changed_marker in out
+    if link_dest:
+        # a leading period indicates no change
+        changed = (changed_marker + '.') not in out
+    else:
+        changed = changed_marker in out
+
     out_clean = out.replace(changed_marker, '')
     out_lines = out_clean.split('\n')
     while '' in out_lines:

@@ -338,7 +338,7 @@ class LinodeInventory(object):
 
     def to_safe(self, word):
         """Escapes any characters that would be invalid in an ansible group name."""
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """Converts a dict to a JSON object and dumps it as a formatted string."""

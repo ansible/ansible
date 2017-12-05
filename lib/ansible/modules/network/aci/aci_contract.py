@@ -88,7 +88,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -123,9 +123,24 @@ def main():
     priority = module.params['priority']
     dscp = module.params['dscp']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='contract')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzBrCP',
+            aci_rn='brc-{}'.format(contract),
+            filter_target='(vzBrCP.name, "{}")'.format(contract),
+            module_object=contract,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

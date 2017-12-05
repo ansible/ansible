@@ -63,7 +63,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -94,7 +94,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='port_security')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='l2PortSecurityPol',
+            aci_rn='infra/portsecurityP-{}'.format(port_security),
+            filter_target='(l2PortSecurityPol.name, "{}")'.format(port_security),
+            module_object=port_security,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

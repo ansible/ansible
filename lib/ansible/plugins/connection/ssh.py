@@ -22,14 +22,23 @@ DOCUMENTATION = '''
                - name: ansible_host
                - name: ansible_ssh_host
       host_key_checking:
-          #constant: HOST_KEY_CHECKING
           description: Determines if ssh should check host keys
           type: boolean
           ini:
               - section: defaults
                 key: 'host_key_checking'
+              - section: ssh_connection
+                key: 'host_key_checking'
+                version_added: '2.5'
           env:
               - name: ANSIBLE_HOST_KEY_CHECKING
+              - name: ANSIBLE_SSH_HOST_KEY_CHECKING
+                version_added: '2.5'
+          vars:
+              - name: ansible_host_key_checking
+                version_added: '2.5'
+              - name: ansible_ssh_host_key_checking
+                version_added: '2.5'
       password:
           description: Authentication password for the C(remote_user). Can be supplied as CLI option.
           vars:
@@ -176,6 +185,15 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
+      use_tty:
+        version_added: '2.5'
+        default: True
+        description: add -tt to ssh commands to force tty allocation
+        env: [{name: ANSIBLE_SSH_USETTY}]
+        ini:
+        - {key: usetty, section: ssh_connection}
+        type: boolean
+        yaml: {key: connection.usetty}
 '''
 
 import errno
@@ -770,23 +788,23 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_escalation':
                     if self._flags['become_success']:
-                        display.debug('Escalation succeeded')
+                        display.vvv('Escalation succeeded')
                         self._flags['become_success'] = False
                         state += 1
                     elif self._flags['become_error']:
-                        display.debug('Escalation failed')
+                        display.vvv('Escalation failed')
                         self._terminate_process(p)
                         self._flags['become_error'] = False
                         raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
                     elif self._flags['become_nopasswd_error']:
-                        display.debug('Escalation requires password')
+                        display.vvv('Escalation requires password')
                         self._terminate_process(p)
                         self._flags['become_nopasswd_error'] = False
                         raise AnsibleError('Missing %s password' % self._play_context.become_method)
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
-                        display.debug('Escalation prompt repeated')
+                        display.vvv('Escalation prompt repeated')
                         self._terminate_process(p)
                         self._flags['become_prompt'] = False
                         raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
@@ -948,7 +966,11 @@ class Connection(ConnectionBase):
 
         ssh_executable = self._play_context.ssh_executable
 
-        if not in_data and sudoable:
+        # -tt can cause various issues in some environments so allow the user
+        # to disable it as a troubleshooting method.
+        use_tty = self.get_option('use_tty')
+
+        if not in_data and sudoable and use_tty:
             args = (ssh_executable, '-tt', self.host, cmd)
         else:
             args = (ssh_executable, self.host, cmd)

@@ -9,6 +9,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     callback: unixy
     type: stdout
+    author: Allyson Bowles <@akatch>
     short_description: condensed Ansible output
     version_added: 2.5
     description:

@@ -3,7 +3,7 @@ Playbook Debugger
 
 .. contents:: Topics
 
-In 2.1 we added a ``debug`` strategy. This strategy enables you to invoke a debugger when a task has
+Ansible includes a ``debug`` strategy. This strategy enables you to invoke a debugger when a task has
 failed.  You have access to all of the features of the debugger in the context of the failed task.  You can then, for example, check or set the value of variables, update module arguments, and re-run the failed task with the new variables and arguments to help resolve the cause of the failure.
 
 To use the ``debug`` strategy, change the ``strategy`` attribute like this::
@@ -12,6 +12,9 @@ To use the ``debug`` strategy, change the ``strategy`` attribute like this::
       strategy: debug
       tasks:
       ...
+
+If you don't want change the code, you can define ``ANSIBLE_STRATEGY=debug``
+environment variable in order to enable the debugger.
 
 For example, run the playbook below::
 

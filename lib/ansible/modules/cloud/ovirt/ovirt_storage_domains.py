@@ -80,6 +80,7 @@ options:
             - "C(version) - NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
             - "C(timeout) - The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
             - "C(retrans) - The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
+            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
     iscsi:
         description:
@@ -145,6 +146,7 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/data
+      mount_options: noexec,nosuid
 
 # Add data localfs storage domain
 - ovirt_storage_domains:
@@ -304,7 +306,7 @@ class StorageDomainModule(BaseModule):
                     otypes.LogicalUnit(
                         id=lun_id,
                         address=storage.get('address'),
-                        port=storage.get('port', 3260),
+                        port=int(storage.get('port', 3260)),
                         target=storage.get('target'),
                         username=storage.get('username'),
                         password=storage.get('password'),

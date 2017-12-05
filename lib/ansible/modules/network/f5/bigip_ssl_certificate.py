@@ -4,13 +4,17 @@
 # Copyright (c) 2017 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: bigip_ssl_certificate
-short_description: Import/Delete certificates from BIG-IP.
+short_description: Import/Delete certificates from BIG-IP
 description:
   - This module will import/delete SSL certificates on BIG-IP LTM.
     Certificates can be imported from certificate and key files on the local
@@ -41,7 +45,7 @@ options:
       - absent
   name:
     description:
-      - SSL Certificate Name.  This is the cert/key pair name used
+      - SSL Certificate Name. This is the cert/key pair name used
         when importing a certificate/key into the F5. It also
         determines the filenames of the objects on the LTM
         (:Partition:name.cer_11111_1 and :Partition_name.key_11111_1).
@@ -69,87 +73,97 @@ notes:
     a role context.
 extends_documentation_fragment: f5
 requirements:
-    - f5-sdk >= 1.5.0
-    - BIG-IP >= v12
+  - f5-sdk >= 3.0.3
+  - BIG-IP >= v12
 author:
-    - Tim Rupp (@caphrim007)
+  - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Import PEM Certificate from local disk
   bigip_ssl_certificate:
-      name: "certificate-name"
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      cert_src: "/path/to/cert.crt"
-      key_src: "/path/to/key.key"
+    name: certificate-name
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    cert_src: /path/to/cert.crt
+    key_src: /path/to/key.key
   delegate_to: localhost
 
 - name: Use a file lookup to import PEM Certificate
   bigip_ssl_certificate:
-      name: "certificate-name"
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      cert_content: "{{ lookup('file', '/path/to/cert.crt') }}"
-      key_content: "{{ lookup('file', '/path/to/key.key') }}"
+    name: certificate-name
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    cert_content: "{{ lookup('file', '/path/to/cert.crt') }}"
+    key_content: "{{ lookup('file', '/path/to/key.key') }}"
+  delegate_to: localhost
+
+- name: Use a file lookup to import CA certificate chain
+  bigip_ssl_certificate:
+    name: ca-chain-name
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: present
+    cert_content: "{{ lookup('file', '/path/to/ca-chain.crt') }}"
   delegate_to: localhost
 
 - name: "Delete Certificate"
   bigip_ssl_certificate:
-      name: "certificate-name"
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      state: "absent"
+    name: certificate-name
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    state: absent
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 cert_name:
-    description: The name of the certificate that the user provided
-    returned: created
-    type: string
-    sample: "cert1"
+  description: The name of the certificate that the user provided
+  returned: created
+  type: string
+  sample: cert1
 key_filename:
-    description:
-        - The name of the SSL certificate key. The C(key_filename) and
-          C(cert_filename) will be similar to each other, however the
-          C(key_filename) will have a C(.key) extension.
-    returned: created
-    type: string
-    sample: "cert1.key"
+  description:
+    - The name of the SSL certificate key. The C(key_filename) and
+      C(cert_filename) will be similar to each other, however the
+      C(key_filename) will have a C(.key) extension.
+  returned: created
+  type: string
+  sample: cert1.key
 key_checksum:
-    description: SHA1 checksum of the key that was provided.
-    returned: changed and created
-    type: string
-    sample: "cf23df2207d99a74fbe169e3eba035e633b65d94"
+  description: SHA1 checksum of the key that was provided.
+  returned: changed and created
+  type: string
+  sample: cf23df2207d99a74fbe169e3eba035e633b65d94
 key_source_path:
-    description: Path on BIG-IP where the source of the key is stored
-    returned: created
-    type: string
-    sample: "/var/config/rest/downloads/cert1.key"
+  description: Path on BIG-IP where the source of the key is stored
+  returned: created
+  type: string
+  sample: /var/config/rest/downloads/cert1.key
 cert_filename:
-    description:
-        - The name of the SSL certificate. The C(cert_filename) and
-          C(key_filename) will be similar to each other, however the
-          C(cert_filename) will have a C(.crt) extension.
-    returned: created
-    type: string
-    sample: "cert1.crt"
+  description:
+    - The name of the SSL certificate. The C(cert_filename) and
+      C(key_filename) will be similar to each other, however the
+      C(cert_filename) will have a C(.crt) extension.
+  returned: created
+  type: string
+  sample: cert1.crt
 cert_checksum:
-    description: SHA1 checksum of the cert that was provided.
-    returned: changed and created
-    type: string
-    sample: "f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0"
+  description: SHA1 checksum of the cert that was provided.
+  returned: changed and created
+  type: string
+  sample: f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0
 cert_source_path:
-    description: Path on BIG-IP where the source of the certificate is stored.
-    returned: created
-    type: string
-    sample: "/var/config/rest/downloads/cert1.crt"
+  description: Path on BIG-IP where the source of the certificate is stored.
+  returned: created
+  type: string
+  sample: /var/config/rest/downloads/cert1.crt
 '''
 
 
@@ -162,14 +176,16 @@ try:
 except ImportError:
     from io import StringIO
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError,
-    iteritems
-)
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.f5_utils import iteritems
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -232,11 +248,10 @@ class KeyParameters(Parameters):
 
     @property
     def key_filename(self):
-        fname, fext = os.path.splitext(self.name)
-        if fext == '':
-            return fname + '.key'
-        else:
+        if self.name.endswith('.key'):
             return self.name
+        else:
+            return self.name + '.key'
 
     @property
     def key_checksum(self):
@@ -292,11 +307,10 @@ class CertParameters(Parameters):
 
     @property
     def cert_filename(self):
-        fname, fext = os.path.splitext(self.name)
-        if fext == '':
-            return fname + '.crt'
-        else:
+        if self.name.endswith('.crt'):
             return self.name
+        else:
+            return self.name + '.crt'
 
     @property
     def cert_src(self):
@@ -544,14 +558,14 @@ class KeyManager(BaseManager):
                 if getattr(self.want, key) is not None:
                     changed[key] = getattr(self.want, key)
             if changed:
-                self.changes = Parameters(changed)
+                self.changes = KeyParameters(changed)
         except Exception:
             pass
 
     def _update_changed_options(self):
         changed = {}
         try:
-            for key in CertParameters.updatables:
+            for key in KeyParameters.updatables:
                 if getattr(self.want, key) is not None:
                     attr1 = getattr(self.want, key)
                     attr2 = getattr(self.have, key)
@@ -560,7 +574,7 @@ class KeyManager(BaseManager):
                 if self.want.key_checksum != self.have.checksum:
                     changed['key_checksum'] = self.want.key_checksum
             if changed:
-                self.changes = CertParameters(changed)
+                self.changes = KeyParameters(changed)
                 return True
         except Exception:
             pass
@@ -635,7 +649,7 @@ class ArgumentSpec(object):
             name=dict(
                 required=True
             ),
-            cert_content=dict(),
+            cert_content=dict(aliases=['content']),
             cert_src=dict(
                 type='path',
                 removed_in_version='2.4'
@@ -649,7 +663,6 @@ class ArgumentSpec(object):
                 no_log=True
             ),
             state=dict(
-                required=False,
                 default='present',
                 choices=['absent', 'present']
             )

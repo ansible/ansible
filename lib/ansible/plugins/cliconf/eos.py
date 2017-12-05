@@ -23,7 +23,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
@@ -62,8 +62,8 @@ class Cliconf(CliconfBase):
         for cmd in chain([b'configure'], to_list(command), [b'end']):
             self.send_command(cmd)
 
-    def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
     def get_capabilities(self):
         result = {}

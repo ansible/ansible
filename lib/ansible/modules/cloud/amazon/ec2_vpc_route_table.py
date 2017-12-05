@@ -128,6 +128,13 @@ EXAMPLES = '''
         instance_id: "{{ nat.instance_id }}"
   register: nat_route_table
 
+- name: delete route table
+  ec2_vpc_route_table:
+    vpc_id: vpc-1245678
+    region: us-west-1
+    route_table_id: "{{ route_table.id }}"
+    lookup: id
+    state: absent
 '''
 
 import re
@@ -162,9 +169,9 @@ class AnsibleSubnetSearchException(AnsibleRouteTableException):
     pass
 
 
-CIDR_RE = re.compile('^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$')
-SUBNET_RE = re.compile('^subnet-[A-z0-9]+$')
-ROUTE_TABLE_RE = re.compile('^rtb-[A-z0-9]+$')
+CIDR_RE = re.compile(r'^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$')
+SUBNET_RE = re.compile(r'^subnet-[A-z0-9]+$')
+ROUTE_TABLE_RE = re.compile(r'^rtb-[A-z0-9]+$')
 
 
 def find_subnets(vpc_conn, vpc_id, identified_subnets):

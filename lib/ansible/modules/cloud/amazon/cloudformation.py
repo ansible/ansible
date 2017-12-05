@@ -5,13 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-# upcoming features:
-# - Ted's multifile YAML concatenation
-# - changesets (and blocking/waiting for them)
-# - finish AWSRetry conversion
-# - move create/update code out of main
-# - unit tests
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -256,7 +249,7 @@ def get_stack_events(cfn, stack_name, token_filter=None):
                 "StackEvents[?ClientRequestToken == '{0}']".format(token_filter)
             ))
         else:
-            events = list(pg)
+            events = list(pg.search("StackEvents[*]"))
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
@@ -292,7 +285,7 @@ def create_stack(module, stack_params, cfn):
 
     try:
         cfn.create_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params['ClientRequestToken'])
+        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
@@ -351,7 +344,7 @@ def update_stack(module, stack_params, cfn):
     # don't need to be updated.
     try:
         cfn.update_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', stack_params['ClientRequestToken'])
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -540,9 +533,8 @@ def main():
         stack_params['NotificationARNs'] = []
 
     # can't check the policy when verifying.
-    if module.params['stack_policy'] is not None and not module.check_mode:
+    if module.params['stack_policy'] is not None and not module.check_mode and not module.params['create_changeset']:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
-
 
     template_parameters = module.params['template_parameters']
     stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
@@ -630,7 +622,7 @@ def main():
                 result = {'changed': False, 'output': 'Stack not found.'}
             else:
                 cfn.delete_stack(StackName=stack_params['StackName'])
-                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params['ClientRequestToken'])
+                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params.get('ClientRequestToken', None))
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 

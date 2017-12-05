@@ -54,17 +54,15 @@ EXAMPLES = '''
 
 import os
 
-from collections import MutableMapping
-
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.plugins.cache import FactCache
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
     """ constructs groups and vars using Jinaj2 template expressions """
 
     NAME = 'constructed'
@@ -91,36 +89,32 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
-        try:
-            data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError("Unable to parse %s: %s" % (to_native(path), to_native(e)))
+        self._read_config_data(path)
 
-        if not data:
-            raise AnsibleParserError("%s is empty" % (to_native(path)))
-        elif not isinstance(data, MutableMapping):
-            raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(data))
-        elif data.get('plugin') != self.NAME:
-            raise AnsibleParserError("%s is not a constructed groups config file, plugin entry must be 'constructed'" % (to_native(path)))
-
-        strict = data.get('strict', False)
+        strict = self.get_option('strict')
+        fact_cache = FactCache()
         try:
             # Go over hosts (less var copies)
             for host in inventory.hosts:
 
                 # get available variables to templar
                 hostvars = inventory.hosts[host].get_vars()
+                if host in fact_cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, fact_cache[host])
+
+                # create composite vars
+                self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
+
+                # refetch host vars in case new ones have been created above
+                hostvars = inventory.hosts[host].get_vars()
                 if host in self._cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, self._cache[host])
 
-                # create composite vars
-                self._set_composite_vars(data.get('compose'), hostvars, host, strict=strict)
-
                 # constructed groups based on conditionals
-                self._add_host_to_composed_groups(data.get('groups'), hostvars, host, strict=strict)
+                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict)
 
                 # constructed groups based variable values
-                self._add_host_to_keyed_groups(data.get('keyed_groups'), hostvars, host, strict=strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict)
 
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))

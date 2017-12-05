@@ -73,7 +73,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 # Mapping dicts are used to normalize the proposed data to what the APIC expects, which will keep diffs accurate
@@ -111,7 +111,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='l2_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='l2IfPol',
+            aci_rn='infra/l2IfP-{}'.format(l2_policy),
+            filter_target='(l2IfPol.name, "{}")'.format(l2_policy),
+            module_object=l2_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

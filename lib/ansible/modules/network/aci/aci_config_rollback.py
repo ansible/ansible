@@ -134,7 +134,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.urls import fetch_url
@@ -196,7 +196,15 @@ def main():
 
         filename = 'ce2_{0}-{1}'.format(export_policy, snapshot)
 
-        aci.construct_url(root_class="import_policy")
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configImportP',
+                aci_rn='fabric/configimp-{}'.format(import_policy),
+                filter_target='(configImportP.name, "{}")'.format(import_policy),
+                module_object=import_policy,
+            ),
+        )
+
         aci.get_existing()
 
         # Filter out module parameters with null values

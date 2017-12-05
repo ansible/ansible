@@ -40,7 +40,8 @@ options:
     default: null
   repository:
     description:
-      - A package repository or multiple repositories
+      - A package repository or multiple repositories.
+        Unlike with the underlying apk command, this list will override the system repositories rather than supplement them.
     required: false
     default: null
     version_added: "2.4"
@@ -67,6 +68,7 @@ options:
     choices: [ "yes", "no" ]
 notes:
   - '"name" and "upgrade" are mutually exclusive.'
+  - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
 '''
 
 EXAMPLES = '''
@@ -148,7 +150,7 @@ from ansible.module_utils.basic import AnsibleModule
 def parse_for_packages(stdout):
     packages = []
     data = stdout.split('\n')
-    regex = re.compile('^\(\d+/\d+\)\s+\S+\s+(\S+)')
+    regex = re.compile(r'^\(\d+/\d+\)\s+\S+\s+(\S+)')
     for l in data:
         p = regex.search(l)
         if p:
@@ -299,7 +301,7 @@ def main():
     # add repositories to the APK_PATH
     if p['repository']:
         for r in p['repository']:
-            APK_PATH = "%s --repository %s" % (APK_PATH, r)
+            APK_PATH = "%s --repository %s --repositories-file /dev/null" % (APK_PATH, r)
 
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:

@@ -23,8 +23,8 @@
 - name: assert the ping worked
   assert:
     that:
-    - not result|failed
-    - not result|changed
+    - result is not failed
+    - result is not changed
     - result.ping == 'pong'
 
 - name: ping with data
@@ -35,8 +35,8 @@
 - name: assert the ping worked with data
   assert:
     that:
-    - not result|failed
-    - not result|changed
+    - result is not failed
+    - result is not changed
     - result.ping == 'testing'
 
 - name: ping with data=crash
@@ -48,6 +48,6 @@
 - name: assert the ping failed with data=boom
   assert:
     that:
-    - result|failed
-    - not result|changed
+    - result is failed
+    - result is not changed
     - "'Exception: boom' in result.module_stderr"

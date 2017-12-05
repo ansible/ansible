@@ -64,7 +64,7 @@ RETURN = """
 import os
 import sys
 from ansible.module_utils.six.moves.urllib.parse import urlparse
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
 
 try:
@@ -131,7 +131,8 @@ class LookupModule(LookupBase):
             for param in params[1:]:
                 if param and len(param) > 0:
                     name, value = param.split('=')
-                    assert name in paramvals, "%s not a valid consul lookup parameter" % name
+                    if name not in paramvals:
+                        raise AnsibleAssertionError("%s not a valid consul lookup parameter" % name)
                     paramvals[name] = value
         except (ValueError, AssertionError) as e:
             raise AnsibleError(e)

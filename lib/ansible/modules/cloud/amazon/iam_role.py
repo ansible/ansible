@@ -37,6 +37,11 @@ options:
     description:
       - The name of the role to create.
     required: true
+  description:
+    description:
+      - Provide a description of the new role
+    required: false
+    version_added: "2.5"
   assume_role_policy_document:
     description:
       - "The trust relationship policy document that grants an entity permission to assume the role.  This parameter is required when state: present."
@@ -60,10 +65,11 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create a role
+# Create a role with description
 - iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+    description: This is My New Role
     state: present
 
 # Create a role and attach a managed policy called "PowerUserAccess"
@@ -208,6 +214,8 @@ def create_or_update_role(connection, module):
     params['Path'] = module.params.get('path')
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
+    if module.params.get('description') is not None:
+        params['Description'] = module.params.get('description')
     managed_policies = module.params.get('managed_policy')
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -288,7 +296,7 @@ def create_or_update_role(connection, module):
     role = get_role(connection, module, params['RoleName'])
 
     role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
-    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role))
+    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
 
 
 def destroy_role(connection, module):
@@ -360,7 +368,8 @@ def main():
             path=dict(default="/", type='str'),
             assume_role_policy_document=dict(type='json'),
             managed_policy=dict(type='list', aliases=['managed_policies']),
-            state=dict(choices=['present', 'absent'], required=True)
+            state=dict(choices=['present', 'absent'], required=True),
+            description=dict(required=False, type='str')
         )
     )
 

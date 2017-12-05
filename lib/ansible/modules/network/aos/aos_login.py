@@ -81,7 +81,7 @@ aos_session:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import check_aos_version
+from ansible.module_utils.network.aos.aos import check_aos_version
 
 try:
     from apstra.aosom.session import Session
@@ -90,6 +90,7 @@ try:
     HAS_AOS_PYEZ = True
 except ImportError:
     HAS_AOS_PYEZ = False
+
 
 def aos_login(module):
 
@@ -110,6 +111,7 @@ def aos_login(module):
     module.exit_json(changed=False,
                      ansible_facts=dict(aos_session=aos.session),
                      aos_session=dict(aos_session=aos.session))
+
 
 def main():
     module = AnsibleModule(

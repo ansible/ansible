@@ -6,11 +6,10 @@ Conditionals
 
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), or previous task result.
 In some cases, the values of variables may depend on other variables.
-Further, additional groups can be created to manage hosts based on whether the hosts match other criteria.
-There are many options to control execution flow in Ansible.
-More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons
+Further, additional groups can be created to manage hosts based on whether the hosts match other criteria. This topic covers how conditionals are used in playbooks. 
 
-Let's dig into what they are.
+.. note:: There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons.
+
 
 .. _the_when_statement:
 
@@ -58,21 +57,20 @@ decide to do something conditionally based on success or failure::
         ignore_errors: True
 
       - command: /bin/something
-        when: result|failed
+        when: result is failed
 
-      # In older versions of ansible use |success, now both are valid but succeeded uses the correct tense.
+      # In older versions of ansible use ``success``, now both are valid but succeeded uses the correct tense.
       - command: /bin/something_else
-        when: result|succeeded
+        when: result is succeeded
 
       - command: /bin/still/something_else
-        when: result|skipped
+        when: result is skipped
 
 
-.. note:: the filters have been updated in 2.1 so both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).
 
-Note that was a little bit of foreshadowing on the 'register' statement.  We'll get to it a bit later in this chapter.
 
-As a reminder, to see what facts are available on a particular system, you can do::
+As a reminder, to see what facts are available on a particular system, you can do the following::
 
     ansible hostname.example.com -m setup
 
@@ -197,7 +195,7 @@ instead, the tasks are executed as expected because the conditional is not appli
 Conditional Imports
 ```````````````````
 
-.. note:: This is an advanced topic that is infrequently used.  You can probably skip this section.
+.. note:: This is an advanced topic that is infrequently used.
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.

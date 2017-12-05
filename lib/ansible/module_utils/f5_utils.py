@@ -176,7 +176,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems, with_metaclass
-from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils._text import to_text
 
@@ -226,7 +226,7 @@ class AnsibleF5Client(object):
     def __init__(self, argument_spec=None, supports_check_mode=False,
                  mutually_exclusive=None, required_together=None,
                  required_if=None, required_one_of=None, add_file_common_args=False,
-                 f5_product_name='bigip'):
+                 f5_product_name='bigip', sans_state=False, sans_partition=False):
 
         self.f5_product_name = f5_product_name
 
@@ -234,7 +234,11 @@ class AnsibleF5Client(object):
         merged_arg_spec.update(F5_COMMON_ARGS)
         if argument_spec:
             merged_arg_spec.update(argument_spec)
-            self.arg_spec = merged_arg_spec
+        if sans_state:
+            del merged_arg_spec['state']
+        if sans_partition:
+            del merged_arg_spec['partition']
+        self.arg_spec = merged_arg_spec
 
         mutually_exclusive_params = []
         if mutually_exclusive:
@@ -301,7 +305,7 @@ class AnsibleF5Client(object):
                 kwargs['user'],
                 kwargs['password'],
                 port=kwargs['server_port'],
-                token='local'
+                auth_provider='local'
             )
 
     def reconnect(self):

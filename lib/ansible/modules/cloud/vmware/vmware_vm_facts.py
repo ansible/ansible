@@ -51,12 +51,12 @@ virtual_machines:
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import HAS_PYVMOMI, connect_to_api, get_all_objs, vmware_argument_spec
+from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, get_all_objs,
+                                         vmware_argument_spec, _get_vm_prop)
 
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/getallvms.py
@@ -72,8 +72,9 @@ def get_all_virtual_machines(content):
             if _ip_address is None:
                 _ip_address = ""
         _mac_address = []
-        if vm.config is not None:
-            for dev in vm.config.hardware.device:
+        all_devices = _get_vm_prop(vm, ('config', 'hardware', 'device'))
+        if all_devices:
+            for dev in all_devices:
                 if isinstance(dev, vim.vm.device.VirtualEthernetCard):
                     _mac_address.append(dev.macAddress)
 

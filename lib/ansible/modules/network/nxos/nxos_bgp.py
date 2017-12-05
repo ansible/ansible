@@ -310,10 +310,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -461,7 +461,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
-    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     asn_match = asn_re.match(str(netcfg))
 
     if asn_match:
