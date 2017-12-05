@@ -708,7 +708,7 @@ class ACIModule(object):
         if child_configs:
             children = []
             for child in child_configs:
-                child_copy = deepcopy(copy)
+                child_copy = deepcopy(child)
                 has_value = False
                 for root_key in child_copy.keys():
                     for final_keys, values in child_copy[root_key]['attributes'].items():
