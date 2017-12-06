@@ -48,7 +48,17 @@ class ActionModule(_ActionModule):
         elif self._play_context.connection == 'local':
             provider = load_provider(iosxr_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
-            pc.connection = 'network_cli'
+            if self._task.action in ['iosxr_netconf', 'iosxr_config', 'iosxr_command'] or \
+                    (provider['transport'] == 'cli' and (self._task.action == 'iosxr_banner' or
+                                                         self._task.action == 'iosxr_facts' or self._task.action == 'iosxr_logging' or
+                                                         self._task.action == 'iosxr_system' or self._task.action == 'iosxr_user' or
+                                                         self._task.action == 'iosxr_interface')):
+                pc.connection = 'network_cli'
+                pc.port = int(provider['port'] or self._play_context.port or 22)
+            else:
+                pc.connection = 'netconf'
+                pc.port = int(provider['port'] or self._play_context.port or 830)
+
             pc.network_os = 'iosxr'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
             pc.port = int(provider['port'] or self._play_context.port or 22)
@@ -70,15 +80,16 @@ class ActionModule(_ActionModule):
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
-        if socket_path is None:
-            socket_path = self._connection.socket_path
+        if pc.connection == 'network_cli':
+            if socket_path is None:
+                socket_path = self._connection.socket_path
 
-        conn = Connection(socket_path)
-        out = conn.get_prompt()
-        while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('abort')
+            conn = Connection(socket_path)
             out = conn.get_prompt()
+            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                conn.send_command('abort')
+                out = conn.get_prompt()
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result

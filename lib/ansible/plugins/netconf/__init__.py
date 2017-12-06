@@ -54,10 +54,9 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         problems.
 
         List of supported rpc's:
+            :get: Retrieves running configuration and device state information
             :get_config: Retrieves the specified configuration from the device
             :edit_config: Loads the specified commands into the remote device
-            :get: Execute specified command on remote device
-            :get_capabilities: Retrieves device information and supported rpc methods
             :commit: Load configuration from candidate to running
             :discard_changes: Discard changes to candidate datastore
             :validate: Validate the contents of the specified configuration.
@@ -65,6 +64,9 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
             :unlock: Release a configuration lock, previously obtained with the lock operation.
             :copy_config: create or replace an entire configuration datastore with the contents of another complete
                           configuration datastore.
+            :get-schema: Retrieves the required schema from the device
+            :get_capabilities: Retrieves device information and supported rpc methods
+
             For JUNOS:
             :execute_rpc: RPC to be execute on remote device
             :load_configuration: Loads given configuration on device
@@ -100,7 +102,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
            :source: name of the configuration datastore being queried
            :filter: specifies the portion of the configuration to retrieve
            (by default entire configuration is retrieved)"""
-        return self.m.get_config(*args, **kwargs).data_xml
+        pass
 
     @ensure_connected
     def get(self, *args, **kwargs):
@@ -108,7 +110,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         *filter* specifies the portion of the configuration to retrieve
         (by default entire configuration is retrieved)
         """
-        return self.m.get(*args, **kwargs).data_xml
+        pass
 
     @ensure_connected
     def edit_config(self, *args, **kwargs):
@@ -122,10 +124,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
             :error_option: if specified must be one of { `"stop-on-error"`, `"continue-on-error"`, `"rollback-on-error"` }
             The `"rollback-on-error"` *error_option* depends on the `:rollback-on-error` capability.
         """
-        try:
-            return self.m.edit_config(*args, **kwargs).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
+        pass
 
     @ensure_connected
     def validate(self, *args, **kwargs):
@@ -133,7 +132,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :source: is the name of the configuration datastore being validated or `config`
         element containing the configuration subtree to be validated
         """
-        return self.m.validate(*args, **kwargs).data_xml
+        pass
 
     @ensure_connected
     def copy_config(self, *args, **kwargs):
@@ -162,7 +161,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
     def discard_changes(self, *args, **kwargs):
         """Revert the candidate configuration to the currently running configuration.
         Any uncommitted changes are discarded."""
-        return self.m.discard_changes(*args, **kwargs).data_xml
+        pass
 
     @ensure_connected
     def commit(self, *args, **kwargs):
@@ -176,10 +175,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :confirmed: whether this is a confirmed commit
         :timeout: specifies the confirm timeout in seconds
         """
-        try:
-            return self.m.commit(*args, **kwargs).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
+        pass
 
     @ensure_connected
     def validate(self, *args, **kwargs):
@@ -187,8 +183,18 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
            :source: name of configuration data store"""
         return self.m.validate(*args, **kwargs).data_xml
 
+    @ensure_connected
+    def get_schema(self, *args, **kwargs):
+        """Retrieves the required schema from the device
+        """
+        return self.m.get_schema(*args, **kwargs)
+
+    @ensure_connected
+    def locked(self, *args, **kwargs):
+        return self.m.locked(*args, **kwargs)
+
     @abstractmethod
-    def get_capabilities(self, commands):
+    def get_capabilities(self):
         """Retrieves device information and supported
         rpc methods by device platform and return result
         as a string
@@ -213,3 +219,5 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
     def fetch_file(self, source, destination):
         """Fetch file over scp from remote device"""
         pass
+
+# TODO Restore .data_xml, when ncclient supports it for all platforms

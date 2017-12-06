@@ -115,7 +115,7 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args, run_commands
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_command
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
@@ -166,7 +166,7 @@ class Hardware(FactsBase):
             results['dir /all'])
 
         match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
-            results['show memory summary'])
+                          results['show memory summary'])
         if match:
             self.facts['memtotal_mb'] = match.group(1)
             self.facts['memfree_mb'] = match.group(2)
@@ -188,7 +188,7 @@ class Interfaces(FactsBase):
 
     def commands(self):
         return(['show interfaces', 'show ipv6 interface',
-            'show lldp', 'show lldp neighbors detail'])
+                'show lldp', 'show lldp neighbors detail'])
 
     def populate(self, results):
         self.facts['all_ipv4_addresses'] = list()
@@ -360,7 +360,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 
@@ -405,7 +404,7 @@ def main():
     try:
         for inst in instances:
             commands = inst.commands()
-            responses = run_commands(module, commands)
+            responses = run_command(module, commands)
             results = dict(zip(commands, responses))
             inst.populate(results)
             facts.update(inst.facts)
