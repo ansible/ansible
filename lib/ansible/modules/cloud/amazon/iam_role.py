@@ -57,6 +57,12 @@ options:
       - Create or remove the IAM role
     required: true
     choices: [ 'present', 'absent' ]
+  create_instance_profile:
+    description:
+      - Creates an IAM instance profile along with the role
+    type: bool
+    default: true
+    version_added: 2.5
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -217,6 +223,7 @@ def create_or_update_role(connection, module):
     if module.params.get('description') is not None:
         params['Description'] = module.params.get('description')
     managed_policies = module.params.get('managed_policy')
+    create_instance_profile = module.params.get('create_instance_profile')
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
     changed = False
@@ -275,22 +282,23 @@ def create_or_update_role(connection, module):
                 changed = True
 
     # Instance profile
-    try:
-        instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
-        # Make sure an instance profile is attached
+    if create_instance_profile:
         try:
-            connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
-            changed = True
+            instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
         except ClientError as e:
-            # If the profile already exists, no problem, move on
-            if e.response['Error']['Code'] == 'EntityAlreadyExists':
-                pass
-            else:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-        connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
+            # Make sure an instance profile is attached
+            try:
+                connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
+                changed = True
+            except ClientError as e:
+                # If the profile already exists, no problem, move on
+                if e.response['Error']['Code'] == 'EntityAlreadyExists':
+                    pass
+                else:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Get the role again
     role = get_role(connection, module, params['RoleName'])
@@ -369,7 +377,8 @@ def main():
             assume_role_policy_document=dict(type='json'),
             managed_policy=dict(type='list', aliases=['managed_policies']),
             state=dict(choices=['present', 'absent'], required=True),
-            description=dict(required=False, type='str')
+            description=dict(required=False, type='str'),
+            create_instance_profile=dict(type='bool', default=True)
         )
     )
 
