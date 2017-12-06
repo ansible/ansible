@@ -251,7 +251,8 @@ def set_acl(consul_client, configuration):
         # Token given but no ACL with token exists, however an ACL with the same name exists. Remove ACL with outdated
         # token
         remove_old_result = remove_acl(consul_client, existing_acls_mapped_by_name[configuration.name].token)
-        assert remove_old_result.changed
+        if not remove_old_result.changed:
+            raise AssertionError()
         del existing_acls_mapped_by_name[configuration.name]
 
     if configuration.token and configuration.token in existing_acls_mapped_by_token:
