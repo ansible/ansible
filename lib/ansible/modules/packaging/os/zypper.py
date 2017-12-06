@@ -62,6 +62,12 @@ options:
         choices: [ package, patch, pattern, product, srcpackage, application ]
         default: "package"
         version_added: "2.0"
+    extra_args_precommand:
+        version_added: "2.5"
+        required: false
+        description:
+          - Add additional  global target options to C(zypper) .
+          - Options should be supplied in a single line as if given in the command line.
     disable_gpg_check:
         description:
           - Whether to disable to GPG signature checking of the package
@@ -160,6 +166,13 @@ EXAMPLES = '''
     name: '*'
     state: latest
     type: patch
+
+# install rpm package in /tmp/folder using root option
+- zypper:
+    name: /tmp/nginx-1.8.0-1.sles12.ngx.x86_64.rpm
+    state: present
+    disable_gpg_check: yes
+    extra_args_precommand: --root /tmp/folder
 
 # Perform a dist-upgrade with additional arguments
 - zypper:
@@ -309,7 +322,9 @@ def get_cmd(m, subcommand):
     is_install = subcommand in ['install', 'update', 'patch', 'dist-upgrade']
     is_refresh = subcommand == 'refresh'
     cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive', '--xmlout']
-
+    if m.params['extra_args_precommand']:
+        args_list = m.params['extra_args_precommand'].split()
+        cmd.extend(args_list)
     # add global options before zypper command
     if (is_install or is_refresh) and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
@@ -461,6 +476,7 @@ def main():
             name = dict(required=True, aliases=['pkg'], type='list'),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'dist-upgrade']),
             type = dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
+            extra_args_precommand = dict(required=False, default=None),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
             disable_recommends = dict(required=False, default='yes', type='bool'),
             force = dict(required=False, default='no', type='bool'),
