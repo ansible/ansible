@@ -400,6 +400,6 @@ hexlify()'ied result of:
       - the plaintext
 
         - the original plaintext
-        - padding up to the AES256 blocksize. (The data used for padding is based on `RFX5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
+        - padding up to the AES256 blocksize. (The data used for padding is based on `RFC5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
 
 
