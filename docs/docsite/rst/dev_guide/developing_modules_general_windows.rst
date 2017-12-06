@@ -18,12 +18,13 @@ Windows environment setup
 Unlike Python module development which can be run on the host that runs
 Ansible, Windows modules need to be written and tested for Windows hosts.
 While evaluation editions of Windows can be downloaded from
-Microsoft, these images are usually not ready to be used by Ansible out of the
-box. The easiest way to set up a Windows host is to set up a virtual machine 
-using Vagrant. Vagrant can be used to download existing OS images called *boxes*
-that are then deployed to a hypervisor like VirtualBox. These boxes can either be
-created and stored offline or they can be downloaded from a central repository
-called Vagrant Cloud.
+Microsoft, these images are usually not ready to be used by Ansible without
+further modification. The easiest way to set up a Windows host so that it is
+ready to by used by Ansible is to set up a virtual machine using Vagrant.
+Vagrant can be used to download existing OS images called *boxes* that are then
+deployed to a hypervisor like VirtualBox. These boxes can either be created and
+stored offline or they can be downloaded from a central repository called
+Vagrant Cloud.
 
 This guide will use the Vagrant boxes created by the `packer-windoze <https://github.com/jborean93/packer-windoze>`_
 repository which have also been uploaded to `Vagrant Cloud <https://app.vagrantup.com/boxes/search?utf8=%E2%9C%93&sort=downloads&provider=&q=jborean93>`_.
