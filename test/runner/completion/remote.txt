@@ -1,4 +1,4 @@
-freebsd/10.3-STABLE
-freebsd/11.0-STABLE
+freebsd/10.4
+freebsd/11.1
 osx/10.11
 rhel/7.4
