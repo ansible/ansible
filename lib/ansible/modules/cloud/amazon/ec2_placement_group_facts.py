@@ -72,8 +72,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (connect_to_aws,
                                       boto3_conn,
                                       ec2_argument_spec,
-                                      get_aws_connection_info,
-                                      HAS_BOTO3)
+                                      get_aws_connection_info)
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
@@ -118,9 +117,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(
         module, boto3=True)
