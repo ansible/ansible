@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqldatabase
 version_added: "2.5"
-short_description: Manage Database instance
+short_description: Manage SQL Database instance
 description:
-    - Create, update and delete instance of Database
+    - Create, update and delete instance of SQL Database
 
 options:
     resource_group:
@@ -127,7 +127,7 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Database
+  - name: Create (or update) SQL Database
     azure_rm_sqldatabase:
       resource_group: resource_group_name
       server_name: server_name
@@ -151,59 +151,24 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-state:
-    description: Current state of Database
+id:
+    description:
+        - Resource ID.
     returned: always
-    type: complex
-    contains:
-        id:
-            description:
-                - Resource ID.
-            returned: always
-            type: str
-            sample: id
-        name:
-            description:
-                - Resource name.
-            returned: always
-            type: str
-            sample: name
-        type:
-            description:
-                - Resource type.
-            returned: always
-            type: str
-            sample: type
-        tags:
-            description:
-                - Resource tags.
-            returned: always
-            type: complex
-            sample: tags
-        location:
-            description:
-                - Resource location.
-            returned: always
-            type: str
-            sample: location
-        kind:
-            description:
-                - Kind of database.  This is metadata used for the Azure portal experience.
-            returned: always
-            type: str
-            sample: kind
-        database_id:
-            description:
-                - The ID of the database.
-            returned: always
-            type: str
-            sample: database_id
-        status:
-            description:
-                - The status of the database.
-            returned: always
-            type: str
-            sample: status
+    type: str
+    sample: id
+database_id:
+    description:
+        - The ID of the database.
+    returned: always
+    type: str
+    sample: database_id
+status:
+    description:
+        - The status of the database.
+    returned: always
+    type: str
+    sample: status
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -223,7 +188,7 @@ class Actions:
 
 
 class AzureRMDatabases(AzureRMModuleBase):
-    """Configuration class for an Azure RM Database resource"""
+    """Configuration class for an Azure RM SQL Database resource"""
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -378,78 +343,84 @@ class AzureRMDatabases(AzureRMModuleBase):
         if not ("location" in self.parameters):
             self.parameters["location"] = resource_group.location
 
-        old_response = self.get_database()
+        old_response = self.get_sqldatabase()
 
         if not old_response:
-            self.log("Database instance doesn't exist")
+            self.log("SQL Database instance doesn't exist")
             if self.state == 'absent':
                 self.log("Old instance didn't exist")
             else:
                 self.to_do = Actions.Create
         else:
-            self.log("Database instance already exists")
+            self.log("SQL Database instance already exists")
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                self.log("Need to check if Database instance has to be deleted or may be updated")
+                self.log("Need to check if SQL Database instance has to be deleted or may be updated")
                 self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
-            self.log("Need to Create / Update the Database instance")
+            self.log("Need to Create / Update the SQL Database instance")
 
             if self.check_mode:
                 return self.results
 
-            self.results['state'] = self.create_update_database()
+            response = self.create_update_sqldatabase()
             if not old_response:
                 self.results['changed'] = True
             else:
-                self.results['changed'] = old_response.__ne__(self.results['state'])
+                self.results['changed'] = old_response.__ne__(response)
+            self.results.update(response)
 
             # remove unnecessary fields from return state
-            self.results['state'].pop('collation', None)
-            self.results['state'].pop('creation_date', None)
-            self.results['state'].pop('containment_state', None)
-            self.results['state'].pop('current_service_objective_id', None)
-            self.results['state'].pop('earliest_restore_date', None)
-            self.results['state'].pop('create_mode', None)
-            self.results['state'].pop('source_database_id', None)
-            self.results['state'].pop('source_database_deletion_date', None)
-            self.results['state'].pop('restore_point_in_time', None)
-            self.results['state'].pop('recovery_services_recovery_point_resource_id', None)
-            self.results['state'].pop('edition', None)
-            self.results['state'].pop('max_size_bytes', None)
-            self.results['state'].pop('requested_service_objective_id', None)
-            self.results['state'].pop('requested_service_objective_name', None)
-            self.results['state'].pop('service_level_objective', None)
-            self.results['state'].pop('elastic_pool_name', None)
-            self.results['state'].pop('default_secondary_location', None)
-            self.results['state'].pop('service_tier_advisors', None)
-            self.results['state'].pop('transparent_data_encryption', None)
-            self.results['state'].pop('recommended_index', None)
-            self.results['state'].pop('failover_group_id', None)
-            self.results['state'].pop('read_scale', None)
-            self.results['state'].pop('sample_name', None)
-            self.results['state'].pop('zone_redundant', None)
+            self.results.pop('name', None)
+            self.results.pop('type', None)
+            self.results.pop('tags', None)
+            self.results.pop('location', None)
+            self.results.pop('kind', None)
+            self.results.pop('collation', None)
+            self.results.pop('creation_date', None)
+            self.results.pop('containment_state', None)
+            self.results.pop('current_service_objective_id', None)
+            self.results.pop('earliest_restore_date', None)
+            self.results.pop('create_mode', None)
+            self.results.pop('source_database_id', None)
+            self.results.pop('source_database_deletion_date', None)
+            self.results.pop('restore_point_in_time', None)
+            self.results.pop('recovery_services_recovery_point_resource_id', None)
+            self.results.pop('edition', None)
+            self.results.pop('max_size_bytes', None)
+            self.results.pop('requested_service_objective_id', None)
+            self.results.pop('requested_service_objective_name', None)
+            self.results.pop('service_level_objective', None)
+            self.results.pop('elastic_pool_name', None)
+            self.results.pop('default_secondary_location', None)
+            self.results.pop('service_tier_advisors', None)
+            self.results.pop('transparent_data_encryption', None)
+            self.results.pop('recommended_index', None)
+            self.results.pop('failover_group_id', None)
+            self.results.pop('read_scale', None)
+            self.results.pop('sample_name', None)
+            self.results.pop('zone_redundant', None)
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
-            self.log("Database instance deleted")
-            self.delete_database()
+            self.log("SQL Database instance deleted")
+            self.delete_sqldatabase()
             self.results['changed'] = True
         else:
-            self.log("Database instance unchanged")
+            self.log("SQL Database instance unchanged")
             self.results['state'] = old_response
             self.results['changed'] = False
 
         return self.results
 
-    def create_update_database(self):
+    def create_update_sqldatabase(self):
         '''
-        Creates or updates Database with the specified configuration.
+        Creates or updates SQL Database with the specified configuration.
 
-        :return: deserialized Database instance state dictionary
+        :return: deserialized SQL Database instance state dictionary
         '''
-        self.log("Creating / Updating the Database instance {0}".format(self.name))
+        self.log("Creating / Updating the SQL Database instance {0}".format(self.name))
 
         try:
             response = self.mgmt_client.databases.create_or_update(self.resource_group,
@@ -460,34 +431,34 @@ class AzureRMDatabases(AzureRMModuleBase):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
-            self.log('Error attempting to create the Database instance.')
-            self.fail("Error creating the Database instance: {0}".format(str(exc)))
+            self.log('Error attempting to create the SQL Database instance.')
+            self.fail("Error creating the SQL Database instance: {0}".format(str(exc)))
         return response.as_dict()
 
-    def delete_database(self):
+    def delete_sqldatabase(self):
         '''
-        Deletes specified Database instance in the specified subscription and resource group.
+        Deletes specified SQL Database instance in the specified subscription and resource group.
 
         :return: True
         '''
-        self.log("Deleting the Database instance {0}".format(self.name))
+        self.log("Deleting the SQL Database instance {0}".format(self.name))
         try:
             response = self.mgmt_client.databases.delete(self.resource_group,
                                                          self.server_name,
                                                          self.name)
         except CloudError as e:
-            self.log('Error attempting to delete the Database instance.')
-            self.fail("Error deleting the Database instance: {0}".format(str(e)))
+            self.log('Error attempting to delete the SQL Database instance.')
+            self.fail("Error deleting the SQL Database instance: {0}".format(str(e)))
 
         return True
 
-    def get_database(self):
+    def get_sqldatabase(self):
         '''
-        Gets the properties of the specified Database.
+        Gets the properties of the specified SQL Database.
 
-        :return: deserialized Database instance state dictionary
+        :return: deserialized SQL Database instance state dictionary
         '''
-        self.log("Checking if the Database instance {0} is present".format(self.name))
+        self.log("Checking if the SQL Database instance {0} is present".format(self.name))
         found = False
         try:
             response = self.mgmt_client.databases.get(self.resource_group,
@@ -495,9 +466,9 @@ class AzureRMDatabases(AzureRMModuleBase):
                                                       self.name)
             found = True
             self.log("Response : {0}".format(response))
-            self.log("Database instance : {0} found".format(response.name))
+            self.log("SQL Database instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the Database instance.')
+            self.log('Did not find the SQL Database instance.')
         if found is True:
             return response.as_dict()
 
