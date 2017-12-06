@@ -121,7 +121,7 @@ requirements:
 EXAMPLES = '''
 - name: vdirect_runnable
   vdirect_runnable:
-      vdirect_primary_ip: 10.10.10.10
+      vdirect_ip: 10.10.10.10
       vdirect_user: vDirect
       vdirect_password: radware
       runnable_type: ConfigurationTemplate

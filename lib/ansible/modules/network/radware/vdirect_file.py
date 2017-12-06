@@ -106,7 +106,7 @@ requirements:
 EXAMPLES = '''
 - name: vdirect_file
   vdirect_file:
-      vdirect_primary_ip: 10.10.10.10
+      vdirect_ip: 10.10.10.10
       vdirect_user: vDirect
       vdirect_password: radware
       file_name: /tmp/get_vlans.vm
