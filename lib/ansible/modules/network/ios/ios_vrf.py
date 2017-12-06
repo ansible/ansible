@@ -1,31 +1,19 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
 DOCUMENTATION = """
 ---
 module: ios_vrf
 version_added: "2.3"
-author: "Peter Sprygada (@privateip)"
+author:
+- Peter Sprygada (@privateip)
 short_description: Manage the collection of VRF definitions on Cisco IOS devices
 description:
   - This module provides declarative management of VRF definitions on
@@ -75,16 +63,17 @@ options:
       - Instructs the module to consider the
         VRF definition absolute.  It will remove any previously configured
         VRFs on the device.
-    default: false
+    type: bool
+    default: 'no'
   state:
     description:
       - Configures the state of the VRF definition
         as it relates to the device operational configuration.  When set
         to I(present), the VRF should be configured in the device active
         configuration and when set to I(absent) the VRF should not be
-        in the device active configuration
+        in the device active configuration.
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
@@ -140,9 +129,8 @@ from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.ios.ios import load_config, get_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.network.common.config import NetworkConfig
+from ansible.module_utils.network.ios.ios import check_args, get_config, ios_argument_spec, load_config
 from ansible.module_utils.six import iteritems
 
 
@@ -175,9 +163,10 @@ def add_command_to_vrf(name, cmd, commands):
         ])
     commands.append(cmd)
 
+
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state'] # FIXME NOT USED
+    state = module.params['state']  # FIXME NOT USED
 
     for update in updates:
         want, have = update
@@ -226,6 +215,7 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def parse_description(configobj, name):
     cfg = configobj['vrf definition %s' % name]
     cfg = '\n'.join(cfg.children)
@@ -233,12 +223,14 @@ def parse_description(configobj, name):
     if match:
         return match.group(1)
 
+
 def parse_rd(configobj, name):
     cfg = configobj['vrf definition %s' % name]
     cfg = '\n'.join(cfg.children)
     match = re.search(r'rd (.+)$', cfg, re.M)
     if match:
         return match.group(1)
+
 
 def parse_interfaces(configobj, name):
     vrf_cfg = 'vrf forwarding %s' % name
@@ -248,6 +240,7 @@ def parse_interfaces(configobj, name):
         if vrf_cfg in '\n'.join(configobj[intf].children):
             interfaces.append(intf.split(' ')[1])
     return interfaces
+
 
 def map_config_to_obj(module):
     config = get_config(module)
@@ -290,6 +283,7 @@ def get_param_value(key, item, module):
 
     return value
 
+
 def map_params_to_obj(module):
     vrfs = module.params.get('vrfs')
     if not vrfs:
@@ -319,6 +313,7 @@ def map_params_to_obj(module):
         objects.append(item)
 
     return objects
+
 
 def update_objects(want, have):
     updates = list()
@@ -365,15 +360,15 @@ def main():
     argument_spec = dict(
         vrfs=dict(type='list'),
 
-        name=dict(),
-        description=dict(),
-        rd=dict(),
+        name=dict(type='str'),
+        description=dict(type='str'),
+        rd=dict(type='str'),
 
         interfaces=dict(type='list'),
 
-        delay=dict(default=10, type='int'),
+        delay=dict(type='int', default=10),
         purge=dict(type='bool', default=False),
-        state=dict(default='present', choices=['present', 'absent'])
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     argument_spec.update(ios_argument_spec)
