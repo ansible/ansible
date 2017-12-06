@@ -17,7 +17,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33252)
 * Fix quote filter when given an integer to quote (https://github.com/ansible/ansible/issues/33272)
 * nxos_vrf_interface fix when validating the interface (https://github.com/ansible/ansible/issues/33227)
-
+* Fix for win_copy when sourcing files from an SMBv1 share
+  (https://github.com/ansible/ansible/pull/33576)
 
 <a id="2.4.2"></a>
 
