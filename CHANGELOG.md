@@ -9,9 +9,10 @@ Ansible Changes By Release
 * Fix `pamd` rule args regexp to match file paths (https://github.com/ansible/ansible/pull/33432)
 * Check if SELinux policy exists before setting (https://github.com/ansible/ansible/pull/31834)
 * Set locale to `C` in `letsencrypt` module to fix date parsing errors (https://github.com/ansible/ansible/pull/31339)
-
 * Fix include in loop when stategy=free
   (https://github.com/ansible/ansible/pull/33094)
+* Fix save parameter in asa_config (https://github.com/ansible/ansible/pull/32761)
+* Fix --vault-id support in ansible-pull (https://github.com/ansible/ansible/pull/33629)
 
 
 <a id="2.4.2"></a>
