@@ -37,8 +37,9 @@ description:
     the needed REST API calls.
 
 version_added: "2.5"
-author: "Nicolas Thomas / thomnico / (nthomas at fortinet.com) and \
- Miguel Angel Munoz / mamunozgonzalez / (magonzalez at fortinet.com)"
+author:
+    - Nicolas Thomas (@thomnico)
+    - Miguel Angel Munoz (@mamunozgonzalez)
 notes:
     - "Requires fortiosapi library developed by Fortinet"
     - "Run as a local_action in your playbook"
@@ -259,25 +260,13 @@ results:
   description: Data returned by the endpoint operation
   returned: on sucess
   type: string
-  sample: {
-            "apply-to": "admin-password ipsec-preshared-key",
-            "change-4-characters": "disable",
-            "expire-day": 90,
-            "expire-status": "enable",
-            "min-lower-case-letter": 2,
-            "min-non-alphanumeric": 1,
-            "min-number": 2,
-            "min-upper-case-letter": 2,
-            "minimum-length": 8,
-            "reuse-password": "disable",
-            "status": "enable
-          }
+  sample: 'apply-to: admin-password ipsec-preshared-key'
 
 status:
   description: Indication of the operation's result
   returned: always
   type: string
-  sample: "success"
+  sample: success
 
 version:
   description: Version of the FortiGate
@@ -290,16 +279,7 @@ version:
 from ansible.module_utils.basic import AnsibleModule
 import logging
 
-try:
-    from fortiosapi import FortiOSAPI
-    HAS_FORTIOSAPI = True
-except ImportError:
-    HAS_FORTIOSAPI = False
-
-if HAS_FORTIOSAPI:
-    fos = FortiOSAPI()
-else:
-    raise ImportError("fortiosapi module is required")
+fos = None
 
 formatter = logging.Formatter('%(asctime)s %(name)-12s '
                               '%(levelname)-8s %(message)s')
@@ -702,6 +682,7 @@ def fortios_cmdb_set(data):
 
 
 def main():
+
     fields = {
         "host": {"required": True, "type": "str"},
         "password": {"required": False, "type": "str"},
@@ -716,6 +697,14 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
+    try:
+        from fortiosapi import FortiOSAPI
+    except ImportError:
+        raise ImportError("fortiosapi module is required")
+
+    global fos
+    fos = FortiOSAPI()
+
     is_error, has_changed, result = fortios_cmdb_set(module.params)
 
     if not is_error:

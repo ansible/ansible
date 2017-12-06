@@ -1,5 +1,4 @@
 cryptography
-fortiosapi
 jinja2
 mock
 paramiko
