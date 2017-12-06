@@ -294,7 +294,7 @@ class VdirectRunnable(object):
         result = self.client.runnable.run(data, self.type, self.name, self.action_name)
         result_to_return = {'msg': ''}
         if result[rest_client.RESP_STATUS] == 200:
-            if result[rest_client.RESP_DATA]['status'] == 200 and result[rest_client.RESP_DATA]['success']:
+            if result[rest_client.RESP_DATA]['success']:
                 if self.type == WORKFLOW_TEMPLATE_RUNNABLE_TYPE:
                     result_to_return['msg'] = WORKFLOW_CREATION_SUCCESS
                 elif self.type == CONFIGURATION_TEMPLATE_RUNNABLE_TYPE:
