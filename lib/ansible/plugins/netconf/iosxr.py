@@ -104,8 +104,6 @@ class Netconf(NetconfBase):
         ])
 
         install_filter = build_xml('install', install_meta, opcode='filter')
-        if install_filter == 'no_lxml':
-            raise AnsibleError('lxml is not installed')
 
         reply = self.get(install_filter)
         ele_boot_variable = etree.fromstring(reply).find('.//boot-variable/boot-variable')
@@ -117,8 +115,6 @@ class Netconf(NetconfBase):
             device_info['network_os_version'] = re.split('-', ele_package_name.text)[-1]
 
         hostname_filter = build_xml('host-names', opcode='filter')
-        if hostname_filter == 'no_lxml':
-            raise AnsibleError('lxml is not installed')
 
         reply = self.get(hostname_filter)
         device_info['network_os_hostname'] = etree.fromstring(reply).find('.//host-name').text

@@ -127,7 +127,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec
-from ansible.module_utils.network.iosxr.iosxr import check_args, command_spec
+from ansible.module_utils.network.iosxr.iosxr import command_spec
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
@@ -181,7 +181,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     commands = parse_commands(module, warnings)
 

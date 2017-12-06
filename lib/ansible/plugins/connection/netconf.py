@@ -114,7 +114,6 @@ class Connection(ConnectionBase):
         self._netconf = None
         self._manager = None
         self._connected = False
-        self._netconf = None
 
         self._local = LocalConnection(play_context, new_stdin, *args, **kwargs)
 

@@ -83,21 +83,16 @@ import collections
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import get_config_diff, commit_config, discard_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
-from ansible.module_utils.network.iosxr.iosxr import get_device_capabilities, build_xml
-
-try:
-    from lxml import etree
-    HAS_LXML = True
-except ImportError:
-    HAS_LXML = False
+from ansible.module_utils.network.iosxr.iosxr import get_config_diff, commit_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, discard_config
+from ansible.module_utils.network.iosxr.iosxr import build_xml, is_cliconf, is_netconf
+from ansible.module_utils.network.iosxr.iosxr import etree_find, etree_findall
 
 
 class ConfigBase(object):
-    def __init__(self, module, warnings):
+    def __init__(self, module):
         self._module = module
-        self._result = {'changed': False, 'warnings': warnings}
+        self._result = {'changed': False, 'warnings': []}
         self._want = {}
         self._have = {}
 
@@ -113,8 +108,8 @@ class ConfigBase(object):
 
 
 class CliConfiguration(ConfigBase):
-    def __init__(self, module, warnings):
-        super(CliConfiguration, self).__init__(module, warnings)
+    def __init__(self, module):
+        super(CliConfiguration, self).__init__(module)
 
     def map_obj_to_commands(self):
         commands = list()
@@ -157,8 +152,8 @@ class CliConfiguration(ConfigBase):
 
 
 class NCConfiguration(ConfigBase):
-    def __init__(self, module, warnings):
-        super(NCConfiguration, self).__init__(module, warnings)
+    def __init__(self, module):
+        super(NCConfiguration, self).__init__(module)
         self._banners_meta = collections.OrderedDict()
         self._banners_meta.update([
             ('banner', {'xpath': 'banners/banner', 'tag': True, 'attrib': "operation"}),
@@ -169,17 +164,14 @@ class NCConfiguration(ConfigBase):
     def map_obj_to_commands(self):
         state = self._module.params['state']
         _get_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode="filter")
-        if _get_filter == 'no_lxml':
-            self._module.fail_json(msg='lxml is not installed')
 
         running = get_config(self._module, source='running', config_filter=_get_filter)
 
         banner_name = None
         banner_text = None
-        running_utf8 = running.encode('utf8')
-        if etree.fromstring(running_utf8).find('.//banner-text') is not None:
-            banner_name = etree.fromstring(running_utf8).find('.//banner-name').text
-            banner_text = etree.fromstring(running_utf8).find('.//banner-text').text
+        if etree_find(running, 'banner-text') is not None:
+            banner_name = etree_find(running, 'banner-name').text
+            banner_text = etree_find(running, 'banner-text').text
 
         opcode = None
         if state == 'absent' and banner_name == self._module.params['banner'] and len(banner_text):
@@ -190,8 +182,6 @@ class NCConfiguration(ConfigBase):
         self._result['commands'] = []
         if opcode:
             _edit_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode=opcode)
-            if _edit_filter == 'no_lxml':
-                self._module.fail_json(msg='lxml is not installed')
 
             if _edit_filter is not None:
                 if not self._module.check_mode:
@@ -202,7 +192,7 @@ class NCConfiguration(ConfigBase):
                     if diff:
                         commit_config(self._module)
                         self._result['changed'] = True
-                        self._result['commands'] = etree.tostring(_edit_filter)
+                        self._result['commands'] = _edit_filter
                         if self._module._diff:
                             self._result['diff'] = {'prepared': diff}
                     else:
@@ -232,21 +222,11 @@ def main():
                            required_if=required_if,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
-
-    device_capabilities = get_device_capabilities(module)
-    network_api = device_capabilities.get('network_api')
-
-    if network_api == 'cliconf':
+    if is_cliconf(module):
         module.deprecate("cli support for 'iosxr_banner' is deprecated. Use transport netconf instead', version='4 releases from v2.5")
-        config_object = CliConfiguration(module, warnings)
-    elif network_api == 'netconf':
-        if not HAS_LXML:
-            module.fail_json(msg=('lxml is not installed'))
-        config_object = NCConfiguration(module, warnings)
-    else:
-        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
+        config_object = CliConfiguration(module)
+    elif is_netconf(module):
+        config_object = NCConfiguration(module)
 
     result = config_object.run()
     module.exit_json(**result)

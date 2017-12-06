@@ -115,7 +115,7 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args, run_command
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_command
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
@@ -360,7 +360,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 

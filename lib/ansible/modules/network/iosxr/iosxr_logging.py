@@ -115,7 +115,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
 from ansible.module_utils.network.common.utils import remove_default_spec
 
 
@@ -350,7 +350,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 

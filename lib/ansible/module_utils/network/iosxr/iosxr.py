@@ -60,7 +60,9 @@ NS_DICT = {
     'INSTALL_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-installmgr-admin-oper"},
     'HOST-NAMES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-cfg"},
     'M:TYPE_NSMAP': {"idx": "urn:ietf:params:xml:ns:yang:iana-if-type"},
-    'ETHERNET_NSMAP': {None: "http://openconfig.net/yang/interfaces/ethernet"}
+    'ETHERNET_NSMAP': {None: "http://openconfig.net/yang/interfaces/ethernet"},
+    'CETHERNET_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-drivers-media-eth-cfg"},
+    'INTERFACE-CONFIGURATIONS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"}
 }
 
 iosxr_provider_spec = {
@@ -98,10 +100,6 @@ def get_provider_argspec():
     return iosxr_provider_spec
 
 
-def check_args(module, warnings):
-    pass
-
-
 def get_connection(module):
     if hasattr(module, 'connection'):
         return module.connection
@@ -126,40 +124,6 @@ def get_device_capabilities(module):
     module.capabilities = json.loads(capabilities)
 
     return module.capabilities
-
-
-# Builds netconf xml rpc document from meta-data
-# e.g:
-#
-# Module inputs:
-# banner_params = [{'banner':'motd', 'text':'Ansible banner example', 'state':'present'}]
-#
-# Meta-data definition
-# bannermap = collections.OrderedDict()
-# bannermap.update([
-#     ('banner', {'xpath' : 'banners/banner', 'tag' : True, 'attrib' : "operation"}),
-#     ('a:banner', {'xpath' : 'banner/banner-name'}),
-#     ('a:text', {'xpath' : 'banner/banner-text', 'operation' : 'edit'})
-# ])
-#
-# Fields:
-#   key: exact match to the key in arg_spec for a parameter
-#        (prefixes --> a: value fetched from arg_spec, m: value fetched from meta-data)
-#   xpath: xpath of the element (based on YANG model)
-#   tag: True if no text on the element
-#   attrib: attribute to be embedded in the element (e.g. xc:operation="merge")
-#   operation: if edit --> includes the element in edit_config() query else ignores for get() queries
-#   value: if key is prefixed with "m:", value is required in meta-data
-#
-# Output:
-# <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
-#   <banners xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg">
-#     <banner xc:operation="merge">
-#       <banner-name>motd</banner-name>
-#       <banner-text>Ansible banner example</banner-text>
-#     </banner>
-#   </banners>
-# </config>
 
 
 def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
@@ -223,8 +187,48 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
 
 
 def build_xml(container, xmap=None, params=None, opcode=None):
-    if not HAS_XML:
-        return 'no_lxml'
+
+    '''
+    Builds netconf xml rpc document from meta-data
+
+    Args:
+        container: the YANG container within the namespace
+        xmap: meta-data map to build xml tree
+        params: Input params that feed xml tree values
+        opcode: operation to be performed (merge, delete etc.)
+
+    Example:
+        Module inputs:
+            banner_params = [{'banner':'motd', 'text':'Ansible banner example', 'state':'present'}]
+
+        Meta-data definition:
+            bannermap = collections.OrderedDict()
+            bannermap.update([
+                ('banner', {'xpath' : 'banners/banner', 'tag' : True, 'attrib' : "operation"}),
+                ('a:banner', {'xpath' : 'banner/banner-name'}),
+                ('a:text', {'xpath' : 'banner/banner-text', 'operation' : 'edit'})
+            ])
+
+            Fields:
+                key: exact match to the key in arg_spec for a parameter
+                   (prefixes --> a: value fetched from arg_spec, m: value fetched from meta-data)
+                xpath: xpath of the element (based on YANG model)
+                tag: True if no text on the element
+                attrib: attribute to be embedded in the element (e.g. xc:operation="merge")
+                operation: if edit --> includes the element in edit_config() query else ignores for get() queries
+                value: if key is prefixed with "m:", value is required in meta-data
+
+        Output:
+            <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+              <banners xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg">
+                <banner xc:operation="merge">
+                  <banner-name>motd</banner-name>
+                  <banner-text>Ansible banner example</banner-text>
+                </banner>
+              </banners>
+            </config>
+    :returns: xml rpc document as a string
+    '''
 
     if opcode == 'filter':
         root = etree.Element("filter", type="subtree")
@@ -245,17 +249,62 @@ def build_xml(container, xmap=None, params=None, opcode=None):
             for item in subtree_list:
                 container_ele.append(item)
 
-    return root
+    return etree.tostring(root)
+
+
+def etree_find(root, node):
+    element = etree.fromstring(root).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+    if element is not None:
+        return element
+
+    return None
+
+
+def etree_findall(root, node):
+    element = etree.fromstring(root).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+    if element is not None:
+        return element
+
+    return None
+
+
+def is_cliconf(module):
+    capabilities = get_device_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api not in ('cliconf', 'netconf'):
+        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
+        return False
+
+    if network_api == 'cliconf':
+        return True
+
+    return False
+
+
+def is_netconf(module):
+    capabilities = get_device_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api not in ('cliconf', 'netconf'):
+        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
+        return False
+
+    if network_api == 'netconf':
+        if not HAS_NCCLIENT:
+            module.fail_json(msg=('ncclient is not installed'))
+        if not HAS_XML:
+            module.fail_json(msg=('lxml is not installed'))
+
+        return True
+
+    return False
 
 
 def get_config_diff(module, running=None, candidate=None):
     conn = get_connection(module)
-    capabilities = get_device_capabilities(module)
-    network_api = capabilities.get('network_api')
 
-    if network_api == 'cliconf':
+    if is_cliconf(module):
         return conn.get('show commit changes diff')
-    elif network_api == 'netconf':
+    elif is_netconf(module):
         if running and candidate:
             running_data = running.split("\n", 1)[1].rsplit("\n", 1)[0]
             candidate_data = candidate.split("\n", 1)[1].rsplit("\n", 1)[0]
@@ -263,9 +312,8 @@ def get_config_diff(module, running=None, candidate=None):
                 d = Differ()
                 diff = list(d.compare(running_data.splitlines(), candidate_data.splitlines()))
                 return '\n'.join(diff).strip()
-        return None
-    else:
-        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
+
+    return None
 
 
 def discard_config(module):
@@ -275,14 +323,14 @@ def discard_config(module):
 
 def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, persist=False, check=False):
     conn = get_connection(module)
+    reply = None
+
     if check:
         reply = conn.validate()
     else:
-        capabilities = get_device_capabilities(module)
-        network_api = capabilities.get('network_api')
-        if network_api == 'netconf':
+        if is_netconf(module):
             reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
-        elif network_api == 'cliconf':
+        elif is_cliconf(module):
             reply = conn.commit(comment=comment)
 
     return reply
@@ -292,15 +340,6 @@ def get_config(module, source='running', config_filter=None):
     global _DEVICE_CONFIGS
 
     conn = get_connection(module)
-    capabilities = get_device_capabilities(module)
-    network_api = capabilities.get('network_api')
-
-    if network_api == 'netconf':
-        if not HAS_NCCLIENT:
-            module.fail_json(msg=('ncclient is not installed'))
-        if not HAS_XML:
-            module.fail_json(msg=('lxml is not installed'))
-        config_filter = etree.tostring(config_filter)
 
     if config_filter is not None:
         key = (source + ' ' + ' '.join(config_filter)).strip().rstrip()
@@ -311,34 +350,30 @@ def get_config(module, source='running', config_filter=None):
         return config
     else:
         out = conn.get_config(source=source, filter=config_filter)
-        if network_api == 'netconf':
+        if is_netconf(module):
             out = to_xml(conn.get_config(source=source, filter=config_filter))
 
-        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        cfg = to_bytes(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS.update({key: cfg})
         return cfg
 
 
 def load_config(module, command_filter, warnings, replace=False, admin=False, commit=False, comment=None):
     conn = get_connection(module)
-    capabilities = get_device_capabilities(module)
-    network_api = capabilities.get('network_api')
 
-    if network_api == 'netconf':
-        if not HAS_NCCLIENT:
-            module.fail_json(msg=('ncclient is not installed'))
-        if not HAS_XML:
-            module.fail_json(msg=('lxml is not installed'))
-
+    if is_netconf(module):
+        # FIXME: check for platform behaviour and restore this
         # ret = conn.lock(target = 'candidate')
         # ret = conn.discard_changes()
         try:
-            out = conn.edit_config(etree.tostring(command_filter))
+            ret = conn.edit_config(command_filter)
         finally:
             # ret = conn.unlock(target = 'candidate')
             pass
 
-    elif network_api == 'cliconf':
+        return ret
+
+    elif is_cliconf(module):
         # to keep the pre-cliconf behaviour, make a copy, avoid adding commands to input list
         cmd_filter = deepcopy(command_filter)
         cmd_filter.insert(0, 'configure terminal')
@@ -356,8 +391,6 @@ def load_config(module, command_filter, warnings, replace=False, admin=False, co
             conn.discard_changes()
 
         return diff
-    else:
-        module.fail_json(msg=('unsupported network_api: {!s}'.format(network_api)))
 
 
 def run_command(module, commands):

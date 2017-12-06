@@ -182,7 +182,6 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
-from ansible.module_utils.network.iosxr.iosxr import check_args as iosxr_check_args
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
@@ -190,7 +189,6 @@ DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
 
 def check_args(module, warnings):
-    iosxr_check_args(module, warnings)
     if module.params['comment']:
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
