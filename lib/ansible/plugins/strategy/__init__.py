@@ -913,8 +913,12 @@ class StrategyBase:
                 play_context.set_options_from_plugin(connection)
 
             if connection:
-                connection.reset()
-                msg = 'reset connection'
+                try:
+                    connection.reset()
+                    msg = 'reset connection'
+                except ConnectionError as e:
+                    # most likely socket is already closed
+                    display.debug("got an error while closing persistent connection: %s" % e)
             else:
                 msg = 'no connection, nothing to reset'
         else:
