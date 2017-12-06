@@ -268,6 +268,8 @@ files:
   $modules/cloud/packet/:
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/pubnub/pubnub_blocks.py: parfeon pubnub
+  $modules/cloud/rackspace/:
+    ignored: sivel angstwad
   $modules/cloud/rackspace/rax_cdb.py: jails
   $modules/cloud/rackspace/rax_cdb_database.py: jails
   $modules/cloud/rackspace/rax_cdb_user.py: jails
@@ -695,7 +697,9 @@ files:
   $modules/web_infrastructure/rundeck_project.py: nerzhul
   $modules/web_infrastructure/supervisorctl.py: inetfuture mattupstate
   $modules/web_infrastructure/taiga_issue.py: lekum
-  $modules/windows/: $team_windows
+  $modules/windows/:
+    maintainers: $team_windows
+    ignored: angstwad
   $modules/windows/async_status.ps1: $team_windows
   $modules/windows/async_wrapper.ps1: $team_windows
   $modules/windows/setup.ps1: $team_ansible
