@@ -104,6 +104,7 @@ Errors
             Arguments with a default should not be marked as required
   318       Module deprecated, but DOCUMENTATION.deprecated is missing
   319       ``RETURN`` fragments missing  or invalid
+  320       ``DOCUMENTATION.options`` must be a dictionary/hash when used
   ..
 ---------   -------------------
   **4xx**   **Syntax**

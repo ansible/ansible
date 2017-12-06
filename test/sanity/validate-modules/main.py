@@ -814,12 +814,11 @@ class ModuleValidator(Validator):
                             msg='Unknown DOCUMENTATION error, see TRACE'
                         )
 
-                if 'options' in doc and doc['options'] is None and doc.get('extends_documentation_fragment'):
+                if 'options' in doc and doc['options'] is None:
                     self.reporter.error(
                         path=self.object_path,
-                        code=304,
-                        msg=('DOCUMENTATION.options must be a dictionary/hash when used '
-                             'with DOCUMENTATION.extends_documentation_fragment')
+                        code=320,
+                        msg='DOCUMENTATION.options must be a dictionary/hash when used',
                     )
 
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
@@ -980,7 +979,7 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, _, _, _ = get_docstring(self.base_module, verbose=True)
-                existing_options = existing_doc.get('options', {})
+                existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
                 self.reporter.warning(
@@ -1010,7 +1009,7 @@ class ModuleValidator(Validator):
         except ValueError:
             mod_version_added = StrictVersion('0.0')
 
-        options = doc.get('options', {})
+        options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
         strict_ansible_version = StrictVersion(should_be)
