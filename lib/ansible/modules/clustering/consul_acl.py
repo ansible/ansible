@@ -245,6 +245,14 @@ def set_acl(consul_client, configuration):
         # Name used as identifier instead of token - get token of ACL with identifying name
         configuration.token = existing_acls_mapped_by_name[configuration.name].token
 
+    if configuration.token not in existing_acls_mapped_by_token \
+            and configuration.name in existing_acls_mapped_by_name:
+        # Token given but no ACL with token exists, however an ACL with the same name exists. Remove ACL with outdated
+        # token
+        remove_old_result = remove_acl(consul_client, existing_acls_mapped_by_name[configuration.name].token)
+        assert remove_old_result.changed
+        del existing_acls_mapped_by_name[configuration.name]
+
     if configuration.token and configuration.token in existing_acls_mapped_by_token:
         # Token given and ACL with token exists - update the existing ACL
         return update_acl(
