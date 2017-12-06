@@ -24,7 +24,7 @@
     src: foo.txt
     dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
   register: fail_missing_parent_dir
-  failed_when: "'Destination directory ' + test_win_copy_path + '\\missing-dir does not exist' not in fail_missing_parent_dir.msg"
+  failed_when: "'does not exist' not in fail_missing_parent_dir.msg"
 
 - name: fail to copy an encrypted file without the password set
   win_copy:
