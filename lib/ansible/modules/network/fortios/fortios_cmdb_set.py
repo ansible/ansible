@@ -16,7 +16,6 @@
 #
 # the lib use python logging can get it if the following is set in your
 # Ansible config.
-# log_path = /var/log/ansible.log in your conf..
 
 from __future__ import (absolute_import, division, print_function)
 
@@ -277,17 +276,8 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-import logging
 
 fos = None
-
-formatter = logging.Formatter('%(asctime)s %(name)-12s '
-                              '%(levelname)-8s %(message)s')
-logger = logging.getLogger('fortiosapi')
-hdlr = logging.FileHandler('/var/tmp/ansible-fortiosconfig.log')
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.setLevel(logging.DEBUG)
 
 AVAILABLE_ENDPOINTS = [
     'system resource',
