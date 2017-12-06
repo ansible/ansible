@@ -1,29 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
-# (c) 2016, Indrajit Raychaudhuri <irc+code@indrajit.com>
-#
+# Copyright: (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
+# Copyright: (c) 2016, Indrajit Raychaudhuri <irc+code@indrajit.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: homebrew_cask
 author:
-    - "Indrajit Raychaudhuri (@indrajitr)"
-    - "Daniel Jaouen (@danieljaouen)"
-    - "Enric Lluelles (@enriclluelles)"
-requirements:
-   - "python >= 2.6"
+- Indrajit Raychaudhuri (@indrajitr)
+- Daniel Jaouen (@danieljaouen)
+- Enric Lluelles (@enriclluelles)
 short_description: Install/uninstall homebrew casks.
 description:
     - Manages Homebrew casks.
@@ -31,35 +26,29 @@ version_added: "1.6"
 options:
     name:
         description:
-            - name of cask to install/remove
-        required: true
-        aliases: ['pkg', 'package', 'cask']
+            - Name of cask to install/remove.
+        required: yes
+        aliases: [ cask, package, pkg ]
     path:
         description:
-            - "':' separated list of paths to search for 'brew' executable."
-        required: false
-        default: '/usr/local/bin'
+            - A colon-separated list of paths to search for 'brew' executable.
+        default: /usr/local/bin
     state:
         description:
-            - state of the cask
-        choices: [ 'present', 'absent' ]
-        required: false
+            - State of the cask.
+        choices: [ absent, present ]
         default: present
     update_homebrew:
         description:
-            - update homebrew itself first. Note that C(brew cask update) is
-              a synonym for C(brew update).
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
-        aliases: ['update-brew']
+            - Update homebrew itself first. Note that C(brew cask update) is a synonym for C(brew update).
+        type: bool
+        default: 'no'
+        aliases: [ update-brew ]
         version_added: "2.2"
     install_options:
         description:
-            - options flags to install a package
-        required: false
-        default: null
-        aliases: ['options']
+            - Options flags to install a package.
+        aliases: [ options ]
         version_added: "2.2"
 '''
 EXAMPLES = '''
@@ -137,9 +126,9 @@ class HomebrewCask(object):
         -                   # dashes
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_CASK_REGEX        = _create_regex_group(VALID_CASK_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_CASK_REGEX = _create_regex_group(VALID_CASK_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -184,10 +173,7 @@ class HomebrewCask(object):
         if brew_path is None:
             return True
 
-        return (
-            isinstance(brew_path, string_types)
-            and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
-        )
+        return isinstance(brew_path, string_types) and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
 
     @classmethod
     def valid_cask(cls, cask):
@@ -196,10 +182,7 @@ class HomebrewCask(object):
         if cask is None:
             return True
 
-        return (
-            isinstance(cask, string_types)
-            and not cls.INVALID_CASK_REGEX.search(cask)
-        )
+        return isinstance(cask, string_types) and not cls.INVALID_CASK_REGEX.search(cask)
 
     @classmethod
     def valid_state(cls, state):
@@ -212,13 +195,7 @@ class HomebrewCask(object):
         if state is None:
             return True
         else:
-            return (
-                isinstance(state, string_types)
-                and state.lower() in (
-                    'installed',
-                    'absent',
-                )
-            )
+            return isinstance(state, string_types) and state.lower() in ('absent', 'installed')
 
     @classmethod
     def valid_module(cls, module):
@@ -457,11 +434,7 @@ class HomebrewCask(object):
             )
             raise HomebrewCaskException(self.message)
 
-        opts = (
-            [self.brew_path, 'cask', 'install', self.current_cask]
-            + self.install_options
-        )
-
+        opts = ([self.brew_path, 'cask', 'install', self.current_cask] + self.install_options)
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
@@ -533,33 +506,11 @@ class HomebrewCask(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(
-                aliases=["pkg", "package", "cask"],
-                required=False,
-                type='list',
-            ),
-            path=dict(
-                default="/usr/local/bin",
-                required=False,
-                type='path',
-            ),
-            state=dict(
-                default="present",
-                choices=[
-                    "present", "installed",
-                    "absent", "removed", "uninstalled",
-                ],
-            ),
-            update_homebrew=dict(
-                default=False,
-                aliases=["update-brew"],
-                type='bool',
-            ),
-            install_options=dict(
-                default=None,
-                aliases=['options'],
-                type='list',
-            )
+            name=dict(type='list', aliases=['cask', 'package', 'pkg']),
+            path=dict(type='path', default="/usr/local/bin"),
+            state=dict(type='str', default="present", choices=['absent', 'installed', 'present', 'removed', 'uninstalled']),
+            update_homebrew=dict(type='bool', aliases=["update-brew"]),
+            install_options=dict(type='list', aliases=['options'])
         ),
         supports_check_mode=True,
     )
@@ -588,9 +539,7 @@ def main():
     install_options = ['--{0}'.format(install_option)
                        for install_option in p['install_options']]
 
-    brew_cask = HomebrewCask(module=module, path=path, casks=casks,
-                             state=state,  update_homebrew=update_homebrew,
-                             install_options=install_options)
+    brew_cask = HomebrewCask(module=module, path=path, casks=casks, state=state, update_homebrew=update_homebrew, install_options=install_options)
     (failed, changed, message) = brew_cask.run()
     if failed:
         module.fail_json(msg=message)
