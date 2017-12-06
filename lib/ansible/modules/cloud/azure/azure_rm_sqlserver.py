@@ -74,35 +74,30 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-state:
-    description: Current state of SQL Server
+id:
+    description:
+        - Resource ID.
     returned: always
-    type: complex
-    contains:
-        id:
-            description:
-                - Resource ID.
-            returned: always
-            type: str
-            sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
-        version:
-            description:
-                - The version of the server.
-            returned: always
-            type: str
-            sample: 12.0
-        state:
-            description:
-                - The state of the server.
-            returned: always
-            type: str
-            sample: state
-        fully_qualified_domain_name:
-            description:
-                - The fully qualified domain name of the server.
-            returned: always
-            type: str
-            sample: sqlcrudtest-4645.database.windows.net
+    type: str
+    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+version:
+    description:
+        - The version of the server.
+    returned: always
+    type: str
+    sample: 12.0
+state:
+    description:
+        - The state of the server.
+    returned: always
+    type: str
+    sample: state
+fully_qualified_domain_name:
+    description:
+        - The fully qualified domain name of the server.
+    returned: always
+    type: str
+    sample: sqlcrudtest-4645.database.windows.net
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -234,21 +229,22 @@ class AzureRMServers(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
 
-            self.results['state'] = self.create_update_sqlserver()
+            response = self.create_update_sqlserver()
             if not old_response:
                 self.results['changed'] = True
             else:
-                self.results['changed'] = old_response.__ne__(self.results['state'])
+                self.results['changed'] = old_response.__ne__(response)
+            self.results.update(response)
 
             # remove unnecessary fields from return state
-            self.results['state'].pop('name', None)
-            self.results['state'].pop('type', None)
-            self.results['state'].pop('tags', None)
-            self.results['state'].pop('location', None)
-            self.results['state'].pop('identity', None)
-            self.results['state'].pop('kind', None)
-            self.results['state'].pop('administrator_login', None)
-            self.results['state'].pop('administrator_login_password', None)
+            self.results.pop('name', None)
+            self.results.pop('type', None)
+            self.results.pop('tags', None)
+            self.results.pop('location', None)
+            self.results.pop('identity', None)
+            self.results.pop('kind', None)
+            self.results.pop('administrator_login', None)
+            self.results.pop('administrator_login_password', None)
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("SQL Server instance deleted")

@@ -10,7 +10,7 @@
   assert:
     that:
       - output.changed
-      - output.state.state == 'Ready'
+      - output.state == 'Ready'
 
 - name: Update instance of SQL Server
   azure_rm_sqlserver:
@@ -24,7 +24,7 @@
   assert:
     that:
       - output.changed == false
-      - output.state.state == 'Ready'
+      - output.state == 'Ready'
 
 - name: Delete instance of SQL Server
   azure_rm_sqlserver:
