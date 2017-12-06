@@ -1,8 +1,8 @@
 # Guidelines for AWS modules
 
 The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
-further information see 
-[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).  
+further information see
+[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
 If you are planning to contribute AWS modules to Ansible then getting in touch with the the working
 group will be a good way to start, especially because a similar module may already be under
 development.
@@ -63,7 +63,8 @@ as the module does that check.
 
 If you want to import the modules anyway (for example `from botocore.exception import
 ClientError`) Wrap import statements in a try block and fail the module later using `HAS_BOTO3` if
-the import fails.
+the import fails. See below as well (`Exception Handling for boto3 and botocore`) for more detail
+on how to safely import botocore exceptions.
 
 #### boto
 
@@ -336,7 +337,7 @@ If the underlying `describe_some_resources` API call throws a `ResourceNotFound`
 exception, `AWSRetry` takes this as a cue to retry until it's not thrown (this
 is so that when creating a resource, we can just retry until it exists).
 
-To handle authorization failures or parameter validation errors in 
+To handle authorization failures or parameter validation errors in
 `describe_some_resource_with_backoff`, where we just want to return `None` if
 the resource doesn't exist and not retry, we need:
 
@@ -373,7 +374,7 @@ snake_case. There is a helper function in module_utils/ec2.py called `camel_dict
 that allows you to easily convert the boto3 response to snake_case.
 
 You should use this helper function and avoid changing the names of values returned by Boto3.
-E.g. if boto3 returns a value called 'SecretAccessKey' do not change it to 'AccessKey'.  
+E.g. if boto3 returns a value called 'SecretAccessKey' do not change it to 'AccessKey'.
 
 ```python
 # Make a call to AWS
