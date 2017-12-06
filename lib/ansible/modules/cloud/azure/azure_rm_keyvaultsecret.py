@@ -157,7 +157,6 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         self.results['state'] = results
 
         if not self.check_mode:
-
             # Create secret
             if self.state == 'present' and changed:
                 results['secret_id'] = self.create_secret(self.secret_name, self.secret_value, self.tags)
@@ -167,6 +166,11 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
             elif self.state == 'absent' and changed:
                 results['secret_id'] = self.delete_secret(self.secret_name)
                 self.results['state'] = results
+                self.results['state']['status'] = 'Deleted'
+        else:
+            if self.state == 'present' and changed:
+                self.results['state']['status'] = 'Created'
+            elif self.state == 'absent' and changed:
                 self.results['state']['status'] = 'Deleted'
 
         return self.results
