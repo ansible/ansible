@@ -1,18 +1,25 @@
 ---
+- name: Enable Netconf service
+  iosxr_netconf:
+    netconf_port: 830
+    netconf_vrf: 'default'
+    state: present
+  register: result
+
 - name: Setup
   iosxr_banner:
     banner: login
     text: |
       Junk login banner
       over multiple lines
-    provider: "{{ cli }}"
+    provider: "{{ netconf }}"
     state: present
 
 - name: remove login
   iosxr_banner:
     banner: login
     state: absent
-    provider: "{{ cli }}"
+    provider: "{{ netconf }}"
   register: result
 
 - debug:
@@ -21,21 +28,16 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'no banner login' in result.commands[0]"
+      - "'xc:operation=\"delete\"' in result.commands"
 
 - name: remove login (idempotent)
   iosxr_banner:
     banner: login
     state: absent
-    provider: "{{ cli }}"
+    provider: "{{ netconf }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
       - "result.commands | length == 0"
-
-
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"

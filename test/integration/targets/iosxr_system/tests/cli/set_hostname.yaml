@@ -5,10 +5,12 @@
   iosxr_config:
     lines: hostname switch
     match: none
+    provider: "{{ cli }}"
 
 - name: configure hostname
   iosxr_system:
     hostname: foo
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -18,6 +20,7 @@
 - name: verify hostname
   iosxr_system:
     hostname: foo
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -28,5 +31,6 @@
   iosxr_config:
     lines: "hostname {{ inventory_hostname }}"
     match: none
+    provider: "{{ cli }}"
 
 - debug: msg="END cli/set_hostname.yaml"

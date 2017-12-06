@@ -6,6 +6,7 @@
   iosxr_facts:
     gather_subset:
       - "!hardware"
+    provider: "{{ cli }}"
   register: result
 
 - assert:

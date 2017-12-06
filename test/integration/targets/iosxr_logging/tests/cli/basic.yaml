@@ -5,12 +5,14 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: absent
+    provider: "{{ cli }}"
 
 - name: Remove console logging
   iosxr_logging:
     dest: console
     level: warning
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - name: Remove buffer
@@ -18,6 +20,7 @@
     dest: buffered
     size: 4800000
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 # Start tests
@@ -26,6 +29,7 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: present
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -39,6 +43,7 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: present
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -50,6 +55,7 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -62,6 +68,7 @@
     dest: hostnameprefix
     name: 172.16.0.1
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -73,6 +80,7 @@
     dest: console
     level: warning
     state: present
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -84,6 +92,7 @@
   iosxr_logging:
     dest: buffered
     size: 4800000
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -96,6 +105,7 @@
     aggregate:
       - { dest: console, level: notifications }
       - { dest: buffered, size: 4700000 }
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -110,6 +120,7 @@
       - { dest: console, level: notifications }
       - { dest: buffered, size: 4700000 }
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - assert:

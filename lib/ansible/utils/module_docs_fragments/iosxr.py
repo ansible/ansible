@@ -64,6 +64,9 @@ options:
             key used to authenticate the SSH session. If the value is not specified
             in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
             will be used instead.
+requirements:
+    - "ncclient >= 0.5.3 when using netconf"
+    - "lxml >= 4.1.1 when using netconf"
 notes:
   - For more information on using Ansible to manage Cisco devices see U(https://www.ansible.com/ansible-cisco).
 """

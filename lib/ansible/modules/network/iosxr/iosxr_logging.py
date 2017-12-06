@@ -21,6 +21,7 @@ short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on Cisco IOS XR devices.
+extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XR 6.1.2
 options:
@@ -114,7 +115,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
 from ansible.module_utils.network.common.utils import remove_default_spec
 
 
@@ -237,7 +238,7 @@ def map_config_to_obj(module):
     obj = []
     dest_group = ('console', 'hostnameprefix', 'monitor', 'buffered', 'on')
 
-    data = get_config(module, flags=['logging'])
+    data = get_config(module, config_filter='logging')
     lines = data.split("\n")
 
     for line in lines:
@@ -349,7 +350,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 
