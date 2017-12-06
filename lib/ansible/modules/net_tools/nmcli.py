@@ -423,51 +423,52 @@ EXAMPLES='''
 
 # To add an Team connection with static IP configuration, issue a command as follows
   - nmcli:
-    conn_name: my-team1
-    ifname: my-team1
-    type: team
-    ip4: 192.0.2.100/24
-    gw4: 192.0.2.1
-    state: present
-    autoconnect: yes
+      conn_name: my-team1
+      ifname: my-team1
+      type: team
+      ip4: 192.0.2.100/24
+      gw4: 192.0.2.1
+      state: present
+      autoconnect: yes
 
 # Optionally, at the same time specify IPv6 addresses for the device as follows:
   - nmcli:
-    conn_name: my-eth1
-    ifname: eth1
-    type: ethernet
-    ip4: 192.0.2.100/24
-    gw4: 192.0.2.1
-    ip6: '2001:db8::cafe'
-    gw6: '2001:db8::1'
-    state: present
+      conn_name: my-eth1
+      ifname: eth1
+      type: ethernet
+      ip4: 192.0.2.100/24
+      gw4: 192.0.2.1
+      ip6: '2001:db8::cafe'
+      gw6: '2001:db8::1'
+      state: present
 
 # To add two IPv4 DNS server addresses:
   - nmcli:
-    conn_name: my-eth1
-    type: ethernet
-    dns4:
-      - 192.0.2.53
-      - 198.51.100.53
-    state: present
+      conn_name: my-eth1
+      type: ethernet
+      dns4:
+        - 192.0.2.53
+        - 198.51.100.53
+      state: present
 
 # To make a profile usable for all compatible Ethernet interfaces, issue a command as follows
   - nmcli:
-    ctype: ethernet
-    name: my-eth1
-    ifname: '*'
-    state: present
+      ctype: ethernet
+      name: my-eth1
+      ifname: '*'
+      state: present
 
 # To change the property of a setting e.g. MTU, issue a command as follows:
   - nmcli:
-    conn_name: my-eth1
-    mtu: 9000
-    type: ethernet
-    state: present
+      conn_name: my-eth1
+      mtu: 9000
+      type: ethernet
+      state: present
 
-# Exit Status's:
-#     - nmcli exits with status 0 if it succeeds, a value greater than 0 is
-#     returned if an error occurs.
+# nmcli exits with status 0 if it succeeds and exits with a status greater
+# than zero when there is a failure. The following list of status codes may be
+# returned:
+#
 #     - 0 Success - indicates the operation succeeded
 #     - 1 Unknown or unspecified error
 #     - 2 Invalid user input, wrong nmcli invocation
