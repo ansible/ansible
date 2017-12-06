@@ -129,7 +129,7 @@ requirements:
 EXAMPLES = '''
 - name: vdirect_commit
   vdirect_commit:
-      vdirect_primary_ip: 10.10.10.10
+      vdirect_ip: 10.10.10.10
       vdirect_user: vDirect
       vdirect_password: radware
       devices: ['dev1', 'dev2']
