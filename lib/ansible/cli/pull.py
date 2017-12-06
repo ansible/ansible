@@ -239,6 +239,9 @@ class PullCLI(CLI):
         if self.options.vault_password_files:
             for vault_password_file in self.options.vault_password_files:
                 cmd += " --vault-password-file=%s" % vault_password_file
+        if self.options.vault_ids:
+            for vault_id in self.options.vault_ids:
+                cmd += " --vault-id=%s" % vault_id
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
