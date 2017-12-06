@@ -145,7 +145,7 @@ from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
 
-from ansible.module_utils.network.mlnxos.mlnxos import mlnxos_argument_spec, run_commands
+from ansible.module_utils.network.mlnxos.mlnxos import run_commands
 
 
 def to_lines(stdout):
@@ -189,8 +189,6 @@ def main():
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
-
-    argument_spec.update(mlnxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

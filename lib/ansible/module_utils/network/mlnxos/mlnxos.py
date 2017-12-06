@@ -26,34 +26,11 @@ from ansible.module_utils.network.common.utils import to_list, EntityCollection
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
 
-mlnxos_provider_spec = {
-    'host': dict(),
-    'port': dict(type='int'),
-    'username': dict(fallback=(env_fallback,
-                               ['ANSIBLE_NET_USERNAME'])),
-    'password': dict(fallback=(env_fallback,
-                               ['ANSIBLE_NET_PASSWORD']), no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback,
-                                  ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'authorize': dict(fallback=(env_fallback,
-                                ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(fallback=(env_fallback,
-                                ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int')
-}
-mlnxos_argument_spec = {
-    'provider': dict(type='dict', options=mlnxos_provider_spec),
-}
-
-command_spec = {
+_COMMAND_SPEC = {
     'command': dict(key=True),
     'prompt': dict(),
     'answer': dict()
 }
-
-
-def get_provider_argspec():
-    return mlnxos_provider_spec
 
 
 def get_connection(module):
@@ -68,7 +45,7 @@ def to_commands(module, commands):
     if not isinstance(commands, list):
         raise AssertionError('argument must be of type <list>')
 
-    transform = EntityCollection(module, command_spec)
+    transform = EntityCollection(module, _COMMAND_SPEC)
     commands = transform(commands)
     return commands
 
