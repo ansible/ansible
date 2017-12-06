@@ -177,32 +177,40 @@ def get_version(pacman_output):
     return None
 
 
-def query_package(module, pacman_path, name, state="present"):
-    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second
-    boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available
+def query_package_local(module, pacman_path, name):
+    cmd = "%s -Q %s" % (pacman_path, name)
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    return rc == 0
+
+
+def query_package_remote(module, pacman_path, name):
+    """Query the package status in both the local system and the repository.
+
+    Returns a boolean to indicate if the package is installed, a second boolean
+    to indicate if the package is up-to-date and a third boolean to indicate
+    whether online information were available
     """
-    if state == "present":
-        lcmd = "%s --query --info %s" % (pacman_path, name)
-        lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
-        if lrc != 0:
-            # package is not installed locally
-            return False, False, False
+    lcmd = "%s --query --info %s" % (pacman_path, name)
+    lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
+    if lrc != 0:
+        # package is not installed locally
+        return False, False, False
 
-        # get the version installed locally (if any)
-        lversion = get_version(lstdout)
+    # get the version installed locally (if any)
+    lversion = get_version(lstdout)
 
-        rcmd = "%s --sync --info %s" % (pacman_path, name)
-        rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
-        # get the version in the repository
-        rversion = get_version(rstdout)
+    rcmd = "%s --sync --info %s" % (pacman_path, name)
+    rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
+    # get the version in the repository
+    rversion = get_version(rstdout)
 
-        if rrc == 0:
-            # Return True to indicate that the package is installed locally, and the result of the version number comparison
-            # to determine if the package is up-to-date.
-            return True, (lversion == rversion), False
+    if rrc == 0:
+        # Return True to indicate that the package is installed locally, and the result of the version number comparison
+        # to determine if the package is up-to-date.
+        return True, (lversion == rversion), False
 
     # package is installed but cannot fetch remote Version. Last True stands for the error
-        return True, True, True
+    return True, True, True
 
 
 def update_package_db(module, pacman_path):
@@ -263,7 +271,7 @@ def remove_packages(module, pacman_path, packages):
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        installed, updated, unknown = query_package(module, pacman_path, package)
+        installed = query_package_local(module, pacman_path, package)
         if not installed:
             continue
 
@@ -301,13 +309,17 @@ def install_packages(module, pacman_path, state, packages, package_files):
     to_install_repos = []
     to_install_files = []
     for i, package in enumerate(packages):
-        # if the package is installed and state == present or state == latest and is up-to-date then skip
-        installed, updated, latestError = query_package(module, pacman_path, package)
-        if latestError and state == 'latest':
-            package_err.append(package)
+        if state == "present":
+            installed = query_package_local(module, pacman_path, package)
+            if installed:
+                continue
+        elif state == "latest":
+            installed, up_to_date, error = query_package_remote(module, pacman_path, package)
+            if error:
+                package_err.append(package)
 
-        if installed and (state == 'present' or (state == 'latest' and updated)):
-            continue
+            if up_to_date:
+                continue
 
         if package_files[i]:
             to_install_files.append(package_files[i])
@@ -365,11 +377,15 @@ def check_packages(module, pacman_path, packages, state):
     }
 
     for package in packages:
-        installed, updated, unknown = query_package(module, pacman_path, package)
-        if ((state in ["present", "latest"] and not installed) or
-                (state == "absent" and installed) or
-                (state == "latest" and not updated)):
-            would_be_changed.append(package)
+        if state == "latest":
+            installed, up_to_date, error = query_package_remote(module, pacman_path, package)
+            if not up_to_date:
+                would_be_changed.append(package)
+        else:
+            installed = query_package_local(module, pacman_path, package)
+            if ((state == "present" and not installed) or
+                    (state == "absent" and installed)):
+                would_be_changed.append(package)
     if would_be_changed:
         if state == "absent":
             state = "removed"
