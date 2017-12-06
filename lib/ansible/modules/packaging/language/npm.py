@@ -70,6 +70,8 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+requirements:
+    - npm installed in bin path (recommended /usr/local/bin)
 '''
 
 EXAMPLES = '''
