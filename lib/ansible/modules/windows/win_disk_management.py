@@ -193,16 +193,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-changed:
-    description: Whether anything was changed.
-    returned: always
-    type: boolean
-    sample: true
-msg:
-    description: Possible error message on failure.
-    returned: failed
-    type: string
-    sample: "No free drive letter left on the target"
 change_log:
     description: Dictionary containing all the detailed information about changes on the selected disk.
     returned: if --check or/and --diff option was passed to the module
