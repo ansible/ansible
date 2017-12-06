@@ -7,3 +7,4 @@ wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 
 isort < 4.2.8 # 4.2.8 changes import sort order requirements which breaks previously passing pylint tests
 pep8 <= 1.7.0 # pep8 1.7.0 is the last "real" release, avoid the user warning added in 1.7.1
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
+pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
