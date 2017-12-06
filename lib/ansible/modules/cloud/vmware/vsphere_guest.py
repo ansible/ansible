@@ -299,6 +299,7 @@ EXAMPLES = '''
 import os
 import re
 import ssl
+import socket
 import traceback
 
 HAS_PYSPHERE = False
@@ -1797,21 +1798,17 @@ def main():
         module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set '
                              'validate_certs=False on the task')
 
+    if not validate_certs:
+        ssl._create_default_https_context = ssl._create_unverified_context
+
     try:
         viserver.connect(vcenter_hostname, username, password)
     except ssl.SSLError as sslerr:
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror:
-            if not validate_certs:
-                ssl._create_default_https_context
-                ssl._create_default_https_context = ssl._create_unverified_context
-                viserver.connect(vcenter_hostname, username, password)
-            else:
-                module.fail_json(msg='Unable to validate the certificate of the vcenter host %s' % vcenter_hostname)
-        else:
-            raise
-    except VIApiException as err:
-        module.fail_json(msg="Cannot connect to %s: %s" %
-                         (vcenter_hostname, to_native(err)),
+        module.fail_json(msg='Unable to validate the certificate of the vcenter hostname %s. Due to %s' % (vcenter_hostname, sslerr))
+    except socket.gaierror as err:
+        module.fail_json(msg="Unable to resolve name for vcenter hostname: %s. Due to %s" % (vcenter_hostname, to_native(err)))
+    except (TypeError, VIApiException) as err:
+        module.fail_json(msg="Cannot connect to %s: %s" % (vcenter_hostname, to_native(err)),
                          exception=traceback.format_exc())
 
     # Check if the VM exists before continuing
