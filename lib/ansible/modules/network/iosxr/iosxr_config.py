@@ -1,22 +1,22 @@
 #!/usr/bin/python
-#
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
 module: iosxr_config
 version_added: "2.1"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+author:
+- Ricardo Carrillo Cruz (@rcarrillocruz)
 short_description: Manage Cisco IOS XR configuration sections
 description:
   - Cisco IOS XR configurations use a simple block indent file syntax
@@ -34,17 +34,13 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
-    aliases: ['commands']
+    aliases: [ commands ]
   parents:
     description:
       - The ordered set of parents that uniquely identify the section
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -52,8 +48,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines).
-    required: false
-    default: null
     version_added: "2.2"
   before:
     description:
@@ -62,16 +56,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -82,9 +72,8 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
+    choices: [ exact, line, none, strict ]
     default: line
-    choices: ['line', 'strict', 'exact', 'none']
   replace:
     description:
       - Instructs the module on the way to perform the configuration
@@ -93,9 +82,8 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
+    choices: [ block, config, line ]
     default: line
-    choices: ['line', 'block', 'config']
   force:
     description:
       - The force argument instructs the module to not consider the
@@ -105,9 +93,8 @@ options:
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
-    required: false
-    default: false
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.2"
   config:
     description:
@@ -118,8 +105,6 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -127,41 +112,38 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     version_added: "2.2"
   comment:
     description:
       - Allows a commit description to be specified to be included
         when the configuration is committed.  If the configuration is
         not changed or committed, this argument is ignored.
-    required: false
     default: 'configured by iosxr_config'
     version_added: "2.2"
   admin:
     description:
       - Enters into administration configuration mode for making config
         changes to the device.
-    required: false
-    default: false
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.4"
 """
 
 EXAMPLES = """
-- name: configure top level configuration
+- name: Configure top level configuration
   iosxr_config:
     lines: hostname {{ inventory_hostname }}
 
-- name: configure interface settings
+- name: Configure interface settings
   iosxr_config:
     lines:
       - description test interface
       - ip address 172.31.1.1 255.255.255.0
     parents: interface GigabitEthernet0/0/0/0
 
-- name: load a config from disk and replace the current config
+- name: Load a config from disk and replace the current config
   iosxr_config:
     src: config.cfg
     backup: yes
@@ -179,11 +161,11 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import load_config,get_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
-from ansible.module_utils.network.iosxr.iosxr import check_args as iosxr_check_args
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.iosxr.iosxr import check_args as iosxr_check_args
+from ansible.module_utils.network.iosxr.iosxr import get_config, iosxr_argument_spec, load_config
 
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
@@ -216,6 +198,7 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -230,8 +213,7 @@ def run(module, result):
     if match != 'none' and replace != 'config':
         contents = get_running_config(module)
         configobj = NetworkConfig(contents=contents, indent=1)
-        commands = candidate.difference(configobj, path=path, match=match,
-                                          replace=replace)
+        commands = candidate.difference(configobj, path=path, match=match, replace=replace)
     else:
         commands = candidate.items
 
@@ -253,29 +235,30 @@ def run(module, result):
             result['diff'] = dict(prepared=diff)
             result['changed'] = True
 
+
 def main():
     """main entry point for module execution
     """
     argument_spec = dict(
         src=dict(type='path'),
 
-        lines=dict(aliases=['commands'], type='list'),
+        lines=dict(type='list', aliases=['commands']),
         parents=dict(type='list'),
 
         before=dict(type='list'),
         after=dict(type='list'),
 
-        match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
-        replace=dict(default='line', choices=['line', 'block', 'config']),
+        match=dict(type='str', default='line', choices=['exact', 'line', 'none', 'strict']),
+        replace=dict(type='str', default='line', choices=['block', 'config', 'line']),
 
         # this argument is deprecated in favor of setting match: none
         # it will be removed in a future version
-        force=dict(default=False, type='bool'),
+        force=dict(type='bool', defaut=False),
 
-        config=dict(),
+        config=dict(type='str'),
         backup=dict(type='bool', default=False),
-        comment=dict(default=DEFAULT_COMMIT_COMMENT),
-        admin=dict(type='bool', default=False)
+        comment=dict(type='str', default=DEFAULT_COMMIT_COMMENT),
+        admin=dict(type='bool', default=False),
     )
 
     argument_spec.update(iosxr_argument_spec)

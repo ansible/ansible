@@ -1,22 +1,22 @@
 #!/usr/bin/python
-#
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
 module: iosxr_command
 version_added: "2.1"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+author:
+- Ricardo Carrillo Cruz (@rcarrillocruz)
 short_description: Run commands on remote devices running Cisco IOS XR
 description:
   - Sends arbitrary commands to an IOS XR node and returns the results
@@ -44,9 +44,7 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
-    aliases: ['waitfor']
+    aliases: [ waitfor ]
     version_added: "2.2"
   match:
     description:
@@ -56,9 +54,8 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
+    choices: [ all, any ]
     default: all
-    choices: ['any', 'all']
     version_added: "2.2"
   retries:
     description:
@@ -66,7 +63,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -74,28 +70,27 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
 EXAMPLES = """
 tasks:
-  - name: run show version on remote devices
+  - name: Run show version on remote devices
     iosxr_command:
       commands: show version
 
-  - name: run show version and check to see if output contains iosxr
+  - name: Run show version and check to see if output contains iosxr
     iosxr_command:
       commands: show version
       wait_for: result[0] contains IOS-XR
 
-  - name: run multiple commands on remote nodes
+  - name: Run multiple commands on remote nodes
     iosxr_command:
       commands:
         - show version
         - show interfaces
 
-  - name: run multiple commands and evaluate the output
+  - name: Run multiple commands and evaluate the output
     iosxr_command:
       commands:
         - show version
@@ -125,9 +120,9 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import run_commands, iosxr_argument_spec, check_args
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.iosxr.iosxr import check_args, iosxr_argument_spec, run_commands
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -161,15 +156,16 @@ def parse_commands(module, warnings):
             )
     return commands
 
+
 def main():
     spec = dict(
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
-        match=dict(default='all', choices=['all', 'any']),
+        match=dict(type='str', default='all', choices=['all', 'any']),
 
-        retries=dict(default=10, type='int'),
-        interval=dict(default=1, type='int')
+        retries=dict(type='int', default=10),
+        interval=dict(type='int', default=1),
     )
 
     spec.update(iosxr_argument_spec)
@@ -209,7 +205,6 @@ def main():
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
 
     result = {
         'changed': False,

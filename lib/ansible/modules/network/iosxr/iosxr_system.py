@@ -1,21 +1,22 @@
 #!/usr/bin/python
-#
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible by Red Hat, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
-
 
 DOCUMENTATION = """
 ---
 module: iosxr_system
 version_added: "2.3"
-author: "Peter Sprygada (@privateip)"
+author:
+- Peter Sprygada (@privateip)
 short_description: Manage the system attributes on Cisco IOS XR devices
 description:
   - This module provides declarative management of node system attributes
@@ -28,7 +29,8 @@ notes:
 options:
   hostname:
     description:
-      - Configure the device hostname parameter. This option takes an ASCII string value.
+      - Configure the device hostname parameter.
+      - This option takes an ASCII string value.
   domain_name:
     description:
       - Configure the IP domain name
@@ -40,7 +42,7 @@ options:
     description:
       - Provides the list of domain suffixes to
         append to the hostname for the purpose of doing name resolution.
-        This argument accepts a list of names and will be reconciled
+      - This argument accepts a list of names and will be reconciled
         with the current active configuration on the running node.
   lookup_source:
     description:
@@ -68,12 +70,12 @@ options:
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
+    choices: [ absent, present ]
     default: present
-    choices: ['present', 'absent']
 """
 
 EXAMPLES = """
-- name: configure hostname and domain-name
+- name: Configure hostname and domain-name
   iosxr_system:
     hostname: iosxr01
     domain_name: test.example.com
@@ -81,14 +83,17 @@ EXAMPLES = """
       - ansible.com
       - redhat.com
       - cisco.com
-- name: remove configuration
+
+- name: Remove configuration
   iosxr_system:
     state: absent
-- name: configure DNS lookup sources
+
+- name: Configure DNS lookup sources
   iosxr_system:
     lookup_source: MgmtEth0/0/CPU0/0
     lookup_enabled: yes
-- name: configure name servers
+
+- name: Configure name servers
   iosxr_system:
     name_servers:
       - 8.8.8.8
@@ -104,22 +109,25 @@ commands:
     - hostname iosxr01
     - ip domain-name test.example.com
 """
+
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args, get_config, iosxr_argument_spec, load_config
+
 
 def diff_list(want, have):
     adds = set(want).difference(have)
     removes = set(have).difference(want)
     return (adds, removes)
 
+
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
 
-    needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
+    def needs_update(x):
+        return want.get(x) and (want.get(x) != have.get(x))
 
     if state == 'absent':
         if have['hostname'] != 'ios':
@@ -167,19 +175,23 @@ def map_obj_to_commands(want, have, module):
 
     return commands
 
+
 def parse_hostname(config):
     match = re.search(r'^hostname (\S+)', config, re.M)
     return match.group(1)
+
 
 def parse_domain_name(config):
     match = re.search(r'^domain name (\S+)', config, re.M)
     if match:
         return match.group(1)
 
+
 def parse_lookup_source(config):
     match = re.search(r'^domain lookup source-interface (\S+)', config, re.M)
     if match:
         return match.group(1)
+
 
 def map_config_to_obj(module):
     config = get_config(module)
@@ -192,6 +204,7 @@ def map_config_to_obj(module):
         'name_servers': re.findall(r'^domain name-server (\S+)', config, re.M)
     }
 
+
 def map_params_to_obj(module):
     return {
         'hostname': module.params['hostname'],
@@ -202,19 +215,20 @@ def map_params_to_obj(module):
         'name_servers': module.params['name_servers']
     }
 
+
 def main():
     """ Main entry point for Ansible module execution
     """
     argument_spec = dict(
-        hostname=dict(),
-        domain_name=dict(),
+        hostname=dict(type='str'),
+        domain_name=dict(type='str'),
         domain_search=dict(type='list'),
 
         name_servers=dict(type='list'),
-        lookup_source=dict(),
+        lookup_source=dict(type='str'),
         lookup_enabled=dict(type='bool'),
 
-        state=dict(choices=['present', 'absent'], default='present')
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     argument_spec.update(iosxr_argument_spec)
