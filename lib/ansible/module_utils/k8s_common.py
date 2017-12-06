@@ -16,15 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+
 import copy
 import json
 import os
+import re
 
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from openshift.helper.ansible import KubernetesAnsibleModuleHelper, ARG_ATTRIBUTES_BLACKLIST
+    from openshift.helper.ansible import KubernetesAnsibleModuleHelper
     from openshift.helper.exceptions import KubernetesException
+
     HAS_K8S_MODULE_HELPER = True
 except ImportError as exc:
     HAS_K8S_MODULE_HELPER = False
@@ -36,140 +41,137 @@ except ImportError:
     HAS_YAML = False
 
 
-class KubernetesAnsibleException(Exception):
-    pass
-
-
 class KubernetesAnsibleModule(AnsibleModule):
-    @staticmethod
-    def get_helper(api_version, kind):
-        return KubernetesAnsibleModuleHelper(api_version, kind)
 
-    def __init__(self, kind, api_version):
-        self.api_version = api_version
-        self.kind = kind
-        self.argspec_cache = None
+    def __init__(self):
 
         if not HAS_K8S_MODULE_HELPER:
-            raise KubernetesAnsibleException(
+            raise Exception(
                 "This module requires the OpenShift Python client. Try `pip install openshift`"
             )
 
         if not HAS_YAML:
-            raise KubernetesAnsibleException(
+            raise Exception(
                 "This module requires PyYAML. Try `pip install PyYAML`"
             )
 
-        try:
-            self.helper = self.get_helper(api_version, kind)
-        except Exception as exc:
-            raise KubernetesAnsibleException(
-                "Error initializing AnsibleModuleHelper: {}".format(exc)
-            )
-
-        mutually_exclusive = (
+        mutually_exclusive = [
             ('resource_definition', 'src'),
-        )
+        ]
 
         AnsibleModule.__init__(self,
-                               argument_spec=self.argspec,
+                               argument_spec=self._argspec,
                                supports_check_mode=True,
                                mutually_exclusive=mutually_exclusive)
 
+        self.kind = self.params.pop('kind')
+        self.api_version = self.params.pop('api_version')
+        self.resource_definition = self.params.pop('resource_definition')
+        self.src = self.params.pop('src')
+        if self.src:
+            self.resource_definition = self.load_resource_definition(self.src)
+
+        if self.resource_definition:
+            self.api_version = self.resource_definition.get('apiVersion')
+            self.kind = self.resource_definition.get('kind')
+
+        self.api_version = self.api_version.lower()
+        self.kind = self._to_snake(self.kind)
+
+        if not self.api_version:
+            self.fail_json(
+                msg=("Error: no api_version specified. Use the api_version parameter, or provide it as part of a ",
+                     "resource_definition.")
+            )
+        if not self.kind:
+            self.fail_json(
+                msg="Error: no kind specified. Use the kind parameter, or provide it as part of a resource_definition"
+            )
+
+        self.helper = self._get_helper(self.api_version, self.kind)
+
     @property
-    def argspec(self):
-        """
-        Build the module argument spec from the helper.argspec, removing any extra attributes not needed by
-        Ansible.
+    def _argspec(self):
+        return {
+            'state': {
+                'default': 'present',
+                'choices': ['present', 'absent'],
+            },
+            'force': {
+                'type': 'bool',
+                'default': False,
+            },
+            'resource_definition': {
+                'type': 'dict',
+                'aliases': ['definition', 'inline']
+            },
+            'src': {
+                'type': 'path',
+            },
+            'kind': {},
+            'name': {},
+            'namespace': {},
+            'api_version': {
+                'aliases': ['api', 'version']
+            },
+            'kubeconfig': {
+                'type': 'path',
+            },
+            'context': {},
+            'host': {},
+            'api_key': {
+                'no_log': True,
+            },
+            'username': {},
+            'password': {
+                'no_log': True,
+            },
+            'verify_ssl': {
+                'type': 'bool',
+            },
+            'ssl_ca_cert': {
+                'type': 'path',
+            },
+            'cert_file': {
+                'type': 'path',
+            },
+            'key_file': {
+                'type': 'path',
+            },
+        }
 
-        :return: dict: a valid Ansible argument spec
-        """
-        if not self.argspec_cache:
-            spec = {
-                'dry_run': {
-                    'type': 'bool',
-                    'default': False,
-                    'description': [
-                        "If set to C(True) the module will exit without executing any action."
-                        "Useful to only generate YAML file definitions for the resources in the tasks."
-                    ]
-                }
-            }
-
-            for arg_name, arg_properties in self.helper.argspec.items():
-                spec[arg_name] = {}
-                for option, option_value in arg_properties.items():
-                    if option not in ARG_ATTRIBUTES_BLACKLIST:
-                        if option == 'choices':
-                            if isinstance(option_value, dict):
-                                spec[arg_name]['choices'] = [value for key, value in option_value.items()]
-                            else:
-                                spec[arg_name]['choices'] = option_value
-                        else:
-                            spec[arg_name][option] = option_value
-
-            self.argspec_cache = spec
-        return self.argspec_cache
+    def _get_helper(self, api_version, kind):
+        try:
+            helper = KubernetesAnsibleModuleHelper(api_version=api_version, kind=kind, debug=False)
+            helper.get_model(api_version, kind)
+            return helper
+        except KubernetesException as exc:
+            self.exit_json(msg="Error initializing module helper {}".format(str(exc)))
 
     def execute_module(self):
-        """
-        Performs basic CRUD operations on the model object. Ends by calling
-        AnsibleModule.fail_json(), if an error is encountered, otherwise
-        AnsibleModule.exit_json() with a dict containing:
-          changed: boolean
-          api_version: the API version
-          <kind>: a dict representing the object's state
-        :return: None
-        """
-
-        resource_definition = self.params.get('resource_definition')
-        if self.params.get('src'):
-            resource_definition = self.load_resource_definition(self.params['src'])
-        if resource_definition:
-            resource_params = self.resource_to_parameters(resource_definition)
+        if self.resource_definition:
+            resource_params = self.resource_to_parameters(self.resource_definition)
             self.params.update(resource_params)
 
-        state = self.params.get('state', None)
-        force = self.params.get('force', False)
+        self._authenticate()
+
+        state = self.params.pop('state', None)
+        force = self.params.pop('force', False)
         dry_run = self.params.pop('dry_run', False)
         name = self.params.get('name')
-        namespace = self.params.get('namespace', None)
+        namespace = self.params.get('namespace')
         existing = None
 
-        return_attributes = dict(changed=False,
-                                 api_version=self.api_version,
-                                 request=self.helper.request_body_from_params(self.params))
-        return_attributes[self.helper.base_model_name_snake] = {}
+        self._remove_aliases()
+
+        return_attributes = dict(changed=False, result=dict())
 
         if dry_run:
             self.exit_json(**return_attributes)
 
-        try:
-            auth_options = {}
-            for key, value in self.helper.argspec.items():
-                if value.get('auth_option') and self.params.get(key) is not None:
-                    auth_options[key] = self.params[key]
-            self.helper.set_client_config(**auth_options)
-        except KubernetesException as e:
-            self.fail_json(msg='Error loading config', error=str(e))
+        if self._diff:
+            return_attributes['request'] = self.helper.request_body_from_params(self.params)
 
-        if state is None:
-            # This is a list, rollback or ? module with no 'state' param
-            if self.helper.base_model_name_snake.endswith('list'):
-                # For list modules, execute a GET, and exit
-                k8s_obj = self._read(name, namespace)
-                return_attributes[self.kind] = k8s_obj.to_dict()
-                self.exit_json(**return_attributes)
-            elif self.helper.has_method('create'):
-                # For a rollback, execute a POST, and exit
-                k8s_obj = self._create(namespace)
-                return_attributes[self.kind] = k8s_obj.to_dict()
-                return_attributes['changed'] = True
-                self.exit_json(**return_attributes)
-            else:
-                self.fail_json(msg="Missing state parameter. Expected one of: present, absent")
-
-        # CRUD modules
         try:
             existing = self.helper.get_object(name, namespace)
         except KubernetesException as exc:
@@ -193,7 +195,7 @@ class KubernetesAnsibleModule(AnsibleModule):
         else:
             if not existing:
                 k8s_obj = self._create(namespace)
-                return_attributes[self.kind] = k8s_obj.to_dict()
+                return_attributes['result'] = k8s_obj.to_dict()
                 return_attributes['changed'] = True
                 self.exit_json(**return_attributes)
 
@@ -206,7 +208,7 @@ class KubernetesAnsibleModule(AnsibleModule):
                     except KubernetesException as exc:
                         self.fail_json(msg="Failed to replace object: {}".format(exc.message),
                                        error=exc.value.get('status'))
-                return_attributes[self.kind] = k8s_obj.to_dict()
+                return_attributes['result'] = k8s_obj.to_dict()
                 return_attributes['changed'] = True
                 self.exit_json(**return_attributes)
 
@@ -218,22 +220,41 @@ class KubernetesAnsibleModule(AnsibleModule):
                 self.fail_json(msg="Failed to patch object: {}".format(exc.message))
             match, diff = self.helper.objects_match(existing, k8s_obj)
             if match:
-                return_attributes[self.kind] = existing.to_dict()
+                return_attributes['result'] = existing.to_dict()
                 self.exit_json(**return_attributes)
-            else:
-                self.log('Existing:')
-                self.log(json.dumps(existing.to_str(), indent=4))
-                self.log('\nDifferences:')
-                self.log(json.dumps(diff, indent=4))
+            elif self._diff:
+                return_attributes['differences'] = diff
             # Differences exist between the existing obj and requested params
             if not self.check_mode:
                 try:
                     k8s_obj = self.helper.patch_object(name, namespace, k8s_obj)
                 except KubernetesException as exc:
                     self.fail_json(msg="Failed to patch object: {}".format(exc.message))
-            return_attributes[self.kind] = k8s_obj.to_dict()
+            return_attributes['result'] = k8s_obj.to_dict()
             return_attributes['changed'] = True
             self.exit_json(**return_attributes)
+
+    def _authenticate(self):
+        try:
+            auth_options = {}
+            auth_args = ('host', 'api_key', 'kubeconfig', 'context', 'username', 'password',
+                         'cert_file', 'key_file', 'ssl_ca_cert', 'verify_ssl')
+            for key, value in iteritems(self.params):
+                if key in auth_args and value is not None:
+                    auth_options[key] = value
+            self.helper.set_client_config(**auth_options)
+        except KubernetesException as e:
+            self.fail_json(msg='Error loading config', error=str(e))
+
+    def _remove_aliases(self):
+        """
+        The helper doesn't know what to do with aliased keys
+        """
+        for k, v in iteritems(self._argspec):
+            if 'aliases' in v:
+                for alias in v['aliases']:
+                    if alias in self.params:
+                        self.params.pop(alias)
 
     def _create(self, namespace):
         request_body = None
@@ -275,24 +296,24 @@ class KubernetesAnsibleModule(AnsibleModule):
     def resource_to_parameters(self, resource):
         """ Converts a resource definition to module parameters """
         parameters = {}
-        for key, value in resource.items():
+        for key, value in iteritems(resource):
             if key in ('apiVersion', 'kind', 'status'):
                 continue
             elif key == 'metadata' and isinstance(value, dict):
-                for meta_key, meta_value in value.items():
+                for meta_key, meta_value in iteritems(value):
                     if meta_key in ('name', 'namespace', 'labels', 'annotations'):
                         parameters[meta_key] = meta_value
             elif key in self.helper.argspec and value is not None:
-                    parameters[key] = value
+                parameters[key] = value
             elif isinstance(value, dict):
                 self._add_parameter(value, [key], parameters)
         self.log("Request to parameters: {}".format(json.dumps(parameters)))
         return parameters
 
     def _add_parameter(self, request, path, parameters):
-        for key, value in request.items():
+        for key, value in iteritems(request):
             if path:
-                param_name = '_'.join(path + [self.helper.attribute_to_snake(key)])
+                param_name = '_'.join(path + [self._to_snake(key)])
             else:
                 param_name = self.helper.attribute_to_snake(key)
             if param_name in self.helper.argspec and value is not None:
@@ -303,7 +324,25 @@ class KubernetesAnsibleModule(AnsibleModule):
                 self._add_parameter(value, continue_path, parameters)
             else:
                 self.fail_json(
-                    msg=("Error parsing resource definition. Encountered {}, which does not map to a module "
-                         "parameter. If this looks like a problem with the module, please open an issue at "
-                         "github.com/openshift/openshift-restclient-python/issues").format(param_name)
+                    msg=("Error parsing resource definition. Encountered {}, which does not map to a parameter "
+                         "expected by the openshift Python module.".format(param_name))
                 )
+
+    @staticmethod
+    def _to_snake(name):
+        """
+        Convert a string from camel to snake
+        :param name: string to convert
+        :return: string
+        """
+        if not name:
+            return name
+
+        def replace(m):
+            m = m.group(0)
+            return m[0] + '_' + m[1:]
+
+        p = r'[a-z][A-Z]|' \
+            r'[A-Z]{2}[a-z]'
+        result = re.sub(p, replace, name)
+        return result.lower()

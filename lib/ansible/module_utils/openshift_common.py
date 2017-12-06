@@ -16,54 +16,51 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.k8s_common import KubernetesAnsibleException, KubernetesAnsibleModule
+from ansible.module_utils.k8s_common import KubernetesAnsibleModule
 
 try:
-    from openshift.helper.ansible import OpenShiftAnsibleModuleHelper, ARG_ATTRIBUTES_BLACKLIST
-    from openshift.helper.exceptions import KubernetesException, OpenShiftException
+    from openshift.helper.ansible import OpenShiftAnsibleModuleHelper
+    from openshift.helper.exceptions import OpenShiftException
     HAS_OPENSHIFT_HELPER = True
 except ImportError as exc:
     HAS_OPENSHIFT_HELPER = False
 
 
-class OpenShiftAnsibleException(KubernetesAnsibleException):
-    pass
-
-
 class OpenShiftAnsibleModule(KubernetesAnsibleModule):
-    def __init__(self, kind, api_version):
+    def __init__(self):
+
         if not HAS_OPENSHIFT_HELPER:
-            raise OpenShiftAnsibleException(
+            raise Exception(
                 "This module requires the OpenShift Python client. Try `pip install openshift`"
             )
 
-        try:
-            super(OpenShiftAnsibleModule, self).__init__(kind, api_version)
-        except KubernetesAnsibleException as exc:
-            raise OpenShiftAnsibleException(exc.args)
+        super(OpenShiftAnsibleModule, self).__init__()
 
-    @staticmethod
-    def get_helper(api_version, kind):
-        return OpenShiftAnsibleModuleHelper(api_version, kind)
+    def _get_helper(self, api_version, kind):
+        try:
+            helper = OpenShiftAnsibleModuleHelper(api_version=api_version, kind=kind, debug=False)
+            helper.get_model(api_version, kind)
+            return helper
+        except OpenShiftException as exc:
+            self.exit_json(msg="Error initializing module helper {}".format(str(exc)))
 
     def _create(self, namespace):
         if self.kind.lower() == 'project':
             return self._create_project()
-        else:
-            return super(OpenShiftAnsibleModule, self)._create(namespace)
+        return super(OpenShiftAnsibleModule, self)._create(namespace)
 
     def _create_project(self):
         new_obj = None
         k8s_obj = None
         try:
             new_obj = self.helper.object_from_params(self.params)
-        except KubernetesException as exc:
+        except OpenShiftException as exc:
             self.fail_json(msg="Failed to create object: {}".format(exc.message))
         try:
             k8s_obj = self.helper.create_project(metadata=new_obj.metadata,
                                                  display_name=self.params.get('display_name'),
                                                  description=self.params.get('description'))
-        except KubernetesException as exc:
+        except OpenShiftException as exc:
             self.fail_json(msg='Failed to retrieve requested object',
                            error=exc.value.get('status'))
         return k8s_obj
