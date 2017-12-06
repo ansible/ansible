@@ -145,7 +145,7 @@ options:
             - Please review the Host object documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
             - Possible values are, 0 (none), 1 (MD2), 2 (MD5), 4 (straight), 5 (OEM), 6 (RMCP+).
-        default: -1
+        default: None
         required: false
         version_added: "2.5"
     ipmi_privilege:
@@ -154,7 +154,7 @@ options:
             - Please review the Host object documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
             - Possible values are, 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM).
-        default: 2
+        default: None
         required: false
         version_added: "2.5"
     ipmi_username:
@@ -655,8 +655,8 @@ def main():
             status=dict(default="enabled", choices=['enabled', 'disabled']),
             state=dict(default="present", choices=['present', 'absent']),
             inventory_mode=dict(required=False, choices=['automatic', 'manual', 'disabled']),
-            ipmi_authtype=dict(type='int', default=-1),
-            ipmi_privilege=dict(type='int', default=2),
+            ipmi_authtype=dict(type='int', default=None),
+            ipmi_privilege=dict(type='int', default=None),
             ipmi_username=dict(type='str', required=False, default=None),
             ipmi_password=dict(type='str', required=False, default=None, no_log=True),
             tls_connect=dict(type='int', default=1),
