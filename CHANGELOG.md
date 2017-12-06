@@ -13,6 +13,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33094)
 * Fix save parameter in asa_config (https://github.com/ansible/ansible/pull/32761)
 * Fix --vault-id support in ansible-pull (https://github.com/ansible/ansible/pull/33629)
+* In nxos_interface_ospf, fail nicely if loopback is used with passive_interface:
+  (https://github.com/ansible/ansible/pull/33252)
 
 
 <a id="2.4.2"></a>
