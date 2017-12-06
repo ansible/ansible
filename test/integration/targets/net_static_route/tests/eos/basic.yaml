@@ -59,8 +59,8 @@
     aggregate:
       - { address: 192.168.4.0/24, next_hop: 192.168.0.1 }
       - { address: 192.168.5.0/24, next_hop: 192.168.0.1 }
-  authorize: yes
-  provider: "{{ cli }}"
+    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
