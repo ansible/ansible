@@ -18,8 +18,8 @@ DOCUMENTATION = '''
 module: icinga2_host
 short_description: Manage a host in Icinga2
 description:
-   - "Add or remove a host to Icinga2 through the API"
-   - "( see https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/ )"
+   - "Add or remove a host to Icinga2 through the API."
+   - "See U(https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/)"
 version_added: "2.5"
 author: "Jurgen Brand (@t794104)"
 options:
@@ -29,7 +29,7 @@ options:
     required: true
   use_proxy:
     description:
-      - if C(no), it will not use a proxy, even if one is defined in
+      - If C(no), it will not use a proxy, even if one is defined in
         an environment variable on the target hosts.
     default: 'yes'
     type: bool
@@ -73,34 +73,33 @@ options:
     default: present
   name:
     description:
-      - name used to create / delete the host
-      - this does not need to be the FQDN, but does needs to be unique
+      - Name used to create / delete the host. This does not need to be the FQDN, but does needs to be unique.
     required: true
   zone:
     description:
-      - the zone from where this host should be polled
+      - The zone from where this host should be polled.
   template:
     description:
-      - the template used to define the host
+      - The template used to define the host.
     required: false
     default: None
   check_command:
     description:
-      - the command used to check if the host is alive
+      - The command used to check if the host is alive.
     required: false
     default: "hostalive"
   display_name:
     description:
-      - the name used to display the host
+      - The name used to display the host.
     required: false
     default: if none is give it is the value of the <name> parameter
   ip:
     description:
-      - the ip-addres of the host
+      - The IP address of the host.
     required: true
   variables:
     description:
-      - list of variables
+      - List of variables.
     required: false
     default: None
 '''
