@@ -7,6 +7,7 @@
      master_profile:
          - count: 1
            dns_prefix: "acsdcos{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+           vm_size: Standard_A0
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
@@ -33,6 +34,7 @@
      master_profile:
          - count: 1
            dns_prefix: "acsdcos{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+           vm_size: Standard_A0
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
@@ -60,6 +62,7 @@
      master_profile:
          - count: 1
            dns_prefix: "acsdcos{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+           vm_size: Standard_A0
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
@@ -79,6 +82,7 @@
      master_profile:
          - count: 1
            dns_prefix: "acssw{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+           vm_size: Standard_A0
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
@@ -105,6 +109,7 @@
      master_profile:
          - count: 1
            dns_prefix: "acssw{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+           vm_size: Standard_A0
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
@@ -132,6 +137,7 @@
      master_profile:
          - count: 1
            dns_prefix: "acssw{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+           vm_size: Standard_A0
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaZoyiz1qbdOQ8xEf6uEu1cCwYowo5FHtsBhqLoDnnp7KUTEBN+io238wdhjkasndq238e2/983289dasjnasey823/YkUCuzxDpsH7DUDhZcwySLKVVe0Qm3+928dfsjsejk298r/+vAnflKebuypNlmocIvakFWoZda18FOmsOoIVXQ8HWFNCuw9ZCunMSN62QGamCe3dL5cXlkgHYv7ekJE15IA9aOJcM7e90oeTqo+dsajda82e78sdja/llas8tsXY85LFqRnr3gJ02bAscjc477+X+j/gkpFoN1QEmt juliens@msft.com
