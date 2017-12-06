@@ -5,7 +5,7 @@
     dest: fakedest
     remote_src: yes
   register: fail_remote_invalid_source
-  failed_when: "fail_remote_invalid_source.msg != 'Cannot copy src file: fakesource as it does not exist'"
+  failed_when: "'it does not exist' not in fail_remote_invalid_source.msg"
 
 - name: setup source folder for remote tests
   win_copy:
@@ -43,7 +43,7 @@
     dest: '{{test_win_copy_path}}\target\file\foo.txt'
     remote_src: yes
   register: fail_remote_file_parent_dir_file
-  failed_when: fail_remote_file_parent_dir_file.msg != 'object at destination parent dir ' + test_win_copy_path + '\\target\\file is currently a file'
+  failed_when: "'is currently a file' not in fail_remote_file_parent_dir_file.msg"
 
 - name: fail source is a folder dest parent dir is also a file
   win_copy:
@@ -59,7 +59,7 @@
     dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
     remote_src: yes
   register: fail_remote_missing_parent_dir
-  failed_when: "'Destination directory ' + test_win_copy_path + '\\missing-dir does not exist' not in fail_remote_missing_parent_dir.msg"
+  failed_when: "'does not exist' not in fail_remote_missing_parent_dir.msg"
 
 - name: remove target after remote failure tests
   win_file:
