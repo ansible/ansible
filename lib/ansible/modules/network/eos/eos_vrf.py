@@ -237,7 +237,7 @@ def check_declarative_intent_params(want, module):
             for i in w['interfaces']:
                 obj_in_have = search_obj_in_list(w['name'], have)
 
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+                if obj_in_have and i not in obj_in_have.get('interfaces', []):
                     module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
