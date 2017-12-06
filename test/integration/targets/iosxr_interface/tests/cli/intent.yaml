@@ -7,6 +7,7 @@
     description: test_interface_1
     enabled: True
     state: present
+    provider: "{{ cli }}"
   register: result
 
 - name: Check intent arguments
@@ -14,6 +15,7 @@
     name: GigabitEthernet0/0/0/1
     state: up
     delay: 20
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -24,6 +26,7 @@
   iosxr_interface:
     name: GigabitEthernet0/0/0/1
     state: down
+    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -38,6 +41,7 @@
     enabled: False
     state: down
     delay: 20
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -49,6 +53,7 @@
     name: GigabitEthernet0/0/0/1
     enabled: False
     state: up
+    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -64,6 +69,7 @@
       enabled: True
       state: up
       delay: 20
+    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 

@@ -7,10 +7,12 @@
       - no domain lookup source-interface Loopback10
 #      - vrf ansible
     match: none
+    provider: "{{ cli }}"
 
 - name: configure lookup_source
   iosxr_system:
     lookup_source: Loopback10
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -21,6 +23,7 @@
 - name: verify lookup_source
   iosxr_system:
     lookup_source: Loopback10
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -58,5 +61,6 @@
       - no domain lookup source-interface Loopback10
       - no vrf ansible
     match: none
+    provider: "{{ cli }}"
 
 - debug: msg="END cli/set_lookup_source.yaml"
