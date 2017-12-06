@@ -1,0 +1,30 @@
+---
+
+- name: create an ACL
+  consul_acl:
+    host: "{{ acl_host }}"
+    mgmt_token: "{{ mgmt_token }}"
+    name: "{{ test_consul_acl_token_name }}"
+    token: "{{ test_consul_acl_token_id }}"
+  register: created_acl
+
+- name: change ACL token
+  consul_acl:
+    host: "{{ acl_host }}"
+    mgmt_token: "{{ mgmt_token }}"
+    name: "{{ test_consul_acl_token_name }}"
+    token: "{{ test_consul_acl_token_id_2 }}"
+  register: updated_acl
+
+- name: verify updated ACL
+  assert:
+    that:
+      - updated_acl.changed
+      - updated_acl.token == test_consul_acl_token_id_2
+
+- name: clean up
+  consul_acl:
+    host: "{{ acl_host }}"
+    mgmt_token: "{{ mgmt_token }}"
+    token: "{{ created_acl.token }}"
+    state: absent
