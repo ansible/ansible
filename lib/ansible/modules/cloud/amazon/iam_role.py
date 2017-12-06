@@ -56,7 +56,7 @@ options:
     description:
       - Create or remove the IAM role
     required: true
-    choices: [ 'present', 'absent' ]
+    choices: [ 'present', 'absent', 'fetch' ]
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -71,6 +71,11 @@ EXAMPLES = '''
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
     description: This is My New Role
     state: present
+
+# Fetch an existing role
+- iam_role:
+    name: mynewrole
+    state: fetch
 
 # Create a role and attach a managed policy called "PowerUserAccess"
 - iam_role:
@@ -336,6 +341,19 @@ def destroy_role(connection, module):
     module.exit_json(changed=True)
 
 
+def fetch_role(connection, module):
+
+    params = dict()
+    params['RoleName'] = module.params.get('name')
+    changed = False
+
+    # Get role
+    role = get_role(connection, module, params['RoleName'])
+
+    role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
+    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role))
+
+
 def get_role(connection, module, name):
     try:
         return connection.get_role(RoleName=name)['Role']
@@ -368,13 +386,13 @@ def main():
             path=dict(default="/", type='str'),
             assume_role_policy_document=dict(type='json'),
             managed_policy=dict(type='list', aliases=['managed_policies']),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent', 'fetch'], required=True),
             description=dict(required=False, type='str')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=[('state', 'present', ['assume_role_policy_document'])])
+                           required_if=[('state', 'present', 'fetch', ['assume_role_policy_document'])])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
@@ -387,6 +405,8 @@ def main():
 
     if state == 'present':
         create_or_update_role(connection, module)
+    elif state == 'fetch':
+        fetch_role(connection, module)
     else:
         destroy_role(connection, module)
 
