@@ -122,6 +122,12 @@ options:
         description:
             - "If I(True) storage domain will be formatted after removing it from oVirt/RHV."
             - "This parameter is relevant only when C(state) is I(absent)."
+    discard_after_delete:
+        description:
+            - "If I(True) storage domain blocks will be discarded upon deletion. Enabled by default."
+            - "This parameter is relevant only for block based storage domains."
+        version_added: 2.5
+
 extends_documentation_fragment: ovirt
 '''
 
@@ -300,6 +306,8 @@ class StorageDomainModule(BaseModule):
             host=otypes.Host(
                 name=self._module.params['host'],
             ),
+            discard_after_delete=self._module.params['discard_after_delete']
+            if storage_type in ['iscsi', 'fcp'] else False,
             storage=otypes.HostStorage(
                 type=otypes.StorageType(storage_type),
                 logical_units=[
@@ -498,6 +506,7 @@ def main():
         fcp=dict(default=None, type='dict'),
         destroy=dict(type='bool', default=False),
         format=dict(type='bool', default=False),
+        discard_after_delete=dict(type='bool', default=True)
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
