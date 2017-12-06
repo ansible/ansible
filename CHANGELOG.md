@@ -15,6 +15,8 @@ Ansible Changes By Release
 * Fix --vault-id support in ansible-pull (https://github.com/ansible/ansible/pull/33629)
 * In nxos_interface_ospf, fail nicely if loopback is used with passive_interface:
   (https://github.com/ansible/ansible/pull/33252)
+* Fix quote filter when given an integer to quote (https://github.com/ansible/ansible/issues/33272)
+* nxos_vrf_interface fix when validating the interface (https://github.com/ansible/ansible/issues/33227)
 
 
 <a id="2.4.2"></a>
