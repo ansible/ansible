@@ -93,8 +93,8 @@ class TaskResult:
         if self._result.get('_ansible_no_log', False):
             x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
             for preserve in _PRESERVE:
-                if preserve in result._results:
-                    x[preserve] = result._results[preserve]
+                if preserve in self._result:
+                    x[preserve] = self._result[preserve]
             result._result = x
         elif self._result:
             result._result = deepcopy(self._result)
