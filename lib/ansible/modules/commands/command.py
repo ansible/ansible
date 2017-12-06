@@ -57,7 +57,8 @@ options:
     default: null
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
-       The C(command) module is much more secure as it's not affected by the user's environment.
+       Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
+       use the C(command) module when possible.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
