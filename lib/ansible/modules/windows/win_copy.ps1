@@ -291,7 +291,7 @@ if ($mode -eq "query") {
     # expanded this will always result in a change as the calculation is done
     # on the win_copy action plugin and is only run if a change needs to occur
     if (-not (Test-Path -Path $src -PathType Leaf)) {
-        Fail-Json -obj $result -message "Cannot expand src zip file file: $src as it does not exist"
+        Fail-Json -obj $result -message "Cannot expand src zip file: $src as it does not exist"
     }
 
     # Detect if the PS zip assemblies are available or whether to use Shell
