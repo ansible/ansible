@@ -447,10 +447,10 @@ def create_rule_instance(rule):
     '''
     return SecurityRule(
         rule['protocol'],
-        rule['source_address_prefix'],
-        rule['destination_address_prefix'],
         rule['access'],
         rule['direction'],
+        source_address_prefix=rule['source_address_prefix'],
+        destination_address_prefix=rule['destination_address_prefix'],
         id=rule.get('id', None),
         description=rule.get('description', None),
         source_port_range=rule.get('source_port_range', None),
