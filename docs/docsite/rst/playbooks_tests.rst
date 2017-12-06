@@ -7,7 +7,7 @@ Tests
 `Tests <http://jinja.pocoo.org/docs/dev/templates/#tests>`_ in Jinja are a way of evaluating template expressions and returning True or False.
 Jinja ships with many of these. See `builtin tests`_ in the official Jinja template documentation.
 
-The main difference between tests and filters are that Jinja tests are used for comparisons, whereas filters are used for data manipulation, and have different applications in jinja. Tests can also be used in list processing filters, like C(map()) and C(select()) to choose items in the list.
+The main difference between tests and filters are that Jinja tests are used for comparisons, whereas filters are used for data manipulation, and have different applications in jinja. Tests can also be used in list processing filters, like ``map()`` and ``select()`` to choose items in the list.
 
 Like all templating, tests always execute on the Ansible controller, **not** on the target of a task, as they test local data.
 
