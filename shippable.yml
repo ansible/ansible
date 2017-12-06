@@ -10,7 +10,7 @@ matrix:
   include:
     - env: TEST=remote TARGET=all PLATFORM=osx VERSION=10.11
 
-    - env: TEST=remote TARGET=all PLATFORM=freebsd VERSION=10.3-STABLE PRIVILEGED=true
+    - env: TEST=remote TARGET=all PLATFORM=freebsd VERSION=10.4 PRIVILEGED=true
 
     - env: TEST=remote TARGET=ci_win1 PLATFORM=windows VERSION=2012-R2_RTM
     - env: TEST=remote TARGET=ci_win2 PLATFORM=windows VERSION=2012-R2_RTM
