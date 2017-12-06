@@ -14,12 +14,12 @@ PARAMS_GET_CONNECTED = dict(
 )
 
 
-@pytest.mark.resource(name='datacenters')
+@pytest.mark.resource(TestDatacenterFactsModule='datacenters')
 class TestDatacenterFactsModule(OneViewBaseFactsTest):
     def test_should_get_all_datacenters(self):
         self.resource.get_all.return_value = {"name": "Data Center Name"}
 
-        self.mock_ansible_module.params = dict(config='config.json',)
+        self.mock_ansible_module.params = dict(config='config.json')
 
         DatacenterFactsModule().run()
 
@@ -68,6 +68,7 @@ class TestDatacenterFactsModule(OneViewBaseFactsTest):
             ansible_facts={'datacenter_visual_content': None,
                            'datacenters': []}
         )
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

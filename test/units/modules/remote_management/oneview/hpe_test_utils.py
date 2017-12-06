@@ -27,17 +27,16 @@ from hpOneView.oneview_client import OneViewClient
 class OneViewBaseTest(object):
     @pytest.fixture(autouse=True)
     def setUp(self, mock_ansible_module, mock_ov_client, request):
+        class_name = type(self).__name__
         marker = request.node.get_marker('resource')
-        self.resource = getattr(mock_ov_client, "%s" % (marker.kwargs['name']))
+        self.resource = getattr(mock_ov_client, "%s" % (marker.kwargs[class_name]))
         self.mock_ov_client = mock_ov_client
         self.mock_ansible_module = mock_ansible_module
 
     @pytest.fixture
     def testing_module(self):
         resource_name = type(self).__name__.replace('Test', '')
-        resource_module_path_name = resource_name.replace('Module', '')
-        resource_module_path_name = re.findall('[A-Z][^A-Z]*', resource_module_path_name)
-        resource_module_path_name = 'oneview_' + str.join('_', resource_module_path_name).lower()
+        resource_module_path_name = self.underscore(resource_name.replace('Module', ''))
 
         ansible = __import__('ansible')
         oneview_module = ansible.modules.remote_management.oneview
@@ -53,6 +52,11 @@ class OneViewBaseTest(object):
             message = "Something went wrong while parsing yaml from {}.EXAMPLES".format(self.testing_class.__module__)
             raise Exception(message)
         return testing_module
+
+    def underscore(self, word):
+        word = re.findall('[A-Z][^A-Z]*', word)
+        word = 'oneview_' + str.join('_', word).lower()
+        return word
 
     def test_main_function_should_call_run_method(self, testing_module, mock_ansible_module):
         mock_ansible_module.params = {'config': 'config.json'}
