@@ -5,6 +5,7 @@
       name: auth_user
       state: present
       configured_password: pass123
+      provider: "{{ cli }}"
 
   - name: test login
     expect:
@@ -30,6 +31,7 @@
       name: auth_user
       state: present
       public_key_contents: "{{ lookup('file', \"{{ role_path }}/files/public.pub\") }}"
+      provider: "{{ cli }}"
 
   - name: test login with private key
     expect:
@@ -40,6 +42,7 @@
   - name: remove user and key
     iosxr_user:
       name: auth_user
+      provider: "{{ cli }}"
       state: absent
 
   - name: test login with private key (should fail, no user)
@@ -55,6 +58,7 @@
       name: auth_user
       state: present
       public_key: "{{ role_path }}/files/public.pub"
+      provider: "{{ cli }}"
 
   - name: test login with private key
     expect:
@@ -68,6 +72,7 @@
       name: auth_user
       state: present
       public_key_contents: "{{ lookup('file', \"{{ role_path }}/files/public2.pub\") }}"
+      provider: "{{ cli }}"
 
   # FIXME: pexpect fails with OSError: [Errno 5] Input/output error
   - name: test login with invalid private key (should fail)
@@ -88,4 +93,5 @@
     iosxr_user:
       name: auth_user
       state: absent
+      provider: "{{ cli }}"
     register: result

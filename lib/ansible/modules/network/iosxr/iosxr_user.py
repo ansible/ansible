@@ -26,6 +26,7 @@ description:
     either individual usernames or the aggregate of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XR 6.1.2
 options:
@@ -166,7 +167,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
 
 try:
     from base64 import b64decode
@@ -228,7 +229,7 @@ def map_obj_to_commands(updates, module):
 
 
 def map_config_to_obj(module):
-    data = get_config(module, flags=['username'])
+    data = get_config(module, config_filter='username')
     users = data.strip().rstrip('!').split('!')
 
     if not users:
@@ -452,8 +453,6 @@ def main():
             'The "password" argument is used to authenticate the current connection. ' +
             'To set a user password use "configured_password" instead.'
         )
-
-    check_args(module, warnings)
 
     result = {'changed': False}
 

@@ -5,10 +5,12 @@
   iosxr_config:
     lines: no domain name
     match: none
+    provider: "{{ cli }}"
 
 - name: configure domain_name
   iosxr_system:
     domain_name: eng.ansible.com
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -18,6 +20,7 @@
 - name: verify domain_name
   iosxr_system:
     domain_name: eng.ansible.com
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -28,5 +31,6 @@
   iosxr_config:
     lines: no domain name
     match: none
+    provider: "{{ cli }}"
 
 - debug: msg="END cli/set_domain_name.yaml"
