@@ -339,7 +339,7 @@ def create_launch_config(connection, module):
             module.fail_json(msg="Failed to create launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     result = (dict((k, v) for k, v in launch_config.items()
-              if k not in ['Connection', 'CreatedTime', 'InstanceMonitoring', 'BlockDeviceMappings']))
+                   if k not in ['Connection', 'CreatedTime', 'InstanceMonitoring', 'BlockDeviceMappings']))
 
     result['CreatedTime'] = to_text(launch_config.get('CreatedTime'))
 

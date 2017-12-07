@@ -111,6 +111,7 @@ EXAMPLES = '''
 import re
 from ansible.module_utils.basic import AnsibleModule
 
+
 def query_package(module, pkgng_path, name, dir_arg):
 
     rc, out, err = module.run_command("%s %s info -g -e %s" % (pkgng_path, dir_arg, name))
@@ -119,6 +120,7 @@ def query_package(module, pkgng_path, name, dir_arg):
         return True
 
     return False
+
 
 def pkgng_older_than(module, pkgng_path, compare_version):
 
@@ -206,6 +208,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg):
 
     return (False, "package(s) already present")
 
+
 def annotation_query(module, pkgng_path, package, tag, dir_arg):
     rc, out, err = module.run_command("%s %s info -g -A %s" % (pkgng_path, dir_arg, package))
     match = re.search(r'^\s*(?P<tag>%s)\s*:\s*(?P<value>\w+)' % tag, out, flags=re.MULTILINE)
@@ -219,10 +222,10 @@ def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
     if not _value:
         # Annotation does not exist, add it.
         rc, out, err = module.run_command('%s %s annotate -y -A %s %s "%s"'
-            % (pkgng_path, dir_arg, package, tag, value))
+                                          % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
             module.fail_json(msg="could not annotate %s: %s"
-                % (package, out), stderr=err)
+                             % (package, out), stderr=err)
         return True
     elif _value != value:
         # Annotation exists, but value differs
@@ -234,41 +237,43 @@ def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
         # Annotation exists, nothing to do
         return False
 
+
 def annotation_delete(module, pkgng_path, package, tag, value, dir_arg):
     _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if _value:
         rc, out, err = module.run_command('%s %s annotate -y -D %s %s'
-            % (pkgng_path, dir_arg, package, tag))
+                                          % (pkgng_path, dir_arg, package, tag))
         if rc != 0:
             module.fail_json(msg="could not delete annotation to %s: %s"
-                % (package, out), stderr=err)
+                             % (package, out), stderr=err)
         return True
     return False
+
 
 def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
     _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if not value:
         # No such tag
         module.fail_json(msg="could not change annotation to %s: tag %s does not exist"
-            % (package, tag))
+                         % (package, tag))
     elif _value == value:
         # No change in value
         return False
     else:
-        rc,out,err = module.run_command('%s %s annotate -y -M %s %s "%s"'
-            % (pkgng_path, dir_arg, package, tag, value))
+        rc, out, err = module.run_command('%s %s annotate -y -M %s %s "%s"'
+                                          % (pkgng_path, dir_arg, package, tag, value))
         if rc != 0:
             module.fail_json(msg="could not change annotation annotation to %s: %s"
-                % (package, out), stderr=err)
+                             % (package, out), stderr=err)
         return True
 
 
 def annotate_packages(module, pkgng_path, packages, annotation, dir_arg):
     annotate_c = 0
     annotations = map(lambda _annotation:
-        re.match(r'(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?',
-            _annotation).groupdict(),
-        re.split(r',', annotation))
+                      re.match(r'(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?',
+                               _annotation).groupdict(),
+                      re.split(r',', annotation))
 
     operation = {
         '+': annotation_add,
@@ -284,6 +289,7 @@ def annotate_packages(module, pkgng_path, packages, annotation, dir_arg):
     if annotate_c > 0:
         return (True, "added %s annotations." % annotate_c)
     return (False, "changed no annotations")
+
 
 def autoremove_packages(module, pkgng_path, dir_arg):
     rc, out, err = module.run_command("%s %s autoremove -n" % (pkgng_path, dir_arg))
@@ -302,20 +308,21 @@ def autoremove_packages(module, pkgng_path, dir_arg):
 
     return True, "autoremoved %d package(s)" % (autoremove_c)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec       = dict(
-            state           = dict(default="present", choices=["present","absent"], required=False),
-            name            = dict(aliases=["pkg"], required=True, type='list'),
-            cached          = dict(default=False, type='bool'),
-            annotation      = dict(default="", required=False),
-            pkgsite         = dict(default="", required=False),
-            rootdir         = dict(default="", required=False, type='path'),
-            chroot          = dict(default="", required=False, type='path'),
-            jail            = dict(default="", required=False, type='str'),
-            autoremove      = dict(default=False, type='bool')),
-        supports_check_mode = True,
-        mutually_exclusive  =[["rootdir", "chroot", "jail"]])
+        argument_spec=dict(
+            state=dict(default="present", choices=["present", "absent"], required=False),
+            name=dict(aliases=["pkg"], required=True, type='list'),
+            cached=dict(default=False, type='bool'),
+            annotation=dict(default="", required=False),
+            pkgsite=dict(default="", required=False),
+            rootdir=dict(default="", required=False, type='path'),
+            chroot=dict(default="", required=False, type='path'),
+            jail=dict(default="", required=False, type='str'),
+            autoremove=dict(default=False, type='bool')),
+        supports_check_mode=True,
+        mutually_exclusive=[["rootdir", "chroot", "jail"]])
 
     pkgng_path = module.get_bin_path('pkg', True)
 

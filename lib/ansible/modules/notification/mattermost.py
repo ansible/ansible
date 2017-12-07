@@ -98,54 +98,54 @@ from ansible.module_utils.urls import fetch_url
 def main():
     module = AnsibleModule(
         supports_check_mode=True,
-        argument_spec = dict(
-            url         = dict(type='str', required=True),
-            api_key     = dict(type='str', required=True,  no_log=True),
-            text        = dict(type='str', required=True),
-            channel     = dict(type='str', default=None),
-            username    = dict(type='str', default='Ansible'),
-            icon_url    = dict(type='str', default='https://www.ansible.com/favicon.ico'),
-            validate_certs = dict(default='yes', type='bool'),
+        argument_spec=dict(
+            url=dict(type='str', required=True),
+            api_key=dict(type='str', required=True, no_log=True),
+            text=dict(type='str', required=True),
+            channel=dict(type='str', default=None),
+            username=dict(type='str', default='Ansible'),
+            icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
-    #init return dict
+    # init return dict
     result = dict(changed=False, msg="OK")
 
-    #define webhook
-    webhook_url = "{0}/hooks/{1}".format(module.params['url'],module.params['api_key'])
+    # define webhook
+    webhook_url = "{0}/hooks/{1}".format(module.params['url'], module.params['api_key'])
     result['webhook_url'] = webhook_url
 
-    #define payload
-    payload = { }
+    # define payload
+    payload = {}
     for param in ['text', 'channel', 'username', 'icon_url']:
         if module.params[param] is not None:
             payload[param] = module.params[param]
 
-    payload=module.jsonify(payload)
+    payload = module.jsonify(payload)
     result['payload'] = payload
 
-    #http headers
+    # http headers
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     }
 
-    #notes:
-    #Nothing is done in check mode
-    #it'll pass even if your server is down or/and if your token is invalid.
-    #If someone find good way to check...
+    # notes:
+    # Nothing is done in check mode
+    # it'll pass even if your server is down or/and if your token is invalid.
+    # If someone find good way to check...
 
-    #send request if not in test mode
+    # send request if not in test mode
     if module.check_mode is False:
         response, info = fetch_url(module=module, url=webhook_url, headers=headers, method='POST', data=payload)
 
-        #something's wrong
+        # something's wrong
         if info['status'] != 200:
-            #some problem
+            # some problem
             result['msg'] = "Failed to send mattermost message, the error was: {0}".format(info['msg'])
             module.fail_json(**result)
 
-    #Looks good
+    # Looks good
     module.exit_json(**result)
 
 

@@ -279,6 +279,7 @@ class ACMEDirectory(object):
     require authentication).
     https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.2
     '''
+
     def __init__(self, module):
         self.module = module
         self.directory_root = module.params['acme_directory']
@@ -304,6 +305,7 @@ class ACMEAccount(object):
     ACME server. Provides access to account bound information like
     the currently active authorizations and valid certificates
     '''
+
     def __init__(self, module):
         self.module = module
         self.key = module.params['account_key']
@@ -513,6 +515,7 @@ class ACMEClient(object):
     start and validate ACME challenges and download the respective
     certificates.
     '''
+
     def __init__(self, module):
         self.module = module
         self.challenge = module.params['challenge']

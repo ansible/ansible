@@ -102,6 +102,7 @@ def ring_check(module, riak_admin_bin):
     else:
         return False
 
+
 def main():
 
     module = AnsibleModule(
@@ -115,9 +116,8 @@ def main():
             wait_for_ring=dict(default=False, type='int'),
             wait_for_service=dict(
                 required=False, default=None, choices=['kv']),
-            validate_certs = dict(default='yes', type='bool'))
+            validate_certs=dict(default='yes', type='bool'))
     )
-
 
     command = module.params.get('command')
     http_conn = module.params.get('http_conn')
@@ -126,8 +126,7 @@ def main():
     wait_for_ring = module.params.get('wait_for_ring')
     wait_for_service = module.params.get('wait_for_service')
 
-
-    #make sure riak commands are on the path
+    # make sure riak commands are on the path
     riak_bin = module.get_bin_path('riak')
     riak_admin_bin = module.get_bin_path('riak-admin')
 
@@ -150,16 +149,16 @@ def main():
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-    rc, out, err = module.run_command([riak_bin, 'version'] )
+    rc, out, err = module.run_command([riak_bin, 'version'])
     version = out.strip()
 
     result = dict(node_name=node_name,
-              nodes=nodes,
-              ring_size=ring_size,
-              version=version)
+                  nodes=nodes,
+                  ring_size=ring_size,
+                  version=version)
 
     if command == 'ping':
-        cmd = '%s ping %s' % ( riak_bin, target_node )
+        cmd = '%s ping %s' % (riak_bin, target_node)
         rc, out, err = module.run_command(cmd)
         if rc == 0:
             result['ping'] = out
@@ -219,7 +218,7 @@ def main():
                 module.fail_json(msg='Timeout waiting for handoffs.')
 
     if wait_for_service:
-        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name ]
+        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name]
         rc, out, err = module.run_command(cmd)
         result['service'] = out
 

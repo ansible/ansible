@@ -196,8 +196,9 @@ def build_payload_for_rocketchat(module, text, channel, username, icon_url, icon
                 attachment['fallback'] = attachment['text']
             payload['attachments'].append(attachment)
 
-    payload="payload=" + module.jsonify(payload)
+    payload = "payload=" + module.jsonify(payload)
     return payload
+
 
 def do_notify_rocketchat(module, domain, token, protocol, payload):
 
@@ -210,21 +211,22 @@ def do_notify_rocketchat(module, domain, token, protocol, payload):
     if info['status'] != 200:
         module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            domain      = dict(type='str', required=True, default=None),
-            token       = dict(type='str', required=True, no_log=True),
-            protocol    = dict(type='str', default='https', choices=['http', 'https']),
-            msg         = dict(type='str', required=False, default=None),
-            channel     = dict(type='str', default=None),
-            username    = dict(type='str', default='Ansible'),
-            icon_url    = dict(type='str', default='https://www.ansible.com/favicon.ico'),
-            icon_emoji  = dict(type='str', default=None),
-            link_names  = dict(type='int', default=1, choices=[0,1]),
-            validate_certs = dict(default='yes', type='bool'),
-            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
-            attachments = dict(type='list', required=False, default=None)
+        argument_spec=dict(
+            domain=dict(type='str', required=True, default=None),
+            token=dict(type='str', required=True, no_log=True),
+            protocol=dict(type='str', default='https', choices=['http', 'https']),
+            msg=dict(type='str', required=False, default=None),
+            channel=dict(type='str', default=None),
+            username=dict(type='str', default='Ansible'),
+            icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
+            icon_emoji=dict(type='str', default=None),
+            link_names=dict(type='int', default=1, choices=[0, 1]),
+            validate_certs=dict(default='yes', type='bool'),
+            color=dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            attachments=dict(type='list', required=False, default=None)
         )
     )
 

@@ -425,6 +425,7 @@ def _throttleable_operation(max_retries):
         return _do_op
     return _operation_wrapper
 
+
 def _get_vpc_connection(module, region, aws_connect_params):
     try:
         return connect_to_aws(boto.vpc, region, **aws_connect_params)
@@ -433,6 +434,7 @@ def _get_vpc_connection(module, region, aws_connect_params):
 
 
 _THROTTLING_RETRIES = 5
+
 
 class ElbManager(object):
     """Handles ELB creation and destruction"""
@@ -579,10 +581,10 @@ class ElbManager(object):
 
             # status of instances behind the ELB
             if info['instances']:
-                info['instance_health'] = [ dict(
-                    instance_id = instance_state.instance_id,
-                    reason_code = instance_state.reason_code,
-                    state = instance_state.state
+                info['instance_health'] = [dict(
+                    instance_id=instance_state.instance_id,
+                    reason_code=instance_state.reason_code,
+                    state=instance_state.state
                 ) for instance_state in self.elb_conn.describe_instance_health(self.name)]
             else:
                 info['instance_health'] = []
@@ -663,7 +665,7 @@ class ElbManager(object):
 
         elb_interfaces = self.ec2_conn.get_all_network_interfaces(
             filters={'attachment.instance-owner-id': 'amazon-elb',
-                        'description': 'ELB {0}'.format(self.name) })
+                     'description': 'ELB {0}'.format(self.name)})
 
         for x in range(0, max_retries):
             for interface in elb_interfaces:
@@ -888,13 +890,13 @@ class ElbManager(object):
         if self.zones:
             if self.purge_zones:
                 zones_to_disable = list(set(self.elb.availability_zones) -
-                                    set(self.zones))
+                                        set(self.zones))
                 zones_to_enable = list(set(self.zones) -
-                                    set(self.elb.availability_zones))
+                                       set(self.elb.availability_zones))
             else:
                 zones_to_disable = None
                 zones_to_enable = list(set(self.zones) -
-                                    set(self.elb.availability_zones))
+                                       set(self.elb.availability_zones))
             if zones_to_enable:
                 self._enable_zones(zones_to_enable)
             # N.B. This must come second, in case it would have removed all zones
@@ -962,7 +964,7 @@ class ElbManager(object):
                 "enabled": True,
                 "s3_bucket_name": self.access_logs['s3_location'],
                 "s3_bucket_prefix": self.access_logs.get('s3_prefix', ''),
-                "emit_interval": self.access_logs.get('interval',  60),
+                "emit_interval": self.access_logs.get('interval', 60),
             }
 
             update_access_logs_config = False
@@ -1002,10 +1004,10 @@ class ElbManager(object):
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
 
     def _policy_name(self, policy_type):
-        return __file__.split('/')[-1].split('.')[0].replace('_', '-')  + '-' + policy_type
+        return __file__.split('/')[-1].split('.')[0].replace('_', '-') + '-' + policy_type
 
     def _create_policy(self, policy_param, policy_meth, policy):
-        getattr(self.elb_conn, policy_meth )(policy_param, self.elb.name, policy)
+        getattr(self.elb_conn, policy_meth)(policy_param, self.elb.name, policy)
 
     def _delete_policy(self, elb_name, policy):
         self.elb_conn.delete_lb_policy(elb_name, policy)
@@ -1223,7 +1225,7 @@ class ElbManager(object):
                 params['Tags.member.%d.Value' % (i + 1)] = dictact[key]
 
             self.elb_conn.make_request('AddTags', params)
-            self.changed=True
+            self.changed = True
 
         # Remove extra tags
         dictact = dict(set(tagdict.items()) - set(self.tags.items()))
@@ -1232,7 +1234,7 @@ class ElbManager(object):
                 params['Tags.member.%d.Key' % (i + 1)] = key
 
             self.elb_conn.make_request('RemoveTags', params)
-            self.changed=True
+            self.changed = True
 
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
@@ -1275,7 +1277,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive = [['security_group_ids', 'security_group_names']]
+        mutually_exclusive=[['security_group_ids', 'security_group_names']]
     )
 
     if not HAS_BOTO:
@@ -1321,7 +1323,7 @@ def main():
         security_group_ids = []
         try:
             ec2 = connect_to_aws(boto.ec2, region, **aws_connect_params)
-            if subnets: # We have at least one subnet, ergo this is a VPC
+            if subnets:  # We have at least one subnet, ergo this is a VPC
                 vpc_conn = _get_vpc_connection(module=module, region=region, aws_connect_params=aws_connect_params)
                 vpc_id = vpc_conn.get_all_subnets([subnets[0]])[0].vpc_id
                 filters = {'vpc_id': vpc_id}
@@ -1333,10 +1335,10 @@ def main():
                 if isinstance(group_name, string_types):
                     group_name = [group_name]
 
-                group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
+                group_id = [str(grp.id) for grp in grp_details if str(grp.name) in group_name]
                 security_group_ids.extend(group_id)
         except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg = str(e))
+            module.fail_json(msg=str(e))
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,

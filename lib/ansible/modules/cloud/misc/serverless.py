@@ -154,13 +154,13 @@ def get_service_name(module, stage):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            service_path = dict(required=True, type='path'),
-            state        = dict(default='present', choices=['present', 'absent'], required=False),
-            functions    = dict(type='list', required=False),
-            region       = dict(default='', required=False),
-            stage        = dict(default='', required=False),
-            deploy       = dict(default=True, type='bool', required=False),
-            serverless_bin_path = dict(required=False, type='path')
+            service_path=dict(required=True, type='path'),
+            state=dict(default='present', choices=['present', 'absent'], required=False),
+            functions=dict(type='list', required=False),
+            region=dict(default='', required=False),
+            stage=dict(default='', required=False),
+            deploy=dict(default=True, type='bool', required=False),
+            serverless_bin_path=dict(required=False, type='path')
         ),
     )
 
@@ -198,13 +198,13 @@ def main():
     if rc != 0:
         if state == 'absent' and "-{}' does not exist".format(stage) in out:
             module.exit_json(changed=False, state='absent', command=command,
-                    out=out, service_name=get_service_name(module, stage))
+                             out=out, service_name=get_service_name(module, stage))
 
         module.fail_json(msg="Failure when executing Serverless command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
 
     # gather some facts about the deployment
     module.exit_json(changed=True, state='present', out=out, command=command,
-            service_name=get_service_name(module, stage))
+                     service_name=get_service_name(module, stage))
 
 
 if __name__ == '__main__':

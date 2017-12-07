@@ -146,7 +146,7 @@ def map_obj_to_commands(updates, module):
                         pass
 
             if w['facility'] is not None:
-                    commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
+                commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
 
     return commands
 

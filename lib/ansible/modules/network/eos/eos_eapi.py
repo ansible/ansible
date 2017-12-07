@@ -187,6 +187,7 @@ from ansible.module_utils.network.eos.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
+
 def check_transport(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
@@ -194,17 +195,21 @@ def check_transport(module):
     if 'eapi' in (transport, provider_transport):
         module.fail_json(msg='eos_eapi module is only supported over cli transport')
 
+
 def validate_http_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
+
 
 def validate_https_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
 
+
 def validate_local_http_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
+
 
 def validate_vrf(value, module):
     out = run_commands(module, ['show vrf'])
@@ -213,11 +218,12 @@ def validate_vrf(value, module):
     if value not in configured_vrfs:
         module.fail_json(msg='vrf `%s` is not configured on the system' % value)
 
+
 def map_obj_to_commands(updates, module, warnings):
     commands = list()
     want, have = updates
 
-    needs_update = lambda x: want.get(x) is not None and (want.get(x) != have.get(x))
+    def needs_update(x): return want.get(x) is not None and (want.get(x) != have.get(x))
 
     def add(cmd):
         if 'management api http-commands' not in commands:
@@ -266,7 +272,6 @@ def map_obj_to_commands(updates, module, warnings):
         elif want['state'] == 'started':
             add('no shutdown')
 
-
     if needs_update('vrf'):
         add('vrf %s' % want['vrf'])
         # switching operational vrfs here
@@ -277,6 +282,7 @@ def map_obj_to_commands(updates, module, warnings):
             add('no shutdown')
 
     return commands
+
 
 def parse_state(data):
     if data[0]['enabled']:
@@ -299,6 +305,7 @@ def map_config_to_obj(module):
         'state': parse_state(out)
     }
 
+
 def map_params_to_obj(module):
     obj = {
         'http': module.params['http'],
@@ -319,6 +326,7 @@ def map_params_to_obj(module):
                 validator(value, module)
 
     return obj
+
 
 def verify_state(updates, module):
     want, have = updates
@@ -348,6 +356,7 @@ def verify_state(updates, module):
         if timeout == 0:
             module.fail_json(msg='timeout expired before eapi running state changed')
 
+
 def collect_facts(module, result):
     out = run_commands(module, ['show management api http-commands | json'])
     facts = dict(eos_eapi_urls=dict())
@@ -358,6 +367,7 @@ def collect_facts(module, result):
             facts['eos_eapi_urls'][key] = list()
         facts['eos_eapi_urls'][key].append(str(url).strip())
     result['ansible_facts'] = facts
+
 
 def main():
     """ main entry point for module execution

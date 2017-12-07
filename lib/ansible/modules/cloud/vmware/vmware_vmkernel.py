@@ -154,15 +154,15 @@ def main():
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(portgroup_name=dict(required=True, type='str'),
-                         ip_address=dict(required=True, type='str'),
-                         subnet_mask=dict(required=True, type='str'),
-                         mtu=dict(required=False, type='int'),
-                         enable_vsan=dict(required=False, type='bool'),
-                         enable_vmotion=dict(required=False, type='bool'),
-                         enable_mgmt=dict(required=False, type='bool'),
-                         enable_ft=dict(required=False, type='bool'),
-                         vswitch_name=dict(required=True, type='str'),
-                         vlan_id=dict(required=True, type='int')))
+                              ip_address=dict(required=True, type='str'),
+                              subnet_mask=dict(required=True, type='str'),
+                              mtu=dict(required=False, type='int'),
+                              enable_vsan=dict(required=False, type='bool'),
+                              enable_vmotion=dict(required=False, type='bool'),
+                              enable_mgmt=dict(required=False, type='bool'),
+                              enable_ft=dict(required=False, type='bool'),
+                              vswitch_name=dict(required=True, type='str'),
+                              vlan_id=dict(required=True, type='int')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 

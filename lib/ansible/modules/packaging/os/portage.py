@@ -289,7 +289,7 @@ def sync_repositories(module, webrsync=False):
 def emerge_packages(module, packages):
     p = module.params
 
-    if not (p['update'] or p['noreplace'] or p['state']=='latest'):
+    if not (p['update'] or p['noreplace'] or p['state'] == 'latest'):
         for package in packages:
             if not query_package(module, package, 'emerge'):
                 break
@@ -319,7 +319,7 @@ def emerge_packages(module, packages):
         if p[flag]:
             args.append(arg)
 
-    if p['state'] and p['state']=='latest':
+    if p['state'] and p['state'] == 'latest':
         args.append("--update")
 
     if p['usepkg'] and p['usepkgonly']:

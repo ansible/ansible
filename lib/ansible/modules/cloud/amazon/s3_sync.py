@@ -256,7 +256,6 @@ DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024
 
 
 def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
-
     """
     calculates a multipart upload etag for amazon s3
 

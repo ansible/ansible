@@ -120,10 +120,10 @@ def pauseMonitor(module, params):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            state     = dict(required=True, choices=['started', 'paused']),
-            apikey      = dict(required=True),
-            monitorid   = dict(required=True)
+        argument_spec=dict(
+            state=dict(required=True, choices=['started', 'paused']),
+            apikey=dict(required=True),
+            monitorid=dict(required=True)
         ),
         supports_check_mode=SUPPORTS_CHECK_MODE
     )
