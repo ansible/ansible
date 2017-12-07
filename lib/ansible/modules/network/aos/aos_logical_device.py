@@ -214,16 +214,16 @@ def logical_device(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     my_logical_dev = find_collection_item(aos.LogicalDevices,
                                           item_name=item_name,
                                           item_id=item_id)
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         logical_device_absent(module, aos, my_logical_dev)

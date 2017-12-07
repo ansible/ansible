@@ -307,12 +307,12 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
     EXIT_DICT['total_bytes'] = c.total_bytes
 
     _locals = locals().keys()
-    if ('cont_deleted' in _locals
-            or 'meta_set' in _locals
-            or 'cont_public' in _locals
-            or 'cont_private' in _locals
-            or 'cont_web_index' in _locals
-            or 'cont_err_index' in _locals):
+    if ('cont_deleted' in _locals or
+            'meta_set' in _locals or
+            'cont_public' in _locals or
+            'cont_private' in _locals or
+            'cont_web_index' in _locals or
+            'cont_err_index' in _locals):
         EXIT_DICT['changed'] = True
 
     module.exit_json(**EXIT_DICT)

@@ -211,16 +211,16 @@ def rack_type(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     my_rack_type = find_collection_item(aos.RackTypes,
                                         item_name=item_name,
                                         item_id=item_id)
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         rack_type_absent(module, aos, my_rack_type)

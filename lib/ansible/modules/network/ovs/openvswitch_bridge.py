@@ -148,8 +148,7 @@ def map_obj_to_commands(want, have, module):
                 command = templatized_command % module.params
                 if want['external_ids']:
                     for k, v in iteritems(want['external_ids']):
-                        if (k not in have['external_ids']
-                                or want['external_ids'][k] != have['external_ids'][k]):
+                        if k not in have['external_ids'] or want['external_ids'][k] != have['external_ids'][k]:
                             command += " " + k + " " + v
                             commands.append(command)
         else:

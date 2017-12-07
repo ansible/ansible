@@ -212,9 +212,9 @@ class ElbManager:
             elif self._is_instance_state_pending(instance_state):
                 # If it's pending, we'll skip further checks and continue waiting
                 pass
-            elif (awaited_state == 'InService'
-                  and instance_state.reason_code == "Instance"
-                  and time.time() >= wait_timeout):
+            elif (awaited_state == 'InService' and
+                  instance_state.reason_code == "Instance" and
+                  time.time() >= wait_timeout):
                 # If the reason_code for the instance being out of service is
                 # "Instance" this indicates a failure state, e.g. the instance
                 # has failed a health check or the ELB does not have the
