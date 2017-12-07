@@ -1,9 +1,19 @@
 ---
+- name: Setup
+  net_user: &clear_users
+    aggregate:
+      - name: netop
+      - name: netend
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
 - name: Set multiple users role
   net_user:
     aggregate:
       - name: netop
       - name: netend
+    nopassword: yes
     role: network-operator
     state: present
     authorize: yes
@@ -13,10 +23,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - 'result.commands == ["username netop role network-operator", "username netend role network-operator"]'
+      - 'result.commands == ["username netop role network-operator", "username netop nopassword", "username netend role network-operator", "username netend nopassword"]'
 
 - name: tearDown
-  net_user:
-    purge: yes
-    authorize: yes
-    provider: "{{ cli }}"
+  net_user: *clear_users

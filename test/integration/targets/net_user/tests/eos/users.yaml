@@ -1,20 +1,27 @@
 ---
+- name: Setup
+  net_user: &clear_netop
+    name: netop
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+
 - name: Create user
   net_user:
     name: netop
+    nopassword: yes
     state: present
+    authorize: yes
     provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - 'result.commands == ["username netop"]'
+      - 'result.commands == ["username netop nopassword"]'
 
-- name: Purge users
-  net_user:
-    purge: yes
-    provider: "{{ cli }}"
+- name: tearDown
+  net_user: *clear_netop
   register: result
 
 - assert:
