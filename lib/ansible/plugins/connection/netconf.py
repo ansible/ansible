@@ -235,4 +235,3 @@ class Connection(ConnectionBase):
             self._manager.close_session()
             self._connected = False
         super(Connection, self).close()
-
