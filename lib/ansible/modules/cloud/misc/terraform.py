@@ -59,6 +59,21 @@ options:
       - A group of key-values to override template variables or those in
         variables files.
     required: false
+  targets:
+    description:
+      - A list of specific resources to target in this plan/application. The
+        resources selected here will also auto-include any dependencies.
+    required: false
+  lock:
+    description:
+      - Enable statefile locking, if you use a service that accepts locks (such
+        as S3+DynamoDB) to store your statefile.
+    required: false
+  lock_timeout:
+    description:
+      - How long to maintain the lock on the statefile, if you use a service
+        that accepts locks (such as S3+DynamoDB).
+    required: false
   force_init:
     description:
       - To avoid duplicating infra, if a state file can't be found this will
@@ -76,7 +91,7 @@ EXAMPLES = """
 # Basic deploy of a service
 - terraform:
     project_path: '{{ project_dir }}'
-    state: latest
+    state: present
 """
 
 RETURN = """
@@ -136,7 +151,7 @@ def _state_args(state_file):
     if state_file and os.path.exists(state_file):
         return ['-state', state_file]
     if state_file and not os.path.exists(state_file):
-        module.fail_json(msg='Could not find state_file "{}", check the path and try again.'.format(state_file))
+        module.fail_json(msg='Could not find state_file "{0}", check the path and try again.'.format(state_file))
     return []
 
 
@@ -154,12 +169,12 @@ def build_plan(bin_path, project_path, variables_args, state_file, plan_path=Non
         return plan_path, False
     elif rc == 1:
         # failure to plan
-        module.fail_json(msg='Terraform plan could not be created\r\nSTDOUT: {}\r\n\r\nSTDERR: {}'.format(out, err))
+        module.fail_json(msg='Terraform plan could not be created\r\nSTDOUT: {0}\r\n\r\nSTDERR: {1}'.format(out, err))
     elif rc == 2:
         # changes, but successful
         return plan_path, True
 
-    module.fail_json(msg='Terraform plan failed with unexpected exit code {}. \r\nSTDOUT: {}\r\n\r\nSTDERR: {}'.format(rc, out, err))
+    module.fail_json(msg='Terraform plan failed with unexpected exit code {0}. \r\nSTDOUT: {1}\r\n\r\nSTDERR: {2}'.format(rc, out, err))
 
 
 def main():
@@ -213,7 +228,7 @@ def main():
     for k, v in variables.items():
         variables_args.extend([
             '-var',
-            '{}={}'.format(k, v)
+            '{0}={1}'.format(k, v)
         ])
     if variables_file:
         variables_args.append('-var-file', variables_file)
@@ -232,7 +247,7 @@ def main():
     elif plan_file and os.path.exists(plan_file):
         command.append(plan_file)
     elif plan_file and not os.path.exists(plan_file):
-        module.fail_json(msg='Could not find plan_file "{}", check the path and try again.'.format(plan_file))
+        module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
     else:
         plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file)
         command.append(plan_file)
@@ -242,7 +257,7 @@ def main():
         if state == 'absent' and 'Resources: 0' in out:
             changed = False
         if rc != 0:
-            module.fail_json(msg="Failure when executing Terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err), command=' '.join(command))
+            module.fail_json(msg="Failure when executing Terraform command. Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err), command=' '.join(command))
     else:
         changed = False
         out, err = '', ''
@@ -250,12 +265,12 @@ def main():
     outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc == 1:
-        module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {}\nstderr: {}".format(outputs_text, outputs_err))
+        module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {0}\nstderr: {1}".format(outputs_text, outputs_err))
         outputs = {}
     elif rc != 0:
         module.fail_json(
             msg="Failure when getting Terraform outputs. "
-                "Exited {}.\nstdout: {}\nstderr: {}".format(rc, outputs_text, outputs_err),
+                "Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, outputs_text, outputs_err),
             command=' '.join(outputs_command))
     else:
         outputs = json.loads(outputs_text)
