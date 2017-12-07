@@ -143,10 +143,7 @@ def to_lines(stdout):
 def parse_commands(module, warnings):
     commands = module.params['commands']
     for item in to_list(commands):
-        try:
-            command = item['command']
-        except Exception:
-            command = item
+        command = item['command']
         if module.check_mode and not command.startswith('show'):
             warnings.append(
                 'only show commands are supported when using check mode, not '
