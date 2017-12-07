@@ -1,16 +1,9 @@
-lib/ansible/modules/cloud/amazon/aws_kms.py
 lib/ansible/modules/cloud/amazon/ec2_elb.py
-lib/ansible/modules/cloud/amazon/ecs_task.py
 lib/ansible/modules/cloud/amazon/elb_instance.py
-lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py
-lib/ansible/modules/cloud/centurylink/clc_loadbalancer.py
 lib/ansible/modules/cloud/openstack/os_security_group_rule.py
 lib/ansible/modules/cloud/openstack/os_server.py
 lib/ansible/modules/cloud/rackspace/rax_files.py
 lib/ansible/modules/cloud/vmware/vsphere_guest.py
-lib/ansible/modules/database/mongodb/mongodb_user.py
-lib/ansible/modules/net_tools/dnsmadeeasy.py
-lib/ansible/modules/net_tools/snmp_facts.py
 lib/ansible/modules/network/aos/aos_blueprint.py
 lib/ansible/modules/network/aos/aos_device.py
 lib/ansible/modules/network/aos/aos_external_router.py
@@ -21,7 +14,5 @@ lib/ansible/modules/network/aos/aos_rack_type.py
 lib/ansible/modules/network/aos/aos_template.py
 lib/ansible/modules/network/ovs/openvswitch_bridge.py
 lib/ansible/modules/network/ovs/openvswitch_port.py
-lib/ansible/modules/network/sros/sros_rollback.py
-lib/ansible/modules/packaging/language/maven_artifact.py
 lib/ansible/modules/packaging/os/homebrew_cask.py
 lib/ansible/modules/packaging/os/homebrew.py
