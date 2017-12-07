@@ -20,6 +20,8 @@ Ansible Changes By Release
 * Fix for win_copy when sourcing files from an SMBv1 share
   (https://github.com/ansible/ansible/pull/33576)
 * correctly report callback plugin file
+* restrict revaulting to vault cli
+  https://github.com/ansible/ansible/pull/33656
 
 <a id="2.4.2"></a>
 
