@@ -4,6 +4,7 @@
     lines: no banner motd
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create motd
   eos_banner:
@@ -15,6 +16,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -35,6 +37,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -54,6 +57,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -73,6 +77,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:

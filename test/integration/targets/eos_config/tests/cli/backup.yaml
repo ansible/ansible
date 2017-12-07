@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/backup.yaml"
+- debug: msg="START cli/backup.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -10,6 +10,7 @@
       - interface Ethernet2
     match: none
     provider: "{{ cli }}"
+  become: yes
 
 - name: collect any backup files
   find:
@@ -29,6 +30,7 @@
     src: basic/config.j2
     backup: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -47,4 +49,4 @@
     that:
       - "backup_files.files is defined"
 
-- debug: msg="END cli/backup.yaml"
+- debug: msg="END cli/backup.yaml on connection={{ ansible_connection }}"

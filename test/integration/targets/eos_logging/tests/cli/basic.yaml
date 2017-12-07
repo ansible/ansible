@@ -6,6 +6,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -20,6 +21,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -33,6 +35,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -47,6 +50,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -60,6 +64,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -73,6 +78,7 @@
     size: 480000
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -87,6 +93,7 @@
       - { dest: buffered, size: 480000, state: absent }
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:

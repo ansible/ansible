@@ -4,6 +4,7 @@
     lines: no banner login
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create login banner
   eos_banner:
@@ -14,6 +15,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -32,6 +34,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -47,6 +50,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -62,6 +66,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
