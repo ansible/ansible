@@ -14,3 +14,4 @@ azure-mgmt-batch>=4.1.0,<5
 azure-mgmt-sql>=0.7.1,<0.8
 azure-mgmt-web>=0.32.0,<0.33
 azure-mgmt-containerservice>=2.0.0,<3.0.0
+azure-mgmt-containerregistry>=1.0.1
