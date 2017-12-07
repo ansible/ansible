@@ -141,10 +141,10 @@ class Netconf(NetconfBase):
                 port=obj._play_context.port or 830,
                 username=obj._play_context.remote_user,
                 password=obj._play_context.password,
-                key_filename=str(obj.key_filename),
+                key_filename=obj._play_context.private_key_file,
                 hostkey_verify=C.HOST_KEY_CHECKING,
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-                allow_agent=obj.allow_agent,
+                allow_agent=obj._play_context.allow_agent,
                 timeout=obj._play_context.timeout
             )
         except SSHUnknownHostError as exc:
