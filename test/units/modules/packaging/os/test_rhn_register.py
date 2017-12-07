@@ -110,9 +110,9 @@ def test_without_required_parameters(capfd, patch_rhn):
 TESTED_MODULE = rhn_register.__name__
 TEST_CASES = [
     [
-        # Registering an unregistered host
+        # Registering an unregistered host and subscribing to one channel
         {
-            'activationkey': 'key',
+            'channels': 'rhel-x86_64-server-6',
             'username': 'user',
             'password': 'pass',
         },
@@ -133,6 +133,26 @@ TEST_CASES = [
             'run_command.call_count': 1,
             'run_command.call_args': '/usr/sbin/rhnreg_ks',
             'request_called': True,
+            'unlink.call_count': 0,
+        }
+    ],
+    [
+        # Registering an unregistered host with only an activationkey and without subscribing any channels
+        {
+            'activationkey': 'key',
+        },
+        {
+            'calls': [
+            ],
+            'is_registered': False,
+            'is_registered.call_count': 1,
+            'enable.call_count': 1,
+            'systemid.call_count': 0,
+            'changed': True,
+            'msg': "System successfully registered to 'rhn.redhat.com'.",
+            'run_command.call_count': 1,
+            'run_command.call_args': '/usr/sbin/rhnreg_ks',
+            'request_called': False,
             'unlink.call_count': 0,
         }
     ],
