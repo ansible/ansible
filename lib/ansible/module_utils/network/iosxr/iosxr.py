@@ -383,7 +383,7 @@ def load_config(module, command_filter, warnings, replace=False, admin=False, co
         diff = get_config_diff(module)
         if module._diff:
             if diff:
-                module['diff'] = to_text(diff, errors='surrogate_or_strict')
+                module._result['diff'] = to_text(diff, errors='surrogate_or_strict')
         if commit:
             commit_config(module, comment=comment)
             conn.edit_config('end')
