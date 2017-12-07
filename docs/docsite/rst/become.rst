@@ -250,8 +250,6 @@ The following example shows how to set enable mode for `all` tests in this play:
            gather_subset:
              - "!hardware"
 
-FIXME: Can be specified per host
-
 Setting enable mode for all tasks
 ---------------------------------
 
