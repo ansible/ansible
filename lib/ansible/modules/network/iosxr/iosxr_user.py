@@ -475,8 +475,10 @@ def main():
         module.fail_json(msg='cannot delete the `admin` account')
 
     if commands:
-        if not module.check_mode:
-            load_config(module, commands, result['warnings'], commit=True)
+        commit = not module.check_mode
+        diff = load_config(module, commands, commit=commit)
+        if diff:
+            result['diff'] = dict(prepared=diff)
         result['changed'] = True
 
     if module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']):

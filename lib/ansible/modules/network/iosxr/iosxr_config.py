@@ -246,11 +246,12 @@ def run(module, result):
 
             result['commands'] = commands
 
-        diff = load_config(module, commands, result['warnings'],
-                           not check_mode, replace_config, comment, admin)
+        commit = not check_mode
+        diff = load_config(module, commands, commit=commit, replace=replace_config,
+                           comment=comment, admin=admin)
         if diff:
             result['diff'] = dict(prepared=diff)
-            result['changed'] = True
+        result['changed'] = True
 
 
 def main():
