@@ -22,15 +22,15 @@
       - csr_ku_xku.changed == False
 
 - name: Validate old_API CSR (test - Common Name)
-  shell: "openssl req -noout -subject -in {{ output_dir }}/csr_olddapi.csr -nameopt oneline,-space_eq"
-  register: csr_olddapi_cn
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr_oldapi.csr -nameopt oneline,-space_eq"
+  register: csr_oldapi_cn
 
 - name: Validate old_API CSR (test - csr modulus)
-  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr_olddapi.csr'
-  register: csr_olddapi_modulus
+  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr_oldapi.csr'
+  register: csr_oldapi_modulus
 
 - name: Validate old_API CSR (assert)
   assert:
     that:
-      - csr_olddapi_cn.stdout.split('=')[-1] == 'www.ansible.com'
-      - csr_olddapi_modulus.stdout == privatekey_modulus.stdout
+      - csr_oldapi_cn.stdout.split('=')[-1] == 'www.ansible.com'
+      - csr_oldapi_modulus.stdout == privatekey_modulus.stdout
