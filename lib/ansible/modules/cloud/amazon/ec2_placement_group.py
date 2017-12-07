@@ -14,7 +14,8 @@ short_description: Create or delete an EC2 Placement Group
 description:
     - Create an EC2 Placement Group; if the placement group already exists,
       nothing is done. Or, delete an existing placement group. If the placement
-      group is absent, do nothing.
+      group is absent, do nothing. See also
+      http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html
 version_added: "2.5"
 author: "Brad Macpherson (@iiibrad)"
 options:
@@ -28,6 +29,14 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+  strategy:
+    description:
+      - Placement group strategy. Cluster will cluster instances into a
+        low-latency group in a single Availability Zone, while Spread spreads
+        instances across underlying hardware.
+    required: false
+    default: cluster
+    choices: [ 'cluster', 'spread' ]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -41,6 +50,12 @@ EXAMPLES = '''
 - ec2_placement_group:
     name: my-cluster
     state: present
+
+# Create a Spread placement group.
+- ec2_placement_group:
+    name: my-cluster
+    state: present
+    strategy: spread
 
 # Delete a placement group.
 - ec2_placement_group:
@@ -110,16 +125,17 @@ def get_placement_group_details(connection, module):
 @AWSRetry.exponential_backoff()
 def create_placement_group(connection, module):
     name = module.params.get("name")
+    strategy = module.params.get("strategy")
 
     try:
         connection.create_placement_group(
-            GroupName=name, Strategy='cluster', DryRun=module.check_mode)
+            GroupName=name, Strategy=strategy, DryRun=module.check_mode)
     except (BotoCoreError, ClientError) as e:
         if e.response['Error']['Code'] == "DryRunOperation":
             module.exit_json(changed=True, placement_group={
                 "name": name,
                 "state": 'DryRun',
-                "strategy": 'cluster',
+                "strategy": strategy,
             })
         module.fail_json_aws(
             e,
@@ -151,7 +167,8 @@ def main():
     argument_spec.update(
         dict(
             name=dict(type='str'),
-            state=dict(default='present', choices=['present', 'absent'])
+            state=dict(default='present', choices=['present', 'absent']),
+            strategy=dict(default='cluster', choices=['cluster', 'spread'])
         )
     )
 
@@ -174,7 +191,18 @@ def main():
         if placement_group is None:
             create_placement_group(connection, module)
         else:
-            module.exit_json(changed=False, placement_group=placement_group)
+            strategy = module.params.get("strategy")
+            if placement_group['strategy'] == strategy:
+                module.exit_json(
+                    changed=False, placement_group=placement_group)
+            else:
+                name = module.params.get("name")
+                module.fail_json(
+                    msg=("Placement group '{}' exists, can't change strategy" +
+                         " from '{}' to '{}'").format(
+                             name,
+                             placement_group['strategy'],
+                             strategy))
 
     elif state == 'absent':
         placement_group = get_placement_group_details(connection, module)
