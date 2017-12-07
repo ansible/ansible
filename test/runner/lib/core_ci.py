@@ -64,7 +64,6 @@ class AnsibleCoreCI(object):
         providers = dict(
             aws=(
                 'aws',
-                'azure',
                 'windows',
                 'freebsd',
                 'rhel',
@@ -73,6 +72,7 @@ class AnsibleCoreCI(object):
                 'ios',
             ),
             azure=(
+                'azure',
             ),
             parallels=(
                 'osx',
