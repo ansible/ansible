@@ -9,4 +9,3 @@
        include: cleanup.yml
   when: ansible_os_family in ['Debian', 'Suse']
   # centos/RHEL does not have a2enmod/a2dismod
-
