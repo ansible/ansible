@@ -70,6 +70,13 @@ options:
     type: bool
     default: 'no'
     version_added: "2.1"
+  allow_downgrades:
+    description:
+      - Allow packages to be downgraded to an earlier version. This can be used as a more granular
+        "force".
+    type: bool
+    default: 'no'
+    version_added: "2.5"
   upgrade:
     description:
       - If yes or safe, performs an aptitude safe-upgrade.
@@ -154,6 +161,12 @@ EXAMPLES = '''
   apt:
     name: foo=1.00
     state: present
+
+- name: Install the version '1.00' of package "foo" and allow potential downgrades
+  apt:
+    name: foo=1.00
+    state: present
+    allow_downgrades: yes
 
 - name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
   apt:
