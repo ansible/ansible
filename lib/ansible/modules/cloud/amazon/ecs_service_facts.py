@@ -170,17 +170,17 @@ class EcsServiceManager:
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
         response = self.ecs.list_services(**fn_args)
-        relevant_response = dict(services = response['serviceArns'])
+        relevant_response = dict(services=response['serviceArns'])
         return relevant_response
 
     def describe_services(self, cluster, services):
         fn_args = dict()
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
-        fn_args['services']=services.split(",")
+        fn_args['services'] = services.split(",")
         response = self.ecs.describe_services(**fn_args)
-        relevant_response = dict(services = map(self.extract_service_from, response['services']))
-        if 'failures' in response and len(response['failures'])>0:
+        relevant_response = dict(services=map(self.extract_service_from, response['services']))
+        if 'failures' in response and len(response['failures']) > 0:
             relevant_response['services_not_running'] = response['failures']
         return relevant_response
 
@@ -199,13 +199,14 @@ class EcsServiceManager:
                     e['createdAt'] = str(e['createdAt'])
         return service
 
+
 def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        details=dict(required=False, type='bool', default=False ),
-        cluster=dict(required=False, type='str' ),
-        service=dict(required=False, type='str' )
+        details=dict(required=False, type='bool', default=False),
+        cluster=dict(required=False, type='str'),
+        service=dict(required=False, type='str')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)

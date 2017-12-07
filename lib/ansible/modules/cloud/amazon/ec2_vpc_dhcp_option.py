@@ -235,6 +235,7 @@ def ensure_tags(module, vpc_conn, resource_id, tags, add_only, check_mode):
     except EC2ResponseError as e:
         module.fail_json(msg="Failed to modify tags: %s" % e.message, exception=traceback.format_exc())
 
+
 def fetch_dhcp_options_for_vpc(vpc_conn, vpc_id):
     """
     Returns the DHCP options object currently associated with the requested VPC ID using the VPC
@@ -284,7 +285,7 @@ def main():
         inherit_existing=dict(type='bool', default=False),
         tags=dict(type='dict', default=None, aliases=['resource_tags']),
         state=dict(type='str', default='present', choices=['present', 'absent'])
-        )
+    )
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -312,17 +313,17 @@ def main():
             new_options['ntp-servers'] = params['ntp_servers']
         if params['domain_name'] is not None:
             # needs to be a list for comparison with boto objects later
-            new_options['domain-name'] = [ params['domain_name'] ]
+            new_options['domain-name'] = [params['domain_name']]
         if params['netbios_node_type'] is not None:
             # needs to be a list for comparison with boto objects later
-            new_options['netbios-node-type'] = [ str(params['netbios_node_type']) ]
+            new_options['netbios-node-type'] = [str(params['netbios_node_type'])]
         # If we were given a vpc_id then we need to look at the options on that
         if params['vpc_id']:
             existing_options = fetch_dhcp_options_for_vpc(connection, params['vpc_id'])
             # if we've been asked to inherit existing options, do that now
             if params['inherit_existing']:
                 if existing_options:
-                    for option in [ 'domain-name-servers', 'netbios-name-servers', 'ntp-servers', 'domain-name', 'netbios-node-type']:
+                    for option in ['domain-name-servers', 'netbios-name-servers', 'ntp-servers', 'domain-name', 'netbios-node-type']:
                         if existing_options.options.get(option) and new_options[option] != [] and (not new_options[option] or [''] == new_options[option]):
                             new_options[option] = existing_options.options.get(option)
 
@@ -336,7 +337,7 @@ def main():
     # Now let's cover the case where there are existing options that we were told about by id
     # If a dhcp_options_id was supplied we don't look at options inside, just set tags (if given)
     else:
-        supplied_options = connection.get_all_dhcp_options(filters={'dhcp-options-id':params['dhcp_options_id']})
+        supplied_options = connection.get_all_dhcp_options(filters={'dhcp-options-id': params['dhcp_options_id']})
         if len(supplied_options) != 1:
             if params['state'] != 'absent':
                 module.fail_json(msg=" a dhcp_options_id was supplied, but does not exist")

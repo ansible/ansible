@@ -951,7 +951,7 @@ class TaskParameters(DockerBaseClass):
         Returns parameters used to create a HostConfig object
         '''
 
-        host_config_params=dict(
+        host_config_params = dict(
             port_bindings='published_ports',
             publish_all_ports='publish_all_ports',
             links='links',
@@ -1163,7 +1163,7 @@ class TaskParameters(DockerBaseClass):
 
         options = dict(
             Type=self.log_driver,
-            Config = dict()
+            Config=dict()
         )
 
         if self.log_options is not None:
@@ -1215,7 +1215,6 @@ class TaskParameters(DockerBaseClass):
         except Exception as exc:
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
-
 
 
 class Container(DockerBaseClass):
@@ -1570,7 +1569,7 @@ class Container(DockerBaseClass):
                         CgroupPermissions=parts[2],
                         PathInContainer=parts[1],
                         PathOnHost=parts[0]
-                        ))
+                    ))
         return expected_devices
 
     def _get_expected_entrypoint(self):

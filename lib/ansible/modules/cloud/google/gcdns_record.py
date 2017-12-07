@@ -348,7 +348,7 @@ PROVIDER = Provider.GOOGLE
 # I'm hard-coding the supported record types here, because they (hopefully!)
 # shouldn't change much, and it allows me to use it as a "choices" parameter
 # in an AnsibleModule argument_spec.
-SUPPORTED_RECORD_TYPES = [ 'A', 'AAAA', 'CNAME', 'SRV', 'TXT', 'SOA', 'NS', 'MX', 'SPF', 'PTR' ]
+SUPPORTED_RECORD_TYPES = ['A', 'AAAA', 'CNAME', 'SRV', 'TXT', 'SOA', 'NS', 'MX', 'SPF', 'PTR']
 
 
 ################################################################################
@@ -378,8 +378,8 @@ def create_record(module, gcdns, zone, record):
         # The record doesn't match, so we need to check if we can overwrite it.
         if not overwrite:
             module.fail_json(
-                msg     = 'cannot overwrite existing record, overwrite protection enabled',
-                changed = False
+                msg='cannot overwrite existing record, overwrite protection enabled',
+                changed=False
             )
 
     # The record either doesn't exist, or it exists and we can overwrite it.
@@ -393,9 +393,9 @@ def create_record(module, gcdns, zone, record):
                 # not when combined (e.g., an 'A' record with "www.example.com"
                 # as its value).
                 module.fail_json(
-                    msg     = 'value is invalid for the given type: ' +
-                              "%s, got value: %s" % (record_type, record_data),
-                    changed = False
+                    msg='value is invalid for the given type: ' +
+                    "%s, got value: %s" % (record_type, record_data),
+                    changed=False
                 )
 
             elif error.code == 'cnameResourceRecordSetConflict':
@@ -403,8 +403,8 @@ def create_record(module, gcdns, zone, record):
                 # already have another type of resource record with the name
                 # domain name.
                 module.fail_json(
-                    msg     = "non-CNAME resource record already exists: %s" % record_name,
-                    changed = False
+                    msg="non-CNAME resource record already exists: %s" % record_name,
+                    changed=False
                 )
 
             else:
@@ -428,8 +428,8 @@ def create_record(module, gcdns, zone, record):
             try:
                 gcdns.create_record(record.name, record.zone, record.type, record.data)
                 module.fail_json(
-                    msg     = 'error updating record, the original record was restored',
-                    changed = False
+                    msg='error updating record, the original record was restored',
+                    changed=False
                 )
             except LibcloudError:
                 # We deleted the old record, couldn't create the new record, and
@@ -437,12 +437,12 @@ def create_record(module, gcdns, zone, record):
                 # record to the failure output so the user can resore it if
                 # necessary.
                 module.fail_json(
-                    msg     = 'error updating record, and could not restore original record, ' +
-                              "original name: %s " % record.name +
-                              "original zone: %s " % record.zone +
-                              "original type: %s " % record.type +
-                              "original data: %s" % record.data,
-                    changed = True)
+                    msg='error updating record, and could not restore original record, ' +
+                    "original name: %s " % record.name +
+                    "original zone: %s " % record.zone +
+                    "original type: %s " % record.type +
+                    "original data: %s" % record.data,
+                    changed=True)
 
     return True
 
@@ -450,8 +450,8 @@ def create_record(module, gcdns, zone, record):
 def remove_record(module, gcdns, record):
     """Remove a resource record."""
 
-    overwrite   = module.boolean(module.params['overwrite'])
-    ttl         = module.params['ttl']
+    overwrite = module.boolean(module.params['overwrite'])
+    ttl = module.params['ttl']
     record_data = module.params['record_data']
 
     # If there is no record, we're obviously done.
@@ -463,10 +463,10 @@ def remove_record(module, gcdns, record):
     if not overwrite:
         if not _records_match(record.data['ttl'], record.data['rrdatas'], ttl, record_data):
             module.fail_json(
-                msg     = 'cannot delete due to non-matching ttl or record_data: ' +
-                          "ttl: %d, record_data: %s " % (ttl, record_data) +
-                          "original ttl: %d, original record_data: %s" % (record.data['ttl'], record.data['rrdatas']),
-                changed = False
+                msg='cannot delete due to non-matching ttl or record_data: ' +
+                "ttl: %d, record_data: %s " % (ttl, record_data) +
+                "original ttl: %d, original record_data: %s" % (record.data['ttl'], record.data['rrdatas']),
+                changed=False
             )
 
     # If we got to this point, we're okay to delete the record.
@@ -529,30 +529,30 @@ def _records_match(old_ttl, old_record_data, new_ttl, new_record_data):
 def _sanity_check(module):
     """Run sanity checks that don't depend on info from the zone/record."""
 
-    overwrite   = module.params['overwrite']
+    overwrite = module.params['overwrite']
     record_name = module.params['record']
     record_type = module.params['type']
-    state       = module.params['state']
-    ttl         = module.params['ttl']
+    state = module.params['state']
+    ttl = module.params['ttl']
     record_data = module.params['record_data']
 
     # Apache libcloud needs to be installed and at least the minimum version.
     if not HAS_LIBCLOUD:
         module.fail_json(
-            msg = 'This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed = False
+            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
+            changed=False
         )
     elif LooseVersion(LIBCLOUD_VERSION) < MINIMUM_LIBCLOUD_VERSION:
         module.fail_json(
-            msg = 'This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed = False
+            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
+            changed=False
         )
 
     # A negative TTL is not permitted (how would they even work?!).
     if ttl < 0:
         module.fail_json(
-            msg     = 'TTL cannot be less than zero, got: %d' % ttl,
-            changed = False
+            msg='TTL cannot be less than zero, got: %d' % ttl,
+            changed=False
         )
 
     # Deleting SOA records is not permitted.
@@ -572,8 +572,8 @@ def _sanity_check(module):
                     socket.inet_aton(value)
                 except socket.error:
                     module.fail_json(
-                        msg     = 'invalid A record value, got: %s' % value,
-                        changed = False
+                        msg='invalid A record value, got: %s' % value,
+                        changed=False
                     )
 
         # AAAA records must contain valid IPv6 addresses.
@@ -583,23 +583,23 @@ def _sanity_check(module):
                     socket.inet_pton(socket.AF_INET6, value)
                 except socket.error:
                     module.fail_json(
-                        msg     = 'invalid AAAA record value, got: %s' % value,
-                        changed = False
+                        msg='invalid AAAA record value, got: %s' % value,
+                        changed=False
                     )
 
         # CNAME and SOA records can't have multiple values.
         if record_type in ['CNAME', 'SOA'] and len(record_data) > 1:
             module.fail_json(
-                msg     = 'CNAME or SOA records cannot have more than one value, ' +
-                          "got: %s" % record_data,
-                changed = False
+                msg='CNAME or SOA records cannot have more than one value, ' +
+                "got: %s" % record_data,
+                changed=False
             )
 
         # Google Cloud DNS does not support wildcard NS records.
         if record_type == 'NS' and record_name[0] == '*':
             module.fail_json(
-                msg     = "wildcard NS records not allowed, got: %s" % record_name,
-                changed = False
+                msg="wildcard NS records not allowed, got: %s" % record_name,
+                changed=False
             )
 
         # Values for txt records must begin and end with a double quote.
@@ -607,32 +607,32 @@ def _sanity_check(module):
             for value in record_data:
                 if value[0] != '"' and value[-1] != '"':
                     module.fail_json(
-                        msg     = 'TXT record_data must be enclosed in double quotes, ' +
-                                  'got: %s' % value,
-                        changed = False
+                        msg='TXT record_data must be enclosed in double quotes, ' +
+                        'got: %s' % value,
+                        changed=False
                     )
 
 
 def _additional_sanity_checks(module, zone):
     """Run input sanity checks that depend on info from the zone/record."""
 
-    overwrite   = module.params['overwrite']
+    overwrite = module.params['overwrite']
     record_name = module.params['record']
     record_type = module.params['type']
-    state       = module.params['state']
+    state = module.params['state']
 
     # CNAME records are not allowed to have the same name as the root domain.
     if record_type == 'CNAME' and record_name == zone.domain:
         module.fail_json(
-            msg     = 'CNAME records cannot match the zone name',
-            changed = False
+            msg='CNAME records cannot match the zone name',
+            changed=False
         )
 
     # The root domain must always have an NS record.
     if record_type == 'NS' and record_name == zone.domain and state == 'absent':
         module.fail_json(
-            msg     = 'cannot delete root NS records',
-            changed = False
+            msg='cannot delete root NS records',
+            changed=False
         )
 
     # Updating NS records with the name as the root domain is not allowed
@@ -640,16 +640,16 @@ def _additional_sanity_checks(module, zone):
     # records cannot be removed.
     if record_type == 'NS' and record_name == zone.domain and overwrite:
         module.fail_json(
-            msg     = 'cannot update existing root NS records',
-            changed = False
+            msg='cannot update existing root NS records',
+            changed=False
         )
 
     # SOA records with names that don't match the root domain are not permitted
     # (and wouldn't make sense anyway).
     if record_type == 'SOA' and record_name != zone.domain:
         module.fail_json(
-            msg     = 'non-root SOA records are not permitted, got: %s' % record_name,
-            changed = False
+            msg='non-root SOA records are not permitted, got: %s' % record_name,
+            changed=False
         )
 
 
@@ -661,46 +661,46 @@ def main():
     """Main function"""
 
     module = AnsibleModule(
-        argument_spec = dict(
-            state                 = dict(default='present', choices=['present', 'absent'], type='str'),
-            record                = dict(required=True, aliases=['name'], type='str'),
-            zone                  = dict(type='str'),
-            zone_id               = dict(type='str'),
-            type                  = dict(required=True, choices=SUPPORTED_RECORD_TYPES, type='str'),
-            record_data           = dict(aliases=['value'], type='list'),
-            ttl                   = dict(default=300, type='int'),
-            overwrite             = dict(default=False, type='bool'),
-            service_account_email = dict(type='str'),
-            pem_file              = dict(type='path'),
-            credentials_file      = dict(type='path'),
-            project_id            = dict(type='str')
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            record=dict(required=True, aliases=['name'], type='str'),
+            zone=dict(type='str'),
+            zone_id=dict(type='str'),
+            type=dict(required=True, choices=SUPPORTED_RECORD_TYPES, type='str'),
+            record_data=dict(aliases=['value'], type='list'),
+            ttl=dict(default=300, type='int'),
+            overwrite=dict(default=False, type='bool'),
+            service_account_email=dict(type='str'),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(type='str')
         ),
-        required_if = [
+        required_if=[
             ('state', 'present', ['record_data']),
             ('overwrite', False, ['record_data'])
         ],
-        required_one_of     = [['zone', 'zone_id']],
-        supports_check_mode = True
+        required_one_of=[['zone', 'zone_id']],
+        supports_check_mode=True
     )
 
     _sanity_check(module)
 
     record_name = module.params['record']
     record_type = module.params['type']
-    state       = module.params['state']
-    ttl         = module.params['ttl']
-    zone_name   = module.params['zone']
-    zone_id     = module.params['zone_id']
+    state = module.params['state']
+    ttl = module.params['ttl']
+    zone_name = module.params['zone']
+    zone_id = module.params['zone_id']
 
     json_output = dict(
-        state       = state,
-        record      = record_name,
-        zone        = zone_name,
-        zone_id     = zone_id,
-        type        = record_type,
-        record_data = module.params['record_data'],
-        ttl         = ttl,
-        overwrite   = module.boolean(module.params['overwrite'])
+        state=state,
+        record=record_name,
+        zone=zone_name,
+        zone_id=zone_id,
+        type=record_type,
+        record_data=module.params['record_data'],
+        ttl=ttl,
+        overwrite=module.boolean(module.params['overwrite'])
     )
 
     # Google Cloud DNS wants the trailing dot on all DNS names.
@@ -718,13 +718,13 @@ def main():
     zone = _get_zone(gcdns, zone_name, zone_id)
     if zone is None and zone_name is not None:
         module.fail_json(
-            msg     = 'zone name was not found: %s' % zone_name,
-            changed = False
+            msg='zone name was not found: %s' % zone_name,
+            changed=False
         )
     elif zone is None and zone_id is not None:
         module.fail_json(
-            msg     = 'zone id was not found: %s' % zone_id,
-            changed = False
+            msg='zone id was not found: %s' % zone_id,
+            changed=False
         )
 
     # Populate the returns with the actual zone information.
@@ -738,8 +738,8 @@ def main():
     except InvalidRequestError:
         # We gave Google Cloud DNS an invalid DNS record name.
         module.fail_json(
-            msg     = 'record name is invalid: %s' % record_name,
-            changed = False
+            msg='record name is invalid: %s' % record_name,
+            changed=False
         )
 
     _additional_sanity_checks(module, zone)
@@ -752,20 +752,20 @@ def main():
         diff['before_header'] = '<absent>'
     else:
         diff['before'] = dict(
-            record      = record.data['name'],
-            type        = record.data['type'],
-            record_data = record.data['rrdatas'],
-            ttl         = record.data['ttl']
+            record=record.data['name'],
+            type=record.data['type'],
+            record_data=record.data['rrdatas'],
+            ttl=record.data['ttl']
         )
         diff['before_header'] = "%s:%s" % (record_type, record_name)
 
     # Create, remove, or modify the record.
     if state == 'present':
         diff['after'] = dict(
-            record      = record_name,
-            type        = record_type,
-            record_data = module.params['record_data'],
-            ttl         = ttl
+            record=record_name,
+            type=record_type,
+            record_data=module.params['record_data'],
+            ttl=ttl
         )
         diff['after_header'] = "%s:%s" % (record_type, record_name)
 

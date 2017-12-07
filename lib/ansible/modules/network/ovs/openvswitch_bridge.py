@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
 # Portions copyright @ 2015 VMware, Inc.
@@ -109,6 +109,7 @@ def _fail_mode_to_str(text):
     else:
         return text.strip()
 
+
 def _external_ids_to_dict(text):
     if not text:
         return None
@@ -121,6 +122,7 @@ def _external_ids_to_dict(text):
                 d[k] = v
 
         return d
+
 
 def map_obj_to_commands(want, have, module):
     commands = list()
@@ -156,7 +158,7 @@ def map_obj_to_commands(want, have, module):
             command = templatized_command % module.params
 
             if want['parent']:
-                templatized_command =  "%(parent)s %(vlan)s"
+                templatized_command = "%(parent)s %(vlan)s"
                 command += " " + templatized_command % module.params
 
             if want['set']:
@@ -175,7 +177,7 @@ def map_obj_to_commands(want, have, module):
             if want['external_ids']:
                 for k, v in iteritems(want['external_ids']):
                     templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
-                                        " br-set-external-id %(bridge)s")
+                                           " br-set-external-id %(bridge)s")
                     command = templatized_command % module.params
                     command += " " + k + " " + v
                     commands.append(command)

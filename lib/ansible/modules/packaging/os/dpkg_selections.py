@@ -41,6 +41,7 @@ EXAMPLES = '''
     selection: hold
 '''
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(

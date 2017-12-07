@@ -182,7 +182,7 @@ def set_route_command(module, prefix):
 
 def get_dotted_mask(mask):
     bits = 0
-    for i in range(32-mask, 32):
+    for i in range(32 - mask, 32):
         bits |= (1 << i)
     mask = ("%d.%d.%d.%d" % ((bits & 0xff000000) >> 24, (bits & 0xff0000) >> 16, (bits & 0xff00) >> 8, (bits & 0xff)))
     return mask

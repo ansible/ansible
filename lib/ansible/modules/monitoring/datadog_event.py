@@ -135,7 +135,7 @@ def main():
                 choices=['error', 'warning', 'info', 'success']
             ),
             aggregation_key=dict(required=False, default=None),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 

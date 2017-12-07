@@ -189,6 +189,7 @@ param_map_list = dict(
     )
 )
 
+
 def get_collection_from_param_map(module, aos):
 
     param_map = None
@@ -219,6 +220,7 @@ def get_collection_from_param_map(module, aos):
             return CollectionMapper(getattr(aos, param_map))
 
     return None
+
 
 def blueprint_param_present(module, aos, blueprint, param, param_value):
 
@@ -278,6 +280,7 @@ def blueprint_param_absent(module, aos, blueprint, param, param_value):
                          name=param.name,
                          value=param.value)
 
+
 def blueprint_param(module):
 
     margs = module.params
@@ -295,15 +298,15 @@ def blueprint_param(module):
     # --------------------------------------------------------------------
     try:
         blueprint = find_collection_item(aos.Blueprints,
-                                        item_name=margs['blueprint'],
-                                        item_id=margs['blueprint'])
+                                         item_name=margs['blueprint'],
+                                         item_id=margs['blueprint'])
     except:
         module.fail_json(msg="Unable to find the Blueprint based on name or ID, something went wrong")
 
     if blueprint.exists is False:
         module.fail_json(msg='Blueprint %s does not exist.\n'
-                             'known blueprints are [%s]'%
-                             (margs['blueprint'],','.join(aos.Blueprints.names)))
+                             'known blueprints are [%s]' %
+                             (margs['blueprint'], ','.join(aos.Blueprints.names)))
 
     # --------------------------------------------------------------------
     # If get_param_list is defined, build the list of supported parameters
@@ -316,8 +319,8 @@ def blueprint_param(module):
             params_list[param] = blueprint.params[param].info
 
         module.exit_json(changed=False,
-                         blueprint= blueprint.name,
-                         params_list=params_list )
+                         blueprint=blueprint.name,
+                         params_list=params_list)
 
     # --------------------------------------------------------------------
     # Check Param name, return an error if not supported by this blueprint
@@ -325,7 +328,7 @@ def blueprint_param(module):
     if margs['name'] in blueprint.params.names:
         param = blueprint.params[margs['name']]
     else:
-        module.fail_json(msg='unable to access param %s' % margs['name'] )
+        module.fail_json(msg='unable to access param %s' % margs['name'])
 
     # --------------------------------------------------------------------
     # Check if param_value needs to be converted to an object
@@ -350,6 +353,7 @@ def blueprint_param(module):
 
         blueprint_param_present(module, aos, blueprint, param, param_value)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -359,7 +363,7 @@ def main():
             name=dict(required=False),
             value=dict(required=False, type="dict"),
             param_map=dict(required=False),
-            state=dict( choices=['present', 'absent'], default='present')
+            state=dict(choices=['present', 'absent'], default='present')
         ),
         supports_check_mode=True
     )

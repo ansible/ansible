@@ -195,7 +195,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
         self.dns_servers = None
         self.purge_dns_servers = None
 
-        self.results=dict(
+        self.results = dict(
             changed=False,
             state=dict()
         )
@@ -326,7 +326,6 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
             elif self.state == 'absent':
                 self.delete_virtual_network()
                 self.results['state']['status'] = 'Deleted'
-
 
         return self.results
 

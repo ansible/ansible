@@ -171,7 +171,6 @@ def main():
     # validate the ports data structure
     validate_ports(module, slb_server_ports)
 
-
     json_post = {
         "server-list": [
             {
@@ -188,7 +187,7 @@ def main():
     if slb_server_status:
         json_post['server-list'][0]['action'] = slb_server_status
 
-    slb_server_data = axapi_call_v3(module, axapi_base_url+'slb/server/', method='GET', body='', signature=signature)
+    slb_server_data = axapi_call_v3(module, axapi_base_url + 'slb/server/', method='GET', body='', signature=signature)
 
     # for empty slb server list
     if axapi_failure(slb_server_data):
@@ -203,7 +202,7 @@ def main():
     changed = False
     if operation == 'create':
         if slb_server_exists is False:
-            result = axapi_call_v3(module, axapi_base_url+'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
+            result = axapi_call_v3(module, axapi_base_url + 'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
             if axapi_failure(result):
                 module.fail_json(msg="failed to create the server: %s" % result['response']['err']['msg'])
             changed = True
@@ -234,7 +233,7 @@ def main():
 
     # if the config has changed, save the config unless otherwise requested
     if changed and write_config:
-        write_result = axapi_call_v3(module, axapi_base_url+'write/memory/', method='POST', body='', signature=signature)
+        write_result = axapi_call_v3(module, axapi_base_url + 'write/memory/', method='POST', body='', signature=signature)
         if axapi_failure(write_result):
             module.fail_json(msg="failed to save the configuration: %s" % write_result['response']['err']['msg'])
 

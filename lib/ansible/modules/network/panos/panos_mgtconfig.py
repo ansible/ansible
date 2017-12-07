@@ -81,7 +81,7 @@ EXAMPLES = '''
     panorama_secondary: "1.1.1.4"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
@@ -112,11 +112,11 @@ def set_dns_server(xapi, new_dns_server, primary=True):
         tag = "primary"
     else:
         tag = "secondary"
-    xpath = _XPATH_DNS_SERVERS+"/"+tag
+    xpath = _XPATH_DNS_SERVERS + "/" + tag
 
     # check the current element value
     xapi.get(xpath)
-    val = xapi.element_root.find(".//"+tag)
+    val = xapi.element_root.find(".//" + tag)
     if val is not None:
         # element exists
         val = val.text
@@ -135,11 +135,11 @@ def set_panorama_server(xapi, new_panorama_server, primary=True):
         tag = "panorama-server"
     else:
         tag = "panorama-server-2"
-    xpath = _XPATH_PANORAMA_SERVERS+"/"+tag
+    xpath = _XPATH_PANORAMA_SERVERS + "/" + tag
 
     # check the current element value
     xapi.get(xpath)
-    val = xapi.element_root.find(".//"+tag)
+    val = xapi.element_root.find(".//" + tag)
     if val is not None:
         # element exists
         val = val.text

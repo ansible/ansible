@@ -113,17 +113,18 @@ def assume_role_policy(connection, module):
 
     module.exit_json(changed=changed, sts_creds=assumed_role.credentials.__dict__, sts_user=assumed_role.user.__dict__)
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            role_arn = dict(required=True, default=None),
-            role_session_name = dict(required=True, default=None),
-            duration_seconds = dict(required=False, default=None, type='int'),
-            external_id = dict(required=False, default=None),
-            policy = dict(required=False, default=None),
-            mfa_serial_number = dict(required=False, default=None),
-            mfa_token = dict(required=False, default=None)
+            role_arn=dict(required=True, default=None),
+            role_session_name=dict(required=True, default=None),
+            duration_seconds=dict(required=False, default=None, type='int'),
+            external_id=dict(required=False, default=None),
+            policy=dict(required=False, default=None),
+            mfa_serial_number=dict(required=False, default=None),
+            mfa_token=dict(required=False, default=None)
         )
     )
 

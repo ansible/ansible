@@ -251,8 +251,8 @@ def main():
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state =dict(required=True, type='str',
-                        choices=['present', 'absent', 'update']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent', 'update']),
             pn_name=dict(required=True, type='str'),
             pn_port=dict(type='str'),
             pn_peer_port=dict(type='str'),
@@ -269,7 +269,7 @@ def main():
         ),
         required_if=(
             ["state", "present", ["pn_name", "pn_port", "pn_peer_port",
-                                           "pn_peer_switch"]],
+                                  "pn_peer_switch"]],
             ["state", "absent", ["pn_name"]],
             ["state", "update", ["pn_name"]]
         )

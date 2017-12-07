@@ -157,7 +157,6 @@ def apply_key_map(key_map, table):
     return new_dict
 
 
-
 def get_commands_config_udld_global(delta, reset):
     config_args = {
         'enabled': 'udld aggressive',
@@ -224,12 +223,11 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_one_of=[['aggressive', 'msg_time', 'reset']],
-                                supports_check_mode=True)
+                           required_one_of=[['aggressive', 'msg_time', 'reset']],
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     aggressive = module.params['aggressive']
     msg_time = module.params['msg_time']

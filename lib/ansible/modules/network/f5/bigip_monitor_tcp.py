@@ -548,9 +548,9 @@ class Difference(object):
                 )
         elif self.want.timeout is not None:
             if self.have.interval >= self.want.timeout:
-                    raise F5ModuleError(
-                        "Parameter 'interval' must be less than 'timeout'."
-                    )
+                raise F5ModuleError(
+                    "Parameter 'interval' must be less than 'timeout'."
+                )
         elif self.want.interval is not None:
             if self.want.interval >= self.have.timeout:
                 raise F5ModuleError(

@@ -95,7 +95,7 @@ def get_current(module):
     cmd = ('show running-config', 'show ntp logging')
 
     output = run_commands(module, ({'command': cmd[0], 'output': 'text'},
-                                  {'command': cmd[1], 'output': 'text'}))
+                                   {'command': cmd[1], 'output': 'text'}))
 
     match = re.search(r"^ntp master(?: (\d+))", output[0], re.M)
     if match:
@@ -166,7 +166,6 @@ def main():
                 commands.append('ntp logging')
             else:
                 commands.append('no ntp logging')
-
 
     result['commands'] = commands
     result['updates'] = commands

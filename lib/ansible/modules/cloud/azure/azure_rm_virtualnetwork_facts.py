@@ -178,6 +178,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
 
+
 def main():
     AzureRMNetworkInterfaceFacts()
 

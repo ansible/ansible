@@ -145,18 +145,19 @@ MINIMUM_LIBCLOUD_VERSION = '0.19.0'
 PROVIDER = Provider.GOOGLE
 
 # The URL used to verify ownership of a zone in Google Cloud DNS.
-ZONE_VERIFICATION_URL= 'https://www.google.com/webmasters/verification/'
+ZONE_VERIFICATION_URL = 'https://www.google.com/webmasters/verification/'
 
 ################################################################################
 # Functions
 ################################################################################
 
+
 def create_zone(module, gcdns, zone):
     """Creates a new Google Cloud DNS zone."""
 
     description = module.params['description']
-    extra       = dict(description = description)
-    zone_name   = module.params['zone']
+    extra = dict(description=description)
+    zone_name = module.params['zone']
 
     # Google Cloud DNS wants the trailing dot on the domain name.
     if zone_name[-1] != '.':
@@ -184,8 +185,8 @@ def create_zone(module, gcdns, zone):
             # The zone name or a parameter might be completely invalid. This is
             # typically caused by an illegal DNS name (e.g. foo..com).
             module.fail_json(
-                msg     = "zone name is not a valid DNS name: %s" % zone_name,
-                changed = False
+                msg="zone name is not a valid DNS name: %s" % zone_name,
+                changed=False
             )
 
         elif error.code == 'managedZoneDnsNameNotAvailable':
@@ -193,8 +194,8 @@ def create_zone(module, gcdns, zone):
             # names, such as TLDs, ccTLDs, or special domain names such as
             # example.com.
             module.fail_json(
-                msg     = "zone name is reserved or already in use: %s" % zone_name,
-                changed = False
+                msg="zone name is reserved or already in use: %s" % zone_name,
+                changed=False
             )
 
         elif error.code == 'verifyManagedZoneDnsNameOwnership':
@@ -202,8 +203,8 @@ def create_zone(module, gcdns, zone):
             # it. This occurs when a user attempts to create a zone which shares
             # a domain name with a zone hosted elsewhere in Google Cloud DNS.
             module.fail_json(
-                msg     = "ownership of zone %s needs to be verified at %s" % (zone_name, ZONE_VERIFICATION_URL),
-                changed = False
+                msg="ownership of zone %s needs to be verified at %s" % (zone_name, ZONE_VERIFICATION_URL),
+                changed=False
             )
 
         else:
@@ -226,8 +227,8 @@ def remove_zone(module, gcdns, zone):
     # refuse to remove the zone.
     if len(zone.list_records()) > 2:
         module.fail_json(
-            msg     = "zone is not empty and cannot be removed: %s" % zone.domain,
-            changed = False
+            msg="zone is not empty and cannot be removed: %s" % zone.domain,
+            changed=False
         )
 
     try:
@@ -246,8 +247,8 @@ def remove_zone(module, gcdns, zone):
             # the milliseconds between the check and the removal command,
             # records were added to the zone.
             module.fail_json(
-                msg     = "zone is not empty and cannot be removed: %s" % zone.domain,
-                changed = False
+                msg="zone is not empty and cannot be removed: %s" % zone.domain,
+                changed=False
             )
 
         else:
@@ -273,6 +274,7 @@ def _get_zone(gcdns, zone_name):
 
     return found_zone
 
+
 def _sanity_check(module):
     """Run module sanity checks."""
 
@@ -281,40 +283,41 @@ def _sanity_check(module):
     # Apache libcloud needs to be installed and at least the minimum version.
     if not HAS_LIBCLOUD:
         module.fail_json(
-            msg = 'This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed = False
+            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
+            changed=False
         )
     elif LooseVersion(LIBCLOUD_VERSION) < MINIMUM_LIBCLOUD_VERSION:
         module.fail_json(
-            msg = 'This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
-            changed = False
+            msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
+            changed=False
         )
 
     # Google Cloud DNS does not support the creation of TLDs.
     if '.' not in zone_name or len([label for label in zone_name.split('.') if label]) == 1:
         module.fail_json(
-            msg     = 'cannot create top-level domain: %s' % zone_name,
-            changed = False
+            msg='cannot create top-level domain: %s' % zone_name,
+            changed=False
         )
 
 ################################################################################
 # Main
 ################################################################################
 
+
 def main():
     """Main function"""
 
     module = AnsibleModule(
-        argument_spec = dict(
-            state                 = dict(default='present', choices=['present', 'absent'], type='str'),
-            zone                  = dict(required=True, aliases=['name'], type='str'),
-            description           = dict(default='', type='str'),
-            service_account_email = dict(type='str'),
-            pem_file              = dict(type='path'),
-            credentials_file      = dict(type='path'),
-            project_id            = dict(type='str')
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            zone=dict(required=True, aliases=['name'], type='str'),
+            description=dict(default='', type='str'),
+            service_account_email=dict(type='str'),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(type='str')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     _sanity_check(module)
@@ -327,9 +330,9 @@ def main():
         zone_name = zone_name + '.'
 
     json_output = dict(
-        state       = state,
-        zone        = zone_name,
-        description = module.params['description']
+        state=state,
+        zone=zone_name,
+        description=module.params['description']
     )
 
     # Build a connection object that was can use to connect with Google
@@ -347,16 +350,16 @@ def main():
         diff['before_header'] = '<absent>'
     else:
         diff['before'] = dict(
-            zone        = zone.domain,
-            description = zone.extra['description']
+            zone=zone.domain,
+            description=zone.extra['description']
         )
         diff['before_header'] = zone_name
 
     # Create or remove the zone.
     if state == 'present':
         diff['after'] = dict(
-            zone        = zone_name,
-            description = module.params['description']
+            zone=zone_name,
+            description=module.params['description']
         )
         diff['after_header'] = zone_name
 

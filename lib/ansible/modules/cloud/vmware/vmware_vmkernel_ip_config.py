@@ -87,8 +87,8 @@ def main():
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(vmk_name=dict(required=True, type='str'),
-                         ip_address=dict(required=True, type='str'),
-                         subnet_mask=dict(required=True, type='str')))
+                              ip_address=dict(required=True, type='str'),
+                              subnet_mask=dict(required=True, type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 

@@ -162,6 +162,7 @@ def spec_to_commands(want, have):
 
     return commands
 
+
 def map_param_to_obj(module):
     return {
         'host_name': module.params['host_name'],

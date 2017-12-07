@@ -134,10 +134,12 @@ from ansible.module_utils._text import to_native
 class NotSupportedError(Exception):
     pass
 
+
 class CannotDropError(Exception):
     pass
 
 # module specific functions
+
 
 def get_user_facts(cursor, user=''):
     facts = {}
@@ -173,6 +175,7 @@ def get_user_facts(cursor, user=''):
                 facts[user_key]['default_roles'] = row.default_roles.replace(' ', '').split(',')
     return facts
 
+
 def update_roles(user_facts, cursor, user,
                  existing_all, existing_default, required):
     del_roles = list(set(existing_all) - set(required))
@@ -183,6 +186,7 @@ def update_roles(user_facts, cursor, user,
         cursor.execute("grant {0} to {1}".format(','.join(new_roles), user))
     if required:
         cursor.execute("alter user {0} default role {1}".format(user, ','.join(required)))
+
 
 def check(user_facts, user, profile, resource_pool,
           locked, password, expired, ldap, roles):
@@ -198,12 +202,13 @@ def check(user_facts, user, profile, resource_pool,
     if password and password != user_facts[user_key]['password']:
         return False
     if (expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or
-           ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
+            ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
         return False
-    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
-            sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
+    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or
+                  sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
         return False
     return True
+
 
 def present(user_facts, cursor, user, profile, resource_pool,
             locked, password, expired, ldap, roles):
@@ -267,20 +272,21 @@ def present(user_facts, cursor, user, profile, resource_pool,
             changed = True
         if changed:
             cursor.execute(' '.join(query_fragments))
-        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
-               sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
+        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or
+                      sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
             update_roles(user_facts, cursor, user,
-                user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
+                         user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
             changed = True
         if changed:
             user_facts.update(get_user_facts(cursor, user))
         return changed
 
+
 def absent(user_facts, cursor, user, roles):
     user_key = user.lower()
     if user_key in user_facts:
         update_roles(user_facts, cursor, user,
-            user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], [])
+                     user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], [])
         try:
             cursor.execute("drop user {0}".format(user_facts[user_key]['name']))
         except pyodbc.Error:
@@ -291,6 +297,7 @@ def absent(user_facts, cursor, user, roles):
         return False
 
 # module logic
+
 
 def main():
 
@@ -309,7 +316,7 @@ def main():
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
             login_password=dict(default=None, no_log=True),
-        ), supports_check_mode = True)
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
         module.fail_json(msg="The python pyodbc module is required.")
@@ -348,8 +355,8 @@ def main():
             "User={3};"
             "Password={4};"
             "ConnectionLoadBalance={5}"
-            ).format(module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ).format(module.params['cluster'], module.params['port'], db,
+                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
     except Exception as e:
@@ -359,7 +366,7 @@ def main():
         user_facts = get_user_facts(cursor)
         if module.check_mode:
             changed = not check(user_facts, user, profile, resource_pool,
-                locked, password, expired, ldap, roles)
+                                locked, password, expired, ldap, roles)
         elif state == 'absent':
             try:
                 changed = absent(user_facts, cursor, user, roles)
@@ -368,7 +375,7 @@ def main():
         elif state in ['present', 'locked']:
             try:
                 changed = present(user_facts, cursor, user, profile, resource_pool,
-                    locked, password, expired, ldap, roles)
+                                  locked, password, expired, ldap, roles)
             except pyodbc.Error as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except NotSupportedError as e:

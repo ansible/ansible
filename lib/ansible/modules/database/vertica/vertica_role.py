@@ -98,10 +98,12 @@ from ansible.module_utils._text import to_native
 class NotSupportedError(Exception):
     pass
 
+
 class CannotDropError(Exception):
     pass
 
 # module specific functions
+
 
 def get_role_facts(cursor, role=''):
     facts = {}
@@ -123,12 +125,14 @@ def get_role_facts(cursor, role=''):
                 facts[role_key]['assigned_roles'] = row.assigned_roles.replace(' ', '').split(',')
     return facts
 
+
 def update_roles(role_facts, cursor, role,
                  existing, required):
     for assigned_role in set(existing) - set(required):
         cursor.execute("revoke {0} from {1}".format(assigned_role, role))
     for assigned_role in set(required) - set(existing):
         cursor.execute("grant {0} to {1}".format(assigned_role, role))
+
 
 def check(role_facts, role, assigned_roles):
     role_key = role.lower()
@@ -137,6 +141,7 @@ def check(role_facts, role, assigned_roles):
     if assigned_roles and sorted(assigned_roles) != sorted(role_facts[role_key]['assigned_roles']):
         return False
     return True
+
 
 def present(role_facts, cursor, role, assigned_roles):
     role_key = role.lower()
@@ -147,19 +152,20 @@ def present(role_facts, cursor, role, assigned_roles):
         return True
     else:
         changed = False
-        if assigned_roles and (sorted(assigned_roles) !=  sorted(role_facts[role_key]['assigned_roles'])):
+        if assigned_roles and (sorted(assigned_roles) != sorted(role_facts[role_key]['assigned_roles'])):
             update_roles(role_facts, cursor, role,
-                role_facts[role_key]['assigned_roles'], assigned_roles)
+                         role_facts[role_key]['assigned_roles'], assigned_roles)
             changed = True
         if changed:
             role_facts.update(get_role_facts(cursor, role))
         return changed
 
+
 def absent(role_facts, cursor, role, assigned_roles):
     role_key = role.lower()
     if role_key in role_facts:
         update_roles(role_facts, cursor, role,
-            role_facts[role_key]['assigned_roles'], [])
+                     role_facts[role_key]['assigned_roles'], [])
         cursor.execute("drop role {0} cascade".format(role_facts[role_key]['name']))
         del role_facts[role_key]
         return True
@@ -167,6 +173,7 @@ def absent(role_facts, cursor, role, assigned_roles):
         return False
 
 # module logic
+
 
 def main():
 
@@ -180,7 +187,7 @@ def main():
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
             login_password=dict(default=None, no_log=True),
-        ), supports_check_mode = True)
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
         module.fail_json(msg="The python pyodbc module is required.")
@@ -206,8 +213,8 @@ def main():
             "User={3};"
             "Password={4};"
             "ConnectionLoadBalance={5}"
-            ).format(module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ).format(module.params['cluster'], module.params['port'], db,
+                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
     except Exception as e:

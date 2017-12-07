@@ -180,6 +180,7 @@ def alarm(module, state, label, entity_id, check_id, notification_plan_id, crite
     else:
         module.exit_json(changed=changed)
 
+
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(

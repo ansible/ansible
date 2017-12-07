@@ -132,13 +132,14 @@ def aos_device_normal(module, aos, dev):
                          value=dev.value)
     else:
         # Check if the device is online
-        if dev.state in ('OOS-READY','IS-READY'):
+        if dev.state in ('OOS-READY', 'IS-READY'):
             module.exit_json(changed=False,
                              name=dev.name,
                              id=dev.id,
                              value=dev.value)
         else:
             module.fail_json(msg="Device is in '%s' state" % dev.state)
+
 
 def aos_device(module):
     margs = module.params
@@ -161,8 +162,8 @@ def aos_device(module):
     # Find Object if available based on ID or Name
     #----------------------------------------------------
     dev = find_collection_item(aos.Devices,
-                        item_name=item_name,
-                        item_id=item_id)
+                               item_name=item_name,
+                               item_id=item_id)
 
     if dev.exists is False:
         module.fail_json(msg="unknown device '%s'" % margs['name'])
@@ -189,6 +190,7 @@ def aos_device(module):
     if margs['state'] == 'normal':
         aos_device_normal(module, aos, dev)
 
+
 def main():
 
     module = AnsibleModule(
@@ -196,12 +198,12 @@ def main():
             session=dict(required=True, type="dict"),
             name=dict(required=False),
             id=dict(required=False),
-            state=dict( choices=['normal'],
-                        default='normal'),
-            approve=dict( required=False, type='bool' ),
-            location=dict( required=False, default='')
+            state=dict(choices=['normal'],
+                       default='normal'),
+            approve=dict(required=False, type='bool'),
+            location=dict(required=False, default='')
         ),
-        mutually_exclusive = [('name', 'id')],
+        mutually_exclusive=[('name', 'id')],
         required_one_of=[('name', 'id')],
         supports_check_mode=True
     )

@@ -151,6 +151,7 @@ def get_acl_config(module, acl_name):
 
     return NetworkConfig(indent=1, contents='\n'.join(filtered_config))
 
+
 def parse_acl_name(module):
     first_line = True
     for line in module.params['lines']:
@@ -167,6 +168,7 @@ def parse_acl_name(module):
         first_line = False
 
     return acl_name
+
 
 def main():
 

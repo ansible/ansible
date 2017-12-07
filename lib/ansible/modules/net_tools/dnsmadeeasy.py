@@ -401,7 +401,7 @@ class DME2(object):
         self.record_map = None      # ["record_name"] => ID
         self.records = None         # ["record_ID"] => <record>
         self.all_records = None
-        self.contactList_map = None # ["contactList_name"] => ID
+        self.contactList_map = None  # ["contactList_name"] => ID
 
         # Lookup the domain ID if passed as a domain name vs. ID
         if not self.domain.isdigit():
@@ -551,6 +551,7 @@ class DME2(object):
 # Module execution.
 #
 
+
 def main():
 
     module = AnsibleModule(
@@ -581,7 +582,7 @@ def main():
             ip3=dict(required=False),
             ip4=dict(required=False),
             ip5=dict(required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']

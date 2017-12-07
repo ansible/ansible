@@ -343,13 +343,13 @@ def parse_interface_data(body):
     splitted_body = body.split('\n')
 
     for index in range(0, len(splitted_body) - 1):
-            if "Encapsulation 802.1Q" in splitted_body[index]:
-                regex = r'(.+?ID\s(?P<dot1q>\d+).*)?'
-                match = re.match(regex, splitted_body[index])
-                if match:
-                    match_dict = match.groupdict()
-                    if match_dict['dot1q'] is not None:
-                        return int(match_dict['dot1q'])
+        if "Encapsulation 802.1Q" in splitted_body[index]:
+            regex = r'(.+?ID\s(?P<dot1q>\d+).*)?'
+            match = re.match(regex, splitted_body[index])
+            if match:
+                match_dict = match.groupdict()
+                if match_dict['dot1q'] is not None:
+                    return int(match_dict['dot1q'])
     return 0
 
 

@@ -246,7 +246,7 @@ class NetAppCDOTVolume(object):
         else:
             volume_delete = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-destroy', **{'name': self.name, 'unmount-and-offline':
-                    'true'})
+                                     'true'})
 
         try:
             self.server.invoke_successfully(volume_delete,

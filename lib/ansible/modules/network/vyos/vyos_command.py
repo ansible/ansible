@@ -142,6 +142,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.network.vyos.vyos import run_commands
 from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
+
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):

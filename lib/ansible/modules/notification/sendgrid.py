@@ -145,14 +145,14 @@ from ansible.module_utils.urls import fetch_url
 
 
 def post_sendgrid_api(module, username, password, from_address, to_addresses,
-        subject, body, api_key=None, cc=None, bcc=None, attachments=None,
-        html_body=False, from_name=None, headers=None):
+                      subject, body, api_key=None, cc=None, bcc=None, attachments=None,
+                      html_body=False, from_name=None, headers=None):
 
     if not HAS_SENDGRID:
         SENDGRID_URI = "https://api.sendgrid.com/api/mail.send.json"
         AGENT = "Ansible"
-        data = {'api_user': username, 'api_key':password,
-                'from':from_address, 'subject': subject, 'text': body}
+        data = {'api_user': username, 'api_key': password,
+                'from': from_address, 'subject': subject, 'text': body}
         encoded_data = urlencode(data)
         to_addresses_api = ''
         for recipient in to_addresses:
@@ -160,9 +160,9 @@ def post_sendgrid_api(module, username, password, from_address, to_addresses,
             to_addresses_api += '&to[]=%s' % recipient
         encoded_data += to_addresses_api
 
-        headers = { 'User-Agent': AGENT,
-                'Content-type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json'}
+        headers = {'User-Agent': AGENT,
+                   'Content-type': 'application/x-www-form-urlencoded',
+                   'Accept': 'application/json'}
         return fetch_url(module, SENDGRID_URI, data=encoded_data, headers=headers, method='POST')
     else:
 
@@ -207,6 +207,7 @@ def post_sendgrid_api(module, username, password, from_address, to_addresses,
 # Main
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -225,11 +226,11 @@ def main():
             attachments=dict(required=False, type='list')
         ),
         supports_check_mode=True,
-        mutually_exclusive = [
+        mutually_exclusive=[
             ['api_key', 'password'],
             ['api_key', 'username']
-            ],
-        required_together = [['username', 'password']],
+        ],
+        required_together=[['username', 'password']],
     )
 
     username = module.params['username']
@@ -253,8 +254,8 @@ def main():
                              'api_key, bcc, cc, headers, from_name, html_body, attachments')
 
     response, info = post_sendgrid_api(module, username, password,
-        from_address, to_addresses, subject, body, attachments=attachments,
-        bcc=bcc, cc=cc, headers=headers, html_body=html_body, api_key=api_key)
+                                       from_address, to_addresses, subject, body, attachments=attachments,
+                                       bcc=bcc, cc=cc, headers=headers, html_body=html_body, api_key=api_key)
 
     if not HAS_SENDGRID:
         if info['status'] != 200:

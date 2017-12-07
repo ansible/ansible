@@ -289,7 +289,7 @@ class SolidFireVolume(object):
                 elif volume_detail.total_size is not None and volume_detail.total_size != self.size:
                     size_difference = abs(float(volume_detail.total_size - self.size))
                     # Change size only if difference is bigger than 0.001
-                    if size_difference/self.size > 0.001:
+                    if size_difference / self.size > 0.001:
                         update_volume = True
                         changed = True
 
@@ -312,8 +312,8 @@ class SolidFireVolume(object):
                         self.create_volume()
                         result_message = "Volume created"
                     elif update_volume:
-                            self.update_volume()
-                            result_message = "Volume updated"
+                        self.update_volume()
+                        result_message = "Volume updated"
 
                 elif self.state == 'absent':
                     self.delete_volume()

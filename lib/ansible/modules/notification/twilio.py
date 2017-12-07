@@ -112,15 +112,15 @@ def post_twilio_api(module, account_sid, auth_token, msg, from_number,
         % (account_sid,)
     AGENT = "Ansible"
 
-    data = {'From':from_number, 'To':to_number, 'Body':msg}
+    data = {'From': from_number, 'To': to_number, 'Body': msg}
     if media_url:
         data['MediaUrl'] = media_url
     encoded_data = urlencode(data)
 
     headers = {'User-Agent': AGENT,
-            'Content-type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-            }
+               'Content-type': 'application/x-www-form-urlencoded',
+               'Accept': 'application/json',
+               }
 
     # Hack module params to have the Basic auth params that fetch_url expects
     module.params['url_username'] = account_sid.replace('\n', '')
@@ -159,7 +159,7 @@ def main():
 
     for number in to_number:
         r, info = post_twilio_api(module, account_sid, auth_token, msg,
-                from_number, number, media_url)
+                                  from_number, number, media_url)
         if info['status'] not in [200, 201]:
             body_message = "unknown error"
             if 'body' in info:

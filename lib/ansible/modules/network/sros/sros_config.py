@@ -275,6 +275,7 @@ def run(module, result):
             load_config(module, commands)
         result['changed'] = True
 
+
 def main():
     """ main entry point for module execution
     """
