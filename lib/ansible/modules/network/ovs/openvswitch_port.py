@@ -147,7 +147,9 @@ def map_obj_to_commands(want, have, module):
 
             if want['external_ids'] != have['external_ids']:
                 for k, v in iteritems(want['external_ids']):
-                    if not have['external_ids'] or k not in have['external_ids'] or want['external_ids'][k] != have['external_ids'][k]:
+                    if (not have['external_ids']
+                            or k not in have['external_ids']
+                            or want['external_ids'][k] != have['external_ids'][k]):
                         if v is None:
                             templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
                                                    " remove port %(port)s"

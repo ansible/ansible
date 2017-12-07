@@ -242,7 +242,7 @@ class Homebrew(object):
 
         return (
             isinstance(package, string_types)
-            and notcls.INVALID_PACKAGE_REGEX.search(package)
+            and not cls.INVALID_PACKAGE_REGEX.search(package)
         )
 
     @classmethod
@@ -262,8 +262,8 @@ class Homebrew(object):
             return True
         else:
             return (
-                isinstance(state, string_types) and
-                state.lower() in (
+                isinstance(state, string_types)
+                and state.lower() in (
                     'installed',
                     'upgraded',
                     'head',
