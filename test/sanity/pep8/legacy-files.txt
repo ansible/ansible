@@ -140,7 +140,6 @@ lib/ansible/modules/net_tools/cloudflare_dns.py
 lib/ansible/modules/net_tools/dnsimple.py
 lib/ansible/modules/net_tools/dnsmadeeasy.py
 lib/ansible/modules/net_tools/ipinfoio_facts.py
-lib/ansible/modules/net_tools/nmcli.py
 lib/ansible/modules/net_tools/omapi_host.py
 lib/ansible/modules/net_tools/snmp_facts.py
 lib/ansible/modules/network/a10/a10_server_axapi3.py
