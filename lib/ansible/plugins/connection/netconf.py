@@ -164,6 +164,7 @@ class Connection(ConnectionBase):
         allow_agent = True
         if self._play_context.password is not None:
             allow_agent = False
+        setattr(self._play_context, 'allow_agent', allow_agent)
 
         key_filename = None
         if self._play_context.private_key_file:
@@ -195,7 +196,7 @@ class Connection(ConnectionBase):
                 key_filename=str(key_filename),
                 hostkey_verify=C.HOST_KEY_CHECKING,
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-                allow_agent=allow_agent,
+                allow_agent=self._play_context.allow_agent,
                 timeout=self._play_context.timeout,
                 device_params={'name': network_os},
                 ssh_config=ssh_config
