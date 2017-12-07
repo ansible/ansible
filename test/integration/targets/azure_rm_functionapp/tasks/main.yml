@@ -19,10 +19,13 @@
   azure_rm_functionapp_facts:
     resource_group: '{{ resource_group }}'
     name: azfuncci
+  register: results
 
 - name: assert the facts were retrieved
   assert:
-    that: '{{ ansible_facts.azure_functionapps|length == 1 }}'
+    that:
+    - results.ansible_facts.azure_functionapps|length == 1
+    - results.ansible_facts.azure_functionapps[0].name == 'azfuncci'
 
 - name: delete basic function app
   azure_rm_functionapp:
