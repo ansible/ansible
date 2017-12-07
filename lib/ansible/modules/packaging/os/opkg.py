@@ -1,68 +1,53 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Patrick Pelletier <pp.pelletier@gmail.com>
+# Copyright: (c) 2013, Patrick Pelletier <pp.pelletier@gmail.com>
 # Based on pacman (Afterburn) and pkgin (Shaun Zinck) modules
-#
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: opkg
-author: "Patrick Pelletier (@skinp)"
+author:
+- Patrick Pelletier (@skinp)
 short_description: Package manager for OpenWrt
 description:
-    - Manages OpenWrt packages
+    - Manages OpenWrt packages.
 version_added: "1.1"
 options:
     name:
         description:
-            - name of package to install/remove
+            - Name of package to install/remove.
         required: true
     state:
         description:
-            - state of the package
-        choices: [ 'present', 'absent' ]
-        required: false
+            - State of the package.
+        choices: [ absent, present ]
         default: present
     force:
         description:
-            - opkg --force parameter used
-        choices:
-            - ""
-            - "depends"
-            - "maintainer"
-            - "reinstall"
-            - "overwrite"
-            - "downgrade"
-            - "space"
-            - "postinstall"
-            - "remove"
-            - "checksum"
-            - "removal-of-dependent-packages"
-        required: false
+            - opkg --force parameter used.
+        choices: [ '', checksum, depends, downgrade, maintainer, overwrite, postinstall, reinstall, removal-of-dependent-packages, remove, space ]
         default: absent
         version_added: "2.0"
     update_cache:
         description:
-            - update the package db first
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-notes:  []
+            - Update the package db first.
+        type: bool
+        default: 'no'
 requirements:
-    - opkg
-    - python
+- opkg
+- python
 '''
+
 EXAMPLES = '''
 - opkg:
     name: foo
@@ -88,6 +73,9 @@ EXAMPLES = '''
 '''
 
 import pipes
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def update_package_db(module, opkg_path):
     """ Updates packages list. """
@@ -169,12 +157,12 @@ def install_packages(module, opkg_path, packages):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=["pkg"], required=True),
-            state=dict(default="present", choices=["present", "installed", "absent", "removed"]),
-            force=dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove",
-                                            "checksum", "removal-of-dependent-packages"]),
-            update_cache=dict(default="no", aliases=["update-cache"], type='bool')
-        )
+            name=dict(type='str', required=True, aliases=['pkg']),
+            state=dict(type='str', default='present', choices=['absent', 'installed', 'present', 'removed']),
+            force=dict(type='str', default='', choices=['', 'checksum', 'depends', 'downgrade', 'maintainer', 'overwrite', 'postinstall',
+                                                        'reinstall', 'removal-of-dependent-packages', 'remove', 'space']),
+            update_cache=dict(type='bool', default=False, aliases=["update-cache"]),
+        ),
     )
 
     opkg_path = module.get_bin_path('opkg', True, ['/bin'])
@@ -192,8 +180,6 @@ def main():
     elif p["state"] in ["absent", "removed"]:
         remove_packages(module, opkg_path, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
