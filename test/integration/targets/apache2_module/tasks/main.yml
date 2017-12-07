@@ -1,6 +1,11 @@
 ---
 
-- name: include only on supported systems
-  include: actualtest.yml
+- name:
+  block:
+    - name: include only on supported systems
+      include: actualtest.yml
+  always:
+     - name: cleanup installed modules
+       include: cleanup.yml
   when: ansible_os_family in ['Debian', 'Suse']
   # centos/RHEL does not have a2enmod/a2dismod
