@@ -336,7 +336,7 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, p
     return reply
 
 
-def get_config(module, source='running', config_filter=None):
+def get_config(module, config_filter=None, source='running'):
     global _DEVICE_CONFIGS
 
     conn = get_connection(module)
@@ -358,20 +358,30 @@ def get_config(module, source='running', config_filter=None):
         return cfg
 
 
-def load_config(module, command_filter, warnings, replace=False, admin=False, commit=False, comment=None):
+def load_config(module, command_filter, commit=False, replace=False,
+                comment=None, admin=False, running=None, nc_get_filter=None):
+
     conn = get_connection(module)
 
+    diff = None
     if is_netconf(module):
         # FIXME: check for platform behaviour and restore this
-        # ret = conn.lock(target = 'candidate')
-        # ret = conn.discard_changes()
-        try:
-            ret = conn.edit_config(command_filter)
-        finally:
-            # ret = conn.unlock(target = 'candidate')
-            pass
+        # conn.lock(target = 'candidate')
+        # conn.discard_changes()
 
-        return ret
+        try:
+            conn.edit_config(command_filter)
+
+            candidate = get_config(module, source='candidate', config_filter=nc_get_filter)
+            diff = get_config_diff(module, running, candidate)
+
+            if commit and diff:
+                commit_config(module)
+            else:
+                discard_config(module)
+        finally:
+            # conn.unlock(target = 'candidate')
+            pass
 
     elif is_cliconf(module):
         # to keep the pre-cliconf behaviour, make a copy, avoid adding commands to input list
@@ -380,17 +390,17 @@ def load_config(module, command_filter, warnings, replace=False, admin=False, co
         if admin:
             cmd_filter.insert(0, 'admin')
         conn.edit_config(cmd_filter)
-        diff = get_config_diff(module)
+
         if module._diff:
-            if diff:
-                module._result['diff'] = to_text(diff, errors='surrogate_or_strict')
+            diff = get_config_diff(module)
+
         if commit:
             commit_config(module, comment=comment)
             conn.edit_config('end')
         else:
             conn.discard_changes()
 
-        return diff
+    return diff
 
 
 def run_command(module, commands):
