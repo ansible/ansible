@@ -140,11 +140,13 @@ from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
+
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
+
 
 def parse_commands(module, warnings):
     command = ComplexList(dict(
@@ -166,6 +168,7 @@ def parse_commands(module, warnings):
                     'commands.  Please use ios_config instead'
             )
     return commands
+
 
 def main():
     """main entry point for module execution
@@ -219,7 +222,6 @@ def main():
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
 
     result.update({
         'changed': False,

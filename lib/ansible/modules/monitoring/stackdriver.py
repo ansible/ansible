@@ -124,6 +124,7 @@ def send_deploy_event(module, key, revision_id, deployed_by='Ansible', deployed_
 
     return do_send_request(module, deploy_api, params, key)
 
+
 def send_annotation_event(module, key, msg, annotated_by='Ansible', level=None, instance_id=None, event_epoch=None):
     """Send an annotation event to Stackdriver"""
     annotation_api = "https://event-gateway.stackdriver.com/v1/annotationevent"
@@ -141,13 +142,14 @@ def send_annotation_event(module, key, msg, annotated_by='Ansible', level=None, 
 
     return do_send_request(module, annotation_api, params, key)
 
+
 def do_send_request(module, url, params, key):
     data = json.dumps(params)
     headers = {
         'Content-Type': 'application/json',
         'x-stackdriver-apikey': key
     }
-    response, info =  fetch_url(module, url, headers=headers, data=data, method='POST')
+    response, info = fetch_url(module, url, headers=headers, data=data, method='POST')
     if info['status'] != 200:
         module.fail_json(msg="Unable to send msg: %s" % info['msg'])
 

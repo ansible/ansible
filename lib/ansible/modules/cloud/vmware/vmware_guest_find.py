@@ -156,7 +156,6 @@ class PyVmomiHelper(object):
         return tree
 
     def _build_folder_map(self, folder, inpath='/'):
-
         """ Build a searchable index for vms+uuids+folders """
         if isinstance(folder, tuple):
             folder = folder[1]

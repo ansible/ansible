@@ -184,7 +184,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
     changed = False
 
     required = [volume_id, snapshot_id, instance_id]
-    if required.count(None) != len(required) - 1: # only 1 must be set
+    if required.count(None) != len(required) - 1:  # only 1 must be set
         module.fail_json(msg='One and only one of volume_id or instance_id or snapshot_id must be specified')
     if instance_id and not device_name or device_name and not instance_id:
         module.fail_json(msg='Instance ID and device name must both be specified')
@@ -193,7 +193,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
         try:
             volumes = ec2.get_all_volumes(filters={'attachment.instance-id': instance_id, 'attachment.device': device_name})
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
         if not volumes:
             module.fail_json(msg="Could not find volume with name %s attached to instance %s" % (device_name, instance_id))
@@ -202,7 +202,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
 
     if state == 'absent':
         if not snapshot_id:
-            module.fail_json(msg = 'snapshot_id must be set when state is absent')
+            module.fail_json(msg='snapshot_id must be set when state is absent')
         try:
             ec2.delete_snapshot(snapshot_id)
         except boto.exception.BotoServerError as e:
@@ -210,7 +210,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
             if e.error_code == 'InvalidSnapshot.NotFound':
                 module.exit_json(changed=False)
             else:
-                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+                module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
         # successful delete
         module.exit_json(changed=True)
@@ -221,7 +221,7 @@ def create_snapshot(module, ec2, state=None, description=None, wait=None,
         except boto.exception.BotoServerError as e:
             module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
-        last_snapshot_min_age = last_snapshot_min_age * 60 # Convert to seconds
+        last_snapshot_min_age = last_snapshot_min_age * 60  # Convert to seconds
         snapshot = _get_most_recent_snapshot(current_snapshots,
                                              max_snapshot_age_secs=last_snapshot_min_age)
     try:
@@ -249,16 +249,16 @@ def create_snapshot_ansible_module():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            volume_id = dict(),
-            description = dict(),
-            instance_id = dict(),
-            snapshot_id = dict(),
-            device_name = dict(),
-            wait = dict(type='bool', default=True),
-            wait_timeout = dict(type='int', default=0),
-            last_snapshot_min_age = dict(type='int', default=0),
-            snapshot_tags = dict(type='dict', default=dict()),
-            state = dict(choices=['absent', 'present'], default='present'),
+            volume_id=dict(),
+            description=dict(),
+            instance_id=dict(),
+            snapshot_id=dict(),
+            device_name=dict(),
+            wait=dict(type='bool', default=True),
+            wait_timeout=dict(type='int', default=0),
+            last_snapshot_min_age=dict(type='int', default=0),
+            snapshot_tags=dict(type='dict', default=dict()),
+            state=dict(choices=['absent', 'present'], default='present'),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)

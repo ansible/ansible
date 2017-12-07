@@ -137,20 +137,20 @@ from ansible.module_utils.openstack import openstack_full_argument_spec, opensta
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        name              = dict(required=True),
-        id                = dict(default=None),
-        checksum          = dict(default=None),
-        disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
-        container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
-        owner             = dict(default=None),
-        min_disk          = dict(type='int', default=0),
-        min_ram           = dict(type='int', default=0),
-        is_public         = dict(type='bool', default=False),
-        filename          = dict(default=None),
-        ramdisk           = dict(default=None),
-        kernel            = dict(default=None),
-        properties        = dict(type='dict', default={}),
-        state             = dict(default='present', choices=['absent', 'present']),
+        name=dict(required=True),
+        id=dict(default=None),
+        checksum=dict(default=None),
+        disk_format=dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
+        container_format=dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
+        owner=dict(default=None),
+        min_disk=dict(type='int', default=0),
+        min_ram=dict(type='int', default=0),
+        is_public=dict(type='bool', default=False),
+        filename=dict(default=None),
+        ramdisk=dict(default=None),
+        kernel=dict(default=None),
+        properties=dict(type='dict', default={}),
+        state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
@@ -163,13 +163,13 @@ def main():
 
         changed = False
         if module.params['checksum']:
-            image = cloud.get_image(name_or_id=None,filters={'checksum': module.params['checksum']})
+            image = cloud.get_image(name_or_id=None, filters={'checksum': module.params['checksum']})
         else:
             image = cloud.get_image(name_or_id=module.params['name'])
 
         if module.params['state'] == 'present':
             if not image:
-                kwargs={}
+                kwargs = {}
                 if module.params['id'] is not None:
                     kwargs['id'] = module.params['id']
                 image = cloud.create_image(

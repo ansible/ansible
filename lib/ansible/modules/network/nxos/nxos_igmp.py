@@ -95,6 +95,7 @@ from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
+
 def get_current(module):
     output = run_commands(module, {'command': 'show running-config', 'output': 'text'})
     return {
@@ -126,11 +127,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     current = get_current(module)
     desired = get_desired(module)

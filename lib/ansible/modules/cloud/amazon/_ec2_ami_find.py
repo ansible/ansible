@@ -303,7 +303,7 @@ def get_block_device_mapping(image):
     """
 
     bdm_dict = dict()
-    bdm = getattr(image,'block_device_mapping')
+    bdm = getattr(image, 'block_device_mapping')
     for device_name in bdm.keys():
         bdm_dict[device_name] = {
             'size': bdm[device_name].size,
@@ -319,28 +319,28 @@ def get_block_device_mapping(image):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        owner = dict(required=False, default=None),
-        ami_id = dict(required=False),
-        ami_tags = dict(required=False, type='dict',
-                aliases = ['search_tags', 'image_tags']),
-        architecture = dict(required=False),
-        hypervisor = dict(required=False),
-        is_public = dict(required=False, type='bool'),
-        name = dict(required=False),
-        platform = dict(required=False),
-        product_code = dict(required=False),
-        sort = dict(required=False, default=None,
-                    choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location',
-                             'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
-        sort_tag = dict(required=False),
-        sort_order = dict(required=False, default='ascending',
-                choices=['ascending', 'descending']),
-        sort_start = dict(required=False),
-        sort_end = dict(required=False),
-        state = dict(required=False, default='available'),
-        virtualization_type = dict(required=False),
-        no_result_action = dict(required=False, default='success',
-                choices = ['success', 'fail']),
+        owner=dict(required=False, default=None),
+        ami_id=dict(required=False),
+        ami_tags=dict(required=False, type='dict',
+                      aliases=['search_tags', 'image_tags']),
+        architecture=dict(required=False),
+        hypervisor=dict(required=False),
+        is_public=dict(required=False, type='bool'),
+        name=dict(required=False),
+        platform=dict(required=False),
+        product_code=dict(required=False),
+        sort=dict(required=False, default=None,
+                  choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location',
+                           'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
+        sort_tag=dict(required=False),
+        sort_order=dict(required=False, default='ascending',
+                        choices=['ascending', 'descending']),
+        sort_start=dict(required=False),
+        sort_end=dict(required=False),
+        state=dict(required=False, default='available'),
+        virtualization_type=dict(required=False),
+        no_result_action=dict(required=False, default='success',
+                              choices=['success', 'fail']),
     )
     )
 
@@ -379,7 +379,7 @@ def main():
         filter['image_id'] = ami_id
     if ami_tags:
         for tag in ami_tags:
-            filter['tag:'+tag] = ami_tags[tag]
+            filter['tag:' + tag] = ami_tags[tag]
     if architecture:
         filter['architecture'] = architecture
     if hypervisor:
@@ -435,9 +435,9 @@ def main():
     if sort == 'tag':
         if not sort_tag:
             module.fail_json(msg="'sort_tag' option must be given with 'sort=tag'")
-        results.sort(key=lambda e: e['tags'][sort_tag], reverse=(sort_order=='descending'))
+        results.sort(key=lambda e: e['tags'][sort_tag], reverse=(sort_order == 'descending'))
     elif sort:
-        results.sort(key=lambda e: e[sort], reverse=(sort_order=='descending'))
+        results.sort(key=lambda e: e[sort], reverse=(sort_order == 'descending'))
 
     try:
         if sort and sort_start and sort_end:

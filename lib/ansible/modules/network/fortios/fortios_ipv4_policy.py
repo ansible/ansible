@@ -202,28 +202,28 @@ from ansible.module_utils.network.fortios.fortios import backup, AnsibleFortios
 
 def main():
     argument_spec = dict(
-        comment                   = dict(type='str'),
-        id                        = dict(type='int', required=True),
-        src_intf                  = dict(type='list', default='any'),
-        dst_intf                  = dict(type='list', default='any'),
-        state                     = dict(choices=['present', 'absent'], default='present'),
-        src_addr                  = dict(type='list'),
-        dst_addr                  = dict(type='list'),
-        src_addr_negate           = dict(type='bool', default=False),
-        dst_addr_negate           = dict(type='bool', default=False),
-        policy_action             = dict(choices=['accept','deny'], aliases=['action']),
-        service                   = dict(aliases=['services'], type='list'),
-        service_negate            = dict(type='bool', default=False),
-        schedule                  = dict(type='str', default='always'),
-        nat                       = dict(type='bool', default=False),
-        fixedport                 = dict(type='bool', default=False),
-        poolname                  = dict(type='str'),
-        av_profile                = dict(type='str'),
-        webfilter_profile         = dict(type='str'),
-        ips_sensor                = dict(type='str'),
-        application_list          = dict(type='str'),
-        logtraffic                = dict(choices=['disable','all','utm'], default='utm'),
-        logtraffic_start          = dict(type='bool', default=False),
+        comment=dict(type='str'),
+        id=dict(type='int', required=True),
+        src_intf=dict(type='list', default='any'),
+        dst_intf=dict(type='list', default='any'),
+        state=dict(choices=['present', 'absent'], default='present'),
+        src_addr=dict(type='list'),
+        dst_addr=dict(type='list'),
+        src_addr_negate=dict(type='bool', default=False),
+        dst_addr_negate=dict(type='bool', default=False),
+        policy_action=dict(choices=['accept', 'deny'], aliases=['action']),
+        service=dict(aliases=['services'], type='list'),
+        service_negate=dict(type='bool', default=False),
+        schedule=dict(type='str', default='always'),
+        nat=dict(type='bool', default=False),
+        fixedport=dict(type='bool', default=False),
+        poolname=dict(type='str'),
+        av_profile=dict(type='str'),
+        webfilter_profile=dict(type='str'),
+        ips_sensor=dict(type='str'),
+        application_list=dict(type='str'),
+        logtraffic=dict(choices=['disable', 'all', 'utm'], default='utm'),
+        logtraffic_start=dict(type='bool', default=False),
     )
 
     # merge global required_if & argument_spec from module_utils/fortios.py
@@ -236,7 +236,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=fortios_required_if + ipv4_policy_required_if ,
+        required_if=fortios_required_if + ipv4_policy_required_if,
     )
 
     # init forti object

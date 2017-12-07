@@ -263,7 +263,7 @@ from ansible.module_utils._text import to_bytes, to_native
 
 def get_stack_events(cfn, stack_name, token_filter=None):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
-    ret = {'events':[], 'log':[]}
+    ret = {'events': [], 'log': []}
 
     try:
         pg = cfn.get_paginator(
@@ -348,8 +348,8 @@ def create_changeset(module, stack_params, cfn):
             cs = cfn.create_change_set(**stack_params)
             result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET')
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
-                'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
-                'NOTE that dependencies on this stack might fail due to pending changes!']
+                                  'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
+                                  'NOTE that dependencies on this stack might fail due to pending changes!']
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -413,7 +413,7 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
         except:
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
-            if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
+            if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.
                 ret = get_stack_events(cfn, stack_name, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
@@ -421,12 +421,12 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
                 return {'changed': True, 'failed': True, 'output': 'Stack Not Found', 'exception': traceback.format_exc()}
         ret = get_stack_events(cfn, stack_name, op_token)
         if not stack:
-            if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
+            if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.
                 ret = get_stack_events(cfn, stack_name, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
-                ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
+                ret.update({'changed': False, 'failed': True, 'output': 'Stack not found.'})
                 return ret
         # it covers ROLLBACK_COMPLETE and UPDATE_ROLLBACK_COMPLETE
         # Possible states: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w1ab2c15c17c21c13
@@ -435,7 +435,7 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
-            ret.update({'changed': True, 'output' : 'Stack %s complete' % operation })
+            ret.update({'changed': True, 'output': 'Stack %s complete' % operation})
             return ret
         elif stack['StackStatus'].endswith('_ROLLBACK_FAILED'):
             ret.update({'changed': True, 'failed': True, 'output': 'Stack %s rollback failed' % operation})
@@ -447,7 +447,7 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
         else:
             # this can loop forever :/
             time.sleep(5)
-    return {'failed': True, 'output':'Failed for unknown reasons.'}
+    return {'failed': True, 'output': 'Failed for unknown reasons.'}
 
 
 def build_changeset_name(stack_params):
@@ -470,7 +470,7 @@ def check_mode_changeset(module, stack_params, cfn):
 
     try:
         change_set = cfn.create_change_set(**stack_params)
-        for i in range(60): # total time 5 min
+        for i in range(60):  # total time 5 min
             description = cfn.describe_change_set(ChangeSetName=change_set['Id'])
             if description['Status'] in ('CREATE_COMPLETE', 'FAILED'):
                 break
@@ -496,7 +496,7 @@ def get_stack_facts(cfn, stack_name):
     try:
         stack_response = cfn.describe_stacks(StackName=stack_name)
         stack_info = stack_response['Stacks'][0]
-    except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
+    except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
             # missing stack, don't bail.
@@ -567,7 +567,7 @@ def main():
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
     template_parameters = module.params['template_parameters']
-    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
+    stack_params['Parameters'] = [{'ParameterKey': k, 'ParameterValue': str(v)} for k, v in template_parameters.items()]
 
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
@@ -637,7 +637,7 @@ def main():
                 "resource_type": res['ResourceType'],
                 "last_updated_time": res['LastUpdatedTimestamp'],
                 "status": res['ResourceStatus'],
-                "status_reason": res.get('ResourceStatusReason') # can be blank, apparently
+                "status_reason": res.get('ResourceStatusReason')  # can be blank, apparently
             })
         result['stack_resources'] = stack_resources
 
@@ -658,8 +658,8 @@ def main():
 
     if module.params['template_format'] is not None:
         result['warnings'] = [('Argument `template_format` is deprecated '
-            'since Ansible 2.3, JSON and YAML templates are now passed '
-            'directly to the CloudFormation API.')]
+                               'since Ansible 2.3, JSON and YAML templates are now passed '
+                               'directly to the CloudFormation API.')]
     module.exit_json(**result)
 
 

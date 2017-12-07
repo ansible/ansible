@@ -71,7 +71,7 @@ EXAMPLES = '''
     dag_filter: "'aws-tag.aws:cloudformation:logical-id.ServerInstance' and 'instanceState.running'"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 

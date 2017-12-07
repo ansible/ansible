@@ -108,20 +108,20 @@ webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
             # You can specify an IP address or hostname.
-            host = dict(required=True),
-            https = dict(required=False, type='bool', default=False),
-            subdomains = dict(required=False, type='list', default=[]),
-            site_apps = dict(required=False, type='list', default=[]),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
+            host=dict(required=True),
+            https=dict(required=False, type='bool', default=False),
+            subdomains=dict(required=False, type='list', default=[]),
+            site_apps=dict(required=False, type='list', default=[]),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
         ),
         supports_check_mode=True
     )
-    site_name  = module.params['name']
+    site_name = module.params['name']
     site_state = module.params['state']
     site_host = module.params['host']
     site_ip = socket.gethostbyname(site_host)
@@ -159,7 +159,7 @@ def main():
                (set(existing_site['subdomains']) == set(module.params['subdomains'])) and \
                (dict(existing_site['website_apps']) == dict(module.params['site_apps'])):
                 module.exit_json(
-                    changed = False
+                    changed=False
                 )
 
         positional_args = [
@@ -168,16 +168,16 @@ def main():
             module.params['subdomains'],
         ]
         for a in module.params['site_apps']:
-            positional_args.append( (a[0], a[1]) )
+            positional_args.append((a[0], a[1]))
 
         if not module.check_mode:
             # If this isn't a dry run, create or modify the site
             result.update(
                 webfaction.create_website(
                     *positional_args
-                    ) if not existing_site else webfaction.update_website (
-                        *positional_args
-                    )
+                ) if not existing_site else webfaction.update_website(
+                    *positional_args
+                )
             )
 
     elif site_state == 'absent':
@@ -185,7 +185,7 @@ def main():
         # If the site's already not there, nothing changed.
         if not existing_site:
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         if not module.check_mode:
@@ -198,8 +198,8 @@ def main():
         module.fail_json(msg="Unknown state specified: {}".format(site_state))
 
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
 
