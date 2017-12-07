@@ -53,6 +53,16 @@ For more information about action plugins, `read the action plugins documentatio
 
 Check out the roles documentation `available here <http://docs.ansible.com/ansible/playbooks_reuse_roles.html#roles>`_.
 
+5. Should you write multiple modules instead of one module?
+
+The following guidelines will help you determine if your module attempts to do too much, and should likely be broken into several smaller modules.
+
+* Modules should have a concise and well defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
+
+* Modules should not require that a user know all the underlying options of an api/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
+
+* Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
+
 
 .. _developing_modules_all:
 
