@@ -41,7 +41,7 @@ The above would be the equivalent of::
         state: present
         groups: "wheel"
 
-.. note:: Before 2.5 Ansible mainly used the `with_<lookup>` keywords to create loops, the `loop` keyword is basically analogous to `with_list`.
+.. note:: Before 2.5 Ansible mainly used the ``with_<lookup>`` keywords to create loops, the `loop` keyword is basically analogous to ``with_list``.
 
 
 Some plugins like, the yum and apt modules can take lists directly to their options, this is more optimal than looping over the task.
@@ -90,7 +90,7 @@ For example, using the 'nested' lookup, you can combine lists::
 :doc:`Jinja2 lookups playbooks_lookups`, :doc:`filters playbooks_filters` and :doc:`tests playbooks_tests`
 make for some powerful data generation and manipulation.
 
-.. note:: `with_` loops are actually a combination of things `with_` + `lookup()`, even 'items' is a lookup. `loop` can be used in the same way as shown above.
+.. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.
 
 .. _do_until_loops:
 
@@ -113,7 +113,7 @@ been retried for 5 times with a delay of 10 seconds. The default value for "retr
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
 The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
 
-.. note:: If the "until" parameter isn't defined, the value for the "retries" parameter is forced to 1.
+.. note:: If the ``until`` parameter isn't defined, the value for the ``retries`` parameter is forced to 1.
 
 Using register with a loop
 ``````````````````````````
@@ -226,8 +226,8 @@ Loop Control
 .. versionadded:: 2.1
 
 In 2.0 you are again able to use loops and task includes (but not playbook includes). This adds the ability to loop over the set of tasks in one shot.
-Ansible by default sets the loop variable `item` for each loop, which causes these nested loops to overwrite the value of `item` from the "outer" loops.
-As of Ansible 2.1, the `loop_control` option can be used to specify the name of the variable to be used for the loop::
+Ansible by default sets the loop variable ``item`` for each loop, which causes these nested loops to overwrite the value of ``item`` from the "outer" loops.
+As of Ansible 2.1, the ``loop_control`` option can be used to specify the name of the variable to be used for the loop::
 
     # main.yml
     - include: inner.yml
@@ -251,7 +251,7 @@ As of Ansible 2.1, the `loop_control` option can be used to specify the name of 
 
 .. versionadded:: 2.2
 
-When using complex data structures for looping the display might get a bit too "busy", this is where the C(label) directive comes to help::
+When using complex data structures for looping the display might get a bit too "busy", this is where the ``label`` directive comes to help::
 
     - name: create servers
       digital_ocean:
@@ -272,7 +272,7 @@ This will now display just the 'label' field instead of the whole structure per 
 
 .. versionadded:: 2.2
 
-Another option to loop control is C(pause), which allows you to control the time (in seconds) between execution of items in a task loop.::
+Another option to loop control is ``pause``, which allows you to control the time (in seconds) between execution of items in a task loop.::
 
     # main.yml
     - name: create servers, pause 3s before creating next
@@ -291,8 +291,8 @@ Another option to loop control is C(pause), which allows you to control the time
 Loops and Includes in 2.0
 `````````````````````````
 
-Because `loop_control` is not available in Ansible 2.0, when using an include with a loop you should use `set_fact` to save the "outer" loops value
-for `item`::
+Because ``loop_control`` is not available in Ansible 2.0, when using an include with a loop you should use ``set_fact`` to save the "outer" loops value
+for ``item``::
 
     # main.yml
     - include_tasks: inner.yml

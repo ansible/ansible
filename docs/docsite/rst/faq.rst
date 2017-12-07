@@ -374,11 +374,11 @@ the :envvar:`ANSIBLE_DEBUG` environment variable.
 When should I use {{ }}? Also, how to interpolate variables or dynamic variable names
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-A steadfast rule is 'always use {{ }} except when `when:`'.
+A steadfast rule is 'always use ``{{ }}`` except when ``when:``'.
 Conditionals are always run through Jinja2 as to resolve the expression,
-so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
+so ``when:``, ``failed_when:`` and ``changed_when:`` are always templated and you should avoid adding ``{{ }}``.
 
-In most other cases you should always use the brackets, even if previously you could use variables without specifying (like `loop` or `with_` clauses),
+In most other cases you should always use the brackets, even if previously you could use variables without specifying (like ``loop`` or ``with_`` clauses),
 as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:
@@ -393,16 +393,13 @@ The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars 
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
-
-.. _i_dont_see_my_question:
-
-
 Why don't you ship in X format?
 +++++++++++++++++++++++++++++++
 
 Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
 
+.. _i_dont_see_my_question:
 
 I don't see my question here
 ++++++++++++++++++++++++++++
