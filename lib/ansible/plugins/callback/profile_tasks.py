@@ -18,7 +18,7 @@ DOCUMENTATION = '''
       - Ansible callback plugin for timing individual tasks and overall execution time.
       - "Mashup of 2 excellent original works: https://github.com/jlafon/ansible-profile,
          https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old"
-      - "Format: ``<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>``"
+      - "Format: C(<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>)"
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
