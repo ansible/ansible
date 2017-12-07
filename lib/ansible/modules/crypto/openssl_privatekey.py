@@ -22,8 +22,7 @@ short_description: Generate OpenSSL private keys.
 description:
     - "This module allows one to (re)generate OpenSSL private keys. It uses
        the pyOpenSSL python library to interact with openssl. One can generate
-       either RSA or DSA private keys. Keys are generated in PEM format.
-       This module uses file common arguments to specify generated file permissions."
+       either RSA or DSA private keys. Keys are generated in PEM format."
 requirements:
     - "python-pyOpenSSL"
 options:
@@ -64,6 +63,7 @@ options:
         description:
             - The cipher to encrypt the private key. (cipher can be found by running `openssl list-cipher-algorithms`)
         version_added: "2.4"
+extends_documentation_fragment: files
 '''
 
 EXAMPLES = '''
@@ -125,6 +125,7 @@ fingerprint:
 '''
 
 import os
+import traceback
 
 try:
     from OpenSSL import crypto
@@ -136,6 +137,7 @@ else:
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
 
 
 class PrivateKeyError(crypto_utils.OpenSSLObjectError):
@@ -157,9 +159,9 @@ class PrivateKey(crypto_utils.OpenSSLObject):
         self.privatekey = None
         self.fingerprint = {}
 
-        self.mode = module.params['mode']
-        if not self.mode:
-            self.mode = int('0600', 8)
+        self.mode = module.params.get('mode', None)
+        if self.mode is None:
+            self.mode = 0o600
 
         self.type = crypto.TYPE_RSA
         if module.params['type'] == 'DSA':
@@ -177,10 +179,19 @@ class PrivateKey(crypto_utils.OpenSSLObject):
                 raise PrivateKeyError(exc)
 
             try:
-                privatekey_file = os.open(self.path,
-                                          os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                                          self.mode)
-
+                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+                os.close(privatekey_file)
+                if isinstance(self.mode, string_types):
+                    try:
+                        self.mode = int(self.mode, 8)
+                    except ValueError as e:
+                        try:
+                            st = os.lstat(self.path)
+                            self.mode = AnsibleModule._symbolic_mode_to_octal(st, self.mode)
+                        except ValueError as e:
+                            module.fail_json(msg="%s" % to_native(e), exception=traceback.format_exc())
+                os.chmod(self.path, self.mode)
+                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, self.mode)
                 if self.cipher and self.passphrase:
                     os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey,
                                                                      self.cipher, to_bytes(self.passphrase)))
