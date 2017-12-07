@@ -174,9 +174,11 @@ def map_obj_to_commands(updates, module):
     for update in updates:
         want, have = update
 
-        def needs_update(x): return want.get(x) and (want.get(x) != have.get(x))
+        def needs_update(x):
+            return want.get(x) and (want.get(x) != have.get(x))
 
-        def add(x): return commands.append('username %s %s' % (want['name'], x))
+        def add(x):
+            return commands.append('username %s %s' % (want['name'], x))
 
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])

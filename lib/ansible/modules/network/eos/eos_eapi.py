@@ -223,7 +223,8 @@ def map_obj_to_commands(updates, module, warnings):
     commands = list()
     want, have = updates
 
-    def needs_update(x): return want.get(x) is not None and (want.get(x) != have.get(x))
+    def needs_update(x):
+        return want.get(x) is not None and (want.get(x) != have.get(x))
 
     def add(cmd):
         if 'management api http-commands' not in commands:
