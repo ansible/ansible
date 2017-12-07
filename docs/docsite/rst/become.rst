@@ -1,29 +1,32 @@
+*****************************
 Become (Privilege Escalation)
-+++++++++++++++++++++++++++++
+*****************************
 
 Ansible can use existing privilege escalation systems to allow a user to execute tasks as another.
 
 .. contents:: Topics
 
 Become
-``````
+======
+
 Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas` and others.
 
 
 .. note:: Prior to version 1.9, Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user and execute tasks and create resources with the second user's permissions. As of Ansible version 1.9,  `become` supersedes the old sudo/su, while still being backwards compatible. This new implementation also makes it easier to add other privilege escalation tools, including `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
 
-.. note:: Become vars and directives are independent. For example, setting `become_user` does not set `become`.
+.. note:: Become vars and directives are independent. For example, setting ``become_user`` does not set ``become``.
 
 
 Directives
------------
+==========
+
 These can be set from play to task level, but are overridden by connection variables as they can be host specific.
 
 become
-    set to 'true'/'yes' to activate privilege escalation.
+    set to ``yes`` to activate privilege escalation.
 
 become_user
-    set to user with desired privileges — the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
+    set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
 
 become_method
     (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`
@@ -37,20 +40,20 @@ For example, to manage a system service (which requires ``root`` privileges) whe
       service:
         name: httpd
         state: started
-      become: true
+      become: yes
 
 To run a command as the ``apache`` user::
 
     - name: Run a command as the apache user
       command: somecommand
-      become: true
+      become: yes
       become_user: apache
 
 To do something as the ``nobody`` user when the shell is nologin::
 
     - name: Run a command as nobody
       command: somecommand
-      become: true
+      become: yes
       become_method: su
       become_user: nobody
       become_flags: '-s /bin/sh'
@@ -63,23 +66,23 @@ ansible_become
     equivalent of the become directive, decides if privilege escalation is used or not.
 
 ansible_become_method
-    allows to set privilege escalation method
+    which privilege escalation method should be used
 
 ansible_become_user
-    allows to set the user you become through privilege escalation, does not imply `ansible_become: True`
+    set the user you become through privilege escalation; does not imply ``ansible_become: yes``
 
 ansible_become_pass
-    allows you to set the privilege escalation password
+    set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
 
-    webserver ansible_user=manager ansible_become=true
+    webserver ansible_user=manager ansible_become=yes
 
 Command line options
 --------------------
 
 --ask-become-pass, -K
-    ask for privilege escalation password, does not imply become will be used
+    ask for privilege escalation password; does not imply become will be used. Note that this password will be used for all hosts.
 
 --become, -b
     run operations with become (no password implied)
@@ -109,7 +112,7 @@ Although privilege escalation is mostly intuitive, there are a few limitations
 on how it works.  Users should be aware of these to avoid surprises.
 
 Becoming an Unprivileged User
-=============================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Ansible 2.0.x and below has a limitation with regards to becoming an
 unprivileged user that can be a security risk if users are not aware of it.
@@ -179,21 +182,21 @@ modules you want to run there to be world readable, you can turn on
 a warning and allow the task to run as it did prior to 2.1.
 
 Connection Plugin Support
-=========================
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Privilege escalation methods must also be supported by the connection plugin
 used.   Most connection plugins will warn if they do not support become.  Some
 will just ignore it as they always run as root (jail, chroot, etc).
 
 Only one method may be enabled per host
-=======================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Methods cannot be chained.  You cannot use ``sudo /bin/su -`` to become a user,
 you need to have privileges to run the command as that user in sudo or be able
 to su directly to it (the same for pbrun, pfexec or other supported methods).
 
 Can't limit escalation to certain commands
-==========================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Privilege escalation permissions have to be general.  Ansible does not always
 use a specific command to do something but runs modules (code) from
@@ -202,8 +205,109 @@ or '/bin/chmod' as the allowed commands this will fail with ansible as those
 paths won't match with the temporary file that ansible creates to run the
 module.
 
+.. _become-network:
+
+Become and Networks
+===================
+
+
+network_cli and become
+----------------------
+
+Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
+
+This functionality requires the host connection type to be using ``connection: network_cli``. In Ansible 2.5 this is limited to ``eos`` and ``ios``.
+
+This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
+
+If a task fails with the following then it's an indicator that `enable` mode is required:
+
+.. code-block:: console
+
+   Invalid input (privileged mode required)
+
+The following example shows how to set enable mode for a specific task:
+
+.. code-block:: yaml
+
+   - name: Gather facts (eos)
+     eos_facts:
+       gather_subset:
+         - "!hardware"
+     become: yes
+     become_method: enable
+
+The following example shows how to set enable mode for `all` tests in this play:
+
+.. code-block:: yaml
+
+   - hosts: eos-switches
+     become: yes
+     become_method: enable
+     tasks:
+       - name: Gather facts (eos)
+         eos_facts:
+           gather_subset:
+             - "!hardware"
+
+FIXME: Can be specified per host
+
+Setting enable mode for all tasks
+---------------------------------
+
+Often you wish for all tasks to run using privilege mode, that is best achieved by using ``group_vars``:
+
+**group_vars/eos.yml**
+
+.. code-block:: yaml
+
+   ansible_connection: network_cli
+   ansible_network_os: eos
+   ansible_user: myuser
+   ansible_become: yes
+   ansible_become_method: enable
+
+
+Passwords for enable mode
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If a password is required to enter enable mode this can be specified by doing one of the following:
+
+* providing the :option:`--ask-become-pass <ansible-playbook --ask-become-pass>` command line option
+* setting the ``ansible_become_pass`` connection variable
+
+.. warning::
+
+   As a reminder passwords should never be stored in plain text. See how encrypt secrets in vault :doc:`playbooks_vault` for more information.
+
+For more information about ``network_cli`` see :ref:`network-cli`.
+
+.. _become-network_auth_and_auth_password
+
+authorize and auth_pass
+-----------------------
+
+For network platforms that do not currently support ``connection: network_cli`` then the module options ``authorize`` and ``auth_pass`` can be used.
+
+.. code-block:: yaml
+
+   - hosts: eos-switches
+     ansible_connection: local
+     tasks:
+       - name: Gather facts (eos)
+         eos_facts:
+           gather_subset:
+             - "!hardware"
+         provider:
+           authorize: yes
+           auth_pass: " {{ secret_auth_pass }}"
+
+Note that over time more platforms will move to support ``become``. Check the :doc:`list_of_network_modules` for details.
+
+.. _become-windows:
+
 Become and Windows
-``````````````````
+==================
 
 Since Ansible 2.3, ``become`` can be used on Windows hosts through the
 ``runas`` method. Become on Windows uses the same inventory setup and
@@ -218,7 +322,7 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 and run commands that are not normally accessible in a WinRM session.
 
 .. note:: Prior to Ansible 2.4, become would only work when ``ansible_winrm_transport`` was
-    set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on 
+    set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on
     all transport types.
 
 Administrative Rights
@@ -269,7 +373,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
 * Grant ``SeTcbPrivilege`` to the user Ansible connects with on
   WinRM. ``SeTcbPrivilege`` is a high-level privilege that grants
   full control over the operating system. No user is given this privilege by
-  default, and care should be taken if you grant this privilege to a user or group. 
+  default, and care should be taken if you grant this privilege to a user or group.
   For more information on this privilege, please see
   `Act as part of the operating system <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
   You can use the below task to set this privilege on a Windows host::
@@ -293,7 +397,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
         type: dword
         state: present
       register: uac_result
-    
+
     - name: reboot after disabling UAC
       win_reboot:
       when: uac_result is changed
