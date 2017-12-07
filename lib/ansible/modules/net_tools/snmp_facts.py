@@ -243,7 +243,8 @@ def main():
     # Use v without a prefix to use with return values
     v = DefineOid(dotprefix=False)
 
-    def Tree(): return defaultdict(Tree)
+    def Tree():
+        return defaultdict(Tree)
 
     results = Tree()
 
