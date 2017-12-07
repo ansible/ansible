@@ -490,9 +490,6 @@
   register: _multitest_2
   with_items: "{{ test_regexp }}"
 
-- debug:
-    var: _multitest_1.results | map(attribute='changed') | unique | list
-
 - name: Assert that the file was changed the first time but not the second time
   assert:
     that:
