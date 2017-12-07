@@ -83,10 +83,9 @@ import collections
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import get_config_diff, commit_config
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, discard_config
 from ansible.module_utils.network.iosxr.iosxr import build_xml, is_cliconf, is_netconf
-from ansible.module_utils.network.iosxr.iosxr import etree_find, etree_findall
+from ansible.module_utils.network.iosxr.iosxr import etree_find
 
 
 class ConfigBase(object):
@@ -125,8 +124,10 @@ class CliConfiguration(ConfigBase):
                 commands.append(banner_cmd)
         self._result['commands'] = commands
         if commands:
-            if not self._module.check_mode:
-                load_config(self._module, commands, self._result['warnings'], commit=True)
+            commit = not self._module.check_mode
+            diff = load_config(self._module, commands, commit=commit)
+            if diff:
+                self._result['diff'] = dict(prepared=diff)
             self._result['changed'] = True
 
     def map_config_to_obj(self):
@@ -184,19 +185,15 @@ class NCConfiguration(ConfigBase):
             _edit_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode=opcode)
 
             if _edit_filter is not None:
-                if not self._module.check_mode:
-                    load_config(self._module, _edit_filter, self._result['warnings'])
-                    candidate = get_config(self._module, source='candidate', config_filter=_get_filter)
+                commit = not self._module.check_mode
+                diff = load_config(self._module, _edit_filter, commit=commit, running=running, nc_get_filter=_get_filter)
 
-                    diff = get_config_diff(self._module, running, candidate)
-                    if diff:
-                        commit_config(self._module)
-                        self._result['changed'] = True
-                        self._result['commands'] = _edit_filter
-                        if self._module._diff:
-                            self._result['diff'] = {'prepared': diff}
-                    else:
-                        discard_config(self._module)
+                if diff:
+                    self._result['commands'] = _edit_filter
+                    if self._module._diff:
+                        self._result['diff'] = dict(prepared=diff)
+
+                    self._result['changed'] = True
 
     def run(self):
         self.map_params_to_obj()
@@ -223,7 +220,7 @@ def main():
                            supports_check_mode=True)
 
     if is_cliconf(module):
-        module.deprecate("cli support for 'iosxr_banner' is deprecated. Use transport netconf instead', version='4 releases from v2.5")
+        module.deprecate(msg="cli support for 'iosxr_banner' is deprecated. Use transport netconf instead", version="4 releases from v2.5")
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)
