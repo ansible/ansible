@@ -187,7 +187,6 @@ def main():
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-
     result.update({
         'changed': False,
         'stdout': responses,

@@ -185,7 +185,7 @@ def main():
 
     # Send the data to bigpanda
     data = json.dumps(body)
-    headers = {'Authorization':'Bearer %s' % token, 'Content-Type':'application/json'}
+    headers = {'Authorization': 'Bearer %s' % token, 'Content-Type': 'application/json'}
     try:
         response, info = fetch_url(module, request_url, data=data, headers=headers)
         if info['status'] == 200:

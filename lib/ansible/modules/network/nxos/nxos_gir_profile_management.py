@@ -176,7 +176,7 @@ def main():
         commands=dict(required=False, type='list'),
         mode=dict(required=True, choices=['maintenance', 'normal']),
         state=dict(choices=['absent', 'present'],
-                       default='present'),
+                   default='present'),
         include_defaults=dict(default=False),
         config=dict()
     )
@@ -184,11 +184,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     state = module.params['state']
     commands = module.params['commands'] or []

@@ -163,4 +163,4 @@ def main():
         module.fail_json(msg=errorMsg)
 
 if __name__ == '__main__':
-        main()
+    main()

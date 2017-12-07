@@ -103,7 +103,7 @@ msg:
 from ansible.module_utils.basic import AnsibleModule
 
 
-CL_LICENSE_PATH='/usr/cumulus/bin/cl-license'
+CL_LICENSE_PATH = '/usr/cumulus/bin/cl-license'
 
 
 def install_license(module):

@@ -76,26 +76,26 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.fortios.fortios import fortios_argument_spec, fortios_required_if
 from ansible.module_utils.network.fortios.fortios import backup
 
-#check for pyFG lib
+# check for pyFG lib
 try:
     from pyFG import FortiOS, FortiConfig
     from pyFG.fortios import logger
     from pyFG.exceptions import CommandExecutionException, FailedCommit, ForcedCommit
-    HAS_PYFG=True
+    HAS_PYFG = True
 except:
-    HAS_PYFG=False
+    HAS_PYFG = False
 
 
 # some blocks don't support update, so remove them
-NOT_UPDATABLE_CONFIG_OBJECTS=[
+NOT_UPDATABLE_CONFIG_OBJECTS = [
     "vpn certificate local",
 ]
 
 
 def main():
     argument_spec = dict(
-        src       = dict(type='str', default=None),
-        filter    = dict(type='str', default=""),
+        src=dict(type='str', default=None),
+        filter=dict(type='str', default=""),
     )
 
     argument_spec.update(fortios_argument_spec)
@@ -114,20 +114,20 @@ def main():
     if not HAS_PYFG:
         module.fail_json(msg='Could not import the python library pyFG required by this module')
 
-    #define device
-    f = FortiOS( module.params['host'],
-        username=module.params['username'],
-        password=module.params['password'],
-        timeout=module.params['timeout'],
-        vdom=module.params['vdom'])
+    # define device
+    f = FortiOS(module.params['host'],
+                username=module.params['username'],
+                password=module.params['password'],
+                timeout=module.params['timeout'],
+                vdom=module.params['vdom'])
 
-    #connect
+    # connect
     try:
         f.open()
     except:
         module.fail_json(msg='Error connecting device')
 
-    #get  config
+    # get  config
     try:
         f.load_config(path=module.params['filter'])
         result['running_config'] = f.running_config.to_text()
@@ -135,24 +135,23 @@ def main():
     except:
         module.fail_json(msg='Error reading running config')
 
-    #backup config
+    # backup config
     if module.params['backup']:
         backup(module, f.running_config.to_text())
 
-
-    #update config
+    # update config
     if module.params['src'] is not None:
-        #store config in str
+        # store config in str
         try:
             conf_str = module.params['src']
             f.load_config(in_candidate=True, config_text=conf_str)
         except:
             module.fail_json(msg="Can't open configuration file, or configuration invalid")
 
-        #get updates lines
+        # get updates lines
         change_string = f.compare_config()
 
-        #remove not updatable parts
+        # remove not updatable parts
         c = FortiConfig()
         c.parse_config_output(change_string)
 
@@ -165,7 +164,7 @@ def main():
             result['change_string'] = change_string
             result['changed'] = True
 
-        #Commit if not check mode
+        # Commit if not check mode
         if module.check_mode is False and change_string != "":
             try:
                 f.commit(change_string)

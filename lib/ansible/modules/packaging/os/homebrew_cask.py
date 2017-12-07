@@ -137,9 +137,9 @@ class HomebrewCask(object):
         -                   # dashes
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_CASK_REGEX        = _create_regex_group(VALID_CASK_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_CASK_REGEX = _create_regex_group(VALID_CASK_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -589,7 +589,7 @@ def main():
                        for install_option in p['install_options']]
 
     brew_cask = HomebrewCask(module=module, path=path, casks=casks,
-                             state=state,  update_homebrew=update_homebrew,
+                             state=state, update_homebrew=update_homebrew,
                              install_options=install_options)
     (failed, changed, message) = brew_cask.run()
     if failed:

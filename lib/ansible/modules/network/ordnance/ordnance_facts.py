@@ -223,6 +223,7 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+
 def main():
     spec = dict(
         gather_subset=dict(default=['!config'], type='list')

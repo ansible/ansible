@@ -142,18 +142,19 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aos.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
+
 def check_ranges_are_valid(module, ranges):
 
     i = 1
     for range in ranges:
-        if not isinstance(range, list) :
+        if not isinstance(range, list):
             module.fail_json(msg="Range (%i) must be a list not %s" % (i, type(range)))
         elif len(range) != 2:
             module.fail_json(msg="Range (%i) must be a list of 2 members, not %i" % (i, len(range)))
-        elif not isinstance( range[0], int ):
-            module.fail_json(msg="1st element of range (%i) must be integer instead of %s " % (i,type(range[0])))
-        elif not isinstance( range[1], int ):
-            module.fail_json(msg="2nd element of range (%i) must be integer instead of %s " % (i,type(range[1])))
+        elif not isinstance(range[0], int):
+            module.fail_json(msg="1st element of range (%i) must be integer instead of %s " % (i, type(range[0])))
+        elif not isinstance(range[1], int):
+            module.fail_json(msg="2nd element of range (%i) must be integer instead of %s " % (i, type(range[1])))
         elif range[1] <= range[0]:
             module.fail_json(msg="2nd element of range (%i) must be bigger than 1st " % (i))
 
@@ -161,24 +162,26 @@ def check_ranges_are_valid(module, ranges):
 
     return True
 
+
 def get_list_of_range(asn_pool):
     ranges = []
 
     for range in asn_pool.value['ranges']:
-        ranges.append([ range['first'], range['last']])
+        ranges.append([range['first'], range['last']])
 
     return ranges
+
 
 def create_new_asn_pool(asn_pool, name, ranges):
 
     # Create value
     datum = dict(display_name=name, ranges=[])
     for range in ranges:
-        datum['ranges'].append(dict(first=range[0],last=range[1]))
+        datum['ranges'].append(dict(first=range[0], last=range[1]))
 
     asn_pool.datum = datum
 
-    ## Write to AOS
+    # Write to AOS
     return asn_pool.write()
 
 
@@ -190,7 +193,7 @@ def asn_pool_absent(module, aos, my_pool):
     if my_pool.exists is False:
         module.exit_json(changed=False, name=margs['name'], id='', value={})
 
-    ## Check if object is currently in Use or Not
+    # Check if object is currently in Use or Not
     # If in Use, return an error
     if my_pool.value:
         if my_pool.value['status'] != 'not_in_use':
@@ -205,10 +208,10 @@ def asn_pool_absent(module, aos, my_pool):
         except:
             module.fail_json(msg="An error occurred, while trying to delete the ASN Pool")
 
-    module.exit_json( changed=True,
-                      name=my_pool.name,
-                      id=my_pool.id,
-                      value={} )
+    module.exit_json(changed=True,
+                     name=my_pool.name,
+                     id=my_pool.id,
+                     value={})
 
 
 def asn_pool_present(module, aos, my_pool):
@@ -236,10 +239,10 @@ def asn_pool_present(module, aos, my_pool):
             except:
                 module.fail_json(msg="An error occurred while trying to create a new ASN Pool ")
 
-        module.exit_json( changed=True,
-                          name=my_pool.name,
-                          id=my_pool.id,
-                          value=my_pool.value )
+        module.exit_json(changed=True,
+                         name=my_pool.name,
+                         id=my_pool.id,
+                         value=my_pool.value)
 
     # Currently only check if the pool exist or not
     #    if exist return change false
@@ -248,14 +251,16 @@ def asn_pool_present(module, aos, my_pool):
     # if pool already exist, check if list of ASN is the same
     # if same just return the object and report change false
     # if set(get_list_of_range(my_pool)) == set(margs['ranges']):
-    module.exit_json( changed=False,
-                      name=my_pool.name,
-                      id=my_pool.id,
-                      value=my_pool.value )
+    module.exit_json(changed=False,
+                     name=my_pool.name,
+                     id=my_pool.id,
+                     value=my_pool.value)
 
 # ########################################################
 # Main Function
 # ########################################################
+
+
 def asn_pool(module):
 
     margs = module.params
@@ -271,7 +276,7 @@ def asn_pool(module):
     # Check ID / Name and Content
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -293,8 +298,8 @@ def asn_pool(module):
     # ----------------------------------------------------
     try:
         my_pool = find_collection_item(aos.AsnPools,
-                            item_name=item_name,
-                            item_id=item_id)
+                                       item_name=item_name,
+                                       item_id=item_id)
     except:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
@@ -309,19 +314,20 @@ def asn_pool(module):
 
         asn_pool_present(module, aos, my_pool)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             session=dict(required=True, type="dict"),
-            name=dict(required=False ),
-            id=dict(required=False ),
+            name=dict(required=False),
+            id=dict(required=False),
             content=dict(required=False, type="json"),
-            state=dict( required=False,
-                        choices=['present', 'absent'],
-                        default="present"),
+            state=dict(required=False,
+                       choices=['present', 'absent'],
+                       default="present"),
             ranges=dict(required=False, type="list", default=[])
         ),
-        mutually_exclusive = [('name', 'id', 'content')],
+        mutually_exclusive=[('name', 'id', 'content')],
         required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )

@@ -115,7 +115,7 @@ def main():
         argument_spec=dict(
             token=dict(required=True, no_log=True),
             msg=dict(required=True),
-            type=dict(required=True, choices=["inbox","chat"]),
+            type=dict(required=True, choices=["inbox", "chat"]),
             external_user_name=dict(required=False),
             from_address=dict(required=False),
             source=dict(required=False),
@@ -125,7 +125,7 @@ def main():
             project=dict(required=False),
             tags=dict(required=False),
             link=dict(required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -152,7 +152,7 @@ def main():
         module.fail_json(msg="external_user_name is required for the 'chat' type")
 
     # required params for the 'inbox' type
-    for item in [ 'from_address', 'source', 'subject' ]:
+    for item in ['from_address', 'source', 'subject']:
         if module.params[item]:
             if type == 'chat':
                 module.fail_json(msg="%s is not valid for the 'chat' type" % item)
@@ -166,7 +166,7 @@ def main():
         params['tags'] = module.params["tags"]
 
     # optional params for the 'inbox' type
-    for item in [ 'from_name', 'reply_to', 'project', 'link' ]:
+    for item in ['from_name', 'reply_to', 'project', 'link']:
         if module.params[item]:
             if type == 'chat':
                 module.fail_json(msg="%s is not valid for the 'chat' type" % item)

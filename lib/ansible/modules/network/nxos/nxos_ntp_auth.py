@@ -198,7 +198,7 @@ def get_ntp_auth_info(key_id, module):
 
 
 def auth_type_to_num(auth_type):
-    if auth_type == 'encrypt' :
+    if auth_type == 'encrypt':
         return '7'
     else:
         return '0'
@@ -258,11 +258,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     key_id = module.params['key_id']
     md5string = module.params['md5string']

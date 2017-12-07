@@ -138,6 +138,7 @@ def notification(module, state, label, notification_type, details):
     else:
         module.exit_json(changed=changed)
 
+
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(

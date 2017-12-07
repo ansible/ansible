@@ -137,11 +137,13 @@ def change_keys(recs, key='uuid', filter_func=None):
 
     return new_recs
 
+
 def get_host(session):
     """Get the host"""
     host_recs = session.xenapi.host.get_all()
     # We only have one host, so just return its entry
     return session.xenapi.host.get_record(host_recs[0])
+
 
 def get_vms(session):
     xs_vms = {}
@@ -164,6 +166,7 @@ def get_srs(session):
     for sr in srs.values():
         xs_srs[sr['name_label']] = sr
     return xs_srs
+
 
 def main():
     module = AnsibleModule({})

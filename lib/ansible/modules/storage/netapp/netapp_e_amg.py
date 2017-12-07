@@ -168,7 +168,7 @@ def create_async(module, ssid, api_url, api_pwd, api_usr, body):
         rc, data = request(url, data=post_data, method='POST', url_username=api_usr, url_password=api_pwd,
                            headers=HEADERS)
     except Exception as e:
-        module.exit_json(msg="Exception while creating aysnc mirror group. Message: %s" %  to_native(e),
+        module.exit_json(msg="Exception while creating aysnc mirror group. Message: %s" % to_native(e),
                          exception=traceback.format_exc())
     return data
 

@@ -86,6 +86,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlencode
 # Module execution.
 #
 
+
 def main():
 
     module = AnsibleModule(
@@ -99,7 +100,7 @@ def main():
             user=dict(required=False),
             appname=dict(required=False),
             environment=dict(required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         required_one_of=[['app_name', 'application_id']],
         supports_check_mode=True
@@ -117,7 +118,7 @@ def main():
     else:
         module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
 
-    for item in [ "changelog", "description", "revision", "user", "appname", "environment" ]:
+    for item in ["changelog", "description", "revision", "user", "appname", "environment"]:
         if module.params[item]:
             params[item] = module.params[item]
 

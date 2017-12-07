@@ -456,6 +456,7 @@ class Configuration:
     """
     Configuration for this module.
     """
+
     def __init__(self, management_token=None, host=None, scheme=None, validate_certs=None, name=None, port=None,
                  rules=None, state=None, token=None, token_type=None):
         self.management_token = management_token    # type: str
@@ -474,6 +475,7 @@ class Output:
     """
     Output of an action of this module.
     """
+
     def __init__(self, changed=None, token=None, rules=None, operation=None):
         self.changed = changed  # type: bool
         self.token = token  # type: str
@@ -485,6 +487,7 @@ class ACL:
     """
     Consul ACL. See: https://www.consul.io/docs/guides/acl.html.
     """
+
     def __init__(self, rules, token_type, token, name):
         self.rules = rules
         self.token_type = token_type
@@ -507,6 +510,7 @@ class Rule:
     """
     ACL rule. See: https://www.consul.io/docs/guides/acl.html#acl-rules-and-scope.
     """
+
     def __init__(self, scope, policy, pattern=None):
         self.scope = scope
         self.policy = policy
@@ -532,6 +536,7 @@ class RuleCollection:
     """
     Collection of ACL rules, which are part of a Consul ACL.
     """
+
     def __init__(self):
         self._rules = {}
         for scope in RULE_SCOPES:

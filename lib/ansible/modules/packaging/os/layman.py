@@ -158,8 +158,8 @@ def install_overlay(module, name, list_url=None):
 
     if not layman.is_repo(name):
         if not list_url:
-            raise ModuleError("Overlay '%s' is not on the list of known " \
-                "overlays and URL of the remote list was not provided." % name)
+            raise ModuleError("Overlay '%s' is not on the list of known "
+                              "overlays and URL of the remote list was not provided." % name)
 
         overlay_defs = layman_conf.get_option('overlay_defs')
         dest = path.join(overlay_defs, name + '.xml')
@@ -209,7 +209,7 @@ def sync_overlay(name):
     layman = init_layman()
 
     if not layman.sync(name):
-        messages = [ str(item[1]) for item in layman.sync_results[2] ]
+        messages = [str(item[1]) for item in layman.sync_results[2]]
         raise ModuleError(messages)
 
 
@@ -227,11 +227,11 @@ def sync_overlays():
 def main():
     # define module
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            list_url = dict(aliases=['url']),
-            state = dict(default="present", choices=['present', 'absent', 'updated']),
-            validate_certs = dict(required=False, default=True, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True),
+            list_url=dict(aliases=['url']),
+            state=dict(default="present", choices=['present', 'absent', 'updated']),
+            validate_certs=dict(required=False, default=True, type='bool'),
         ),
         supports_check_mode=True
     )

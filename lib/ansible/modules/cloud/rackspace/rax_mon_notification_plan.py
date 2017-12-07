@@ -141,6 +141,7 @@ def notification_plan(module, state, label, critical_state, warning_state, ok_st
     else:
         module.exit_json(changed=changed)
 
+
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(

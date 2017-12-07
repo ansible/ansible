@@ -94,8 +94,8 @@ def main():
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(change_hostname_to=dict(required=True, type='str'),
-                         domainname=dict(required=True, type='str'),
-                         dns_servers=dict(required=True, type='list')))
+                              domainname=dict(required=True, type='str'),
+                              dns_servers=dict(required=True, type='list')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 

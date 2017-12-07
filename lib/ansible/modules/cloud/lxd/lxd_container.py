@@ -216,7 +216,7 @@ EXAMPLES = '''
         flat: true
 '''
 
-RETURN='''
+RETURN = '''
 addresses:
   description: Mapping from the network device name to a list of IPv4 addresses in the container
   returned: when state is started or restarted
@@ -328,7 +328,7 @@ class LXDContainerManagement(object):
         return ANSIBLE_LXD_STATES[resp_json['metadata']['status']]
 
     def _change_state(self, action, force_stop=False):
-        body_json={'action': action, 'timeout': self.timeout}
+        body_json = {'action': action, 'timeout': self.timeout}
         if force_stop:
             body_json['force'] = True
         return self.client.do('PUT', '/1.0/containers/{0}/state'.format(self.name), body_json=body_json)
@@ -527,6 +527,7 @@ class LXDContainerManagement(object):
                 fail_params['logs'] = e.kwargs['logs']
             self.module.fail_json(**fail_params)
 
+
 def main():
     """Ansible Main module."""
 
@@ -585,7 +586,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict( type='str', no_log=True )
+            trust_password=dict(type='str', no_log=True)
         ),
         supports_check_mode=False,
     )

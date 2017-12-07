@@ -186,7 +186,7 @@ class Proxy(object):
         old_interface = {}
         if 'interface' in self.existing_data and \
            len(self.existing_data['interface']) > 0:
-                old_interface = self.existing_data['interface']
+            old_interface = self.existing_data['interface']
 
         final_interface = old_interface.copy()
         final_interface.update(new_interface)
@@ -206,7 +206,7 @@ class Proxy(object):
             for item in data:
                 if data[item] and item in self.existing_data and \
                    self.existing_data[item] != data[item]:
-                        parameters[item] = data[item]
+                    parameters[item] = data[item]
 
             if 'interface' in parameters:
                 parameters.pop('interface')

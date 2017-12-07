@@ -109,11 +109,11 @@ def _system_state_change(module, keypair):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        name            = dict(required=True),
-        public_key      = dict(default=None),
-        public_key_file = dict(default=None),
-        state           = dict(default='present',
-                               choices=['absent', 'present']),
+        name=dict(required=True),
+        public_key=dict(default=None),
+        public_key_file=dict(default=None),
+        state=dict(default='present',
+                   choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs(

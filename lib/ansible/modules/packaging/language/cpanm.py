@@ -141,6 +141,7 @@ def _is_package_installed(module, name, locallib, cpanm, version):
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
     return res == 0
 
+
 def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
     # don't copy stuff like this
@@ -197,23 +198,23 @@ def main():
         required_one_of=[['name', 'from_path']],
     )
 
-    cpanm       = _get_cpanm_path(module)
-    name        = module.params['name']
-    from_path   = module.params['from_path']
-    notest      = module.boolean(module.params.get('notest', False))
-    locallib    = module.params['locallib']
-    mirror      = module.params['mirror']
+    cpanm = _get_cpanm_path(module)
+    name = module.params['name']
+    from_path = module.params['from_path']
+    notest = module.boolean(module.params.get('notest', False))
+    locallib = module.params['locallib']
+    mirror = module.params['mirror']
     mirror_only = module.params['mirror_only']
     installdeps = module.params['installdeps']
-    use_sudo    = module.params['system_lib']
-    version     = module.params['version']
+    use_sudo = module.params['system_lib']
+    version = module.params['version']
 
-    changed   = False
+    changed = False
 
     installed = _is_package_installed(module, name, locallib, cpanm, version)
 
     if not installed:
-        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
+        cmd = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 

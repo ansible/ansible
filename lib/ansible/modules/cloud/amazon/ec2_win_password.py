@@ -119,11 +119,11 @@ BACKEND = default_backend()
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        instance_id = dict(required=True),
-        key_file = dict(required=True, type='path'),
-        key_passphrase = dict(no_log=True, default=None, required=False),
-        wait = dict(type='bool', default=False, required=False),
-        wait_timeout = dict(default=120, required=False),
+        instance_id=dict(required=True),
+        key_file=dict(required=True, type='path'),
+        key_passphrase=dict(no_log=True, default=None, required=False),
+        wait=dict(type='bool', default=False, required=False),
+        wait_timeout=dict(default=120, required=False),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -158,18 +158,18 @@ def main():
         decoded = b64decode(data)
 
     if wait and datetime.datetime.now() >= end:
-        module.fail_json(msg = "wait for password timeout after %d seconds" % wait_timeout)
+        module.fail_json(msg="wait for password timeout after %d seconds" % wait_timeout)
 
     try:
         f = open(key_file, 'rb')
     except IOError as e:
-        module.fail_json(msg = "I/O error (%d) opening key file: %s" % (e.errno, e.strerror))
+        module.fail_json(msg="I/O error (%d) opening key file: %s" % (e.errno, e.strerror))
     else:
         try:
             with f:
                 key = load_pem_private_key(f.read(), b_key_passphrase, BACKEND)
         except (ValueError, TypeError) as e:
-            module.fail_json(msg = "unable to parse key file")
+            module.fail_json(msg="unable to parse key file")
 
     try:
         decrypted = key.decrypt(decoded, PKCS1v15())

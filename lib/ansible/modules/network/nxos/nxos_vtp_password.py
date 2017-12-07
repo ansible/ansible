@@ -194,13 +194,13 @@ def main():
     argument_spec = dict(
         vtp_password=dict(type='str', no_log=True),
         state=dict(choices=['absent', 'present'],
-                       default='present'),
+                   default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)

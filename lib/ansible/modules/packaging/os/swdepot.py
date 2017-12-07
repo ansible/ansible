@@ -108,6 +108,7 @@ def query_package(module, name, depot=None):
 
     return rc, version
 
+
 def remove_package(module, name):
     """ Uninstall package if installed. """
 
@@ -119,6 +120,7 @@ def remove_package(module, name):
     else:
         return rc, stderr
 
+
 def install_package(module, depot, name):
     """ Install package if not already installed """
 
@@ -129,12 +131,13 @@ def install_package(module, depot, name):
     else:
         return rc, stderr
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=['pkg'], required=True),
-            state = dict(choices=['present', 'absent', 'latest'], required=True),
-            depot = dict(default=None, required=False)
+        argument_spec=dict(
+            name=dict(aliases=['pkg'], required=True),
+            state=dict(choices=['present', 'absent', 'latest'], required=True),
+            depot=dict(default=None, required=False)
         ),
         supports_check_mode=True
     )
@@ -145,12 +148,11 @@ def main():
     changed = False
     msg = "No changed"
     rc = 0
-    if ( state == 'present' or state == 'latest' ) and depot is None:
+    if (state == 'present' or state == 'latest') and depot is None:
         output = "depot parameter is mandatory in present or latest task"
         module.fail_json(name=name, msg=output, rc=rc)
 
-
-    #Check local version
+    # Check local version
     rc, version_installed = query_package(module, name)
     if not rc:
         installed = True
@@ -159,7 +161,7 @@ def main():
     else:
         installed = False
 
-    if ( state == 'present' or state == 'latest' ) and installed is False:
+    if (state == 'present' or state == 'latest') and installed is False:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = install_package(module, depot, name)
@@ -172,14 +174,14 @@ def main():
             module.fail_json(name=name, msg=output, rc=rc)
 
     elif state == 'latest' and installed is True:
-        #Check depot version
+        # Check depot version
         rc, version_depot = query_package(module, name, depot)
 
         if not rc:
-            if compare_package(version_installed,version_depot) == -1:
+            if compare_package(version_installed, version_depot) == -1:
                 if module.check_mode:
                     module.exit_json(changed=True)
-                #Install new version
+                # Install new version
                 rc, output = install_package(module, depot, name)
 
                 if not rc:

@@ -332,7 +332,7 @@ def activate_pipeline(client, module):
                 pass
             else:
                 module.fail_json(msg=('Data Pipeline {0} failed to activate '
-                                 'within timeout {1} seconds').format(dp_name, timeout))
+                                      'within timeout {1} seconds').format(dp_name, timeout))
         changed = True
 
     data_pipeline = get_result(client, dp_id)
@@ -477,7 +477,7 @@ def diff_pipeline(client, module, objects, unique_id, dp_name):
             result = {'data_pipeline': data_pipeline,
                       'msg': msg}
     except DataPipelineNotFound:
-            create_dp = True
+        create_dp = True
 
     return create_dp, changed, result
 

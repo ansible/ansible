@@ -204,7 +204,6 @@ class Package:
         return self.prefix + self.name + self.version
 
 
-
 def split_name_version(name):
     """splits of the package name and desired version
 
@@ -301,7 +300,7 @@ def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
             return parse_zypper_xml(m, cmd, fail_not_found=fail_not_found, packages=packages)
 
         return packages, rc, stdout, stderr
-    m.fail_json(msg='Zypper run command failed with return code %s.'%rc, rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
+    m.fail_json(msg='Zypper run command failed with return code %s.' % rc, rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
 
 
 def get_cmd(m, subcommand):
@@ -455,20 +454,21 @@ def repo_refresh(m):
 # ===========================================
 # Main control flow
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, aliases=['pkg'], type='list'),
-            state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'dist-upgrade']),
-            type = dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
-            disable_gpg_check = dict(required=False, default='no', type='bool'),
-            disable_recommends = dict(required=False, default='yes', type='bool'),
-            force = dict(required=False, default='no', type='bool'),
-            update_cache = dict(required=False, aliases=['refresh'], default='no', type='bool'),
-            oldpackage = dict(required=False, default='no', type='bool'),
-            extra_args = dict(required=False, default=None),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['pkg'], type='list'),
+            state=dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'dist-upgrade']),
+            type=dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
+            disable_gpg_check=dict(required=False, default='no', type='bool'),
+            disable_recommends=dict(required=False, default='yes', type='bool'),
+            force=dict(required=False, default='no', type='bool'),
+            update_cache=dict(required=False, aliases=['refresh'], default='no', type='bool'),
+            oldpackage=dict(required=False, default='no', type='bool'),
+            extra_args=dict(required=False, default=None),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     name = module.params['name']

@@ -171,7 +171,7 @@ class ElbManager:
         found = False
         for lb in self.lbs:
             if lb.name == lbtest:
-                found=True
+                found = True
                 break
         return found
 
@@ -330,7 +330,7 @@ def main():
     argument_spec.update(dict(
         state={'required': True},
         instance_id={'required': True},
-        ec2_elbs={'default': None, 'required': False, 'type':'list'},
+        ec2_elbs={'default': None, 'required': False, 'type': 'list'},
         enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
         wait={'required': False, 'default': True, 'type': 'bool'},
         wait_timeout={'required': False, 'default': 0, 'type': 'int'}
@@ -363,7 +363,7 @@ def main():
     if ec2_elbs is not None:
         for elb in ec2_elbs:
             if not elb_man.exists(elb):
-                msg="ELB %s does not exist" % elb
+                msg = "ELB %s does not exist" % elb
                 module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':

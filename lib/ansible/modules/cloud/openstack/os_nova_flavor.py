@@ -194,21 +194,21 @@ def _system_state_change(module, flavor):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        state        = dict(required=False, default='present',
-                            choices=['absent', 'present']),
-        name         = dict(required=False),
+        state=dict(required=False, default='present',
+                   choices=['absent', 'present']),
+        name=dict(required=False),
 
         # required when state is 'present'
-        ram          = dict(required=False, type='int'),
-        vcpus        = dict(required=False, type='int'),
-        disk         = dict(required=False, type='int'),
+        ram=dict(required=False, type='int'),
+        vcpus=dict(required=False, type='int'),
+        disk=dict(required=False, type='int'),
 
-        ephemeral    = dict(required=False, default=0, type='int'),
-        swap         = dict(required=False, default=0, type='int'),
-        rxtx_factor  = dict(required=False, default=1.0, type='float'),
-        is_public    = dict(required=False, default=True, type='bool'),
-        flavorid     = dict(required=False, default="auto"),
-        extra_specs  = dict(required=False, default=None, type='dict'),
+        ephemeral=dict(required=False, default=0, type='int'),
+        swap=dict(required=False, default=0, type='int'),
+        rxtx_factor=dict(required=False, default=1.0, type='float'),
+        is_public=dict(required=False, default=True, type='bool'),
+        flavorid=dict(required=False, default="auto"),
+        extra_specs=dict(required=False, default=None, type='dict'),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -247,9 +247,9 @@ def main():
                     rxtx_factor=module.params['rxtx_factor'],
                     is_public=module.params['is_public']
                 )
-                changed=True
+                changed = True
             else:
-                changed=False
+                changed = False
 
             old_extra_specs = flavor['extra_specs']
             new_extra_specs = dict([(k, str(v)) for k, v in extra_specs.items()])

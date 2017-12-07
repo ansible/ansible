@@ -148,7 +148,7 @@ def save_instance(module, name, flavor, volume, cdb_type, cdb_version, wait,
                 module.fail_json(changed=False, action=action,
                                  msg='The new volume size must be larger than '
                                      'the current volume size',
-                                cdb=rax_to_dict(instance))
+                                 cdb=rax_to_dict(instance))
             instance.resize_volume(volume)
             changed = True
 

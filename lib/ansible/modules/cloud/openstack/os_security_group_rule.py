@@ -212,8 +212,8 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
         if ((module_min is None and module_max is None) and
                 (rule_min and int(rule_min) == 1 and
                     rule_max and int(rule_max) == 65535)):
-                    # (None, None) == (1, 65535)
-                    return True
+            # (None, None) == (1, 65535)
+            return True
 
     # Sanity check to make sure we don't have type comparison issues.
     if module_min:
@@ -270,21 +270,21 @@ def _system_state_change(module, secgroup, remotegroup):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        security_group   = dict(required=True),
+        security_group=dict(required=True),
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
-        protocol         = dict(default=None,
-                                choices=[None, 'tcp', 'udp', 'icmp', '112']),
-        port_range_min   = dict(required=False, type='int'),
-        port_range_max   = dict(required=False, type='int'),
-        remote_ip_prefix = dict(required=False, default=None),
-        remote_group     = dict(required=False, default=None),
-        ethertype        = dict(default='IPv4',
-                                choices=['IPv4', 'IPv6']),
-        direction        = dict(default='ingress',
-                                choices=['egress', 'ingress']),
-        state            = dict(default='present',
-                                choices=['absent', 'present']),
+        protocol=dict(default=None,
+                      choices=[None, 'tcp', 'udp', 'icmp', '112']),
+        port_range_min=dict(required=False, type='int'),
+        port_range_max=dict(required=False, type='int'),
+        remote_ip_prefix=dict(required=False, default=None),
+        remote_group=dict(required=False, default=None),
+        ethertype=dict(default='IPv4',
+                       choices=['IPv4', 'IPv6']),
+        direction=dict(default='ingress',
+                       choices=['egress', 'ingress']),
+        state=dict(default='present',
+                   choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -312,7 +312,7 @@ def main():
         if remote_group:
             remotegroup = cloud.get_security_group(remote_group)
         else:
-            remotegroup = { 'id' : None }
+            remotegroup = {'id': None}
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, secgroup, remotegroup))

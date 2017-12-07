@@ -242,6 +242,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 import re
 
+
 def execute_show_command(command, module, command_type='cli_show'):
     if command_type == 'cli_show_ascii':
         cmds = [{
@@ -501,11 +502,11 @@ def config_remove_oif(existing, existing_oif_prefix_source):
             if each.get('prefix') and each.get('source'):
                 command = 'no ip igmp static-oif {0} source {1} '.format(
                     each.get('prefix'), each.get('source')
-                    )
+                )
             elif each.get('prefix'):
                 command = 'no ip igmp static-oif {0}'.format(
                     each.get('prefix')
-                    )
+                )
             if command:
                 commands.append(command)
             command = None
@@ -533,7 +534,7 @@ def main():
         oif_source=dict(required=False, type='str'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
-                       default='present'),
+                   default='present'),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -542,11 +543,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     state = module.params['state']
     interface = module.params['interface']
@@ -607,7 +607,7 @@ def main():
     changed = False
     commands = []
     proposed = dict((k, v) for k, v in module.params.items()
-                     if v is not None and k in args)
+                    if v is not None and k in args)
 
     CANNOT_ABSENT = ['version', 'startup_query_interval',
                      'startup_query_count', 'robustness', 'querier_timeout',

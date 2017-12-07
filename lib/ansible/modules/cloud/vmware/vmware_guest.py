@@ -507,6 +507,7 @@ class PyVmomiDeviceHelper(object):
 
 class PyVmomiCache(object):
     """ This class caches references to objects which are requested multiples times but not modified """
+
     def __init__(self, content, dc_name=None):
         self.content = content
         self.dc_name = dc_name
@@ -849,7 +850,7 @@ class PyVmomiHelper(PyVmomi):
                 if (nic.device.backing and not hasattr(nic.device.backing, 'port')):
                     nic_change_detected = True
                 elif (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
-                      nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
+                                              nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()

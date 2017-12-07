@@ -154,6 +154,7 @@ def managed_disk_to_dict(managed_disk):
 
 class AzureRMManagedDisk(AzureRMModuleBase):
     """Configuration class for an Azure RM Managed Disk resource"""
+
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(

@@ -102,7 +102,7 @@ content:
 import json
 
 from ansible.module_utils.network.a10.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
-                                      axapi_enabled_disabled, axapi_get_vport_protocol, AXAPI_VPORT_PROTOCOLS)
+                                                  axapi_enabled_disabled, axapi_get_vport_protocol, AXAPI_VPORT_PROTOCOLS)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 
@@ -145,6 +145,7 @@ def validate_ports(module, ports):
         # ensure the service_group field is at least present
         if 'service_group' not in item:
             item['service_group'] = ''
+
 
 def main():
     argument_spec = a10_argument_spec()

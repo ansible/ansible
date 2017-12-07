@@ -278,35 +278,34 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 
 
-
 class CloudflareAPI(object):
 
     cf_api_endpoint = 'https://api.cloudflare.com/client/v4'
     changed = False
 
     def __init__(self, module):
-        self.module            = module
+        self.module = module
         self.account_api_token = module.params['account_api_token']
-        self.account_email     = module.params['account_email']
-        self.port              = module.params['port']
-        self.priority          = module.params['priority']
-        self.proto             = module.params['proto']
-        self.proxied           = module.params['proxied']
-        self.record            = module.params['record']
-        self.service           = module.params['service']
-        self.is_solo           = module.params['solo']
-        self.state             = module.params['state']
-        self.timeout           = module.params['timeout']
-        self.ttl               = module.params['ttl']
-        self.type              = module.params['type']
-        self.value             = module.params['value']
-        self.weight            = module.params['weight']
-        self.zone              = module.params['zone']
+        self.account_email = module.params['account_email']
+        self.port = module.params['port']
+        self.priority = module.params['priority']
+        self.proto = module.params['proto']
+        self.proxied = module.params['proxied']
+        self.record = module.params['record']
+        self.service = module.params['service']
+        self.is_solo = module.params['solo']
+        self.state = module.params['state']
+        self.timeout = module.params['timeout']
+        self.ttl = module.params['ttl']
+        self.type = module.params['type']
+        self.value = module.params['value']
+        self.weight = module.params['weight']
+        self.zone = module.params['zone']
 
         if self.record == '@':
             self.record = self.zone
 
-        if (self.type in ['CNAME','NS','MX','SRV']) and (self.value is not None):
+        if (self.type in ['CNAME', 'NS', 'MX', 'SRV']) and (self.value is not None):
             self.value = self.value.rstrip('.')
 
         if (self.type == 'SRV'):
@@ -318,10 +317,10 @@ class CloudflareAPI(object):
         if not self.record.endswith(self.zone):
             self.record = self.record + '.' + self.zone
 
-    def _cf_simple_api_call(self,api_call,method='GET',payload=None):
-        headers = { 'X-Auth-Email': self.account_email,
-                    'X-Auth-Key': self.account_api_token,
-                    'Content-Type': 'application/json' }
+    def _cf_simple_api_call(self, api_call, method='GET', payload=None):
+        headers = {'X-Auth-Email': self.account_email,
+                   'X-Auth-Key': self.account_api_token,
+                   'Content-Type': 'application/json'}
         data = None
         if payload:
             try:
@@ -336,28 +335,28 @@ class CloudflareAPI(object):
                                method=method,
                                timeout=self.timeout)
 
-        if info['status'] not in [200,304,400,401,403,429,405,415]:
-            self.module.fail_json(msg="Failed API call {0}; got unexpected HTTP code {1}".format(api_call,info['status']))
+        if info['status'] not in [200, 304, 400, 401, 403, 429, 405, 415]:
+            self.module.fail_json(msg="Failed API call {0}; got unexpected HTTP code {1}".format(api_call, info['status']))
 
         error_msg = ''
         if info['status'] == 401:
             # Unauthorized
-            error_msg = "API user does not have permission; Status: {0}; Method: {1}: Call: {2}".format(info['status'],method,api_call)
+            error_msg = "API user does not have permission; Status: {0}; Method: {1}: Call: {2}".format(info['status'], method, api_call)
         elif info['status'] == 403:
             # Forbidden
-            error_msg = "API request not authenticated; Status: {0}; Method: {1}: Call: {2}".format(info['status'],method,api_call)
+            error_msg = "API request not authenticated; Status: {0}; Method: {1}: Call: {2}".format(info['status'], method, api_call)
         elif info['status'] == 429:
             # Too many requests
-            error_msg = "API client is rate limited; Status: {0}; Method: {1}: Call: {2}".format(info['status'],method,api_call)
+            error_msg = "API client is rate limited; Status: {0}; Method: {1}: Call: {2}".format(info['status'], method, api_call)
         elif info['status'] == 405:
             # Method not allowed
-            error_msg = "API incorrect HTTP method provided; Status: {0}; Method: {1}: Call: {2}".format(info['status'],method,api_call)
+            error_msg = "API incorrect HTTP method provided; Status: {0}; Method: {1}: Call: {2}".format(info['status'], method, api_call)
         elif info['status'] == 415:
             # Unsupported Media Type
-            error_msg = "API request is not valid JSON; Status: {0}; Method: {1}: Call: {2}".format(info['status'],method,api_call)
-        elif info ['status'] == 400:
+            error_msg = "API request is not valid JSON; Status: {0}; Method: {1}: Call: {2}".format(info['status'], method, api_call)
+        elif info['status'] == 400:
             # Bad Request
-            error_msg = "API bad request; Status: {0}; Method: {1}: Call: {2}".format(info['status'],method,api_call)
+            error_msg = "API bad request; Status: {0}; Method: {1}: Call: {2}".format(info['status'], method, api_call)
 
         result = None
         try:
@@ -375,22 +374,22 @@ class CloudflareAPI(object):
                 error_msg += "; Failed to parse API response with error {0}: {1}".format(to_native(e), content)
 
         # received an error status but no data with details on what failed
-        if (info['status'] not in [200,304]) and (result is None):
+        if (info['status'] not in [200, 304]) and (result is None):
             self.module.fail_json(msg=error_msg)
 
         if not result['success']:
             error_msg += "; Error details: "
             for error in result['errors']:
-                error_msg += "code: {0}, error: {1}; ".format(error['code'],error['message'])
+                error_msg += "code: {0}, error: {1}; ".format(error['code'], error['message'])
                 if 'error_chain' in error:
                     for chain_error in error['error_chain']:
-                        error_msg += "code: {0}, error: {1}; ".format(chain_error['code'],chain_error['message'])
+                        error_msg += "code: {0}, error: {1}; ".format(chain_error['code'], chain_error['message'])
             self.module.fail_json(msg=error_msg)
 
         return result, info['status']
 
-    def _cf_api_call(self,api_call,method='GET',payload=None):
-        result, status = self._cf_simple_api_call(api_call,method,payload)
+    def _cf_api_call(self, api_call, method='GET', payload=None):
+        result, status = self._cf_simple_api_call(api_call, method, payload)
 
         data = result['result']
 
@@ -401,19 +400,19 @@ class CloudflareAPI(object):
                 parameters = ['page={0}'.format(next_page)]
                 # strip "page" parameter from call parameters (if there are any)
                 if '?' in api_call:
-                    raw_api_call,query = api_call.split('?',1)
+                    raw_api_call, query = api_call.split('?', 1)
                     parameters += [param for param in query.split('&') if not param.startswith('page')]
                 else:
                     raw_api_call = api_call
                 while next_page <= pagination['total_pages']:
                     raw_api_call += '?' + '&'.join(parameters)
-                    result, status = self._cf_simple_api_call(raw_api_call,method,payload)
+                    result, status = self._cf_simple_api_call(raw_api_call, method, payload)
                     data += result['result']
                     next_page += 1
 
         return data, status
 
-    def _get_zone_id(self,zone=None):
+    def _get_zone_id(self, zone=None):
         if not zone:
             zone = self.zone
 
@@ -426,16 +425,16 @@ class CloudflareAPI(object):
 
         return zones[0]['id']
 
-    def get_zones(self,name=None):
+    def get_zones(self, name=None):
         if not name:
             name = self.zone
         param = ''
         if name:
-            param = '?' + urlencode({'name' : name})
-        zones,status = self._cf_api_call('/zones' + param)
+            param = '?' + urlencode({'name': name})
+        zones, status = self._cf_api_call('/zones' + param)
         return zones
 
-    def get_dns_records(self,zone_name=None,type=None,record=None,value=''):
+    def get_dns_records(self, zone_name=None, type=None, record=None, value=''):
         if not zone_name:
             zone_name = self.zone
         if not type:
@@ -459,16 +458,16 @@ class CloudflareAPI(object):
         if query:
             api_call += '?' + urlencode(query)
 
-        records,status = self._cf_api_call(api_call)
+        records, status = self._cf_api_call(api_call)
         return records
 
-    def delete_dns_records(self,**kwargs):
+    def delete_dns_records(self, **kwargs):
         params = {}
-        for param in ['port','proto','service','solo','type','record','value','weight','zone']:
+        for param in ['port', 'proto', 'service', 'solo', 'type', 'record', 'value', 'weight', 'zone']:
             if param in kwargs:
                 params[param] = kwargs[param]
             else:
-                params[param] = getattr(self,param)
+                params[param] = getattr(self, param)
 
         records = []
         content = params['value']
@@ -481,27 +480,27 @@ class CloudflareAPI(object):
         else:
             search_value = content
 
-        records = self.get_dns_records(params['zone'],params['type'],search_record,search_value)
+        records = self.get_dns_records(params['zone'], params['type'], search_record, search_value)
 
         for rr in records:
             if params['solo']:
                 if not ((rr['type'] == params['type']) and (rr['name'] == search_record) and (rr['content'] == content)):
                     self.changed = True
                     if not self.module.check_mode:
-                        result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(rr['zone_id'],rr['id']),'DELETE')
+                        result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(rr['zone_id'], rr['id']), 'DELETE')
             else:
                 self.changed = True
                 if not self.module.check_mode:
-                    result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(rr['zone_id'],rr['id']),'DELETE')
+                    result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(rr['zone_id'], rr['id']), 'DELETE')
         return self.changed
 
-    def ensure_dns_record(self,**kwargs):
+    def ensure_dns_record(self, **kwargs):
         params = {}
-        for param in ['port','priority','proto','proxied','service','ttl','type','record','value','weight','zone']:
+        for param in ['port', 'priority', 'proto', 'proxied', 'service', 'ttl', 'type', 'record', 'value', 'weight', 'zone']:
             if param in kwargs:
                 params[param] = kwargs[param]
             else:
-                params[param] = getattr(self,param)
+                params[param] = getattr(self, param)
 
         search_value = params['value']
         search_record = params['record']
@@ -509,7 +508,7 @@ class CloudflareAPI(object):
         if (params['type'] is None) or (params['record'] is None):
             self.module.fail_json(msg="You must provide a type and a record to create a new record")
 
-        if (params['type'] in [ 'A','AAAA','CNAME','TXT','MX','NS','SPF']):
+        if (params['type'] in ['A', 'AAAA', 'CNAME', 'TXT', 'MX', 'NS', 'SPF']):
             if not params['value']:
                 self.module.fail_json(msg="You must provide a non-empty value to create this record type")
 
@@ -527,11 +526,11 @@ class CloudflareAPI(object):
                 "ttl": params['ttl']
             }
 
-        if (params['type'] in [ 'A', 'AAAA', 'CNAME' ]):
+        if (params['type'] in ['A', 'AAAA', 'CNAME']):
             new_record["proxied"] = params["proxied"]
 
         if params['type'] == 'MX':
-            for attr in [params['priority'],params['value']]:
+            for attr in [params['priority'], params['value']]:
                 if (attr is None) or (attr == ''):
                     self.module.fail_json(msg="You must provide priority and a value to create this record type")
             new_record = {
@@ -543,7 +542,7 @@ class CloudflareAPI(object):
             }
 
         if params['type'] == 'SRV':
-            for attr in [params['port'],params['priority'],params['proto'],params['service'],params['weight'],params['value']]:
+            for attr in [params['port'], params['priority'], params['proto'], params['service'], params['weight'], params['value']]:
                 if (attr is None) or (attr == ''):
                     self.module.fail_json(msg="You must provide port, priority, proto, service, weight and a value to create this record type")
             srv_data = {
@@ -555,12 +554,12 @@ class CloudflareAPI(object):
                 "proto": params['proto'],
                 "service": params['service']
             }
-            new_record = { "type": params['type'], "ttl": params['ttl'], 'data': srv_data }
+            new_record = {"type": params['type'], "ttl": params['ttl'], 'data': srv_data}
             search_value = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
             search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
 
         zone_id = self._get_zone_id(params['zone'])
-        records = self.get_dns_records(params['zone'],params['type'],search_record,search_value)
+        records = self.get_dns_records(params['zone'], params['type'], search_record, search_value)
         # in theory this should be impossible as cloudflare does not allow
         # the creation of duplicate records but lets cover it anyways
         if len(records) > 1:
@@ -569,7 +568,7 @@ class CloudflareAPI(object):
         if len(records) == 1:
             cur_record = records[0]
             do_update = False
-            if (params['ttl'] is not None) and (cur_record['ttl'] != params['ttl'] ):
+            if (params['ttl'] is not None) and (cur_record['ttl'] != params['ttl']):
                 do_update = True
             if (params['priority'] is not None) and ('priority' in cur_record) and (cur_record['priority'] != params['priority']):
                 do_update = True
@@ -582,53 +581,54 @@ class CloudflareAPI(object):
                 if self.module.check_mode:
                     result = new_record
                 else:
-                    result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(zone_id,records[0]['id']),'PUT',new_record)
+                    result, info = self._cf_api_call('/zones/{0}/dns_records/{1}'.format(zone_id, records[0]['id']), 'PUT', new_record)
                 self.changed = True
-                return result,self.changed
+                return result, self.changed
             else:
-                return records,self.changed
+                return records, self.changed
         if self.module.check_mode:
             result = new_record
         else:
-            result, info = self._cf_api_call('/zones/{0}/dns_records'.format(zone_id),'POST',new_record)
+            result, info = self._cf_api_call('/zones/{0}/dns_records'.format(zone_id), 'POST', new_record)
         self.changed = True
-        return result,self.changed
+        return result, self.changed
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            account_api_token = dict(required=True, no_log=True, type='str'),
-            account_email     = dict(required=True, type='str'),
-            port              = dict(required=False, default=None, type='int'),
-            priority          = dict(required=False, default=1, type='int'),
-            proto             = dict(required=False, default=None, choices=[ 'tcp', 'udp' ], type='str'),
-            proxied           = dict(required=False, default=False, type='bool'),
-            record            = dict(required=False, default='@', aliases=['name'], type='str'),
-            service           = dict(required=False, default=None, type='str'),
-            solo              = dict(required=False, default=None, type='bool'),
-            state             = dict(required=False, default='present', choices=['present', 'absent'], type='str'),
-            timeout           = dict(required=False, default=30, type='int'),
-            ttl               = dict(required=False, default=1, type='int'),
-            type              = dict(required=False, default=None, choices=[ 'A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'SPF' ], type='str'),
-            value             = dict(required=False, default=None, aliases=['content'], type='str'),
-            weight            = dict(required=False, default=1, type='int'),
-            zone              = dict(required=True, default=None, aliases=['domain'], type='str'),
+        argument_spec=dict(
+            account_api_token=dict(required=True, no_log=True, type='str'),
+            account_email=dict(required=True, type='str'),
+            port=dict(required=False, default=None, type='int'),
+            priority=dict(required=False, default=1, type='int'),
+            proto=dict(required=False, default=None, choices=['tcp', 'udp'], type='str'),
+            proxied=dict(required=False, default=False, type='bool'),
+            record=dict(required=False, default='@', aliases=['name'], type='str'),
+            service=dict(required=False, default=None, type='str'),
+            solo=dict(required=False, default=None, type='bool'),
+            state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
+            timeout=dict(required=False, default=30, type='int'),
+            ttl=dict(required=False, default=1, type='int'),
+            type=dict(required=False, default=None, choices=['A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'SPF'], type='str'),
+            value=dict(required=False, default=None, aliases=['content'], type='str'),
+            weight=dict(required=False, default=1, type='int'),
+            zone=dict(required=True, default=None, aliases=['domain'], type='str'),
         ),
-        supports_check_mode = True,
-        required_if = ([
-            ('state','present',['record','type']),
-            ('type','MX',['priority','value']),
-            ('type','SRV',['port','priority','proto','service','value','weight']),
-            ('type','A',['value']),
-            ('type','AAAA',['value']),
-            ('type','CNAME',['value']),
-            ('type','TXT',['value']),
-            ('type','NS',['value']),
-            ('type','SPF',['value'])
+        supports_check_mode=True,
+        required_if=([
+            ('state', 'present', ['record', 'type']),
+            ('type', 'MX', ['priority', 'value']),
+            ('type', 'SRV', ['port', 'priority', 'proto', 'service', 'value', 'weight']),
+            ('type', 'A', ['value']),
+            ('type', 'AAAA', ['value']),
+            ('type', 'CNAME', ['value']),
+            ('type', 'TXT', ['value']),
+            ('type', 'NS', ['value']),
+            ('type', 'SPF', ['value'])
         ]
         ),
-        required_one_of = (
-            [['record','value','type']]
+        required_one_of=(
+            [['record', 'value', 'type']]
         )
     )
 
@@ -645,11 +645,11 @@ def main():
         # delete all records matching record name + type
         if cf_api.is_solo:
             changed = cf_api.delete_dns_records(solo=cf_api.is_solo)
-        result,changed = cf_api.ensure_dns_record()
-        if isinstance(result,list):
-            module.exit_json(changed=changed,result={'record': result[0]})
+        result, changed = cf_api.ensure_dns_record()
+        if isinstance(result, list):
+            module.exit_json(changed=changed, result={'record': result[0]})
         else:
-            module.exit_json(changed=changed,result={'record': result})
+            module.exit_json(changed=changed, result={'record': result})
     else:
         # force solo to False, just to be sure
         changed = cf_api.delete_dns_records(solo=False)

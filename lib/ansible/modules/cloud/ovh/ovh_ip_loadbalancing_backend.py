@@ -162,7 +162,7 @@ def main():
 
     if not HAS_OVH:
         module.fail_json(msg='ovh-api python module'
-           'is required to run this module ')
+                         'is required to run this module ')
 
     # Get parameters
     name = module.params.get('name')
