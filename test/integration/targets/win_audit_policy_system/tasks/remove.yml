@@ -18,8 +18,8 @@
 - name: check mode assert that changed is true
   assert:
     that:
-      - category | changed
-      - subcategory | changed
+      - category is changed
+      - subcategory is changed
 
 - name: check mode assert that audit_type is still "success" (old value) for category
   assert:
@@ -54,8 +54,8 @@
 - name: assert that changed is true
   assert:
     that:
-      - category | changed
-      - subcategory | changed
+      - category is changed
+      - subcategory is changed
 
 - name: assert that audit_type is "no auditing"
   assert:
@@ -84,8 +84,8 @@
 - name: idem assert that changed is false
   assert:
     that:
-      - not category | changed
-      - not subcategory | changed
+      - category is not changed
+      - subcategory is not changed
 
 - name: assert that audit_type is "no auditing"
   assert:
