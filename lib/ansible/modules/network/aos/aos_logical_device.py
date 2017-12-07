@@ -134,6 +134,8 @@ from ansible.module_utils.network.aos.aos import get_aos_session, find_collectio
 #########################################################
 # State Processing
 #########################################################
+
+
 def logical_device_absent(module, aos, my_logical_dev):
 
     margs = module.params
@@ -154,10 +156,11 @@ def logical_device_absent(module, aos, my_logical_dev):
         except:
             module.fail_json(msg="An error occurred, while trying to delete the Logical Device")
 
-    module.exit_json( changed=True,
-                      name=my_logical_dev.name,
-                      id=my_logical_dev.id,
-                      value={} )
+    module.exit_json(changed=True,
+                     name=my_logical_dev.name,
+                     id=my_logical_dev.id,
+                     value={})
+
 
 def logical_device_present(module, aos, my_logical_dev):
 
@@ -174,14 +177,16 @@ def logical_device_present(module, aos, my_logical_dev):
     if my_logical_dev.exists is False and 'content' not in margs.keys():
         module.fail_json(msg="'content' is mandatory for module that don't exist currently")
 
-    module.exit_json( changed=False,
-                      name=my_logical_dev.name,
-                      id=my_logical_dev.id,
-                      value=my_logical_dev.value )
+    module.exit_json(changed=False,
+                     name=my_logical_dev.name,
+                     id=my_logical_dev.id,
+                     value=my_logical_dev.value)
 
 #########################################################
 # Main Function
 #########################################################
+
+
 def logical_device(module):
 
     margs = module.params
@@ -196,7 +201,7 @@ def logical_device(module):
 
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -227,18 +232,19 @@ def logical_device(module):
 
         logical_device_present(module, aos, my_logical_dev)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             session=dict(required=True, type="dict"),
-            name=dict(required=False ),
-            id=dict(required=False ),
+            name=dict(required=False),
+            id=dict(required=False),
             content=dict(required=False, type="json"),
-            state=dict( required=False,
-                        choices=['present', 'absent'],
-                        default="present")
+            state=dict(required=False,
+                       choices=['present', 'absent'],
+                       default="present")
         ),
-        mutually_exclusive = [('name', 'id', 'content')],
+        mutually_exclusive=[('name', 'id', 'content')],
         required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )

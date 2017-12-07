@@ -144,34 +144,35 @@ class EcsClusterManager:
         response = self.ecs.describe_clusters(clusters=[
             cluster_name
         ])
-        if len(response['failures'])>0:
+        if len(response['failures']) > 0:
             c = self.find_in_array(response['failures'], cluster_name, 'arn')
-            if c and c['reason']=='MISSING':
+            if c and c['reason'] == 'MISSING':
                 return None
             # fall thru and look through found ones
-        if len(response['clusters'])>0:
+        if len(response['clusters']) > 0:
             c = self.find_in_array(response['clusters'], cluster_name)
             if c:
                 return c
         raise Exception("Unknown problem describing cluster %s." % cluster_name)
 
-    def create_cluster(self, clusterName = 'default'):
+    def create_cluster(self, clusterName='default'):
         response = self.ecs.create_cluster(clusterName=clusterName)
         return response['cluster']
 
     def delete_cluster(self, clusterName):
         return self.ecs.delete_cluster(cluster=clusterName)
 
+
 def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent', 'has_instances'] ),
-        name=dict(required=True, type='str' ),
+        state=dict(required=True, choices=['present', 'absent', 'has_instances']),
+        name=dict(required=True, type='str'),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10)
     ))
-    required_together = ( ['state', 'name'] )
+    required_together = (['state', 'name'])
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
 
@@ -185,12 +186,12 @@ def main():
     try:
         existing = cluster_mgr.describe_cluster(module.params['name'])
     except Exception as e:
-        module.fail_json(msg="Exception describing cluster '"+module.params['name']+"': "+str(e))
+        module.fail_json(msg="Exception describing cluster '" + module.params['name'] + "': " + str(e))
 
     results = dict(changed=False)
     if module.params['state'] == 'present':
-        if existing and 'status' in existing and existing['status']=="ACTIVE":
-            results['cluster']=existing
+        if existing and 'status' in existing and existing['status'] == "ACTIVE":
+            results['cluster'] = existing
         else:
             if not module.check_mode:
                 # doesn't exist. create it.
@@ -205,7 +206,7 @@ def main():
             # it exists, so we should delete it and mark changed.
             # return info about the cluster deleted
             results['cluster'] = existing
-            if 'status' in existing and existing['status']=="INACTIVE":
+            if 'status' in existing and existing['status'] == "INACTIVE":
                 results['changed'] = False
             else:
                 if not module.check_mode:
@@ -213,7 +214,7 @@ def main():
                 results['changed'] = True
     elif module.params['state'] == 'has_instances':
         if not existing:
-            module.fail_json(msg="Cluster '"+module.params['name']+" not found.")
+            module.fail_json(msg="Cluster '" + module.params['name'] + " not found.")
             return
         # it exists, so we should delete it and mark changed.
         # return info about the cluster deleted
@@ -228,8 +229,8 @@ def main():
                 results['changed'] = True
                 break
             time.sleep(delay)
-        if count == 0 and i is repeat-1:
-            module.fail_json(msg="Cluster instance count still zero after "+str(repeat)+" tries of "+str(delay)+" seconds each.")
+        if count == 0 and i is repeat - 1:
+            module.fail_json(msg="Cluster instance count still zero after " + str(repeat) + " tries of " + str(delay) + " seconds each.")
             return
 
     module.exit_json(**results)

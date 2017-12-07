@@ -288,6 +288,7 @@ def conv_array_to_str(_value):
         return ' '.join(_value)
     return _value
 
+
 def build_generic_attr(module, _attr):
     _value = module.params.get(_attr)
     _value = conv_bool_to_str(_value)

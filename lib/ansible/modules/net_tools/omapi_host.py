@@ -234,7 +234,7 @@ class OmapiHostManager:
             fields_to_update = {}
 
             if to_bytes('ip-address', errors='surrogate_or_strict') not in response_obj or \
-                            unpack_ip(response_obj[to_bytes('ip-address', errors='surrogate_or_strict')]) != self.module.params['ip']:
+                    unpack_ip(response_obj[to_bytes('ip-address', errors='surrogate_or_strict')]) != self.module.params['ip']:
                 fields_to_update['ip-address'] = pack_ip(self.module.params['ip'])
 
             # Name cannot be changed

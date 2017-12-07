@@ -71,6 +71,7 @@ BASE_URL = 'https://grove.io/api/notice/%s/'
 # ==============================================================
 # do_notify_grove
 
+
 def do_notify_grove(module, channel_token, service, message, url=None, icon_url=None):
     my_url = BASE_URL % (channel_token,)
 
@@ -88,15 +89,16 @@ def do_notify_grove(module, channel_token, service, message, url=None, icon_url=
 # ==============================================================
 # main
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            channel_token = dict(type='str', required=True, no_log=True),
-            message = dict(type='str', required=True),
-            service = dict(type='str', default='ansible'),
-            url = dict(type='str', default=None),
-            icon_url = dict(type='str', default=None),
-            validate_certs = dict(default='yes', type='bool'),
+        argument_spec=dict(
+            channel_token=dict(type='str', required=True, no_log=True),
+            message=dict(type='str', required=True),
+            service=dict(type='str', default='ansible'),
+            url=dict(type='str', default=None),
+            icon_url=dict(type='str', default=None),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 

@@ -231,7 +231,6 @@ def main():
         supports_check_mode=True
     )
 
-
     linkprop = LinkProp(module)
 
     rc = None

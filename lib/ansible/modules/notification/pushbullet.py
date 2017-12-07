@@ -107,28 +107,28 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            api_key     = dict(type='str', required=True, no_log=True),
-            channel     = dict(type='str', default=None),
-            device      = dict(type='str', default=None),
-            push_type   = dict(type='str', default="note", choices=['note', 'link']),
-            title       = dict(type='str', required=True),
-            body        = dict(type='str', default=None),
-            url         = dict(type='str', default=None),
+        argument_spec=dict(
+            api_key=dict(type='str', required=True, no_log=True),
+            channel=dict(type='str', default=None),
+            device=dict(type='str', default=None),
+            push_type=dict(type='str', default="note", choices=['note', 'link']),
+            title=dict(type='str', required=True),
+            body=dict(type='str', default=None),
+            url=dict(type='str', default=None),
         ),
-        mutually_exclusive = (
+        mutually_exclusive=(
             ['channel', 'device'],
         ),
         supports_check_mode=True
     )
 
-    api_key     = module.params['api_key']
-    channel     = module.params['channel']
-    device      = module.params['device']
-    push_type   = module.params['push_type']
-    title       = module.params['title']
-    body        = module.params['body']
-    url         = module.params['url']
+    api_key = module.params['api_key']
+    channel = module.params['channel']
+    device = module.params['device']
+    push_type = module.params['push_type']
+    title = module.params['title']
+    body = module.params['body']
+    url = module.params['url']
 
     if not pushbullet_found:
         module.fail_json(msg="Python 'pushbullet.py' module is required. Install via: $ pip install pushbullet.py")

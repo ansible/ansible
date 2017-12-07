@@ -91,7 +91,7 @@ EXAMPLES = '''
     target: /tmp/dump.sql
 '''
 
-RETURN  = '''
+RETURN = '''
 #
 '''
 
@@ -125,6 +125,7 @@ def db_delete(conn, cursor, db):
         pass
     cursor.execute("DROP DATABASE [%s]" % db)
     return not db_exists(conn, cursor, db)
+
 
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):

@@ -147,6 +147,7 @@ import re
 # Import module snippets.
 from ansible.module_utils.basic import AnsibleModule
 
+
 def parse_for_packages(stdout):
     packages = []
     data = stdout.split('\n')
@@ -156,6 +157,7 @@ def parse_for_packages(stdout):
         if p:
             packages.append(p.group(1))
     return packages
+
 
 def update_package_db(module, exit):
     cmd = "%s update" % (APK_PATH)
@@ -167,6 +169,7 @@ def update_package_db(module, exit):
     else:
         return True
 
+
 def query_package(module, name):
     cmd = "%s -v info --installed %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
@@ -174,6 +177,7 @@ def query_package(module, name):
         return True
     else:
         return False
+
 
 def query_latest(module, name):
     cmd = "%s version %s" % (APK_PATH, name)
@@ -184,6 +188,7 @@ def query_latest(module, name):
         return False
     return True
 
+
 def query_virtual(module, name):
     cmd = "%s -v info --description %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
@@ -191,6 +196,7 @@ def query_virtual(module, name):
     if re.search(search_pattern, stdout):
         return True
     return False
+
 
 def get_dependencies(module, name):
     cmd = "%s -v info --depends %s" % (APK_PATH, name)
@@ -200,6 +206,7 @@ def get_dependencies(module, name):
         return dependencies[1:]
     else:
         return []
+
 
 def upgrade_packages(module, available):
     if module.check_mode:
@@ -215,6 +222,7 @@ def upgrade_packages(module, available):
     if re.search(r'^OK', stdout):
         module.exit_json(changed=False, msg="packages already upgraded", stdout=stdout, stderr=stderr, packages=packagelist)
     module.exit_json(changed=True, msg="upgraded packages", stdout=stdout, stderr=stderr, packages=packagelist)
+
 
 def install_packages(module, names, state):
     upgrade = False
@@ -254,6 +262,7 @@ def install_packages(module, names, state):
         module.fail_json(msg="failed to install %s" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
     module.exit_json(changed=True, msg="installed %s package(s)" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
 
+
 def remove_packages(module, names):
     installed = []
     for name in names:
@@ -274,6 +283,7 @@ def remove_packages(module, names):
 
 # ==========================================
 # Main control flow.
+
 
 def main():
     module = AnsibleModule(

@@ -96,7 +96,7 @@ class IpinfoioFacts(object):
         self.module = module
 
     def get_geo_data(self):
-        response, info = fetch_url(self.module, self.url, force=True, # NOQA
+        response, info = fetch_url(self.module, self.url, force=True,  # NOQA
                                    timeout=self.timeout)
         try:
             info['status'] == 200
@@ -116,7 +116,7 @@ class IpinfoioFacts(object):
 
 
 def main():
-    module = AnsibleModule( # NOQA
+    module = AnsibleModule(  # NOQA
         argument_spec=dict(
             http_agent=dict(default=USER_AGENT),
             timeout=dict(type='int', default=10),

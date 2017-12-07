@@ -48,7 +48,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 
-DEFAULT_VOICE='Alex'
+DEFAULT_VOICE = 'Alex'
 
 
 def say(module, msg, voice):
@@ -68,7 +68,7 @@ def main():
     if not os.path.exists("/usr/bin/say"):
         module.fail_json(msg="/usr/bin/say is not installed")
 
-    msg   = module.params['msg']
+    msg = module.params['msg']
     voice = module.params['voice']
 
     say(module, msg, voice)

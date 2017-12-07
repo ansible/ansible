@@ -146,6 +146,7 @@ from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
+
 def to_lines(stdout):
     lines = list()
     for item in stdout:
@@ -153,6 +154,7 @@ def to_lines(stdout):
             item = str(item).split('\n')
         lines.append(item)
     return lines
+
 
 def parse_commands(module, warnings):
     spec = dict(
@@ -176,11 +178,13 @@ def parse_commands(module, warnings):
 
     return commands
 
+
 def to_cli(obj):
     cmd = obj['command']
     if obj.get('output') == 'json':
         cmd += ' | json'
     return cmd
+
 
 def main():
     """entry point for module execution

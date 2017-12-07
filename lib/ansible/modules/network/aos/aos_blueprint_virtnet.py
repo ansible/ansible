@@ -88,6 +88,7 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aos.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
+
 def ensure_present(module, aos, blueprint, virtnet):
 
     # if exist already return tru
@@ -104,7 +105,7 @@ def ensure_present(module, aos, blueprint, virtnet):
                 virtnet.create(module.params['content'])
             except:
                 e = get_exception()
-                module.fail_json(msg="unable to create virtual-network : %r" % e )
+                module.fail_json(msg="unable to create virtual-network : %r" % e)
 
         module.exit_json(changed=True,
                          blueprint=blueprint.name,
@@ -121,7 +122,7 @@ def ensure_absent(module, aos, blueprint, virtnet):
                 virtnet.delete()
             except:
                 e = get_exception()
-                module.fail_json(msg="unable to delete virtual-network %s : %r" % (virtnet.name, e) )
+                module.fail_json(msg="unable to delete virtual-network %s : %r" % (virtnet.name, e))
 
         module.exit_json(changed=True,
                          blueprint=blueprint.name)
@@ -129,6 +130,7 @@ def ensure_absent(module, aos, blueprint, virtnet):
     else:
         module.exit_json(changed=False,
                          blueprint=blueprint.name)
+
 
 def blueprint_virtnet(module):
 
@@ -147,22 +149,22 @@ def blueprint_virtnet(module):
     # --------------------------------------------------------------------
     try:
         blueprint = find_collection_item(aos.Blueprints,
-                                        item_name=margs['blueprint'],
-                                        item_id=margs['blueprint'])
+                                         item_name=margs['blueprint'],
+                                         item_id=margs['blueprint'])
     except:
         module.fail_json(msg="Unable to find the Blueprint based on name or ID, something went wrong")
 
     if blueprint.exists is False:
         module.fail_json(msg='Blueprint %s does not exist.\n'
-                             'known blueprints are [%s]'%
-                             (margs['blueprint'],','.join(aos.Blueprints.names)))
+                             'known blueprints are [%s]' %
+                             (margs['blueprint'], ','.join(aos.Blueprints.names)))
 
     # --------------------------------------------------------------------
     # Convert "content" to dict and extract name
     # --------------------------------------------------------------------
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -179,7 +181,7 @@ def blueprint_virtnet(module):
         virtnet = blueprint.VirtualNetworks[item_name]
     except:
         module.fail_json(msg="Something went wrong while trying to find Virtual Network %s in blueprint %s"
-                                % ( item_name, blueprint.name ))
+                         % (item_name, blueprint.name))
 
     # --------------------------------------------------------------------
     # Proceed based on State value
@@ -198,11 +200,11 @@ def main():
         argument_spec=dict(
             session=dict(required=True, type="dict"),
             blueprint=dict(required=True),
-            name=dict(required=False ),
+            name=dict(required=False),
             content=dict(required=False, type="json"),
             state=dict(choices=['present', 'absent'], default='present')
         ),
-        mutually_exclusive = [('name', 'content')],
+        mutually_exclusive=[('name', 'content')],
         required_one_of=[('name', 'content')],
         supports_check_mode=True
     )

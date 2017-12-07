@@ -217,6 +217,7 @@ class CronTab(object):
         user      - the user of the crontab (defaults to root)
         cron_file - a cron file under /etc/cron.d, or an absolute path
     """
+
     def __init__(self, module, user=None, cron_file=None):
         self.module = module
         self.user = user

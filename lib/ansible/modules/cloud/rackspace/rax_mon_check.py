@@ -256,6 +256,7 @@ def cloud_check(module, state, entity_id, label, check_type,
     else:
         module.exit_json(changed=changed)
 
+
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(

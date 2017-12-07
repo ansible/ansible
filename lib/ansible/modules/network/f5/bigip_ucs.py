@@ -466,6 +466,7 @@ class V1Manager(BaseManager):
       * No API to upload UCS files
 
     """
+
     def create_on_device(self):
         remote_path = "/var/local/ucs"
         tpath_name = '/var/config/rest/downloads'

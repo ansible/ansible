@@ -105,7 +105,7 @@ def main():
             to=dict(required=True),
             msg=dict(required=True),
             host=dict(required=False),
-            port=dict(required=False,default=5222),
+            port=dict(required=False, default=5222),
             encoding=dict(required=False),
         ),
         supports_check_mode=True
@@ -134,15 +134,15 @@ def main():
     msg = xmpp.protocol.Message(body=module.params['msg'])
 
     try:
-        conn=xmpp.Client(server, debug=[])
-        if not conn.connect(server=(host,port)):
+        conn = xmpp.Client(server, debug=[])
+        if not conn.connect(server=(host, port)):
             module.fail_json(rc=1, msg='Failed to connect to server: %s' % (server))
-        if not conn.auth(user,password,'Ansible'):
-            module.fail_json(rc=1, msg='Failed to authorize %s on: %s' % (user,server))
+        if not conn.auth(user, password, 'Ansible'):
+            module.fail_json(rc=1, msg='Failed to authorize %s on: %s' % (user, server))
         # some old servers require this, also the sleep following send
         conn.sendInitPresence(requestRoster=0)
 
-        if nick: # sending to room instead of user, need to join
+        if nick:  # sending to room instead of user, need to join
             msg.setType('groupchat')
             msg.setTag('x', namespace='http://jabber.org/protocol/muc#user')
             conn.send(xmpp.Presence(to=module.params['to']))

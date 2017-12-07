@@ -78,7 +78,7 @@ EXAMPLES = '''
     create_default_route: "yes"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
@@ -98,8 +98,8 @@ _IF_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
 
 _ZONE_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
               "/vsys/entry/zone/entry"
-_ZONE_XPATH_QUERY = _ZONE_XPATH+"[network/layer3/member/text()='%s']"
-_ZONE_XPATH_IF = _ZONE_XPATH+"[@name='%s']/network/layer3/member[text()='%s']"
+_ZONE_XPATH_QUERY = _ZONE_XPATH + "[network/layer3/member/text()='%s']"
+_ZONE_XPATH_IF = _ZONE_XPATH + "[@name='%s']/network/layer3/member[text()='%s']"
 _VR_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
             "/network/virtual-router/entry"
 
@@ -120,9 +120,9 @@ def add_dhcp_if(xapi, if_name, zone_name, create_default_route):
     if_xml = (''.join(if_xml)) % (if_name, cdr)
     xapi.edit(xpath=_IF_XPATH % if_name, element=if_xml)
 
-    xapi.set(xpath=_ZONE_XPATH+"[@name='%s']/network/layer3" % zone_name,
+    xapi.set(xpath=_ZONE_XPATH + "[@name='%s']/network/layer3" % zone_name,
              element='<member>%s</member>' % if_name)
-    xapi.set(xpath=_VR_XPATH+"[@name='default']/interface",
+    xapi.set(xpath=_VR_XPATH + "[@name='default']/interface",
              element='<member>%s</member>' % if_name)
 
     return True

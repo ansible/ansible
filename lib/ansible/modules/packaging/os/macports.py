@@ -68,6 +68,7 @@ EXAMPLES = '''
 
 import pipes
 
+
 def update_package_db(module, port_path):
     """ Updates packages list. """
 
@@ -196,10 +197,10 @@ def deactivate_packages(module, port_path, packages):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=["pkg"], required=True),
-            state = dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
-            update_cache = dict(default="no", aliases=["update-cache"], type='bool')
+        argument_spec=dict(
+            name=dict(aliases=["pkg"], required=True),
+            state=dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
+            update_cache=dict(default="no", aliases=["update-cache"], type='bool')
         )
     )
 

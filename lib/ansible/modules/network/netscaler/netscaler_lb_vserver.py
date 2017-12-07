@@ -1900,10 +1900,10 @@ def main():
                     module.fail_json(msg=msg, diff=lb_vserver_diff(client, module, lbvserver_proxy), **module_result)
 
                 if not service_bindings_identical(client, module):
-                        module.fail_json(msg='service bindings are not identical', **module_result)
+                    module.fail_json(msg='service bindings are not identical', **module_result)
 
                 if not servicegroup_bindings_identical(client, module):
-                        module.fail_json(msg='servicegroup bindings are not identical', **module_result)
+                    module.fail_json(msg='servicegroup bindings are not identical', **module_result)
 
                 if module.params['servicetype'] == 'SSL':
                     if not ssl_certkey_bindings_identical(client, module):

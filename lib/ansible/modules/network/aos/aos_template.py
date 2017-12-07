@@ -143,6 +143,8 @@ from ansible.module_utils.network.aos.aos import get_aos_session, find_collectio
 #########################################################
 # State Processing
 #########################################################
+
+
 def template_absent(module, aos, my_template):
 
     margs = module.params
@@ -163,10 +165,11 @@ def template_absent(module, aos, my_template):
         except:
             module.fail_json(msg="An error occurred, while trying to delete the Template")
 
-    module.exit_json( changed=True,
-                      name=my_template.name,
-                      id=my_template.id,
-                      value={} )
+    module.exit_json(changed=True,
+                     name=my_template.name,
+                     id=my_template.id,
+                     value={})
+
 
 def template_present(module, aos, my_template):
 
@@ -186,10 +189,10 @@ def template_present(module, aos, my_template):
         module.fail_json(msg="'content' is mandatory for module that don't exist currently")
 
     # if module already exist, just return it
-    module.exit_json( changed=False,
-                      name=my_template.name,
-                      id=my_template.id,
-                      value=my_template.value )
+    module.exit_json(changed=False,
+                     name=my_template.name,
+                     id=my_template.id,
+                     value=my_template.value)
 
 
 #########################################################
@@ -209,7 +212,7 @@ def aos_template(module):
 
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'] )
+        content = content_to_dict(module, margs['content'])
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -227,8 +230,8 @@ def aos_template(module):
     #----------------------------------------------------
     try:
         my_template = find_collection_item(aos.DesignTemplates,
-                            item_name=item_name,
-                            item_id=item_id)
+                                           item_name=item_name,
+                                           item_id=item_id)
     except:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
@@ -243,18 +246,19 @@ def aos_template(module):
 
         template_present(module, aos, my_template)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             session=dict(required=True, type="dict"),
-            name=dict(required=False ),
-            id=dict(required=False ),
+            name=dict(required=False),
+            id=dict(required=False),
             content=dict(required=False, type="json"),
-            state=dict( required=False,
-                        choices=['present', 'absent'],
-                        default="present")
+            state=dict(required=False,
+                       choices=['present', 'absent'],
+                       default="present")
         ),
-        mutually_exclusive = [('name', 'id', 'content')],
+        mutually_exclusive=[('name', 'id', 'content')],
         required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )

@@ -187,7 +187,6 @@ def check_fw_print_env(module, slot_num):
                 return m0.group(1)
 
 
-
 def get_primary_slot_num(module):
     cmd = None
     if platform.machine() == 'ppc':
@@ -264,7 +263,7 @@ def check_sw_version(module):
             if 'active' in slot:
                 _msg = "Version %s is installed in the active slot" \
                     % (_version)
-                module.exit_json(changed=False,  msg=_msg)
+                module.exit_json(changed=False, msg=_msg)
             else:
                 _msg = "Version " + _version + \
                     " is installed in the alternate slot. "

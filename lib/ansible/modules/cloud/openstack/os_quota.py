@@ -306,13 +306,16 @@ def _get_volume_quotas(cloud, project):
 
     return cloud.get_volume_quotas(project)
 
+
 def _get_network_quotas(cloud, project):
 
     return cloud.get_network_quotas(project)
 
+
 def _get_compute_quotas(cloud, project):
 
     return cloud.get_compute_quotas(project)
+
 
 def _get_quotas(module, cloud, project):
 
@@ -334,6 +337,7 @@ def _get_quotas(module, cloud, project):
 
     return quota
 
+
 def _scrub_results(quota):
 
     filter_attr = [
@@ -349,6 +353,7 @@ def _scrub_results(quota):
             del quota[attr]
 
     return quota
+
 
 def _system_state_change_details(module, project_quota_output):
 
@@ -368,6 +373,7 @@ def _system_state_change_details(module, project_quota_output):
 
     return (changes_required, quota_change_request)
 
+
 def _system_state_change(module, project_quota_output):
     """
     Determine if changes are required to the current project quota.
@@ -385,6 +391,7 @@ def _system_state_change(module, project_quota_output):
         return True
     else:
         return False
+
 
 def main():
 
@@ -427,8 +434,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec,
-            supports_check_mode=True
-        )
+                           supports_check_mode=True
+                           )
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -437,7 +444,7 @@ def main():
         cloud_params = dict(module.params)
         cloud = shade.operator_cloud(**cloud_params)
 
-        #In order to handle the different volume types we update module params after.
+        # In order to handle the different volume types we update module params after.
         dynamic_types = [
             'gigabytes_types',
             'snapshots_types',
@@ -448,22 +455,22 @@ def main():
             for k, v in module.params[dynamic_type].items():
                 module.params[k] = int(v)
 
-        #Get current quota values
+        # Get current quota values
         project_quota_output = _get_quotas(module, cloud, cloud_params['name'])
         changes_required = False
 
         if module.params['state'] == "absent":
-            #If a quota state is set to absent we should assume there will be changes.
-            #The default quota values are not accessible so we can not determine if
-            #no changes will occur or not.
+            # If a quota state is set to absent we should assume there will be changes.
+            # The default quota values are not accessible so we can not determine if
+            # no changes will occur or not.
             if module.check_mode:
                 module.exit_json(changed=True)
 
-            #Calling delete_network_quotas when a quota has not been set results
-            #in an error, according to the shade docs it should return the
-            #current quota.
-            #The following error string is returned:
-            #network client call failed: Quota for tenant 69dd91d217e949f1a0b35a4b901741dc could not be found.
+            # Calling delete_network_quotas when a quota has not been set results
+            # in an error, according to the shade docs it should return the
+            # current quota.
+            # The following error string is returned:
+            # network client call failed: Quota for tenant 69dd91d217e949f1a0b35a4b901741dc could not be found.
             neutron_msg1 = "network client call failed: Quota for tenant"
             neutron_msg2 = "could not be found"
 
@@ -495,7 +502,7 @@ def main():
                     quota_call = getattr(cloud, 'set_%s_quotas' % (quota_type))
                     quota_call(cloud_params['name'], **quota_change_request[quota_type])
 
-                #Get quota state post changes for validation
+                # Get quota state post changes for validation
                 project_quota_update = _get_quotas(module, cloud, cloud_params['name'])
 
                 if project_quota_output == project_quota_update:
@@ -504,8 +511,8 @@ def main():
                 project_quota_output = project_quota_update
 
         module.exit_json(changed=changes_required,
-            openstack_quotas=project_quota_output
-        )
+                         openstack_quotas=project_quota_output
+                         )
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)

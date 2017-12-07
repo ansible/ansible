@@ -121,7 +121,8 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
+
 
 def create_nic(module, profitbricks):
     """
@@ -172,6 +173,7 @@ def create_nic(module, profitbricks):
 
     except Exception as e:
         module.fail_json(msg="failed to create the NIC: %s" % str(e))
+
 
 def delete_nic(module, profitbricks):
     """
@@ -228,12 +230,13 @@ def delete_nic(module, profitbricks):
     except Exception as e:
         module.fail_json(msg="failed to remove the NIC: %s" % str(e))
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             datacenter=dict(),
             server=dict(),
-            name=dict(default=str(uuid.uuid4()).replace('-','')[:10]),
+            name=dict(default=str(uuid.uuid4()).replace('-', '')[:10]),
             lan=dict(),
             subscription_user=dict(),
             subscription_password=dict(no_log=True),
@@ -254,7 +257,6 @@ def main():
         module.fail_json(msg='datacenter parameter is required')
     if not module.params.get('server'):
         module.fail_json(msg='server parameter is required')
-
 
     subscription_user = module.params.get('subscription_user')
     subscription_password = module.params.get('subscription_password')

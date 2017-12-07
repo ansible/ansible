@@ -110,20 +110,20 @@ webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
-            type = dict(required=True),
-            autostart = dict(required=False, type='bool', default=False),
-            extra_info = dict(required=False, default=""),
-            port_open = dict(required=False, type='bool', default=False),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
-            machine = dict(required=False, default=False),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            type=dict(required=True),
+            autostart=dict(required=False, type='bool', default=False),
+            extra_info=dict(required=False, default=""),
+            port_open=dict(required=False, type='bool', default=False),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
+            machine=dict(required=False, default=False),
         ),
         supports_check_mode=True
     )
-    app_name  = module.params['name']
+    app_name = module.params['name']
     app_type = module.params['type']
     app_state = module.params['state']
 
@@ -157,7 +157,7 @@ def main():
             # If it exists with the right type, we don't change it
             # Should check other parameters.
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         if not module.check_mode:
@@ -176,7 +176,7 @@ def main():
         # If the app's already not there, nothing changed.
         if not existing_app:
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         if not module.check_mode:
@@ -188,10 +188,9 @@ def main():
     else:
         module.fail_json(msg="Unknown state specified: {}".format(app_state))
 
-
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
 

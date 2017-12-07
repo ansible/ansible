@@ -69,6 +69,7 @@ EXAMPLES = '''
 import os
 import pipes
 
+
 def package_installed(module, name):
     cmd = ['pkginfo']
     cmd.append('-q')
@@ -79,11 +80,12 @@ def package_installed(module, name):
     else:
         return False
 
+
 def package_latest(module, name, site):
     # Only supports one package
-    cmd = [ 'pkgutil', '-U', '--single', '-c' ]
+    cmd = ['pkgutil', '-U', '--single', '-c']
     if site is not None:
-        cmd += [ '-t', site]
+        cmd += ['-t', site]
     cmd.append(name)
     rc, out, err = run_command(module, cmd)
     # replace | tail -1 |grep -v SAME
@@ -91,45 +93,50 @@ def package_latest(module, name, site):
     # at the end of the list
     return 'SAME' in out.split('\n')[-2]
 
+
 def run_command(module, cmd, **kwargs):
     progname = cmd[0]
     cmd[0] = module.get_bin_path(progname, True, ['/opt/csw/bin'])
     return module.run_command(cmd, **kwargs)
 
+
 def package_install(module, state, name, site, update_catalog):
-    cmd = [ 'pkgutil', '-iy' ]
+    cmd = ['pkgutil', '-iy']
     if update_catalog:
-        cmd += [ '-U' ]
+        cmd += ['-U']
     if site is not None:
-        cmd += [ '-t', site ]
+        cmd += ['-t', site]
     if state == 'latest':
-        cmd += [ '-f' ]
+        cmd += ['-f']
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
+
 
 def package_upgrade(module, name, site, update_catalog):
-    cmd = [ 'pkgutil', '-ufy' ]
+    cmd = ['pkgutil', '-ufy']
     if update_catalog:
-        cmd += [ '-U' ]
+        cmd += ['-U']
     if site is not None:
-        cmd += [ '-t', site ]
+        cmd += ['-t', site]
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
 
+
 def package_uninstall(module, name):
-    cmd = [ 'pkgutil', '-ry', name]
+    cmd = ['pkgutil', '-ry', name]
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required = True),
-            state = dict(required = True, choices=['present', 'absent','latest']),
-            site = dict(default = None),
-            update_catalog = dict(required = False, default = False, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=True, choices=['present', 'absent', 'latest']),
+            site=dict(default=None),
+            update_catalog=dict(required=False, default=False, type='bool'),
         ),
         supports_check_mode=True
     )

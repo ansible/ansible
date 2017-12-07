@@ -166,6 +166,7 @@ def find_health_check(conn, wanted):
             return check
     return None
 
+
 def to_health_check(config):
     return HealthCheck(
         config.get('IPAddress'),
@@ -178,6 +179,7 @@ def to_health_check(config):
         failure_threshold=int(config.get('FailureThreshold')),
     )
 
+
 def health_check_diff(a, b):
     a = a.__dict__
     b = b.__dict__
@@ -188,6 +190,7 @@ def health_check_diff(a, b):
         if a.get(key) != b.get(key):
             diff[key] = b.get(key)
     return diff
+
 
 def to_template_params(health_check):
     params = {
@@ -240,7 +243,8 @@ UPDATEHCXMLBody = """
     </UpdateHealthCheckRequest>
     """
 
-def create_health_check(conn, health_check, caller_ref = None):
+
+def create_health_check(conn, health_check, caller_ref=None):
     if caller_ref is None:
         caller_ref = str(uuid.uuid4())
     uri = '/%s/healthcheck' % conn.Version
@@ -258,6 +262,7 @@ def create_health_check(conn, health_check, caller_ref = None):
         return e
     else:
         raise exception.DNSServerError(response.status, response.reason, body)
+
 
 def update_health_check(conn, health_check_id, health_check_version, health_check):
     uri = '/%s/healthcheck/%s' % (conn.Version, health_check_id)
@@ -279,18 +284,19 @@ def update_health_check(conn, health_check_id, health_check_version, health_chec
     h.parse(body)
     return e
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state               = dict(choices=['present', 'absent'], default='present'),
-        ip_address          = dict(),
-        port                = dict(type='int'),
-        type                = dict(required=True, choices=['HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP']),
-        resource_path       = dict(),
-        fqdn                = dict(),
-        string_match        = dict(),
-        request_interval    = dict(type='int', choices=[10, 30], default=30),
-        failure_threshold   = dict(type='int', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], default=3),
+        state=dict(choices=['present', 'absent'], default='present'),
+        ip_address=dict(),
+        port=dict(type='int'),
+        type=dict(required=True, choices=['HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP']),
+        resource_path=dict(),
+        fqdn=dict(),
+        string_match=dict(),
+        request_interval=dict(type='int', choices=[10, 30], default=30),
+        failure_threshold=dict(type='int', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], default=3),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -298,15 +304,15 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto 2.27.0+ required for this module')
 
-    state_in              = module.params.get('state')
-    ip_addr_in            = module.params.get('ip_address')
-    port_in               = module.params.get('port')
-    type_in               = module.params.get('type')
-    resource_path_in      = module.params.get('resource_path')
-    fqdn_in               = module.params.get('fqdn')
-    string_match_in       = module.params.get('string_match')
-    request_interval_in   = module.params.get('request_interval')
-    failure_threshold_in  = module.params.get('failure_threshold')
+    state_in = module.params.get('state')
+    ip_addr_in = module.params.get('ip_address')
+    port_in = module.params.get('port')
+    type_in = module.params.get('type')
+    resource_path_in = module.params.get('resource_path')
+    fqdn_in = module.params.get('fqdn')
+    string_match_in = module.params.get('string_match')
+    request_interval_in = module.params.get('request_interval')
+    failure_threshold_in = module.params.get('failure_threshold')
 
     if ip_addr_in is None and fqdn_in is None:
         module.fail_json(msg="parameter 'ip_address' or 'fqdn' is required")
@@ -334,7 +340,7 @@ def main():
     try:
         conn = Route53Connection(**aws_connect_kwargs)
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg = e.error_message)
+        module.fail_json(msg=e.error_message)
 
     changed = False
     action = None
@@ -362,7 +368,7 @@ def main():
             conn.delete_health_check(check_id)
             changed = True
     else:
-        module.fail_json(msg = "Logic Error: Unknown state")
+        module.fail_json(msg="Logic Error: Unknown state")
 
     module.exit_json(changed=changed, health_check=dict(id=check_id), action=action)
 

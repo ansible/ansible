@@ -147,7 +147,7 @@ from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_conn
 DEFAULT_RULE_FIELDS = {
     'RuleNumber': 32767,
     'RuleAction': 'deny',
-    'CidrBlock':  '0.0.0.0/0',
+    'CidrBlock': '0.0.0.0/0',
     'Protocol': '-1'
 }
 
@@ -159,7 +159,7 @@ DEFAULT_EGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)])
 PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
 
 
-#Utility methods
+# Utility methods
 def icmp_present(entry):
     if len(entry) == 6 and entry[1] == 'icmp' or entry[1] == 1:
         return True
@@ -225,7 +225,7 @@ def nacls_changed(nacl, client, module):
     nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
     nacl = describe_network_acl(client, module)
     entries = nacl['NetworkAcls'][0]['Entries']
-    tmp_egress = [entry for entry in entries if entry['Egress'] is True and DEFAULT_EGRESS !=entry]
+    tmp_egress = [entry for entry in entries if entry['Egress'] is True and DEFAULT_EGRESS != entry]
     tmp_ingress = [entry for entry in entries if entry['Egress'] is False]
     egress = [rule for rule in tmp_egress if DEFAULT_EGRESS != rule]
     ingress = [rule for rule in tmp_ingress if DEFAULT_INGRESS != rule]
@@ -321,7 +321,7 @@ def construct_acl_entries(nacl, client, module):
         create_network_acl_entry(params, client, module)
 
 
-## Module invocations
+# Module invocations
 def setup_network_acl(client, module):
     changed = False
     nacl = describe_network_acl(client, module)
@@ -372,7 +372,7 @@ def remove_network_acl(client, module):
     return changed, result
 
 
-#Boto3 client methods
+# Boto3 client methods
 def create_network_acl(vpc_id, client, module):
     try:
         if module.check_mode:
@@ -546,7 +546,7 @@ def main():
         ingress=dict(required=False, type='list', default=list()),
         egress=dict(required=False, type='list', default=list(),),
         state=dict(default='present', choices=['present', 'absent']),
-        ),
+    ),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,

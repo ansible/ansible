@@ -403,7 +403,6 @@ def main():
 
             result['changed'] = True
 
-
     running_config = None
     startup_config = None
 

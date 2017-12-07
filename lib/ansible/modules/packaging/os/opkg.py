@@ -89,6 +89,7 @@ EXAMPLES = '''
 
 import pipes
 
+
 def update_package_db(module, opkg_path):
     """ Updates packages list. """
 

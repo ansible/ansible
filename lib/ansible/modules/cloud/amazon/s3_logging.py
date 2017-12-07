@@ -137,10 +137,10 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=True),
-            target_bucket = dict(required=False, default=None),
-            target_prefix = dict(required=False, default=""),
-            state = dict(required=False, default='present', choices=['present', 'absent'])
+            name=dict(required=True),
+            target_bucket=dict(required=False, default=None),
+            target_prefix=dict(required=False, default=""),
+            state=dict(required=False, default='present', choices=['present', 'absent'])
         )
     )
 

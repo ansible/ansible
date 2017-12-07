@@ -193,7 +193,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                 if self.domain_name != results['dns_settings'].get('domain_name_label'):
                     self.log('CHANGED: domain_name_label')
                     changed = True
-                    results['dns_settings']['domain_name_label'] =self.domain_name
+                    results['dns_settings']['domain_name_label'] = self.domain_name
 
                 if self.allocation_method != results['public_ip_allocation_method']:
                     self.log("CHANGED: allocation_method")

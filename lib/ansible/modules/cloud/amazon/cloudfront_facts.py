@@ -259,7 +259,7 @@ class CloudFrontServiceManager:
 
     def get_distribution(self, distribution_id):
         try:
-            func = partial(self.client.get_distribution,Id=distribution_id)
+            func = partial(self.client.get_distribution, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution - " + str(e),
@@ -268,7 +268,7 @@ class CloudFrontServiceManager:
 
     def get_distribution_config(self, distribution_id):
         try:
-            func = partial(self.client.get_distribution_config,Id=distribution_id)
+            func = partial(self.client.get_distribution_config, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
@@ -277,7 +277,7 @@ class CloudFrontServiceManager:
 
     def get_origin_access_identity(self, origin_access_identity_id):
         try:
-            func = partial(self.client.get_cloud_front_origin_access_identity,Id=origin_access_identity_id)
+            func = partial(self.client.get_cloud_front_origin_access_identity, Id=origin_access_identity_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing origin access identity - " + str(e),
@@ -286,7 +286,7 @@ class CloudFrontServiceManager:
 
     def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
-            func = partial(self.client.get_cloud_front_origin_access_identity_config,Id=origin_access_identity_id)
+            func = partial(self.client.get_cloud_front_origin_access_identity_config, Id=origin_access_identity_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e),
@@ -295,7 +295,7 @@ class CloudFrontServiceManager:
 
     def get_invalidation(self, distribution_id, invalidation_id):
         try:
-            func = partial(self.client.get_invalidation,DistributionId=distribution_id,Id=invalidation_id)
+            func = partial(self.client.get_invalidation, DistributionId=distribution_id, Id=invalidation_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing invalidation - " + str(e),
@@ -304,7 +304,7 @@ class CloudFrontServiceManager:
 
     def get_streaming_distribution(self, distribution_id):
         try:
-            func = partial(self.client.get_streaming_distribution,Id=distribution_id)
+            func = partial(self.client.get_streaming_distribution, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
@@ -313,7 +313,7 @@ class CloudFrontServiceManager:
 
     def get_streaming_distribution_config(self, distribution_id):
         try:
-            func = partial(self.client.get_streaming_distribution_config,Id=distribution_id)
+            func = partial(self.client.get_streaming_distribution_config, Id=distribution_id)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
@@ -399,13 +399,13 @@ class CloudFrontServiceManager:
 
     def summary_get_origin_access_identity_list(self):
         try:
-            origin_access_identity_list = { 'origin_access_identities': [] }
+            origin_access_identity_list = {'origin_access_identities': []}
             origin_access_identities = self.list_origin_access_identities()
             for origin_access_identity in origin_access_identities:
                 oai_id = origin_access_identity['Id']
                 oai_full_response = self.get_origin_access_identity(oai_id)
-                oai_summary = { 'Id': oai_id, 'ETag': oai_full_response['ETag'] }
-                origin_access_identity_list['origin_access_identities'].append( oai_summary )
+                oai_summary = {'Id': oai_id, 'ETag': oai_full_response['ETag']}
+                origin_access_identity_list['origin_access_identities'].append(oai_summary)
             return origin_access_identity_list
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e),
@@ -415,8 +415,8 @@ class CloudFrontServiceManager:
     def summary_get_distribution_list(self, streaming=False):
         try:
             list_name = 'streaming_distributions' if streaming else 'distributions'
-            key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled' ]
-            distribution_list = { list_name: [] }
+            key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled']
+            distribution_list = {list_name: []}
             distributions = self.list_streaming_distributions(False) if streaming else self.list_distributions(False)
             for dist in distributions:
                 temp_distribution = {}
@@ -520,15 +520,17 @@ class CloudFrontServiceManager:
             if 'Items' in item['Aliases']:
                 aliases = item['Aliases']['Items']
                 for alias in aliases:
-                    keyed_list.update( { alias: item } )
-            keyed_list.update( { distribution_id: item } )
+                    keyed_list.update({alias: item})
+            keyed_list.update({distribution_id: item})
         return keyed_list
+
 
 def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
     facts[distribution_id].update(details)
     for alias in aliases:
         facts[alias].update(details)
     return facts
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -581,17 +583,17 @@ def main():
     summary = module.params.get('summary')
 
     aliases = []
-    result = { 'cloudfront': {} }
+    result = {'cloudfront': {}}
     facts = {}
 
     require_distribution_id = (distribution or distribution_config or invalidation or streaming_distribution or
-        streaming_distribution_config or list_invalidations)
+                               streaming_distribution_config or list_invalidations)
 
     # set default to summary if no option specified
     summary = summary or not (distribution or distribution_config or origin_access_identity or
-        origin_access_identity_config or invalidation or streaming_distribution or streaming_distribution_config or
-        list_origin_access_identities or list_distributions_by_web_acl_id or list_invalidations or
-        list_streaming_distributions or list_distributions)
+                              origin_access_identity_config or invalidation or streaming_distribution or streaming_distribution_config or
+                              list_origin_access_identities or list_distributions_by_web_acl_id or list_invalidations or
+                              list_streaming_distributions or list_distributions)
 
     # validations
     if require_distribution_id and distribution_id is None and domain_name_alias is None:
@@ -611,21 +613,21 @@ def main():
 
     # set appropriate cloudfront id
     if distribution_id and not list_invalidations:
-        facts = { distribution_id: {} }
+        facts = {distribution_id: {}}
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
-            facts.update( { alias: {} } )
+            facts.update({alias: {}})
         if invalidation_id:
-            facts.update( { invalidation_id: {} } )
+            facts.update({invalidation_id: {}})
     elif distribution_id and list_invalidations:
-        facts = { distribution_id: {} }
+        facts = {distribution_id: {}}
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
-            facts.update( { alias: {} } )
+            facts.update({alias: {}})
     elif origin_access_identity_id:
-        facts = { origin_access_identity_id: {} }
+        facts = {origin_access_identity_id: {}}
     elif web_acl_id:
-        facts = { web_acl_id: {} }
+        facts = {web_acl_id: {}}
 
     # get details based on options
     if distribution:
@@ -644,7 +646,7 @@ def main():
     if streaming_distribution_config:
         facts_to_set = service_mgr.get_streaming_distribution_config(distribution_id)
     if list_invalidations:
-        facts_to_set = {'invalidations': service_mgr.list_invalidations(distribution_id) }
+        facts_to_set = {'invalidations': service_mgr.list_invalidations(distribution_id)}
     if 'facts_to_set' in vars():
         facts = set_facts_for_distribution_id_and_alias(facts_to_set, facts, distribution_id, aliases)
 

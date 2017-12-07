@@ -256,6 +256,7 @@ def create_lifecycle_rule(connection, module):
 
     module.exit_json(changed=changed)
 
+
 def compare_rule(rule_a, rule_b):
 
     # Copy objects
@@ -364,27 +365,27 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=True, type='str'),
-            expiration_days = dict(default=None, required=False, type='int'),
-            expiration_date = dict(default=None, required=False, type='str'),
-            prefix = dict(default=None, required=False),
-            requester_pays = dict(default='no', type='bool'),
-            rule_id = dict(required=False, type='str'),
-            state = dict(default='present', choices=['present', 'absent']),
-            status = dict(default='enabled', choices=['enabled', 'disabled']),
-            storage_class = dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
-            transition_days = dict(default=None, required=False, type='int'),
-            transition_date = dict(default=None, required=False, type='str')
+            name=dict(required=True, type='str'),
+            expiration_days=dict(default=None, required=False, type='int'),
+            expiration_date=dict(default=None, required=False, type='str'),
+            prefix=dict(default=None, required=False),
+            requester_pays=dict(default='no', type='bool'),
+            rule_id=dict(required=False, type='str'),
+            state=dict(default='present', choices=['present', 'absent']),
+            status=dict(default='enabled', choices=['enabled', 'disabled']),
+            storage_class=dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
+            transition_days=dict(default=None, required=False, type='int'),
+            transition_date=dict(default=None, required=False, type='str')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive = [
-                               [ 'expiration_days', 'expiration_date' ],
-                               [ 'expiration_days', 'transition_date' ],
-                               [ 'transition_days', 'transition_date' ],
-                               [ 'transition_days', 'expiration_date' ]
-                               ]
+                           mutually_exclusive=[
+                               ['expiration_days', 'expiration_date'],
+                               ['expiration_days', 'transition_date'],
+                               ['transition_days', 'transition_date'],
+                               ['transition_days', 'expiration_date']
+                           ]
                            )
 
     if not HAS_BOTO:
@@ -428,7 +429,7 @@ def main():
         except ValueError as e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
 
-    boto_required_version = (2,40,0)
+    boto_required_version = (2, 40, 0)
     if storage_class == 'standard_ia' and tuple(map(int, (boto.__version__.split(".")))) < boto_required_version:
         module.fail_json(msg="'standard_ia' class requires boto >= 2.40.0")
 

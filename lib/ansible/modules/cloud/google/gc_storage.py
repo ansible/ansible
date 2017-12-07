@@ -179,19 +179,18 @@ def grant_check(module, gs, obj):
     try:
         acp = obj.get_acl()
         if module.params.get('permission') == 'public-read':
-            grant = [ x for x in acp.entries.entry_list if x.scope.type == 'AllUsers']
+            grant = [x for x in acp.entries.entry_list if x.scope.type == 'AllUsers']
             if not grant:
                 obj.set_acl('public-read')
                 module.exit_json(changed=True, result="The objects permission as been set to public-read")
         if module.params.get('permission') == 'authenticated-read':
-            grant = [ x for x in acp.entries.entry_list if x.scope.type == 'AllAuthenticatedUsers']
+            grant = [x for x in acp.entries.entry_list if x.scope.type == 'AllAuthenticatedUsers']
             if not grant:
                 obj.set_acl('authenticated-read')
                 module.exit_json(changed=True, result="The objects permission as been set to authenticated-read")
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
     return True
-
 
 
 def key_check(module, gs, bucket, obj):
@@ -199,7 +198,7 @@ def key_check(module, gs, bucket, obj):
         bucket = gs.lookup(bucket)
         key_check = bucket.get_key(obj)
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
     if key_check:
         grant_check(module, gs, key_check)
         return True
@@ -213,7 +212,7 @@ def keysum(module, gs, bucket, obj):
     if not key_check:
         return None
     md5_remote = key_check.etag[1:-1]
-    etag_multipart = '-' in md5_remote # Check for multipart, etag is not md5
+    etag_multipart = '-' in md5_remote  # Check for multipart, etag is not md5
     if etag_multipart is True:
         module.fail_json(msg="Files uploaded with multipart of gs are not supported with checksum, unable to compute checksum.")
     return md5_remote
@@ -223,7 +222,7 @@ def bucket_check(module, gs, bucket):
     try:
         result = gs.lookup(bucket)
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
     if result:
         grant_check(module, gs, result)
         return True
@@ -237,7 +236,7 @@ def create_bucket(module, gs, bucket):
         bucket.set_acl(module.params.get('permission'))
         bucket.configure_versioning(module.params.get('versioning'))
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
     if bucket:
         return True
 
@@ -251,7 +250,7 @@ def delete_bucket(module, gs, bucket):
         bucket.delete()
         return True
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
 
 
 def delete_key(module, gs, bucket, obj):
@@ -260,7 +259,7 @@ def delete_key(module, gs, bucket, obj):
         bucket.delete_key(obj)
         module.exit_json(msg="Object deleted from bucket ", changed=True)
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
 
 
 def create_dirkey(module, gs, bucket, obj):
@@ -270,7 +269,7 @@ def create_dirkey(module, gs, bucket, obj):
         key.set_contents_from_string('')
         module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
 
 
 def path_check(path):
@@ -308,7 +307,7 @@ def upload_gsfile(module, gs, bucket, obj, src, expiry):
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
     except gs.provider.storage_copy_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
 
 
 def download_gsfile(module, gs, bucket, obj, dest):
@@ -318,7 +317,7 @@ def download_gsfile(module, gs, bucket, obj, dest):
         key.get_contents_to_filename(dest)
         module.exit_json(msg="GET operation complete", changed=True)
     except gs.provider.storage_copy_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
 
 
 def download_gsstr(module, gs, bucket, obj):
@@ -328,7 +327,7 @@ def download_gsstr(module, gs, bucket, obj):
         contents = key.get_contents_as_string()
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
     except gs.provider.storage_copy_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
 
 
 def get_download_url(module, gs, bucket, obj, expiry):
@@ -338,7 +337,7 @@ def get_download_url(module, gs, bucket, obj, expiry):
         url = key.generate_url(expiry)
         module.exit_json(msg="Download url:", url=url, expiration=expiry, changed=True)
     except gs.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e))
 
 
 def handle_get(module, gs, bucket, obj, overwrite, dest):
@@ -355,7 +354,7 @@ def handle_get(module, gs, bucket, obj, overwrite, dest):
 def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
     # Lets check to see if bucket exists to get ground truth.
     bucket_rc = bucket_check(module, gs, bucket)
-    key_rc    = key_check(module, gs, bucket, obj)
+    key_rc = key_check(module, gs, bucket, obj)
 
     # Lets check key state. Does it exist and if it does, compute the etag md5sum.
     if bucket_rc and key_rc:
@@ -380,7 +379,7 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
 def handle_delete(module, gs, bucket, obj):
     if bucket and not obj:
         if bucket_check(module, gs, bucket):
-            module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=delete_bucket(module, gs, bucket))
+            module.exit_json(msg="Bucket %s and all keys have been deleted." % bucket, changed=delete_bucket(module, gs, bucket))
         else:
             module.exit_json(msg="Bucket does not exist.", changed=False)
     if bucket and obj:
@@ -409,7 +408,7 @@ def handle_create(module, gs, bucket, obj):
 
         if bucket_check(module, gs, bucket):
             if key_check(module, gs, bucket, dirobj):
-                module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
+                module.exit_json(msg="Bucket %s and key %s already exists." % (bucket, obj), changed=False)
             else:
                 create_dirkey(module, gs, bucket, dirobj)
         else:
@@ -419,35 +418,35 @@ def handle_create(module, gs, bucket, obj):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            bucket         = dict(required=True),
-            object         = dict(default=None, type='path'),
-            src            = dict(default=None),
-            dest           = dict(default=None, type='path'),
-            expiration     = dict(type='int', default=600, aliases=['expiry']),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'get_url', 'get_str'], required=True),
-            permission     = dict(choices=['private', 'public-read', 'authenticated-read'], default='private'),
-            headers        = dict(type='dict', default={}),
-            gs_secret_key  = dict(no_log=True, required=True),
-            gs_access_key  = dict(required=True),
-            overwrite      = dict(default=True, type='bool', aliases=['force']),
-            region         = dict(default='US', type='str'),
-            versioning     = dict(default='no', type='bool')
+        argument_spec=dict(
+            bucket=dict(required=True),
+            object=dict(default=None, type='path'),
+            src=dict(default=None),
+            dest=dict(default=None, type='path'),
+            expiration=dict(type='int', default=600, aliases=['expiry']),
+            mode=dict(choices=['get', 'put', 'delete', 'create', 'get_url', 'get_str'], required=True),
+            permission=dict(choices=['private', 'public-read', 'authenticated-read'], default='private'),
+            headers=dict(type='dict', default={}),
+            gs_secret_key=dict(no_log=True, required=True),
+            gs_access_key=dict(required=True),
+            overwrite=dict(default=True, type='bool', aliases=['force']),
+            region=dict(default='US', type='str'),
+            versioning=dict(default='no', type='bool')
         ),
     )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto 2.9+ required for this module')
 
-    bucket        = module.params.get('bucket')
-    obj           = module.params.get('object')
-    src           = module.params.get('src')
-    dest          = module.params.get('dest')
-    mode          = module.params.get('mode')
-    expiry        = module.params.get('expiration')
+    bucket = module.params.get('bucket')
+    obj = module.params.get('object')
+    src = module.params.get('src')
+    dest = module.params.get('dest')
+    mode = module.params.get('mode')
+    expiry = module.params.get('expiration')
     gs_secret_key = module.params.get('gs_secret_key')
     gs_access_key = module.params.get('gs_access_key')
-    overwrite     = module.params.get('overwrite')
+    overwrite = module.params.get('overwrite')
 
     if mode == 'put':
         if not src or not object:
@@ -459,7 +458,7 @@ def main():
     try:
         gs = boto.connect_gs(gs_access_key, gs_secret_key)
     except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg = str(e))
+        module.fail_json(msg=str(e))
 
     if mode == 'get':
         if not bucket_check(module, gs, bucket) or not key_check(module, gs, bucket, obj):

@@ -162,12 +162,12 @@ class FactsBase(object):
         self.facts = dict()
         self.responses = None
 
-
     def populate(self):
         self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
         return run_commands(self.module, cmd, check_rc=False)
+
 
 class Default(FactsBase):
 
@@ -439,6 +439,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     """main entry point for module execution

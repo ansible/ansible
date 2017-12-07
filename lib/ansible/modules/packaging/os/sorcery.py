@@ -607,17 +607,17 @@ def manage_spells(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(default=None, aliases=['spell'], type='list'),
-            state = dict(default='present', choices=['present', 'latest',
-                         'absent', 'cast', 'dispelled', 'rebuild']),
-            depends = dict(default=None),
-            update = dict(default=False, type='bool'),
-            update_cache = dict(default=False, aliases=['update_codex'], type='bool'),
-            cache_valid_time = dict(default=0, type='int')
+        argument_spec=dict(
+            name=dict(default=None, aliases=['spell'], type='list'),
+            state=dict(default='present', choices=['present', 'latest',
+                                                   'absent', 'cast', 'dispelled', 'rebuild']),
+            depends=dict(default=None),
+            update=dict(default=False, type='bool'),
+            update_cache=dict(default=False, aliases=['update_codex'], type='bool'),
+            cache_valid_time=dict(default=0, type='int')
         ),
-        required_one_of = [['name', 'update', 'update_cache']],
-        supports_check_mode = True
+        required_one_of=[['name', 'update', 'update_cache']],
+        supports_check_mode=True
     )
 
     if os.geteuid() != 0:

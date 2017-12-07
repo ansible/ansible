@@ -238,7 +238,7 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
 
 
 def _create_machine(module, profitbricks, datacenter, name):
@@ -290,7 +290,7 @@ def _create_machine(module, profitbricks, datacenter, name):
 
     n = NIC(
         lan=int(lan)
-        )
+    )
 
     s = Server(
         name=name,
@@ -299,7 +299,7 @@ def _create_machine(module, profitbricks, datacenter, name):
         cpu_family=cpu_family,
         create_volumes=[v],
         nics=[n],
-        )
+    )
 
     try:
         create_server_response = profitbricks.create_server(
@@ -341,7 +341,7 @@ def _create_datacenter(module, profitbricks):
     i = Datacenter(
         name=datacenter,
         location=location
-        )
+    )
 
     try:
         datacenter_response = profitbricks.create_datacenter(datacenter=i)
@@ -624,7 +624,7 @@ def main():
     if state == 'absent':
         if not module.params.get('datacenter'):
             module.fail_json(msg='datacenter parameter is required ' +
-                'for running or stopping machines.')
+                             'for running or stopping machines.')
 
         try:
             (changed) = remove_virtual_machine(module, profitbricks)
@@ -635,7 +635,7 @@ def main():
     elif state in ('running', 'stopped'):
         if not module.params.get('datacenter'):
             module.fail_json(msg='datacenter parameter is required for ' +
-                'running or stopping machines.')
+                             'running or stopping machines.')
         try:
             (changed) = startstop_machine(module, profitbricks, state)
             module.exit_json(changed=changed)
@@ -649,10 +649,10 @@ def main():
             module.fail_json(msg='image parameter is required for new instance')
         if not module.params.get('subscription_user'):
             module.fail_json(msg='subscription_user parameter is ' +
-                'required for new instance')
+                             'required for new instance')
         if not module.params.get('subscription_password'):
             module.fail_json(msg='subscription_password parameter is ' +
-                'required for new instance')
+                             'required for new instance')
 
         try:
             (machine_dict_array) = create_virtual_machine(module, profitbricks)

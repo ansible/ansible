@@ -242,7 +242,7 @@ class LogicMonitor(object):
 
                 for host in hosts:
                     if (host["hostName"] == hostname and
-                       host["agentId"] == collector["id"]):
+                            host["agentId"] == collector["id"]):
 
                         self.module.debug("Host match found")
                         return host
@@ -263,7 +263,7 @@ class LogicMonitor(object):
         self.module.debug("Looking for displayname " + displayname)
         self.module.debug("Making RPC call to 'getHost'")
         host_json = (json.loads(self.rpc("getHost",
-                                {"displayName": displayname})))
+                                         {"displayName": displayname})))
 
         if host_json["status"] == 200:
             self.module.debug("RPC call succeeded")
@@ -431,7 +431,7 @@ class Host(LogicMonitor):
             # Used the host information to grab the collector description
             # if not provided
             if (not hasattr(self.params, "collector") and
-               "agentDescription" in info):
+                    "agentDescription" in info):
                 self.module.debug("Setting collector from host response. " +
                                   "Collector " + info["agentDescription"])
                 self.params["collector"] = info["agentDescription"]
@@ -464,8 +464,8 @@ class Host(LogicMonitor):
         if self.info:
             self.module.debug("Making RPC call to 'getHostProperties'")
             properties_json = (json.loads(self.rpc("getHostProperties",
-                                          {'hostId': self.info["id"],
-                                           "filterSystemProperties": True})))
+                                                   {'hostId': self.info["id"],
+                                                    "filterSystemProperties": True})))
 
             if properties_json["status"] == 200:
                 self.module.debug("RPC call succeeded")

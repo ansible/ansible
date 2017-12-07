@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: bundler
 short_description: Manage Ruby Gem dependencies with Bundler
@@ -104,7 +104,7 @@ options:
 author: "Tim Hoiberg (@thoiberg)"
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # Installs gems from a Gemfile in the current directory
 - bundler:
     state: present
@@ -159,7 +159,7 @@ def main():
             extra_args=dict(default=None, required=False),
         ),
         supports_check_mode=True
-        )
+    )
 
     state = module.params.get('state')
     chdir = module.params.get('chdir')

@@ -125,6 +125,7 @@ def set_owner(cursor, schema, owner):
     cursor.execute(query)
     return True
 
+
 def get_schema_info(cursor, schema):
     query = """
     SELECT schema_owner AS owner
@@ -134,10 +135,12 @@ def get_schema_info(cursor, schema):
     cursor.execute(query, {'schema': schema})
     return cursor.fetchone()
 
+
 def schema_exists(cursor, schema):
     query = "SELECT schema_name FROM information_schema.schemata WHERE schema_name = %(schema)s"
     cursor.execute(query, {'schema': schema})
     return cursor.rowcount == 1
+
 
 def schema_delete(cursor, schema):
     if schema_exists(cursor, schema):
@@ -146,6 +149,7 @@ def schema_delete(cursor, schema):
         return True
     else:
         return False
+
 
 def schema_create(cursor, schema, owner):
     if not schema_exists(cursor, schema):
@@ -162,6 +166,7 @@ def schema_create(cursor, schema, owner):
         else:
             return False
 
+
 def schema_matches(cursor, schema, owner):
     if not schema_exists(cursor, schema):
         return False
@@ -176,6 +181,7 @@ def schema_matches(cursor, schema, owner):
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -189,7 +195,7 @@ def main():
             database=dict(default="postgres"),
             state=dict(default="present", choices=["absent", "present"]),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not postgresqldb_found:
@@ -205,13 +211,13 @@ def main():
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '' )
+    kw = dict((params_map[k], v) for (k, v) in module.params.items()
+              if k in params_map and v != '')
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
