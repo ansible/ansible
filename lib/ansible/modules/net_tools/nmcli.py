@@ -1008,8 +1008,7 @@ class Nmcli(object):
                 self.execute_command(cmd)
                 cmd=self.modify_connection_team()
                 self.execute_command(cmd)
-                cmd=self.up_connection()
-                return self.execute_command(cmd)
+                return self.up_connection()
             elif (self.dns4 is None) or (self.dns6 is None):
                 cmd=self.create_connection_team()
                 return self.execute_command(cmd)
@@ -1019,7 +1018,6 @@ class Nmcli(object):
                 self.execute_command(cmd)
                 cmd=self.modify_connection_team_slave()
                 self.execute_command(cmd)
-                # cmd=self.up_connection()
                 return self.execute_command(cmd)
             else:
                 cmd=self.create_connection_team_slave()
@@ -1030,8 +1028,7 @@ class Nmcli(object):
                 self.execute_command(cmd)
                 cmd=self.modify_connection_bond()
                 self.execute_command(cmd)
-                cmd=self.up_connection()
-                return self.execute_command(cmd)
+                return self.up_connection()
             else:
                 cmd=self.create_connection_bond()
                 return self.execute_command(cmd)
@@ -1043,8 +1040,7 @@ class Nmcli(object):
                 self.execute_command(cmd)
                 cmd=self.modify_connection_ethernet()
                 self.execute_command(cmd)
-                cmd=self.up_connection()
-                return self.execute_command(cmd)
+                return self.up_connection()
             else:
                 cmd=self.create_connection_ethernet()
                 return self.execute_command(cmd)
