@@ -45,6 +45,12 @@
           - Biometric Info
       register: csr_ku_xku
 
+    - name: Generate CSR with old API
+      openssl_csr:
+        path: '{{ output_dir }}/csr_oldapi.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        commonName: www.ansible.com
+
     - import_tasks: ../tests/validate.yml
 
   when: pyopenssl_version.stdout is version('0.15', '>=')
