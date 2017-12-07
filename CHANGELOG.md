@@ -19,6 +19,7 @@ Ansible Changes By Release
 * nxos_vrf_interface fix when validating the interface (https://github.com/ansible/ansible/issues/33227)
 * Fix for win_copy when sourcing files from an SMBv1 share
   (https://github.com/ansible/ansible/pull/33576)
+* correctly report callback plugin file
 
 <a id="2.4.2"></a>
 
