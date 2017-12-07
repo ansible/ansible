@@ -1,123 +1,106 @@
 #!/usr/bin/python
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: dnsimple
 version_added: "1.6"
-short_description: Interface with dnsimple.com (a DNS hosting service).
+short_description: Interface with dnsimple.com (a DNS hosting service)
 description:
-   - "Manages domains and records via the DNSimple API, see the docs: U(http://developer.dnsimple.com/)"
+   - Manages domains and records via the DNSimple API.
+   - See the docs at U(http://developer.dnsimple.com/)
 options:
   account_email:
     description:
-      - >
-        Account email. If omitted, the env variables DNSIMPLE_EMAIL and DNSIMPLE_API_TOKEN will be looked for.
-        If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)
-    required: false
-    default: null
+      - Account email.
+      - If omitted, the env variables C(DNSIMPLE_EMAIL) and C(DNSIMPLE_API_TOKEN) will be looked for.
+        If those are not found, a C(.dnsimple) file will be looked for, see U(https://github.com/mikemaccana/dnsimple-python#getting-started)
 
   account_api_token:
     description:
       - Account API token. See I(account_email) for info.
-    required: false
-    default: null
 
   domain:
     description:
-      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple. If omitted, a list of domains
-        will be returned.
-      - If domain is present but the domain doesn't exist, it will be created.
-    required: false
-    default: null
+      - Domain to work with.
+      - Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple.
+      - If omitted, a list of domains will be returned.
+      - If domain is present but the domain does not exist, it will be created.
 
   record:
     description:
-      - Record to add, if blank a record for the domain will be created, supports the wildcard (*)
-    required: false
-    default: null
+      - Record to add.
+      - If a blank record for the domain will be created, supports the wildcard (*).
 
   record_ids:
     description:
-      - List of records to ensure they either exist or don't exist
-    required: false
-    default: null
+      - List of records to ensure they either exist or don't exist.
 
   type:
     description:
-      - The type of DNS record to create
-    required: false
-    choices: [ 'A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL' ]
-    default: null
+      - The type of DNS record to create.
+    choices: [ A, AAAA, ALIAS, CNAME, HINFO, MX, NAPTR, NS, POOL, PTR, SSHFP, SPF, SRV, TXT, URL ]
 
   ttl:
     description:
-      - The TTL to give the new record
-    required: false
+      - The TTL to give the new record.
     default: 3600 (one hour)
 
   value:
     description:
-      - Record value
-      - "Must be specified when trying to ensure a record exists"
-    required: false
-    default: null
+      - The record value.
+      - Must be specified when trying to ensure a record exists.
 
   priority:
     description:
-      - Record priority
-    required: false
-    default: null
+      - The record priority.
 
   state:
     description:
-      - whether the record should exist or not
-    required: false
-    choices: [ 'present', 'absent' ]
-    default: null
+      - Whether the record should exist or not.
+    choices: [ absent, present ]
 
   solo:
     description:
-      - Whether the record should be the only one for that record type and record name. Only use with state=present on a record
-    required: false
-    default: null
+      - Whether the record should be the only one for that record type and record name. Only use with state=present on a record.
 
 requirements: [ dnsimple ]
-author: "Alex Coomans (@drcapulet)"
+author:
+- Alex Coomans (@drcapulet)
 '''
 
 EXAMPLES = '''
-# authenticate using email and API token and fetch all domains
-- dnsimple:
+- name: Authenticate using email and API token and fetch all domains
+  dnsimple:
     account_email: test@example.com
     account_api_token: dummyapitoken
   delegate_to: localhost
 
-# fetch my.com domain records
-- dnsimple:
+- name: Fetch my.com domain records
+  dnsimple:
     domain: my.com
     state: present
   delegate_to: localhost
   register: records
 
-# delete a domain
-- dnsimple:
+- name: Delete a domain
+  dnsimple:
     domain: my.com
     state: absent
   delegate_to: localhost
 
-# create a test.my.com A record to point to 127.0.0.01
-- dnsimple:
+- name: Create a test.my.com A record to point to 127.0.0.01
+  dnsimple:
     domain: my.com
     record: test
     type: A
@@ -125,14 +108,14 @@ EXAMPLES = '''
   delegate_to: localhost
   register: record
 
-# and then delete it
-- dnsimple:
+- name: Delete it
+  dnsimple:
     domain: my.com
     record_ids: '{{ record["id"] }}'
   delegate_to: localhost
 
-# create a my.com CNAME record to example.com
-- dnsimple:
+- name: Create a my.com CNAME record to example.com
+  dnsimple:
     domain: my.com
     record: ''
     type: CNAME
@@ -140,8 +123,8 @@ EXAMPLES = '''
     state: present
   delegate_to: localhost
 
-# change it's ttl
-- dnsimple:
+- name: change its TTL
+  dnsimple:
     domain: my.com
     record: ''
     type: CNAME
@@ -150,8 +133,8 @@ EXAMPLES = '''
     state: present
   delegate_to: localhost
 
-# and delete the record
-- dnsimple:
+- name: Delete the record
+  dnsimple:
     domain: my.com
     record: ''
     type: CNAME
@@ -175,39 +158,38 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            account_email=dict(required=False),
-            account_api_token=dict(required=False, no_log=True),
-            domain=dict(required=False),
-            record=dict(required=False),
-            record_ids=dict(required=False, type='list'),
-            type=dict(required=False, choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO',
-                                               'POOL']),
-            ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False),
-            priority=dict(required=False, type='int'),
-            state=dict(required=False, choices=['present', 'absent']),
-            solo=dict(required=False, type='bool'),
+            account_email=dict(type='str'),
+            account_api_token=dict(type='str', no_log=True),
+            domain=dict(type='str'),
+            record=dict(type='str'),
+            record_ids=dict(type='list'),
+            type=dict(type='str', choices=['A', 'AAAA', 'ALIAS', 'CNAME', 'HINFO', 'MX', 'NAPTR', 'NS', 'POOL', 'PTR', 'SRV', 'SSHFP', 'TXT', 'URL']),
+            ttl=dict(type='int', default=3600),
+            value=dict(type='str'),
+            priority=dict(type='int'),
+            state=dict(choices=['absent', 'present']),
+            solo=dict(type='bool'),
         ),
-        required_together = (
-            ['record', 'value']
+        required_together=(
+            ['record', 'value'],
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     if not HAS_DNSIMPLE:
         module.fail_json(msg="dnsimple required for this module")
 
-    account_email     = module.params.get('account_email')
+    account_email = module.params.get('account_email')
     account_api_token = module.params.get('account_api_token')
-    domain            = module.params.get('domain')
-    record            = module.params.get('record')
-    record_ids        = module.params.get('record_ids')
-    record_type       = module.params.get('type')
-    ttl               = module.params.get('ttl')
-    value             = module.params.get('value')
-    priority          = module.params.get('priority')
-    state             = module.params.get('state')
-    is_solo           = module.params.get('solo')
+    domain = module.params.get('domain')
+    record = module.params.get('record')
+    record_ids = module.params.get('record_ids')
+    record_type = module.params.get('type')
+    ttl = module.params.get('ttl')
+    value = module.params.get('value')
+    priority = module.params.get('priority')
+    state = module.params.get('state')
+    is_solo = module.params.get('solo')
 
     if account_email and account_api_token:
         client = DNSimple(email=account_email, api_token=account_api_token)
@@ -278,7 +260,7 @@ def main():
                     if rr['ttl'] != ttl or rr['prio'] != priority:
                         data = {}
                         if ttl:
-                            data['ttl']  = ttl
+                            data['ttl'] = ttl
                         if priority:
                             data['prio'] = priority
                         if module.check_mode:
@@ -289,13 +271,13 @@ def main():
                         module.exit_json(changed=changed, result=rr)
                 else:
                     # create it
-                    data = {
-                        'name':        record,
-                        'record_type': record_type,
-                        'content':     value,
-                    }
+                    data = dict(
+                        name=record,
+                        record_type=record_type,
+                        content=value,
+                    )
                     if ttl:
-                        data['ttl']  = ttl
+                        data['ttl'] = ttl
                     if priority:
                         data['prio'] = priority
                     if module.check_mode:
@@ -315,7 +297,7 @@ def main():
         # Make sure these record_ids either all exist or none
         if domain and record_ids:
             current_records = [str(r['record']['id']) for r in client.records(str(domain))]
-            wanted_records  = [str(r) for r in record_ids]
+            wanted_records = [str(r) for r in record_ids]
             if state == 'present':
                 difference = list(set(wanted_records) - set(current_records))
                 if difference:
