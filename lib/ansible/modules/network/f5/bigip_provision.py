@@ -344,6 +344,7 @@ class ModuleManager(object):
         :return:
         """
         nops = 0
+        restarted_asm = False
         while nops < 3:
             try:
                 policies = self.client.api.tm.asm.policies_s.get_collection()
@@ -352,8 +353,22 @@ class ModuleManager(object):
                 else:
                     nops = 0
             except Exception as ex:
-                pass
+                if not restarted_asm:
+                    self._restart_asm()
+                    restarted_asm = True
             time.sleep(5)
+
+    def _restart_asm(self):
+        try:
+            self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs='-c "bigstart restart asm"'
+            )
+            time.sleep(60)
+            return True
+        except Exception:
+            pass
+        return None
 
     def _get_last_reboot(self):
         try:
