@@ -1,8 +1,12 @@
 #!/usr/bin/python
 
-# TODO: Allow for secret files
+# TODO: Allow for putting secret files
+# TODO: Allow for putting secret files w/ check mode
 # TODO: Update to pass all sanity checks
-# TODO: Review
+# TODO: Beef up the return documentation
+# TODO: Add example for getting a file
+# TODO: Add example for putting a file
+# TODO: Review & Submit PR
 
 
 ANSIBLE_METADATA = {
@@ -31,6 +35,15 @@ options:
         description:
             - Name of the secret you wish to interact with
         required: true
+    is_file:
+        description:
+            - Boolean designating if the secret is a file
+        default: false
+        required: false
+    dest:
+        description:
+            - Absolute path on the host machine that you wish to download the secret file to
+        required: false
     folder:
         description:
             - The folder you wish to store/retrieve the secret in/from
@@ -106,6 +119,10 @@ secret:
 try:
     from ansible.module_utils.basic import AnsibleModule
     from zeep import Client, helpers
+    import pdb
+    import os
+    import tempfile
+    import filecmp
 except:
     module.fail_json(msg="Zeep is a required library", **result)
 
@@ -113,6 +130,9 @@ def run_module():
     module_args = dict(
         endpoint=dict(type='str', required=True),
         name=dict(type='str', required=True),
+        is_file=dict(type='bool', required=False, default=False),
+        dest=dict(type='str', required=False),
+        src=dict(type='str', required=False),
         username=dict(type='str', required=True),
         password=dict(type='str', required=True),
         folder=dict(type='str', required=True),
@@ -128,12 +148,14 @@ def run_module():
         debug=dict()
     )
 
+    # TODO: Update the arg to arg requirements
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True,
-        required_if=[
-            ["mode", "put", ["type", "secret_args"]]
-        ]
+        # required_if=[
+        #     ["mode", "put", ["type", "secret_args"]],
+        #     ["is_file", True, ["dest"]]
+        # ]
     )
 
     # non production, testing mode
@@ -176,14 +198,46 @@ def run_module():
 
         # retrieves a secret and returns it
         if module.params['mode'] == 'get':
-
             # error checking
             if secret is None:
                 module.fail_json(msg='Secret Does Not Exist', **result)
 
-            # returning secret
-            result['secret'] = secret
-            result['changed'] = False
+            if module.params['is_file']:
+                get_file_args = {'token': token, 'secretId': secret_id}
+                get_file_result = make_soap_request(module.params['endpoint'], 'DownloadFileAttachment', get_file_args)
+                file_bytes = get_file_result["FileAttachment"]
+                pdb.set_trace()
+                download_location = os.path.join(module.params['dest'], get_file_result["FileName"])
+
+                # assume nothing changes
+                result['changed'] = False
+
+                # if getting a file and the dest does not exist
+                if not os.path.exists(download_location):
+                    result['changed'] = True
+
+                # if getting a file, and the dest already exists, download a temp copy, check to see if the files match
+                else:
+                    with open(download_location, 'rb') as fp:
+                        curr_file = fp.read()
+
+                    # if they do, return nothing changed
+                    if curr_file == file_bytes:
+                        result['changed'] = False
+
+                    # if they don't & check mode is not enabled, return changed & update the file
+                    # if they don't & check mode is enabled, return changed, but do not update the file
+                    else:
+                        result['changed'] = True
+
+                if result['changed'] and not module.check_mode:
+                    with open(download_location, 'wb') as fp:
+                        fp.write(file_bytes)
+
+            else:
+                # returning secret
+                result['secret'] = secret
+                result['changed'] = False
 
         # ensures the secret is added into the secret server
         elif module.params['mode'] == 'put':
@@ -192,7 +246,19 @@ def run_module():
             result['changed'] = False
 
             if secret is not None:
-                equality_test = check_secret_equality(local_secret=secret, args=module.params['secret_args'])
+                if module.params['is_file']:
+                    get_file_args = {'token': token, 'secretId': secret_id}
+                    get_file_result = make_soap_request(module.params['endpoint'], 'DownloadFileAttachment', get_file_args)
+                    file_bytes = get_file_result["FileAttachment"]
+
+                    with open(module.params['src'], "rb") as fp:
+                        src_bytes = fp.read()
+
+                    equality_test = file_bytes == src_bytes
+
+                else:
+                    equality_test = check_secret_equality(local_secret=secret, args=module.params['secret_args'])
+
                 # if arguments & secret match, change nothing
                 if equality_test:
                     result['changed'] = False
@@ -211,11 +277,12 @@ def run_module():
             # if the secret is not present or doesn't match the argmuments,
             if result['changed'] and not module.check_mode:
 
+                if module.params['is_file']:
+                    pass
                 # if secret is present, update it
-                if secret is not None:
+                elif secret is not None:
                     updated_secret = inject_args(secret, module.params['secret_args'])
                     make_soap_request(module.params['endpoint'], 'UpdateSecret', {'token': token, 'secret': updated_secret})
-                    result['changed'] = True
 
                 # if secret is not present, it should be created
                 else:
@@ -235,7 +302,6 @@ def run_module():
                     new_secret = inject_args(new_secret, module.params['secret_args'])
 
                     make_soap_request(module.params['endpoint'], 'AddNewSecret', {'token': token, 'secret': new_secret})
-                    result['changed'] = True
 
         module.exit_json(**result)
 
