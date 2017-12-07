@@ -446,11 +446,11 @@ def create_rule_instance(rule):
     :return: SecurityRule
     '''
     return SecurityRule(
-        rule['protocol'],
-        rule['access'],
-        rule['direction'],
-        source_address_prefix=rule['source_address_prefix'],
-        destination_address_prefix=rule['destination_address_prefix'],
+        protocol=rule.get(['protocol'], None),
+        access=rule.get(['access'], None),
+        direction=rule.get(['direction'], None),
+        source_address_prefix=rule.get('source_address_prefix', None),
+        destination_address_prefix=rule.get('destination_address_prefix', None),
         id=rule.get('id', None),
         description=rule.get('description', None),
         source_port_range=rule.get('source_port_range', None),
