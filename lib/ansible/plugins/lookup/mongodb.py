@@ -32,7 +32,7 @@ DOCUMENTATION = '''
         connect_string:
             description:
                 - Can be any valid MongoDB connection string, supporting authentication, replicasets, etc.
-                - "More info at https://docs.mongodb.org/manual/reference/connection-string/"
+                - "More info at U(https://docs.mongodb.org/manual/reference/connection-string/)"
             default: "mongodb://localhost/"
         database:
             description:
