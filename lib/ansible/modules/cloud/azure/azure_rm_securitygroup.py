@@ -446,9 +446,9 @@ def create_rule_instance(rule):
     :return: SecurityRule
     '''
     return SecurityRule(
-        protocol=rule.get(['protocol'], None),
-        access=rule.get(['access'], None),
-        direction=rule.get(['direction'], None),
+        protocol=rule.get('protocol', None),
+        access=rule.get('access', None),
+        direction=rule.get('direction', None),
         source_address_prefix=rule.get('source_address_prefix', None),
         destination_address_prefix=rule.get('destination_address_prefix', None),
         id=rule.get('id', None),
