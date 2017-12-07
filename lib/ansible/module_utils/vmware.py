@@ -223,14 +223,6 @@ def find_vm_by_name(content, vm_name, folder=None, recurse=True):
     return None
 
 
-def find_host_portgroup_by_name(host, portgroup_name):
-
-    for portgroup in host.config.network.portgroup:
-        if portgroup.spec.name == portgroup_name:
-            return portgroup
-    return None
-
-
 def compile_folder_path_for_object(vobj):
     """ make a /vm/foo/bar/baz like folder path for an object """
 
@@ -813,6 +805,7 @@ class PyVmomi(object):
         self.current_vm_obj = None
         self.content = connect_to_api(self.module)
 
+    # Virtual Machine related functions
     def get_vm(self):
         vm = None
         match_first = (self.params['name_match'] == 'first')
@@ -830,3 +823,60 @@ class PyVmomi(object):
 
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
+
+    # Cluster related functions
+    def find_cluster_by_name(self, cluster_name, datacenter_name=None):
+        """
+        Find Cluster by name in given datacenter
+        Args:
+            cluster_name: Name of cluster name to find
+            datacenter_name: (optional) Name of datacenter
+
+        Returns: True if found
+
+        """
+        return find_cluster_by_name(self.content, cluster_name, datacenter=datacenter_name)
+
+    def get_all_hosts_by_cluster(self, cluster_name):
+        """
+        Get all hosts from cluster by cluster name
+        Args:
+            cluster_name: Name of cluster
+
+        Returns: List of hosts
+
+        """
+        cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
+        if cluster_obj:
+            return [host for host in cluster_obj.host]
+        else:
+            return []
+
+    # Hosts related functions
+    def find_hostsystem_by_name(self, host_name):
+        """
+        Find Host by name
+        Args:
+            host_name: Name of ESXi host
+
+        Returns: True if found
+
+        """
+        return find_hostsystem_by_name(self.content, hostname=host_name)
+
+    # Network related functions
+    @staticmethod
+    def find_host_portgroup_by_name(host, portgroup_name):
+        """
+        Find Portgroup on given host
+        Args:
+            host: Host config object
+            portgroup_name: Name of portgroup
+
+        Returns: True if found else False
+
+        """
+        for portgroup in host.config.network.portgroup:
+            if portgroup.spec.name == portgroup_name:
+                return portgroup
+        return False
