@@ -168,25 +168,23 @@ import time
 import traceback
 from datetime import datetime
 
-from functools import wraps
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url as _fetch_url
 
 
-def _upsert_lowercase_headers(func):
+def _lowercase_fetch_url(*args, **kwargs):
     '''
-     Decorator to append the lowercase representation of the header names (dict keys) returned in the info dict
+     Add lowercase representations of the header names as dict keys
 
     '''
-    @wraps(func)
-    def func_wrapper(name, *args, **kwargs):
-        response, info = func(name, *args, **kwargs)
-        info.update(dict((header.lower(), value) for (header, value) in info.items()))
-        return response, info
-    return func_wrapper
+    response, info = _fetch_url(*args, **kwargs)
 
-fetch_url = _upsert_lowercase_headers(fetch_url)
+    info.update(dict((header.lower(), value) for (header, value) in info.items()))
+    return response, info
+
+
+fetch_url = _lowercase_fetch_url
 
 
 def nopad_b64(data):
