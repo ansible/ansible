@@ -150,7 +150,8 @@ def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
 
-    def needs_update(x): return want.get(x) is not None and (want.get(x) != have.get(x))
+    def needs_update(x):
+        return want.get(x) is not None and (want.get(x) != have.get(x))
 
     if state == 'absent':
         if have['hostname'] != 'Router':
