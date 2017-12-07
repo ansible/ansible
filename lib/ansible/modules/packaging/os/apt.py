@@ -483,7 +483,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False):
+            allow_unauthenticated=False, allow_downgrades=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -545,6 +545,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
+        if allow_downgrades:
+            cmd += " --allow-downgrades"
+
         rc, out, err = m.run_command(cmd)
         if m._diff:
             diff = parse_diff(out)
@@ -569,7 +572,8 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
-def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
+def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options,
+                allow_downgrades):
     changed = False
     deps_to_install = []
     pkgs_to_install = []
@@ -623,6 +627,9 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             options += " --simulate"
         if force:
             options += " --force-all"
+
+        if allow_downgrades:
+            options += " --force-downgrade"
 
         cmd = "dpkg %s -i %s" % (options, " ".join(pkgs_to_install))
         rc, out, err = m.run_command(cmd)
@@ -887,6 +894,7 @@ def main():
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
+            allow_downgrades=dict(type='bool', default=False, aliases=['allow-downgrades']),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
@@ -930,6 +938,7 @@ def main():
     updated_cache_time = 0
     install_recommends = p['install_recommends']
     allow_unauthenticated = p['allow_unauthenticated']
+    allow_downgrades = p['allow_downgrades']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     autoclean = p['autoclean']
@@ -997,6 +1006,7 @@ def main():
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
+                        allow_downgrades=allow_downgrades,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
@@ -1042,7 +1052,8 @@ def main():
                 build_dep=state_builddep,
                 autoremove=autoremove,
                 only_upgrade=p['only_upgrade'],
-                allow_unauthenticated=allow_unauthenticated
+                allow_unauthenticated=allow_unauthenticated,
+                allow_downgrades=allow_downgrades
             )
 
             # Store if the cache has been updated
