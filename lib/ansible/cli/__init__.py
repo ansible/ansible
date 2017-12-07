@@ -413,7 +413,7 @@ class CLI(with_metaclass(ABCMeta, object)):
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
                     async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
-                    runas_prompt_opts=False, desc=None, basedir_opts=False):
+                    runas_prompt_opts=False, desc=None, basedir_opts=False, vault_rekey_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         # base opts
@@ -446,10 +446,12 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help='ask for vault password')
             parser.add_option('--vault-password-file', default=[], dest='vault_password_files',
                               help="vault password file", action="callback", callback=CLI.unfrack_paths, type='string')
-            parser.add_option('--new-vault-password-file', default=[], dest='new_vault_password_files',
-                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_paths, type='string')
             parser.add_option('--vault-id', default=[], dest='vault_ids', action='append', type='string',
                               help='the vault identity to use')
+
+        if vault_rekey_opts:
+            parser.add_option('--new-vault-password-file', default=[], dest='new_vault_password_files',
+                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_paths, type='string')
             parser.add_option('--new-vault-id', default=None, dest='new_vault_id', type='string',
                               help='the new vault identity to use for rekey')
 
