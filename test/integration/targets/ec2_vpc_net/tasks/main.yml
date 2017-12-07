@@ -11,7 +11,7 @@
     - name: assert failure
       assert:
         that:
-          - 'result | failed'
+          - 'result is failed'
           - 'result.msg.startswith("missing required arguments")'
 
     # ============================================================
@@ -28,7 +28,7 @@
     - name: assert connection failure
       assert:
         that:
-          - 'result | failed'
+          - 'result is failed'
           - 'result.msg.startswith("No handler was ready to authenticate")'
 
     # ============================================================
@@ -71,7 +71,7 @@
     - name: assert the VPC was created successfully
       assert:
         that:
-          - 'result | success'
+          - 'result is successful'
           - 'result.changed'
 
     - name: assert the output
@@ -126,7 +126,7 @@
     - name: assert a new VPC was created
       assert:
         that:
-          - 'result | success'
+          - 'result is successful'
           - 'result.changed'
           - 'result.vpc.instance_tenancy == "dedicated"'
           - result.vpc.id != vpc_1
@@ -146,7 +146,7 @@
     - name: assert failure
       assert:
         that:
-          - 'result | failed'
+          - 'result is failed'
           - '"If you would like to create the VPC anyway please pass True to the multi_ok param" in result.msg'
 
     # ============================================================
@@ -243,7 +243,7 @@
     - name: assert a change was made
       assert:
         that:
-          - 'result | success'
+          - 'result is successful'
           # FIXME The module currently doesn't note changed for VPC attributes.
           # Once this is fixed a test should be added for check mode as well.
           # - 'result.changed'
