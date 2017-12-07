@@ -184,7 +184,10 @@ class HomebrewCask(object):
         if brew_path is None:
             return True
 
-        return isinstance(brew_path, string_types) and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
+        return (
+            isinstance(brew_path, string_types)
+            and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
+        )
 
     @classmethod
     def valid_cask(cls, cask):
@@ -193,7 +196,10 @@ class HomebrewCask(object):
         if cask is None:
             return True
 
-        return isinstance(cask, string_types) and not cls.INVALID_CASK_REGEX.search(cask)
+        return (
+            isinstance(cask, string_types)
+            and not cls.INVALID_CASK_REGEX.search(cask)
+        )
 
     @classmethod
     def valid_state(cls, state):
@@ -207,8 +213,8 @@ class HomebrewCask(object):
             return True
         else:
             return (
-                isinstance(state, string_types) and
-                state.lower() in (
+                isinstance(state, string_types)
+                and state.lower() in (
                     'installed',
                     'absent',
                 )
@@ -452,8 +458,8 @@ class HomebrewCask(object):
             raise HomebrewCaskException(self.message)
 
         opts = (
-            [self.brew_path, 'cask', 'install', self.current_cask] +
-            self.install_options
+            [self.brew_path, 'cask', 'install', self.current_cask]
+            + self.install_options
         )
 
         cmd = [opt for opt in opts if opt]
