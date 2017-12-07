@@ -134,9 +134,11 @@ def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
 
-    def needs_update(x): return want.get(x) and (want.get(x) != have.get(x))
+    def needs_update(x):
+        return want.get(x) and (want.get(x) != have.get(x))
 
-    def difference(x, y, z): return [item for item in x[z] if item not in y[z]]
+    def difference(x, y, z):
+        return [item for item in x[z] if item not in y[z]]
 
     def remove(cmd, commands, vrf=None):
         if vrf:
