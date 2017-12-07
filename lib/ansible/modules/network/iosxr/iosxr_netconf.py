@@ -74,7 +74,6 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
 from ansible.module_utils.six import iteritems
@@ -82,7 +81,7 @@ from ansible.module_utils.six import iteritems
 USE_PERSISTENT_CONNECTION = True
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates):
     want, have = updates
     commands = list()
 
@@ -186,12 +185,14 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands((want, have))
     result['commands'] = commands
 
     if commands:
-        if not module.check_mode:
-            diff = load_config(module, commands, result['warnings'], commit=True)
+        commit = not module.check_mode
+        diff = load_config(module, commands, commit=commit)
+        if diff:
+            result['diff'] = dict(prepared=diff)
         result['changed'] = True
 
     module.exit_json(**result)
