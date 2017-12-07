@@ -26,6 +26,11 @@ and guidelines:
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
+* Modules should have a concise and well defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
+
+* Modules should not require that a user know all the underlying options of an api/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, that's a sign that the module would be rejected.
+
+* Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
 .. _debugging_ansiblemodule_based_modules:
 
