@@ -72,7 +72,8 @@ placement_group:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (boto3_conn,
+from ansible.module_utils.ec2 import (AWSRetry,
+                                      boto3_conn,
                                       ec2_argument_spec,
                                       get_aws_connection_info)
 try:
@@ -81,6 +82,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 
+@AWSRetry.exponential_backoff()
 def get_placement_group_details(connection, module):
     name = module.params.get("name")
     try:
@@ -105,6 +107,7 @@ def get_placement_group_details(connection, module):
         }
 
 
+@AWSRetry.exponential_backoff()
 def create_placement_group(connection, module):
     name = module.params.get("name")
 
@@ -128,6 +131,7 @@ def create_placement_group(connection, module):
                      ))
 
 
+@AWSRetry.exponential_backoff()
 def delete_placement_group(connection, module):
     name = module.params.get("name")
 
