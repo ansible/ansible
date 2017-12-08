@@ -136,9 +136,7 @@ lib/ansible/modules/cloud/openstack/os_user_group.py
 lib/ansible/modules/cloud/openstack/os_user_role.py
 lib/ansible/modules/cloud/openstack/os_zone.py
 lib/ansible/modules/cloud/ovh/ovh_ip_loadbalancing_backend.py
-lib/ansible/modules/cloud/ovirt/ovirt_affinity_group.py
 lib/ansible/modules/cloud/ovirt/ovirt_nics.py
-lib/ansible/modules/cloud/ovirt/ovirt_permissions.py
 lib/ansible/modules/cloud/ovirt/ovirt_vms.py
 lib/ansible/modules/cloud/packet/packet_sshkey.py
 lib/ansible/modules/cloud/profitbricks/profitbricks.py
@@ -153,7 +151,6 @@ lib/ansible/modules/cloud/rackspace/rax_clb_ssl.py
 lib/ansible/modules/cloud/rackspace/rax_dns.py
 lib/ansible/modules/cloud/rackspace/rax_dns_record.py
 lib/ansible/modules/cloud/rackspace/rax_facts.py
-lib/ansible/modules/cloud/rackspace/rax_files.py
 lib/ansible/modules/cloud/rackspace/rax_keypair.py
 lib/ansible/modules/cloud/rackspace/rax_mon_alarm.py
 lib/ansible/modules/cloud/rackspace/rax_mon_check.py
@@ -372,7 +369,6 @@ lib/ansible/modules/packaging/os/layman.py
 lib/ansible/modules/packaging/os/macports.py
 lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
-lib/ansible/modules/packaging/os/pkg5.py
 lib/ansible/modules/packaging/os/pkgin.py
 lib/ansible/modules/packaging/os/pkgng.py
 lib/ansible/modules/packaging/os/pkgutil.py
