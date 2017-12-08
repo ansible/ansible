@@ -158,9 +158,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._compute_environment_string(final_environment)
 
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
-                                                                    task_vars=task_vars, module_compression=self._play_context.module_compression,
-                                                                    async_timeout=self._task.async_val, become=self._play_context.become,
-                                                                    become_method=self._play_context.become_method, become_user=self._play_context.become_user,
+                                                                    task_vars=task_vars, templar=self._templar,
+                                                                    module_compression=self._play_context.module_compression,
+                                                                    async_timeout=self._task.async_val,
+                                                                    become=self._play_context.become,
+                                                                    become_method=self._play_context.become_method,
+                                                                    become_user=self._play_context.become_user,
                                                                     become_password=self._play_context.become_pass,
                                                                     environment=final_environment)
 
