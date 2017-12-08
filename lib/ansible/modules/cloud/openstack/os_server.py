@@ -669,8 +669,7 @@ def _get_server_state(module, cloud):
     if server and state == 'present':
         if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
             module.fail_json(
-                msg="The instance is available but not Active state: "
-                    + server.status)
+                msg="The instance is available but not Active state: " + server.status)
         (ip_changed, server) = _check_ips(module, cloud, server)
         (sg_changed, server) = _check_security_groups(module, cloud, server)
         (server_changed, server) = _update_server(module, cloud, server)

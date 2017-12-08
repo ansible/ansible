@@ -182,7 +182,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         statement['Principal']['AWS'] = valid_entries
                         had_invalid_entries = True
 
-                    if not role_arn in statement['Principal']['AWS']:  # needs to be added.
+                    if role_arn not in statement['Principal']['AWS']:  # needs to be added.
                         changes_needed[granttype] = 'add'
                         statement['Principal']['AWS'].append(role_arn)
                 elif role_arn in statement['Principal']['AWS']:  # not one the places the role should be
@@ -281,7 +281,7 @@ def main():
         # check the grant types for 'grant' only.
         if mode == 'grant':
             for g in module.params['grant_types']:
-                if not g in statement_label:
+                if g not in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
         ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'],

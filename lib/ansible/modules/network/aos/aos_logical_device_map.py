@@ -234,9 +234,9 @@ def logical_device_map(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_log_dev_map = find_collection_item(aos.LogicalDeviceMaps,
                                               item_name=item_name,
@@ -244,9 +244,9 @@ def logical_device_map(module):
     except:
         module.fail_json(msg="Unable to find the Logical Device Map based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         logical_device_map_absent(module, aos, my_log_dev_map)
