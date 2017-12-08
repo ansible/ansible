@@ -321,7 +321,7 @@ EXAMPLES = '''
     set_dscp_mark_class: CS1
     protocol: tcp
 
-# Insert a rule on line 5 
+# Insert a rule on line 5
 - iptables:
     chain: INPUT
     protocol: tcp
