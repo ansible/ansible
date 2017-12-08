@@ -300,9 +300,9 @@ def ip_pool(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_pool = find_collection_item(aos.IpPools,
                                        item_name=item_name,
@@ -310,9 +310,9 @@ def ip_pool(module):
     except:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         ip_pool_absent(module, aos, my_pool)

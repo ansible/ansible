@@ -288,9 +288,9 @@ def ext_router(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_ext_router = find_collection_item(aos.ExternalRouters,
                                              item_name=item_name,
@@ -298,9 +298,9 @@ def ext_router(module):
     except:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         ext_router_absent(module, aos, my_ext_router)

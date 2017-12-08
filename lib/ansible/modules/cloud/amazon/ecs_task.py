@@ -249,23 +249,23 @@ def main():
 
     # Validate Inputs
     if module.params['operation'] == 'run':
-        if not 'task_definition' in module.params and module.params['task_definition'] is None:
+        if 'task_definition' not in module.params and module.params['task_definition'] is None:
             module.fail_json(msg="To run a task, a task_definition must be specified")
         task_to_list = module.params['task_definition']
         status_type = "RUNNING"
 
     if module.params['operation'] == 'start':
-        if not 'task_definition' in module.params and module.params['task_definition'] is None:
+        if 'task_definition' not in module.params and module.params['task_definition'] is None:
             module.fail_json(msg="To start a task, a task_definition must be specified")
-        if not 'container_instances' in module.params and module.params['container_instances'] is None:
+        if 'container_instances' not in module.params and module.params['container_instances'] is None:
             module.fail_json(msg="To start a task, container instances must be specified")
         task_to_list = module.params['task']
         status_type = "RUNNING"
 
     if module.params['operation'] == 'stop':
-        if not 'task' in module.params and module.params['task'] is None:
+        if 'task' not in module.params and module.params['task'] is None:
             module.fail_json(msg="To stop a task, a task must be specified")
-        if not 'task_definition' in module.params and module.params['task_definition'] is None:
+        if 'task_definition' not in module.params and module.params['task_definition'] is None:
             module.fail_json(msg="To stop a task, a task definition must be specified")
         task_to_list = module.params['task_definition']
         status_type = "STOPPED"

@@ -442,7 +442,7 @@ def main():
             module.fail_json(msg='Unable to add or update user: %s' % to_native(e), exception=traceback.format_exc())
 
             # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
-            #newuinfo = user_find(client, user, db_name)
+            # newuinfo = user_find(client, user, db_name)
             # if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
             #    module.exit_json(changed=False, user=user)
 

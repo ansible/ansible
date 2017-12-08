@@ -356,7 +356,7 @@ def main():
             'address': ipv4_networks[ipv4_network]['address'],
             'netmask': ipv4_networks[ipv4_network]['netmask']
         }
-        if not current_interface in interface_to_ipv4:
+        if current_interface not in interface_to_ipv4:
             interface_to_ipv4[current_interface] = []
             interface_to_ipv4[current_interface].append(current_network)
         else:
