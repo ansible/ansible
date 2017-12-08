@@ -407,7 +407,7 @@ class ValueBuilder(object):
         parent_schema = all_schema['data']
         meta = all_schema['meta']
 
-        schema = self._get_child(parent_schema, key)
+        schema = self._find_child(parent_path, parent_schema, key)
         if self._is_leaf(schema):
             path_type = schema['type']
             if path_type.get('primitive', False):
@@ -443,11 +443,20 @@ class ValueBuilder(object):
     def _get_choice_child(self, schema, qname):
         name_key = ':' in qname and 'qname' or 'name'
         for child_case in schema['cases']:
+            # look for direct child
             choice_child_schema = next(
                 (c for c in child_case['children']
                  if c.get(name_key, None) == qname), None)
             if choice_child_schema is not None:
                 return choice_child_schema
+
+            # look for nested choice
+            for child_schema in child_case['children']:
+                if child_schema['kind'] != 'choice':
+                    continue
+                choice_child_schema = self._get_choice_child(child_schema, qname)
+                if choice_child_schema is not None:
+                    return choice_child_schema
         return None
 
     def _is_leaf(self, schema):
