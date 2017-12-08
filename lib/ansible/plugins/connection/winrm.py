@@ -577,7 +577,7 @@ class Connection(ConnectionBase):
                             $buffer_size = %(buffer_size)d
                             $offset = %(offset)d
 
-                            $stream = New-Object -TypeName IO.FileStream($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+                            $stream = New-Object -TypeName IO.FileStream($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
                             $stream.Seek($offset, [System.IO.SeekOrigin]::Begin) > $null
                             $buffer = New-Object -TypeName byte[] $buffer_size
                             $bytes_read = $stream.Read($buffer, 0, $buffer_size)
