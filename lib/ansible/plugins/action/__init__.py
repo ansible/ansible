@@ -158,9 +158,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._compute_environment_string(final_environment)
 
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
-                                                                    task_vars=task_vars, module_compression=self._play_context.module_compression,
-                                                                    async_timeout=self._task.async_val, become=self._play_context.become,
-                                                                    become_method=self._play_context.become_method, become_user=self._play_context.become_user,
+                                                                    task_vars=task_vars, templar=self._templar,
+                                                                    module_compression=self._play_context.module_compression,
+                                                                    async_timeout=self._task.async_val,
+                                                                    become=self._play_context.become,
+                                                                    become_method=self._play_context.become_method,
+                                                                    become_user=self._play_context.become_user,
                                                                     become_password=self._play_context.become_pass,
                                                                     environment=final_environment)
 
@@ -177,10 +180,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if not isinstance(environments, list):
                 environments = [environments]
 
-            # the environments as inherited need to be reversed, to make
-            # sure we merge in the parent's values first so those in the
-            # block then task 'win' in precedence
-            environments.reverse()
+            # The order of environments matters to make sure we merge
+            # in the parent's values first so those in the block then
+            # task 'win' in precedence
             for environment in environments:
                 if environment is None or len(environment) == 0:
                     continue

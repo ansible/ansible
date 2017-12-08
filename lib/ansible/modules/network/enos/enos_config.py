@@ -164,10 +164,10 @@ backup_path:
   sample: /playbooks/ansible/backup/enos01.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.enos import load_config, get_config
-from ansible.module_utils.enos import enos_argument_spec
-from ansible.module_utils.enos import check_args as enos_check_args
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.enos.enos import load_config, get_config
+from ansible.module_utils.network.enos.enos import enos_argument_spec
+from ansible.module_utils.network.enos.enos import check_args as enos_check_args
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 DEFAULT_COMMIT_COMMENT = 'configured by enos_config'

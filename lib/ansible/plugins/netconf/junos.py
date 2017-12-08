@@ -107,10 +107,10 @@ class Netconf(NetconfBase):
                 port=obj._play_context.port or 830,
                 username=obj._play_context.remote_user,
                 password=obj._play_context.password,
-                key_filename=str(obj.key_filename),
+                key_filename=obj._play_context.private_key_file,
                 hostkey_verify=C.HOST_KEY_CHECKING,
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-                allow_agent=obj.allow_agent,
+                allow_agent=obj._play_context.allow_agent,
                 timeout=obj._play_context.timeout
             )
         except SSHUnknownHostError as exc:
@@ -152,3 +152,39 @@ class Netconf(NetconfBase):
     def halt(self):
         """reboot the device"""
         return self.m.halt().data_xml
+
+    @ensure_connected
+    def get(self, *args, **kwargs):
+        try:
+            return self.m.get(*args, **kwargs).data_xml
+        except RPCError as exc:
+            raise Exception(to_xml(exc.xml))
+
+    @ensure_connected
+    def get_config(self, *args, **kwargs):
+        try:
+            return self.m.get_config(*args, **kwargs).data_xml
+        except RPCError as exc:
+            raise Exception(to_xml(exc.xml))
+
+    @ensure_connected
+    def edit_config(self, *args, **kwargs):
+        try:
+            self.m.edit_config(*args, **kwargs).data_xml
+        except RPCError as exc:
+            raise Exception(to_xml(exc.xml))
+
+    @ensure_connected
+    def commit(self, *args, **kwargs):
+        try:
+            return self.m.commit(*args, **kwargs).data_xml
+        except RPCError as exc:
+            raise Exception(to_xml(exc.xml))
+
+    @ensure_connected
+    def validate(self, *args, **kwargs):
+        return self.m.validate(*args, **kwargs).data_xml
+
+    @ensure_connected
+    def discard_changes(self, *args, **kwargs):
+        return self.m.discard_changes(*args, **kwargs).data_xml

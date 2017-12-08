@@ -818,9 +818,9 @@ class TaskExecutor:
         stdin.close()
 
         if p.returncode == 0:
-            result = json.loads(stdout)
+            result = json.loads(to_text(stdout))
         else:
-            result = json.loads(stderr)
+            result = json.loads(to_text(stderr))
 
         if 'messages' in result:
             for msg in result.get('messages'):

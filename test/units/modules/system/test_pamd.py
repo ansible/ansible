@@ -45,6 +45,22 @@ class PamdRuleTestCase(unittest.TestCase):
         self.assertEqual(complicated, module_string.rstrip())
         self.assertEqual('try_first_pass', module.get_module_args_as_string())
 
+    def test_rule_with_arg(self):
+        line = "account       optional    pam_echo.so file=/etc/lockout.txt"
+        module = PamdRule.rulefromstring(stringline=line)
+        self.assertEqual(module.rule_type, 'account')
+        self.assertEqual(module.rule_control, 'optional')
+        self.assertEqual(module.rule_module_path, 'pam_echo.so')
+        self.assertEqual(module.rule_module_args, ['file=/etc/lockout.txt'])
+
+    def test_rule_with_args(self):
+        line = "account       optional    pam_echo.so file1=/etc/lockout1.txt file2=/etc/lockout2.txt"
+        module = PamdRule.rulefromstring(stringline=line)
+        self.assertEqual(module.rule_type, 'account')
+        self.assertEqual(module.rule_control, 'optional')
+        self.assertEqual(module.rule_module_path, 'pam_echo.so')
+        self.assertEqual(module.rule_module_args, ['file1=/etc/lockout1.txt', 'file2=/etc/lockout2.txt'])
+
     def test_less_than_in_args(self):
         rule = "auth requisite pam_succeed_if.so uid >= 1025 quiet_success"
         module = PamdRule.rulefromstring(stringline=rule)

@@ -194,11 +194,11 @@ backup_path:
   sample: /playbooks/ansible/backup/dellos9_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos9 import get_config, get_sublevel_config
-from ansible.module_utils.dellos9 import dellos9_argument_spec, check_args
-from ansible.module_utils.dellos9 import load_config, run_commands
-from ansible.module_utils.dellos9 import WARNING_PROMPTS_RE
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.dellos9.dellos9 import get_config, get_sublevel_config
+from ansible.module_utils.network.dellos9.dellos9 import dellos9_argument_spec, check_args
+from ansible.module_utils.network.dellos9.dellos9 import load_config, run_commands
+from ansible.module_utils.network.dellos9.dellos9 import WARNING_PROMPTS_RE
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 def get_candidate(module):

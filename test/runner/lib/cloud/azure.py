@@ -30,6 +30,14 @@ class AzureCloudProvider(CloudProvider):
     """Azure cloud provider plugin. Sets up cloud resources before delegation."""
     SHERLOCK_CONFIG_PATH = os.path.expanduser('~/.ansible-sherlock-ci.cfg')
 
+    def __init__(self, args):
+        """
+        :type args: TestConfig
+        """
+        super(AzureCloudProvider, self).__init__(args)
+
+        self.aci = None
+
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
         :type targets: tuple[TestTarget]
@@ -59,6 +67,13 @@ class AzureCloudProvider(CloudProvider):
             self._setup_dynamic()
 
         get_config(self.config_path)  # check required variables
+
+    def cleanup(self):
+        """Clean up the cloud resource and any temporary configuration files after tests complete."""
+        if self.aci:
+            self.aci.stop()
+
+        super(AzureCloudProvider, self).cleanup()
 
     def _setup_dynamic(self):
         """Request Azure credentials through Sherlock."""
@@ -95,6 +110,7 @@ class AzureCloudProvider(CloudProvider):
 
             if not self.args.explain:
                 response = aci_result['azure']
+                self.aci = aci
 
         if not self.args.explain:
             values = dict(
@@ -114,7 +130,7 @@ class AzureCloudProvider(CloudProvider):
         """
         :rtype: AnsibleCoreCI
         """
-        return AnsibleCoreCI(self.args, 'azure', 'sherlock', persist=False, stage=self.args.remote_stage)
+        return AnsibleCoreCI(self.args, 'azure', 'azure', persist=False, stage=self.args.remote_stage, provider=self.args.remote_provider)
 
 
 class AzureCloudEnvironment(CloudEnvironment):

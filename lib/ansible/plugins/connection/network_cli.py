@@ -84,6 +84,7 @@ class Connection(ConnectionBase):
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
+        self._play_context = play_context
 
         self._local = connection_loader.get('local', play_context, '/dev/null')
         self._local.set_options()
@@ -114,7 +115,7 @@ class Connection(ConnectionBase):
             try:
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-                for key in ('prompt', 'answer', 'send_only'):
+                for key in ('prompt', 'answer', 'sendonly'):
                     if cmd.get(key) is not None:
                         kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
                 return self.send(**kwargs)
@@ -215,7 +216,7 @@ class Connection(ConnectionBase):
         value to None and the _connected value to False
         '''
         ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(self._play_context.remote_addr, self._play_context.port, self._play_context.remote_user)
+        cp = ssh._create_control_path(self._play_context.remote_addr, self._play_context.port, self._play_context.remote_user, self._play_context.connection)
 
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         socket_path = unfrackpath(cp % dict(directory=tmp_path))
@@ -270,7 +271,6 @@ class Connection(ConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
-
             if prompts and not handled:
                 handled = self._handle_prompt(window, prompts, answer)
 
@@ -279,14 +279,14 @@ class Connection(ConnectionBase):
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompt=None, answer=None, send_only=False):
+    def send(self, command, prompt=None, answer=None, sendonly=False):
         '''
         Sends the command to the device in the opened shell
         '''
         try:
             self._history.append(command)
             self._ssh_shell.sendall(b'%s\r' % command)
-            if send_only:
+            if sendonly:
                 return
             response = self.receive(command, prompt, answer)
             return to_text(response, errors='surrogate_or_strict')

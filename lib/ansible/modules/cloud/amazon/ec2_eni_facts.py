@@ -68,9 +68,9 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (AnsibleAWSError,
-        ansible_dict_to_boto3_filter_list, boto3_conn,
-        boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-        connect_to_aws, ec2_argument_spec, get_aws_connection_info)
+                                      ansible_dict_to_boto3_filter_list, boto3_conn,
+                                      boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
+                                      connect_to_aws, ec2_argument_spec, get_aws_connection_info)
 
 
 def list_ec2_eni_boto3(connection, module):
@@ -99,7 +99,7 @@ def get_eni_info(interface):
     # Private addresses
     private_addresses = []
     for ip in interface.private_ip_addresses:
-        private_addresses.append({ 'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary })
+        private_addresses.append({'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary})
 
     interface_info = {'id': interface.id,
                       'subnet_id': interface.subnet_id,
@@ -152,7 +152,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(default=None, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 

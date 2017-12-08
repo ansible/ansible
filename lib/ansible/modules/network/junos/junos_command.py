@@ -171,9 +171,9 @@ import re
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netconf import exec_rpc
-from ansible.module_utils.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities
-from ansible.module_utils.netcli import Conditional, FailedConditionalError
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities
+from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
 from ansible.module_utils.six import string_types, iteritems
 
 

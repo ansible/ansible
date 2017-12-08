@@ -87,7 +87,12 @@ options:
     - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(num_cpus) (integer): Number of CPUs.'
+    - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
+    - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
+    - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for VM
+          will always be equal to the VM's memory size. version_added: 2.5"
+    - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines. version_added: 2.5.'
   guest_id:
     description:
     - Set the guest ID (Debian, RHEL, Windows...).
@@ -217,8 +222,12 @@ EXAMPLES = r'''
       datastore: g73_datastore
     hardware:
       memory_mb: 512
-      num_cpus: 1
+      num_cpus: 6
+      num_cpu_cores_per_socket: 3
       scsi: paravirtual
+      memory_reservation: 512
+      memory_reservation_lock: True
+      max_connections: 5
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -498,6 +507,7 @@ class PyVmomiDeviceHelper(object):
 
 class PyVmomiCache(object):
     """ This class caches references to objects which are requested multiples times but not modified """
+
     def __init__(self, content, dc_name=None):
         self.content = content
         self.dc_name = dc_name
@@ -612,7 +622,26 @@ class PyVmomiHelper(PyVmomi):
         # set cpu/memory/etc
         if 'hardware' in self.params:
             if 'num_cpus' in self.params['hardware']:
-                self.configspec.numCPUs = int(self.params['hardware']['num_cpus'])
+                try:
+                    num_cpus = int(self.params['hardware']['num_cpus'])
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.num_cpus attribute should be an integer value.")
+
+                if 'num_cpu_cores_per_socket' in self.params['hardware']:
+                    try:
+                        num_cpu_cores_per_socket = int(self.params['hardware']['num_cpu_cores_per_socket'])
+                    except ValueError as e:
+                        self.module.fail_json(msg="hardware.num_cpu_cores_per_socket attribute "
+                                                  "should be an integer value.")
+                    if num_cpus % num_cpu_cores_per_socket != 0:
+                        self.module.fail_json(msg="hardware.num_cpus attribute should be a multiple "
+                                                  "of hardware.num_cpu_cores_per_socket")
+
+                    self.configspec.numCoresPerSocket = num_cpu_cores_per_socket
+                    if vm_obj is None or self.configspec.numCoresPerSocket != vm_obj.config.hardware.numCoresPerSocket:
+                        self.change_detected = True
+
+                self.configspec.numCPUs = num_cpus
                 if vm_obj is None or self.configspec.numCPUs != vm_obj.config.hardware.numCPU:
                     self.change_detected = True
             # num_cpu is mandatory for VM creation
@@ -635,6 +664,25 @@ class PyVmomiHelper(PyVmomi):
             if 'hotadd_cpu' in self.params['hardware']:
                 self.configspec.cpuHotAddEnabled = bool(self.params['hardware']['hotadd_cpu'])
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
+                    self.change_detected = True
+
+            if 'memory_reservation' in self.params['hardware']:
+                memory_reservation_mb = 0
+                try:
+                    memory_reservation_mb = int(self.params['hardware']['memory_reservation'])
+                except ValueError as e:
+                    self.module.fail_json(msg="Failed to set memory_reservation value."
+                                              "Valid value for memory_reservation value in MB (integer): %s" % e)
+
+                mem_alloc = vim.ResourceAllocationInfo()
+                mem_alloc.reservation = memory_reservation_mb
+                self.configspec.memoryAllocation = mem_alloc
+                if vm_obj is None or self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
+                    self.change_detected = True
+
+            if 'memory_reservation_lock' in self.params['hardware']:
+                self.configspec.memoryReservationLockedToMax = bool(self.params['hardware']['memory_reservation_lock'])
+                if vm_obj is None or self.configspec.memoryReservationLockedToMax != vm_obj.config.memoryReservationLockedToMax:
                     self.change_detected = True
 
     def configure_cdrom(self, vm_obj):
@@ -686,6 +734,19 @@ class PyVmomiHelper(PyVmomi):
             if cdrom_spec:
                 self.change_detected = True
                 self.configspec.deviceChange.append(cdrom_spec)
+
+    def configure_hardware_params(self, vm_obj):
+        """
+        Function to configure hardware related configuration of virtual machine
+        Args:
+            vm_obj: virtual machine object
+        """
+        # maxMksConnections == max_connections
+        if 'hardware' in self.params:
+            if 'max_connections' in self.params['hardware']:
+                self.configspec.maxMksConnections = int(self.params['hardware']['max_connections'])
+                if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.hardware.maxMksConnections:
+                    self.change_detected = True
 
     def get_vm_cdrom_device(self, vm=None):
         if vm is None:
@@ -789,7 +850,7 @@ class PyVmomiHelper(PyVmomi):
                 if (nic.device.backing and not hasattr(nic.device.backing, 'port')):
                     nic_change_detected = True
                 elif (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
-                      nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
+                                              nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -1324,6 +1385,7 @@ class PyVmomiHelper(PyVmomi):
         self.configspec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
+        self.configure_hardware_params(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
@@ -1442,6 +1504,7 @@ class PyVmomiHelper(PyVmomi):
 
         self.configure_guestid(vm_obj=self.current_vm_obj)
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
+        self.configure_hardware_params(vm_obj=self.current_vm_obj)
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)

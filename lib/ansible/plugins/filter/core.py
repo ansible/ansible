@@ -141,7 +141,7 @@ def strftime(string_format, second=None):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return shlex_quote(a)
+    return shlex_quote(to_text(a))
 
 
 def fileglob(pathname):

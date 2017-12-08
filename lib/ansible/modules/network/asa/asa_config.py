@@ -195,11 +195,10 @@ backup_path:
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import get_config, load_config, run_commands
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils._text import to_native
-
 
 
 def get_candidate(module):
@@ -210,6 +209,7 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
 
 def run(module, result):
     match = module.params['match']
@@ -250,6 +250,7 @@ def run(module, result):
         if not module.check_mode:
             run_commands(module, 'write mem')
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -292,7 +293,6 @@ def main():
     check_args(module)
 
     config = None
-
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)

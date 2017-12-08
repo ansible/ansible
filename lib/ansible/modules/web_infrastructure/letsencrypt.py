@@ -69,7 +69,7 @@ options:
   csr:
     description:
       - "File containing the CSR for the new certificate."
-      - "Can be created with C(openssl csr ...)."
+      - "Can be created with C(openssl req ...)."
       - "The CSR may contain multiple Subject Alternate Names, but each one
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
@@ -166,8 +166,22 @@ import traceback
 from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.urls import fetch_url as _fetch_url
+
+
+def _lowercase_fetch_url(*args, **kwargs):
+    '''
+     Add lowercase representations of the header names as dict keys
+
+    '''
+    response, info = _fetch_url(*args, **kwargs)
+
+    info.update(dict((header.lower(), value) for (header, value) in info.items()))
+    return response, info
+
+
+fetch_url = _lowercase_fetch_url
 
 
 def nopad_b64(data):
@@ -177,12 +191,11 @@ def nopad_b64(data):
 def simple_get(module, url):
     resp, info = fetch_url(module, url, method='GET')
 
-    result = None
+    result = {}
     try:
         content = resp.read()
     except AttributeError:
-        if info['body']:
-            content = info['body']
+        content = info.get('body')
 
     if content:
         if info['content-type'].startswith('application/json'):
@@ -279,6 +292,7 @@ class ACMEDirectory(object):
     require authentication).
     https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.2
     '''
+
     def __init__(self, module):
         self.module = module
         self.directory_root = module.params['acme_directory']
@@ -304,6 +318,7 @@ class ACMEAccount(object):
     ACME server. Provides access to account bound information like
     the currently active authorizations and valid certificates
     '''
+
     def __init__(self, module):
         self.module = module
         self.key = module.params['account_key']
@@ -353,7 +368,7 @@ class ACMEAccount(object):
 
         pub_hex, pub_exp = re.search(
             r"modulus:\n\s+00:([a-f0-9\:\s]+?)\npublicExponent: ([0-9]+)",
-            out.decode('utf8'), re.MULTILINE | re.DOTALL).groups()
+            to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL).groups()
         pub_exp = "{0:x}".format(int(pub_exp))
         if len(pub_exp) % 2:
             pub_exp = "0{0}".format(pub_exp)
@@ -383,16 +398,15 @@ class ACMEAccount(object):
             "header": self.jws_header,
             "protected": protected64,
             "payload": payload64,
-            "signature": nopad_b64(out),
+            "signature": nopad_b64(to_bytes(out)),
         })
 
         resp, info = fetch_url(self.module, url, data=data, method='POST')
-        result = None
+        result = {}
         try:
             content = resp.read()
         except AttributeError:
-            if info['body']:
-                content = info['body']
+            content = info.get('body')
 
         if content:
             if info['content-type'].startswith('application/json'):
@@ -513,6 +527,7 @@ class ACMEClient(object):
     start and validate ACME challenges and download the respective
     certificates.
     '''
+
     def __init__(self, module):
         self.module = module
         self.challenge = module.params['challenge']
@@ -538,10 +553,10 @@ class ACMEClient(object):
         _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         domains = set([])
-        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", out.decode('utf8'))
+        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
         if common_name is not None:
             domains.add(common_name.group(1))
-        subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", out.decode('utf8'), re.MULTILINE | re.DOTALL)
+        subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
         if subject_alt_names is not None:
             for san in subject_alt_names.group(1).split(", "):
                 if san.startswith("DNS:"):
@@ -638,7 +653,7 @@ class ACMEClient(object):
             elif type == 'dns-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.4
                 resource = '_acme-challenge'
-                value = nopad_b64(hashlib.sha256(keyauthorization).digest()).encode('utf8')
+                value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
             else:
                 continue
 

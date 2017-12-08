@@ -171,8 +171,8 @@ import os
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 
 
 def execute_show_command(command, module):
@@ -333,6 +333,7 @@ def write_on_file(content, filename, module):
 
     return filepath
 
+
 def main():
     argument_spec = dict(
         action=dict(required=True, choices=['create', 'add', 'compare', 'delete', 'delete_all']),
@@ -421,4 +422,4 @@ def main():
     module.exit_json(**result)
 
 if __name__ == '__main__':
-        main()
+    main()

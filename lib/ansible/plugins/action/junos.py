@@ -25,8 +25,8 @@ import copy
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
-from ansible.module_utils.network_common import load_provider
-from ansible.module_utils.junos import junos_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
+from ansible.module_utils.network.junos.junos import junos_provider_spec
 from ansible.plugins.loader import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 
@@ -42,32 +42,29 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
         module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
-
         if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
             return super(ActionModule, self).run(tmp, task_vars)
 
-        provider = load_provider(junos_provider_spec, self._task.args)
-
-        pc = copy.deepcopy(self._play_context)
-        pc.network_os = 'junos'
-
-        pc.remote_addr = provider['host'] or self._play_context.remote_addr
-
-        if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
-            pc.connection = 'network_cli'
-            pc.port = int(provider['port'] or self._play_context.port or 22)
-        else:
-            pc.connection = 'netconf'
-            pc.port = int(provider['port'] or self._play_context.port or 830)
-
-        pc.remote_user = provider['username'] or self._play_context.connection_user
-        pc.password = provider['password'] or self._play_context.password
-        pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
-
-        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         socket_path = None
+
         if self._play_context.connection == 'local':
+            provider = load_provider(junos_provider_spec, self._task.args)
+            pc = copy.deepcopy(self._play_context)
+            pc.network_os = 'junos'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
+            if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
+                pc.connection = 'network_cli'
+                pc.port = int(provider['port'] or self._play_context.port or 22)
+            else:
+                pc.connection = 'netconf'
+                pc.port = int(provider['port'] or self._play_context.port or 830)
+
+            pc.remote_user = provider['username'] or self._play_context.connection_user
+            pc.password = provider['password'] or self._play_context.password
+            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+
+            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             socket_path = connection.run()
@@ -78,8 +75,12 @@ class ActionModule(_ActionModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
+        else:
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using connection=%s and will be ignored' % self._play_context.connection)
 
-        if pc.connection == 'network_cli':
+        if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module
             if socket_path is None:

@@ -24,7 +24,7 @@ import re
 from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
@@ -72,7 +72,12 @@ class Cliconf(CliconfBase):
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
 
-    def commit(self, comment=None):
+    def commit(self, *args, **kwargs):
+        """Execute commit command on remote device.
+        :kwargs:
+            comment: Optional commit description.
+        """
+        comment = kwargs.get('comment', None)
         command = b'commit'
         if comment:
             command += b' comment {0}'.format(comment)

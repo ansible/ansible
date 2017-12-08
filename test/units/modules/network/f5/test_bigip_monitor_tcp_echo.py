@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public Liccense for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -30,21 +16,26 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import F5ModuleError
-from units.modules.utils import set_module_args
 
 try:
     from library.bigip_monitor_tcp_echo import Parameters
     from library.bigip_monitor_tcp_echo import ModuleManager
     from library.bigip_monitor_tcp_echo import ArgumentSpec
+    from library.bigip_monitor_tcp_echo import HAS_F5SDK
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_monitor_tcp_echo import Parameters
         from ansible.modules.network.f5.bigip_monitor_tcp_echo import ModuleManager
         from ansible.modules.network.f5.bigip_monitor_tcp_echo import ArgumentSpec
+        from ansible.modules.network.f5.bigip_monitor_tcp_echo import HAS_F5SDK
         from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 

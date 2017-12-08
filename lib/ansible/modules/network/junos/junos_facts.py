@@ -78,9 +78,9 @@ ansible_facts:
   type: dict
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netconf import exec_rpc
-from ansible.module_utils.junos import junos_argument_spec, get_param
-from ansible.module_utils.junos import get_configuration, get_connection
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
+from ansible.module_utils.network.junos.junos import get_configuration, get_connection
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 

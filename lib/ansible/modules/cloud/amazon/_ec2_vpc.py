@@ -189,6 +189,7 @@ def get_vpc_info(vpc):
         'state': vpc.state,
     })
 
+
 def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     """
     Finds a VPC that matches a specific id or cidr + tags
@@ -211,7 +212,7 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 
     # Check for existing VPC by cidr_block or id
     if vpc_id is not None:
-        found_vpcs = vpc_conn.get_all_vpcs(None, {'vpc-id': vpc_id, 'state': 'available',})
+        found_vpcs = vpc_conn.get_all_vpcs(None, {'vpc-id': vpc_id, 'state': 'available', })
 
     else:
         previous_vpcs = vpc_conn.get_all_vpcs(None, {'cidr': cidr, 'state': 'available'})
@@ -234,8 +235,8 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 
     return (found_vpc)
 
-def routes_match(rt_list=None, rt=None, igw=None):
 
+def routes_match(rt_list=None, rt=None, igw=None):
     """
     Check if the route table has all routes as in given list
 
@@ -284,6 +285,7 @@ def routes_match(rt_list=None, rt=None, igw=None):
     else:
         return True
 
+
 def rtb_changed(route_tables=None, vpc_conn=None, module=None, vpc=None, igw=None):
     """
     Checks if the remote routes match the local routes.
@@ -299,7 +301,7 @@ def rtb_changed(route_tables=None, vpc_conn=None, module=None, vpc=None, igw=Non
         False when both routes and subnet associations matched.
 
     """
-    #We add a one for the main table
+    # We add a one for the main table
     rtb_len = len(route_tables) + 1
     remote_rtb_len = len(vpc_conn.get_all_route_tables(filters={'vpc_id': vpc.id}))
     if remote_rtb_len != rtb_len:
@@ -307,13 +309,13 @@ def rtb_changed(route_tables=None, vpc_conn=None, module=None, vpc=None, igw=Non
     for rt in route_tables:
         rt_id = None
         for sn in rt['subnets']:
-            rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id })
+            rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id})
             if len(rsn) != 1:
                 module.fail_json(
-                    msg='The subnet {0} to associate with route_table {1} ' \
+                    msg='The subnet {0} to associate with route_table {1} '
                     'does not exist, aborting'.format(sn, rt)
                 )
-            nrt  = vpc_conn.get_all_route_tables(filters={'vpc_id': vpc.id, 'association.subnet-id': rsn[0].id})
+            nrt = vpc_conn.get_all_route_tables(filters={'vpc_id': vpc.id, 'association.subnet-id': rsn[0].id})
             if not nrt:
                 return True
             else:
@@ -388,10 +390,10 @@ def create_vpc(module, vpc_conn):
                     time.sleep(5)
             if wait and wait_timeout <= time.time():
                 # waiting took too long
-                module.fail_json(msg = "wait for vpc availability timeout on %s" % time.asctime())
+                module.fail_json(msg="wait for vpc availability timeout on %s" % time.asctime())
 
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     # Done with base VPC, now change to attributes and features.
 
@@ -408,7 +410,6 @@ def create_vpc(module, vpc_conn):
         if new_tags:
             vpc_conn.create_tags(vpc.id, new_tags)
 
-
     # boto doesn't appear to have a way to determine the existing
     # value of the dns attributes, so we just set them.
     # It also must be done one at a time.
@@ -420,7 +421,7 @@ def create_vpc(module, vpc_conn):
         if not isinstance(subnets, list):
             module.fail_json(msg='subnets needs to be a list of cidr blocks')
 
-        current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
+        current_subnets = vpc_conn.get_all_subnets(filters={'vpc_id': vpc.id})
 
         # First add all new subnets
         for subnet in subnets:
@@ -468,7 +469,7 @@ def create_vpc(module, vpc_conn):
                         # to create tags results in exception.
                         # boto doesn't seem to refresh 'state' of the newly created subnet, i.e.: it's always 'pending'
                         # so i resorted to polling vpc_conn.get_all_subnets with the id of the newly added subnet
-                        while len(vpc_conn.get_all_subnets(filters={ 'subnet-id': new_subnet.id })) == 0:
+                        while len(vpc_conn.get_all_subnets(filters={'subnet-id': new_subnet.id})) == 0:
                             time.sleep(0.1)
 
                         vpc_conn.create_tags(new_subnet.id, new_subnet_tags)
@@ -548,7 +549,7 @@ def create_vpc(module, vpc_conn):
                     if route['gw'] == 'igw':
                         if not internet_gateway:
                             module.fail_json(
-                                msg='You asked for an Internet Gateway ' \
+                                msg='You asked for an Internet Gateway '
                                 '(igw) route, but you have no Internet Gateway'
                             )
                         route_kwargs['gateway_id'] = igw.id
@@ -564,10 +565,10 @@ def create_vpc(module, vpc_conn):
 
                 # Associate with subnets
                 for sn in rt['subnets']:
-                    rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id })
+                    rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id})
                     if len(rsn) != 1:
                         module.fail_json(
-                            msg='The subnet {0} to associate with route_table {1} ' \
+                            msg='The subnet {0} to associate with route_table {1} '
                             'does not exist, aborting'.format(sn, rt)
                         )
                     rsn = rsn[0]
@@ -576,7 +577,7 @@ def create_vpc(module, vpc_conn):
                     old_rt = vpc_conn.get_all_route_tables(
                         filters={'association.subnet_id': rsn.id, 'vpc_id': vpc.id}
                     )
-                    old_rt = [ x for x in old_rt if x.id is not None ]
+                    old_rt = [x for x in old_rt if x.id is not None]
                     if len(old_rt) == 1:
                         old_rt = old_rt[0]
                         association_id = None
@@ -591,7 +592,7 @@ def create_vpc(module, vpc_conn):
                 changed = True
             except EC2ResponseError as e:
                 module.fail_json(
-                    msg='Unable to create and associate route table {0}, error: ' \
+                    msg='Unable to create and associate route table {0}, error: '
                     '{1}'.format(rt, e)
                 )
 
@@ -625,7 +626,7 @@ def create_vpc(module, vpc_conn):
 
     created_vpc_id = vpc.id
     returned_subnets = []
-    current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
+    current_subnets = vpc_conn.get_all_subnets(filters={'vpc_id': vpc.id})
 
     for sn in current_subnets:
         returned_subnets.append({
@@ -646,6 +647,7 @@ def create_vpc(module, vpc_conn):
         returned_subnets.sort(key=lambda x: order.get(x['cidr'], subnets_in_play))
 
     return (vpc_dict, created_vpc_id, returned_subnets, igw_id, changed)
+
 
 def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     """
@@ -671,8 +673,8 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 
     if vpc is not None:
         if vpc.state == 'available':
-            terminated_vpc_id=vpc.id
-            vpc_dict=get_vpc_info(vpc)
+            terminated_vpc_id = vpc.id
+            vpc_dict = get_vpc_info(vpc)
             try:
                 subnets = vpc_conn.get_all_subnets(filters={'vpc_id': vpc.id})
                 for sn in subnets:
@@ -709,18 +711,18 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        cidr_block = dict(),
-        instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
-        wait = dict(type='bool', default=False),
-        wait_timeout = dict(default=300),
-        dns_support = dict(type='bool', default=True),
-        dns_hostnames = dict(type='bool', default=True),
-        subnets = dict(type='list'),
-        vpc_id = dict(),
-        internet_gateway = dict(type='bool', default=False),
-        resource_tags = dict(type='dict', required=True),
-        route_tables = dict(type='list'),
-        state = dict(choices=['present', 'absent'], default='present'),
+        cidr_block=dict(),
+        instance_tenancy=dict(choices=['default', 'dedicated'], default='default'),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(default=300),
+        dns_support=dict(type='bool', default=True),
+        dns_hostnames=dict(type='bool', default=True),
+        subnets=dict(type='list'),
+        vpc_id=dict(),
+        internet_gateway=dict(type='bool', default=False),
+        resource_tags=dict(type='dict', required=True),
+        route_tables=dict(type='list'),
+        state=dict(choices=['present', 'absent'], default='present'),
     )
     )
 
@@ -740,7 +742,7 @@ def main():
         try:
             vpc_conn = connect_to_aws(boto.vpc, region, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg = str(e))
+            module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
 

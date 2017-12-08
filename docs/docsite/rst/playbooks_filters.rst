@@ -391,7 +391,7 @@ value using the same ``show vlan`` command.::
         value: present
 
 Another common use case for parsing CLI commands is to break a large command
-into blocks that can parsed.  This can be done using the ``start_block`` and
+into blocks that can be parsed.  This can be done using the ``start_block`` and
 ``end_block`` directives to break the command into blocks that can be parsed.::
 
     ---

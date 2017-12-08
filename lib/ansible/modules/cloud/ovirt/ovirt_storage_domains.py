@@ -122,6 +122,12 @@ options:
         description:
             - "If I(True) storage domain will be formatted after removing it from oVirt/RHV."
             - "This parameter is relevant only when C(state) is I(absent)."
+    discard_after_delete:
+        description:
+            - "If I(True) storage domain blocks will be discarded upon deletion. Enabled by default."
+            - "This parameter is relevant only for block based storage domains."
+        version_added: 2.5
+
 extends_documentation_fragment: ovirt
 '''
 
@@ -300,6 +306,8 @@ class StorageDomainModule(BaseModule):
             host=otypes.Host(
                 name=self._module.params['host'],
             ),
+            discard_after_delete=self._module.params['discard_after_delete']
+            if storage_type in ['iscsi', 'fcp'] else False,
             storage=otypes.HostStorage(
                 type=otypes.StorageType(storage_type),
                 logical_units=[
@@ -498,6 +506,7 @@ def main():
         fcp=dict(default=None, type='dict'),
         destroy=dict(type='bool', default=False),
         format=dict(type='bool', default=False),
+        discard_after_delete=dict(type='bool', default=True)
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -522,7 +531,12 @@ def main():
             host_param = module.params['host']
             if not host_param:
                 host = search_by_attributes(connection.system_service().hosts_service(), status='up')
-                host_param = host.name if host is not None else None
+                if host is None:
+                    raise Exception(
+                        "Not possible to remove storage domain '%s' "
+                        "because no host found with status `up`." % module.params['name']
+                    )
+                host_param = host.name
             ret = storage_domains_module.remove(
                 destroy=module.params['destroy'],
                 format=module.params['format'],

@@ -22,6 +22,7 @@ short_description: Manage Interface on Cisco IOS XR network devices
 description:
   - This module provides declarative management of Interfaces
     on Cisco IOS XR network devices.
+extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XR 6.1.2
 options:
@@ -141,9 +142,9 @@ from copy import deepcopy
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.iosxr import get_config, load_config
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
-from ansible.module_utils.network_common import conditional, remove_default_spec
+from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
 
 def validate_mtu(value, module):
@@ -228,7 +229,7 @@ def map_params_to_obj(module):
 
 
 def map_config_to_obj(module):
-    data = get_config(module, flags=['interface'])
+    data = get_config(module, config_filter='interface')
     interfaces = data.strip().rstrip('!').split('!')
 
     if not interfaces:
@@ -387,7 +388,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
 
@@ -400,9 +400,10 @@ def main():
     result['warnings'] = warnings
 
     if commands:
-        if not module.check_mode:
-            load_config(module, commands, result['warnings'], commit=True)
-            exec_command(module, 'exit')
+        commit = not module.check_mode
+        diff = load_config(module, commands, commit=commit)
+        if diff:
+            result['diff'] = dict(prepared=diff)
         result['changed'] = True
 
     failed_conditions = check_declarative_intent_params(module, want, result)

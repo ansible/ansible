@@ -657,7 +657,6 @@ def compare_listeners(connection, module, current_listeners, new_listeners, purg
 
 
 def compare_rules(connection, module, current_listeners, listener):
-
     """
     Compare rules and return rules to add, rules to modify and rules to remove
     Rules are compared based on priority

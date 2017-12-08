@@ -46,7 +46,7 @@
     that:
       - "fetch_small_stat.stat.exists"
       - "fetch_small_stat.stat.isreg"
-      - "fetch_small_stat.stat.md5 == fetch_small.md5sum"
+      - "fetch_small_stat.stat.checksum == fetch_small.checksum"
 
 - name: fetch the same small file
   fetch: src="C:/Windows/win.ini" dest={{ host_output_dir }}
@@ -75,7 +75,7 @@
     that:
       - "fetch_flat_stat.stat.exists"
       - "fetch_flat_stat.stat.isreg"
-      - "fetch_flat_stat.stat.md5 == fetch_flat.md5sum"
+      - "fetch_flat_stat.stat.checksum == fetch_flat.checksum"
 
 #- name: fetch a small file to flat directory (without trailing slash)
 #  fetch: src="C:/Windows/win.ini" dest="{{ host_output_dir }}" flat=yes
@@ -104,7 +104,7 @@
     that:
       - "fetch_large_stat.stat.exists"
       - "fetch_large_stat.stat.isreg"
-      - "fetch_large_stat.stat.md5 == fetch_large.md5sum"
+      - "fetch_large_stat.stat.checksum == fetch_large.checksum"
 
 - name: fetch a large binary file again
   fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
@@ -133,7 +133,7 @@
     that:
       - "fetch_small_bs_stat.stat.exists"
       - "fetch_small_bs_stat.stat.isreg"
-      - "fetch_small_bs_stat.stat.md5 == fetch_small_bs.md5sum"
+      - "fetch_small_bs_stat.stat.checksum == fetch_small_bs.checksum"
 
 - name: attempt to fetch a non-existent file - do not fail on missing
   fetch: src="C:/this_file_should_not_exist.txt" dest={{ host_output_dir }}

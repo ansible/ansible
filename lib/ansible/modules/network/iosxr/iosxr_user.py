@@ -26,6 +26,7 @@ description:
     either individual usernames or the aggregate of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XR 6.1.2
 options:
@@ -164,9 +165,9 @@ from functools import partial
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.iosxr import get_config, load_config
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
 
 try:
     from base64 import b64decode
@@ -228,7 +229,7 @@ def map_obj_to_commands(updates, module):
 
 
 def map_config_to_obj(module):
-    data = get_config(module, flags=['username'])
+    data = get_config(module, config_filter='username')
     users = data.strip().rstrip('!').split('!')
 
     if not users:
@@ -453,8 +454,6 @@ def main():
             'To set a user password use "configured_password" instead.'
         )
 
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     want = map_params_to_obj(module)
@@ -476,8 +475,10 @@ def main():
         module.fail_json(msg='cannot delete the `admin` account')
 
     if commands:
-        if not module.check_mode:
-            load_config(module, commands, result['warnings'], commit=True)
+        commit = not module.check_mode
+        diff = load_config(module, commands, commit=commit)
+        if diff:
+            result['diff'] = dict(prepared=diff)
         result['changed'] = True
 
     if module.params['state'] == 'present' and (module.params['public_key_contents'] or module.params['public_key']):

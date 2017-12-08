@@ -168,8 +168,8 @@ vlan_list:
 """
 import re
 
-from ansible.module_utils.nxos import run_commands, get_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands, get_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
 
@@ -281,6 +281,15 @@ class Interfaces(FactsBase):
         ('prefix', 'subnet')
     ])
 
+    def ipv6_structure_op_supported(self):
+        data = self.run('show version', 'json')
+        if data:
+            unsupported_versions = ['I2', 'F1', 'A8']
+            for ver in unsupported_versions:
+                if ver in data.get('kickstart_ver_str'):
+                    return False
+            return True
+
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
@@ -289,7 +298,7 @@ class Interfaces(FactsBase):
         if data:
             self.facts['interfaces'] = self.populate_interfaces(data)
 
-        data = self.run('show ipv6 interface', 'json')
+        data = self.run('show ipv6 interface', 'json') if self.ipv6_structure_op_supported() else None
         if data and not isinstance(data, string_types):
             self.parse_ipv6_interfaces(data)
 

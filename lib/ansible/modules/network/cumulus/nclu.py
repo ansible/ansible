@@ -99,7 +99,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def command_helper(module, command, errmsg=None):
     """Run a command, catch any nclu errors"""
-    (_rc, output, _err) = module.run_command("/usr/bin/net %s"%command)
+    (_rc, output, _err) = module.run_command("/usr/bin/net %s" % command)
     if _rc or 'ERROR' in output or 'ERROR' in _err:
         module.fail_json(msg=errmsg or output)
     return str(output)
@@ -141,7 +141,7 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
     # Run all of the net commands
     output_lines = []
     for line in commands:
-        output_lines += [command_helper(module, line.strip(), "Failed on line %s"%line)]
+        output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
     output = "\n".join(output_lines)
 
     # If pending changes changed, report a change.
@@ -153,7 +153,7 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
 
     # Do the commit.
     if do_commit:
-        result = command_helper(module, "commit description '%s'"%description)
+        result = command_helper(module, "commit description '%s'" % description)
         if "commit ignored" in result:
             _changed = False
             command_helper(module, "abort")
@@ -165,12 +165,12 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
 
 def main(testing=False):
     module = AnsibleModule(argument_spec=dict(
-        commands = dict(required=False, type='list'),
-        template = dict(required=False, type='str'),
-        description = dict(required=False, type='str', default="Ansible-originated commit"),
-        abort = dict(required=False, type='bool', default=False),
-        commit = dict(required=False, type='bool', default=False),
-        atomic = dict(required=False, type='bool', default=False)),
+        commands=dict(required=False, type='list'),
+        template=dict(required=False, type='str'),
+        description=dict(required=False, type='str', default="Ansible-originated commit"),
+        abort=dict(required=False, type='bool', default=False),
+        commit=dict(required=False, type='bool', default=False),
+        atomic=dict(required=False, type='bool', default=False)),
         mutually_exclusive=[('commands', 'template'),
                             ('commit', 'atomic'),
                             ('abort', 'atomic')]

@@ -32,10 +32,10 @@ class TestJunosCommandModule(TestJunosModule):
     def setUp(self):
         super(TestJunosCommandModule, self).setUp()
 
-        self.mock_lock_configuration = patch('ansible.module_utils.junos.lock_configuration')
+        self.mock_lock_configuration = patch('ansible.module_utils.network.junos.junos.lock_configuration')
         self.lock_configuration = self.mock_lock_configuration.start()
 
-        self.mock_unlock_configuration = patch('ansible.module_utils.junos.unlock_configuration')
+        self.mock_unlock_configuration = patch('ansible.module_utils.network.junos.junos.unlock_configuration')
         self.unlock_configuration = self.mock_unlock_configuration.start()
 
         self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_netconf.commit_configuration')
@@ -44,13 +44,13 @@ class TestJunosCommandModule(TestJunosModule):
         self.mock_conn = patch('ansible.module_utils.connection.Connection')
         self.conn = self.mock_conn.start()
 
-        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
         self.netconf_conn = self.mock_netconf.start()
 
-        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
         self.netconf_rpc = self.mock_netconf_rpc.start()
 
-        self.mock_get_capabilities = patch('ansible.module_utils.junos.get_capabilities')
+        self.mock_get_capabilities = patch('ansible.module_utils.network.junos.junos.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
         self.get_capabilities.return_value = {'network_api': 'netconf'}
 

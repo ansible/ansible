@@ -1,8 +1,8 @@
 #!powershell
 # This file is part of Ansible
 
-# (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -52,7 +52,7 @@ Function Copy-File($source, $dest) {
     }
 
     if (Test-Path -Path $dest -PathType Container) {
-        Fail-Json -obj $result -message "cannot copy file from $source to $($dest): dest is already a folder"
+        Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': dest is already a folder"
     } elseif (Test-Path -Path $dest -PathType Leaf) {
         if ($force) {
             $target_checksum = Get-FileChecksum -path $dest
@@ -68,7 +68,7 @@ Function Copy-File($source, $dest) {
         $file_dir = [System.IO.Path]::GetDirectoryName($dest)
         # validate the parent dir is not a file and that it exists
         if (Test-Path -Path $file_dir -PathType Leaf) {
-            Fail-Json -obj $result -message "cannot copy file from $source to $($dest): object at dest parent dir is not a folder"
+            Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': object at dest parent dir is not a folder"
         } elseif (-not (Test-Path -Path $file_dir)) {
             # directory doesn't exist, need to create
             New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
@@ -87,14 +87,6 @@ Function Copy-File($source, $dest) {
         }
         $diff += "+$dest`n"
 
-        # make sure we set the attributes accordingly
-        if (-not $check_mode) {
-            $source_file = Get-Item -Path $source -Force
-            $dest_file = Get-Item -Path $dest -Force
-            $dest_file.Attributes = $source_file.Attributes
-            $dest_file.SetAccessControl($source_file.GetAccessControl())
-        }
-
         $result.changed = $true
     }
 
@@ -110,22 +102,15 @@ Function Copy-Folder($source, $dest) {
     if (-not (Test-Path -Path $dest -PathType Container)) {
         $parent_dir = [System.IO.Path]::GetDirectoryName($dest)
         if (Test-Path -Path $parent_dir -PathType Leaf) {
-            Fail-Json -obj $result -message "cannot copy file from $source to $($dest): object at dest parent dir is not a folder"
+            Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': object at dest parent dir is not a folder"
         }
         if (Test-Path -Path $dest -PathType Leaf) {
-            Fail-Json -obj $result -message "cannot copy folder from $source to $($dest): dest is already a file"
+            Fail-Json -obj $result -message "cannot copy folder from '$source' to '$dest': dest is already a file"
         }
 
         New-Item -Path $dest -ItemType Container -WhatIf:$check_mode | Out-Null
         $diff += "+$dest\`n"
         $result.changed = $true
-
-        if (-not $check_mode) {
-            $source_folder = Get-Item -Path $source -Force
-            $dest_folder = Get-Item -Path $source -Force
-            $dest_folder.Attributes = $source_folder.Attributes
-            $dest_folder.SetAccessControl($source_folder.GetAccessControl())
-        }
     }
 
     $child_items = Get-ChildItem -Path $source -Force
@@ -173,10 +158,10 @@ Function Extract-Zip($src, $dest) {
             if ($archive_name.EndsWith("/") -or $archive_name.EndsWith("`\")) {
                 $base64_name = $archive_name.Substring(0, $archive_name.Length - 1)
             } else {
-                throw "invalid base64 archive name $archive_name"
+                throw "invalid base64 archive name '$archive_name'"
             }
         } else {
-            throw "invalid base64 length $archive_name"
+            throw "invalid base64 length '$archive_name'"
         }
 
         # to handle unicode character, win_copy action plugin has encoded the filename
@@ -260,7 +245,7 @@ if ($mode -eq "query") {
                 }
             }
         } elseif (Test-Path -Path $filepath -PathType Container) {
-            Fail-Json -obj $result -message "cannot copy file to dest $($filepath): object at path is already a directory"
+            Fail-Json -obj $result -message "cannot copy file to dest '$filepath': object at path is already a directory"
         } else {
             $changed_files += $file
         }
@@ -272,10 +257,10 @@ if ($mode -eq "query") {
         $dirpath = Join-Path -Path $dest -ChildPath $dirname
         $parent_dir = [System.IO.Path]::GetDirectoryName($dirpath)
         if (Test-Path -Path $parent_dir -PathType Leaf) {
-            Fail-Json -obj $result -message "cannot copy folder to dest $($dirpath): object at parent directory path is already a file"
+            Fail-Json -obj $result -message "cannot copy folder to dest '$dirpath': object at parent directory path is already a file"
         }
         if (Test-Path -Path $dirpath -PathType Leaf) {
-            Fail-Json -obj $result -message "cannot copy folder to dest $($dirpath): object at path is already a file"
+            Fail-Json -obj $result -message "cannot copy folder to dest '$dirpath': object at path is already a file"
         } elseif (-not (Test-Path -Path $dirpath -PathType Container)) {
             $changed_directories += $directory
         }
@@ -291,7 +276,7 @@ if ($mode -eq "query") {
     # expanded this will always result in a change as the calculation is done
     # on the win_copy action plugin and is only run if a change needs to occur
     if (-not (Test-Path -Path $src -PathType Leaf)) {
-        Fail-Json -obj $result -message "Cannot expand src zip file file: $src as it does not exist"
+        Fail-Json -obj $result -message "Cannot expand src zip file: '$src' as it does not exist"
     }
 
     # Detect if the PS zip assemblies are available or whether to use Shell
@@ -316,7 +301,7 @@ if ($mode -eq "query") {
     $result.dest = $dest
 
     if (-not (Test-Path -Path $src)) {
-        Fail-Json -obj $result -message "Cannot copy src file: $src as it does not exist"
+        Fail-Json -obj $result -message "Cannot copy src file: '$src' as it does not exist"
     }
 
     if (Test-Path -Path $src -PathType Container) {
@@ -355,9 +340,9 @@ if ($mode -eq "query") {
             # file and dest if the path to a file (doesn't end with \ or /)
             $parent_dir = Split-Path -Path $dest
             if (Test-Path -Path $parent_dir -PathType Leaf) {
-                Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+                Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
             } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
-                Fail-Json -obj $result -message "Destination directory $parent_dir does not exist"
+                Fail-Json -obj $result -message "Destination directory '$parent_dir' does not exist"
             }
         }
         $copy_result = Copy-File -source $src -dest $dest
@@ -379,7 +364,7 @@ if ($mode -eq "query") {
     # always result in a change as the calculation is done on the Ansible side
     # before this is run. This should also never run in check mode
     if (-not (Test-Path -Path $src -PathType Leaf)) {
-        Fail-Json -obj $result -message "Cannot copy src file: $src as it does not exist"
+        Fail-Json -obj $result -message "Cannot copy src file: '$src' as it does not exist"
     }
 
     # the dest parameter is a directory, we need to append original_basename
@@ -389,7 +374,7 @@ if ($mode -eq "query") {
 
         # when dest ends with /, we need to create the destination directories
         if (Test-Path -Path $parent_dir -PathType Leaf) {
-            Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+            Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
         } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
             New-Item -Path $parent_dir -ItemType Directory | Out-Null
         }
@@ -399,9 +384,9 @@ if ($mode -eq "query") {
 
         # check if the dest parent dirs exist, need to fail if they don't
         if (Test-Path -Path $parent_dir -PathType Leaf) {
-            Fail-Json -obj $result -message "object at destination parent dir $parent_dir is currently a file"
+            Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
         } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
-            Fail-Json -obj $result -message "Destination directory $parent_dir does not exist"
+            Fail-Json -obj $result -message "Destination directory '$parent_dir' does not exist"
         }
     }
 

@@ -42,10 +42,10 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_load_configuration = patch('ansible.modules.network.junos.junos_config.load_configuration')
         self.load_configuration = self.mock_load_configuration.start()
 
-        self.mock_lock_configuration = patch('ansible.module_utils.junos.lock_configuration')
+        self.mock_lock_configuration = patch('ansible.module_utils.network.junos.junos.lock_configuration')
         self.lock_configuration = self.mock_lock_configuration.start()
 
-        self.mock_unlock_configuration = patch('ansible.module_utils.junos.unlock_configuration')
+        self.mock_unlock_configuration = patch('ansible.module_utils.network.junos.junos.unlock_configuration')
         self.unlock_configuration = self.mock_unlock_configuration.start()
 
         self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_config.commit_configuration')
@@ -57,13 +57,13 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_conn = patch('ansible.module_utils.connection.Connection')
         self.conn = self.mock_conn.start()
 
-        self.mock_netconf = patch('ansible.module_utils.junos.NetconfConnection')
+        self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
         self.netconf_conn = self.mock_netconf.start()
 
         self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_config.exec_rpc')
         self.exec_rpc = self.mock_exec_rpc.start()
 
-        self.mock_netconf_rpc = patch('ansible.module_utils.netconf.NetconfConnection')
+        self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
         self.netconf_rpc = self.mock_netconf_rpc.start()
 
     def tearDown(self):
