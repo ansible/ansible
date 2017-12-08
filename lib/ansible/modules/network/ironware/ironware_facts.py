@@ -134,8 +134,8 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.ironware import run_commands
-from ansible.module_utils.ironware import ironware_argument_spec, check_args
+from ansible.module_utils.network.ironware.ironware import run_commands
+from ansible.module_utils.network.ironware.ironware import ironware_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
@@ -418,7 +418,7 @@ class MPLS(FactsBase):
             path['up'] = True if match.group(1) == 'UP' else False
             path['name'] = None
             if path['up']:
-                match = re.search('bypass_lsp: (\S)', data, re.M)
+                match = re.search(r'bypass_lsp: (\S)', data, re.M)
                 path['name'] = match.group(1) if match else None
             return path
 

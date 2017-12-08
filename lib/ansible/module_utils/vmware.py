@@ -26,7 +26,7 @@ try:
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
-    from pyVmomi import vim
+    from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
@@ -223,14 +223,6 @@ def find_vm_by_name(content, vm_name, folder=None, recurse=True):
     return None
 
 
-def find_host_portgroup_by_name(host, portgroup_name):
-
-    for portgroup in host.config.network.portgroup:
-        if portgroup.spec.name == portgroup_name:
-            return portgroup
-    return None
-
-
 def compile_folder_path_for_object(vobj):
     """ make a /vm/foo/bar/baz like folder path for an object """
 
@@ -274,10 +266,19 @@ def gather_vm_facts(content, vm):
         'hw_guest_id': vm.summary.guest.guestId,
         'hw_product_uuid': vm.config.uuid,
         'hw_processor_count': vm.config.hardware.numCPU,
+        'hw_cores_per_socket': vm.config.hardware.numCoresPerSocket,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
+        'hw_datastores': [],
+        'hw_files': [],
+        'hw_esxi_host': None,
+        'hw_guest_ha_state': None,
+        'hw_is_template': vm.config.template,
+        'hw_folder': None,
         'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
         'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
+        'guest_question': vm.summary.runtime.question,
+        'guest_consolidation_needed': vm.summary.runtime.consolidationNeeded,
         'ipv4': None,
         'ipv6': None,
         'annotation': vm.config.annotation,
@@ -285,6 +286,37 @@ def gather_vm_facts(content, vm):
         'snapshots': [],
         'current_snapshot': None,
     }
+
+    # facts that may or may not exist
+    if vm.summary.runtime.host:
+        host = vm.summary.runtime.host
+        facts['hw_esxi_host'] = host.summary.config.name
+    if vm.summary.runtime.dasVmProtection:
+        facts['hw_guest_ha_state'] = vm.summary.runtime.dasVmProtection.dasProtected
+
+    datastores = vm.datastore
+    for ds in datastores:
+        facts['hw_datastores'].append(ds.info.name)
+
+    try:
+        files = vm.config.files
+        layout = vm.layout
+        if files:
+            facts['hw_files'] = [files.vmPathName]
+            for item in layout.snapshot:
+                for snap in item.snapshotFile:
+                    facts['hw_files'].append(files.snapshotDirectory + snap)
+            for item in layout.configFile:
+                facts['hw_files'].append(os.path.dirname(files.vmPathName) + '/' + item)
+            for item in vm.layout.logFile:
+                facts['hw_files'].append(files.logDirectory + item)
+            for item in vm.layout.disk:
+                for disk in item.diskFile:
+                    facts['hw_files'].append(disk)
+    except:
+        pass
+
+    facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
 
     cfm = content.customFieldsManager
     # Resolve custom values
@@ -370,7 +402,7 @@ def get_current_snap_obj(snapshots, snapob):
 
 def list_snapshots(vm):
     result = {}
-    snapshot = _get_vm_prop(vm, ('vm', 'snapshot'))
+    snapshot = _get_vm_prop(vm, ('snapshot',))
     if not snapshot:
         return result
     if vm.snapshot is None:
@@ -419,11 +451,15 @@ def connect_to_api(module, disconnect_atexit=True):
                              " to log on to vCenter or ESXi API at %s: %s" % (username, hostname, e.msg))
     except (requests.ConnectionError, ssl.SSLError) as e:
         module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/443: %s" % (hostname, e))
+    except vmodl.fault.InvalidRequest as e:
+        # Request is malformed
+        module.fail_json(msg="Failed to get a response from server %s as "
+                             "request is malformed: %s" % (hostname, e.msg))
     except Exception as e:
-        module.fail_json(msg="Unknown error connecting to vCenter or ESXi API at %s: %s" % (hostname, e))
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s: %s" % (hostname, e))
 
     if service_instance is None:
-        module.fail_json(msg="Unknown error connecting to vCenter or ESXi API at %s" % hostname)
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s" % hostname)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
@@ -669,7 +705,7 @@ def set_vm_power_state(content, vm, state, force):
     requested states. force is forceful
     """
     facts = gather_vm_facts(content, vm)
-    expected_state = state.replace('_', '').lower()
+    expected_state = state.replace('_', '').replace('-', '').lower()
     current_state = facts['hw_power_status'].lower()
     result = dict(
         changed=False,
@@ -723,6 +759,10 @@ def set_vm_power_state(content, vm, state, force):
                     result['failed'] = True
                     result['msg'] = "Virtual machine %s must be in poweredon state for guest shutdown/reboot" % vm.name
 
+            else:
+                result['failed'] = True
+                result['msg'] = "Unsupported expected state provided: %s" % expected_state
+
         except Exception as e:
             result['failed'] = True
             result['msg'] = to_text(e)
@@ -753,6 +793,7 @@ class PyVmomi(object):
         self.current_vm_obj = None
         self.content = connect_to_api(self.module)
 
+    # Virtual Machine related functions
     def get_vm(self):
         vm = None
         match_first = (self.params['name_match'] == 'first')
@@ -767,3 +808,80 @@ class PyVmomi(object):
             self.current_vm_obj = vm
 
         return vm
+
+    def gather_facts(self, vm):
+        return gather_vm_facts(self.content, vm)
+
+    @staticmethod
+    def get_vm_path(content, vm):
+        foldername = None
+        folder = vm.parent
+        if folder:
+            foldername = folder.name
+            fp = folder.parent
+            # climb back up the tree to find our path, stop before the root folder
+            while fp is not None and fp.name is not None and fp != content.rootFolder:
+                foldername = fp.name + '/' + foldername
+                try:
+                    fp = fp.parent
+                except:
+                    break
+            foldername = '/' + foldername
+        return foldername
+
+    # Cluster related functions
+    def find_cluster_by_name(self, cluster_name, datacenter_name=None):
+        """
+        Find Cluster by name in given datacenter
+        Args:
+            cluster_name: Name of cluster name to find
+            datacenter_name: (optional) Name of datacenter
+
+        Returns: True if found
+
+        """
+        return find_cluster_by_name(self.content, cluster_name, datacenter=datacenter_name)
+
+    def get_all_hosts_by_cluster(self, cluster_name):
+        """
+        Get all hosts from cluster by cluster name
+        Args:
+            cluster_name: Name of cluster
+
+        Returns: List of hosts
+
+        """
+        cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
+        if cluster_obj:
+            return [host for host in cluster_obj.host]
+        else:
+            return []
+
+    # Hosts related functions
+    def find_hostsystem_by_name(self, host_name):
+        """
+        Find Host by name
+        Args:
+            host_name: Name of ESXi host
+
+        Returns: True if found
+
+        """
+        return find_hostsystem_by_name(self.content, hostname=host_name)
+
+    # Network related functions
+    @staticmethod
+    def find_host_portgroup_by_name(host, portgroup_name):
+        """
+        Find Portgroup on given host
+        Args:
+            host: Host config object
+            portgroup_name: Name of portgroup
+
+        Returns: True if found else False
+
+        """
+        for portgroup in host.config.network.portgroup:
+            if portgroup.spec.name == portgroup_name:
+                return portgroup
+        return False

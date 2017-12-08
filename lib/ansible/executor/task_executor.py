@@ -1,38 +1,29 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+import pty
 import time
+import json
+import subprocess
 import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
+from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
-from ansible.plugins.connection import ConnectionBase
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
@@ -489,16 +480,14 @@ class TaskExecutor:
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
-            # only template the vars if the connection actually implements set_host_overrides
-            # NB: this is expensive, and should be removed once connection-specific vars are being handled by play_context
-            sho_impl = getattr(type(self._connection), 'set_host_overrides', None)
-            if sho_impl and sho_impl != ConnectionBase.set_host_overrides:
-                self._connection.set_host_overrides(self._host, variables, templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
+        self._set_connection_options(variables, templar)
+
+        # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
         # And filter out any fields which were set to default(omit), and got the omit token value
@@ -548,7 +537,7 @@ class TaskExecutor:
             if self._task.register:
                 vars_copy[self._task.register] = wrap_var(result.copy())
 
-            if self._task.async > 0:
+            if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
                     # FIXME callback 'v2_runner_on_async_poll' here
@@ -574,7 +563,9 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                vars_copy.update(result['ansible_facts'])
+                vars_copy.update(namespace_facts(result['ansible_facts']))
+                if C.INJECT_FACTS_AS_VARS:
+                    vars_copy.update(clean_facts(result['ansible_facts']))
 
             # set the failed property if it was missing.
             if 'failed' not in result:
@@ -620,7 +611,9 @@ class TaskExecutor:
             variables[self._task.register] = wrap_var(result)
 
         if 'ansible_facts' in result:
-            variables.update(result['ansible_facts'])
+            variables.update(namespace_facts(result['ansible_facts']))
+            if C.INJECT_FACTS_AS_VARS:
+                variables.update(clean_facts(result['ansible_facts']))
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
@@ -675,7 +668,7 @@ class TaskExecutor:
             shared_loader_obj=self._shared_loader_obj,
         )
 
-        time_left = self._task.async
+        time_left = self._task.async_val
         while time_left > 0:
             time.sleep(self._task.poll)
 
@@ -731,20 +724,46 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
-        # if using persistent paramiko connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
-        # then we use the persistent connection plugion. Otherwise load the requested connection plugin
-        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
-            conn_type = 'persistent'
-        else:
-            conn_type = self._play_context.connection
+        conn_type = self._play_context.connection
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
+        # FIXME: remove once all plugins pull all data from self._options
         self._play_context.set_options_from_plugin(connection)
 
+        if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
+            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
+            display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
+            socket_path = self._start_connection()
+            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
+            setattr(connection, '_socket_path', socket_path)
+
         return connection
+
+    def _set_connection_options(self, variables, templar):
+
+        # create copy with delegation built in
+        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+
+        # grab list of usable vars for this plugin
+        option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
+
+        # create dict of 'templated vars'
+        options = {'_extras': {}}
+        for k in option_vars:
+            if k in final_vars:
+                options[k] = templar.template(final_vars[k])
+
+        # add extras if plugin supports them
+        if getattr(self._connection, 'allow_extras', False):
+            for k in final_vars:
+                if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
+                    options['_extras'][k] = templar.template(final_vars[k])
+
+        # set options with 'templated vars' specific to this plugin
+        self._connection.set_options(var_options=options)
 
     def _get_action_handler(self, connection, templar):
         '''
@@ -775,3 +794,42 @@ class TaskExecutor:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
         return handler
+
+    def _start_connection(self):
+        '''
+        Starts the persistent connection
+        '''
+        master, slave = pty.openpty()
+        p = subprocess.Popen(["ansible-connection"], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdin = os.fdopen(master, 'wb', 0)
+        os.close(slave)
+
+        # Need to force a protocol that is compatible with both py2 and py3.
+        # That would be protocol=2 or less.
+        # Also need to force a protocol that excludes certain control chars as
+        # stdin in this case is a pty and control chars will cause problems.
+        # that means only protocol=0 will work.
+        src = cPickle.dumps(self._play_context.serialize(), protocol=0)
+        stdin.write(src)
+
+        stdin.write(b'\n#END_INIT#\n')
+
+        (stdout, stderr) = p.communicate()
+        stdin.close()
+
+        if p.returncode == 0:
+            result = json.loads(to_text(stdout))
+        else:
+            result = json.loads(to_text(stderr))
+
+        if 'messages' in result:
+            for msg in result.get('messages'):
+                display.vvvv('%s' % msg, host=self._play_context.remote_addr)
+
+        if 'error' in result:
+            if self._play_context.verbosity > 2:
+                msg = "The full traceback is:\n" + result['exception']
+                display.display(result['exception'], color=C.COLOR_ERROR)
+            raise AnsibleError(result['error'])
+
+        return result['socket_path']

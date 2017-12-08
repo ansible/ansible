@@ -72,11 +72,17 @@ class ManageNetworkCI(object):
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
+        if self.core_ci.platform in ('vyos',):
+            connection_type = 'network_cli'
+        else:
+            connection_type = 'local'
+
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
             'ansible_port=%s' % self.core_ci.connection.port,
-            'ansible_connection=local',
+            'ansible_connection=%s' % connection_type,
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+            'ansible_network_os=%s' % self.core_ci.platform,
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
@@ -125,7 +131,12 @@ class ManagePosixCI(object):
             self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
         if self.core_ci.platform == 'freebsd':
-            self.become = ['su', '-l', 'root', '-c']
+            if self.core_ci.provider == 'aws':
+                self.become = ['su', '-l', 'root', '-c']
+            elif self.core_ci.provider == 'azure':
+                self.become = ['sudo', '-in', 'sh', '-c']
+            else:
+                raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel':

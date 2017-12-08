@@ -27,7 +27,7 @@ requirements:
 options:
     name:
         description:
-        - Name of the package.
+        - A name or a list of names of the packages.
         required: yes
     state:
         description:
@@ -66,6 +66,9 @@ options:
         type: bool
         default: 'no'
         version_added: "2.3"
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 
 EXAMPLES = '''
@@ -232,7 +235,7 @@ def package_present(names, pkg_spec, module):
                     # "file:/local/package/directory/ is empty" message on stderr
                     # while still installing the package, so we need to look for
                     # for a message like "packagename-1.0: ok" just in case.
-                    match = re.search("\W%s-[^:]+: ok\W" % pkg_spec[name]['stem'], pkg_spec[name]['stdout'])
+                    match = re.search(r"\W%s-[^:]+: ok\W" % pkg_spec[name]['stem'], pkg_spec[name]['stdout'])
 
                     if match:
                         # It turns out we were able to install the package.
@@ -283,7 +286,7 @@ def package_latest(names, pkg_spec, module):
             pkg_spec[name]['changed'] = False
             for installed_name in pkg_spec[name]['installed_names']:
                 module.debug("package_latest(): checking for pre-upgrade package name: %s" % installed_name)
-                match = re.search("\W%s->.+: ok\W" % installed_name, pkg_spec[name]['stdout'])
+                match = re.search(r"\W%s->.+: ok\W" % installed_name, pkg_spec[name]['stdout'])
                 if match:
                     module.debug("package_latest(): pre-upgrade package name match: %s" % installed_name)
 
@@ -499,7 +502,7 @@ def upgrade_packages(pkg_spec, module):
 
     # Try to find any occurrence of a package changing version like:
     # "bzip2-1.0.6->1.0.6p0: ok".
-    match = re.search("\W\w.+->.+: ok\W", pkg_spec['*']['stdout'])
+    match = re.search(r"\W\w.+->.+: ok\W", pkg_spec['*']['stdout'])
     if match:
         pkg_spec['*']['changed'] = True
 

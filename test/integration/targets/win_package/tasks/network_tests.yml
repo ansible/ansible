@@ -17,7 +17,7 @@
 - name: assert install network msi (check mode)
   assert:
     that:
-    - install_network_msi_check|changed
+    - install_network_msi_check is changed
     - install_network_msi_check.reboot_required == False
     - install_network_msi_actual_check.exists == False
 
@@ -38,7 +38,7 @@
 - name: assert install network msi
   assert:
     that:
-    - install_network_msi|changed
+    - install_network_msi is changed
     - install_network_msi.reboot_required == False
     - install_network_msi.rc == 0
     - install_network_msi_actual.exists == True
@@ -55,7 +55,7 @@
 - name: assert install network msi (idempotent)
   assert:
     that:
-    - not install_network_msi_idempotent|changed
+    - install_network_msi_idempotent is not changed
 
 - name: uninstall network msi with path (check mode)
   win_package:
@@ -75,7 +75,7 @@
 - name: assert uninstall network msi with path (check mode)
   assert:
     that:
-    - uninstall_path_network_msi_check|changed
+    - uninstall_path_network_msi_check is changed
     - uninstall_path_network_msi_check.reboot_required == False
     - uninstall_path_network_msi_actual_check.exists == True
 
@@ -96,7 +96,7 @@
 - name: assert uninstall network msi with path
   assert:
     that:
-    - uninstall_path_network_msi|changed
+    - uninstall_path_network_msi is changed
     - uninstall_path_network_msi.reboot_required == False
     - uninstall_path_network_msi.rc == 0
     - uninstall_path_network_msi_actual.exists == False
@@ -113,7 +113,7 @@
 - name: assert uninstall network msi with path (idempotent)
   assert:
     that:
-    - not uninstall_path_network_msi_idempotent|changed
+    - uninstall_path_network_msi_idempotent is not changed
 
 - name: install network reboot msi (check mode)
   win_package:
@@ -133,7 +133,7 @@
 - name: assert install network reboot msi (check mode)
   assert:
     that:
-    - install_network_reboot_msi_check|changed
+    - install_network_reboot_msi_check is changed
     - install_network_reboot_msi_check.reboot_required == False
     - install_network_reboot_msi_actual_check.exists == False
 
@@ -154,7 +154,7 @@
 - name: assert install network reboot msi
   assert:
     that:
-    - install_network_reboot_msi|changed
+    - install_network_reboot_msi is changed
     - install_network_reboot_msi.reboot_required == True
     - install_network_reboot_msi.rc == 3010
     - install_network_reboot_msi_actual.exists == True
@@ -171,7 +171,7 @@
 - name: assert install network reboot msi (idempotent)
   assert:
     that:
-    - not install_network_reboot_msi_idempotent|changed
+    - install_network_reboot_msi_idempotent is not changed
 
 - name: uninstall network msi with product_id (check mode)
   win_package:
@@ -190,7 +190,7 @@
 - name: assert uninstall network msi with product_id (check mode)
   assert:
     that:
-    - uninstall_id_network_msi_check|changed
+    - uninstall_id_network_msi_check is changed
     - uninstall_id_network_msi_check.reboot_required == False
     - uninstall_id_network_msi_actual_check.exists == True
 
@@ -208,7 +208,7 @@
 - name: assert uninstall network msi with product_id
   assert:
     that:
-    - uninstall_id_network_msi|changed
+    - uninstall_id_network_msi is changed
     - uninstall_id_network_msi.reboot_required == True
     - uninstall_id_network_msi.rc == 3010
     - uninstall_id_network_msi_actual.exists == False
@@ -222,7 +222,7 @@
 - name: assert uninstall network msi with product_id (idempotent)
   assert:
     that:
-    - not uninstall_id_network_msi_idempotent|changed
+    - uninstall_id_network_msi_idempotent is not changed
 
 - name: ensure the install folder is cleaned in case uninstall didn't work
   win_file:
@@ -253,7 +253,7 @@
 - name: assert install network msi with arguments (check mode)
   assert:
     that:
-    - install_network_msi_argument_check|changed
+    - install_network_msi_argument_check is changed
     - install_network_msi_argument_check.reboot_required == False
     - install_network_msi_argument_moo_check.stat.exists == False
     - install_network_msi_argument_cow_check.stat.exists == False
@@ -281,7 +281,7 @@
 - name: assert install network msi with arguments
   assert:
     that:
-    - install_network_msi_argument|changed
+    - install_network_msi_argument is changed
     - install_network_msi_argument.reboot_required == False
     - install_network_msi_argument.rc == 0
     - install_network_msi_argument_moo.stat.exists == False
@@ -300,7 +300,7 @@
 - name: assert install network msi with arguments (idempotent)
   assert:
     that:
-    - not install_network_msi_argument_again|changed
+    - install_network_msi_argument_again is not changed
 
 - name: uninstall msi after test
   win_package:
@@ -326,7 +326,7 @@
 - name: assert install network exe (check mode)
   assert:
     that:
-    - install_network_exe_check|changed
+    - install_network_exe_check is changed
     - install_network_exe_check.reboot_required == False
     - install_network_exe_actual_check.exists == False
 
@@ -348,7 +348,7 @@
 - name: assert install network exe
   assert:
     that:
-    - install_network_exe|changed
+    - install_network_exe is changed
     - install_network_exe.reboot_required == False
     - install_network_exe.rc == 0
     - install_network_exe_actual.exists == True
@@ -366,7 +366,7 @@
 - name: assert install network exe (idempotent)
   assert:
     that:
-    - not install_network_exe_idempotent|changed
+    - install_network_exe_idempotent is not changed
 
 - name: uninstall network exe (check mode)
   win_package:
@@ -386,7 +386,7 @@
 - name: assert uninstall network exe (check mode)
   assert:
     that:
-    - uninstall_network_exe_check|changed
+    - uninstall_network_exe_check is changed
     - uninstall_network_exe_check.reboot_required == False
     - uninstall_network_exe_actual_check.exists == True
 
@@ -407,7 +407,7 @@
 - name: assert uninstall network exe
   assert:
     that:
-    - uninstall_network_exe|changed
+    - uninstall_network_exe is changed
     - uninstall_network_exe.reboot_required == False
     - uninstall_network_exe.rc == 0
     - uninstall_network_exe_actual.exists == False
@@ -424,4 +424,4 @@
 - name: assert uninstall network exe (idempotent)
   assert:
     that:
-    - not uninstall_network_exe_idempotent|changed
+    - uninstall_network_exe_idempotent is not changed

@@ -333,7 +333,7 @@ def main():
     )
 
     # Accessing the arguments
-    state= module.params['state']
+    state = module.params['state']
     vrouter_name = module.params['pn_vrouter_name']
     neighbor = module.params['pn_neighbor']
     remote_as = module.params['pn_remote_as']

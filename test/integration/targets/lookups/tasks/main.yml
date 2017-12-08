@@ -245,7 +245,7 @@
 - assert:
     that:
       - "url_invalid_cert.failed"
-      - "'Error validating the server' in url_invalid_cert.msg or (url_invalid_cert.msg | search('hostname .* doesn.t match .*'))"
+      - "'Error validating the server' in url_invalid_cert.msg or ( url_invalid_cert.msg is search('hostname .* doesn.t match .*'))"
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:

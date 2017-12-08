@@ -82,10 +82,10 @@ commands:
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.network_common import validate_ip_address, validate_prefix
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.common.utils import validate_ip_address, validate_prefix
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 def map_obj_to_commands(updates, module):
@@ -189,16 +189,17 @@ def main():
                            supports_check_mode=True)
 
     address = module.params['address']
-    prefix = address.split('/')[-1]
+    if address is not None:
+        prefix = address.split('/')[-1]
+
+    if address and prefix:
+        if '/' not in address or not validate_ip_address(address.split('/')[0]):
+            module.fail_json(msg='{} is not a valid IP address'.format(address))
+
+        if not validate_prefix(prefix):
+            module.fail_json(msg='Length of prefix should be between 0 and 32 bits')
+
     warnings = list()
-    check_args(module, warnings)
-
-    if '/' not in address or not validate_ip_address(address.split('/')[0]):
-        module.fail_json(msg='{} is not a valid IP address'.format(address))
-
-    if not validate_prefix(prefix):
-        module.fail_json(msg='Length of prefix should be between 0 and 32 bits')
-
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings

@@ -30,7 +30,7 @@ from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.loader import PluginLoader
+from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
 
 try:
@@ -39,7 +39,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-IGNORED_ALWAYS = [b"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
+IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
 IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
 
@@ -91,7 +91,7 @@ def split_host_pattern(pattern):
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
     if ',' in pattern:
-        patterns = re.split('\s*,\s*', pattern)
+        patterns = pattern.split(',')
 
     # If it doesn't, it could still be a single pattern. This accounts for
     # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
@@ -99,7 +99,7 @@ def split_host_pattern(pattern):
         try:
             (base, port) = parse_address(pattern, allow_ranges=True)
             patterns = [pattern]
-        except:
+        except Exception:
             # The only other case we accept is a ':'-separated list of patterns.
             # This mishandles IPv6 addresses, and is retained only for backwards
             # compatibility.
@@ -178,12 +178,12 @@ class InventoryManager(object):
     def _setup_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
-        inventory_loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
         display.vvvv('setting up inventory plugins')
 
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             if plugin:
+                plugin.set_options()
                 self._inventory_plugins.append(plugin)
             else:
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
@@ -283,7 +283,8 @@ class InventoryManager(object):
                     else:
                         for fail in failures:
                             display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                            display.vvv(to_text(fail['exc'].tb))
+                            if hasattr(fail['exc'], 'tb'):
+                                display.vvv(to_text(fail['exc'].tb))
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % to_text(source))
 
@@ -525,7 +526,9 @@ class InventoryManager(object):
         if matching_groups:
             for groupname in matching_groups:
                 results.extend(self._inventory.groups[groupname].get_hosts())
-        else:
+
+        # check hosts if no groups matched or it is a regex/glob pattern
+        if not matching_groups or pattern.startswith('~') or any(special in pattern for special in ('.', '?', '*', '[')):
             # pattern might match host
             matching_hosts = self._match_list(self._inventory.hosts, pattern)
             if matching_hosts:

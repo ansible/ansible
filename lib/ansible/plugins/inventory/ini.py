@@ -153,7 +153,6 @@ class InventoryModule(BaseFileInventoryPlugin):
         pending_declarations = {}
         groupname = 'ungrouped'
         state = 'hosts'
-
         self.lineno = 0
         for line in lines:
             self.lineno += 1
@@ -176,24 +175,21 @@ class InventoryModule(BaseFileInventoryPlugin):
                     self._raise_error("Section [%s] has unknown type: %s" % (title, state))
 
                 # If we haven't seen this group before, we add a new Group.
-                #
-                # Either [groupname] or [groupname:children] is sufficient to
-                # declare a group, but [groupname:vars] is allowed only if the
-                # group is declared elsewhere (not necessarily earlier). We add
-                # the group anyway, but make a note in pending_declarations to
-                # check at the end.
+                if groupname not in self.inventory.groups:
+                    # Either [groupname] or [groupname:children] is sufficient to declare a group,
+                    # but [groupname:vars] is allowed only if the # group is declared elsewhere.
+                    # We add the group anyway, but make a note in pending_declarations to check at the end.
+                    if state == 'vars':
+                        pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
 
-                self.inventory.add_group(groupname)
+                    self.inventory.add_group(groupname)
 
-                if state == 'vars':
-                    pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
-
-                # When we see a declaration that we've been waiting for, we can
-                # delete the note.
-
+                # When we see a declaration that we've been waiting for, we process and delete.
                 if groupname in pending_declarations and state != 'vars':
                     if pending_declarations[groupname]['state'] == 'children':
                         self._add_pending_children(groupname, pending_declarations)
+                    elif pending_declarations[groupname]['state'] == 'vars':
+                        del pending_declarations[groupname]
 
                 continue
             elif line.startswith('[') and line.endswith(']'):
@@ -208,7 +204,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             # the current group.
             if state == 'hosts':
                 hosts, port, variables = self._parse_host_definition(line)
-                self.populate_host_vars(hosts, variables, groupname, port)
+                self._populate_host_vars(hosts, variables, groupname, port)
 
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.
@@ -229,22 +225,18 @@ class InventoryModule(BaseFileInventoryPlugin):
                         pending_declarations[child]['parents'].append(groupname)
                 else:
                     self.inventory.add_child(groupname, child)
-
-            # This is a fencepost. It can happen only if the state checker
-            # accepts a state that isn't handled above.
             else:
+                # This can happen only if the state checker accepts a state that isn't handled above.
                 self._raise_error("Entered unhandled state: %s" % (state))
 
         # Any entries in pending_declarations not removed by a group declaration above mean that there was an unresolved reference.
         # We report only the first such error here.
-
         for g in pending_declarations:
-            if g not in self.inventory.groups:
-                decl = pending_declarations[g]
-                if decl['state'] == 'vars':
-                    raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
-                elif decl['state'] == 'children':
-                    raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parents'].pop(), decl['name']))
+            decl = pending_declarations[g]
+            if decl['state'] == 'vars':
+                raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
+            elif decl['state'] == 'children':
+                raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parents'].pop(), decl['name']))
 
     def _add_pending_children(self, group, pending):
         for parent in pending[group]['parents']:
@@ -326,7 +318,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         try:
             (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except:
+        except Exception:
             # not a recognizable host pattern
             pattern = hostpattern
             port = None

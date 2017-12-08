@@ -29,7 +29,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
-    vars_loader, connection_loader, strategy_loader, PluginLoader
+    vars_loader, connection_loader, strategy_loader, inventory_loader
 from ansible.utils import plugin_docs
 try:
     from __main__ import display
@@ -43,6 +43,9 @@ class DocCLI(CLI):
         It displays a terse listing of plugins and their short descriptions,
         provides a printout of their DOCUMENTATION strings,
         and it can create a short "snippet" which can be pasted into a playbook.  '''
+
+    # default ignore list for detailed views
+    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs')
 
     def __init__(self, args):
 
@@ -97,7 +100,7 @@ class DocCLI(CLI):
         elif plugin_type == 'vars':
             loader = vars_loader
         elif plugin_type == 'inventory':
-            loader = PluginLoader('InventoryModule', 'ansible.plugins.inventory', C.DEFAULT_INVENTORY_PLUGIN_PATH, 'inventory_plugins')
+            loader = inventory_loader
         else:
             loader = module_loader
 
@@ -394,6 +397,10 @@ class DocCLI(CLI):
             for config in ('env', 'ini', 'yaml', 'vars'):
                 if config in opt and opt[config]:
                     conf[config] = opt.pop(config)
+                    for ignore in self.IGNORE:
+                        for item in conf[config]:
+                            if ignore in item:
+                                del item[ignore]
 
             if conf:
                 text.append(self._dump_yaml({'set_via': conf}, opt_indent))
@@ -441,7 +448,7 @@ class DocCLI(CLI):
 
     def get_man_text(self, doc):
 
-        IGNORE = frozenset(['module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', self.options.type])
+        self.IGNORE = self.IGNORE + (self.options.type,)
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
@@ -492,7 +499,7 @@ class DocCLI(CLI):
 
         # Generic handler
         for k in sorted(doc):
-            if k in IGNORE or not doc[k]:
+            if k in self.IGNORE or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
                 text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))

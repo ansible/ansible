@@ -34,3 +34,5 @@ lib/ansible/modules/network/lenovo/cnos_vlag.py
 lib/ansible/modules/network/lenovo/cnos_vlan.py
 lib/ansible/modules/network/nxos/nxos_file_copy.py
 lib/ansible/modules/packaging/language/maven_artifact.py
+lib/ansible/modules/packaging/os/yum_repository.py
+lib/ansible/modules/system/hostname.py

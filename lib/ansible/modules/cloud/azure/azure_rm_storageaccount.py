@@ -155,7 +155,7 @@ try:
     from azure.common import AzureMissingResourceHttpError
     from azure.mgmt.storage.models import ProvisioningState, SkuName, SkuTier, Kind
     from azure.mgmt.storage.models import StorageAccountUpdateParameters, CustomDomain, \
-                                          StorageAccountCreateParameters, Sku
+        StorageAccountCreateParameters, Sku
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -226,7 +226,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         self.account_dict = self.get_account()
 
         if self.state == 'present' and self.account_dict and \
-           self.account_dict['provisioning_state'] != AZURE_SUCCESS_STATE :
+           self.account_dict['provisioning_state'] != AZURE_SUCCESS_STATE:
             self.fail("Error: storage account {0} has not completed provisioning. State is {1}. Expecting state "
                       "to be {2}.".format(self.name, self.account_dict['provisioning_state'], AZURE_SUCCESS_STATE))
 
@@ -280,7 +280,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             resource_group=self.resource_group,
             type=account_obj.type,
             access_tier=(account_obj.access_tier.value
-                        if account_obj.access_tier is not None else None),
+                         if account_obj.access_tier is not None else None),
             sku_tier=account_obj.sku.tier.value,
             sku_name=account_obj.sku.name.value,
             provisioning_state=account_obj.provisioning_state.value,

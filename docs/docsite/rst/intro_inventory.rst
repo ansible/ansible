@@ -227,9 +227,9 @@ You can apply variables using ``:vars`` or ``vars:``:
               halon_system_timeout: 30
               self_destruct_countdown: 60
               escape_pods: 2
-         northeast:
-         northwest:
-         southwest:
+          northeast:
+          northwest:
+          southwest:
 
 If you need to store lists or hash data, or prefer to keep host and group specific variables separate from the inventory file, see the next section.
 Child groups have a couple of properties to note:
@@ -283,7 +283,7 @@ the 'raleigh' group might look like::
 It is okay if these files do not exist, as this is an optional feature.
 
 As an advanced use case, you can create *directories* named after your groups or hosts, and
-Ansible will read all the files in these directories. An example with the 'raleigh' group::
+Ansible will read all the files in these directories in lexicographical order. An example with the 'raleigh' group::
 
     /etc/ansible/group_vars/raleigh/db_settings
     /etc/ansible/group_vars/raleigh/cluster_settings
@@ -291,9 +291,9 @@ Ansible will read all the files in these directories. An example with the 'ralei
 All hosts that are in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
 file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
-variables. Note that this only works on Ansible 1.4 or later.
+variables. 
 
-Tip: In Ansible 1.2 or later the ``group_vars/`` and ``host_vars/`` directories can exist in
+Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
@@ -307,7 +307,7 @@ How Variables Are Merged
 
 By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really surive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see the `hash_merge` setting to change this) . The order/precedence is (from lowest to highest):
 
-- all group (becauseit is the 'parent' of all other groups)
+- all group (because it is the 'parent' of all other groups)
 - parent group
 - child group
 - host

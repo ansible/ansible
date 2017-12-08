@@ -82,7 +82,7 @@ import subprocess
 import time
 
 from distutils import util
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.encrypt import random_password
 from ansible.plugins.lookup import LookupBase
@@ -138,7 +138,8 @@ class LookupModule(LookupBase):
             try:
                 for param in params[1:]:
                     name, value = param.split('=')
-                    assert(name in self.paramvals)
+                    if name not in self.paramvals:
+                        raise AnsibleAssertionError('%s not in paramvals' % name)
                     self.paramvals[name] = value
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)

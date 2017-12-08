@@ -96,7 +96,7 @@ def remove_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               remove %s" % (slackpkg_path,
-                                              package))
+                                                            package))
 
         if not module.check_mode and query_package(module, slackpkg_path,
                                                    package):
@@ -122,7 +122,7 @@ def install_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               install %s" % (slackpkg_path,
-                                              package))
+                                                             package))
 
         if not module.check_mode and not query_package(module, slackpkg_path,
                                                        package):
@@ -145,7 +145,7 @@ def upgrade_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               upgrade %s" % (slackpkg_path,
-                                              package))
+                                                             package))
 
         if not module.check_mode and not query_package(module, slackpkg_path,
                                                        package):

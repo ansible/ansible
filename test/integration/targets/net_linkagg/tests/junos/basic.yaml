@@ -128,7 +128,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *disable")
+      - result.diff.prepared is search("\+ *disable")
 
 - name: Enable linkagg interface
   net_linkagg:
@@ -140,7 +140,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *disable")
+      - result.diff.prepared is search("\- *disable")
 
 - name: Deactivate linkagg
   net_linkagg:

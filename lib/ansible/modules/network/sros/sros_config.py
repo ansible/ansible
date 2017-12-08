@@ -225,9 +225,9 @@ backup_path:
   sample: /playbooks/ansible/backup/sros_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.sros import sros_argument_spec, check_args
-from ansible.module_utils.sros import load_config, run_commands, get_config
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.sros.sros import sros_argument_spec, check_args
+from ansible.module_utils.network.sros.sros import load_config, run_commands, get_config
 
 
 def get_active_config(module):
@@ -274,6 +274,7 @@ def run(module, result):
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution

@@ -41,8 +41,16 @@
     guest_id: centos64Guest
     datacenter: "{{ (item|basename).split('_')[0] }}"
     hardware:
-        num_cpus: 1
+        num_cpus: 4
+        num_cpu_cores_per_socket: 2
         memory_mb: 512
+        hotadd_memory: true
+        hotadd_cpu: false
+        # vcsim does not support this changes so commenting
+        # till the time.
+        # memory_reservation: 512
+        # memory_reservation_lock: False
+        max_connections: 10
     disk:
         - size: 0gb
           type: thin
@@ -70,7 +78,8 @@
     guest_id: centos64Guest
     datacenter: "{{ (item|basename).split('_')[0] }}"
     hardware:
-        num_cpus: 1
+        num_cpus: 4
+        num_cpu_cores_per_socket: 2
         memory_mb: 512
     disk:
         - size: 0gb

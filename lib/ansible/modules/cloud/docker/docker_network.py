@@ -184,6 +184,7 @@ class TaskParameters(DockerBaseClass):
 def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -362,16 +363,16 @@ class DockerNetworkManager(object):
 
 def main():
     argument_spec = dict(
-        network_name       = dict(type='str', required=True, aliases=['name']),
-        connected          = dict(type='list', default=[], aliases=['containers']),
-        state              = dict(type='str', default='present', choices=['present', 'absent']),
-        driver             = dict(type='str', default='bridge'),
-        driver_options     = dict(type='dict', default={}),
-        force              = dict(type='bool', default=False),
-        appends            = dict(type='bool', default=False, aliases=['incremental']),
-        ipam_driver        = dict(type='str', default=None),
-        ipam_options       = dict(type='dict', default={}),
-        debug              = dict(type='bool', default=False)
+        network_name=dict(type='str', required=True, aliases=['name']),
+        connected=dict(type='list', default=[], aliases=['containers']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        driver=dict(type='str', default='bridge'),
+        driver_options=dict(type='dict', default={}),
+        force=dict(type='bool', default=False),
+        appends=dict(type='bool', default=False, aliases=['incremental']),
+        ipam_driver=dict(type='str', default=None),
+        ipam_options=dict(type='dict', default={}),
+        debug=dict(type='bool', default=False)
     )
 
     client = AnsibleDockerClient(

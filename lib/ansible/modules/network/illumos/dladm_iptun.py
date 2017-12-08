@@ -206,7 +206,6 @@ class IPTun(object):
                                   rc=rc)
 
 
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(

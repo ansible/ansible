@@ -55,7 +55,7 @@
 
   - assert: *false
 
-  when: not (platform | search('N3K'))
+  when: not ( platform is search('N3K'))
 
   rescue:
   - debug: msg="TRANSPORT:{{ connection.transport }} nxos_evpn_global sanity test - FALURE ENCOUNTERED"

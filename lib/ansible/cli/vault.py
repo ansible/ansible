@@ -102,7 +102,7 @@ class VaultCLI(CLI):
             self.parser.add_option('--stdin-name', dest='encrypt_string_stdin_name',
                                    default=None,
                                    help="Specify the variable name for stdin")
-            self.parser.set_usage("usage: %prog encrypt-string [--prompt] [options] string_to_encrypt")
+            self.parser.set_usage("usage: %prog encrypt_string [--prompt] [options] string_to_encrypt")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
@@ -110,6 +110,7 @@ class VaultCLI(CLI):
 
         self.parser = CLI.base_parser(
             vault_opts=True,
+            vault_rekey_opts=True,
             usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
             desc="encryption/decryption utility for Ansible data files",
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])

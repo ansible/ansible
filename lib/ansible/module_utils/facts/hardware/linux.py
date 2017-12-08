@@ -568,7 +568,7 @@ class LinuxHardware(Hardware):
                 device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
                 if rc == 0:
-                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
 
@@ -585,7 +585,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + "\d+)", folder)
+                m = re.search("(" + diskname + r"\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)
@@ -611,7 +611,7 @@ class LinuxHardware(Hardware):
             d['scheduler_mode'] = ""
             scheduler = get_file_content(sysdir + "/queue/scheduler")
             if scheduler is not None:
-                m = re.match(".*?(\[(.*)\])", scheduler)
+                m = re.match(r".*?(\[(.*)\])", scheduler)
                 if m:
                     d['scheduler_mode'] = m.group(2)
 
@@ -626,11 +626,11 @@ class LinuxHardware(Hardware):
             d['host'] = ""
 
             # domains are numbered (0 to ffff), bus (0 to ff), slot (0 to 1f), and function (0 to 7).
-            m = re.match(".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
+            m = re.match(r".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
             if m and pcidata:
                 pciid = m.group(1)
                 did = re.escape(pciid)
-                m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
+                m = re.search("^" + did + r"\s(.*)$", pcidata, re.MULTILINE)
                 if m:
                     d['host'] = m.group(1)
 

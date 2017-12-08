@@ -146,8 +146,8 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.ios import run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
@@ -162,12 +162,12 @@ class FactsBase(object):
         self.facts = dict()
         self.responses = None
 
-
     def populate(self):
         self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
         return run_commands(self.module, cmd, check_rc=False)
+
 
 class Default(FactsBase):
 
@@ -439,6 +439,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     """main entry point for module execution

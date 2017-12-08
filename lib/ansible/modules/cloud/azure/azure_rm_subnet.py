@@ -132,7 +132,6 @@ except ImportError:
     pass
 
 
-
 def subnet_to_dict(subnet):
     result = dict(
         id=subnet.id,

@@ -132,6 +132,7 @@ EXAMPLES = '''
 
 import re
 
+
 def query_package(module, name):
     """Search for the package by name.
 
@@ -201,8 +202,8 @@ def query_package(module, name):
 
 
 def format_action_message(module, action, count):
-    vars = { "actioned": action,
-             "count":    count }
+    vars = {"actioned": action,
+            "count": count}
 
     if module.check_mode:
         message = "would have %(actioned)s %(count)d package" % vars
@@ -227,10 +228,10 @@ def format_pkgin_command(module, command, package=None):
     else:
         force = ""
 
-    vars = { "pkgin":   PKGIN_PATH,
-             "command": command,
-             "package": package,
-             "force":   force}
+    vars = {"pkgin": PKGIN_PATH,
+            "command": command,
+            "package": package,
+            "force": force}
 
     if module.check_mode:
         return "%(pkgin)s -n %(command)s %(package)s" % vars
@@ -283,6 +284,7 @@ def install_packages(module, packages):
 
     module.exit_json(changed=False, msg="package(s) already present")
 
+
 def update_package_db(module):
     rc, out, err = module.run_command(
         format_pkgin_command(module, "update"))
@@ -294,6 +296,7 @@ def update_package_db(module):
             return True, "updated repository database"
     else:
         module.fail_json(msg="could not update package db")
+
 
 def do_upgrade_packages(module, full=False):
     if full:
@@ -310,11 +313,14 @@ def do_upgrade_packages(module, full=False):
     else:
         module.fail_json(msg="could not %s packages" % cmd)
 
+
 def upgrade_packages(module):
     do_upgrade_packages(module)
 
+
 def full_upgrade_packages(module):
     do_upgrade_packages(module, True)
+
 
 def clean_cache(module):
     rc, out, err = module.run_command(
@@ -327,18 +333,19 @@ def clean_cache(module):
     else:
         module.fail_json(msg="could not clean package cache")
 
+
 def main():
     module = AnsibleModule(
-        argument_spec    = dict(
-            state        = dict(default="present", choices=["present","absent"]),
-            name         = dict(aliases=["pkg"], type='list'),
-            update_cache = dict(default='no', type='bool'),
-            upgrade      = dict(default='no', type='bool'),
-            full_upgrade = dict(default='no', type='bool'),
-            clean        = dict(default='no', type='bool'),
-            force        = dict(default='no', type='bool')),
-        required_one_of = [['name', 'update_cache', 'upgrade', 'full_upgrade', 'clean']],
-        supports_check_mode = True)
+        argument_spec=dict(
+            state=dict(default="present", choices=["present", "absent"]),
+            name=dict(aliases=["pkg"], type='list'),
+            update_cache=dict(default='no', type='bool'),
+            upgrade=dict(default='no', type='bool'),
+            full_upgrade=dict(default='no', type='bool'),
+            clean=dict(default='no', type='bool'),
+            force=dict(default='no', type='bool')),
+        required_one_of=[['name', 'update_cache', 'upgrade', 'full_upgrade', 'clean']],
+        supports_check_mode=True)
 
     global PKGIN_PATH
     PKGIN_PATH = module.get_bin_path('pkgin', True, ['/opt/local/bin'])

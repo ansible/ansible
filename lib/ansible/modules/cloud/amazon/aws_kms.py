@@ -186,6 +186,10 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         changes_needed[granttype] = 'add'
                         statement['Principal']['AWS'].append(role_arn)
                 elif role_arn in statement['Principal']['AWS']:   # not one the places the role should be
+                    if role_arn not in statement['Principal']['AWS']:  # needs to be added.
+                        changes_needed[granttype] = 'add'
+                        statement['Principal']['AWS'].append(role_arn)
+                elif role_arn in statement['Principal']['AWS']:  # not one the places the role should be
                     changes_needed[granttype] = 'remove'
                     statement['Principal']['AWS'].remove(role_arn)
 
@@ -259,6 +263,7 @@ def main():
 
     result = {}
     mode = module.params['mode']
+
     try:
         region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
         kms = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)

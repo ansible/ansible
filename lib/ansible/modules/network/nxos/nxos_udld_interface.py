@@ -110,8 +110,8 @@ changed:
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -171,7 +171,7 @@ def get_commands_config_udld_interface1(delta, interface, module, existing):
         if mode == 'aggressive':
             command = 'udld aggressive'
         if mode == 'enabled':
-                command = 'no udld aggressive ; udld enable'
+            command = 'no udld aggressive ; udld enable'
         elif mode == 'disabled':
             command = 'no udld aggressive ; no udld enable'
     if command:
@@ -188,7 +188,7 @@ def get_commands_config_udld_interface2(delta, interface, module, existing):
         if mode == 'aggressive':
             command = 'udld aggressive'
         if mode == 'enabled':
-                command = 'no udld aggressive ; no udld disable'
+            command = 'no udld aggressive ; no udld disable'
         elif mode == 'disabled':
             command = 'no udld aggressive ; udld disable'
     if command:
@@ -237,7 +237,7 @@ def get_commands_remove_udld_interface2(delta, interface, module, existing):
 def main():
     argument_spec = dict(
         mode=dict(choices=['enabled', 'disabled', 'aggressive'],
-                      required=True),
+                  required=True),
         interface=dict(type='str', required=True),
         state=dict(choices=['absent', 'present'], default='present'),
     )
@@ -245,7 +245,7 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
@@ -265,14 +265,14 @@ def main():
     if state == 'present':
         if delta:
             command = get_commands_config_udld_interface1(delta, interface,
-                                                         module, existing)
+                                                          module, existing)
             commands.append(command)
     elif state == 'absent':
         common = set(proposed.items()).intersection(existing.items())
         if common:
             command = get_commands_remove_udld_interface1(
                 dict(common), interface, module, existing
-                )
+            )
             commands.append(command)
 
     cmds = flatten_list(commands)
@@ -297,11 +297,11 @@ def main():
                         commands = []
                         if state == 'present':
                             command = get_commands_config_udld_interface2(delta, interface,
-                                                                         module, existing)
+                                                                          module, existing)
                         elif state == 'absent':
                             command = get_commands_remove_udld_interface2(
                                 dict(common), interface, module, existing
-                                )
+                            )
                         commands.append(command)
 
                         cmds = flatten_list(commands)

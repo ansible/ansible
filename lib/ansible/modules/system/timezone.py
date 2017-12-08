@@ -517,7 +517,7 @@ class SmartOSTimezone(Timezone):
 
             # sm-set-timezone knows no state and will always set the timezone.
             # XXX: https://github.com/joyent/smtools/pull/2
-            m = re.match('^\* Changed (to)? timezone (to)? (%s).*' % value, stdout.splitlines()[1])
+            m = re.match(r'^\* Changed (to)? timezone (to)? (%s).*' % value, stdout.splitlines()[1])
             if not (m and m.groups()[-1] == value):
                 self.module.fail_json(msg='Failed to set timezone')
         else:

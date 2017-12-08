@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.iosxr import iosxr_netconf
-from .iosxr_module import TestIosxrModule, set_module_args
+from units.modules.utils import set_module_args
+from .iosxr_module import TestIosxrModule
 
 
 class TestIosxrNetconfModule(TestIosxrModule):
@@ -29,8 +30,7 @@ class TestIosxrNetconfModule(TestIosxrModule):
     module = iosxr_netconf
 
     def setUp(self):
-        self.mock_exec_command = patch('ansible.modules.network.iosxr.iosxr_netconf.exec_command')
-        self.exec_command = self.mock_exec_command.start()
+        super(TestIosxrNetconfModule, self).setUp()
 
         self.mock_get_config = patch('ansible.modules.network.iosxr.iosxr_netconf.get_config')
         self.get_config = self.mock_get_config.start()
@@ -39,7 +39,7 @@ class TestIosxrNetconfModule(TestIosxrModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
-        self.mock_exec_command.stop()
+        super(TestIosxrNetconfModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
@@ -50,14 +50,14 @@ class TestIosxrNetconfModule(TestIosxrModule):
         !
         ssh server netconf vrf default
         '''
-        self.exec_command.return_value = 0, '', None
+        self.load_config.return_value = 'dummy diff'
         set_module_args(dict(netconf_port=830, netconf_vrf='default', state='absent'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['no netconf-yang agent ssh', 'no ssh server netconf port 830', 'no ssh server netconf vrf default'])
 
     def test_iosxr_enable_netconf_service(self):
         self.get_config.return_value = ''
-        self.exec_command.return_value = 0, '', None
+        self.load_config.return_value = 'dummy diff'
         set_module_args(dict(netconf_port=830, netconf_vrf='default', state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['netconf-yang agent ssh', 'ssh server netconf port 830', 'ssh server netconf vrf default'])
@@ -69,7 +69,7 @@ class TestIosxrNetconfModule(TestIosxrModule):
         !
         ssh server netconf vrf default
         '''
-        self.exec_command.return_value = 0, '', None
+        self.load_config.return_value = 'dummy diff'
         set_module_args(dict(netconf_port=9000, state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['ssh server netconf port 9000'])
@@ -81,7 +81,7 @@ class TestIosxrNetconfModule(TestIosxrModule):
         !
         ssh server netconf vrf default
         '''
-        self.exec_command.return_value = 0, '', None
+        self.load_config.return_value = 'dummy diff'
         set_module_args(dict(netconf_vrf='new_default', state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['ssh server netconf vrf new_default'])
