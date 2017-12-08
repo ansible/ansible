@@ -6,7 +6,7 @@
 #  - EC2_REGION -> AWS_REGION
 #
 # TODO - name: test 'validate_certs' parameter
-
+# TODO - name: test creating key pair with another_key_material with force=yes
 # ============================================================
 # - include: ../../setup_ec2/tasks/common.yml module_name=ec2_key
 
@@ -25,126 +25,7 @@
            - 'result.msg == "missing required arguments: name"'
 
     # ============================================================
-    - name: test with only name
-      ec2_key:
-        name={{ec2_key_name}}
-      register: result
-      ignore_errors: true
-
-    - name: assert failure when called with only 'name'
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg == "Either region or ec2_url must be specified"'
-
-    # ============================================================
-    - name: test invalid region parameter
-      ec2_key:
-        name={{ec2_key_name}}
-        region='asdf querty 1234'
-      register: result
-      ignore_errors: true
-
-    - name: assert invalid region parameter
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg.startswith("Region asdf querty 1234 does not seem to be available ")'
-
-    # ============================================================
-    - name: test valid region parameter
-      ec2_key:
-        name={{ec2_key_name}}
-        region={{ec2_region}}
-      register: result
-      ignore_errors: true
-
-    - name: assert valid region parameter
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
-
-    # ============================================================
-    - name: test environment variable EC2_REGION
-      ec2_key:
-        name={{ec2_key_name}}
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert environment variable EC2_REGION
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
-
-    # ============================================================
-    - name: test invalid ec2_url parameter
-      ec2_key:
-        name={{ec2_key_name}}
-      environment:
-        EC2_URL: bogus.example.com
-      register: result
-      ignore_errors: true
-
-    - name: assert invalid ec2_url parameter
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
-
-    # ============================================================
-    - name: test valid ec2_url parameter
-      ec2_key:
-        name={{ec2_key_name}}
-      environment:
-        EC2_URL: '{{ec2_url}}'
-      register: result
-      ignore_errors: true
-
-    - name: assert valid ec2_url parameter
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg.startswith("No handler was ready to authenticate.")'
-
-    # ============================================================
-    - name: test credentials from environment
-      ec2_key:
-        name={{ec2_key_name}}
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: bogus_access_key
-        EC2_SECRET_KEY: bogus_secret_key
-      register: result
-      ignore_errors: true
-
-    - name: assert ec2_key with valid ec2_url
-      assert:
-        that:
-           - 'result.failed'
-           - '"EC2ResponseError: 401 Unauthorized" in result.module_stderr'
-
-    # ============================================================
-    - name: test credential parameters
-      ec2_key:
-        name={{ec2_key_name}}
-        ec2_region={{ec2_region}}
-        ec2_access_key=bogus_access_key
-        ec2_secret_key=bogus_secret_key
-      register: result
-      ignore_errors: true
-
-    - name: assert credential parameters
-      assert:
-        that:
-           - 'result.failed'
-           - '"EC2ResponseError: 401 Unauthorized" in result.module_stderr'
-
-    # ============================================================
-    - name: test removing a non-existent keypair
+    - name: test removing a non-existent key pair
       ec2_key:
         name='{{ec2_key_name}}'
         ec2_region={{ec2_region}}
@@ -154,8 +35,13 @@
         state=absent
       register: result
 
+    - name: assert removing a non-existent key pair
+      assert:
+        that:
+          - 'not result.changed'
+
     # ============================================================
-    - name: test state=present without key_material
+    - name: test creating a new key pair
       ec2_key:
         name='{{ec2_key_name}}'
         ec2_region={{ec2_region}}
@@ -165,7 +51,7 @@
         state=present
       register: result
 
-    - name: assert state=present without key_material
+    - name: assert creating a new key pair
       assert:
         that:
            - 'result.changed'
@@ -176,7 +62,7 @@
            - 'result.key.name == "{{ec2_key_name}}"'
 
     # ============================================================
-    - name: test state=absent without key_material
+    - name: test removing an existent key
       ec2_key:
         name='{{ec2_key_name}}'
         state=absent
@@ -187,7 +73,7 @@
         EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
       register: result
 
-    - name: assert state=absent without key_material
+    - name: assert removing an existent key
       assert:
         that:
            - 'result.changed'
@@ -213,85 +99,10 @@
            - 'result.changed == True'
            - '"key" in result'
            - '"name" in result.key'
-           - 'result.key.name == "{{ec2_key_name}}"'
            - '"fingerprint" in result.key'
            - '"private_key" not in result.key'
+           - 'result.key.name == "{{ec2_key_name}}"'
            - 'result.key.fingerprint == "{{fingerprint}}"'
-
-    # ============================================================
-    - name: test state=absent with key_material
-      ec2_key:
-        name='{{ec2_key_name}}'
-        key_material='{{key_material}}'
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=absent
-      register: result
-
-    - name: assert state=absent with key_material
-      assert:
-        that:
-           - 'result.changed'
-           - '"key" in result'
-           - 'result.key == None'
-
-    # ============================================================
-    - name: test state=present with key_material with_files (expect changed=true)
-      ec2_key:
-        name='{{ec2_key_name}}'
-        state=present
-        key_material='{{ item }}'
-      with_file: '{{sshkey}}.pub'
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
-      register: result
-
-    - name: assert state=present with key_material with_files (expect changed=true)
-      assert:
-        that:
-           - 'result.msg == "All items completed"'
-           - 'result.changed == True'
-           - '"results" in result'
-           - '"item" in result.results[0]'
-           - '"key" in result.results[0]'
-           - '"name" in result.results[0].key'
-           - 'result.results[0].key.name == "{{ec2_key_name}}"'
-           - '"fingerprint" in result.results[0].key'
-           - '"private_key" not in result.results[0].key'
-           - 'result.results[0].key.fingerprint == "{{fingerprint}}"'
-
-    # ============================================================
-    - name: test state=present with key_material with_files (expect changed=false)
-      ec2_key:
-        name='{{ec2_key_name}}'
-        state=present
-        key_material='{{ item }}'
-      with_file: '{{sshkey}}.pub'
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
-      register: result
-
-    - name: assert state=present with key_material with_files (expect changed=false)
-      assert:
-        that:
-           - 'result.msg == "All items completed"'
-           - 'not result.changed'
-           - '"results" in result'
-           - '"item" in result.results[0]'
-           - '"key" in result.results[0]'
-           - '"name" in result.results[0].key'
-           - 'result.results[0].key.name == "{{ec2_key_name}}"'
-           - '"fingerprint" in result.results[0].key'
-           - '"private_key" not in result.results[0].key'
-           - 'result.results[0].key.fingerprint == "{{fingerprint}}"'
 
     # ============================================================
 
@@ -313,14 +124,35 @@
           - 'result.key.fingerprint == "{{ fingerprint }}"'
 
     # ============================================================
-    - name: test state=absent with key_material (expect changed=true)
+
+    - name: test updating a key pair using another_key_material (expect changed=True)
+      ec2_key:
+        name: '{{ ec2_key_name }}'
+        ec2_region: '{{ ec2_region }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+        key_material: '{{ another_key_material }}'
+      register: result
+
+    - name: assert updating a key pair using another_key_material (expect changed=True)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.key.fingerprint != "{{ fingerprint }}"'
+
+    # ============================================================
+
+  always:
+
+    # ============================================================
+    - name: test state=absent (expect changed=true)
       ec2_key:
         name='{{ec2_key_name}}'
         ec2_region='{{ec2_region}}'
         ec2_access_key='{{ec2_access_key}}'
         ec2_secret_key='{{ec2_secret_key}}'
         security_token='{{security_token}}'
-        key_material='{{key_material}}'
         state=absent
       register: result
 
@@ -328,25 +160,5 @@
       assert:
         that:
            - 'result.changed'
-           - '"key" in result'
-           - 'result.key == None'
-
-  always:
-
-    # ============================================================
-    - name: test state=absent (expect changed=false)
-      ec2_key:
-        name='{{ec2_key_name}}'
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=absent
-      register: result
-
-    - name: assert state=absent with key_material (expect changed=false)
-      assert:
-        that:
-           - 'not result.changed'
            - '"key" in result'
            - 'result.key == None'
