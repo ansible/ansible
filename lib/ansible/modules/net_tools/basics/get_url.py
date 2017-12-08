@@ -538,6 +538,8 @@ def main():
         changed = True
     else:
         changed = False
+        if os.path.exists(tmpsrc):
+            os.remove(tmpsrc)
 
     if checksum != '':
         destination_checksum = module.digest_from_file(dest, algorithm)
