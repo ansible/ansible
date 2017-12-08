@@ -130,6 +130,14 @@ EXAMPLES = '''
     kms_key_id: arn:aws:kms:us-east-1:XXXXXXXXXXXX:key/746de6ea-50a4-4bcb-8fbc-e3b29f2d367b
 '''
 
+RETURN = '''
+image_id:
+  description: AMI ID of the copied AMI
+  returned: always
+  type: string
+  sample: ami-e689729e
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
 
@@ -148,7 +156,6 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
-
 
 
 def copy_image(module, ec2):
@@ -177,8 +184,8 @@ def copy_image(module, ec2):
         if module.params.get('tags'):
             ec2.create_tags(
                 Resources=[image_id],
-                Tags=[{'Key' : k, 'Value': v} for k,v in module.params.get('tags').items()]
-                )
+                Tags=[{'Key': k, 'Value': v} for k, v in module.params.get('tags').items()]
+            )
 
         module.exit_json(changed=True, image_id=image_id)
     except WaiterError as we:

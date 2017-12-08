@@ -4,7 +4,7 @@
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 
@@ -114,7 +114,7 @@ if ($dest -and -not $check_mode) {
 
 if ($user -and $password) {
     $webrequest_opts.Credential = New-Object System.Management.Automation.PSCredential($user, $($password | ConvertTo-SecureString -AsPlainText -Force))
-} elif ($user -or $password) {
+} elseif ($user -or $password) {
     Add-Warning -obj $result -message "Both 'user' and 'password' parameters are required together, skipping authentication"
 }
 

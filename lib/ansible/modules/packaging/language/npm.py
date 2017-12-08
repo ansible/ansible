@@ -70,6 +70,8 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+requirements:
+    - npm installed in bin path (recommended /usr/local/bin)
 '''
 
 EXAMPLES = '''
@@ -220,7 +222,7 @@ class Npm(object):
             if dep:
                 # node.js v0.10.22 changed the `npm outdated` module separator
                 # from "@" to " ". Split on both for backwards compatibility.
-                pkg, other = re.split('\s|@', dep, 1)
+                pkg, other = re.split(r'\s|@', dep, 1)
                 outdated.append(pkg)
 
         return outdated

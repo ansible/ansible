@@ -18,6 +18,7 @@ description:
     - Manage an AWS Application Elastic Load Balancer target group. See
       U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
 version_added: "2.4"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   deregistration_delay_timeout:
@@ -32,6 +33,7 @@ options:
   health_check_port:
     description:
       - The port the load balancer uses when performing health checks on targets.
+        Can be set to 'traffic-port' to match target port.
     required: false
     default: "The port on which each target receives traffic from the load balancer."
   health_check_path:
@@ -360,7 +362,7 @@ def create_or_update_target_group(connection, module):
             params['HealthCheckProtocol'] = module.params.get("health_check_protocol").upper()
 
         if module.params.get("health_check_port") is not None:
-            params['HealthCheckPort'] = str(module.params.get("health_check_port"))
+            params['HealthCheckPort'] = module.params.get("health_check_port")
 
         if module.params.get("health_check_interval") is not None:
             params['HealthCheckIntervalSeconds'] = module.params.get("health_check_interval")
@@ -382,6 +384,11 @@ def create_or_update_target_group(connection, module):
     tg = get_target_group(connection, module)
 
     if tg:
+        diffs = [param for param in ('Port', 'Protocol', 'VpcId')
+                 if tg.get(param) != params.get(param)]
+        if diffs:
+            module.fail_json(msg="Cannot modify %s parameter(s) for a target group" %
+                             ", ".join(diffs))
         # Target group exists so check health check parameters match what has been passed
         health_check_params = dict()
 
@@ -459,7 +466,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append(target)
+                            instances_to_add.append({'Id': target['Id'], 'Port': int(target['Port'])})
 
                     changed = True
                     try:
@@ -622,7 +629,7 @@ def main():
         dict(
             deregistration_delay_timeout=dict(type='int'),
             health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
-            health_check_port=dict(type='int'),
+            health_check_port=dict(),
             health_check_path=dict(default=None, type='str'),
             health_check_interval=dict(type='int'),
             health_check_timeout=dict(type='int'),

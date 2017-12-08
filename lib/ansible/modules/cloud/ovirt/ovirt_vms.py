@@ -1,359 +1,390 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: ovirt_vms
-short_description: "Module to manage Virtual Machines in oVirt/RHV"
+short_description: Module to manage Virtual Machines in oVirt/RHV
 version_added: "2.2"
-author: "Ondra Machacek (@machacekondra)"
+author:
+- Ondra Machacek (@machacekondra)
 description:
-    - "This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV. Since VM can hold many states in oVirt/RHV,
-       this see notes to see how the states of the VM are handled."
+    - This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV.
+    - Since VM can hold many states in oVirt/RHV, this see notes to see how the states of the VM are handled.
 options:
     name:
         description:
-            - "Name of the Virtual Machine to manage. If VM don't exists C(name) is required.
-               Otherwise C(id) or C(name) can be used."
+            - Name of the Virtual Machine to manage.
+            - If VM don't exists C(name) is required. Otherwise C(id) or C(name) can be used.
     id:
         description:
-            - "ID of the Virtual Machine to manage."
+            - ID of the Virtual Machine to manage.
     state:
         description:
-            - "Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered.
-               When C(state) is I(registered) and the unregistered VM's name
-               belongs to an already registered in engine VM in the same DC
-               then we fail to register the unregistered template."
-            - "I(present) and I(running) are equal states."
-            - "I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted."
-            - "Please check I(notes) to more detailed description of states."
-            - "I(registered) is supported since 2.4"
-        choices: ['running', 'stopped', 'present', 'absent', 'suspended', 'next_run', 'registered']
+            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered.
+              When C(state) is I(registered) and the unregistered VM's name
+              belongs to an already registered in engine VM in the same DC
+              then we fail to register the unregistered template.
+            - I(present) state will create/update VM and don't change its state if it already exists.
+            - I(running) state will create/update VM and start it.
+            - I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted.
+            - Please check I(notes) to more detailed description of states.
+            - I(registered) is supported since 2.4.
+        choices: [ absent, next_run, present, registered, running, stopped, suspended ]
         default: present
     cluster:
         description:
-            - "Name of the cluster, where Virtual Machine should be created. Required if creating VM."
+            - Name of the cluster, where Virtual Machine should be created.
+            - Required if creating VM.
     allow_partial_import:
         description:
-            - "Boolean indication whether to allow partial registration of Virtual Machine when C(state) is registered."
+            - Boolean indication whether to allow partial registration of Virtual Machine when C(state) is registered.
         version_added: "2.4"
     template:
         description:
-            - "Name of the template, which should be used to create Virtual Machine. Required if creating VM."
-            - "If template is not specified and VM doesn't exist, VM will be created from I(Blank) template."
+            - Name of the template, which should be used to create Virtual Machine.
+            - Required if creating VM.
+            - If template is not specified and VM doesn't exist, VM will be created from I(Blank) template.
     template_version:
         description:
-            - "Version number of the template to be used for VM."
-            - "By default the latest available version of the template is used."
+            - Version number of the template to be used for VM.
+            - By default the latest available version of the template is used.
         version_added: "2.3"
     use_latest_template_version:
         description:
-            - "Specify if latest template version should be used, when running a stateless VM."
-            - "If this parameter is set to I(true) stateless VM is created."
+            - Specify if latest template version should be used, when running a stateless VM.
+            - If this parameter is set to I(yes) stateless VM is created.
+        type: bool
         version_added: "2.3"
     storage_domain:
         description:
-            - "Name of the storage domain where all template disks should be created."
-            - "This parameter is considered only when C(template) is provided."
-            - "C(**IMPORTANT**)"
-            - "This parameter is not idempotent, if the VM exists and you specfiy different storage domain,
-              disk won't move."
+            - Name of the storage domain where all template disks should be created.
+            - This parameter is considered only when C(template) is provided.
+            - IMPORTANT - This parameter is not idempotent, if the VM exists and you specfiy different storage domain,
+              disk won't move.
         version_added: "2.4"
     disk_format:
         description:
-            - "Specify format of the disk."
-            - "If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision)."
-            - "If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated)."
-            - "Note that this option isn't idempotent as it's not currently possible to change format of the disk via API."
-            - "This parameter is considered only when C(template) and C(storage domain) is provided."
-        choices: ['cow', 'raw']
+            - Specify format of the disk.
+            - If C(cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision).
+            - If C(raw) format is used, disk storage will be allocated right away, also known as I(preallocated).
+            - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
+            - This parameter is considered only when C(template) and C(storage domain) is provided.
+        choices: [ cow, raw ]
         default: cow
         version_added: "2.4"
     memory:
         description:
-            - "Amount of memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB)."
-            - "Default value is set by engine."
+            - Amount of memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - Default value is set by engine.
     memory_guaranteed:
         description:
-            - "Amount of minimal guaranteed memory of the Virtual Machine.
-               Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB)."
-            - "C(memory_guaranteed) parameter can't be lower than C(memory) parameter. Default value is set by engine."
+            - Amount of minimal guaranteed memory of the Virtual Machine.
+              Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - C(memory_guaranteed) parameter can't be lower than C(memory) parameter.
+            - Default value is set by engine.
     cpu_shares:
         description:
-            - "Set a CPU shares for this Virtual Machine. Default value is set by oVirt/RHV engine."
+            - Set a CPU shares for this Virtual Machine.
+            - Default value is set by oVirt/RHV engine.
     cpu_cores:
         description:
-            - "Number of virtual CPUs cores of the Virtual Machine. Default value is set by oVirt/RHV engine."
+            - Number of virtual CPUs cores of the Virtual Machine.
+            - Default value is set by oVirt/RHV engine.
     cpu_sockets:
         description:
-            - "Number of virtual CPUs sockets of the Virtual Machine. Default value is set by oVirt/RHV engine."
+            - Number of virtual CPUs sockets of the Virtual Machine.
+            - Default value is set by oVirt/RHV engine.
     type:
         description:
-            - "Type of the Virtual Machine. Default value is set by oVirt/RHV engine."
-        choices: [server, desktop]
+            - Type of the Virtual Machine.
+            - Default value is set by oVirt/RHV engine.
+        choices: [ desktop, server ]
     operating_system:
         description:
-            - "Operating system of the Virtual Machine. Default value is set by oVirt/RHV engine."
-        choices: [
-            rhel_6_ppc64, other, freebsd, windows_2003x64, windows_10, rhel_6x64, rhel_4x64, windows_2008x64,
-            windows_2008R2x64, debian_7, windows_2012x64, ubuntu_14_04, ubuntu_12_04, ubuntu_13_10, windows_8x64,
-            other_linux_ppc64, windows_2003, other_linux, windows_10x64, windows_2008, rhel_3, rhel_5, rhel_4,
-            other_ppc64, sles_11, rhel_6, windows_xp, rhel_7x64, freebsdx64, rhel_7_ppc64, windows_7, rhel_5x64,
-            ubuntu_14_04_ppc64, sles_11_ppc64, windows_8, windows_2012R2x64, windows_2008r2x64, ubuntu_13_04,
-            ubuntu_12_10, windows_7x64
-        ]
+            - Operating system of the Virtual Machine.
+            - Default value is set by oVirt/RHV engine.
+        choices:
+        - debian_7
+        - freebsd
+        - freebsdx64
+        - other
+        - other_linux
+        - other_linux_ppc64
+        - other_ppc64
+        - rhel_3
+        - rhel_4
+        - rhel_4x64
+        - rhel_5
+        - rhel_5x64
+        - rhel_6
+        - rhel_6x64
+        - rhel_6_ppc64
+        - rhel_7x64
+        - rhel_7_ppc64
+        - sles_11
+        - sles_11_ppc64
+        - ubuntu_12_04
+        - ubuntu_12_10
+        - ubuntu_13_04
+        - ubuntu_13_10
+        - ubuntu_14_04
+        - ubuntu_14_04_ppc64
+        - windows_10
+        - windows_10x64
+        - windows_2003
+        - windows_2003x64
+        - windows_2008
+        - windows_2008x64
+        - windows_2008r2x64
+        - windows_2008R2x64
+        - windows_2012x64
+        - windows_2012R2x64
+        - windows_7
+        - windows_7x64
+        - windows_8
+        - windows_8x64
+        - windows_xp
     boot_devices:
         description:
-            - "List of boot devices which should be used to boot. Choices I(network), I(hd) and I(cdrom)."
-            - "For example: ['cdrom', 'hd']. Default value is set by oVirt/RHV engine."
+            - List of boot devices which should be used to boot. For example C([ cdrom, hd ]).
+            - Default value is set by oVirt/RHV engine.
+        choices: [ cdrom, hd, network ]
     host:
         description:
-            - "Specify host where Virtual Machine should be running. By default the host is chosen by engine scheduler."
-            - "This parameter is used only when C(state) is I(running) or I(present)."
+            - Specify host where Virtual Machine should be running. By default the host is chosen by engine scheduler.
+            - This parameter is used only when C(state) is I(running) or I(present).
     high_availability:
         description:
-            - "If I(True) Virtual Machine will be set as highly available."
-            - "If I(False) Virtual Machine won't be set as highly available."
-            - "If no value is passed, default value is set by oVirt/RHV engine."
+            - If I(yes) Virtual Machine will be set as highly available.
+            - If I(no) Virtual Machine won't be set as highly available.
+            - If no value is passed, default value is set by oVirt/RHV engine.
+        type: bool
     lease:
         description:
-            - "Name of the storage domain this virtual machine lease reside on."
-            - "C(Note): Supported since oVirt 4.1."
+            - Name of the storage domain this virtual machine lease reside on.
+            - NOTE - Supported since oVirt 4.1.
         version_added: "2.4"
     delete_protected:
         description:
-            - "If I(True) Virtual Machine will be set as delete protected."
-            - "If I(False) Virtual Machine won't be set as delete protected."
-            - "If no value is passed, default value is set by oVirt/RHV engine."
+            - If I(yes) Virtual Machine will be set as delete protected.
+            - If I(no) Virtual Machine won't be set as delete protected.
+            - If no value is passed, default value is set by oVirt/RHV engine.
     stateless:
         description:
-            - "If I(True) Virtual Machine will be set as stateless."
-            - "If I(False) Virtual Machine will be unset as stateless."
-            - "If no value is passed, default value is set by oVirt/RHV engine."
+            - If I(yes) Virtual Machine will be set as stateless.
+            - If I(no) Virtual Machine will be unset as stateless.
+            - If no value is passed, default value is set by oVirt/RHV engine.
     clone:
         description:
-            - "If I(True) then the disks of the created virtual machine will be cloned and independent of the template."
-            - "This parameter is used only when C(state) is I(running) or I(present) and VM didn't exist before."
-        default: False
+            - If I(yes) then the disks of the created virtual machine will be cloned and independent of the template.
+            - This parameter is used only when C(state) is I(running) or I(present) and VM didn't exist before.
+        type: bool
+        default: 'no'
     clone_permissions:
         description:
-            - "If I(True) then the permissions of the template (only the direct ones, not the inherited ones)
-            will be copied to the created virtual machine."
-            - "This parameter is used only when C(state) is I(running) or I(present) and VM didn't exist before."
-        default: False
+            - If I(yes) then the permissions of the template (only the direct ones, not the inherited ones)
+              will be copied to the created virtual machine.
+            - This parameter is used only when C(state) is I(running) or I(present) and VM didn't exist before.
+        type: bool
+        default: 'no'
     cd_iso:
         description:
-            - "ISO file from ISO storage domain which should be attached to Virtual Machine."
-            - "If you pass empty string the CD will be ejected from VM."
-            - "If used with C(state) I(running) or I(present) and VM is running the CD will be attached to VM."
-            - "If used with C(state) I(running) or I(present) and VM is down the CD will be attached to VM persistently."
+            - ISO file from ISO storage domain which should be attached to Virtual Machine.
+            - If you pass empty string the CD will be ejected from VM.
+            - If used with C(state) I(running) or I(present) and VM is running the CD will be attached to VM.
+            - If used with C(state) I(running) or I(present) and VM is down the CD will be attached to VM persistently.
     force:
         description:
-            - "Please check to I(Synopsis) to more detailed description of force parameter, it can behave differently
-               in different situations."
-        default: False
+            - Please check to I(Synopsis) to more detailed description of force parameter, it can behave differently
+              in different situations.
+        type: bool
+        default: 'no'
     nics:
         description:
-            - "List of NICs, which should be attached to Virtual Machine. NIC is described by following dictionary:"
-            - "C(name) - Name of the NIC."
-            - "C(profile_name) - Profile name where NIC should be attached."
-            - "C(interface) -  Type of the network interface. One of following: I(virtio), I(e1000), I(rtl8139), default is I(virtio)."
-            - "C(mac_address) - Custom MAC address of the network interface, by default it's obtained from MAC pool."
-            - "C(Note:)"
-            - "This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
-               To manage NICs of the VM in more depth please use M(ovirt_nics) module instead."
+            - List of NICs, which should be attached to Virtual Machine. NIC is described by following dictionary.
+            - C(name) - Name of the NIC.
+            - C(profile_name) - Profile name where NIC should be attached.
+            - C(interface) -  Type of the network interface. One of following I(virtio), I(e1000), I(rtl8139), default is I(virtio).
+            - C(mac_address) - Custom MAC address of the network interface, by default it's obtained from MAC pool.
+            - NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
+              To manage NICs of the VM in more depth please use M(ovirt_nics) module instead.
     disks:
         description:
-            - "List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary:"
-            - "C(name) - Name of the disk. Either C(name) or C(id) is reuqired."
-            - "C(id) - ID of the disk. Either C(name) or C(id) is reuqired."
-            - "C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio)."
-            - "C(bootable) - I(True) if the disk should be bootable, default is non bootable."
-            - "C(activate) - I(True) if the disk should be activated, default is activated."
-            - "C(Note:)"
-            - "This parameter is used only when C(state) is I(running) or I(present) and is able to only attach disks.
-               To manage disks of the VM in more depth please use M(ovirt_disks) module instead."
+            - List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
+            - C(name) - Name of the disk. Either C(name) or C(id) is reuqired.
+            - C(id) - ID of the disk. Either C(name) or C(id) is reuqired.
+            - C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio).
+            - C(bootable) - I(True) if the disk should be bootable, default is non bootable.
+            - C(activate) - I(True) if the disk should be activated, default is activated.
+            - NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only attach disks.
+              To manage disks of the VM in more depth please use M(ovirt_disks) module instead.
     sysprep:
         description:
-            - "Dictionary with values for Windows Virtual Machine initialization using sysprep:"
-            - "C(host_name) - Hostname to be set to Virtual Machine when deployed."
-            - "C(active_directory_ou) - Active Directory Organizational Unit, to be used for login of user."
-            - "C(org_name) - Organization name to be set to Windows Virtual Machine."
-            - "C(domain) - Domain to be set to Windows Virtual Machine."
-            - "C(timezone) - Timezone to be set to Windows Virtual Machine."
-            - "C(ui_language) - UI language of the Windows Virtual Machine."
-            - "C(system_locale) - System localization of the Windows Virtual Machine."
-            - "C(input_locale) - Input localization of the Windows Virtual Machine."
-            - "C(windows_license_key) - License key to be set to Windows Virtual Machine."
-            - "C(user_name) - Username to be used for set password to Windows Virtual Machine."
-            - "C(root_password) - Password to be set for username to Windows Virtual Machine."
+            - Dictionary with values for Windows Virtual Machine initialization using sysprep.
+            - C(host_name) - Hostname to be set to Virtual Machine when deployed.
+            - C(active_directory_ou) - Active Directory Organizational Unit, to be used for login of user.
+            - C(org_name) - Organization name to be set to Windows Virtual Machine.
+            - C(domain) - Domain to be set to Windows Virtual Machine.
+            - C(timezone) - Timezone to be set to Windows Virtual Machine.
+            - C(ui_language) - UI language of the Windows Virtual Machine.
+            - C(system_locale) - System localization of the Windows Virtual Machine.
+            - C(input_locale) - Input localization of the Windows Virtual Machine.
+            - C(windows_license_key) - License key to be set to Windows Virtual Machine.
+            - C(user_name) - Username to be used for set password to Windows Virtual Machine.
+            - C(root_password) - Password to be set for username to Windows Virtual Machine.
     cloud_init:
         description:
-            - "Dictionary with values for Unix-like Virtual Machine initialization using cloud init:"
-            - "C(host_name) - Hostname to be set to Virtual Machine when deployed."
-            - "C(timezone) - Timezone to be set to Virtual Machine when deployed."
-            - "C(user_name) - Username to be used to set password to Virtual Machine when deployed."
-            - "C(root_password) - Password to be set for user specified by C(user_name) parameter."
-            - "C(authorized_ssh_keys) - Use this SSH keys to login to Virtual Machine."
-            - "C(regenerate_ssh_keys) - If I(True) SSH keys will be regenerated on Virtual Machine."
-            - "C(custom_script) - Cloud-init script which will be executed on Virtual Machine when deployed."
-            - "C(dns_servers) - DNS servers to be configured on Virtual Machine."
-            - "C(dns_search) - DNS search domains to be configured on Virtual Machine."
-            - "C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of none, dhcp or static."
-            - "C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine."
-            - "C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine."
-            - "C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine."
-            - "C(nic_name) - Set name to network interface of Virtual Machine."
-            - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
+            - Dictionary with values for Unix-like Virtual Machine initialization using cloud init.
+            - C(host_name) - Hostname to be set to Virtual Machine when deployed.
+            - C(timezone) - Timezone to be set to Virtual Machine when deployed.
+            - C(user_name) - Username to be used to set password to Virtual Machine when deployed.
+            - C(root_password) - Password to be set for user specified by C(user_name) parameter.
+            - C(authorized_ssh_keys) - Use this SSH keys to login to Virtual Machine.
+            - C(regenerate_ssh_keys) - If I(True) SSH keys will be regenerated on Virtual Machine.
+            - C(custom_script) - Cloud-init script which will be executed on Virtual Machine when deployed.  This is appended to the end of the
+              cloud-init script generated by any other options.
+            - C(dns_servers) - DNS servers to be configured on Virtual Machine.
+            - C(dns_search) - DNS search domains to be configured on Virtual Machine.
+            - C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of C(none), C(dhcp) or C(static).
+            - C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine.
+            - C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine.
+            - C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+            - C(nic_name) - Set name to network interface of Virtual Machine.
+            - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
     cloud_init_nics:
         description:
-            - "List of dictionaries representing network interafaces to be setup by cloud init."
-            - "This option is used, when user needs to setup more network interfaces via cloud init."
-            - "If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
-               are merged with C(cloud_init_nics) parameters."
-            - "Dictionary can contain following values:"
-            - "C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of none, dhcp or static."
-            - "C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine."
-            - "C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine."
-            - "C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine."
-            - "C(nic_name) - Set name to network interface of Virtual Machine."
-            - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
+            - List of dictionaries representing network interafaces to be setup by cloud init.
+            - This option is used, when user needs to setup more network interfaces via cloud init.
+            - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
+              are merged with C(cloud_init_nics) parameters.
+            - Dictionary can contain following values.
+            - C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of C(none), C(dhcp) or C(static).
+            - C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine.
+            - C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine.
+            - C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+            - C(nic_name) - Set name to network interface of Virtual Machine.
+            - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
         version_added: "2.3"
     kernel_path:
         description:
-            - "Path to a kernel image used to boot the virtual machine."
-            - "Kernel image must be stored on either the ISO domain or on the host's storage."
+            - Path to a kernel image used to boot the virtual machine.
+            - Kernel image must be stored on either the ISO domain or on the host's storage.
         version_added: "2.3"
     initrd_path:
         description:
-            - "Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option."
-            - "Ramdisk image must be stored on either the ISO domain or on the host's storage."
+            - Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option.
+            - Ramdisk image must be stored on either the ISO domain or on the host's storage.
         version_added: "2.3"
     kernel_params:
         description:
-            - "Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option."
+            - Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option.
         version_added: "2.3"
     instance_type:
         description:
-            - "Name of virtual machine's hardware configuration."
-            - "By default no instance type is used."
+            - Name of virtual machine's hardware configuration.
+            - By default no instance type is used.
         version_added: "2.3"
     description:
         description:
-            - "Description of the Virtual Machine."
+            - Description of the Virtual Machine.
         version_added: "2.3"
     comment:
         description:
-            - "Comment of the Virtual Machine."
+            - Comment of the Virtual Machine.
         version_added: "2.3"
     timezone:
         description:
-            - "Sets time zone offset of the guest hardware clock."
-            - "For example: Etc/GMT"
+            - Sets time zone offset of the guest hardware clock.
+            - For example C(Etc/GMT)
         version_added: "2.3"
     serial_policy:
         description:
-            - "Specify a serial number policy for the Virtual Machine."
-            - "Following options are supported:"
-            - "C(vm) - Sets the Virtual Machine's UUID as its serial number."
-            - "C(host) - Sets the host's UUID as the Virtual Machine's serial number."
-            - "C(custom) - Allows you to specify a custom serial number in C(serial_policy_value)."
+            - Specify a serial number policy for the Virtual Machine.
+            - Following options are supported.
+            - C(vm) - Sets the Virtual Machine's UUID as its serial number.
+            - C(host) - Sets the host's UUID as the Virtual Machine's serial number.
+            - C(custom) - Allows you to specify a custom serial number in C(serial_policy_value).
         version_added: "2.3"
     serial_policy_value:
         description:
-            - "Allows you to specify a custom serial number."
-            - "This parameter is used only when C(serial_policy) is I(custom)."
+            - Allows you to specify a custom serial number.
+            - This parameter is used only when C(serial_policy) is I(custom).
         version_added: "2.3"
     vmware:
         description:
-            - "Dictionary of values to be used to connect to VMware and import
-               a virtual machine to oVirt."
-            - "Dictionary can contain following values:"
-            - "C(username) - The username to authenticate against the VMware."
-            - "C(password) - The password to authenticate against the VMware."
-            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-               For example: I(vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1)"
-            - "C(drivers_iso) - The name of the ISO containing drivers that can
-               be used during the I(virt-v2v) conversion process."
-            - "C(sparse) - Specifies the disk allocation policy of the resulting
-               virtual machine: I(true) for sparse, I(false) for preallocated.
-               Default value is I(true)."
-            - "C(storage_domain) - Specifies the target storage domain for
-               converted disks. This is required parameter."
+            - Dictionary of values to be used to connect to VMware and import
+              a virtual machine to oVirt.
+            - Dictionary can contain following values.
+            - C(username) - The username to authenticate against the VMware.
+            - C(password) - The password to authenticate against the VMware.
+            - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+              For example I(vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1)
+            - C(drivers_iso) - The name of the ISO containing drivers that can
+              be used during the I(virt-v2v) conversion process.
+            - C(sparse) - Specifies the disk allocation policy of the resulting
+              virtual machine. I(true) for sparse, I(false) for preallocated.
+              Default value is I(true).
+            - C(storage_domain) - Specifies the target storage domain for
+              converted disks. This is required parameter.
         version_added: "2.3"
     xen:
         description:
-            - "Dictionary of values to be used to connect to XEN and import
-               a virtual machine to oVirt."
-            - "Dictionary can contain following values:"
-            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-               For example: I(xen+ssh://root@zen.server). This is required paramater."
-            - "C(drivers_iso) - The name of the ISO containing drivers that can
-               be used during the I(virt-v2v) conversion process."
-            - "C(sparse) - Specifies the disk allocation policy of the resulting
-               virtual machine: I(true) for sparse, I(false) for preallocated.
-               Default value is I(true)."
-            - "C(storage_domain) - Specifies the target storage domain for
-               converted disks. This is required parameter."
+            - Dictionary of values to be used to connect to XEN and import
+              a virtual machine to oVirt.
+            - Dictionary can contain following values.
+            - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+              For example I(xen+ssh://root@zen.server). This is required parameter.
+            - C(drivers_iso) - The name of the ISO containing drivers that can
+              be used during the I(virt-v2v) conversion process.
+            - C(sparse) - Specifies the disk allocation policy of the resulting
+              virtual machine. I(true) for sparse, I(false) for preallocated.
+              Default value is I(true).
+            - C(storage_domain) - Specifies the target storage domain for
+              converted disks. This is required parameter.
         version_added: "2.3"
     kvm:
         description:
-            - "Dictionary of values to be used to connect to kvm and import
-               a virtual machine to oVirt."
-            - "Dictionary can contain following values:"
-            - "C(name) - The name of the KVM virtual machine."
-            - "C(username) - The username to authenticate against the KVM."
-            - "C(password) - The password to authenticate against the KVM."
-            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-               For example: I(qemu:///system). This is required paramater."
-            - "C(drivers_iso) - The name of the ISO containing drivers that can
-               be used during the I(virt-v2v) conversion process."
-            - "C(sparse) - Specifies the disk allocation policy of the resulting
-               virtual machine: I(true) for sparse, I(false) for preallocated.
-               Default value is I(true)."
-            - "C(storage_domain) - Specifies the target storage domain for
-               converted disks. This is required parameter."
+            - Dictionary of values to be used to connect to kvm and import
+              a virtual machine to oVirt.
+            - Dictionary can contain following values.
+            - C(name) - The name of the KVM virtual machine.
+            - C(username) - The username to authenticate against the KVM.
+            - C(password) - The password to authenticate against the KVM.
+            - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+              For example I(qemu:///system). This is required parameter.
+            - C(drivers_iso) - The name of the ISO containing drivers that can
+              be used during the I(virt-v2v) conversion process.
+            - C(sparse) - Specifies the disk allocation policy of the resulting
+              virtual machine. I(true) for sparse, I(false) for preallocated.
+              Default value is I(true).
+            - C(storage_domain) - Specifies the target storage domain for
+              converted disks. This is required parameter.
         version_added: "2.3"
 notes:
-    - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
-       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
-       If VM is in I(SAVING_STATE) state before any operation, we try to wait for VM to be I(SUSPENDED).
-       If VM is in I(POWERING_DOWN) state before any operation, we try to wait for VM to be I(UP) or I(DOWN). VM can
-       get into I(UP) state from I(POWERING_DOWN) state, when there is no ACPI or guest agent running inside VM, or
-       if the shutdown operation fails.
-       When user specify I(UP) C(state), we always wait to VM to be in I(UP) state in case VM is I(MIGRATING),
-       I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). In other states we run start operation on VM.
-       When user specify I(stopped) C(state), and If user pass C(force) parameter set to I(true) we forcibly stop the VM in
-       any state. If user don't pass C(force) parameter, we always wait to VM to be in UP state in case VM is
-       I(MIGRATING), I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). If VM is in I(PAUSED) or
-       I(SUSPENDED) state, we start the VM. Then we gracefully shutdown the VM.
-       When user specify I(suspended) C(state), we always wait to VM to be in UP state in case VM is I(MIGRATING),
-       I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). If VM is in I(PAUSED) or I(DOWN) state,
-       we start the VM. Then we suspend the VM.
-       When user specify I(absent) C(state), we forcibly stop the VM in any state and remove it."
+    - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
+      If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
+      If VM is in I(SAVING_STATE) state before any operation, we try to wait for VM to be I(SUSPENDED).
+      If VM is in I(POWERING_DOWN) state before any operation, we try to wait for VM to be I(UP) or I(DOWN). VM can
+      get into I(UP) state from I(POWERING_DOWN) state, when there is no ACPI or guest agent running inside VM, or
+      if the shutdown operation fails.
+      When user specify I(UP) C(state), we always wait to VM to be in I(UP) state in case VM is I(MIGRATING),
+      I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). In other states we run start operation on VM.
+      When user specify I(stopped) C(state), and If user pass C(force) parameter set to I(true) we forcibly stop the VM in
+      any state. If user don't pass C(force) parameter, we always wait to VM to be in UP state in case VM is
+      I(MIGRATING), I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). If VM is in I(PAUSED) or
+      I(SUSPENDED) state, we start the VM. Then we gracefully shutdown the VM.
+      When user specify I(suspended) C(state), we always wait to VM to be in UP state in case VM is I(MIGRATING),
+      I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). If VM is in I(PAUSED) or I(DOWN) state,
+      we start the VM. Then we suspend the VM.
+      When user specify I(absent) C(state), we forcibly stop the VM in any state and remove it.
 extends_documentation_fragment: ovirt
 '''
 
@@ -361,36 +392,36 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Creates a new Virtual Machine from template named 'rhel7_template'
-ovirt_vms:
+- name: Creates a new Virtual Machine from template named 'rhel7_template'
+  ovirt_vms:
     state: present
     name: myvm
     template: rhel7_template
 
-# Register VM
-ovirt_vms:
+- name: Register VM
+  ovirt_vms:
     state: registered
     storage_domain: mystorage
     cluster: mycluster
     name: myvm
 
-# Register VM using id
-ovirt_vms:
+- name: Register VM using id
+  ovirt_vms:
     state: registered
     storage_domain: mystorage
     cluster: mycluster
     id: 1111-1111-1111-1111
 
-# Register VM, allowing partial import
-ovirt_vms:
+- name: Register VM, allowing partial import
+  ovirt_vms:
     state: registered
     storage_domain: mystorage
     allow_partial_import: "True"
     cluster: mycluster
     id: 1111-1111-1111-1111
 
-# Creates a stateless VM which will always use latest template version:
-ovirt_vms:
+- name: Creates a stateless VM which will always use latest template version
+  ovirt_vms:
     name: myvm
     template: rhel7
     cluster: mycluster
@@ -399,7 +430,7 @@ ovirt_vms:
 # Creates a new server rhel7 Virtual Machine from Blank template
 # on brq01 cluster with 2GiB memory and 2 vcpu cores/sockets
 # and attach bootable disk with name rhel7_disk and attach virtio NIC
-ovirt_vms:
+- ovirt_vms:
     state: present
     cluster: brq01
     name: myvm
@@ -415,8 +446,8 @@ ovirt_vms:
     nics:
       - name: nic1
 
-# Run VM with cloud init:
-ovirt_vms:
+- name: Run VM with cloud init
+  ovirt_vms:
     name: rhel7
     template: rhel7
     cluster: Default
@@ -439,12 +470,12 @@ ovirt_vms:
       user_name: root
       root_password: super_password
 
-# Run VM with cloud init, with multiple network interfaces:
-ovirt_vms:
-  name: rhel7_4
-  template: rhel7
-  cluster: mycluster
-  cloud_init_nics:
+- name: Run VM with cloud init, with multiple network interfaces
+  ovirt_vms:
+    name: rhel7_4
+    template: rhel7
+    cluster: mycluster
+    cloud_init_nics:
     - nic_name: eth0
       nic_boot_protocol: dhcp
       nic_on_boot: true
@@ -455,8 +486,8 @@ ovirt_vms:
       nic_gateway: 10.34.63.254
       nic_on_boot: true
 
-# Run VM with sysprep:
-ovirt_vms:
+- name: Run VM with sysprep
+  ovirt_vms:
     name: windows2012R2_AD
     template: windows2012R2
     cluster: Default
@@ -467,56 +498,55 @@ ovirt_vms:
       user_name: Administrator
       root_password: SuperPassword123
 
-# Migrate/Run VM to/on host named 'host1'
-ovirt_vms:
+- name: Migrate/Run VM to/on host named 'host1'
+  ovirt_vms:
     state: running
     name: myvm
     host: host1
 
-# Change Vm's CD:
-ovirt_vms:
+- name: Change VMs CD
+  ovirt_vms:
     name: myvm
     cd_iso: drivers.iso
 
-# Eject Vm's CD:
-ovirt_vms:
+- name: Eject VMs CD
+  ovirt_vms:
     name: myvm
     cd_iso: ''
 
-# Boot VM from CD:
-ovirt_vms:
+- name: Boot VM from CD
+  ovirt_vms:
     name: myvm
     cd_iso: centos7_x64.iso
     boot_devices:
         - cdrom
 
-# Stop vm:
-ovirt_vms:
+- name: Stop vm
+  ovirt_vms:
     state: stopped
     name: myvm
 
-# Upgrade memory to already created VM:
-ovirt_vms:
+- name: Upgrade memory to already created VM
+  ovirt_vms:
     name: myvm
     memory: 4GiB
 
-# Hot plug memory to already created and running VM:
-# (VM won't be restarted)
-ovirt_vms:
+- name: Hot plug memory to already created and running VM (VM won't be restarted)
+  ovirt_vms:
     name: myvm
     memory: 4GiB
 
 # When change on the VM needs restart of the VM, use next_run state,
 # The VM will be updated and rebooted if there are any changes.
 # If present state would be used, VM won't be restarted.
-ovirt_vms:
+- ovirt_vms:
     state: next_run
     name: myvm
     boot_devices:
       - network
 
-# Import virtual machine from VMware:
-ovirt_vms:
+- name: Import virtual machine from VMware
+  ovirt_vms:
     state: stopped
     cluster: mycluster
     name: vmware_win10
@@ -529,17 +559,17 @@ ovirt_vms:
       username: user
       password: password
 
-# create vm from template and create all disks on specific storage domain
-ovirt_vms:
-  name: vm_test
-  cluster: mycluster
-  template: mytemplate
-  storage_domain: mynfs
-  nics:
+- name: Create vm from template and create all disks on specific storage domain
+  ovirt_vms:
+    name: vm_test
+    cluster: mycluster
+    template: mytemplate
+    storage_domain: mynfs
+    nics:
     - name: nic1
 
-# Remove VM, if VM is running it will be stopped:
-ovirt_vms:
+- name: Remove VM, if VM is running it will be stopped
+  ovirt_vms:
     state: absent
     name: myvm
 '''
@@ -606,7 +636,7 @@ class VmsModule(BaseModule):
                         self.param('template_version')
                     )
                 )
-            template = templates[0]
+            template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
 
         return template
 
@@ -719,26 +749,25 @@ class VmsModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self.param('cluster'), get_link_name(self._connection, entity.cluster))
-            and equal(convert_to_bytes(self.param('memory')), entity.memory)
-            and equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed)
-            and equal(self.param('cpu_cores'), entity.cpu.topology.cores)
-            and equal(self.param('cpu_sockets'), entity.cpu.topology.sockets)
-            and equal(self.param('type'), str(entity.type))
-            and equal(self.param('operating_system'), str(entity.os.type))
-            and equal(self.param('high_availability'), entity.high_availability.enabled)
-            and equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None)))
-            and equal(self.param('stateless'), entity.stateless)
-            and equal(self.param('cpu_shares'), entity.cpu_shares)
-            and equal(self.param('delete_protected'), entity.delete_protected)
-            and equal(self.param('use_latest_template_version'), entity.use_latest_template_version)
-            and equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
-            and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
-            and equal(self.param('description'), entity.description)
-            and equal(self.param('comment'), entity.comment)
-            and equal(self.param('timezone'), getattr(entity.time_zone, 'name', None))
-            and equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None)))
-            and equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
+            equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
+            equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
+            equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
+            equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
+            equal(self.param('type'), str(entity.type)) and
+            equal(self.param('operating_system'), str(entity.os.type)) and
+            equal(self.param('high_availability'), entity.high_availability.enabled) and
+            equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None))) and
+            equal(self.param('stateless'), entity.stateless) and
+            equal(self.param('cpu_shares'), entity.cpu_shares) and
+            equal(self.param('delete_protected'), entity.delete_protected) and
+            equal(self.param('use_latest_template_version'), entity.use_latest_template_version) and
+            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
+            equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True) and
+            equal(self.param('description'), entity.description) and
+            equal(self.param('comment'), entity.comment) and
+            equal(self.param('timezone'), getattr(entity.time_zone, 'name', None)) and
+            equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
+            equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
         )
 
     def pre_create(self, entity):
@@ -880,18 +909,23 @@ class VmsModule(BaseModule):
             ]
             # Stateless snapshot may be already removed:
             if snap_stateless:
+                """
+                We need to wait for Active snapshot ID, to be removed as it's current
+                stateless snapshot. Then we need to wait for staless snapshot ID to
+                be read, for use, because it will become active snapshot.
+                """
                 wait(
-                    service=snapshots_service.snapshot_service(snap_stateless[0].id),
+                    service=snapshots_service.snapshot_service(snap_active.id),
                     condition=lambda snap: snap is None,
                     wait=self.param('wait'),
                     timeout=self.param('timeout'),
                 )
-            wait(
-                service=snapshots_service.snapshot_service(snap_active.id),
-                condition=lambda snap: snap.snapshot_status == otypes.SnapshotStatus.OK,
-                wait=self.param('wait'),
-                timeout=self.param('timeout'),
-            )
+                wait(
+                    service=snapshots_service.snapshot_service(snap_stateless[0].id),
+                    condition=lambda snap: snap.snapshot_status == otypes.SnapshotStatus.OK,
+                    wait=self.param('wait'),
+                    timeout=self.param('timeout'),
+                )
         return True
 
     def __attach_disks(self, entity):
@@ -1121,69 +1155,65 @@ def control_state(vm, vms_service, module):
                 condition=lambda vm: vm.status in [otypes.VmStatus.DOWN, otypes.VmStatus.UP],
             )
 
+
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(
-            choices=['running', 'stopped', 'present', 'absent', 'suspended', 'next_run', 'registered'],
-            default='present',
-        ),
-        name=dict(default=None),
-        id=dict(default=None),
-        cluster=dict(default=None),
-        allow_partial_import=dict(default=None, type='bool'),
-        template=dict(default=None),
-        template_version=dict(default=None, type='int'),
-        use_latest_template_version=dict(default=None, type='bool'),
-        storage_domain=dict(default=None),
-        disk_format=dict(choices=['cow','raw'], default='cow'),
-        disks=dict(default=[], type='list'),
-        memory=dict(default=None),
-        memory_guaranteed=dict(default=None),
-        cpu_sockets=dict(default=None, type='int'),
-        cpu_cores=dict(default=None, type='int'),
-        cpu_shares=dict(default=None, type='int'),
-        type=dict(choices=['server', 'desktop']),
-        operating_system=dict(
-            default=None,
-            choices=[
-                'rhel_6_ppc64', 'other', 'freebsd', 'windows_2003x64', 'windows_10',
-                'rhel_6x64', 'rhel_4x64', 'windows_2008x64', 'windows_2008R2x64',
-                'debian_7', 'windows_2012x64', 'ubuntu_14_04', 'ubuntu_12_04',
-                'ubuntu_13_10', 'windows_8x64', 'other_linux_ppc64', 'windows_2003',
-                'other_linux', 'windows_10x64', 'windows_2008', 'rhel_3', 'rhel_5',
-                'rhel_4', 'other_ppc64', 'sles_11', 'rhel_6', 'windows_xp', 'rhel_7x64',
-                'freebsdx64', 'rhel_7_ppc64', 'windows_7', 'rhel_5x64',
-                'ubuntu_14_04_ppc64', 'sles_11_ppc64', 'windows_8',
-                'windows_2012R2x64', 'windows_2008r2x64', 'ubuntu_13_04',
-                'ubuntu_12_10', 'windows_7x64',
-            ],
-        ),
-        cd_iso=dict(default=None),
-        boot_devices=dict(default=None, type='list'),
+        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended']),
+        name=dict(type='str'),
+        id=dict(type='str'),
+        cluster=dict(type='str'),
+        allow_partial_import=dict(type='bool'),
+        template=dict(type='str'),
+        template_version=dict(type='int'),
+        use_latest_template_version=dict(type='bool'),
+        storage_domain=dict(type='str'),
+        disk_format=dict(type='str', default='cow', choices=['cow', 'raw']),
+        disks=dict(type='list', default=[]),
+        memory=dict(type='str'),
+        memory_guaranteed=dict(type='str'),
+        cpu_sockets=dict(type='int'),
+        cpu_cores=dict(type='int'),
+        cpu_shares=dict(type='int'),
+        type=dict(type='str', choices=['server', 'desktop']),
+        operating_system=dict(type='str',
+                              choices=[
+                                  'rhel_6_ppc64', 'other', 'freebsd', 'windows_2003x64', 'windows_10',
+                                  'rhel_6x64', 'rhel_4x64', 'windows_2008x64', 'windows_2008R2x64',
+                                  'debian_7', 'windows_2012x64', 'ubuntu_14_04', 'ubuntu_12_04',
+                                  'ubuntu_13_10', 'windows_8x64', 'other_linux_ppc64', 'windows_2003',
+                                  'other_linux', 'windows_10x64', 'windows_2008', 'rhel_3', 'rhel_5',
+                                  'rhel_4', 'other_ppc64', 'sles_11', 'rhel_6', 'windows_xp', 'rhel_7x64',
+                                  'freebsdx64', 'rhel_7_ppc64', 'windows_7', 'rhel_5x64',
+                                  'ubuntu_14_04_ppc64', 'sles_11_ppc64', 'windows_8',
+                                  'windows_2012R2x64', 'windows_2008r2x64', 'ubuntu_13_04',
+                                  'ubuntu_12_10', 'windows_7x64',
+                              ]),
+        cd_iso=dict(type='str'),
+        boot_devices=dict(type='list'),
         high_availability=dict(type='bool'),
-        lease=dict(default=None),
+        lease=dict(type='str'),
         stateless=dict(type='bool'),
         delete_protected=dict(type='bool'),
         force=dict(type='bool', default=False),
-        nics=dict(default=[], type='list'),
+        nics=dict(type='list', default=[]),
         cloud_init=dict(type='dict'),
-        cloud_init_nics=dict(defaul=[], type='list'),
+        cloud_init_nics=dict(type='list', default=[]),
         sysprep=dict(type='dict'),
-        host=dict(default=None),
+        host=dict(type='str'),
         clone=dict(type='bool', default=False),
         clone_permissions=dict(type='bool', default=False),
-        kernel_path=dict(default=None),
-        initrd_path=dict(default=None),
-        kernel_params=dict(default=None),
-        instance_type=dict(default=None),
-        description=dict(default=None),
-        comment=dict(default=None),
-        timezone=dict(default=None),
-        serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
-        serial_policy_value=dict(default=None),
-        vmware=dict(default=None, type='dict'),
-        xen=dict(default=None, type='dict'),
-        kvm=dict(default=None, type='dict'),
+        kernel_path=dict(type='str'),
+        initrd_path=dict(type='str'),
+        kernel_params=dict(type='str'),
+        instance_type=dict(type='str'),
+        description=dict(type='str'),
+        comment=dict(type='str'),
+        timezone=dict(type='str'),
+        serial_policy=dict(type='str', choices=['vm', 'host', 'custom']),
+        serial_policy_value=dict(type='str'),
+        vmware=dict(type='dict'),
+        xen=dict(type='dict'),
+        kvm=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1226,7 +1256,7 @@ def main():
             )
 
             # Run the VM if it was just created, else don't run it:
-            if state == 'running' or vm is None:
+            if state == 'running':
                 initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
                 ret = vms_module.action(
                     action='start',
@@ -1255,16 +1285,16 @@ def main():
                             initrd=module.params.get('initrd_path'),
                             kernel=module.params.get('kernel_path'),
                         ) if (
-                            module.params.get('kernel_params')
-                            or module.params.get('initrd_path')
-                            or module.params.get('kernel_path')
+                            module.params.get('kernel_params') or
+                            module.params.get('initrd_path') or
+                            module.params.get('kernel_path')
                         ) else None,
                     ) if (
-                        module.params.get('kernel_params')
-                        or module.params.get('initrd_path')
-                        or module.params.get('kernel_path')
-                        or module.params.get('host')
-                        or initialization
+                        module.params.get('kernel_params') or
+                        module.params.get('initrd_path') or
+                        module.params.get('kernel_path') or
+                        module.params.get('host') or
+                        initialization
                     ) else None,
                 )
 

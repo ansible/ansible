@@ -32,7 +32,7 @@ DOCUMENTATION = """
         default: ''
       remote_addr:
         description:
-            - The path of the chroot you want to access.
+            - The name of the container you want to access.
         default: inventory_hostname
         vars:
             - name: ansible_host
@@ -115,7 +115,7 @@ class Connection(ConnectionBase):
 
     @staticmethod
     def _sanitize_version(version):
-        return re.sub(u'[^0-9a-zA-Z\.]', u'', version)
+        return re.sub(u'[^0-9a-zA-Z.]', u'', version)
 
     def _old_docker_version(self):
         cmd_args = []

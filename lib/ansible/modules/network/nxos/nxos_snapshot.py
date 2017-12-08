@@ -171,8 +171,8 @@ import os
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 
 
 def execute_show_command(command, module):
@@ -191,8 +191,8 @@ def get_existing(module):
     body = execute_show_command(command, module)[0]
     if body:
         split_body = body.splitlines()
-        snapshot_regex = ('(?P<name>\S+)\s+(?P<date>\w+\s+\w+\s+\d+\s+\d+'
-                          ':\d+:\d+\s+\d+)\s+(?P<description>.*)')
+        snapshot_regex = (r'(?P<name>\S+)\s+(?P<date>\w+\s+\w+\s+\d+\s+\d+'
+                          r':\d+:\d+\s+\d+)\s+(?P<description>.*)')
         for snapshot in split_body:
             temp = {}
             try:
@@ -229,7 +229,7 @@ def action_add(module, existing_snapshots):
     body = execute_show_command(command, module)[0]
 
     if body:
-        section_regex = '.*\[(?P<section>\S+)\].*'
+        section_regex = r'.*\[(?P<section>\S+)\].*'
         split_body = body.split('\n\n')
         for section in split_body:
             temp = {}
@@ -333,6 +333,7 @@ def write_on_file(content, filename, module):
 
     return filepath
 
+
 def main():
     argument_spec = dict(
         action=dict(required=True, choices=['create', 'add', 'compare', 'delete', 'delete_all']),
@@ -421,4 +422,4 @@ def main():
     module.exit_json(**result)
 
 if __name__ == '__main__':
-        main()
+    main()

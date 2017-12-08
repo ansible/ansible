@@ -65,32 +65,29 @@ options:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
         required: false
-author: "Matt Davis (@mattdavispdx)"
+author: "Matt Davis (@nitzmahone)"
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
 - C(win_updates) does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
-- C(win_updates) runs the module as a scheduled task, this task is set to start and continue to run even if the Windows host
-  swaps to battery power. This behaviour was changed from Ansible 2.4, before this the scheduled task would fail to start on
-  battery power.
 '''
 
 EXAMPLES = r'''
-# Install all security, critical, and rollup updates
-- win_updates:
+- name: Install all security, critical, and rollup updates
+  win_updates:
     category_names:
       - SecurityUpdates
       - CriticalUpdates
       - UpdateRollups
 
-# Install only security updates
-- win_updates:
+- name: Install only security updates
+  win_updates:
     category_names: SecurityUpdates
 
-# Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
-- win_updates:
+- name: Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
+  win_updates:
     category_names: SecurityUpdates
     state: searched
     log_path: c:\ansible_wu.txt

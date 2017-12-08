@@ -225,7 +225,7 @@ class SolidFireVolumeAccessGroup(object):
                     update_group = True
                     changed = True
                 elif self.virtual_network_id is not None or self.virtual_network_tags is not None or \
-                                self.attributes is not None:
+                        self.attributes is not None:
                     update_group = True
                     changed = True
 

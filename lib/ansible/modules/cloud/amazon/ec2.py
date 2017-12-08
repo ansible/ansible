@@ -25,7 +25,6 @@ module: ec2
 short_description: create, terminate, start or stop an instance in ec2
 description:
     - Creates or terminates ec2 instances.
-    - C(state=restarted) was added in 2.2
 version_added: "0.9"
 options:
   key_name:
@@ -235,7 +234,8 @@ options:
   state:
     version_added: "1.3"
     description:
-      - create or terminate instances
+      - create, terminate, start, stop or restart instances.
+        The state 'restarted' was added in 2.2
     required: false
     default: 'present'
     aliases: []
@@ -833,6 +833,9 @@ def create_block_device(module, ec2, volume):
     # we add handling for either/or but not both
     if all(key in volume for key in ['device_type', 'volume_type']):
         module.fail_json(msg='device_type is a deprecated name for volume_type. Do not use both device_type and volume_type')
+    if 'device_type' in volume:
+        module.deprecate('device_type is deprecated for block devices - use volume_type instead',
+                         version=2.9)
 
     # get whichever one is set, or NoneType if neither are set
     volume_type = volume.get('device_type') or volume.get('volume_type')
@@ -989,11 +992,11 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
+        warn_if_public_ip_assignment_changed(module, inst)
+
         if not isinstance(inst, dict):
             inst = get_instance_info(inst)
         all_instances.append(inst)
-
-        warn_if_public_ip_assignment_changed(module, inst)
 
     return (all_instances, instance_dict_array, changed_instance_ids, changed)
 

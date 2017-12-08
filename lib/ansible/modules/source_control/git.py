@@ -118,6 +118,8 @@ options:
         version_added: "1.2"
         description:
             - If C(no), do not retrieve new revisions from the origin repository
+            - Operations like archive will work on the existing (old) repository and might
+              not respond to changes to the options version or remote.
     executable:
         required: false
         default: null
@@ -1087,6 +1089,15 @@ def main():
         # requested.
         result['before'] = get_version(module, git_path, dest)
         result.update(after=result['before'])
+        if archive:
+            # Git archive is not supported by all git servers, so
+            # we will first clone and perform git archive from local directory
+            if module.check_mode:
+                result.update(changed=True)
+                module.exit_json(**result)
+
+            create_archive(git_path, module, dest, archive, version, repo, result)
+
         module.exit_json(**result)
     else:
         # else do a pull
@@ -1160,14 +1171,6 @@ def main():
             module.exit_json(**result)
 
         create_archive(git_path, module, dest, archive, version, repo, result)
-
-    # cleanup the wrapper script
-    if ssh_wrapper:
-        try:
-            os.remove(ssh_wrapper)
-        except OSError:
-            # No need to fail if the file already doesn't exist
-            pass
 
     module.exit_json(**result)
 

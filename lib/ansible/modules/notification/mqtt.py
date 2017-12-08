@@ -144,18 +144,18 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            server = dict(default = 'localhost'),
-            port = dict(default = 1883, type='int'),
-            topic = dict(required = True),
-            payload = dict(required = True),
-            client_id = dict(default = None),
-            qos = dict(default="0", choices=["0", "1", "2"]),
-            retain = dict(default=False, type='bool'),
-            username = dict(default = None),
-            password = dict(default = None, no_log=True),
-            ca_certs = dict(default = None, type='path'),
-            certfile = dict(default = None, type='path'),
-            keyfile = dict(default = None, type='path'),
+            server=dict(default='localhost'),
+            port=dict(default=1883, type='int'),
+            topic=dict(required=True),
+            payload=dict(required=True),
+            client_id=dict(default=None),
+            qos=dict(default="0", choices=["0", "1", "2"]),
+            retain=dict(default=False, type='bool'),
+            username=dict(default=None),
+            password=dict(default=None, no_log=True),
+            ca_certs=dict(default=None, type='path'),
+            certfile=dict(default=None, type='path'),
+            keyfile=dict(default=None, type='path'),
         ),
         supports_check_mode=True
     )
@@ -163,18 +163,18 @@ def main():
     if not HAS_PAHOMQTT:
         module.fail_json(msg="Paho MQTT is not installed")
 
-    server     = module.params.get("server", 'localhost')
-    port       = module.params.get("port", 1883)
-    topic      = module.params.get("topic")
-    payload    = module.params.get("payload")
-    client_id  = module.params.get("client_id", '')
-    qos        = int(module.params.get("qos", 0))
-    retain     = module.params.get("retain")
-    username   = module.params.get("username", None)
-    password   = module.params.get("password", None)
-    ca_certs   = module.params.get("ca_certs", None)
-    certfile   = module.params.get("certfile", None)
-    keyfile    = module.params.get("keyfile", None)
+    server = module.params.get("server", 'localhost')
+    port = module.params.get("port", 1883)
+    topic = module.params.get("topic")
+    payload = module.params.get("payload")
+    client_id = module.params.get("client_id", '')
+    qos = int(module.params.get("qos", 0))
+    retain = module.params.get("retain")
+    username = module.params.get("username", None)
+    password = module.params.get("password", None)
+    ca_certs = module.params.get("ca_certs", None)
+    certfile = module.params.get("certfile", None)
+    keyfile = module.params.get("keyfile", None)
 
     if client_id is None:
         client_id = "%s_%s" % (socket.getfqdn(), os.getpid())
@@ -182,11 +182,11 @@ def main():
     if payload and payload == 'None':
         payload = None
 
-    auth=None
+    auth = None
     if username is not None:
-        auth = { 'username' : username, 'password' : password }
+        auth = {'username': username, 'password': password}
 
-    tls=None
+    tls = None
     if ca_certs is not None:
         tls = {'ca_certs': ca_certs, 'certfile': certfile,
                'keyfile': keyfile}

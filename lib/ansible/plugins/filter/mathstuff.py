@@ -147,6 +147,7 @@ class FilterModule(object):
             'union': union,
 
             # combinatorial
+            'product': itertools.product,
             'permutations': itertools.permutations,
             'combinations': itertools.combinations,
 

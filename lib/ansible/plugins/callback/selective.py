@@ -88,12 +88,12 @@ class CallbackModule(CallbackBase):
         self.last_task_name = None
         self.printed_last_task = False
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         global DONT_COLORIZE
-        DONT_COLORIZE = self._plugin_options['nocolor']
+        DONT_COLORIZE = self.get_option('nocolor')
 
     def _print_task(self, task_name=None):
         if task_name is None:

@@ -90,8 +90,8 @@ commands:
 '''
 
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -139,23 +139,41 @@ def get_snmp_user(user, module):
 
     resource = {}
     try:
-        resource_table = body[0]['TABLE_snmp_users']['ROW_snmp_users']
+        # The TABLE and ROW keys differ between NXOS platforms.
+        if body[0].get('TABLE_snmp_user'):
+            tablekey = 'TABLE_snmp_user'
+            rowkey = 'ROW_snmp_user'
+            tablegrpkey = 'TABLE_snmp_group_names'
+            rowgrpkey = 'ROW_snmp_group_names'
+            authkey = 'auth_protocol'
+            privkey = 'priv_protocol'
+            grpkey = 'group_names'
+        elif body[0].get('TABLE_snmp_users'):
+            tablekey = 'TABLE_snmp_users'
+            rowkey = 'ROW_snmp_users'
+            tablegrpkey = 'TABLE_groups'
+            rowgrpkey = 'ROW_groups'
+            authkey = 'auth'
+            privkey = 'priv'
+            grpkey = 'group'
+
+        resource_table = body[0][tablekey][rowkey]
         resource['user'] = str(resource_table['user'])
-        resource['authentication'] = str(resource_table['auth']).strip()
-        encrypt = str(resource_table['priv']).strip()
+        resource['authentication'] = str(resource_table[authkey]).strip()
+        encrypt = str(resource_table[privkey]).strip()
         if encrypt.startswith('aes'):
             resource['encrypt'] = 'aes-128'
         else:
             resource['encrypt'] = 'none'
 
-        group_table = resource_table['TABLE_groups']['ROW_groups']
+        group_table = resource_table[tablegrpkey][rowgrpkey]
 
         groups = []
         try:
             for group in group_table:
-                groups.append(str(group['group']).strip())
+                groups.append(str(group[grpkey]).strip())
         except TypeError:
-            groups.append(str(group_table['group']).strip())
+            groups.append(str(group_table[grpkey]).strip())
 
         resource['group'] = groups
 

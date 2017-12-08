@@ -433,6 +433,7 @@ def _parse_nics(nics):
         else:
             yield net
 
+
 def _network_args(module, cloud):
     args = []
     nics = module.params['nics']
@@ -668,8 +669,7 @@ def _get_server_state(module, cloud):
     if server and state == 'present':
         if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
             module.fail_json(
-                msg="The instance is available but not Active state: "
-                    + server.status)
+                msg="The instance is available but not Active state: " + server.status)
         (ip_changed, server) = _check_ips(module, cloud, server)
         (sg_changed, server) = _check_security_groups(module, cloud, server)
         (server_changed, server) = _update_server(module, cloud, server)
@@ -685,31 +685,31 @@ def _get_server_state(module, cloud):
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        name                            = dict(required=True),
-        image                           = dict(default=None),
-        image_exclude                   = dict(default='(deprecated)'),
-        flavor                          = dict(default=None),
-        flavor_ram                      = dict(default=None, type='int'),
-        flavor_include                  = dict(default=None),
-        key_name                        = dict(default=None),
-        security_groups                 = dict(default=['default'], type='list'),
-        network                         = dict(default=None),
-        nics                            = dict(default=[], type='list'),
-        meta                            = dict(default=None, type='raw'),
-        userdata                        = dict(default=None, aliases=['user_data']),
-        config_drive                    = dict(default=False, type='bool'),
-        auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
-        floating_ips                    = dict(default=None, type='list'),
-        floating_ip_pools               = dict(default=None, type='list'),
-        volume_size                     = dict(default=False, type='int'),
-        boot_from_volume                = dict(default=False, type='bool'),
-        boot_volume                     = dict(default=None, aliases=['root_volume']),
-        terminate_volume                = dict(default=False, type='bool'),
-        volumes                         = dict(default=[], type='list'),
-        scheduler_hints                 = dict(default=None, type='dict'),
-        state                           = dict(default='present', choices=['absent', 'present']),
-        delete_fip                      = dict(default=False, type='bool'),
-        reuse_ips                       = dict(default=True, type='bool'),
+        name=dict(required=True),
+        image=dict(default=None),
+        image_exclude=dict(default='(deprecated)'),
+        flavor=dict(default=None),
+        flavor_ram=dict(default=None, type='int'),
+        flavor_include=dict(default=None),
+        key_name=dict(default=None),
+        security_groups=dict(default=['default'], type='list'),
+        network=dict(default=None),
+        nics=dict(default=[], type='list'),
+        meta=dict(default=None, type='raw'),
+        userdata=dict(default=None, aliases=['user_data']),
+        config_drive=dict(default=False, type='bool'),
+        auto_ip=dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
+        floating_ips=dict(default=None, type='list'),
+        floating_ip_pools=dict(default=None, type='list'),
+        volume_size=dict(default=False, type='int'),
+        boot_from_volume=dict(default=False, type='bool'),
+        boot_volume=dict(default=None, aliases=['root_volume']),
+        terminate_volume=dict(default=False, type='bool'),
+        volumes=dict(default=[], type='list'),
+        scheduler_hints=dict(default=None, type='dict'),
+        state=dict(default='present', choices=['absent', 'present']),
+        delete_fip=dict(default=False, type='bool'),
+        reuse_ips=dict(default=True, type='bool'),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[

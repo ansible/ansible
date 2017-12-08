@@ -108,6 +108,7 @@ def normalize_credentials(credentials):
         'expiration': expiration
     }
 
+
 def get_session_token(connection, module):
     duration_seconds = module.params.get('duration_seconds')
     mfa_serial_number = module.params.get('mfa_serial_number')
@@ -131,13 +132,14 @@ def get_session_token(connection, module):
     credentials = normalize_credentials(response.get('Credentials', {}))
     module.exit_json(changed=changed, sts_creds=credentials)
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            duration_seconds = dict(required=False, default=None, type='int'),
-            mfa_serial_number = dict(required=False, default=None),
-            mfa_token = dict(required=False, default=None)
+            duration_seconds=dict(required=False, default=None, type='int'),
+            mfa_serial_number=dict(required=False, default=None),
+            mfa_token=dict(required=False, default=None)
         )
     )
 

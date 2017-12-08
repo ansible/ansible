@@ -24,19 +24,17 @@ description:
 options:
   name:
     description:
-      - Package name, or package specifier with version, like C(name-1.0).
-        If a previous version is specified, the task also needs to turn
-        C(allow_downgrade) on. See the C(allow_downgrade) documentation for
-        caveats with downgrading packages. When using state=latest, this can
-        be '*' which means run C(yum -y update).  You can also pass a url
-        or a local path to a rpm file (using state=present). To operate on
-        several packages this can accept a comma separated list of packages
-        or (as of 2.0) a list of packages.
+      - A package name , or package specifier with version, like C(name-1.0).
+      - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
+        See the C(allow_downgrade) documentation for caveats with downgrading packages.
+      - When using state=latest, this can be '*' which means run C(yum -y update).
+      - You can also pass a url or a local path to a rpm file (using state=present).
+        To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
     required: true
     aliases: [ pkg ]
   exclude:
     description:
-      - "Package name(s) to exclude when state=present, or latest"
+      - Package name(s) to exclude when state=present, or latest
     version_added: "2.0"
   list:
     description:
@@ -130,10 +128,8 @@ options:
     default: "no"
     version_added: "2.4"
 notes:
-  - When used with a loop of package names in a playbook, ansible optimizes
-    the call to the yum module.  Instead of calling the module with a single
-    package each time through the loop, ansible calls the module once with all
-    of the package names from the loop.
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
   - In versions prior to 1.9.2 this module installed and removed each package
     given to the yum module separately. This caused problems when packages
     specified by filename or url had to be installed or removed together. In
@@ -157,9 +153,9 @@ requirements:
 author:
     - Ansible Core Team
     - Seth Vidal
-    - Eduard Snesarev (github.com/verm666)
-    - Berend De Schouwer (github.com/berenddeschouwer)
-    - Abhijeet Kasurde (github.com/akasurde)
+    - Eduard Snesarev (@verm666)
+    - Berend De Schouwer (@berenddeschouwer)
+    - Abhijeet Kasurde (@Akasurde)
 '''
 
 EXAMPLES = '''
@@ -260,7 +256,7 @@ def yum_base(conf_file=None, installroot='/'):
     my.preconf.debuglevel = 0
     my.preconf.errorlevel = 0
     my.preconf.plugins = True
-    #my.preconf.releasever = '/'
+    # my.preconf.releasever = '/'
     if installroot != '/':
         # do not setup installroot by default, because of error
         # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
@@ -347,11 +343,13 @@ def is_group_env_installed(name):
     return False
 
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
+def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
         dis_repos = []
+    if qf is None:
+        qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}\n"
 
     if not repoq:
         pkgs = []
@@ -664,15 +662,18 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
 
     if stuff == 'installed':
         return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'updates':
+
+    if stuff == 'updates':
         return [pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'available':
+
+    if stuff == 'available':
         return [pkg_to_dict(p) for p in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'repos':
+
+    if stuff == 'repos':
         return [dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip()]
-    else:
-        return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
-                                                is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
+
+    return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot) +
+                                           is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
 
 
 def exec_install(module, items, action, pkgs, res, yum_basecmd):
@@ -747,16 +748,32 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
             (name, ver, rel, epoch, arch) = splitFilename(envra)
             installed_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
-            # TODO support downgrade for rpm files
+            # case for two same envr but differrent archs like x86_64 and i686
+            if len(installed_pkgs) == 2:
+                (cur_name0, cur_ver0, cur_rel0, cur_epoch0, cur_arch0) = splitFilename(installed_pkgs[0])
+                (cur_name1, cur_ver1, cur_rel1, cur_epoch1, cur_arch1) = splitFilename(installed_pkgs[1])
+                cur_epoch0 = cur_epoch0 or '0'
+                cur_epoch1 = cur_epoch1 or '0'
+                compare = compareEVR((cur_epoch0, cur_ver0, cur_rel0), (cur_epoch1, cur_ver1, cur_rel1))
+                if compare == 0 and cur_arch0 != cur_arch1:
+                    for installed_pkg in installed_pkgs:
+                        if installed_pkg.endswith(arch):
+                            installed_pkgs = [installed_pkg]
+
             if len(installed_pkgs) == 1:
                 installed_pkg = installed_pkgs[0]
                 (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(installed_pkg)
                 cur_epoch = cur_epoch or '0'
                 compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
 
-                # compare > 0 (higher version is installed) or compare == 0 (exact version is installed)
-                if compare >= 0:
+                # compare > 0 -> higher version is installed
+                # compare == 0 -> exact version is installed
+                # compare < 0 -> lower version is installed
+                if compare > 0 and allow_downgrade:
+                    downgrade_candidate = True
+                elif compare >= 0:
                     continue
+
             # else: if there are more installed packages with the same name, that would mean
             # kernel, gpg-pubkey or like, so just let yum deal with it and try to install it
 
@@ -1111,7 +1128,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
         res['changed'] = True
     elif pkgs['install'] or will_update:
         cmd = yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
-        rc, out, err = module.run_command(cmd)
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, out, err = module.run_command(cmd, environ_update=lang_env)
         out_lower = out.strip().lower()
         if not out_lower.endswith("no packages marked for update") and \
                 not out_lower.endswith("nothing to do"):
@@ -1333,8 +1351,10 @@ def main():
                          disablerepo, disable_gpg_check, exclude, repoquery,
                          skip_broken, update_only, security, params['installroot'], allow_downgrade)
         if repoquery:
-            results['msg'] = '%s %s' % (results.get('msg', ''),
-                             'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
+            results['msg'] = '%s %s' % (
+                results.get('msg', ''),
+                'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.'
+            )
 
     module.exit_json(**results)
 

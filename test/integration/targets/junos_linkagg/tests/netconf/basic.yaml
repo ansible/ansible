@@ -128,7 +128,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *disable")
+      - result.diff.prepared is search("\+ *disable")
 
 - name: Enable linkagg interface
   junos_linkagg:
@@ -140,7 +140,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *disable")
+      - result.diff.prepared is search("\- *disable")
 
 - name: Deactivate linkagg
   junos_linkagg:

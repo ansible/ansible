@@ -43,7 +43,7 @@ class VcenterProvider(CloudProvider):
         if os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_VCSIM_CONTAINER')
         else:
-            self.image = 'ansible/ansible:vcenter-simulator@sha256:1a92e84f477ae4c45f9070a5419a0fc2b46abaecdb5bc396826741bca65ce028'
+            self.image = 'ansible/ansible:vcenter-simulator@sha256:7b7cd213219dc09ae528a8e226804e662c2fae0c1d7d7e2ee3aa9e9c08d4059a'
         self.container_name = ''
 
     def filter(self, targets, exclude):

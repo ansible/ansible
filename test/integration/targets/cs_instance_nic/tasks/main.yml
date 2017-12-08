@@ -14,7 +14,7 @@
 - name: verify setup network
   assert:
     that:
-    - net|success
+    - net is successful
     - net.name == "net_nic"
 
 - name: setup instance
@@ -29,7 +29,7 @@
 - name: verify setup instance
   assert:
     that:
-    - instance|success
+    - instance is successful
     - instance.name == "instance-nic-vm"
     - instance.state == "Stopped"
 
@@ -48,7 +48,7 @@
 - name: verify setup network 2
   assert:
     that:
-    - net|success
+    - net is successful
     - net.name == "net_nic2"
 
 - name: setup absent nic
@@ -61,7 +61,7 @@
 - name: verify setup absent nic
   assert:
     that:
-    - nic|success
+    - nic is successful
 
 - name: test fail missing params
   cs_instance_nic:
@@ -70,7 +70,7 @@
 - name: verify test fail missing params
   assert:
     that:
-    - nic|failed
+    - nic is failed
     - "nic.msg.startswith('missing required arguments: ')"
 
 - name: test create nic in check mode
@@ -83,8 +83,8 @@
 - name: verify test create nic in check mode
   assert:
     that:
-    - nic|success
-    - nic|changed
+    - nic is successful
+    - nic is changed
     - nic.network == "net_nic2"
     - nic.vm == "instance-nic-vm"
     - nic.zone == "{{ cs_common_zone_adv }}"
@@ -99,8 +99,8 @@
 - name: verify test create nic
   assert:
     that:
-    - nic|success
-    - nic|changed
+    - nic is successful
+    - nic is changed
     - nic.ip_address == "10.100.124.42"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -118,8 +118,8 @@
 - name: verify test create nic idempotence
   assert:
     that:
-    - nic|success
-    - not nic|changed
+    - nic is successful
+    - nic is not changed
     - nic.ip_address == "10.100.124.42"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -136,8 +136,8 @@
 - name: verify test create nic without ip address idempotence
   assert:
     that:
-    - nic|success
-    - not nic|changed
+    - nic is successful
+    - nic is not changed
     - nic.ip_address == "10.100.124.42"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -156,8 +156,8 @@
 - name: verify test update nic in check mode
   assert:
     that:
-    - nic|success
-    - nic|changed
+    - nic is successful
+    - nic is changed
     - nic.ip_address == "10.100.124.42"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -175,8 +175,8 @@
 - name: verify test update nic
   assert:
     that:
-    - nic|success
-    - nic|changed
+    - nic is successful
+    - nic is changed
     - nic.ip_address == "10.100.124.23"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -194,8 +194,8 @@
 - name: verify test update nic idempotence
   assert:
     that:
-    - nic|success
-    - not nic|changed
+    - nic is successful
+    - nic is not changed
     - nic.ip_address == "10.100.124.23"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -212,8 +212,8 @@
 - name: verify test update nic without ip address idempotence
   assert:
     that:
-    - nic|success
-    - not nic|changed
+    - nic is successful
+    - nic is not changed
     - nic.ip_address == "10.100.124.23"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -232,8 +232,8 @@
 - name: verify test remove nic in check mode
   assert:
     that:
-    - nic|success
-    - nic|changed
+    - nic is successful
+    - nic is changed
     - nic.ip_address == "10.100.124.23"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -251,8 +251,8 @@
 - name: verify test remove nic
   assert:
     that:
-    - nic|success
-    - nic|changed
+    - nic is successful
+    - nic is changed
     - nic.ip_address == "10.100.124.23"
     - nic.netmask == "255.255.255.0"
     - nic.network == "net_nic2"
@@ -270,8 +270,8 @@
 - name: verify test remove nic idempotence
   assert:
     that:
-    - nic|success
-    - not nic|changed
+    - nic is successful
+    - nic is not changed
 
 - name: cleanup instance
   cs_instance:
@@ -281,7 +281,7 @@
 - name: verify cleanup instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: cleanup network
   cs_network:
@@ -292,7 +292,7 @@
 - name: verify cleanup network
   assert:
     that:
-    - net|success
+    - net is successful
 
 - name: cleanup network 2
   cs_network:
@@ -303,4 +303,4 @@
 - name: verify cleanup network 2
   assert:
     that:
-    - net|success
+    - net is successful

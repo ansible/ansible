@@ -1,7 +1,6 @@
-#- name: make sure pyvmomi is installed
-#  pip:
-#    name: pyvmomi
-#    state: latest
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Wait for Flask controller to come up online
   wait_for:
@@ -16,10 +15,10 @@
 
 - name: kill vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+    url: http://{{ vcsim }}:5000/killall
 - name: start vcsim with folders
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=1
   register: vcsim_instance
 
 - name: Wait for Flask controller to come up online
@@ -30,7 +29,7 @@
 
 - name: get a list of VMS from vcsim   
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
   register: vmlist
 
 - debug: var=vcsim_instance

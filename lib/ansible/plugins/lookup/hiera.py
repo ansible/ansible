@@ -33,8 +33,7 @@ DOCUMENTATION = '''
             default: '/etc/hiera.yaml'
             env:
                 - name: ANSIBLE_HIERA_CFG
-      FIXME:
-        description: incomplete options .. _terms? environment/fqdn?  ANSIBLE_HIERA_CFG, ANSIBLE_HIERA_BIN
+# FIXME: incomplete options .. _terms? environment/fqdn?
 '''
 
 EXAMPLES = """

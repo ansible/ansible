@@ -15,6 +15,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     run_command,
+    find_executable,
 )
 
 from lib.config import (
@@ -36,7 +37,8 @@ class YamllintTest(SanitySingleVersion):
             return SanitySkipped(self.name)
 
         cmd = [
-            'yamllint',
+            'python%s' % args.python_version,
+            find_executable('yamllint'),
             '--format', 'parsable',
         ] + paths
 

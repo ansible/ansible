@@ -269,7 +269,7 @@ class TestGetCollectorNames(unittest.TestCase):
         minimal_gather_subset = frozenset(['my_fact'])
 
         self.assertRaisesRegexp(TypeError,
-                                'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
+                                r'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
                                 collector.get_collector_names,
                                 valid_subsets=valid_subsets,
                                 minimal_gather_subset=minimal_gather_subset,
@@ -341,7 +341,7 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         # something claims 'unknown_collector' is a valid gather_subset, but there is
         # no FactCollector mapped to 'unknown_collector'
         self.assertRaisesRegexp(TypeError,
-                                'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
+                                r'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
                                 self._classes,
                                 all_collector_classes=default_collectors.collectors,
                                 gather_subset=['env', 'unknown_collector'])

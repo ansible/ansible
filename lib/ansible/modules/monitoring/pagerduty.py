@@ -112,7 +112,7 @@ options:
         version_added: 1.5.1
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # List ongoing maintenance windows using a user/passwd
 - pagerduty:
     name: companyabc
@@ -171,12 +171,14 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
+
 def auth_header(user, passwd, token):
     if token:
         return "Token token=%s" % token
 
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     return "Basic %s" % auth
+
 
 def ongoing(module, name, user, passwd, token):
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
@@ -203,7 +205,7 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
     headers = {
         'Authorization': auth_header(user, passwd, token),
-        'Content-Type' : 'application/json',
+        'Content-Type': 'application/json',
     }
     request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
 
@@ -225,11 +227,12 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
 
     return False, json_out, True
 
+
 def absent(module, name, user, passwd, token, requester_id, service):
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/" + service[0]
     headers = {
         'Authorization': auth_header(user, passwd, token),
-        'Content-Type' : 'application/json',
+        'Content-Type': 'application/json',
     }
     request_data = {}
 
@@ -266,7 +269,7 @@ def main():
             hours=dict(default='1', required=False),
             minutes=dict(default='0', required=False),
             desc=dict(default='Created by Ansible', required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 
@@ -280,7 +283,7 @@ def main():
     minutes = module.params['minutes']
     token = module.params['token']
     desc = module.params['desc']
-    requester_id =  module.params['requester_id']
+    requester_id = module.params['requester_id']
 
     if not token and not (user or passwd):
         module.fail_json(msg="neither user and passwd nor token specified")
@@ -290,7 +293,7 @@ def main():
             module.fail_json(msg="service not specified")
         (rc, out, changed) = create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc)
         if rc == 0:
-            changed=True
+            changed = True
 
     if state == "ongoing":
         (rc, out, changed) = ongoing(module, name, user, passwd, token)
@@ -300,7 +303,6 @@ def main():
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
-
 
     module.exit_json(msg="success", result=out, changed=changed)
 

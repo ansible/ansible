@@ -18,6 +18,7 @@ short_description: Gather facts about ec2 volume snapshots in AWS
 description:
     - Gather facts about ec2 volume snapshots in AWS
 version_added: "2.1"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   snapshot_ids:
@@ -178,8 +179,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
-        boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-        ec2_argument_spec, get_aws_connection_info)
+                                      boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
+                                      ec2_argument_spec, get_aws_connection_info)
 
 
 def list_ec2_snapshots(connection, module):
@@ -192,7 +193,12 @@ def list_ec2_snapshots(connection, module):
     try:
         snapshots = connection.describe_snapshots(SnapshotIds=snapshot_ids, OwnerIds=owner_ids, RestorableByUserIds=restorable_by_user_ids, Filters=filters)
     except ClientError as e:
-        module.fail_json(msg=e.message)
+        if e.response['Error']['Code'] == "InvalidSnapshot.NotFound":
+            if len(snapshot_ids) > 1:
+                module.warn("Some of your snapshots may exist, but %s" % str(e))
+            snapshots = {'Snapshots': []}
+        else:
+            module.fail_json(msg="Failed to describe snapshots: %s" % str(e))
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_snapshots = []

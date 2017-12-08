@@ -12,7 +12,7 @@ If you abuse the trust and break components and builds, etc., the trust level fa
 Features, High Level Design, and Roadmap
 ========================================
 
-As a core team member, you are an integral part of the team that develops the roadmap. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, etc. for various releases. Red Hat, the company, and the Ansible team must get these committed features (etc.) completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself may not get into a release if it impacts a lot of other parts within Ansible.
+As a core team member, you are an integral part of the team that develops the `roadmap <http://docs.ansible.com/ansible/devel/roadmap/>`_. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, etc. for various releases. Red Hat, the company, and the Ansible team must get these committed features (etc.) completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself may not get into a release if it impacts a lot of other parts within Ansible.
 
 Any other new features and changes to high level design should go through the proposal process (TBD), to ensure the community and core team have had a chance to review the idea and approve it. The core team has sole responsibility for merging new features based on proposals.
 
@@ -74,7 +74,7 @@ Individuals who've been asked to become a part of this group have generally been
 +=====================+======================+====================+======================+
 | James Cammarata     | jimi-c               | jimi               |                      |
 +---------------------+----------------------+--------------------+----------------------+
-| Brian Coca          | bcoca                | bcoca              | mdyson@cyberdyne.com |
+| Brian Coca          | bcoca                | bcoca              |                      |
 +---------------------+----------------------+--------------------+----------------------+
 | Matt Davis          | nitzmahone           | nitzmahone         |                      |
 +---------------------+----------------------+--------------------+----------------------+
@@ -108,8 +108,6 @@ Individuals who've been asked to become a part of this group have generally been
 +---------------------+----------------------+--------------------+----------------------+
 | Graham Mainwaring   | ghjm                 |                    |                      |
 +---------------------+----------------------+--------------------+----------------------+
-| Jon Davila          | defionscode          |                    |                      |
-+---------------------+----------------------+--------------------+----------------------+
 | Chris Houseknecht   | chouseknecht         |                    |                      |
 +---------------------+----------------------+--------------------+----------------------+
 | Trond Hindenes      | trondhindenes        |                    |                      |
@@ -125,4 +123,20 @@ Individuals who've been asked to become a part of this group have generally been
 | Dag Wieers          | dagwieers            | dagwieers          | dag@wieers.com       |
 +---------------------+----------------------+--------------------+----------------------+
 | Tim Rupp            | caphrim007           | caphrim007         |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Sloane Hertel       | s-hertel             | shertel            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Sam Doran           | samdoran             | samdoran           |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Scott Butler        | dharmabumstead       | dharmabumstead     |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Matt Clay           | mattclay             | mattclay           |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Martin Krizek       | mkrizek              | mkrizek            |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Kedar Kekan         | kedarX               | kedarX             |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Ganesh Nalawade     | ganeshrn             | ganeshrn           |                      |
++---------------------+----------------------+--------------------+----------------------+
+| Trishna Guha        | trishnaguha          | trishnag           |                      |
 +---------------------+----------------------+--------------------+----------------------+

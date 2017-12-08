@@ -47,20 +47,43 @@ def get_plugin_class(obj):
 
 class AnsiblePlugin(with_metaclass(ABCMeta, object)):
 
+    # allow extra passthrough parameters
+    allow_extras = False
+
     def __init__(self):
         self._options = {}
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:
-            option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self.name, variables=hostvars)
+            option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self._load_name, variables=hostvars)
             self.set_option(option, option_value)
         return self._options.get(option)
 
     def set_option(self, option, value):
         self._options[option] = value
 
-    def set_options(self, options):
-        self._options = options
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        '''
+        Sets the _options attribute with the configuration/keyword information for this plugin
+
+        :arg task_keys: Dict with playbook keywords that affect this option
+        :arg var_options: Dict with either 'conneciton variables'
+        :arg direct: Dict with 'direct assignment'
+        '''
+
+        if not self._options:
+            # load config options if we have not done so already, if vars provided we should be mostly done
+            self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options)
+
+        # they can be direct options overriding config
+        if direct:
+            for k in self._options:
+                if k in direct:
+                    self.set_option(k, direct[k])
+
+        # allow extras/wildcards from vars that are not directly consumed in configuration
+        if self.allow_extras and var_options and '_extras' in var_options:
+            self.set_option('_extras', var_options['_extras'])
 
     def _check_required(self):
         # FIXME: standarize required check based on config

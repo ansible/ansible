@@ -30,16 +30,19 @@ class TerminalModule(TerminalBase):
     terminal_stdout_re = [
         re.compile(br"[\r\n]?(?:\([^\)]+\)){,5}(?:>|#) ?$"),
         re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$"),
+        re.compile(br"(?:new|confirm) password:")
     ]
 
     terminal_stderr_re = [
         re.compile(br"% ?Error"),
+        re.compile(br"Syntax Error", re.I),
         re.compile(br"% User not present"),
         re.compile(br"% ?Bad secret"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
+        re.compile(br"the new password was not confirmed", re.I),
         re.compile(br"[^\r\n]+ not found", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"[^\r\n]\/bin\/(?:ba)?sh")
@@ -48,5 +51,10 @@ class TerminalModule(TerminalBase):
     def on_open_shell(self):
         try:
             self._exec_cli_command(b'modify cli preference display-threshold 0 pager disabled')
-        except AnsibleConnectionFailure:
-            raise AnsibleConnectionFailure('unable to set terminal parameters')
+        except AnsibleConnectionFailure as ex:
+            output = str(ex)
+            if 'modify: command not found' in output:
+                try:
+                    self._exec_cli_command(b'tmsh modify cli preference display-threshold 0 pager disabled')
+                except AnsibleConnectionFailure as ex:
+                    raise AnsibleConnectionFailure('unable to set terminal parameters')

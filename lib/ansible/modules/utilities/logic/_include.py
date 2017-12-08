@@ -7,71 +7,74 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['deprecated'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['deprecated'],
+    'supported_by': 'core'
+}
 
 
 DOCUMENTATION = '''
 ---
-author:
-    - "Ansible Core Team (@ansible)"
+author: Ansible Core Team (@ansible)
 module: include
-short_description: include a play or task list.
+short_description: Include a play or task list
 deprecated:
-    The include action was too confusing, dealing with both plays and tasks, being both dynamic and static.  This module will be removed in version 2.8.
-    As alternatives use include_tasks, import_playbook, import_tasks.
+  The include action was too confusing, dealing with both plays and tasks, being both dynamic and static. This module
+  will be removed in version 2.8. As alternatives use M(include_tasks), M(import_playbook), M(import_tasks).
 description:
-     - Includes a file with a list of plays or tasks to be executed in the current playbook.
-     - Files with a list of plays can only be included at the top level, lists of tasks can only be included where tasks normally run (in play).
-     - Before 2.0 all includes were 'static', executed at play compile time.
-     - Static includes are not subject to most directives, for example, loops or conditionals, they are applied instead to each inherited task.
-     - Since 2.0 task includes are dynamic and behave more like real tasks.  This means they can be looped, skipped and use variables from any source.
-       Ansible tries to auto detect this, use the `static` directive (new in 2.1) to bypass autodetection.
-     - This module is also supported for Windows targets.
+  - Includes a file with a list of plays or tasks to be executed in the current playbook.
+  - Files with a list of plays can only be included at the top level. Lists of tasks can only be included where tasks
+    normally run (in play).
+  - Before Ansible version 2.0, all includes were 'static' and were executed when the play was compiled.
+  - Static includes are not subject to most directives. For example, loops or conditionals are applied instead to each
+    inherited task.
+  - Since Ansible 2.0, task includes are dynamic and behave more like real tasks. This means they can be looped,
+    skipped and use variables from any source. Ansible tries to auto detect this, but you can use the `static`
+    directive (which was added in Ansible 2.1) to bypass autodetection.
+  - This module is also supported for Windows targets.
 version_added: "0.6"
 options:
   free-form:
     description:
-        - This module allows you to specify the name of the file directly w/o any other options.
+      - This module allows you to specify the name of the file directly without any other options.
 notes:
-    - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a
-      module can.
-    - This module is also supported for Windows targets.
+  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = """
-# include a play after another play
 - hosts: localhost
   tasks:
     - debug:
-        msg: "play1"
+        msg: play1
 
-- include: otherplays.yml
+- name: Include a play after another play
+  include: otherplays.yaml
 
 
-# include task list in play
 - hosts: all
   tasks:
     - debug:
         msg: task1
 
-    - include: stuff.yml
+    - name: Include task list in play
+      include: stuff.yaml
 
     - debug:
         msg: task10
 
-# dyanmic include task list in play
 - hosts: all
   tasks:
     - debug:
         msg: task1
 
-    - include: "{{ hostvar }}.yml"
+    - name: Include task list in play only if the condition is true
+      include: "{{ hostvar }}.yaml"
       static: no
       when: hostvar is defined
 """
 
 RETURN = """
-# this module does not return anything except plays or tasks to execute
+# This module does not return anything except plays or tasks to execute.
 """

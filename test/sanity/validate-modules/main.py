@@ -23,6 +23,7 @@ import abc
 import argparse
 import ast
 import json
+import errno
 import os
 import re
 import subprocess
@@ -69,7 +70,7 @@ BLACKLIST_IMPORTS = {
                     'ansible.module_utils.urls instead')
         }
     },
-    'boto(?:\.|$)': {
+    r'boto(?:\.|$)': {
         'new_only': True,
         'error': {
             'code': 204,
@@ -635,13 +636,41 @@ class ModuleValidator(Validator):
                         line=import_line
                     )
 
-    def _find_ps_replacers(self):
-        ps_module_util_template = '#Requires -Module Ansible.ModuleUtils.'
-        if ps_module_util_template not in self.text and REPLACER_WINDOWS not in self.text:
+    def _validate_ps_replacers(self):
+        # loop all (for/else + error)
+        # get module list for each
+        # check "shape" of each module name
+
+        module_requires = r'(?im)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'
+        found_requires = False
+
+        for req_stmt in re.finditer(module_requires, self.text):
+            found_requires = True
+            # this will bomb on dictionary format - "don't do that"
+            module_list = [x.strip() for x in req_stmt.group(1).split(',')]
+            if len(module_list) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=210,
+                    msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
+                )
+                continue
+
+            module_name = module_list[0]
+
+            if module_name.lower().endswith('.psm1'):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=211,
+                    msg='Module #Requires should not end in .psm1: "%s"' % module_name
+                )
+
+        # also accept the legacy #POWERSHELL_COMMON replacer signal
+        if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
                 code=207,
-                msg='"%s" not found in module' % ps_module_util_template
+                msg='No Ansible.ModuleUtils module requirements/imports found'
             )
 
     def _find_ps_docs_py_file(self):
@@ -785,12 +814,11 @@ class ModuleValidator(Validator):
                             msg='Unknown DOCUMENTATION error, see TRACE'
                         )
 
-                if 'options' in doc and doc['options'] is None and doc.get('extends_documentation_fragment'):
+                if 'options' in doc and doc['options'] is None:
                     self.reporter.error(
                         path=self.object_path,
-                        code=304,
-                        msg=('DOCUMENTATION.options must be a dictionary/hash when used '
-                             'with DOCUMENTATION.extends_documentation_fragment')
+                        code=320,
+                        msg='DOCUMENTATION.options must be a dictionary/hash when used',
                     )
 
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
@@ -951,7 +979,7 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, _, _, _ = get_docstring(self.base_module, verbose=True)
-                existing_options = existing_doc.get('options', {})
+                existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
                 self.reporter.warning(
@@ -981,7 +1009,7 @@ class ModuleValidator(Validator):
         except ValueError:
             mod_version_added = StrictVersion('0.0')
 
-        options = doc.get('options', {})
+        options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
         strict_ansible_version = StrictVersion(should_be)
@@ -1087,7 +1115,7 @@ class ModuleValidator(Validator):
             self._ensure_imports_below_docs(doc_info, first_callable)
 
         if self._powershell_module():
-            self._find_ps_replacers()
+            self._validate_ps_replacers()
             self._find_ps_docs_py_file()
 
         self._check_for_gpl3_header()
@@ -1225,7 +1253,20 @@ class GitCache(object):
         else:
             self.base_tree = []
 
-        self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+        try:
+            self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+        except GitError as ex:
+            if ex.status == 128:
+                # fallback when there is no .git directory
+                self.head_tree = self._get_module_files()
+            else:
+                raise
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                # fallback when git is not installed
+                self.head_tree = self._get_module_files()
+            else:
+                raise
 
         self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in ('.py', '.ps1'))
 
@@ -1241,11 +1282,30 @@ class GitCache(object):
                     self.head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
 
     @staticmethod
+    def _get_module_files():
+        module_files = []
+
+        for (dir_path, dir_names, file_names) in os.walk('lib/ansible/modules/'):
+            for file_name in file_names:
+                module_files.append(os.path.join(dir_path, file_name))
+
+        return module_files
+
+    @staticmethod
     def _git(args):
         cmd = ['git'] + args
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            raise GitError(stderr, p.returncode)
         return stdout.decode('utf-8').splitlines()
+
+
+class GitError(Exception):
+    def __init__(self, message, status):
+        super(GitError, self).__init__(message)
+
+        self.status = status
 
 
 if __name__ == '__main__':

@@ -26,7 +26,6 @@ from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils.six import iteritems
-from ansible.plugins.cache import FactCache
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
 
@@ -62,15 +61,22 @@ class InventoryData(object):
             self.add_group(group)
         self.add_child('all', 'ungrouped')
 
-        # prime cache
-        self.cache = FactCache()
-
     def serialize(self):
-        data = dict()
+        self._groups_dict_cache = None
+        data = {
+            'groups': self.groups,
+            'hosts': self.hosts,
+            'local': self.locahost,
+            'source': self.current_source,
+        }
         return data
 
     def deserialize(self, data):
-        pass
+        self._groups_dict_cache = {}
+        self.hosts = data.get('hosts')
+        self.groups = data.get('groups')
+        self.localhost = data.get('local')
+        self.current_source = data.get('source')
 
     def _create_implicit_localhost(self, pattern):
 
@@ -82,17 +88,15 @@ class InventoryData(object):
             new_host.address = "127.0.0.1"
             new_host.implicit = True
 
-            if "ansible_python_interpreter" not in new_host.vars:
-                py_interp = sys.executable
-                if not py_interp:
-                    # sys.executable is not set in some cornercases.  #13585
-                    py_interp = '/usr/bin/python'
-                    display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. '
-                                    'You can correct this by setting ansible_python_interpreter for localhost')
-                new_host.set_variable("ansible_python_interpreter", py_interp)
-
-            if "ansible_connection" not in new_host.vars:
-                new_host.set_variable("ansible_connection", 'local')
+            # set localhost defaults
+            py_interp = sys.executable
+            if not py_interp:
+                # sys.executable is not set in some cornercases. see issue #13585
+                py_interp = '/usr/bin/python'
+                display.warning('Unable to determine python interpreter from sys.executable. Using /usr/bin/python default. '
+                                'You can correct this by setting ansible_python_interpreter for localhost')
+            new_host.set_variable("ansible_python_interpreter", py_interp)
+            new_host.set_variable("ansible_connection", 'local')
 
             self.localhost = new_host
 
@@ -169,6 +173,17 @@ class InventoryData(object):
         else:
             display.debug("group %s already in inventory" % group)
 
+    def remove_group(self, group):
+
+        if group in self.groups:
+            del self.groups[group]
+            display.debug("Removed group %s from inventory" % group)
+            self._groups_dict_cache = {}
+
+        for host in self.hosts:
+            h = self.hosts[host]
+            h.remove_group(group)
+
     def add_host(self, host, group=None, port=None):
         ''' adds a host to inventory and possibly a group if not there already '''
 
@@ -204,6 +219,15 @@ class InventoryData(object):
             g.add_host(h)
             self._groups_dict_cache = {}
             display.debug("Added host %s to group %s" % (host, group))
+
+    def remove_host(self, host):
+
+        if host in self.hosts:
+            del self.hosts[host]
+
+        for group in self.groups:
+            g = self.groups[group]
+            g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
         ''' sets a varible for an inventory object '''

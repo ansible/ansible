@@ -111,8 +111,8 @@ changed:
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -155,7 +155,6 @@ def apply_key_map(key_map, table):
             else:
                 new_dict[new_key] = value
     return new_dict
-
 
 
 def get_commands_config_udld_global(delta, reset):
@@ -224,12 +223,11 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_one_of=[['aggressive', 'msg_time', 'reset']],
-                                supports_check_mode=True)
+                           required_one_of=[['aggressive', 'msg_time', 'reset']],
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     aggressive = module.params['aggressive']
     msg_time = module.params['msg_time']

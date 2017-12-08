@@ -87,7 +87,7 @@ EXAMPLES = '''
 # Install a specific version of Elasticsearch Head in Elasticsearch 2.x
 - elasticsearch_plugin:
     name: mobz/elasticsearch-head
-    versino: 2.0.0
+    version: 2.0.0
 
 # Uninstall Elasticsearch head plugin in Elasticsearch 2.x
 - elasticsearch_plugin:
@@ -196,30 +196,30 @@ def remove_plugin(module, plugin_bin, plugin_name):
     return True, cmd, out, err
 
 
-def get_plugin_bin(module, plugin_bin):
+def get_plugin_bin(module, plugin_bin=None):
     # Use the plugin_bin that was supplied first before trying other options
-    if plugin_bin:
-        if os.path.isfile(plugin_bin):
-            valid_plugin_bin = plugin_bin
+    valid_plugin_bin = None
+    if plugin_bin and os.path.isfile(plugin_bin):
+        valid_plugin_bin = plugin_bin
 
-        else:
-            # Add the plugin_bin passed into the module to the top of the list of paths to test,
-            # testing for that binary name first before falling back to the default paths.
-            bin_paths = list(PLUGIN_BIN_PATHS)
-            if plugin_bin and plugin_bin not in bin_paths:
-                bin_paths.insert(0, plugin_bin)
+    else:
+        # Add the plugin_bin passed into the module to the top of the list of paths to test,
+        # testing for that binary name first before falling back to the default paths.
+        bin_paths = list(PLUGIN_BIN_PATHS)
+        if plugin_bin and plugin_bin not in bin_paths:
+            bin_paths.insert(0, plugin_bin)
 
-            # Get separate lists of dirs and binary names from the full paths to the
-            # plugin binaries.
-            plugin_dirs = list(set([os.path.dirname(x) for x in bin_paths]))
-            plugin_bins = list(set([os.path.basename(x) for x in bin_paths]))
+        # Get separate lists of dirs and binary names from the full paths to the
+        # plugin binaries.
+        plugin_dirs = list(set([os.path.dirname(x) for x in bin_paths]))
+        plugin_bins = list(set([os.path.basename(x) for x in bin_paths]))
 
-            # Check for the binary names in the default system paths as well as the path
-            # specified in the module arguments.
-            for bin_file in plugin_bins:
-                valid_plugin_bin = module.get_bin_path(bin_file, opt_dirs=plugin_dirs)
-                if valid_plugin_bin:
-                    break
+        # Check for the binary names in the default system paths as well as the path
+        # specified in the module arguments.
+        for bin_file in plugin_bins:
+            valid_plugin_bin = module.get_bin_path(bin_file, opt_dirs=plugin_dirs)
+            if valid_plugin_bin:
+                break
 
     if not valid_plugin_bin:
         module.fail_json(msg='%s does not exist and no other valid plugin installers were found. Make sure Elasticsearch is installed.' % plugin_bin)

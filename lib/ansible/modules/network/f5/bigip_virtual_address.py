@@ -4,14 +4,18 @@
 # Copyright (c) 2017 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_virtual_address
-short_description: Manage LTM virtual addresses on a BIG-IP.
+short_description: Manage LTM virtual addresses on a BIG-IP
 description:
   - Manage LTM virtual addresses on a BIG-IP.
 version_added: "2.4"
@@ -99,79 +103,94 @@ options:
     choices:
       - yes
       - no
+  partition:
+    description:
+      - Device partition to manage resources on.
+    required: False
+    default: 'Common'
+    version_added: 2.5
+  traffic_group:
+    description:
+      - The traffic group for the virtual address. When creating a new address,
+        if this value is not specified, the default of C(/Common/traffic-group-1)
+        will be used.
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
   - Requires the netaddr Python package on the host. This is as easy as pip
     install netaddr.
 extends_documentation_fragment: f5
+requirements:
+  - f5-sdk
+  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add virtual address
   bigip_virtual_address:
-      server: "lb.mydomain.net"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      partition: "Common"
-      address: "10.10.10.10"
+    server: lb.mydomain.net
+    user: admin
+    password: secret
+    state: present
+    partition: Common
+    address: 10.10.10.10
   delegate_to: localhost
 
 - name: Enable route advertisement on the virtual address
   bigip_virtual_address:
-      server: "lb.mydomain.net"
-      user: "admin"
-      password: "secret"
-      state: "present"
-      address: "10.10.10.10"
-      use_route_advertisement: yes
+    server: lb.mydomain.net
+    user: admin
+    password: secret
+    state: present
+    address: 10.10.10.10
+    use_route_advertisement: yes
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 use_route_advertisement:
-    description: The new setting for whether to use route advertising or not.
-    returned: changed
-    type: bool
-    sample: true
+  description: The new setting for whether to use route advertising or not.
+  returned: changed
+  type: bool
+  sample: true
 auto_delete:
-    description: New setting for auto deleting virtual address.
-    returned: changed
-    type: string
-    sample: enabled
+  description: New setting for auto deleting virtual address.
+  returned: changed
+  type: string
+  sample: enabled
 icmp_echo:
-    description: New ICMP echo setting applied to virtual address.
-    returned: changed
-    type: string
-    sample: disabled
+  description: New ICMP echo setting applied to virtual address.
+  returned: changed
+  type: string
+  sample: disabled
 connection_limit:
-    description: The new connection limit of the virtual address.
-    returned: changed
-    type: int
-    sample: 1000
+  description: The new connection limit of the virtual address.
+  returned: changed
+  type: int
+  sample: 1000
 netmask:
-    description: The netmask of the virtual address.
-    returned: created
-    type: int
-    sample: 2345
+  description: The netmask of the virtual address.
+  returned: created
+  type: int
+  sample: 2345
 arp_state:
-    description: The new way the virtual address handles ARP requests.
-    returned: changed
-    type: string
-    sample: disabled
+  description: The new way the virtual address handles ARP requests.
+  returned: changed
+  type: string
+  sample: disabled
 address:
-    description: The address of the virtual address.
-    returned: created
-    type: int
-    sample: 2345
+  description: The address of the virtual address.
+  returned: created
+  type: int
+  sample: 2345
 state:
-    description: The new state of the virtual address.
-    returned: changed
-    type: string
-    sample: disabled
+  description: The new state of the virtual address.
+  returned: changed
+  type: string
+  sample: disabled
 '''
 
 try:
@@ -180,14 +199,17 @@ try:
 except ImportError:
     HAS_NETADDR = False
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.f5_utils import AnsibleF5Parameters
+from ansible.module_utils.f5_utils import HAS_F5SDK
+from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
+
+try:
+    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+except ImportError:
+    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -198,12 +220,13 @@ class Parameters(AnsibleF5Parameters):
         'connectionLimit': 'connection_limit',
         'serverScope': 'advertise_route',
         'mask': 'netmask',
-        'arp': 'arp_state'
+        'arp': 'arp_state',
+        'trafficGroup': 'traffic_group',
     }
 
     updatables = [
         'use_route_advertisement', 'auto_delete', 'icmp_echo', 'connection_limit',
-        'arp_state', 'enabled', 'advertise_route'
+        'arp_state', 'enabled', 'advertise_route', 'traffic_group'
     ]
 
     returnables = [
@@ -213,8 +236,13 @@ class Parameters(AnsibleF5Parameters):
 
     api_attributes = [
         'routeAdvertisement', 'autoDelete', 'icmpEcho', 'connectionLimit',
-        'advertiseRoute', 'arp', 'mask', 'enabled', 'serverScope'
+        'advertiseRoute', 'arp', 'mask', 'enabled', 'serverScope', 'trafficGroup'
     ]
+
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
+        return value
 
     @property
     def advertise_route(self):
@@ -301,6 +329,19 @@ class Parameters(AnsibleF5Parameters):
         else:
             return self._values['state']
 
+    @property
+    def traffic_group(self):
+        if self._values['traffic_group'] is None:
+            return None
+        else:
+            result = self._fqdn_name(self._values['traffic_group'])
+        if result.startswith('/Common/'):
+            return result
+        else:
+            raise F5ModuleError(
+                "Traffic groups can only exist in /Common"
+            )
+
     def to_return(self):
         result = {}
         for returnable in self.returnables:
@@ -320,12 +361,43 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
+class Changes(Parameters):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def traffic_group(self):
+        if self.want.traffic_group != self.have.traffic_group:
+            return self.want.traffic_group
+
+
 class ModuleManager(object):
     def __init__(self, client):
         self.client = client
         self.have = None
         self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.changes = Changes()
 
     def _set_changed_options(self):
         changed = {}
@@ -333,18 +405,23 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(changed)
             return True
         return False
 
@@ -430,6 +507,8 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
+        if self.want.traffic_group is None:
+            self.want.update({'traffic_group': '/Common/traffic-group-1'})
         if self.client.check_mode:
             return True
         self.create_on_device()
@@ -497,7 +576,8 @@ class ArgumentSpec(object):
             ),
             use_route_advertisement=dict(
                 type='bool'
-            )
+            ),
+            traffic_group=dict()
         )
         self.f5_product_name = 'bigip'
 

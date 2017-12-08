@@ -25,7 +25,7 @@ import json
 from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
@@ -52,18 +52,18 @@ class Cliconf(CliconfBase):
         return device_info
 
     def get_config(self):
-        return self.send_command(b'show configuration all')
+        return self.send_command(b'show configuration commands')
 
     def edit_config(self, command):
         for cmd in chain([b'configure'], to_list(command)):
             self.send_command(cmd)
 
-    def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(to_bytes(command), prompt=to_bytes(prompt), answer=to_bytes(answer), sendonly=sendonly)
 
     def commit(self, comment=None):
         if comment:
-            command = b'commit comment {0}'.format(comment)
+            command = b'commit comment "{0}"'.format(comment)
         else:
             command = b'commit'
         self.send_command(command)

@@ -29,8 +29,8 @@
 
 - assert:
     that:
-    - bogus_utils | failed
-    - bogus_utils.msg | search("Could not find")
+    - bogus_utils is failed
+    - bogus_utils.msg is search("Could not find")
 
 - name: call module with camel conversion tests
   camel_conversion_test:
@@ -48,7 +48,7 @@
     that:
     - sid_test.data == 'success'
 
-- name: create testing folder for argv binary
+- name: create temp testing folder
   win_file:
     path: C:\ansible testing
     state: directory
@@ -67,7 +67,33 @@
     that:
     - command_util.data == 'success'
 
+- name: call module with ArgvParser tests
+  argv_parser_test:
+    exe: C:\ansible testing\PrintArgv.exe
+  register: argv_test
+
+- assert:
+    that:
+    - argv_test.data == 'success'
+
+- name: call module with symbolic link tests
+  symbolic_link_test:
+    path: C:\ansible testing
+  register: symbolic_link
+
+- assert:
+    that:
+    - symbolic_link.data == 'success'
+
 - name: remove testing folder
   win_file:
     path: C:\ansible testing
     state: absent
+
+- name: call module with FileUtil tests
+  file_util_test:
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'

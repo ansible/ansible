@@ -66,7 +66,7 @@
         key_name: '{{ setup_key.key.name }}'
         instance_type: t2.micro
         state: present
-        image: '{{ ec2_ami_image[ec2_region] }}'
+        image: '{{ ec2_region_images[ec2_region] }}'
         wait: yes
         instance_tags:
           '{{ec2_ami_name}}_instance_setup': 'integration_tests'
@@ -101,7 +101,6 @@
           Name: '{{ ec2_ami_name }}_ami'
         wait: yes
         root_device_name: /dev/xvda
-      ignore_errors: true
       register: result
 
     - name: assert that image has been created
@@ -109,12 +108,28 @@
         that:
           - "result.changed"
           - "result.image_id.startswith('ami-')"
-          # FIXME: tags are not currently shown in the results
-          #- "result.tags == '{Name: {{ ec2_ami_name }}_ami}'"
+          - "'Name' in result.tags and result.tags.Name == ec2_ami_name + '_ami'"
 
     - name: set image id fact for deletion later
       set_fact:
         ec2_ami_image_id: "{{ result.image_id }}"
+
+    # ============================================================
+
+    - name: gather facts about the image created
+      ec2_ami_facts:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_ids: '{{ ec2_ami_image_id }}'
+      register: ami_facts_result
+      ignore_errors: true
+
+    - name: assert that the right image was found
+      assert:
+        that:
+          - "ami_facts_result.images[0].image_id == ec2_ami_image_id"
 
     # ============================================================
 
@@ -158,7 +173,7 @@
       assert:
         that:
           - "result.failed"
-          - "result.msg == 'image_id needs to be an ami image to registered/delete'"
+          - "result.msg == 'state is absent but all of the following are missing: image_id'"
 
     # ============================================================
 
@@ -171,6 +186,8 @@
         name: '{{ ec2_ami_name }}_ami'
         description: '{{ ec2_ami_description }}'
         state: present
+        launch_permissions:
+          user_ids: []
         tags:
           Name: '{{ ec2_ami_name }}_ami'
         root_device_name: /dev/xvda
@@ -196,39 +213,37 @@
 
     # ============================================================
 
-# FIXME: this only works if launch permissions are specified and if they are not an empty list
-#    - name: test idempotence
-#      ec2_ami:
-#        ec2_region: '{{ec2_region}}'
-#        ec2_access_key: '{{ec2_access_key}}'
-#        ec2_secret_key: '{{ec2_secret_key}}'
-#        security_token: '{{security_token}}'
-#        description: '{{ ec2_ami_description }}'
-#        state: present
-#        tags:
-#          Name: '{{ ec2_ami_name }}_ami'
-#        root_device_name: /dev/xvda
-#        image_id: '{{ result.image_id }}'
-#        launch_permissions:
-#          user_ids:
-#            -
-#        device_mapping:
-#          - device_name: /dev/xvda
-#            volume_type: gp2
-#            size: 8
-#            delete_on_termination: true
-#            snapshot_id: '{{ setup_snapshot.snapshot_id }}'
-#      register: result
+    - name: test default launch permissions idempotence
+      ec2_ami:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        description: '{{ ec2_ami_description }}'
+        state: present
+        name: '{{ ec2_ami_name }}_ami'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        root_device_name: /dev/xvda
+        image_id: '{{ result.image_id }}'
+        launch_permissions:
+          user_ids: []
+        device_mapping:
+          - device_name: /dev/xvda
+            volume_type: gp2
+            size: 8
+            delete_on_termination: true
+            snapshot_id: '{{ setup_snapshot.snapshot_id }}'
+      register: result
 
-#    - name: assert a new ami has been created
-#      assert:
-#        that:
-#          - "not result.changed"
-#          - "result.image_id.startswith('ami-')"
+    - name: assert a new ami has not been created
+      assert:
+        that:
+          - "not result.changed"
+          - "result.image_id.startswith('ami-')"
 
     # ============================================================
 
-# FIXME: tags are not currently shown in the results
     - name: add a tag to the AMI
       ec2_ami:
         ec2_region: '{{ec2_region}}'
@@ -241,14 +256,34 @@
         name: '{{ ec2_ami_name }}_ami'
         tags:
           New: Tag
-        launch_permissions:
-          group_names: ['all']
       register: result
-#
-#    - name: assert a tag was added
-#      assert:
-#        that:
-#          - "result.tags == '{Name: {{ ec2_ami_name }}_ami}, New: Tag'"
+
+    - name: assert a tag was added
+      assert:
+        that:
+          - "'Name' in result.tags and result.tags.Name == ec2_ami_name + '_ami'"
+          - "'New' in result.tags and result.tags.New == 'Tag'"
+
+    - name: use purge_tags to remove a tag from the AMI
+      ec2_ami:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        description: '{{ ec2_ami_description }}'
+        image_id: '{{ result.image_id }}'
+        name: '{{ ec2_ami_name }}_ami'
+        tags:
+          New: Tag
+        purge_tags: yes
+      register: result
+
+    - name: assert a tag was removed
+      assert:
+        that:
+          - "'Name' not in result.tags"
+          - "'New' in result.tags and result.tags.New == 'Tag'"
 
     # ============================================================
 
@@ -298,29 +333,25 @@
 
     # ============================================================
 
-# FIXME: currently the module doesn't remove launch permissions correctly
-#    - name: remove public launch permissions
-#      ec2_ami:
-#        ec2_region: '{{ec2_region}}'
-#        ec2_access_key: '{{ec2_access_key}}'
-#        ec2_secret_key: '{{ec2_secret_key}}'
-#        security_token: '{{security_token}}'
-#        state: present
-#        image_id: '{{ result.image_id }}'
-#        name: '{{ ec2_ami_name }}_ami'
-#        tags:
-#          Name: '{{ ec2_ami_name }}_ami'
-#        launch_permissions:
-#          group_names:
-#            -
-#
-#      register: result
-#      ignore_errors: true
-#
-#    - name: assert launch permissions were updated
-#      assert:
-#        that:
-#          - "result.changed"
+    - name: remove public launch permissions
+      ec2_ami:
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        image_id: '{{ result.image_id }}'
+        name: '{{ ec2_ami_name }}_ami'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        launch_permissions:
+          group_names: []
+      register: result
+
+    - name: assert launch permissions were updated
+      assert:
+        that:
+          - "result.changed"
 
     # ============================================================
 
@@ -374,16 +405,13 @@
         tags:
           Name: '{{ ec2_ami_name }}_ami'
         wait: yes
-      ignore_errors: true
       register: result
 
-# FIXME: currently deleting an already deleted image fails
-# It should succeed, with changed: false
-#    - name: assert that image does not exist
-#      assert:
-#        that:
-#          - not result.changed
-#          - not result.failed
+    - name: assert that image does not exist
+      assert:
+        that:
+          - not result.changed
+          - not result.failed
 
 
     # ============================================================

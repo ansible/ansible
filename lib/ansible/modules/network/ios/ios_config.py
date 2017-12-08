@@ -248,7 +248,7 @@ EXAMPLES = """
 
 - name: check the running-config against master config
   ios_config:
-    diff_config: intended
+    diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
 
 - name: check the startup-config against the running-config
@@ -282,13 +282,13 @@ backup_path:
 import re
 import time
 
-from ansible.module_utils.ios import run_commands, get_config, load_config
-from ansible.module_utils.ios import get_defaults_flag
-from ansible.module_utils.ios import ios_argument_spec
-from ansible.module_utils.ios import check_args as ios_check_args
+from ansible.module_utils.network.ios.ios import run_commands, get_config, load_config
+from ansible.module_utils.network.ios.ios import get_defaults_flag
+from ansible.module_utils.network.ios.ios import ios_argument_spec
+from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems
 
 
@@ -483,7 +483,7 @@ def main():
         if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
             result['changed'] = True
             if not module.check_mode:
-                run_commands(module, 'copy running-config startup-config')
+                run_commands(module, 'copy running-config startup-config\r')
             else:
                 module.warn('Skipping command `copy running-config startup-config` '
                             'due to check_mode.  Configuration not copied to '

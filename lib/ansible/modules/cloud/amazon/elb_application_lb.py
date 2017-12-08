@@ -25,6 +25,7 @@ short_description: Manage an Application load balancer
 description:
     - Manage an AWS Application Elastic Load Balancer. See U(https://aws.amazon.com/blogs/aws/new-aws-application-load-balancer/) for details.
 version_added: "2.4"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   access_logs_enabled:
@@ -656,7 +657,6 @@ def compare_listeners(connection, module, current_listeners, new_listeners, purg
 
 
 def compare_rules(connection, module, current_listeners, listener):
-
     """
     Compare rules and return rules to add, rules to modify and rules to remove
     Rules are compared based on priority

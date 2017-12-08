@@ -18,6 +18,7 @@ short_description: Gather facts about ec2 Auto Scaling Groups (ASGs) in AWS
 description:
   - Gather facts about ec2 Auto Scaling Groups (ASGs) in AWS
 version_added: "2.2"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   name:

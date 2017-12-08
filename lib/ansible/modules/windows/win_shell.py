@@ -53,6 +53,10 @@ options:
     description:
       - change the shell used to execute the command (eg, C(cmd)). The target shell must accept a C(/c) parameter followed by the raw command line to be
         executed.
+  stdin:
+    description:
+    - Set the stdin of the command directly to the specified value.
+    version_added: '2.5'
 notes:
    -  If you want to run an executable securely and predictably, it may be
       better to use the M(win_command) module instead. Best practices when writing
@@ -88,6 +92,19 @@ EXAMPLES = r'''
   args:
     executable: cmd
   register: homedir_out
+
+- name: run multi-lined shell commands
+  win_shell: |
+    $value = Test-Path -Path C:\temp
+    if ($value) {
+        Remove-Item -Path C:\temp -Force
+    }
+    New-Item -Path C:\temp -ItemType Directory
+
+- name: retrieve the input based on stdin
+  win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'
+  args:
+    stdin: Input message
 '''
 
 RETURN = r'''

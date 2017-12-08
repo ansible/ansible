@@ -104,7 +104,7 @@ simple_config_file:
 import collections
 
 from ansible.errors import AnsibleParserError
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
     import os_client_config
@@ -115,7 +115,7 @@ except ImportError:
     HAS_SHADE = False
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory provider for ansible using OpenStack clouds. '''
 
     NAME = 'openstack'
@@ -124,13 +124,10 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        cache_key = self.get_cache_prefix(path)
+        cache_key = self._get_cache_prefix(path)
 
         # file is config file
-        try:
-            self._config_data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError(e)
+        self._config_data = self._read_config_data(path)
 
         msg = ''
         if not self._config_data:
@@ -151,9 +148,9 @@ class InventoryModule(BaseInventoryPlugin):
             self._config_data = {}
 
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache and cache_key in self._cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self._cache[cache_key]
             except KeyError:
                 pass
 
@@ -189,7 +186,7 @@ class InventoryModule(BaseInventoryPlugin):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            inventory.cache[cache_key] = source_data
+            self._cache[cache_key] = source_data
 
         self._populate_from_source(source_data)
 

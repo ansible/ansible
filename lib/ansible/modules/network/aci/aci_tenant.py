@@ -82,7 +82,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -109,7 +109,14 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+    )
     aci.get_existing()
 
     if state == 'present':
