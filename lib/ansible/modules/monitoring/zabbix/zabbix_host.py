@@ -325,8 +325,7 @@ class Host(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             parameters = {'hostid': host_id, 'groups': group_ids, 'status': status, 'tls_connect': tls_connect,
-                          'tls_accept': tls_accept, 'ipmi_authtype': ipmi_authtype, 'ipmi_privilege': ipmi_privilege,
-                          'ipmi_username': ipmi_username, 'ipmi_password': ipmi_password}
+                          'tls_accept': tls_accept}
             if proxy_id >= 0:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
