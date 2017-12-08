@@ -52,6 +52,11 @@ options:
     choices: [ append, insert ]
     default: append
     version_added: "2.2"
+  rule_num:
+    description:
+      - Insert the rule as the given rule number. This works only with
+        action = 'insert'.
+    version_added: "2.5"
   ip_version:
     description:
       - Which version of the IP protocol this rule should apply to.
@@ -440,6 +445,8 @@ def push_arguments(iptables_path, action, params, make_rule=True):
     cmd = [iptables_path]
     cmd.extend(['-t', params['table']])
     cmd.extend([action, params['chain']])
+    if action == '-I':
+        cmd.extend([params['rule_num']])
     if make_rule:
         cmd.extend(construct_rule(params))
     return cmd
@@ -496,6 +503,7 @@ def main():
             action=dict(type='str', default='append', choices=['append', 'insert']),
             ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
             chain=dict(type='str'),
+            rule_num=dict(type='str'),
             protocol=dict(type='str'),
             source=dict(type='str'),
             to_source=dict(type='str'),
