@@ -34,8 +34,8 @@ options:
   node_type:
     description:
       - The node type of the cluster. Must be specified when command=create.
-    choices: ['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc2.large', 'dc1.8xlarge', 'dw1.xlarge',
-              'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge']
+    choices: ['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge', 'dc2.large', 'dc2.8xlarge',
+              'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge']
   username:
     description:
       - Master database username. Used only when command=create.
@@ -284,7 +284,7 @@ def create_cluster(module, redshift):
               'automated_snapshot_retention_period', 'port',
               'cluster_version', 'allow_version_upgrade',
               'number_of_nodes', 'publicly_accessible',
-              'encrypted', 'elastic_ip'):
+              'encrypted', 'elastic_ip', 'enhanced_vpc_routing'):
         if p in module.params:
             params[p] = module.params.get(p)
 
@@ -397,7 +397,8 @@ def modify_cluster(module, redshift):
               'availability_zone', 'preferred_maintenance_window',
               'cluster_parameter_group_name',
               'automated_snapshot_retention_period', 'port', 'cluster_version',
-              'allow_version_upgrade', 'number_of_nodes', 'new_cluster_identifier'):
+              'allow_version_upgrade', 'number_of_nodes', 'new_cluster_identifier',
+              'enhanced_vpc_routing'):
         if p in module.params:
             params[p] = module.params.get(p)
 
@@ -462,6 +463,7 @@ def main():
         encrypted=dict(type='bool', default=False),
         elastic_ip=dict(required=False),
         new_cluster_identifier=dict(aliases=['new_identifier']),
+        enhanced_vpc_routing=dict(type='bool', default=False),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=300),
     ))
