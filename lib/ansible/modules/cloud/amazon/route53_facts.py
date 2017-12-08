@@ -112,6 +112,10 @@ options:
     default: 'list'
 author: Karen Cheng(@Etherdaemon)
 extends_documentation_fragment: aws
+requirements:
+    - boto
+    - boto3
+    - botocore
 '''
 
 EXAMPLES = '''

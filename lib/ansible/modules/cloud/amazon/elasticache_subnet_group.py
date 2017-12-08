@@ -43,6 +43,8 @@ author: "Tim Mahoney (@timmahoney)"
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''

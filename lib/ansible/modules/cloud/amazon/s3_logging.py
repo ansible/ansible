@@ -43,6 +43,8 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''

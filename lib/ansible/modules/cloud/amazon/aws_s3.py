@@ -29,14 +29,6 @@ description:
       This module has a dependency on boto3 and botocore.
 version_added: "1.1"
 options:
-  aws_access_key:
-    description:
-      - AWS access key id. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    aliases: [ 'ec2_access_key', 'access_key' ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    aliases: ['ec2_secret_key', 'secret_key']
   bucket:
     description:
       - Bucket name.

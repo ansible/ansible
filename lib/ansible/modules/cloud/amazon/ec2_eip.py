@@ -74,6 +74,8 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
    - There may be a delay between the time the EIP is assigned and when

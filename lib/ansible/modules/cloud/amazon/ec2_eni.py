@@ -108,6 +108,8 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 notes:
     - This module identifies and ENI based on either the eni_id, a combination of private_ip_address and subnet_id,
       or a combination of instance_id and device_id. Any of these options will let you specify a particular ENI.

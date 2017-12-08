@@ -68,6 +68,8 @@ author: "Jonathan I. Davila (@defionscode)"
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''

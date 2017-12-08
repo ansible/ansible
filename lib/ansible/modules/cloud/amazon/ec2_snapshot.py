@@ -77,6 +77,8 @@ author: "Will Thames (@willthames)"
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto
 '''
 
 EXAMPLES = '''
