@@ -7,6 +7,10 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils._text import to_text
+
 
 # Fully Qualified name (with the partition)
 def fq_name(partition, name):
