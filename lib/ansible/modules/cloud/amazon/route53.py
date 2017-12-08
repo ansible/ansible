@@ -490,7 +490,7 @@ def main():
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
-        value=dict(required=False, type='list', default=[]),
+        value=dict(required=False, type='list'),
         overwrite=dict(required=False, type='bool'),
         retry_interval=dict(required=False, default=500),
         private_zone=dict(required=False, type='bool', default=False),
@@ -535,7 +535,7 @@ def main():
     ttl_in = module.params.get('ttl')
     record_in = module.params.get('record').lower()
     type_in = module.params.get('type')
-    value_in = module.params.get('value')
+    value_in = module.params.get('value') or []
     alias_in = module.params.get('alias')
     alias_hosted_zone_id_in = module.params.get('alias_hosted_zone_id')
     alias_evaluate_target_health_in = module.params.get('alias_evaluate_target_health')
