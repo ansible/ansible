@@ -234,8 +234,11 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
         module.fail_json(msg='Found more than one vpc based on the supplied criteria, aborting')
 
     return (found_vpc)
+  
 
+def routes_match(rt_list=None, rt=None, igw=None):
 
+  
 def routes_match(rt_list=None, rt=None, igw=None):
     """
     Check if the route table has all routes as in given list
@@ -592,6 +595,7 @@ def create_vpc(module, vpc_conn):
                 changed = True
             except EC2ResponseError as e:
                 module.fail_json(
+                    msg='Unable to create and associate route table {0}, error:'
                     msg='Unable to create and associate route table {0}, error: '
                     '{1}'.format(rt, e)
                 )

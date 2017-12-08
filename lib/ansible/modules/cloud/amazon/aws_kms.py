@@ -126,8 +126,8 @@ def get_arn_from_kms_alias(kms, aliasname):
     key_id = None
     for a in ret['Aliases']:
         if a['AliasName'] == aliasname:
-            key_id = a['TargetKeyId']
-            break
+                key_id = a['TargetKeyId']
+                break
     if not key_id:
         raise Exception('could not find alias {}'.format(aliasname))
 
@@ -182,6 +182,10 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         statement['Principal']['AWS'] = valid_entries
                         had_invalid_entries = True
 
+                    if role_arn not in statement['Principal']['AWS']:       # needs to be added.
+                        changes_needed[granttype] = 'add'
+                        statement['Principal']['AWS'].append(role_arn)
+                elif role_arn in statement['Principal']['AWS']:   # not one the places the role should be
                     if role_arn not in statement['Principal']['AWS']:  # needs to be added.
                         changes_needed[granttype] = 'add'
                         statement['Principal']['AWS'].append(role_arn)
