@@ -225,9 +225,9 @@ def aos_template(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_template = find_collection_item(aos.DesignTemplates,
                                            item_name=item_name,
@@ -235,9 +235,9 @@ def aos_template(module):
     except:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         template_absent(module, aos, my_template)

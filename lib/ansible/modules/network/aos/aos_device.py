@@ -158,9 +158,9 @@ def aos_device(module):
     elif margs['name'] is not None:
         item_name = margs['name']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     dev = find_collection_item(aos.Devices,
                                item_name=item_name,
                                item_id=item_id)
@@ -168,9 +168,9 @@ def aos_device(module):
     if dev.exists is False:
         module.fail_json(msg="unknown device '%s'" % margs['name'])
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Valid device state for reference
-    #----------------------------------------------------
+    # ----------------------------------------------------
         # DEVICE_STATE_IS_ACTIVE = 1;
         # DEVICE_STATE_IS_READY = 2;
         # DEVICE_STATE_IS_NOCOMMS = 3;
@@ -184,9 +184,9 @@ def aos_device(module):
         # DEVICE_STATE_OOS_MAINT = 11;
         # DEVICE_STATE_OOS_REBOOTING = 12;
         # DEVICE_STATE_ERROR = 13;
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # State == Normal
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'normal':
         aos_device_normal(module, aos, dev)
 

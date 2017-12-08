@@ -202,7 +202,7 @@ def main():
     configobjs = candidate.difference(config)
 
     if configobjs:
-        #commands = dumps(configobjs, 'lines')
+        # commands = dumps(configobjs, 'lines')
         commands = dumps(configobjs, 'commands')
         commands = sanitize_config(commands.split('\n'))
 
