@@ -78,6 +78,11 @@ options:
     required: false
     description:
       - Domain value for C(/etc/hosts).
+  docker:
+    required: false
+    description:
+      - Docker images need this flag enabled along with the I(brand) set to C(lx).
+    version_added: "2.5"
   filesystems:
       required: false
       description:
@@ -607,7 +612,7 @@ def main():
         ],
         'bool': [
             'archive_on_delete', 'autoboot', 'debug', 'delegate_dataset',
-            'firewall_enabled', 'force', 'indestructible_delegated',
+            'docker', 'firewall_enabled', 'force', 'indestructible_delegated',
             'indestructible_zoneroot', 'maintain_resolvers', 'nowait'
         ],
         'int': [
