@@ -164,7 +164,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                     become_password=self._play_context.become_pass,
                                                                     environment=final_environment)
 
-        return (module_style, module_shebang, module_data, module_path)
+        return (module_style, self._templar.template(module_shebang), module_data, module_path)
 
     def _compute_environment_string(self, raw_environment_out=None):
         '''
