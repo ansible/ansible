@@ -11,7 +11,6 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 DOCUMENTATION = r'''
 ---
 module: bigip_gtm_wide_ip
@@ -20,17 +19,19 @@ description:
   - Manages F5 BIG-IP GTM wide ip.
 version_added: "2.0"
 options:
-  lb_method:
+  pool_lb_method:
     description:
       - Specifies the load balancing method used to select a pool in this wide
         IP. This setting is relevant only when multiple pools are configured
         for a wide IP.
     required: True
+    aliases: ['lb_method']
     choices:
       - round-robin
       - ratio
       - topology
       - global-availability
+    version_added: 2.5
   name:
     description:
       - Wide IP name. This name must be formatted as a fully qualified
@@ -56,9 +57,9 @@ options:
   state:
     description:
       - When C(present) or C(enabled), ensures that the Wide IP exists and
-        is enabled. When C(absent), ensures that the Wide IP has been
-        removed. When C(disabled), ensures that the Wide IP exists and is
-        disabled.
+        is enabled.
+      - When C(absent), ensures that the Wide IP has been removed.
+      - When C(disabled), ensures that the Wide IP exists and is disabled.
     default: present
     choices:
       - present
@@ -71,6 +72,21 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
+  pools:
+    description:
+      - The pools that you want associated with the Wide IP.
+      - If C(ratio) is not provided when creating a new Wide IP, it will default
+        to 1.
+    suboptions:
+      name:
+        description:
+          - The name of the pool to include
+        required: true
+      ratio:
+        description:
+          - Ratio for the pool.
+          - The system uses this number with the Ratio load balancing method.
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -80,6 +96,7 @@ requirements:
 author:
   - Tim Rupp (@caphrim007)
 '''
+
 
 EXAMPLES = r'''
 - name: Set lb method
@@ -111,6 +128,7 @@ from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.six import iteritems
 from distutils.version import LooseVersion
 
 try:
@@ -120,16 +138,12 @@ except ImportError:
 
 
 class Parameters(AnsibleF5Parameters):
-    updatables = ['lb_method']
-    returnables = ['name', 'lb_method', 'state']
-    api_attributes = ['poolLbMode', 'enabled', 'disabled']
-
-    def to_return(self):
-        result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
+    api_map = {
+        'poolLbMode': 'pool_lb_method'
+    }
+    updatables = ['pool_lb_method', 'state', 'pools']
+    returnables = ['name', 'pool_lb_method', 'state', 'pools']
+    api_attributes = ['poolLbMode', 'enabled', 'disabled', 'pools']
 
     def api_params(self):
         result = {}
@@ -141,8 +155,47 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
+        return value
+
+
+class ApiParameters(Parameters):
     @property
-    def lb_method(self):
+    def disabled(self):
+        if self._values['disabled'] is True:
+            return True
+        return False
+
+    @property
+    def enabled(self):
+        if self._values['enabled'] is True:
+            return True
+        return False
+
+    @property
+    def pools(self):
+        result = []
+        if self._values['pools'] is None:
+            return None
+        pools = sorted(self._values['pools'], key=lambda x: x['order'])
+        for item in pools:
+            pool = dict()
+            pool.update(item)
+            name = '/{0}/{1}'.format(item['partition'], item['name'])
+            del pool['nameReference']
+            del pool['order']
+            del pool['name']
+            del pool['partition']
+            pool['name'] = name
+            result.append(pool)
+        return result
+
+
+class ModuleParameters(Parameters):
+    @property
+    def pool_lb_method(self):
         deprecated = [
             'return_to_dns', 'null', 'static_persist', 'vs_capacity',
             'least_conn', 'lowest_rtt', 'lowest_hops', 'packet_rate', 'cpu',
@@ -178,25 +231,6 @@ class Parameters(AnsibleF5Parameters):
             lb_method = 'round-robin'
         return lb_method
 
-    @lb_method.setter
-    def lb_method(self, value):
-        self._values['lb_method'] = value
-
-    @property
-    def collection(self):
-        type_map = dict(
-            a='a_s',
-            aaaa='aaaas',
-            cname='cnames',
-            mx='mxs',
-            naptr='naptrs',
-            srv='srvs'
-        )
-        if self._values['type'] is None:
-            return None
-        wideip_type = self._values['type']
-        return type_map[wideip_type]
-
     @property
     def type(self):
         if self._values['type'] is None:
@@ -214,14 +248,6 @@ class Parameters(AnsibleF5Parameters):
         return self._values['name']
 
     @property
-    def poolLbMode(self):
-        return self.lb_method
-
-    @poolLbMode.setter
-    def poolLbMode(self, value):
-        self.lb_method = value
-
-    @property
     def state(self):
         if self._values['state'] == 'enabled':
             return 'present'
@@ -233,8 +259,6 @@ class Parameters(AnsibleF5Parameters):
             return False
         elif self._values['state'] in ['present', 'enabled']:
             return True
-        elif self._values['enabled'] is True:
-            return True
         else:
             return None
 
@@ -244,10 +268,104 @@ class Parameters(AnsibleF5Parameters):
             return True
         elif self._values['state'] in ['present', 'enabled']:
             return False
-        elif self._values['disabled'] is True:
-            return True
         else:
             return None
+
+    @property
+    def pools(self):
+        result = []
+        if self._values['pools'] is None:
+            return None
+        for item in self._values['pools']:
+            pool = dict()
+            if 'ratio' in item:
+                pool['ratio'] = item['ratio']
+            pool['name'] = self._fqdn_name(item['name'])
+            result.append(pool)
+        return result
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    @property
+    def pool_lb_method(self):
+        result = dict(
+            lb_method=self._values['pool_lb_method'],
+            pool_lb_method=self._values['pool_lb_method'],
+        )
+        return result
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    def to_tuple(self, items):
+        result = []
+        for x in items:
+            tmp = [(str(k), str(v)) for k, v in iteritems(x)]
+            result += tmp
+        return result
+
+    def _diff_complex_items(self, want, have):
+        if want == [] and have is None:
+            return None
+        if want is None:
+            return None
+        w = self.to_tuple(want)
+        h = self.to_tuple(have)
+        if set(w).issubset(set(h)):
+            return None
+        else:
+            return want
+
+    @property
+    def state(self):
+        if self.want.state == 'disabled' and self.have.enabled:
+            return self.want.state
+        elif self.want.state in ['present', 'enabled'] and self.have.disabled:
+            return self.want.state
+
+    @property
+    def pools(self):
+        result = self._diff_complex_items(self.want.pools, self.have.pools)
+        return result
 
 
 class ModuleManager(object):
@@ -278,9 +396,9 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, client):
         self.client = client
-        self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.want = ModuleParameters(params=self.client.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -288,24 +406,23 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = UsableChanges(changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
-
-        if self.want.state == 'disabled' and self.have.enabled:
-            changed['state'] = self.want.state
-        elif self.want.state in ['present', 'enabled'] and self.have.disabled:
-            changed['state'] = self.want.state
-
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = UsableChanges(changed)
             return True
         return False
 
@@ -322,18 +439,15 @@ class BaseManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        self._announce_deprecations()
+        self._announce_deprecations(result)
         return result
 
-    def _announce_deprecations(self):
-        warnings = []
-        if self.want:
-            warnings += self.want._values.get('__warnings', [])
-        if self.have:
-            warnings += self.have._values.get('__warnings', [])
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
         for warning in warnings:
             self.client.module.deprecate(
                 msg=warning['msg'],
@@ -407,7 +521,7 @@ class UntypedManager(BaseManager):
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(result)
+        return ApiParameters(result)
 
     def create_on_device(self):
         params = self.want.api_params()
@@ -434,10 +548,19 @@ class TypedManager(BaseManager):
                 "The 'type' option is required for BIG-IP instances "
                 "greater than or equal to 12.x"
             )
+        type_map = dict(
+            a='a_s',
+            aaaa='aaaas',
+            cname='cnames',
+            mx='mxs',
+            naptr='naptrs',
+            srv='srvs'
+        )
+        self.collection = type_map[self.want.type]
 
     def exists(self):
         wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.want.collection)
+        collection = getattr(wideips, self.collection)
         resource = getattr(collection, self.want.type)
         result = resource.exists(
             name=self.want.name,
@@ -448,7 +571,7 @@ class TypedManager(BaseManager):
     def update_on_device(self):
         params = self.want.api_params()
         wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.want.collection)
+        collection = getattr(wideips, self.collection)
         resource = getattr(collection, self.want.type)
         result = resource.load(
             name=self.want.name,
@@ -458,19 +581,19 @@ class TypedManager(BaseManager):
 
     def read_current_from_device(self):
         wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.want.collection)
+        collection = getattr(wideips, self.collection)
         resource = getattr(collection, self.want.type)
         result = resource.load(
             name=self.want.name,
             partition=self.want.partition
         )
         result = result.attrs
-        return Parameters(result)
+        return ApiParameters(result)
 
     def create_on_device(self):
         params = self.want.api_params()
         wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.want.collection)
+        collection = getattr(wideips, self.collection)
         resource = getattr(collection, self.want.type)
         resource.create(
             name=self.want.name,
@@ -480,7 +603,7 @@ class TypedManager(BaseManager):
 
     def remove_from_device(self):
         wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.want.collection)
+        collection = getattr(wideips, self.collection)
         resource = getattr(collection, self.want.type)
         result = resource.load(
             name=self.want.name,
@@ -504,8 +627,9 @@ class ArgumentSpec(object):
         lb_method_choices = deprecated + supported
         self.supports_check_mode = True
         self.argument_spec = dict(
-            lb_method=dict(
-                choices=lb_method_choices
+            pool_lb_method=dict(
+                choices=lb_method_choices,
+                aliases=['lb_method']
             ),
             name=dict(
                 required=True,
@@ -519,6 +643,13 @@ class ArgumentSpec(object):
             state=dict(
                 default='present',
                 choices=['absent', 'present', 'enabled', 'disabled']
+            ),
+            pools=dict(
+                type='list',
+                options=dict(
+                    name=dict(required=True),
+                    ratio=dict(type='int')
+                )
             )
         )
         self.f5_product_name = 'bigip'
