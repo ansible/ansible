@@ -32,7 +32,7 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
@@ -43,7 +43,7 @@ from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.clean import namespace_facts
 
 try:
     from __main__ import display
@@ -132,7 +132,8 @@ class VariableManager:
     @extra_vars.setter
     def extra_vars(self, value):
         ''' ensures a clean copy of the extra_vars are used to set the value '''
-        assert isinstance(value, MutableMapping), "the type of 'value' for extra_vars should be a MutableMapping, but is a %s" % type(value)
+        if not isinstance(value, MutableMapping):
+            raise AnsibleAssertionError("the type of 'value' for extra_vars should be a MutableMapping, but is a %s" % type(value))
         self._extra_vars = value.copy()
 
     def set_inventory(self, inventory):
@@ -146,7 +147,8 @@ class VariableManager:
     @options_vars.setter
     def options_vars(self, value):
         ''' ensures a clean copy of the options_vars are used to set the value '''
-        assert isinstance(value, dict), "the type of 'value' for options_vars should be a dict, but is a %s" % type(value)
+        if not isinstance(value, dict):
+            raise AnsibleAssertionError("the type of 'value' for options_vars should be a dict, but is a %s" % type(value))
         self._options_vars = value.copy()
 
     def _preprocess_vars(self, a):
@@ -516,10 +518,11 @@ class VariableManager:
             items = [None]
 
         delegated_host_vars = dict()
+        item_var = getattr(task.loop_control, 'loop_var', 'item')
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
-                vars_copy['item'] = item
+                vars_copy[item_var] = item
 
             templar.set_available_variables(vars_copy)
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
@@ -592,7 +595,8 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        assert isinstance(facts, dict), "the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts)
+        if not isinstance(facts, dict):
+            raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts))
 
         if host.name not in self._fact_cache:
             self._fact_cache[host.name] = facts
@@ -607,7 +611,8 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        assert isinstance(facts, dict), "the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts)
+        if not isinstance(facts, dict):
+            raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts))
 
         if host.name not in self._nonpersistent_fact_cache:
             self._nonpersistent_fact_cache[host.name] = facts

@@ -159,10 +159,10 @@ from time import sleep
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.ios import get_config, load_config
-from ansible.module_utils.ios import ios_argument_spec, check_args
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.network_common import conditional, remove_default_spec
+from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.config import NetworkConfig
+from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
 
 def validate_mtu(value, module):

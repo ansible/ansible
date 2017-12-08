@@ -19,9 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+try:
+    from lxml.etree import fromstring
+except ImportError:
+    from xml.etree.ElementTree import fromstring
+
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_facts
-from .junos_module import TestJunosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .junos_module import TestJunosModule, load_fixture
 
 RPC_CLI_MAP = {
     'get-software-information': 'show version',
@@ -38,18 +44,38 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_facts
 
     def setUp(self):
+        super(TestJunosCommandModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.junos.junos_facts.get_configuration')
         self.get_config = self.mock_get_config.start()
 
-        self.mock_send_request = patch('ansible.modules.network.junos.junos_facts.send_request')
-        self.send_request = self.mock_send_request.start()
+        self.mock_conn = patch('ansible.module_utils.connection.Connection')
+        self.conn = self.mock_conn.start()
+
+        self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
+        self.netconf_conn = self.mock_netconf.start()
+
+        self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_facts.exec_rpc')
+        self.exec_rpc = self.mock_exec_rpc.start()
+
+        self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
+        self.netconf_rpc = self.mock_netconf_rpc.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.network.junos.junos.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'netconf'}
 
     def tearDown(self):
-        self.mock_send_request.stop()
+        super(TestJunosCommandModule, self).tearDown()
+        self.mock_conn.stop()
+        self.mock_netconf.stop()
+        self.mock_exec_rpc.stop()
+        self.mock_netconf_rpc.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
         def load_from_file(*args, **kwargs):
-            module, element = args
+            element = fromstring(args[1])
 
             if element.text:
                 path = str(element.text)
@@ -60,7 +86,7 @@ class TestJunosCommandModule(TestJunosModule):
             filename = '%s_%s.txt' % (filename, format)
             return load_fixture(filename)
 
-        self.send_request.side_effect = load_from_file
+        self.exec_rpc.side_effect = load_from_file
 
     def test_junos_get_facts(self):
         set_module_args(dict())

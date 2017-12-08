@@ -82,7 +82,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -108,7 +108,14 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="aep")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='infraAttEntityP',
+            aci_rn='infra/attentp-{}'.format(aep),
+            filter_target='(infraAttEntityP.name, "{}")'.format(aep),
+            module_object=aep,
+        ),
+    )
     aci.get_existing()
 
     if state == 'present':

@@ -70,10 +70,10 @@ def is_available(name, ubuntuMode):
     * if the locale is present in /etc/locales.gen
     * or if the locale is present in /usr/share/i18n/SUPPORTED"""
     if ubuntuMode:
-        __regexp = '^(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
+        __regexp = r'^(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
         __locales_available = '/usr/share/i18n/SUPPORTED'
     else:
-        __regexp = '^#{0,1}\s*(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
+        __regexp = r'^#{0,1}\s*(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
         __locales_available = '/etc/locale.gen'
 
     re_compiled = re.compile(__regexp)
@@ -117,11 +117,11 @@ def replace_line(existing_line, new_line):
 
 def set_locale(name, enabled=True):
     """ Sets the state of the locale. Defaults to enabled. """
-    search_string = '#{0,1}\s*%s (?P<charset>.+)' % name
+    search_string = r'#{0,1}\s*%s (?P<charset>.+)' % name
     if enabled:
-        new_string = '%s \g<charset>' % (name)
+        new_string = r'%s \g<charset>' % (name)
     else:
-        new_string = '# %s \g<charset>' % (name)
+        new_string = r'# %s \g<charset>' % (name)
     try:
         f = open("/etc/locale.gen", "r")
         lines = [re.sub(search_string, new_string, line) for line in f]

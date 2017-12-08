@@ -1,5 +1,5 @@
 # Copyright (c) 2017 Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 # The rules used in these functions are derived from the below
 # https://docs.microsoft.com/en-us/cpp/cpp/parsing-cpp-command-line-arguments

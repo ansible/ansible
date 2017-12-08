@@ -1293,7 +1293,7 @@ MERGE_MULTIPLE_CLI_TAGS:
   version_added: "2.3"
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, mlnxos]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
@@ -1319,35 +1319,12 @@ PARAMIKO_HOST_KEY_AUTO_ADD:
   - {key: host_key_auto_add, section: paramiko_connection}
   type: boolean
 PARAMIKO_LOOK_FOR_KEYS:
-  # TODO: move to plugin
+  name: look for keys
   default: True
   description: 'TODO: write it'
   env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
   ini:
   - {key: look_for_keys, section: paramiko_connection}
-  type: boolean
-PARAMIKO_PROXY_COMMAND:
-  # TODO: move to plugin
-  default:
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
-  ini:
-  - {key: proxy_command, section: paramiko_connection}
-PARAMIKO_PTY:
-  # TODO: move to plugin
-  default: True
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_PTY}]
-  ini:
-  - {key: pty, section: paramiko_connection}
-  type: boolean
-PARAMIKO_RECORD_HOST_KEYS:
-  # TODO: move to plugin
-  default: True
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_RECORD_HOST_KEYS}]
-  ini:
-  - {key: record_host_keys, section: paramiko_connection}
   type: boolean
 PERSISTENT_CONTROL_PATH_DIR:
   name: Persistence socket path

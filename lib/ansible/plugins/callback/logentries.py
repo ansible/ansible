@@ -111,7 +111,6 @@ try:
 except ImportError:
     HAS_FLATDICT = False
 
-from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.callback import CallbackBase
 
@@ -233,42 +232,26 @@ class CallbackModule(CallbackBase):
 
         self.le_jobid = str(uuid.uuid4())
 
-        # FIXME: remove when done testing
-        # initialize configurable
-        self.api_url = 'data.logentries.com'
-        self.api_port = 80
-        self.api_tls_port = 443
-        self.use_tls = False
-        self.flatten = False
-        self.token = None
-
         # FIXME: make configurable, move to options
         self.timeout = 10
 
-        # FIXME: remove testing
-        # self.set_options({'api': 'data.logentries.com', 'port': 80,
-        # 'tls_port': 10000, 'use_tls': True, 'flatten': False, 'token': 'ae693734-4c5b-4a44-8814-1d2feb5c8241'})
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-    def set_option(self, name, value):
-        raise AnsibleError("The Logentries callabck plugin does not suport setting individual options.")
-
-    def set_options(self, options):
-
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         # get options
         try:
-            self.api_url = self._plugin_options['api']
-            self.api_port = self._plugin_options['port']
-            self.api_tls_port = self._plugin_options['tls_port']
-            self.use_tls = self._plugin_options['use_tls']
-            self.flatten = self._plugin_options['flatten']
+            self.api_url = self.get_option('api')
+            self.api_port = self.get_option('port')
+            self.api_tls_port = self.get_option('tls_port')
+            self.use_tls = self.get_option('use_tls')
+            self.flatten = self.get_option('flatten')
         except KeyError as e:
             self._display.warning("Missing option for Logentries callback plugin: %s" % to_native(e))
             self.disabled = True
 
         try:
-            self.token = self._plugin_options['token']
+            self.token = self.get_option('token')
         except KeyError as e:
             self._display.warning('Logentries token was not provided, this is required for this callback to operate, disabling')
             self.disabled = True

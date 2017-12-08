@@ -23,9 +23,11 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.module_utils.eos import eos_provider_spec
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.eos.eos import eos_provider_spec
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.network_common import load_provider
+from ansible.module_utils.network.common.utils import load_provider
 
 try:
     from __main__ import display
@@ -37,13 +39,19 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        provider = load_provider(eos_provider_spec, self._task.args)
-        transport = provider['transport'] or 'cli'
+        socket_path = None
 
-        display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
+        if self._play_context.connection == 'network_cli':
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using network_cli and will be ignored')
+        elif self._play_context.connection == 'local':
+            provider = load_provider(eos_provider_spec, self._task.args)
+            transport = provider['transport'] or 'cli'
 
-        if transport == 'cli':
-            if self._play_context.connection == 'local':
+            display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
+
+            if transport == 'cli':
                 pc = copy.deepcopy(self._play_context)
                 pc.connection = 'network_cli'
                 pc.network_os = 'eos'
@@ -70,29 +78,42 @@ class ActionModule(_ActionModule):
 
                 task_vars['ansible_socket'] = socket_path
 
-        else:
-            provider['transport'] = 'eapi'
+            else:
+                provider['transport'] = 'eapi'
 
-            if provider.get('host') is None:
-                provider['host'] = self._play_context.remote_addr
+                if provider.get('host') is None:
+                    provider['host'] = self._play_context.remote_addr
 
-            if provider.get('port') is None:
-                default_port = 443 if provider['use_ssl'] else 80
-                provider['port'] = int(self._play_context.port or default_port)
+                if provider.get('port') is None:
+                    default_port = 443 if provider['use_ssl'] else 80
+                    provider['port'] = int(self._play_context.port or default_port)
 
-            if provider.get('timeout') is None:
-                provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
+                if provider.get('timeout') is None:
+                    provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
 
-            if provider.get('username') is None:
-                provider['username'] = self._play_context.connection_user
+                if provider.get('username') is None:
+                    provider['username'] = self._play_context.connection_user
 
-            if provider.get('password') is None:
-                provider['password'] = self._play_context.password
+                if provider.get('password') is None:
+                    provider['password'] = self._play_context.password
 
-            if provider.get('authorize') is None:
-                provider['authorize'] = False
+                if provider.get('authorize') is None:
+                    provider['authorize'] = False
 
-            self._task.args['provider'] = provider
+                self._task.args['provider'] = provider
+
+        if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            if socket_path is None:
+                socket_path = self._connection.socket_path
+
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            while '(config' in to_text(out, errors='surrogate_then_replace').strip():
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                conn.send_command('abort')
+                out = conn.get_prompt()
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result

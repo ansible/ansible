@@ -8,7 +8,7 @@
         - feature vn-segment-vlan-based
       provider: "{{ connection }}"
       match: none
-    when: platform | search('N9K')
+    when: platform is search('N9K')
 
   - name: Ensure a range of VLANs are present on the switch
     nxos_vlan: &conf_vlan
@@ -37,18 +37,18 @@
       mapped_vni: 5555
       provider: "{{ connection }}"
     register: result
-    when: platform | search('N9K')
+    when: platform is search('N9K')
 
   - assert: *true
-    when: platform | search('N9K')
+    when: platform is search('N9K')
 
   - name: "web Idempotence"
     nxos_vlan: *web1
     register: result
-    when: platform | search('N9K')
+    when: platform is search('N9K')
 
   - assert: *false
-    when: platform | search('N9K')
+    when: platform is search('N9K')
 
   - name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
     nxos_vlan: &web2
@@ -58,18 +58,18 @@
       name: WEB
       provider: "{{ connection }}"
     register: result
-    when: platform | search('N3K|N7K')
+    when: platform is search('N3K|N7K')
 
   - assert: *true
-    when: platform | search('N3K|N7K')
+    when: platform is search('N3K|N7K')
 
   - name: "web Idempotence"
     nxos_vlan: *web2
     register: result
-    when: platform | search('N3K|N7K')
+    when: platform is search('N3K|N7K')
 
   - assert: *false
-    when: platform | search('N3K|N7K')
+    when: platform is search('N3K|N7K')
 
   - name: Ensure VLAN is NOT on the device
     nxos_vlan: &no_vlan
@@ -100,6 +100,6 @@
         state: disabled
         provider: "{{ connection }}"
       ignore_errors: yes
-      when: platform | search('N9K')
+      when: platform is search('N9K')
 
 - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vlan sanity test"

@@ -151,7 +151,7 @@ RETURN = '''
 
 import re
 
-from ansible.module_utils.enos import run_commands, enos_argument_spec, check_args
+from ansible.module_utils.network.enos.enos import run_commands, enos_argument_spec, check_args
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
@@ -235,7 +235,9 @@ class Hardware(FactsBase):
 
     def populate(self):
         super(Hardware, self).populate()
-        data = self.responses[0]
+        data = self.run(['show system memory'])
+        data = to_text(data, errors='surrogate_or_strict').strip()
+        data = data.replace(r"\n", "\n")
         if data:
             self.facts['memtotal_mb'] = self.parse_memtotal(data)
             self.facts['memfree_mb'] = self.parse_memfree(data)

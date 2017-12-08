@@ -136,6 +136,12 @@ options:
         or 'default'.
     required: false
     default: null
+  disable_peer_as_check:
+    description:
+      - Disable checking of peer AS-number while advertising
+    required: false
+    choices: ['true', 'false']
+    version_added: 2.5
   filter_list_in:
     description:
       - Valid values are a string defining a filter-list name,
@@ -284,16 +290,17 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
     'allowas_in',
     'as_override',
     'default_originate',
+    'disable_peer_as_check',
     'next_hop_self',
     'next_hop_third_party',
     'route_reflector_client',
@@ -312,6 +319,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'as_override': 'as-override',
     'default_originate': 'default-originate',
     'default_originate_route_map': 'default-originate route-map',
+    'disable_peer_as_check': 'disable-peer-as-check',
     'filter_list_in': 'filter-list in',
     'filter_list_out': 'filter-list out',
     'max_prefix_limit': 'maximum-prefix',
@@ -438,7 +446,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:
@@ -637,6 +645,7 @@ def main():
         as_override=dict(required=False, type='bool'),
         default_originate=dict(required=False, type='bool'),
         default_originate_route_map=dict(required=False, type='str'),
+        disable_peer_as_check=dict(required=False, type='bool'),
         filter_list_in=dict(required=False, type='str'),
         filter_list_out=dict(required=False, type='str'),
         max_prefix_limit=dict(required=False, type='str'),

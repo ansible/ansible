@@ -384,6 +384,11 @@ def create_or_update_target_group(connection, module):
     tg = get_target_group(connection, module)
 
     if tg:
+        diffs = [param for param in ('Port', 'Protocol', 'VpcId')
+                 if tg.get(param) != params.get(param)]
+        if diffs:
+            module.fail_json(msg="Cannot modify %s parameter(s) for a target group" %
+                             ", ".join(diffs))
         # Target group exists so check health check parameters match what has been passed
         health_check_params = dict()
 

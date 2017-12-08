@@ -93,16 +93,16 @@ webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
-            subdomains = dict(required=False, default=[]),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            subdomains=dict(required=False, default=[]),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
         ),
         supports_check_mode=True
     )
-    domain_name  = module.params['name']
+    domain_name = module.params['name']
     domain_state = module.params['state']
     domain_subdomains = module.params['subdomains']
 
@@ -127,7 +127,7 @@ def main():
             if set(existing_domain['subdomains']) >= set(domain_subdomains):
                 # If it exists with the right subdomains, we don't change anything.
                 module.exit_json(
-                    changed = False,
+                    changed=False,
                 )
 
         positional_args = [session_id, domain_name] + domain_subdomains
@@ -146,7 +146,7 @@ def main():
         # If the app's already not there, nothing changed.
         if not existing_domain:
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         positional_args = [session_id, domain_name] + domain_subdomains
@@ -161,8 +161,8 @@ def main():
         module.fail_json(msg="Unknown state specified: {}".format(domain_state))
 
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
 

@@ -53,9 +53,9 @@
 - name: check mode remove assert that change detected, but rule is still present
   assert:
     that:
-    - directory | changed
-    - file | changed
-    - registry | changed
+    - directory is changed
+    - file is changed
+    - registry is changed
     - directory_results.matching_rule_found and directory_results.path_type == 'directory'
     - file_results.matching_rule_found and file_results.path_type == 'file'
     - registry_results.matching_rule_found and registry_results.path_type == 'registry'
@@ -112,9 +112,9 @@
 - name: remove assert that change detected and rule is gone
   assert:
     that:
-    - directory | changed
-    - file | changed
-    - registry | changed
+    - directory is changed
+    - file is changed
+    - registry is changed
     - not directory_results.matching_rule_found and directory_results.path_type == 'directory'
     - not file_results.matching_rule_found and file_results.path_type == 'file'
     - not registry_results.matching_rule_found and registry_results.path_type == 'registry'
@@ -146,6 +146,6 @@
 - name: idempotent remove assert that no change detected
   assert:
     that:
-    - not directory | changed and directory.path_type == 'directory'
-    - not file | changed and file.path_type == 'file'
-    - not registry | changed and registry.path_type == 'registry'
+    - directory is not changed and directory.path_type == 'directory'
+    - file is not changed and file.path_type == 'file'
+    - registry is not changed and registry.path_type == 'registry'

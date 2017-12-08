@@ -332,6 +332,18 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
         pwchanging = user_should_we_change_password(current_role_attrs, user, password, encrypted)
 
+        if current_role_attrs is None:
+            try:
+                # AWS RDS instances does not allow user to access pg_authid
+                # so try to get current_role_attrs from pg_roles tables
+                select = "SELECT * FROM pg_roles where rolname=%(user)s"
+                cursor.execute(select, {"user": user})
+                # Grab current role attributes from pg_roles
+                current_role_attrs = cursor.fetchone()
+            except psycopg2.ProgrammingError as e:
+                db_connection.rollback()
+                module.fail_json(msg="Failed to get role details for current user %s: %s" % (user, e))
+
         role_attr_flags_changing = False
         if role_attr_flags:
             role_attr_flags_dict = {}
@@ -503,7 +515,7 @@ def get_database_privileges(cursor, user, db):
     datacl = cursor.fetchone()[0]
     if datacl is None:
         return set()
-    r = re.search('%s\\\\?\"?=(C?T?c?)/[^,]+\,?' % user, datacl)
+    r = re.search(r'%s\\?"?=(C?T?c?)/[^,]+,?' % user, datacl)
     if r is None:
         return set()
     o = set()

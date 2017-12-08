@@ -39,7 +39,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-IGNORED_ALWAYS = [b"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
+IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
 IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
 
@@ -99,7 +99,7 @@ def split_host_pattern(pattern):
         try:
             (base, port) = parse_address(pattern, allow_ranges=True)
             patterns = [pattern]
-        except:
+        except Exception:
             # The only other case we accept is a ':'-separated list of patterns.
             # This mishandles IPv6 addresses, and is retained only for backwards
             # compatibility.
@@ -183,6 +183,7 @@ class InventoryManager(object):
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             if plugin:
+                plugin.set_options()
                 self._inventory_plugins.append(plugin)
             else:
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
@@ -282,7 +283,8 @@ class InventoryManager(object):
                     else:
                         for fail in failures:
                             display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                            display.vvv(to_text(fail['exc'].tb))
+                            if hasattr(fail['exc'], 'tb'):
+                                display.vvv(to_text(fail['exc'].tb))
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % to_text(source))
 
@@ -524,7 +526,9 @@ class InventoryManager(object):
         if matching_groups:
             for groupname in matching_groups:
                 results.extend(self._inventory.groups[groupname].get_hosts())
-        else:
+
+        # check hosts if no groups matched or it is a regex/glob pattern
+        if not matching_groups or pattern.startswith('~') or any(special in pattern for special in ('.', '?', '*', '[')):
             # pattern might match host
             matching_hosts = self._match_list(self._inventory.hosts, pattern)
             if matching_hosts:

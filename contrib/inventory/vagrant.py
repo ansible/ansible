@@ -79,7 +79,7 @@ def list_running_boxes():
     boxes = []
 
     for line in output:
-        matcher = re.search("([^\s]+)[\s]+running \(.+", line)
+        matcher = re.search(r"([^\s]+)[\s]+running \(.+", line)
         if matcher:
             boxes.append(matcher.group(1))
 

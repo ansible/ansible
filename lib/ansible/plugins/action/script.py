@@ -19,9 +19,10 @@ __metaclass__ = type
 
 import os
 import re
+import shlex
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
 
 
@@ -72,30 +73,46 @@ class ActionModule(ActionBase):
             if self._connection._shell.SHELL_FAMILY != 'powershell' and not chdir.startswith('/'):
                 return dict(failed=True, msg='chdir %s must be an absolute path for a Unix-aware remote node' % chdir)
 
-        # the script name is the first item in the raw params, so we split it
-        # out now so we know the file name we need to transfer to the remote,
-        # and everything else is an argument to the script which we need later
-        # to append to the remote command
-        parts = self._task.args.get('_raw_params', '').strip().split()
+        # Split out the script as the first item in raw_params using
+        # shlex.split() in order to support paths and files with spaces in the name.
+        # Any arguments passed to the script will be added back later.
+        raw_params = to_native(self._task.args.get('_raw_params', ''), errors='surrogate_or_strict')
+        parts = [to_text(s, errors='surrogate_or_strict') for s in shlex.split(raw_params.strip())]
         source = parts[0]
-        args = ' '.join(parts[1:])
 
         try:
             source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
         except AnsibleError as e:
             return dict(failed=True, msg=to_native(e))
 
-        # transfer the file to a remote tmp location
-        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
-        self._transfer_file(source, tmp_src)
+        if not self._play_context.check_mode:
+            # transfer the file to a remote tmp location
+            tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
 
-        # set file permissions, more permissive when the copy is done as a different user
-        self._fixup_perms2((tmp, tmp_src), execute=True)
+            # Convert raw_params to text for the purpose of replacing the script since
+            # parts and tmp_src are both unicode strings and raw_params will be different
+            # depending on Python version.
+            #
+            # Once everything is encoded consistently, replace the script path on the remote
+            # system with the remainder of the raw_params. This preserves quoting in parameters
+            # that would have been removed by shlex.split().
+            target_command = to_text(raw_params).strip().replace(parts[0], tmp_src)
 
-        # add preparation steps to one ssh roundtrip executing the script
-        env_dict = dict()
-        env_string = self._compute_environment_string(env_dict)
-        script_cmd = ' '.join([env_string, tmp_src, args])
+            self._transfer_file(source, tmp_src)
+
+            # set file permissions, more permissive when the copy is done as a different user
+            self._fixup_perms2((tmp, tmp_src), execute=True)
+
+            # add preparation steps to one ssh roundtrip executing the script
+            env_dict = dict()
+            env_string = self._compute_environment_string(env_dict)
+            script_cmd = ' '.join([env_string, target_command])
+
+        if self._play_context.check_mode:
+            result['changed'] = True
+            self._remove_tmp_path(tmp)
+            return result
+
         script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
         exec_data = None

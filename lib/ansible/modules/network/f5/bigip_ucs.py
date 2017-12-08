@@ -195,7 +195,10 @@ from ansible.module_utils.six import iteritems
 try:
     from collections import OrderedDict
 except ImportError:
-    pass
+    try:
+        from ordereddict import OrderedDict
+    except ImportError:
+        pass
 
 try:
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
@@ -463,6 +466,7 @@ class V1Manager(BaseManager):
       * No API to upload UCS files
 
     """
+
     def create_on_device(self):
         remote_path = "/var/local/ucs"
         tpath_name = '/var/config/rest/downloads'

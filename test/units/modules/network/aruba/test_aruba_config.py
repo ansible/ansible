@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.aruba import aruba_config
-from .aruba_module import TestArubaModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .aruba_module import TestArubaModule, load_fixture
 
 
 class TestArubaConfigModule(TestArubaModule):
@@ -32,6 +31,8 @@ class TestArubaConfigModule(TestArubaModule):
     module = aruba_config
 
     def setUp(self):
+        super(TestArubaConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.aruba.aruba_config.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -42,6 +43,8 @@ class TestArubaConfigModule(TestArubaModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestArubaConfigModule, self).tearDown()
+
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()

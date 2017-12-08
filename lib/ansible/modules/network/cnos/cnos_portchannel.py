@@ -429,7 +429,7 @@ import json
 import time
 import re
 try:
-    from ansible.module_utils import cnos
+    from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
 except:
     HAS_LIB = False
@@ -521,4 +521,4 @@ def main():
         module.fail_json(msg=errorMsg)
 
 if __name__ == '__main__':
-        main()
+    main()

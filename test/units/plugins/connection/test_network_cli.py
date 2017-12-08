@@ -35,7 +35,7 @@ from ansible.plugins.connection import network_cli
 
 class TestConnectionClass(unittest.TestCase):
 
-    @patch("ansible.plugins.connection.network_cli.ParamikoSshConnection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect_error(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -47,7 +47,7 @@ class TestConnectionClass(unittest.TestCase):
         pc.network_os = None
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
 
-    @patch("ansible.plugins.connection.network_cli.ParamikoSshConnection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__invalid_os(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -60,7 +60,7 @@ class TestConnectionClass(unittest.TestCase):
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
 
     @patch("ansible.plugins.connection.network_cli.terminal_loader")
-    @patch("ansible.plugins.connection.network_cli.ParamikoSshConnection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -74,7 +74,7 @@ class TestConnectionClass(unittest.TestCase):
 
         conn._connect()
         self.assertTrue(conn._terminal.on_open_shell.called)
-        self.assertFalse(conn._terminal.on_authorize.called)
+        self.assertFalse(conn._terminal.on_become.called)
 
         conn._play_context.become = True
         conn._play_context.become_method = 'enable'
@@ -82,9 +82,9 @@ class TestConnectionClass(unittest.TestCase):
         conn._connected = False
 
         conn._connect()
-        conn._terminal.on_authorize.assert_called_with(passwd='password')
+        conn._terminal.on_become.assert_called_with(passwd='password')
 
-    @patch("ansible.plugins.connection.network_cli.ParamikoSshConnection.close")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection.close")
     def test_network_cli_close(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -99,7 +99,7 @@ class TestConnectionClass(unittest.TestCase):
         self.assertTrue(terminal.on_close_shell.called)
         self.assertIsNone(conn._ssh_shell)
 
-    @patch("ansible.plugins.connection.network_cli.ParamikoSshConnection._connect")
+    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli_exec_command(self, mocked_super):
         pc = PlayContext()
         new_stdin = StringIO()

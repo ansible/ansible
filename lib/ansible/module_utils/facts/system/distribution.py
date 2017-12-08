@@ -208,7 +208,7 @@ class DistributionFiles:
         if 'Slackware' not in data:
             return False, slackware_facts  # TODO: remove
         slackware_facts['distribution'] = name
-        version = re.findall('\w+[.]\w+', data)
+        version = re.findall(r'\w+[.]\w+', data)
         if version:
             slackware_facts['distribution_version'] = version[0]
         return True, slackware_facts
@@ -251,16 +251,16 @@ class DistributionFiles:
                 if distribution:
                     suse_facts['distribution'] = distribution.group(1).strip('"')
                 # example pattern are 13.04 13.0 13
-                distribution_version = re.search('^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
+                distribution_version = re.search(r'^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
                 if distribution_version:
                     suse_facts['distribution_version'] = distribution_version.group(1)
                 if 'open' in data.lower():
-                    release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
+                    release = re.search(r'^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release:
                         suse_facts['distribution_release'] = release.groups()[0]
                 elif 'enterprise' in data.lower() and 'VERSION_ID' in line:
                     # SLES doesn't got funny release names
-                    release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
+                    release = re.search(r'^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release.group(1):
                         release = release.group(1)
                     else:
@@ -294,7 +294,7 @@ class DistributionFiles:
         debian_facts = {}
         if 'Debian' in data or 'Raspbian' in data:
             debian_facts['distribution'] = 'Debian'
-            release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
 
@@ -475,8 +475,8 @@ class Distribution(object):
 
     def get_distribution_HPUX(self):
         hpux_facts = {}
-        rc, out, err = self.module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
-        data = re.search('HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
+        rc, out, err = self.module.run_command(r"/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
+        data = re.search(r'HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
         if data:
             hpux_facts['distribution_version'] = data.groups()[0]
             hpux_facts['distribution_release'] = data.groups()[1]
@@ -495,7 +495,7 @@ class Distribution(object):
     def get_distribution_FreeBSD(self):
         freebsd_facts = {}
         freebsd_facts['distribution_release'] = platform.release()
-        data = re.search('(\d+)\.(\d+)-RELEASE.*', freebsd_facts['distribution_release'])
+        data = re.search(r'(\d+)\.(\d+)-RELEASE.*', freebsd_facts['distribution_release'])
         if data:
             freebsd_facts['distribution_major_version'] = data.group(1)
             freebsd_facts['distribution_version'] = '%s.%s' % (data.group(1), data.group(2))
@@ -505,7 +505,7 @@ class Distribution(object):
         openbsd_facts = {}
         openbsd_facts['distribution_version'] = platform.release()
         rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
-        match = re.match('OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
+        match = re.match(r'OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
         if match:
             openbsd_facts['distribution_release'] = match.groups()[0]
         else:

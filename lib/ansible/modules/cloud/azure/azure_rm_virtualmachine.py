@@ -106,6 +106,11 @@ options:
               for by C(name).'
             - Custom image support was added in Ansible 2.5
         required: true
+    availability_set:
+        description:
+            - Name or ID of an existing availability set to add the VM to. The availability_set should be in the same resource group as VM.
+        default: null
+        version_added: "2.5"
     storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
@@ -448,6 +453,9 @@ azure_vm:
     type: complex
     contains: {
         "properties": {
+            "availabilitySet": {
+                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
+            },
             "hardwareProfile": {
                 "vmSize": "Standard_D1"
             },
@@ -588,15 +596,16 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import parse_resource_id
     from azure.mgmt.compute.models import NetworkInterfaceReference, \
-                                          VirtualMachine, HardwareProfile, \
-                                          StorageProfile, OSProfile, OSDisk, DataDisk, \
-                                          VirtualHardDisk, ManagedDiskParameters, \
-                                          ImageReference, NetworkProfile, LinuxConfiguration, \
-                                          SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
-                                          DiskCreateOptionTypes, Plan
+        VirtualMachine, HardwareProfile, \
+        StorageProfile, OSProfile, OSDisk, DataDisk, \
+        VirtualHardDisk, ManagedDiskParameters, \
+        ImageReference, NetworkProfile, LinuxConfiguration, \
+        SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
+        DiskCreateOptionTypes, Plan, SubResource
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
-                                          NetworkInterfaceIPConfiguration, Subnet
+        NetworkInterfaceIPConfiguration, Subnet
     from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
     from azure.mgmt.storage.models import Kind, SkuTier, SkuName
 except ImportError:
@@ -613,8 +622,8 @@ AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 def extract_names_from_blob_uri(blob_uri, storage_suffix):
     # HACK: ditch this once python SDK supports get by URI
-    m = re.match('^https://(?P<accountname>[^\.]+)\.blob\.{0}/'
-                 '(?P<containername>[^/]+)/(?P<blobname>.+)$'.format(storage_suffix), blob_uri)
+    m = re.match(r'^https://(?P<accountname>[^.]+)\.blob\.{0}/'
+                 r'(?P<containername>[^/]+)/(?P<blobname>.+)$'.format(storage_suffix), blob_uri)
     if not m:
         raise Exception("unable to parse blob uri '%s'" % blob_uri)
     extracted_names = m.groupdict()
@@ -637,6 +646,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
             image=dict(type='raw'),
+            availability_set=dict(type='str'),
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
@@ -649,7 +659,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
             remove_on_absent=dict(type='list', default=['all']),
-            virtual_network_resource_group=dict(type = 'str'),
+            virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             subnet_name=dict(type='str', aliases=['subnet']),
             allocated=dict(type='bool', default=True),
@@ -670,6 +680,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.ssh_password_enabled = None
         self.ssh_public_keys = None
         self.image = None
+        self.availability_set = None
         self.storage_account_name = None
         self.storage_container_name = None
         self.storage_blob_name = None
@@ -893,6 +904,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not image_reference:
                         self.fail("Parameter error: an image is required when creating a virtual machine.")
 
+                    availability_set_resource = None
+                    if self.availability_set:
+                        parsed_availability_set = parse_resource_id(self.availability_set)
+                        availability_set = self.get_availability_set(parsed_availability_set.get('resource_group', self.resource_group),
+                                                                     parsed_availability_set.get('name'))
+                        availability_set_resource = SubResource(availability_set.id)
+
                     # Get defaults
                     if not self.network_interface_names:
                         default_nic = self.create_default_nic()
@@ -956,6 +974,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
+                        availability_set=availability_set_resource,
                         plan=plan
                     )
 
@@ -1052,6 +1071,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk']['storageAccountType']
                         )
 
+                    availability_set_resource = None
+                    try:
+                        availability_set_resource = SubResource(vm_dict['properties']['availabilitySet']['id'])
+                    except Exception:
+                        # pass if the availability set is not set
+                        pass
+
                     vm_resource = VirtualMachine(
                         vm_dict['location'],
                         os_profile=OSProfile(
@@ -1077,6 +1103,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 version=vm_dict['properties']['storageProfile']['imageReference']['version']
                             ),
                         ),
+                        availability_set=availability_set_resource,
                         network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
@@ -1270,7 +1297,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         nic_names = []
         pip_names = []
 
-        if self.remove_on_absent.intersection(set(['all','virtual_storage'])):
+        if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
             # store the attached vhd info so we can nuke it after the VM is gone
             if(vm.storage_profile.os_disk.managed_disk):
                 self.log('Storing managed disk ID for deletion')
@@ -1292,7 +1319,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Managed disk IDs to delete: {0}".format(', '.join(managed_disk_ids)))
             self.results['deleted_managed_disk_ids'] = managed_disk_ids
 
-        if self.remove_on_absent.intersection(set(['all','network_interfaces'])):
+        if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             # store the attached nic info so we can nuke them after the VM is gone
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
@@ -1300,7 +1327,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 nic_names.append(id_dict['networkInterfaces'])
             self.log('NIC names to delete {0}'.format(', '.join(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
-            if self.remove_on_absent.intersection(set(['all','public_ips'])):
+            if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
                 for name in nic_names:
                     nic = self.get_network_interface(name)
@@ -1322,18 +1349,18 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
-        if self.remove_on_absent.intersection(set(['all','virtual_storage'])):
+        if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
             self.log('Deleting VHDs')
             self.delete_vm_storage(vhd_uris)
             self.log('Deleting managed disks')
             self.delete_managed_disks(managed_disk_ids)
 
-        if self.remove_on_absent.intersection(set(['all','network_interfaces'])):
+        if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             self.log('Deleting network interfaces')
             for name in nic_names:
                 self.delete_nic(name)
 
-        if self.remove_on_absent.intersection(set(['all','public_ips'])):
+        if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
             self.log('Deleting public IPs')
             for name in pip_names:
                 self.delete_pip(name)
@@ -1434,6 +1461,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 return ImageReference(id=vm_image.id)
 
         self.fail("Error could not find image with name {0}".format(name))
+
+    def get_availability_set(self, resource_group, name):
+        try:
+            return self.compute_client.availability_sets.get(resource_group, name)
+        except Exception as exc:
+            self.fail("Error fetching availability set {0} - {1}".format(name, str(exc)))
 
     def get_storage_account(self, name):
         try:

@@ -128,7 +128,7 @@ def get_ini_config_value(p, entry):
     if p is not None:
         try:
             value = p.get(entry.get('section', 'defaults'), entry.get('key', ''), raw=True)
-        except:  # FIXME: actually report issues here
+        except Exception:  # FIXME: actually report issues here
             pass
     return value
 
@@ -224,14 +224,23 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
-    def get_plugin_options(self, plugin_type, name, variables=None):
+    def get_plugin_options(self, plugin_type, name, keys=None, variables=None):
 
         options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, variables=variables)
+            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables)
 
         return options
+
+    def get_plugin_vars(self, plugin_type, name):
+
+        pvars = []
+        for pdef in self.get_configuration_definitions(plugin_type, name).values():
+            if 'vars' in pdef and pdef['vars']:
+                for var_entry in pdef['vars']:
+                    pvars.append(var_entry['name'])
+        return pvars
 
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
@@ -264,12 +273,12 @@ class ConfigManager(object):
 
         return value, origin
 
-    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, variables=None):
+    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
         ''' wrapper '''
-        value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name, variables=variables)
+        value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name, keys=keys, variables=variables)
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, variables=None):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
 
         if cfile is None:
@@ -290,9 +299,14 @@ class ConfigManager(object):
 
         if config in defs:
             # Use 'variable overrides' if present, highest precedence, but only present when querying running play
-            if variables:
+            if variables and defs[config].get('vars'):
                 value, origin = self._loop_entries(variables, defs[config]['vars'])
                 origin = 'var: %s' % origin
+
+            # use playbook keywords if you have em
+            if value is None and keys:
+                value, origin = self._loop_entries(keys, defs[config]['keywords'])
+                origin = 'keyword: %s' % origin
 
             # env vars are next precedence
             if value is None and defs[config].get('env'):
@@ -318,13 +332,6 @@ class ConfigManager(object):
                     elif ftype == 'yaml':
                         # FIXME: implement, also , break down key from defs (. notation???)
                         origin = cfile
-
-            '''
-            # for plugins, try using existing constants, this is for backwards compatiblity
-            if plugin_name and defs[config].get('constants'):
-                value, origin = self._loop_entries(self.data, defs[config]['constants'])
-                origin = 'constant: %s' % origin
-            '''
 
             # set default if we got here w/o a value
             if value is None:

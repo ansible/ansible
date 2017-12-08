@@ -24,7 +24,7 @@
 - name: assert remove from empty right check
   assert:
     that:
-    - not remove_empty_right_check|changed
+    - remove_empty_right_check is not changed
     - remove_empty_right_check.added == []
     - remove_empty_right_check.removed == []
 
@@ -39,7 +39,7 @@
 - name: assert remove from empty right
   assert:
     that:
-    - not remove_empty_right|changed
+    - remove_empty_right is not changed
     - remove_empty_right.added == []
     - remove_empty_right.removed == []
 
@@ -59,7 +59,7 @@
 - name: assert set administrator check
   assert:
     that:
-    - set_administrator_check|changed
+    - set_administrator_check is changed
     - set_administrator_check.added == ["{{ansible_hostname}}\\Administrator"]
     - set_administrator_check.removed == []
     - set_administrator_actual_check.users == []
@@ -79,7 +79,7 @@
 - name: assert set administrator check
   assert:
     that:
-    - set_administrator|changed
+    - set_administrator is changed
     - set_administrator.added == ["{{ansible_hostname}}\\Administrator"]
     - set_administrator.removed == []
     - set_administrator_actual.users == ['Administrator']
@@ -94,7 +94,7 @@
 - name: assert set administrator check
   assert:
     that:
-    - not set_administrator_again|changed
+    - set_administrator_again is not changed
     - set_administrator_again.added == []
     - set_administrator_again.removed == []
 
@@ -114,7 +114,7 @@
 - name: assert remove from right check
   assert:
     that:
-    - remove_right_check|changed
+    - remove_right_check is changed
     - remove_right_check.removed == ["{{ansible_hostname}}\\Administrator"]
     - remove_right_check.added == []
     - remove_right_actual_check.users == ['Administrator']
@@ -134,7 +134,7 @@
 - name: assert remove from right
   assert:
     that:
-    - remove_right|changed
+    - remove_right is changed
     - remove_right.removed == ["{{ansible_hostname}}\\Administrator"]
     - remove_right.added == []
     - remove_right_actual.users == []
@@ -149,7 +149,7 @@
 - name: assert remove from right
   assert:
     that:
-    - not remove_right_again|changed
+    - remove_right_again is not changed
     - remove_right_again.removed == []
     - remove_right_again.added == []
 
@@ -169,7 +169,7 @@
 - name: assert add to empty right check
   assert:
     that:
-    - add_right_on_empty_check|changed
+    - add_right_on_empty_check is changed
     - add_right_on_empty_check.removed == []
     - add_right_on_empty_check.added == ["{{ansible_hostname}}\\Administrator", "BUILTIN\\Administrators"]
     - add_right_on_empty_actual_check.users == []
@@ -189,7 +189,7 @@
 - name: assert add to empty right
   assert:
     that:
-    - add_right_on_empty|changed
+    - add_right_on_empty is changed
     - add_right_on_empty.removed == []
     - add_right_on_empty.added == ["{{ansible_hostname}}\\Administrator", "BUILTIN\\Administrators"]
     - add_right_on_empty_actual.users == ["Administrator", "BUILTIN\\Administrators"]
@@ -204,7 +204,7 @@
 - name: assert add to empty right
   assert:
     that:
-    - not add_right_on_empty_again|changed
+    - add_right_on_empty_again is not changed
     - add_right_on_empty_again.removed == []
     - add_right_on_empty_again.added == []
 
@@ -224,7 +224,7 @@
 - name: assert add to existing right check
   assert:
     that:
-    - add_right_on_existing_check|changed
+    - add_right_on_existing_check is changed
     - add_right_on_existing_check.removed == []
     - add_right_on_existing_check.added == ["BUILTIN\\Guests", "BUILTIN\\Users"]
     - add_right_on_existing_actual_check.users == ["Administrator", "BUILTIN\\Administrators"]
@@ -244,7 +244,7 @@
 - name: assert add to existing right
   assert:
     that:
-    - add_right_on_existing|changed
+    - add_right_on_existing is changed
     - add_right_on_existing.removed == []
     - add_right_on_existing.added == ["BUILTIN\\Guests", "BUILTIN\\Users"]
     - add_right_on_existing_actual.users == ["Administrator", "BUILTIN\\Administrators", "BUILTIN\\Users", "BUILTIN\\Guests"]
@@ -259,7 +259,7 @@
 - name: assert add to existing right
   assert:
     that:
-    - not add_right_on_existing_again|changed
+    - add_right_on_existing_again is not changed
     - add_right_on_existing_again.removed == []
     - add_right_on_existing_again.added == []
 
@@ -279,7 +279,7 @@
 - name: assert remove from existing check
   assert:
     that:
-    - remove_on_existing_check|changed
+    - remove_on_existing_check is changed
     - remove_on_existing_check.removed == ["BUILTIN\\Guests", "{{ansible_hostname}}\\Administrator"]
     - remove_on_existing_check.added == []
     - remove_on_existing_actual_check.users == ["Administrator", "BUILTIN\\Administrators", "BUILTIN\\Users", "BUILTIN\\Guests"]
@@ -299,7 +299,7 @@
 - name: assert remove from existing
   assert:
     that:
-    - remove_on_existing|changed
+    - remove_on_existing is changed
     - remove_on_existing.removed == ["BUILTIN\\Guests", "{{ansible_hostname}}\\Administrator"]
     - remove_on_existing.added == []
     - remove_on_existing_actual.users == ["BUILTIN\\Administrators", "BUILTIN\\Users"]
@@ -314,7 +314,7 @@
 - name: assert remove from existing again
   assert:
     that:
-    - not remove_on_existing_again|changed
+    - remove_on_existing_again is not changed
     - remove_on_existing_again.removed == []
     - remove_on_existing_again.added == []
 
@@ -334,7 +334,7 @@
 - name: assert set to existing check
   assert:
     that:
-    - set_on_existing_check|changed
+    - set_on_existing_check is changed
     - set_on_existing_check.removed == ["BUILTIN\\Users"]
     - set_on_existing_check.added == ["NT AUTHORITY\\SYSTEM", "BUILTIN\\Backup Operators"]
     - set_on_existing_actual_check.users == ["BUILTIN\\Administrators", "BUILTIN\\Users"]
@@ -354,7 +354,7 @@
 - name: assert set to existing
   assert:
     that:
-    - set_on_existing|changed
+    - set_on_existing is changed
     - set_on_existing.removed == ["BUILTIN\\Users"]
     - set_on_existing.added == ["NT AUTHORITY\\SYSTEM", "BUILTIN\\Backup Operators"]
     - set_on_existing_actual.users == ["NT AUTHORITY\\SYSTEM", "BUILTIN\\Administrators", "BUILTIN\\Backup Operators"]
@@ -369,6 +369,6 @@
 - name: assert set to existing
   assert:
     that:
-    - not set_on_existing_again|changed
+    - set_on_existing_again is not changed
     - set_on_existing_again.removed == []
     - set_on_existing_again.added == []

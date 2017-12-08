@@ -26,12 +26,11 @@ from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.connection import send_data, recv_data
+from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
@@ -52,6 +51,8 @@ class ConnectionProcess(object):
         self.srv = JsonRpcServer()
         self.sock = None
 
+        self.connection = None
+
     def start(self):
         try:
             messages = list()
@@ -66,7 +67,9 @@ class ConnectionProcess(object):
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
 
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null')
+            self.connection.set_options()
             self.connection._connect()
+            self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
             messages.append('connection to remote device started successfully')
 
@@ -84,7 +87,7 @@ class ConnectionProcess(object):
 
     def run(self):
         try:
-            while True:
+            while self.connection.connected:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
@@ -135,24 +138,19 @@ class ConnectionProcess(object):
     def shutdown(self):
         """ Shuts down the local domain socket
         """
-        if not os.path.exists(self.socket_path):
-            return
-
-        try:
-            if self.sock:
-                self.sock.close()
-            if self.connection:
-                self.connection.close()
-
-        except:
-            pass
-
-        finally:
-            if os.path.exists(self.socket_path):
-                os.remove(self.socket_path)
-                setattr(self.connection, '_socket_path', None)
-                setattr(self.connection, '_connected', False)
-
+        if os.path.exists(self.socket_path):
+            try:
+                if self.sock:
+                    self.sock.close()
+                if self.connection:
+                    self.connection.close()
+            except:
+                pass
+            finally:
+                if os.path.exists(self.socket_path):
+                    os.remove(self.socket_path)
+                    setattr(self.connection, '_socket_path', None)
+                    setattr(self.connection, '_connected', False)
         display.display('shutdown complete', log_only=True)
 
     def do_EXEC(self, data):
@@ -272,7 +270,7 @@ def main():
                     wfd = os.fdopen(w, 'w')
                     process = ConnectionProcess(wfd, play_context, socket_path, original_path)
                     process.start()
-                except Exception as exc:
+                except Exception:
                     messages.append(traceback.format_exc())
                     rc = 1
 
@@ -293,6 +291,20 @@ def main():
 
         else:
             messages.append('found existing local domain socket, using it!')
+            conn = Connection(socket_path)
+            pc_data = to_text(init_data)
+            try:
+                messages.extend(conn.update_play_context(pc_data))
+            except Exception as exc:
+                # Only network_cli has update_play context, so missing this is
+                # not fatal e.g. netconf
+                if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
+                    pass
+                else:
+                    result.update({
+                        'error': to_text(exc),
+                        'exception': traceback.format_exc()
+                    })
 
     result.update({
         'messages': messages,

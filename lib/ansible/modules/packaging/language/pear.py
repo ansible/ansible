@@ -83,12 +83,14 @@ def get_local_version(pear_output):
             return installed
     return None
 
+
 def _get_pear_path(module):
     if module.params['executable'] and os.path.isfile(module.params['executable']):
         result = module.params['executable']
     else:
         result = module.get_bin_path('pear', True, [module.params['executable']])
     return result
+
 
 def get_repository_version(pear_output):
     """Take pear remote-info output and get the latest version"""
@@ -97,6 +99,7 @@ def get_repository_version(pear_output):
         if 'Latest ' in line:
             return line.rsplit(None, 1)[-1].strip()
     return None
+
 
 def query_package(module, name, state="present"):
     """Query the package status in both the local system and the repository.
@@ -198,18 +201,14 @@ def check_packages(module, packages, state):
         module.exit_json(change=False, msg="package(s) already %s" % state)
 
 
-
-
 def main():
     module = AnsibleModule(
-        argument_spec    = dict(
-            name         = dict(aliases=['pkg']),
-            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
-            executable   = dict(default=None, required=False, type='path')),
-        required_one_of = [['name']],
-        supports_check_mode = True)
-
-
+        argument_spec=dict(
+            name=dict(aliases=['pkg']),
+            state=dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
+            executable=dict(default=None, required=False, type='path')),
+        required_one_of=[['name']],
+        supports_check_mode=True)
 
     p = module.params
 

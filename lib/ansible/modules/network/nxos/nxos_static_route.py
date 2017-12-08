@@ -88,10 +88,10 @@ commands:
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 def reconcile_candidate(module, candidate, prefix):
@@ -182,7 +182,7 @@ def set_route_command(module, prefix):
 
 def get_dotted_mask(mask):
     bits = 0
-    for i in range(32-mask, 32):
+    for i in range(32 - mask, 32):
         bits |= (1 << i)
     mask = ("%d.%d.%d.%d" % ((bits & 0xff000000) >> 24, (bits & 0xff0000) >> 16, (bits & 0xff00) >> 8, (bits & 0xff)))
     return mask

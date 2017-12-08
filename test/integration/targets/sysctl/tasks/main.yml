@@ -71,8 +71,8 @@
 - name: validate results
   assert:
       that:
-        - sysctl_test0 | changed
-        - not sysctl_test1 | changed
+        - sysctl_test0 is changed
+        - sysctl_test1 is not changed
         - 'sysctl_content0.stdout_lines[sysctl_content0.stdout_lines.index("vm.swappiness=5")] == "vm.swappiness=5"'
 
 - name: Remove kernel.panic
@@ -98,7 +98,7 @@
 - name: Validate results for key removal
   assert:
     that:
-      - sysctl_test2 | changed
+      - sysctl_test2 is changed
       - "'kernel.panic' not in sysctl_content2.stdout_lines"
 
 - name: Test remove kernel.panic again
@@ -113,7 +113,7 @@
 - name: Assert that no change was made
   assert:
     that:
-      - not sysctl_test2_change_test | changed
+      - sysctl_test2_change_test is not changed
 
 ##
 ## sysctl - sysctl_set
@@ -141,7 +141,7 @@
 - name: validate results for test 3
   assert:
     that:
-      - sysctl_test3 | changed
+      - sysctl_test3 is changed
       - 'sysctl_check3.stdout_lines == ["net.ipv4.ip_forward = 1"]'
 
 - name: Try sysctl with no name
@@ -155,7 +155,7 @@
 - name: validate nameless results
   assert:
     that:
-      - sysctl_no_name | failed
+      - sysctl_no_name is failed
       - "sysctl_no_name.msg == 'name cannot be None'"
 
 - name: Try sysctl with no value
@@ -169,5 +169,5 @@
 - name: validate nameless results
   assert:
     that:
-      - sysctl_no_value | failed
+      - sysctl_no_value is failed
       - "sysctl_no_value.msg == 'value cannot be None'"

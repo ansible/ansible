@@ -151,6 +151,9 @@ def set_state(module, state):
 
 
 def set_config_policy(module, policy, configfile):
+    if not os.path.exists('/etc/selinux/%s/policy' % policy):
+        module.fail_json(msg='Policy %s does not exist in /etc/selinux/' % policy)
+
     # edit config file with state value
     # SELINUXTYPE=targeted
     policyline = 'SELINUXTYPE=%s' % policy

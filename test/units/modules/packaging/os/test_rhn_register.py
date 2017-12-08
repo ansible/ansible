@@ -7,8 +7,8 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.modules.packaging.os import rhn_register
 
-from ..utils import (set_module_args, AnsibleExitJson, AnsibleFailJson,
-                     exit_json, fail_json, get_method_name, mock_request)
+from units.modules.packaging.utils import mock_request
+from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 
 SYSTEMID = """<?xml version="1.0"?>
@@ -37,9 +37,11 @@ def skipWhenAllModulesMissing(modules):
     return unittest.skip("{0}: none are available".format(', '.join(modules)))
 
 
-class TestRhnRegister(unittest.TestCase):
+class TestRhnRegister(ModuleTestCase):
 
     def setUp(self):
+        super(TestRhnRegister, self).setUp()
+
         self.module = rhn_register
         self.module.HAS_UP2DATE_CLIENT = True
 
@@ -51,16 +53,9 @@ class TestRhnRegister(unittest.TestCase):
         self.mock_load_config.start()
         self.addCleanup(self.mock_load_config.stop)
 
-        self.mock_exit_fail = patch.multiple(basic.AnsibleModule, exit_json=exit_json, fail_json=fail_json)
-        self.mock_exit_fail.start()
-        self.addCleanup(self.mock_exit_fail.stop)
-
         enable_patcher = patch.object(rhn_register.Rhn, 'enable')
         self.mock_enable = enable_patcher.start()
         self.addCleanup(enable_patcher.stop)
-
-    def tearDown(self):
-        pass
 
 #    This one fails, module needs to be fixed.
 #    @patch('os.path.isfile')

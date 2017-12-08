@@ -210,7 +210,7 @@ class PluginLoader:
             type_name = get_plugin_class(self.class_name)
 
             # FIXME: expand from just connection and callback
-            if type_name in ('connection', 'callback'):
+            if type_name in ('callback', 'connection', 'inventory', 'lookup'):
                 dstring = read_docstring(path, verbose=False, ignore_errors=False)
 
                 if dstring.get('doc', False):

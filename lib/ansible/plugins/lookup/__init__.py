@@ -19,10 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
-from ansible.module_utils.six import with_metaclass
 from ansible.errors import AnsibleFileNotFound
+from ansible.plugins import AnsiblePlugin
 
 try:
     from __main__ import display
@@ -33,10 +33,15 @@ except ImportError:
 __all__ = ['LookupBase']
 
 
-class LookupBase(with_metaclass(ABCMeta, object)):
+class LookupBase(AnsiblePlugin):
+
     def __init__(self, loader=None, templar=None, **kwargs):
+
+        super(LookupBase, self).__init__()
+
         self._loader = loader
         self._templar = templar
+
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 

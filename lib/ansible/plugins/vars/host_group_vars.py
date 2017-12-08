@@ -134,7 +134,7 @@ class VarsModule(BaseVarsPlugin):
     def _get_dir_files(self, path):
 
         found = []
-        for spath in os.listdir(path):
+        for spath in sorted(os.listdir(path)):
             if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]

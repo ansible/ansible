@@ -19,9 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-import os
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_nxapi
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -32,6 +29,8 @@ class TestNxosNxapiModule(TestNxosModule):
     module = nxos_nxapi
 
     def setUp(self):
+        super(TestNxosNxapiModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_nxapi.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -39,6 +38,7 @@ class TestNxosNxapiModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosNxapiModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

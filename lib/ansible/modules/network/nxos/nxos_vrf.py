@@ -97,8 +97,8 @@ commands:
 '''
 import re
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -162,7 +162,7 @@ def get_vrf_description(vrf, module):
         for element in splitted_body:
             if 'description' in element:
                 match_description = re.match(descr_regex, element,
-                                            re.DOTALL)
+                                             re.DOTALL)
                 group_description = match_description.groupdict()
                 description = group_description["descr"]
 
@@ -182,7 +182,7 @@ def get_vrf(vrf, module):
     vrf_key = {
         'vrf_name': 'vrf',
         'vrf_state': 'admin_state'
-        }
+    }
 
     try:
         body = execute_show_command(command, module)[0]

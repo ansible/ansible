@@ -507,6 +507,8 @@ class ClustersModule(BaseModule):
         return equal(item.get('id'), entity.id) and equal(item.get('name'), entity.name)
 
     def _update_check_external_network_providers(self, entity):
+        if self.param('external_network_providers') is None:
+            return True
         if entity.external_network_providers is None:
             return not self.param('external_network_providers')
         entity_providers = self._connection.follow_link(entity.external_network_providers)

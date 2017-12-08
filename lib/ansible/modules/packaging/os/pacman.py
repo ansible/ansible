@@ -18,8 +18,7 @@ DOCUMENTATION = '''
 module: pacman
 short_description: Manage packages with I(pacman)
 description:
-    - Manage packages with the I(pacman) package manager, which is used by
-      Arch Linux and its variants.
+    - Manage packages with the I(pacman) package manager, which is used by Arch Linux and its variants.
 version_added: "1.0"
 author:
     - Indrajit Raychaudhuri (@indrajitr)
@@ -28,7 +27,7 @@ author:
 options:
     name:
         description:
-            - Name of the package to install, upgrade, or remove.
+            - Name or list of names of the packages to install, upgrade, or remove.
         aliases: [ package, pkg ]
 
     state:
@@ -69,6 +68,9 @@ options:
         type: bool
         default: no
         version_added: "2.0"
+notes:
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
 '''
 
 RETURN = '''
@@ -192,7 +194,7 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        regex = re.compile(r'([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))
@@ -417,11 +419,11 @@ def main():
         for i, pkg in enumerate(pkgs):
             if not pkg:  # avoid empty strings
                 continue
-            elif re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
+            elif re.match(r".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)
-                pkgs[i] = re.sub('-[0-9].*$', '', pkgs[i].split('/')[-1])
+                pkgs[i] = re.sub(r'-[0-9].*$', '', pkgs[i].split('/')[-1])
             else:
                 pkg_files.append(None)
 

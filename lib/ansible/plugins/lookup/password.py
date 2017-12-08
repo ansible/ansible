@@ -92,7 +92,7 @@ _raw:
 import os
 import string
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
@@ -250,7 +250,8 @@ def _format_content(password, salt, encrypt=True):
         return password
 
     # At this point, the calling code should have assured us that there is a salt value.
-    assert salt, '_format_content was called with encryption requested but no salt value'
+    if not salt:
+        raise AnsibleAssertionError('_format_content was called with encryption requested but no salt value')
 
     return u'%s salt=%s' % (password, salt)
 

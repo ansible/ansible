@@ -31,7 +31,9 @@ This means you can no longer use it early in plays to determine ``hosts:`` or si
 This also changes the behaviour of ``add_hosts`` and the implicit localhost; 
 because they no longer automatically inherit the global value, they default to ``None``. See the module documentation for more information.
 
-The ``inventory_file`` remains unchanged, as it was always host specific.
+The ``inventory_file`` remains mostly unchanged, as it was always host specific.
+
+Since there is no longer a single inventory, the 'implicit localhost' doesn't get either of these variables defined.
 
 A bug was fixed with the inventory path/directory, which was defaulting to the current working directory. This caused ``group_vars`` and ``host_vars`` to be picked up from the current working directory instead of just adjacent to the playbook or inventory directory when a host list (comma separated host names) was provided as inventory.
 
@@ -156,6 +158,31 @@ If you have a template lookup like this::
 
     {{ "name surname" | regex_replace("^[^\\s]+\\s+(.*)", "\\1") }}
 
+Tests
+=====
+
+Tests succeeded/failed
+-----------------------
+
+Prior to Ansible version 2.4, a task return code of ``rc`` would override a return code of ``failed``. In version 2.4,  both ``rc`` and ``failed`` are used to calculate the state of the task. Because of this, test plugins ``succeeded``/``failed``` have also been changed. This means that overriding a task failure with ``failed_when: no`` will result in ``succeeded``/``failed`` returning ``True``/``False``. For example:
+
+    - command: /bin/false
+      register: result
+      failed_when: no
+
+    - debug:
+        msg: 'This is printed on 2.3'
+      when: result|failed
+
+    - debug:
+        msg: 'This is printed on 2.4'
+      when: result|succeeded
+
+    - debug:
+        msg: 'This is always printed'
+      when: result.rc != 0
+
+As we can see from the example above, in Ansible 2.3 ``succeeded``/``failed`` only checked the value of ``rc``.
 
 Networking
 ==========

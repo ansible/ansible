@@ -173,6 +173,17 @@ class InventoryData(object):
         else:
             display.debug("group %s already in inventory" % group)
 
+    def remove_group(self, group):
+
+        if group in self.groups:
+            del self.groups[group]
+            display.debug("Removed group %s from inventory" % group)
+            self._groups_dict_cache = {}
+
+        for host in self.hosts:
+            h = self.hosts[host]
+            h.remove_group(group)
+
     def add_host(self, host, group=None, port=None):
         ''' adds a host to inventory and possibly a group if not there already '''
 
@@ -208,6 +219,15 @@ class InventoryData(object):
             g.add_host(h)
             self._groups_dict_cache = {}
             display.debug("Added host %s to group %s" % (host, group))
+
+    def remove_host(self, host):
+
+        if host in self.hosts:
+            del self.hosts[host]
+
+        for group in self.groups:
+            g = self.groups[group]
+            g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
         ''' sets a varible for an inventory object '''

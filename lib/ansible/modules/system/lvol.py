@@ -58,7 +58,7 @@ options:
     version_added: "1.5"
   opts:
     description:
-    - Free-form options to be passed to the lvcreate command
+    - Free-form options to be passed to the lvcreate command.
     version_added: "2.0"
   snapshot:
     description:
@@ -66,16 +66,20 @@ options:
     version_added: "2.1"
   pvs:
     description:
-    - Comma separated list of physical volumes e.g. /dev/sda,/dev/sdb
+    - Comma separated list of physical volumes (e.g. /dev/sda,/dev/sdb).
     version_added: "2.2"
   shrink:
     description:
-    - shrink if current size is higher than size requested
+    - Shrink if current size is higher than size requested.
     type: bool
     default: 'yes'
     version_added: "2.2"
-notes:
-  - Filesystems on top of the volume are not resized.
+  resizefs:
+    description:
+    - Resize the underlying filesystem together with the logical volume.
+    type: bool
+    default: 'yes'
+    version_added: "2.5"
 '''
 
 EXAMPLES = '''
@@ -135,6 +139,7 @@ EXAMPLES = '''
     vg: firefly
     lv: test
     size: 100%PVS
+    resizefs: true
 
 - name: Resize the logical volume to % of VG
   lvol:
@@ -226,7 +231,7 @@ def get_lvm_version(module):
     rc, out, err = module.run_command("%s version" % (ver_cmd))
     if rc != 0:
         return None
-    m = re.search("LVM version:\s+(\d+)\.(\d+)\.(\d+).*(\d{4}-\d{2}-\d{2})", out)
+    m = re.search(r"LVM version:\s+(\d+)\.(\d+)\.(\d+).*(\d{4}-\d{2}-\d{2})", out)
     if not m:
         return None
     return mkversion(m.group(1), m.group(2), m.group(3))
@@ -244,7 +249,8 @@ def main():
             shrink=dict(type='bool', default=True),
             active=dict(type='bool', default=True),
             snapshot=dict(type='str'),
-            pvs=dict(type='str')
+            pvs=dict(type='str'),
+            resizefs=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -267,6 +273,7 @@ def main():
     force = module.boolean(module.params['force'])
     shrink = module.boolean(module.params['shrink'])
     active = module.boolean(module.params['active'])
+    resizefs = module.boolean(module.params['resizefs'])
     size_opt = 'L'
     size_unit = 'm'
     snapshot = module.params['snapshot']
@@ -421,6 +428,8 @@ def main():
                     tool = '%s %s' % (tool, '--force')
 
             if tool:
+                if resizefs:
+                    tool = '%s %s' % (tool, '--resizefs')
                 cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                 rc, out, err = module.run_command(cmd)
                 if "Reached maximum COW size" in out:
@@ -450,6 +459,8 @@ def main():
                     tool = '%s %s' % (tool, '--force')
 
             if tool:
+                if resizefs:
+                    tool = '%s %s' % (tool, '--resizefs')
                 cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                 rc, out, err = module.run_command(cmd)
                 if "Reached maximum COW size" in out:

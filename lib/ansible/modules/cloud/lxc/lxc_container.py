@@ -377,7 +377,7 @@ EXAMPLES = """
     - test-container-new-archive-destroyed-clone
 """
 
-RETURN="""
+RETURN = """
 lxc_container:
     description: container information
     returned: success
@@ -579,7 +579,7 @@ def create_script(command):
         f.close()
 
     # Ensure the script is executable.
-    os.chmod(script_file, int('0700',8))
+    os.chmod(script_file, int('0700', 8))
 
     # Output log file.
     stdout_file = os.fdopen(tempfile.mkstemp(prefix='lxc-attach-script-log')[0], 'ab')
@@ -723,7 +723,7 @@ class LxcContainerManagement(object):
 
         container_config_file = self.container.config_file_name
         with open(container_config_file, 'rb') as f:
-            container_config = to_text(f.read(), errors='surrogate_or_strict').splitlines()
+            container_config = to_text(f.read(), errors='surrogate_or_strict').splitlines(True)
 
         # Note used ast literal_eval because AnsibleModule does not provide for
         # adequate dictionary parsing.
@@ -915,7 +915,7 @@ class LxcContainerManagement(object):
             'ips': self.container.get_ips(),
             'state': self._get_state(),
             'init_pid': int(self.container.init_pid),
-            'name' : self.container_name,
+            'name': self.container_name,
         }
 
     def _unfreeze(self):
@@ -1365,7 +1365,7 @@ class LxcContainerManagement(object):
         :type source_dir: ``str``
         """
 
-        old_umask = os.umask(int('0077',8))
+        old_umask = os.umask(int('0077', 8))
 
         archive_path = self.module.params.get('archive_path')
         if not os.path.isdir(archive_path):
@@ -1750,7 +1750,7 @@ def main():
             )
         ),
         supports_check_mode=False,
-        required_if = ([
+        required_if=([
             ('archive', True, ['archive_path'])
         ]),
     )

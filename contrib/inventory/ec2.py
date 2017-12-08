@@ -12,9 +12,9 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
-optional region environment variable if region is 'auto'
+Optional region environment variable if region is 'auto'
 
-This script also assumes there is an ec2.ini file alongside it.  To specify a
+This script also assumes that there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
     export EC2_INI_PATH=/path/to/my_ec2.ini
@@ -95,7 +95,7 @@ consistency with variable spellings (camelCase and underscores) since this
 just loops through all variables the object exposes. It is preferred to use the
 ones with underscores when multiple exist.
 
-In addition, if an instance has AWS Tags associated with it, each tag is a new
+In addition, if an instance has AWS tags associated with it, each tag is a new
 variable named:
  - ec2_tag_[Key] = [Value]
 
@@ -1680,9 +1680,9 @@ class Ec2Inventory(object):
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        regex = "[^A-Za-z0-9\_"
+        regex = r"[^A-Za-z0-9\_"
         if not self.replace_dash_in_groups:
-            regex += "\-"
+            regex += r"\-"
         return re.sub(regex + "]", "_", word)
 
     def json_format_dict(self, data, pretty=False):

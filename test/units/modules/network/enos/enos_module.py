@@ -1,4 +1,4 @@
-# (c) 2016 Red Hat Inc.
+# Copyright (C) 2017 Lenovo, Inc.
 #
 # This file is part of Ansible
 #
@@ -64,7 +64,8 @@ class AnsibleFailJson(Exception):
 
 class TestEnosModule(unittest.TestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
+    def execute_module(self, failed=False, changed=False, commands=None,
+                       sort=True, defaults=False):
 
         self.load_fixtures(commands)
 
@@ -77,9 +78,11 @@ class TestEnosModule(unittest.TestCase):
 
         if commands is not None:
             if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+                self.assertEqual(sorted(commands), sorted(result['commands']),
+                                 result['commands'])
             else:
-                self.assertEqual(commands, result['commands'], result['commands'])
+                self.assertEqual(commands, result['commands'],
+                                 result['commands'])
 
         return result
 

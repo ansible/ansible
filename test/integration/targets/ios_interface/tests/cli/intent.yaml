@@ -21,7 +21,7 @@
     name: "{{ test_interface }}"
     state: up
     tx_rate: ge(0)
-    rx_rate: le(0)
+    rx_rate: ge(0)
     authorize: yes
   register: result
 

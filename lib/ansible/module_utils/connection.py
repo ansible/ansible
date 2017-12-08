@@ -34,8 +34,7 @@ import traceback
 import uuid
 
 from functools import partial
-
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import iteritems
 
 
@@ -77,7 +76,7 @@ def request_builder(method, *args, **kwargs):
     reqid = str(uuid.uuid4())
     req = {'jsonrpc': '2.0', 'method': method, 'id': reqid}
 
-    params = list(args) or kwargs or None
+    params = args or kwargs or None
     if params:
         req['params'] = params
 
@@ -92,10 +91,11 @@ class ConnectionError(Exception):
             setattr(self, k, v)
 
 
-class Connection:
+class Connection(object):
 
     def __init__(self, socket_path):
-        assert socket_path is not None, 'socket_path must be a value'
+        if socket_path is None:
+            raise AssertionError('socket_path must be a value')
         self.socket_path = socket_path
 
     def __getattr__(self, name):
@@ -106,15 +106,8 @@ class Connection:
                 raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
             return partial(self.__rpc__, name)
 
-    def __rpc__(self, name, *args, **kwargs):
-        """Executes the json-rpc and returns the output received
-           from remote device.
-           :name: rpc method to be executed over connection plugin that implements jsonrpc 2.0
-           :args: Ordered list of params passed as arguments to rpc method
-           :kwargs: Dict of valid key, value pairs passed as arguments to rpc method
+    def _exec_jsonrpc(self, name, *args, **kwargs):
 
-           For usage refer the respective connection plugin docs.
-        """
         req = request_builder(name, *args, **kwargs)
         reqid = req['id']
 
@@ -131,6 +124,20 @@ class Connection:
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
+
+        return response
+
+    def __rpc__(self, name, *args, **kwargs):
+        """Executes the json-rpc and returns the output received
+           from remote device.
+           :name: rpc method to be executed over connection plugin that implements jsonrpc 2.0
+           :args: Ordered list of params passed as arguments to rpc method
+           :kwargs: Dict of valid key, value pairs passed as arguments to rpc method
+
+           For usage refer the respective connection plugin docs.
+        """
+
+        response = self._exec_jsonrpc(name, *args, **kwargs)
 
         if 'error' in response:
             err = response.get('error')

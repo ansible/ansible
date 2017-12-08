@@ -2,11 +2,11 @@
 - debug: msg="START {{ connection.transport }} nxos_pim_rp_address sanity"
 
 - set_fact: bidir="false" 
-  when: platform | search('N3K')
+  when: platform is search('N3K')
 
 - set_fact: bidircfg='bidir'
 - set_fact: bidircfg=''
-  when: platform | search('N3K')
+  when: platform is search('N3K')
 
 - block:
   - name: "Disable feature PIM"

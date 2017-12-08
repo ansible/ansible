@@ -291,7 +291,7 @@ def find_rule(rulebase, rule_name):
 
 def rule_is_match(propose_rule, current_rule):
 
-    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability'
+    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability',
                    'spyware', 'url_filtering', 'file_blocking', 'data_filtering',
                    'wildfire_analysis', 'type', 'action', 'tag', 'log_start', 'log_end']
     list_check = ['tozone', 'fromzone', 'source', 'source_user', 'destination', 'category',

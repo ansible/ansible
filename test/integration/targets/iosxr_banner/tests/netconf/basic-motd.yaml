@@ -1,0 +1,49 @@
+---
+- name: Enable Netconf service
+  iosxr_netconf:
+    netconf_port: 830
+    netconf_vrf: 'default'
+    state: present
+  register: result
+
+- name: setup - remove motd
+  iosxr_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Set motd
+  iosxr_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my motd banner' in result.commands"
+      - "'that has a multiline' in result.commands"
+
+- name: Set motd again (idempotent)
+  iosxr_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"

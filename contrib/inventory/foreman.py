@@ -264,7 +264,7 @@ class ForemanInventory(object):
         >>> ForemanInventory.to_safe("foo-bar baz")
         'foo_barbaz'
         '''
-        regex = "[^A-Za-z0-9\_]"
+        regex = r"[^A-Za-z0-9\_]"
         return re.sub(regex, "_", word.replace(" ", ""))
 
     def update_cache(self):

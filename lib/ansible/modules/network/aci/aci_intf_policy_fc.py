@@ -64,7 +64,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -93,7 +93,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='fc_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fcIfPol',
+            aci_rn='infra/fcIfPol-{}'.format(fc_policy),
+            filter_target='(fcIfPol.name, "{}")'.format(fc_policy),
+            module_object=fc_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

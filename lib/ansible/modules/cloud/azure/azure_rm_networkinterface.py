@@ -219,7 +219,7 @@ state:
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import NetworkInterface, NetworkInterfaceIPConfiguration, Subnet, \
-                                          PublicIPAddress, NetworkSecurityGroup
+        PublicIPAddress, NetworkSecurityGroup
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -442,7 +442,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     if not pip and self.public_ip:
                         # create a default public_ip
                         pip = self.create_default_pip(self.resource_group, self.location, self.name,
-                                                            self.public_ip_allocation_method)
+                                                      self.public_ip_allocation_method)
 
                     nic = NetworkInterface(
                         location=self.location,
@@ -453,7 +453,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             )
                         ]
                     )
-                    #nic.name = self.name
+                    # nic.name = self.name
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = 'default'
                     nic.network_security_group = NetworkSecurityGroup(id=nsg.id,
@@ -475,8 +475,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         tags=results['tags'],
                         ip_configurations=[
                             NetworkInterfaceIPConfiguration(
-                                private_ip_allocation_method=
-                                results['ip_configuration']['private_ip_allocation_method']
+                                private_ip_allocation_method=results['ip_configuration']['private_ip_allocation_method']
                             )
                         ]
                     )
@@ -484,7 +483,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                              results['ip_configuration']['subnet']['name'])
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = results['ip_configuration']['name']
-                    #nic.name = name=results['name'],
+                    # nic.name = name=results['name'],
 
                     if results['ip_configuration'].get('private_ip_address'):
                         nic.ip_configurations[0].private_ip_address = results['ip_configuration']['private_ip_address']
@@ -496,7 +495,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             id=pip.id,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
-                    #name=pip.name,
+                    # name=pip.name,
 
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
@@ -549,8 +548,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             subnet = self.network_client.subnets.get(self.resource_group, vnet_name, subnet_name)
         except Exception as exc:
             self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(subnet_name,
-                                                                                      vnet_name,
-                                                                                      str(exc)))
+                                                                                       vnet_name,
+                                                                                       str(exc)))
         return subnet
 
     def get_security_group(self, name):

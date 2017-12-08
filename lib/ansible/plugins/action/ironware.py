@@ -24,9 +24,11 @@ import copy
 import json
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.network_common import load_provider
-from ansible.module_utils.ironware import ironware_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
+from ansible.module_utils.network.ironware.ironware import ironware_provider_spec
 
 try:
     from __main__ import display
@@ -58,6 +60,8 @@ class ActionModule(_ActionModule):
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
         pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
         pc.become = provider['authorize'] or False
+        if pc.become:
+            pc.become_method = 'enable'
         pc.become_pass = provider['auth_pass']
 
         display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
@@ -73,10 +77,11 @@ class ActionModule(_ActionModule):
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
-        rc, out, err = connection.exec_command('prompt()')
-        if str(out).strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            connection.exec_command('exit')
+        conn = Connection(socket_path)
+        out = conn.get_prompt()
+        if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+            display.vvvv('wrong context, sending end to device', self._play_context.remote_addr)
+            conn.send_command('end')
 
         task_vars['ansible_socket'] = socket_path
 

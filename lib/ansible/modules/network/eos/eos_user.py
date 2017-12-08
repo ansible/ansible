@@ -155,10 +155,10 @@ from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import get_config, load_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import get_config, load_config
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.eos import eos_argument_spec, check_args
 
 
 def validate_privilege(value, module):
@@ -174,8 +174,11 @@ def map_obj_to_commands(updates, module):
     for update in updates:
         want, have = update
 
-        needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-        add = lambda x: commands.append('username %s %s' % (want['name'], x))
+        def needs_update(x):
+            return want.get(x) and (want.get(x) != have.get(x))
+
+        def add(x):
+            return commands.append('username %s %s' % (want['name'], x))
 
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])

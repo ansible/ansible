@@ -16,7 +16,7 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
@@ -109,6 +109,11 @@ class BaseMeta(type):
                     dst_dict['_valid_attrs'][attr_name] = value
                     dst_dict['_attributes'][attr_name] = value.default
 
+                    if value.alias is not None:
+                        dst_dict[value.alias] = property(getter, setter, deleter)
+                        dst_dict['_valid_attrs'][value.alias] = value
+                        dst_dict['_alias_attrs'][value.alias] = attr_name
+
         def _process_parents(parents, dst_dict):
             '''
             Helper method which creates attributes from all parent objects
@@ -124,6 +129,7 @@ class BaseMeta(type):
         # create some additional class attributes
         dct['_attributes'] = dict()
         dct['_valid_attrs'] = dict()
+        dct['_alias_attrs'] = dict()
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
@@ -158,6 +164,8 @@ class Base(with_metaclass(BaseMeta, object)):
         'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
         'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
     ]
+
+    _inheritable = True
 
     def __init__(self):
 
@@ -209,7 +217,8 @@ class Base(with_metaclass(BaseMeta, object)):
     def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
-        assert ds is not None, 'ds (%s) should not be None but it is.' % ds
+        if ds is None:
+            raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
 
         # cache the datastructure internally
         setattr(self, '_ds', ds)
@@ -234,12 +243,15 @@ class Base(with_metaclass(BaseMeta, object)):
         # so that certain fields can be loaded before others, if they are dependent.
         for name, attr in sorted(iteritems(self._valid_attrs), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
+            target_name = name
+            if name in self._alias_attrs:
+                target_name = self._alias_attrs[name]
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
                 if method:
-                    self._attributes[name] = method(name, ds[name])
+                    self._attributes[target_name] = method(name, ds[name])
                 else:
-                    self._attributes[name] = ds[name]
+                    self._attributes[target_name] = ds[name]
 
         # run early, non-critical validation
         self.validate()
@@ -278,13 +290,16 @@ class Base(with_metaclass(BaseMeta, object)):
             # walk all fields in the object
             for (name, attribute) in iteritems(self._valid_attrs):
 
+                if name in self._alias_attrs:
+                    name = self._alias_attrs[name]
+
                 # run validator only if present
                 method = getattr(self, '_validate_%s' % name, None)
                 if method:
                     method(attribute, name, getattr(self, name))
                 else:
                     # and make sure the attribute is of the type it should be
-                    value = getattr(self, name)
+                    value = self._attributes[name]
                     if value is not None:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(
@@ -313,6 +328,8 @@ class Base(with_metaclass(BaseMeta, object)):
         new_me = self.__class__()
 
         for name in self._valid_attrs.keys():
+            if name in self._alias_attrs:
+                continue
             new_me._attributes[name] = shallowcopy(self._attributes[name])
 
         new_me._loader = self._loader
@@ -547,7 +564,8 @@ class Base(with_metaclass(BaseMeta, object)):
         and extended.
         '''
 
-        assert isinstance(data, dict), 'data (%s) should be a dict but is a %s' % (data, type(data))
+        if not isinstance(data, dict):
+            raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
 
         for (name, attribute) in iteritems(self._valid_attrs):
             if name in data:
