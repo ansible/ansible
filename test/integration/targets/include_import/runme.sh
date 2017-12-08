@@ -33,4 +33,4 @@ ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.ym
 
 ## Recursion
 # https://github.com/ansible/ansible/issues/23609
-# ANSIBLE_STRATEGY='linear' ansible-playbook test_recursion.yml -i ../../inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook test_recursion.yml -i ../../inventory "$@"

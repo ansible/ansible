@@ -1,1 +1,1 @@
-testvar1: set group_vars/all.yml
+group_var1: set in group_vars/all.yml

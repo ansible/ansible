@@ -1,0 +1,11 @@
+- name: Playbook inside dir/
+  hosts: testhost2
+
+
+  tasks:
+    # FIXME Currently failing
+    - name: Assert that variable from group_vars/all.yml is properly set
+      assert:
+        that:
+          - group_var1 == 'set in group_vars/all.yml'
+      ignore_errors: yes
