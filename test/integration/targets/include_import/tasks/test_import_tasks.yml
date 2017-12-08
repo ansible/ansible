@@ -4,3 +4,17 @@
   tasks:
     - name: Test basic task import
       import_tasks: tasks1.yml
+
+    - name: Assert that fact was set in import
+      assert:
+        that:
+          - var_set_in_task1
+
+    - name: Test conditional task import
+      import_tasks: tasks2.yml
+      when: no
+
+    - name: Assert that tasks were skipped
+      assert:
+        that:
+          - var_set_in_task2 is not defined
