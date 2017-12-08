@@ -32,7 +32,7 @@
 #                    which are valid GitHub labels are automatically added.
 #
 
-automerge: False
+automerge: True
 files:
   .github/BOTMETA.yml:
     labels: botmeta
