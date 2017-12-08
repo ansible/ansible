@@ -531,7 +531,12 @@ def main():
             host_param = module.params['host']
             if not host_param:
                 host = search_by_attributes(connection.system_service().hosts_service(), status='up')
-                host_param = host.name if host is not None else None
+                if host is None:
+                    raise Exception(
+                        "Not possible to remove storage domain '%s' "
+                        "because no host found with status `up`." % module.params['name']
+                    )
+                host_param = host.name
             ret = storage_domains_module.remove(
                 destroy=module.params['destroy'],
                 format=module.params['format'],
