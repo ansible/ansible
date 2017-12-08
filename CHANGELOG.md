@@ -23,6 +23,8 @@ Ansible Changes By Release
 * restrict revaulting to vault cli
   https://github.com/ansible/ansible/pull/33656
 * Fix python3 tracebacks in letsencrypt module (https://github.com/ansible/ansible/pull/32734)
+* Fix ansible_*_interpreter variables to be templated prior to being used:
+  https://github.com/ansible/ansible/pull/33698
 
 
 <a id="2.4.2"></a>
