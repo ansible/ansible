@@ -38,12 +38,10 @@ options:
     visible_name:
         description:
             - Visible name of the host in Zabbix.
-        required: false
         version_added: '2.3'
     description:
         description:
             - Description of the host in Zabbix.
-        required: false
         version_added: '2.5'
     host_groups:
         description:
@@ -52,37 +50,30 @@ options:
     link_templates:
         description:
             - List of templates linked to the host.
-        required: false
         default: None
     inventory_mode:
         description:
             - Configure the inventory mode.
         choices: ['automatic', 'manual', 'disabled']
-        required: false
-        default: None
         version_added: '2.1'
     inventory_zabbix:
         description:
             - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
             - Please review the interface documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory'
-        required: false
-        default: None
         version_added: '2.5'
     status:
         description:
             - Monitoring status of the host.
-        required: false
         choices: ['enabled', 'disabled']
-        default: "enabled"
+        default: 'enabled'
     state:
         description:
             - State of the host.
             - On C(present), it will create if host does not exist or update the host if the associated data is different.
             - On C(absent) will remove a host if it exists.
-        required: false
         choices: ['present', 'absent']
-        default: "present"
+        default: 'present'
     proxy:
         description:
             - The name of the Zabbix Proxy to be used
@@ -93,7 +84,6 @@ options:
             - 'Available values are: dns, ip, main, port, type and useip.'
             - Please review the interface documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface'
-        required: false
         default: []
     tls_connect:
         description:
@@ -103,7 +93,7 @@ options:
             - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
-        version_added: "2.5"
+        version_added: '2.5'
     tls_accept:
         description:
             - Specifies what types of connections are allowed for incoming connections.
@@ -112,70 +102,65 @@ options:
             - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
-        version_added: "2.5"
+        version_added: '2.5'
     tls_psk_identity:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
             - It is a unique name by which this specific PSK is referred to by Zabbix components
             - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
     tls_psk:
         description:
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
     tls_issuer:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
     tls_subject:
         description:
             - Required certificate subject.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
     ipmi_authtype:
         description:
             - IPMI authentication algorithm.
             - Please review the Host object documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
-            - Possible values are, 0 (none), 1 (MD2), 2 (MD5), 4 (straight), 5 (OEM), 6 (RMCP+).
-        default: None
-        required: false
-        version_added: "2.5"
+            - Possible values are, C(0) (none), C(1) (MD2), C(2) (MD5), C(4) (straight), C(5) (OEM), C(6) (RMCP+),
+              with -1 being the API default.
+            - Please note that the Zabbix API will treat absent settings as default when updating
+              any of the I(ipmi_)-options; this means that if you attempt to set any of the four
+              options individually, the rest will be reset to default values.
+        version_added: '2.5'
     ipmi_privilege:
         description:
             - IPMI privilege level.
             - Please review the Host object documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
-            - Possible values are, 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM).
-        default: None
-        required: false
-        version_added: "2.5"
+            - Possible values are C(1) (callback), C(2) (user), C(3) (operator), C(4) (admin), C(5) (OEM), with C(2)
+              being the API default.
+            - also see the last note in the I(ipmi_authtype) documentation
+        version_added: '2.5'
     ipmi_username:
         description:
             - IPMI username.
-        default: None
-        required: false
-        version_added: "2.5"
+            - also see the last note in the I(ipmi_authtype) documentation
+        version_added: '2.5'
     ipmi_password:
         description:
             - IPMI password.
-        default: None
-        required: false
-        version_added: "2.5"
+            - also see the last note in the I(ipmi_authtype) documentation
+        version_added: '2.5'
     force:
         description:
             - Overwrite the host configuration, even if already present
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "2.0"
+        default: 'yes'
+        choices: [ 'yes', 'no' ]
+        version_added: '2.0'
 extends_documentation_fragment:
     - zabbix
 '''
