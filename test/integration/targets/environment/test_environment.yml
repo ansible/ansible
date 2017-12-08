@@ -82,7 +82,7 @@
   tasks:
     - name: verify foo==outer
       command: /bin/echo $foo
-      loop:
+      with_items:
         - 1
       register: test_foo
 
@@ -95,7 +95,7 @@
       environment:
         foo: in_task
       command: /bin/echo $foo
-      loop:
+      with_items:
         - 1
       register: test_foo
 
@@ -106,7 +106,7 @@
 
     - name: test that the outer env var is set appropriately still
       command: /bin/echo $foo
-      loop:
+      with_items:
         - 1
       register: test_foo
 
@@ -121,7 +121,7 @@
       block:
         - name: test the environment is set in the block
           command: /bin/echo $foo
-          loop:
+          with_items:
             - 1
           register: test_foo
 
@@ -134,7 +134,7 @@
           environment:
             foo: in_block_in_task
           command: /bin/echo $foo
-          loop:
+          with_items:
             - 1
           register: test_foo
 
@@ -145,7 +145,7 @@
 
         - name: test the environment var is set to the parent value
           command: /bin/echo $foo
-          loop:
+          with_items:
             - 1
           register: test_foo
 
@@ -156,7 +156,7 @@
 
     - name: test the env var foo has the initial value
       command: /bin/echo $foo
-      loop:
+      with_items:
         - 1
       register: test_foo
 
