@@ -47,6 +47,7 @@ PKG_MGRS = [{'path': '/usr/bin/yum', 'name': 'yum'},
             {'path': '/usr/local/sbin/pkg', 'name': 'pkgng'},
             {'path': '/usr/bin/swupd', 'name': 'swupd'},
             {'path': '/usr/sbin/sorcery', 'name': 'sorcery'},
+            {'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             ]
 
 
