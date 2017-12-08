@@ -486,8 +486,8 @@ class ImageManager(DockerBaseClass):
                 except Exception as exc:
                     self.fail("Error: failed to tag image - %s" % str(exc))
                 self.results['image'] = self.client.find_image(name=repo, tag=repo_tag)
-                if push:
-                    self.push_image(repo, repo_tag)
+        if push:
+            self.push_image(repo, repo_tag)
 
     def build_image(self):
         '''
