@@ -56,7 +56,7 @@ def merge_fragment(target, source):
                 value = sorted(frozenset(value + target[key]))
             else:
                 raise Exception("Attempt to extend a documentation fragement, invalid type for %s" % key)
-            target[key] = value
+        target[key] = value
 
 
 def add_fragments(doc, filename):
