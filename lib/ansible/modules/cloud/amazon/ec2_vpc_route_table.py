@@ -397,6 +397,8 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
             except EC2ResponseError as e:
                 if e.error_code == 'DryRunOperation':
                     pass
+                else:
+                    raise
 
         for route_spec in route_specs_to_create:
             try:
@@ -406,6 +408,8 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
             except EC2ResponseError as e:
                 if e.error_code == 'DryRunOperation':
                     pass
+                else:
+                    raise
 
         for route_spec in route_specs_to_recreate:
             if not check_mode:
