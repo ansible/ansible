@@ -453,7 +453,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             )
                         ]
                     )
-                    #nic.name = self.name
+                    # nic.name = self.name
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = 'default'
                     nic.network_security_group = NetworkSecurityGroup(id=nsg.id,
@@ -483,7 +483,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                              results['ip_configuration']['subnet']['name'])
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = results['ip_configuration']['name']
-                    #nic.name = name=results['name'],
+                    # nic.name = name=results['name'],
 
                     if results['ip_configuration'].get('private_ip_address'):
                         nic.ip_configurations[0].private_ip_address = results['ip_configuration']['private_ip_address']

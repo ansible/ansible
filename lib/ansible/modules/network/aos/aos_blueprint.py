@@ -245,9 +245,9 @@ def aos_blueprint(module):
     elif margs['id'] is not None:
         item_id = margs['id']
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Find Object if available based on ID or Name
-    #----------------------------------------------------
+    # ----------------------------------------------------
     try:
         my_blueprint = find_collection_item(aos.Blueprints,
                                             item_name=item_name,
@@ -255,9 +255,9 @@ def aos_blueprint(module):
     except:
         module.fail_json(msg="Unable to find the Blueprint based on name or ID, something went wrong")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Proceed based on State value
-    #----------------------------------------------------
+    # ----------------------------------------------------
     if margs['state'] == 'absent':
 
         ensure_absent(module, aos, my_blueprint)
