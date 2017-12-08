@@ -22,6 +22,8 @@ Ansible Changes By Release
 * correctly report callback plugin file
 * restrict revaulting to vault cli
   https://github.com/ansible/ansible/pull/33656
+* Fix python3 tracebacks in letsencrypt module (https://github.com/ansible/ansible/pull/32734)
+
 
 <a id="2.4.2"></a>
 
