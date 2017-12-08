@@ -7,6 +7,11 @@ Ansible Changes By Release
 * Flush stdin when passing the become password.  Fixes some cases of timeout on
   Python3 with the ssh connection plugin: https://github.com/ansible/ansible/pull/35049
 
+### Bugfixes
+* Fix setting of environment in a task that uses a loop:
+  https://github.com/ansible/ansible/issues/32685
+
+
 <a id="2.3.3"></a>
 
 ## 2.3.3 "Ramble On" - TBD
