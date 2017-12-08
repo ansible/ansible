@@ -109,11 +109,11 @@ EXAMPLES = """
 - name : Configure logging with trap
   ios_logging:
     dest: host
-      name: 172.16.0.1
-      facility: local6
-      level: warnings
-      trap: warnings
-      state:present
+    name: 172.16.0.1
+    facility: local6
+    level: warnings
+    trap: warnings
+    state: present
 """
 
 RETURN = """
