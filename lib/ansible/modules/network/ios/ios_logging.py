@@ -106,6 +106,14 @@ EXAMPLES = """
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
     state: absent
+- name : Configure logging with trap
+  ios_logging:
+  dest: host
+  name: 172.16.0.1
+  facility: local6
+  level: warnings
+  trap: warnings
+  state: present
 """
 
 RETURN = """
@@ -146,6 +154,7 @@ def map_obj_to_commands(updates, module):
         facility = w['facility']
         level = w['level']
         state = w['state']
+        trap = w['trap']
         del w['state']
 
         if state == 'absent' and w in have:
@@ -156,6 +165,9 @@ def map_obj_to_commands(updates, module):
             else:
                 module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
+            if trap:
+                commands.append('no logging trap {0}'.format(trap))
+
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
 
@@ -165,7 +177,8 @@ def map_obj_to_commands(updates, module):
 
             if dest == 'host':
                 commands.append('logging host {0}'.format(name))
-
+                if trap:
+                    commands.append('logging trap {0}'.format(trap))
             elif dest == 'on':
                 commands.append('logging on')
 
@@ -219,6 +232,8 @@ def parse_name(line, dest):
         match = re.search(r'logging host (\S+)', line, re.M)
         if match:
             name = match.group(1)
+        else:
+            name = None
     else:
         name = None
 
@@ -249,9 +264,20 @@ def parse_level(line, dest):
     return level
 
 
+def parse_trap(line, dest):
+    trap_group = ('emergencies', 'alerts', 'critical', 'errors',
+                  'warnings', 'notifications', 'informational', 'debugging')
+
+    if dest == 'host' and line in trap_group:
+        trap = line
+    else:
+        trap = 'informational'
+    return trap
+
+
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
+    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility', 'trap')
 
     data = get_config(module, flags=['| include logging'])
 
@@ -266,7 +292,8 @@ def map_config_to_obj(module):
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
                     'facility': parse_facility(line, dest),
-                    'level': parse_level(line, dest)
+                    'level': parse_level(line, dest),
+                    'trap': parse_trap(line, dest)
                 })
             else:
                 ip_match = re.search(r'\d+\.\d+\.\d+\.\d+', match.group(1), re.M)
@@ -327,7 +354,8 @@ def map_params_to_obj(module, required_if=None):
                 'size': module.params['size'],
                 'facility': module.params['facility'],
                 'level': module.params['level'],
-                'state': module.params['state']
+                'state': module.params['state'],
+                'trap': module.params['trap']
             })
 
         else:
@@ -337,7 +365,8 @@ def map_params_to_obj(module, required_if=None):
                 'size': str(validate_size(module.params['size'], module)),
                 'facility': module.params['facility'],
                 'level': module.params['level'],
-                'state': module.params['state']
+                'state': module.params['state'],
+                'trap': module.params['trap']
             })
 
     return obj
@@ -353,6 +382,8 @@ def main():
         facility=dict(type='str'),
         level=dict(type='str', default='debugging'),
         state=dict(default='present', choices=['present', 'absent']),
+        trap=dict(type='str', choices=['emergencies', 'alerts', 'critical', 'errors', 'warnings', 'notifications',
+                                       'informational', 'debugging'])
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -392,6 +423,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
