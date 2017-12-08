@@ -321,6 +321,14 @@ EXAMPLES = '''
     set_dscp_mark_class: CS1
     protocol: tcp
 
+# Insert a rule on line 5 
+- iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 8080
+    jump: ACCEPT
+    rule_num: 5
+
 # Set the policy for the INPUT chain to DROP
 - iptables:
     chain: INPUT
