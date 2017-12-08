@@ -105,6 +105,15 @@ EXAMPLES = """
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
     state: absent
+
+- name : Configure logging with trap
+  ios_logging:
+    dest: host
+    name: 172.16.0.1
+    facility: local6
+    level: warnings
+    trap: warnings
+    state:present
 """
 
 RETURN = """
@@ -122,12 +131,12 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network_common import remove_default_spec
+from ansible.module_utils.ios import get_config,load_config
+from ansible.module_utils.ios import ios_argument_spec,check_args
 
 
-def validate_size(value, module):
+def validate_size(value,module):
     if value:
         if not int(4096) <= int(value) <= int(4294967295):
             module.fail_json(msg='size must be between 4096 and 4294967295')
@@ -135,9 +144,9 @@ def validate_size(value, module):
             return value
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates,module):
     commands = list()
-    want, have = updates
+    want,have = updates
     for w in want:
         dest = w['dest']
         name = w['name']
@@ -145,6 +154,7 @@ def map_obj_to_commands(updates, module):
         facility = w['facility']
         level = w['level']
         state = w['state']
+        trap = w['trap']
         del w['state']
 
         if state == 'absent' and w in have:
@@ -155,6 +165,9 @@ def map_obj_to_commands(updates, module):
             else:
                 module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
+            if trap:
+                commands.append('no logging trap {0}'.format(trap))
+
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
 
@@ -164,6 +177,9 @@ def map_obj_to_commands(updates, module):
 
             if dest == 'host':
                 commands.append('logging host {0}'.format(name))
+
+            if trap:
+                commands.append('logging trap {0}'.format(trap))
 
             elif dest == 'on':
                 commands.append('logging on')
@@ -180,21 +196,21 @@ def map_obj_to_commands(updates, module):
     return commands
 
 
-def parse_facility(line, dest):
+def parse_facility(line,dest):
     facility = None
     if dest == 'facility':
-        match = re.search(r'logging facility (\S+)', line, re.M)
+        match = re.search(r'logging facility (\S+)',line,re.M)
         if match:
             facility = match.group(1)
 
     return facility
 
 
-def parse_size(line, dest):
+def parse_size(line,dest):
     size = None
 
     if dest == 'buffered':
-        match = re.search(r'logging buffered (\S+)', line, re.M)
+        match = re.search(r'logging buffered (\S+)',line,re.M)
         if match:
             try:
                 int_size = int(match.group(1))
@@ -202,7 +218,7 @@ def parse_size(line, dest):
                 int_size = None
 
             if int_size:
-                if isinstance(int_size, int):
+                if isinstance(int_size,int):
                     size = str(match.group(1))
                 else:
                     size = str(4096)
@@ -210,26 +226,28 @@ def parse_size(line, dest):
     return size
 
 
-def parse_name(line, dest):
+def parse_name(line,dest):
     if dest == 'host':
-        match = re.search(r'logging host (\S+)', line, re.M)
+        match = re.search(r'logging host (\S+)',line,re.M)
         if match:
             name = match.group(1)
+        else:
+            name = None
     else:
         name = None
 
     return name
 
 
-def parse_level(line, dest):
-    level_group = ('emergencies', 'alerts', 'critical', 'errors', 'warnings',
-                   'notifications', 'informational', 'debugging')
+def parse_level(line,dest):
+    level_group = ('emergencies','alerts','critical','errors','warnings',
+                   'notifications','informational','debugging')
 
     if dest == 'host':
         level = 'debugging'
 
     else:
-        match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+        match = re.search(r'logging {0} (\S+)'.format(dest),line,re.M)
         if match:
             if match.group(1) in level_group:
                 level = match.group(1)
@@ -241,29 +259,41 @@ def parse_level(line, dest):
     return level
 
 
+def parse_trap(line,dest):
+    trap_group = ('emergencies','alerts','critical','errors',
+                  'warnings','notifications','informational','debugging')
+
+    if dest == 'host' and line in trap_group:
+        trap = line
+    else:
+        trap = 'informational'
+    return trap
+
+
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
+    dest_group = ('console','host','monitor','buffered','on','facility','trap')
 
-    data = get_config(module, flags=['| include logging'])
+    data = get_config(module,flags=['| include logging'])
 
     for line in data.split('\n'):
-        match = re.search(r'logging (\S+)', line, re.M)
+        match = re.search(r'logging (\S+)',line,re.M)
         if match:
             if match.group(1) in dest_group:
                 dest = match.group(1)
 
                 obj.append({
                     'dest': dest,
-                    'name': parse_name(line, dest),
-                    'size': parse_size(line, dest),
-                    'facility': parse_facility(line, dest),
-                    'level': parse_level(line, dest)
+                    'name': parse_name(line,dest),
+                    'size': parse_size(line,dest),
+                    'facility': parse_facility(line,dest),
+                    'level': parse_level(line,dest),
+                    'trap': parse_trap(line,dest)
                 })
     return obj
 
 
-def map_params_to_obj(module, required_if=None):
+def map_params_to_obj(module,required_if=None):
     obj = []
     aggregate = module.params.get('aggregate')
 
@@ -273,7 +303,7 @@ def map_params_to_obj(module, required_if=None):
                 if item.get(key) is None:
                     item[key] = module.params[key]
 
-            module._check_required_if(required_if, item)
+            module._check_required_if(required_if,item)
 
             d = item.copy()
             if d['dest'] != 'host':
@@ -281,7 +311,7 @@ def map_params_to_obj(module, required_if=None):
 
             if d['dest'] == 'buffered':
                 if 'size' in d:
-                    d['size'] = str(validate_size(d['size'], module))
+                    d['size'] = str(validate_size(d['size'],module))
                 elif 'size' not in d:
                     d['size'] = str(4096)
                 else:
@@ -309,19 +339,19 @@ def map_params_to_obj(module, required_if=None):
                 'size': module.params['size'],
                 'facility': module.params['facility'],
                 'level': module.params['level'],
-                'state': module.params['state']
+                'state': module.params['state'],
+                'trap': module.params['trap']
             })
-
         else:
             obj.append({
                 'dest': module.params['dest'],
                 'name': module.params['name'],
-                'size': str(validate_size(module.params['size'], module)),
+                'size': str(validate_size(module.params['size'],module)),
                 'facility': module.params['facility'],
                 'level': module.params['level'],
-                'state': module.params['state']
+                'state': module.params['state'],
+                'trap': module.params['trap']
             })
-
     return obj
 
 
@@ -329,12 +359,14 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
+        dest=dict(type='str',choices=['on','host','console','monitor','buffered']),
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str'),
-        level=dict(type='str', default='debugging'),
-        state=dict(default='present', choices=['present', 'absent']),
+        level=dict(type='str',default='debugging'),
+        state=dict(default='present',choices=['present','absent']),
+        trap=dict(type='str',choices=['emergencies','alerts','critical','errors','warnings','notifications',
+                                      'informational','debugging'])
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -343,37 +375,38 @@ def main():
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        aggregate=dict(type='list',elements='dict',options=aggregate_spec),
     )
 
     argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
-    required_if = [('dest', 'host', ['name'])]
+    required_if = [('dest','host',['name'])]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
+    check_args(module,warnings)
 
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings
 
-    want = map_params_to_obj(module, required_if=required_if)
+    want = map_params_to_obj(module,required_if=required_if)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands((want,have),module)
     result['commands'] = commands
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            load_config(module,commands)
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
