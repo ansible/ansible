@@ -64,7 +64,12 @@ Modules
 
 Major changes in popular modules are detailed here
 
-No notable changes.
+github_release
+--------------
+
+In the version 2.4 and older, after creating GitHub release using ``create_release`` state, module ``github_release`` used to report state as ``skipped``.
+In the version 2.5 and onwards, this behavior is now changed. After creating GitHub release using ``create_release`` state, module now reports state as ``changed``.
+
 
 Modules removed
 ---------------
