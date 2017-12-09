@@ -310,7 +310,7 @@ class ConsulInventory(object):
         if self.config.suffixes == 'true':
             self.load_availability_groups(node_data, datacenter)
             for name, service in node_data['Services'].items():
-               self.load_data_from_service(name, service, node_data)
+                self.load_data_from_service(name, service, node_data)
 
     def load_node_metadata_from_kv(self, node_data):
         ''' load the json dict at the metadata path defined by the kv_metadata value
@@ -466,7 +466,7 @@ class ConsulConfig(dict):
         config_options = ['host', 'token', 'datacenter', 'servers_suffix',
                           'tags', 'kv_metadata', 'kv_groups', 'availability',
                           'unavailable_suffix', 'available_suffix', 'url',
-                          'domain', 'suffixes','bulk_load']
+                          'domain', 'suffixes', 'bulk_load']
         for option in config_options:
             value = None
             if config.has_option('consul', option):
