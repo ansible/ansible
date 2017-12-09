@@ -35,6 +35,7 @@ Ansible Changes By Release
   in the `md5` return value not being returned. This option will be removed altogether in Ansible
   2.9. use `get_checksum: True` with `checksum_algorithm: md5` to return an md5 hash of the file
   under the `checksum` return value.
+* `osx_say` module was renamed into `say`.
 
 #### Deprecated Modules (to be removed in 2.9):
 * ec2_ami_find: replaced by ec2_ami_facts
