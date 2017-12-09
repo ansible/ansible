@@ -896,8 +896,10 @@ class PyVmomi(object):
             vms = []
 
             for temp_vm_object in objects:
-                for tem_vm_property in temp_vm_object.propSet:
-                    if tem_vm_property.val == self.params['name']:
+                if len(temp_vm_object.propSet) != 1:
+                    break
+                for temp_vm_object_property in temp_vm_object.propSet:
+                    if temp_vm_object_property.val == self.params['name']:
                         vms.append(temp_vm_object.obj)
                         break
 
@@ -923,36 +925,35 @@ class PyVmomi(object):
                     # Get Path for Datacenter
                     dcpath = compile_folder_path_for_object(vobj=datacenter_obj)
 
+                    # Nested folder does not return trailing /
+                    if not dcpath.endswith('/'):
+                        dcpath += '/'
+
                     if user_folder is None or user_folder == '' or user_folder == '/':
                         # User provided blank value or
                         # User provided only root value, we fail
                         self.module.fail_json(msg="vmware_guest found multiple virtual machines with same "
                                                   "name [%s], please specify folder path other than blank "
-                                                  "or '/'" % user_folder)
-                    elif user_folder == '/vm':
-                        # User provided VMware default vm folder with /
-                        user_desired_path = "%s/%s%s" % (dcpath, user_defined_dc, user_folder)
+                                                  "or '/'" % self.params['name'])
+                    elif user_folder == '/vm' or user_folder.startswith('/vm/'):
+                        # User provided VMware default vm folder with / or
+                        # User provided nested folder under VMware default vm folder i.e. folder = /vm/india/finance
+                        user_desired_path = "%s%s%s" % (dcpath, user_defined_dc, user_folder)
                     elif user_folder == 'vm':
                         # User provided VMware default vm folder
-                        user_desired_path = "%s/%s/vm" % (dcpath, user_defined_dc)
-                    elif user_folder.startswith('/vm/'):
-                        # User provided nested folder under VMware default vm folder i.e. folder = /vm/india/finance
-                        user_desired_path = "%s/%s%s" % (dcpath, user_defined_dc, user_folder)
-                    elif user_folder.startswith("%s%s/vm" % (dcpath, user_defined_dc)):
-                        # User defined datacenter is not nested i.e. dcpath = '/'
-                        user_desired_path = user_folder
-                    elif user_folder.startswith("%s/%s/vm" % (dcpath, user_defined_dc)):
-                        # User defined datacenter is nested i.e. dcpath = '/F0/DC0'
-                        user_desired_path = user_folder
-                    elif user_folder.startswith("/%s" % user_defined_dc):
+                        user_desired_path = "%s%s/vm" % (dcpath, user_defined_dc)
+                    elif user_folder.startswith("%s%s/vm" % (dcpath, user_defined_dc)) or \
+                            user_folder.startswith("/%s" % user_defined_dc):
+                        # User defined datacenter is not nested i.e. dcpath = '/' , or
+                        # User defined datacenter is nested i.e. dcpath = '/F0/DC0' or
                         # User provided folder starts with / and datacenter i.e. folder = /ha-datacenter/
                         user_desired_path = user_folder
                     elif user_folder.startswith('/'):
                         # User defined folder is under VMware default vm folder i.e. folder = /india/finance
-                        user_desired_path = "%s/%s/vm%s" % (dcpath, user_defined_dc, user_folder)
+                        user_desired_path = "%s%s/vm%s" % (dcpath, user_defined_dc, user_folder)
                     elif user_folder.startswith('%s' % user_defined_dc):
                         # User defined folder is datacenter i.e. folder = DC0
-                        user_desired_path = "%s/%s/vm" % (dcpath, user_defined_dc)
+                        user_desired_path = "%s%s/vm" % (dcpath, user_defined_dc)
                     else:
                         # get_vm is not super cow !!!
                         user_desired_path = user_folder
@@ -988,7 +989,7 @@ class PyVmomi(object):
         Function to find the path of virtual machine.
         Args:
             content: VMware content object
-            vm_name: Name of the virtual machine
+            vm_name: virtual machine managed object
 
         Returns: Folder of virtual machine if exists, else None
 
