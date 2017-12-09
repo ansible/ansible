@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''
+"""
 DigitalOcean external inventory script
 ======================================
 
@@ -73,14 +73,12 @@ For each host, the following variables are registered:
 
 -----
 ```
-usage: digital_ocean.py [-h] [--list] [--host HOST] [--all]
-                                 [--droplets] [--regions] [--images] [--sizes]
-                                 [--ssh-keys] [--domains] [--pretty]
-                                 [--cache-path CACHE_PATH]
-                                 [--cache-max_age CACHE_MAX_AGE]
-                                 [--force-cache]
-                                 [--refresh-cache]
-                                 [--api-token API_TOKEN]
+usage: digital_ocean.py [-h] [--list] [--host HOST] [--all] [--droplets]
+                        [--regions] [--images] [--sizes] [--ssh-keys]
+                        [--domains] [--tags] [--pretty]
+                        [--cache-path CACHE_PATH]
+                        [--cache-max_age CACHE_MAX_AGE] [--force-cache]
+                        [--refresh-cache] [--env] [--api-token API_TOKEN]
 
 Produce an Ansible Inventory file based on DigitalOcean credentials
 
@@ -91,27 +89,31 @@ optional arguments:
   --host HOST           Get all Ansible inventory variables about a specific
                         Droplet
   --all                 List all DigitalOcean information as JSON
-  --droplets            List Droplets as JSON
+  --droplets, -d        List Droplets as JSON
   --regions             List Regions as JSON
   --images              List Images as JSON
   --sizes               List Sizes as JSON
   --ssh-keys            List SSH keys as JSON
   --domains             List Domains as JSON
+  --tags                List Tags as JSON
   --pretty, -p          Pretty-print results
   --cache-path CACHE_PATH
                         Path to the cache files (default: .)
   --cache-max_age CACHE_MAX_AGE
                         Maximum age of the cached items (default: 0)
   --force-cache         Only use data from the cache
-  --refresh-cache       Force refresh of cache by making API requests to
+  --refresh-cache, -r   Force refresh of cache by making API requests to
                         DigitalOcean (default: False - use cache files)
+  --env, -e             Display DO_API_TOKEN
   --api-token API_TOKEN, -a API_TOKEN
                         DigitalOcean API Token
 ```
 
-'''
+"""
 
 # (c) 2013, Evan Wies <evan@neomantra.net>
+# (c) 2017, Ansible Project
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 #
 # Inspired by the EC2 inventory plugin:
 # https://github.com/ansible/ansible/blob/devel/contrib/inventory/ec2.py
@@ -133,12 +135,13 @@ optional arguments:
 
 ######################################################################
 
-import os
-import sys
-import re
 import argparse
-from time import time
 import ast
+import os
+import re
+import requests
+import sys
+from time import time
 
 try:
     import ConfigParser
@@ -150,10 +153,78 @@ try:
 except ImportError:
     import simplejson as json
 
-try:
-    from dopy.manager import DoManager
-except ImportError as e:
-    sys.exit("failed=True msg={}".format(e.message))
+
+class DoManager:
+    def __init__(self, api_token):
+        self.api_token = api_token
+        self.api_endpoint = 'https://api.digitalocean.com/v2'
+        self.headers = {'Authorization': 'Bearer {0}'.format(self.api_token),
+                        'Content-type': 'application/json'}
+        self.timeout = 60
+
+    def _url_builder(self, path):
+        if path[0] == '/':
+            path = path[1:]
+        return '%s/%s' % (self.api_endpoint, path)
+
+    def send(self, url, method='GET', data=None):
+        url = self._url_builder(url)
+        data = json.dumps(data)
+        try:
+            if method == 'GET':
+                resp_data = {}
+                incomplete = True
+                while incomplete:
+                    resp = requests.get(url, data=data, headers=self.headers, timeout=self.timeout)
+                    json_resp = resp.json()
+
+                    for key, value in json_resp.items():
+                        if isinstance(value, list) and key in resp_data:
+                            resp_data[key] += value
+                        else:
+                            resp_data[key] = value
+
+                    try:
+                        url = json_resp['links']['pages']['next']
+                    except KeyError:
+                        incomplete = False
+
+        except ValueError as e:
+            sys.exit("Unable to parse result from %s: %s" % (url, e))
+        return json_resp
+
+    def all_active_droplets(self):
+        resp = self.send('droplets/')
+        return resp['droplets']
+
+    def all_regions(self):
+        resp = self.send('regions/')
+        return resp['regions']
+
+    def all_images(self, filter_name='global'):
+        params = {'filter': filter_name}
+        resp = self.send('images/', data=params)
+        return resp['images']
+
+    def sizes(self):
+        resp = self.send('sizes/')
+        return resp['sizes']
+
+    def all_ssh_keys(self):
+        resp = self.send('account/keys')
+        return resp['ssh_keys']
+
+    def all_domains(self):
+        resp = self.send('domains/')
+        return resp['domains']
+
+    def show_droplet(self, droplet_id):
+        resp = self.send('droplets/%s' % droplet_id)
+        return resp['droplet']
+
+    def all_tags(self):
+        resp = self.send('tags/')
+        return resp['tags']
 
 
 class DigitalOceanInventory(object):
@@ -163,7 +234,7 @@ class DigitalOceanInventory(object):
     ###########################################################################
 
     def __init__(self):
-        ''' Main execution path '''
+        """Main execution path """
 
         # DigitalOceanInventory data
         self.data = {}  # All DigitalOcean data
@@ -182,9 +253,9 @@ class DigitalOceanInventory(object):
 
         # Verify credentials were set
         if not hasattr(self, 'api_token'):
-            sys.stderr.write('''Could not find values for DigitalOcean api_token.
-They must be specified via either ini file, command line argument (--api-token),
-or environment variables (DO_API_TOKEN)\n''')
+            msg = 'Could not find values for DigitalOcean api_token. They must be specified via either ini file, ' \
+                  'command line argument (--api-token), or environment variables (DO_API_TOKEN)\n'
+            sys.stderr.write(msg)
             sys.exit(-1)
 
         # env command, show DigitalOcean credentials
@@ -200,10 +271,10 @@ or environment variables (DO_API_TOKEN)\n''')
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
-                    sys.stderr.write('''Cache is empty and --force-cache was specified\n''')
+                    sys.stderr.write('Cache is empty and --force-cache was specified\n')
                     sys.exit(-1)
 
-        self.manager = DoManager(None, self.api_token, api_version=2)
+        self.manager = DoManager(self.api_token)
 
         # Pick the json_data to print based on the CLI command
         if self.args.droplets:
@@ -224,6 +295,9 @@ or environment variables (DO_API_TOKEN)\n''')
         elif self.args.domains:
             self.load_from_digital_ocean('domains')
             json_data = {'domains': self.data['domains']}
+        elif self.args.tags:
+            self.load_from_digital_ocean('tags')
+            json_data = {'tags': self.data['tags']}
         elif self.args.all:
             self.load_from_digital_ocean()
             json_data = self.data
@@ -241,16 +315,16 @@ or environment variables (DO_API_TOKEN)\n''')
             print(json.dumps(json_data, sort_keys=True, indent=2))
         else:
             print(json.dumps(json_data))
-        # That's all she wrote...
 
     ###########################################################################
     # Script configuration
     ###########################################################################
 
     def read_settings(self):
-        ''' Reads the settings from the digital_ocean.ini file '''
+        """ Reads the settings from the digital_ocean.ini file """
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/digital_ocean.ini')
+        config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'digital_ocean.ini')
+        config.read(config_path)
 
         # Credentials
         if config.has_option('digital_ocean', 'api_token'):
@@ -271,7 +345,7 @@ or environment variables (DO_API_TOKEN)\n''')
             self.group_variables = ast.literal_eval(config.get('digital_ocean', 'group_variables'))
 
     def read_environment(self):
-        ''' Reads the settings from environment variables '''
+        """ Reads the settings from environment variables """
         # Setup credentials
         if os.getenv("DO_API_TOKEN"):
             self.api_token = os.getenv("DO_API_TOKEN")
@@ -279,7 +353,7 @@ or environment variables (DO_API_TOKEN)\n''')
             self.api_token = os.getenv("DO_API_KEY")
 
     def read_cli_args(self):
-        ''' Command line argument processing '''
+        """ Command line argument processing """
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on DigitalOcean credentials')
 
         parser.add_argument('--list', action='store_true', help='List all active Droplets as Ansible inventory (default: True)')
@@ -292,6 +366,7 @@ or environment variables (DO_API_TOKEN)\n''')
         parser.add_argument('--sizes', action='store_true', help='List Sizes as JSON')
         parser.add_argument('--ssh-keys', action='store_true', help='List SSH keys as JSON')
         parser.add_argument('--domains', action='store_true', help='List Domains as JSON')
+        parser.add_argument('--tags', action='store_true', help='List Tags as JSON')
 
         parser.add_argument('--pretty', '-p', action='store_true', help='Pretty-print results')
 
@@ -313,6 +388,7 @@ or environment variables (DO_API_TOKEN)\n''')
         if (not self.args.droplets and not self.args.regions and
                 not self.args.images and not self.args.sizes and
                 not self.args.ssh_keys and not self.args.domains and
+                not self.args.tags and
                 not self.args.all and not self.args.host):
             self.args.list = True
 
@@ -321,7 +397,7 @@ or environment variables (DO_API_TOKEN)\n''')
     ###########################################################################
 
     def load_from_digital_ocean(self, resource=None):
-        '''Get JSON from DigitalOcean API'''
+        """Get JSON from DigitalOcean API """
         if self.args.force_cache and os.path.isfile(self.cache_filename):
             return
         # We always get fresh droplets
@@ -337,7 +413,7 @@ or environment variables (DO_API_TOKEN)\n''')
             self.data['regions'] = self.manager.all_regions()
             self.cache_refreshed = True
         if resource == 'images' or resource is None:
-            self.data['images'] = self.manager.all_images(filter=None)
+            self.data['images'] = self.manager.all_images()
             self.cache_refreshed = True
         if resource == 'sizes' or resource is None:
             self.data['sizes'] = self.manager.sizes()
@@ -348,9 +424,12 @@ or environment variables (DO_API_TOKEN)\n''')
         if resource == 'domains' or resource is None:
             self.data['domains'] = self.manager.all_domains()
             self.cache_refreshed = True
+        if resource == 'tags' or resource is None:
+            self.data['tags'] = self.manager.all_tags()
+            self.cache_refreshed = True
 
     def build_inventory(self):
-        '''Build Ansible inventory of droplets'''
+        """ Build Ansible inventory of droplets """
         self.inventory = {
             'all': {
                 'hosts': [],
@@ -361,15 +440,11 @@ or environment variables (DO_API_TOKEN)\n''')
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            # when using private_networking, the API reports the private one in "ip_address".
-            if 'private_networking' in droplet['features'] and not self.use_private_network:
-                for net in droplet['networks']['v4']:
-                    if net['type'] == 'public':
-                        dest = net['ip_address']
-                    else:
-                        continue
-            else:
-                dest = droplet['ip_address']
+            for net in droplet['networks']['v4']:
+                if net['type'] == 'public':
+                    dest = net['ip_address']
+                else:
+                    continue
 
             self.inventory['all']['hosts'].append(dest)
 
@@ -380,7 +455,7 @@ or environment variables (DO_API_TOKEN)\n''')
             for group in ('region_' + droplet['region']['slug'],
                           'image_' + str(droplet['image']['id']),
                           'size_' + droplet['size']['slug'],
-                          'distro_' + self.to_safe(droplet['image']['distribution']),
+                          'distro_' + DigitalOceanInventory.to_safe(droplet['image']['distribution']),
                           'status_' + droplet['status']):
                 if group not in self.inventory:
                     self.inventory[group] = {'hosts': [], 'vars': {}}
@@ -390,7 +465,7 @@ or environment variables (DO_API_TOKEN)\n''')
             for group in (droplet['image']['slug'],
                           droplet['image']['name']):
                 if group:
-                    image = 'image_' + self.to_safe(group)
+                    image = 'image_' + DigitalOceanInventory.to_safe(group)
                     if image not in self.inventory:
                         self.inventory[image] = {'hosts': [], 'vars': {}}
                     self.inventory[image]['hosts'].append(dest)
@@ -406,7 +481,7 @@ or environment variables (DO_API_TOKEN)\n''')
             self.inventory['_meta']['hostvars'][dest] = info
 
     def load_droplet_variables_for_host(self):
-        '''Generate a JSON response to a --host call'''
+        """ Generate a JSON response to a --host call """
         host = int(self.args.host)
         droplet = self.manager.show_droplet(host)
         info = self.do_namespace(droplet)
@@ -417,7 +492,7 @@ or environment variables (DO_API_TOKEN)\n''')
     ###########################################################################
 
     def is_cache_valid(self):
-        ''' Determines if the cache files have expired, or if it is still valid '''
+        """ Determines if the cache files have expired, or if it is still valid """
         if os.path.isfile(self.cache_filename):
             mod_time = os.path.getmtime(self.cache_filename)
             current_time = time()
@@ -426,11 +501,10 @@ or environment variables (DO_API_TOKEN)\n''')
         return False
 
     def load_from_cache(self):
-        ''' Reads the data from the cache file and assigns it to member variables as Python Objects'''
+        """ Reads the data from the cache file and assigns it to member variables as Python Objects """
         try:
-            cache = open(self.cache_filename, 'r')
-            json_data = cache.read()
-            cache.close()
+            with open(self.cache_filename, 'r') as cache:
+                json_data = cache.read()
             data = json.loads(json_data)
         except IOError:
             data = {'data': {}, 'inventory': {}}
@@ -439,31 +513,24 @@ or environment variables (DO_API_TOKEN)\n''')
         self.inventory = data['inventory']
 
     def write_to_cache(self):
-        ''' Writes data in JSON format to a file '''
+        """ Writes data in JSON format to a file """
         data = {'data': self.data, 'inventory': self.inventory}
         json_data = json.dumps(data, sort_keys=True, indent=2)
 
-        cache = open(self.cache_filename, 'w')
-        cache.write(json_data)
-        cache.close()
+        with open(self.cache_filename, 'w') as cache:
+            cache.write(json_data)
 
     ###########################################################################
     # Utilities
     ###########################################################################
+    @staticmethod
+    def to_safe(word):
+        """ Converts 'bad' characters in a string to underscores so they can be used as Ansible groups """
+        return re.sub(r"[^A-Za-z0-9\-.]", "_", word)
 
-    def push(self, my_dict, key, element):
-        ''' Pushed an element onto an array that may not have been defined in the dict '''
-        if key in my_dict:
-            my_dict[key].append(element)
-        else:
-            my_dict[key] = [element]
-
-    def to_safe(self, word):
-        ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        return re.sub(r"[^A-Za-z0-9\-\.]", "_", word)
-
-    def do_namespace(self, data):
-        ''' Returns a copy of the dictionary with all the keys put in a 'do_' namespace '''
+    @staticmethod
+    def do_namespace(data):
+        """ Returns a copy of the dictionary with all the keys put in a 'do_' namespace """
         info = {}
         for k, v in data.items():
             info['do_' + k] = v
