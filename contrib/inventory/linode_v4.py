@@ -155,22 +155,22 @@ def call(legacy, all_linodes, token):
                 token))
             response = conn.getresponse()
             lin_dict = json.loads(response.read())
-            ansible_vars_dict['_meta']['hostvars'] = dict(
-                (elem['LABEL'], dict(
-                    "public_ip": ipitem['IPADDRESS'],
-                    "ansible_host": ipitem['IPADDRESS'],
-                    "ansible_ssh_host": ipitem['IPADDRESS'],
-                    "linode_id": ipitem["LINODEID"],
-                    "status": _linode_status(elem["STATUS"]),
-                    "distro": elem["DISTRIBUTIONVENDOR"],
-                    "datacenter": _datacenter_lookup(elem["DATACENTERID"])))
+            ansible_vars_dict['_meta']['hostvars'] = dict([
+                (elem['LABEL'], dict([
+                    ("public_ip", ipitem['IPADDRESS']),
+                    ("ansible_host", ipitem['IPADDRESS']),
+                    ("ansible_ssh_host", ipitem['IPADDRESS']),
+                    ("linode_id", ipitem["LINODEID"]),
+                    ("status", _linode_status(elem["STATUS"])),
+                    ("distro", elem["DISTRIBUTIONVENDOR"]),
+                    ("datacenter", _datacenter_lookup(elem["DATACENTERID"]))]))
                 for elem in lin_dict["DATA"] for ipitem in ip_dict["DATA"]
                 # filter linodes by those running or when all_linodes is true
                 # return only unique ones.
                 if ipitem["LINODEID"] == elem["LINODEID"] and
                 (_linode_status(elem["STATUS"]) == "Running") or
                 ipitem["LINODEID"] == elem["LINODEID"] and all_linodes
-            )
+            ])
         ansible_vars_dict[""] = list(
             ansible_vars_dict['_meta']['hostvars'].keys())
         return ansible_vars_dict
@@ -209,7 +209,22 @@ def call(legacy, all_linodes, token):
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(
-        description='dynamic inventory based on Linode APIs')
+        description='''dynamic inventory based on Linode APIs
+
+Expects an api key to be exported as LINODE_API_KEY. With the permissions
+scheme of the new api, only "view" permissions to the "linodes" resource is
+necessary.
+
+By default, will only show running instances. You can export LINODE_ALL
+to target all linodes associated with your account.
+
+By default, will use the v4 API. You can export LINODE_LEGACY to use
+the legacy API. Note that using the legacy api will require a matching legacy
+api key, which can be generated from manager.linode.com.
+
+''',
+        formatter_class=argparse.RawTextHelpFormatter
+    )
     PARSER.add_argument('--list', action='store_true', default=True,
                         help='Placate inventory requirement')
     _ = PARSER.parse_args()
