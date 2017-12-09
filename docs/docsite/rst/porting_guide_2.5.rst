@@ -89,6 +89,8 @@ This option will be removed starting with Ansible version 2.9. The options ``get
 and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
 desired.
 
+* ``osx_say`` module was renamed into :ref:`say <say>`.
+
 Plugins
 =======
 
