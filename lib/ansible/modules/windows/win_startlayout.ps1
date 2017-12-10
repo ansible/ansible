@@ -13,18 +13,10 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "imported" -validateset "imported","exported"
-$filetype = Get-AnsibleParam -obj $params -name "filetype" -type "string" -default "bin" -validateset "bin","xml" -aliases "type"
 $mountpath = Get-AnsibleParam -obj $params -name "mountpath" -type "path"
 
 $result = @{
     changed = $false
-}
-
-$has_filetype_support = (Get-Command -Name Get-Item).Parameters.ContainsKey("As")
-
-if (-not $has_filetype_support -and $filetype -ne "xml") {
-    Add-Warning -obj $result -message "This version of Windows does not support filetype '$filetype', defaulting to 'xml'."
-    $filetype = "xml"
 }
 
 if ($state -eq "imported") {
@@ -36,7 +28,7 @@ if ($state -eq "imported") {
     # FIXME: Can we do this more dynamic ?
     try {
         if ($has_filetype_support) {
-            Export-StartLayout -LiteralPath "$($path).orig" -As $filetype -WhatIf:$check_mode
+            Export-StartLayout -LiteralPath "$($path).orig" -As XML -WhatIf:$check_mode
         } else {
             Export-StartLayout -LiteralPath "$($path).orig" -WhatIf:$check_mode
         }
@@ -61,7 +53,7 @@ if ($state -eq "imported") {
     # FIXME: Can we do this more dynamic ?
     try {
         if ($has_filetype_support) {
-            Export-StartLayout -LiteralPath $path -As $filetype -WhatIf:$check_mode
+            Export-StartLayout -LiteralPath $path -As XML -WhatIf:$check_mode
         } else {
             Export-StartLayout -LiteralPath $path -WhatIf:$check_mode
         }
