@@ -32,6 +32,7 @@
   apache2_module:
     name: userdir
     state: absent
+  register: userdir_first_disable
 
 - name: disable userdir module, second run
   apache2_module:
@@ -42,7 +43,7 @@
 - name: ensure apache2_module is idempotent
   assert:
     that:
-      - 'not disable.changed'
+      - disable is not changed
 
 - name: enable userdir module
   apache2_module:
@@ -53,7 +54,7 @@
 - name: ensure changed on successful enable
   assert:
     that:
-      - 'enable.changed'
+      - enable is changed
 
 - name: enable userdir module, second run
   apache2_module:
@@ -77,6 +78,12 @@
     that:
       - 'disablefinal.changed'
 
+- name: set userdir to original state
+  apache2_module:
+    name: userdir
+    state: present
+  when: userdir_first_disable is changed
+
 - name: ensure autoindex enabled
   apache2_module:
     name: autoindex
@@ -90,10 +97,20 @@
       state: absent
       force: True
 
+  - name: reenable autoindex
+    apache2_module:
+      name: autoindex
+      state: present
+
   - name: enable evasive module, test https://github.com/ansible/ansible/issues/22635
     apache2_module:
       name: evasive
       state: present
+
+  - name: disable evasive module
+    apache2_module:
+      name: evasive
+      state: absent
 
   - name: use identifier to enable module, fix for https://github.com/ansible/ansible/issues/33669
     apache2_module:
@@ -121,6 +138,12 @@
       identifier: dumpio_module
       state: present
     register: enable_dumpio_correct_2
+
+  - name: disable dump_io
+    apache2_module:
+      name: dump_io
+      identifier: dumpio_module
+      state: absent
 
   - assert:
       that:
