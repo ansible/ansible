@@ -1,0 +1,2 @@
+minor_changes:
+  - "``osx_say`` callback plugin was renamed into ``say``."

@@ -7,15 +7,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: osx_say
+    callback: say
     type: notification
     requirements:
       - whitelisting in configuration
-      - the '/usr/bin/say' command line program (standard on macOS)
-    short_description: oneline Ansible screen output
+      - the '/usr/bin/say' command line program (standard on macOS) or 'espeak' command line program
+    short_description: notify using software speech synthesizer
     version_added: historical
     description:
-      - This plugin will use the 'say' program to "speak" about play events.
+      - This plugin will use the 'say' or 'espeak' program to "speak" about play events.
+    notes:
+      - In 2.5, this callback has been renamed from M(osx_say) into M(say).
 '''
 
 import subprocess
@@ -32,11 +34,11 @@ SAY_CMD = "/usr/bin/say"
 
 class CallbackModule(CallbackBase):
     """
-    makes Ansible much more exciting on macOS.
+    makes Ansible much more exciting.
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
-    CALLBACK_NAME = 'osx_say'
+    CALLBACK_NAME = 'say'
     CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self):
