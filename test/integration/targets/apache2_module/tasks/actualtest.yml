@@ -174,3 +174,39 @@
     - mpm_event
     - mpm_prefork
   when: "ansible_os_family == 'Debian'"
+||||||| merged common ancestors
+=======
+
+- name: use identifier to enable module, fix for https://github.com/ansible/ansible/issues/33669
+  apache2_module:
+    name: dump_io
+    state: present
+  ignore_errors: True
+  register: enable_dumpio_wrong
+
+- name: disable dump_io
+  apache2_module:
+    name: dump_io
+    identifier: dumpio_module
+    state: absent
+
+- name: use identifier to enable module, fix for https://github.com/ansible/ansible/issues/33669
+  apache2_module:
+    name: dump_io
+    identifier: dumpio_module
+    state: present
+  register: enable_dumpio_correct_1
+
+- name: ensure idempotency with identifier
+  apache2_module:
+    name: dump_io
+    identifier: dumpio_module
+    state: present
+  register: enable_dumpio_correct_2
+
+- assert:
+    that:
+      - enable_dumpio_wrong is failed
+      - enable_dumpio_correct_1 is changed
+      - enable_dumpio_correct_2 is not changed
+>>>>>>> Add identifier option to apache2_module
