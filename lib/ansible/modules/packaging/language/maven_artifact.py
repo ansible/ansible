@@ -155,7 +155,11 @@ import os
 import posixpath
 import sys
 
-from lxml import etree
+try:
+    from lxml import etree
+    HAS_LXML_ETREE = True
+except ImportError:
+    HAS_LXML_ETREE = False
 
 try:
     import boto3
@@ -418,6 +422,9 @@ def main():
         ),
         add_file_common_args=True
     )
+
+    if not HAS_LXML_ETREE:
+        module.fail_json(msg='module requires the lxml python library installed on the managed machine')
 
     repository_url = module.params["repository_url"]
     if not repository_url:
