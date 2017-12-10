@@ -20,16 +20,12 @@ DOCUMENTATION = '''
       - In 2.5, this callback has been renamed from M(osx_say) into M(say).
 '''
 
+import distutils.spawn
+import platform
 import subprocess
 import os
 
 from ansible.plugins.callback import CallbackBase
-
-FAILED_VOICE = "Zarvox"
-REGULAR_VOICE = "Trinoids"
-HAPPY_VOICE = "Cellos"
-LASER_VOICE = "Princess"
-SAY_CMD = "/usr/bin/say"
 
 
 class CallbackModule(CallbackBase):
@@ -45,50 +41,74 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
+        self.FAILED_VOICE = None
+        self.REGULAR_VOICE = None
+        self.HAPPY_VOICE = None
+        self.LASER_VOICE = None
+
+        self.synthesizer = distutils.spawn.find_executable('say')
+        if not self.synthesizer:
+            self.synthesizer = distutils.spawn.find_executable('espeak')
+            if self.synthesizer:
+                self.FAILED_VOICE = 'klatt'
+                self.HAPPY_VOICE = 'f5'
+                self.LASER_VOICE = 'whisper'
+        elif platform.system() != 'Darwin':
+            # 'say' binary available, it might be GNUstep tool which doesn't support 'voice' parameter
+            self._display.warning("'say' executable found but system is '%s': ignoring voice parameter" % platform.system())
+        else:
+            self.FAILED_VOICE = 'Zarvox'
+            self.REGULAR_VOICE = 'Trinoids'
+            self.HAPPY_VOICE = 'Cellos'
+            self.LASER_VOICE = 'Princess'
+
         # plugin disable itself if say is not present
         # ansible will not call any callback if disabled is set to True
-        if not os.path.exists(SAY_CMD):
+        if not self.synthesizer:
             self.disabled = True
-            self._display.warning("%s does not exist, plugin %s disabled" % (SAY_CMD, os.path.basename(__file__)))
+            self._display.warning("Unable to find either 'say' or 'espeak' executable, plugin %s disabled" % os.path.basename(__file__))
 
     def say(self, msg, voice):
-        subprocess.call([SAY_CMD, msg, "--voice=%s" % (voice)])
+        cmd = [self.synthesizer, msg]
+        if voice:
+            cmd.extend(('-v', voice))
+        subprocess.call(cmd)
 
     def runner_on_failed(self, host, res, ignore_errors=False):
-        self.say("Failure on host %s" % host, FAILED_VOICE)
+        self.say("Failure on host %s" % host, self.FAILED_VOICE)
 
     def runner_on_ok(self, host, res):
-        self.say("pew", LASER_VOICE)
+        self.say("pew", self.LASER_VOICE)
 
     def runner_on_skipped(self, host, item=None):
-        self.say("pew", LASER_VOICE)
+        self.say("pew", self.LASER_VOICE)
 
     def runner_on_unreachable(self, host, res):
-        self.say("Failure on host %s" % host, FAILED_VOICE)
+        self.say("Failure on host %s" % host, self.FAILED_VOICE)
 
     def runner_on_async_ok(self, host, res, jid):
-        self.say("pew", LASER_VOICE)
+        self.say("pew", self.LASER_VOICE)
 
     def runner_on_async_failed(self, host, res, jid):
-        self.say("Failure on host %s" % host, FAILED_VOICE)
+        self.say("Failure on host %s" % host, self.FAILED_VOICE)
 
     def playbook_on_start(self):
-        self.say("Running Playbook", REGULAR_VOICE)
+        self.say("Running Playbook", self.REGULAR_VOICE)
 
     def playbook_on_notify(self, host, handler):
-        self.say("pew", LASER_VOICE)
+        self.say("pew", self.LASER_VOICE)
 
     def playbook_on_task_start(self, name, is_conditional):
         if not is_conditional:
-            self.say("Starting task: %s" % name, REGULAR_VOICE)
+            self.say("Starting task: %s" % name, self.REGULAR_VOICE)
         else:
-            self.say("Notifying task: %s" % name, REGULAR_VOICE)
+            self.say("Notifying task: %s" % name, self.REGULAR_VOICE)
 
     def playbook_on_setup(self):
-        self.say("Gathering facts", REGULAR_VOICE)
+        self.say("Gathering facts", self.REGULAR_VOICE)
 
     def playbook_on_play_start(self, name):
-        self.say("Starting play: %s" % name, HAPPY_VOICE)
+        self.say("Starting play: %s" % name, self.HAPPY_VOICE)
 
     def playbook_on_stats(self, stats):
-        self.say("Play complete", HAPPY_VOICE)
+        self.say("Play complete", self.HAPPY_VOICE)
