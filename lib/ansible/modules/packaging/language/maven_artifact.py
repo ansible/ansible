@@ -28,7 +28,6 @@ description:
       version if one is not available.
 author: "Chris Schmidt (@chrisisbeef)"
 requirements:
-    - "python >= 2.6"
     - lxml
     - boto if using a S3 repository (s3://...)
 options:
