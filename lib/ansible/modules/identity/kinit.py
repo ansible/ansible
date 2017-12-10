@@ -23,7 +23,8 @@ description:
   The M(expect) or M(shell) module could be used instead, however to ensure the principal's password is not logged,
   the I(no_log: True) task attribute must be set resulting in hidden error messages and the loss of an audit trail.
   By default, this module prevents the password for the authenticating principal from being shown or logged while
-  still displaying error messages and enabling the task to be logged for auditing purposes."
+  still displaying error messages and enabling the task to be logged for auditing purposes. The default location
+  of the Kerberos 5 credentials cache is used."
 options:
   principal:
     description:
@@ -40,10 +41,18 @@ options:
       - The lifetime of the Kerberos ticket.
     required: false
     default: 60
+  state:
+    description:
+      - The state of the Kerberos ticket. If set to C(absent), I(kdestroy) is executed to remove all existing Kerberos tickets for the principal.
+    required: false
+    default: "present"
+    choices: [ "present", "absent" ]
 requirements:
   - kinit
+  - klist
+  - kdestroy
 notes:
-  - "This module requires I(kinit) which needs to be installed on all target systems."
+  - "This module requires Kerberos 5 I(kinit), I(klist), and I(kdestroy) installed on all target systems."
 '''
 
 EXAMPLES = '''
@@ -57,6 +66,11 @@ EXAMPLES = '''
 - kinit:
     principal: johndoe@REALM.EXAMPLE.COM
     password: supersecretpassword
+
+# destroy all existing Kerberos tickets for the principal
+- kinit:
+    principal: johndoe
+    state: absent
 '''
 
 RETURN = '''
@@ -64,17 +78,69 @@ msg:
     description: the status message describing what occurred
     returned: always
     type: string
-    sample: "Successfully obtained Kerberos ticket"
+    sample: "Obtained a short-lived Kerberos ticket"
 
 rc:
-    description: the return code after executing kinit
+    description: the return code after executing klist, kinit, or kdestroy
     returned: always
     type: int
     sample: 0
+
+err:
+    description: the error message after executing klist, kinit, or kdestroy
+    returned: failure
+    type: string
+    sample: "kinit: Password incorrect while getting initial credentials"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 import shlex
+import datetime
+import time
+
+
+class KerberosTicket(object):
+    def __init__(self, module):
+        self.module = module
+        self.principal = module.params['principal']
+        self.password = module.params['password']
+        self.lifetime = module.params.get('lifetime', 60)
+        self.state = module.params['state']
+
+    @property
+    def klist(self):
+        return self.module.get_bin_path("klist", required=True)
+
+    @property
+    def kinit(self):
+        return self.module.get_bin_path("kinit", required=True)
+
+    @property
+    def kdestroy(self):
+        return self.module.get_bin_path("kdestroy", required=True)
+
+    @property
+    def max_ticket_expiry_datetime(self):
+        return datetime.datetime.fromtimestamp(time.time() + self.lifetime)
+
+    def get_existing_tickets(self):
+        return self.module.run_command([self.klist])
+
+    def generate_new_ticket(self):
+        cmd = shlex.split('{0} {1} -l {2}'.format(self.kinit, self.principal, self.lifetime))
+
+        rc, out, err = self.module.run_command(cmd, data=self.password, binary_data=False)
+        if rc:
+            self.module.fail_json(msg="Failed to obtain a Kerberos ticket", rc=rc, err=err)
+        else:
+            self.module.exit_json(changed=True, msg='Obtained a short-lived Kerberos ticket', rc=rc)
+
+    def destroy_existing_tickets(self):
+        rc, out, err = self.module.run_command([self.kdestroy, '-q'])
+        if rc:
+            self.module.fail_json(msg="Failed to destroy existing Kerberos tickets", rc=rc, err=err)
+        else:
+            self.module.exit_json(changed=True, msg='Destroyed existing Kerberos tickets', rc=rc)
 
 
 def main():
@@ -82,28 +148,56 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             principal=dict(required=True, type='str'),
-            password=dict(required=True, type='str', no_log=True),
-            lifetime=dict(required=False, type='int', default=60)
+            password=dict(required=False, type='str', no_log=True),
+            lifetime=dict(required=False, type='int', default=60),
+            state=dict(default='present', choices=['present', 'absent'])
         ),
-        required_together=[
-            ['principal', 'password']
+        required_if=[
+            ['state', 'present', ['principal', 'password']]
         ],
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
-    principal = module.params['principal']
-    password = module.params['password']
-    lifetime = module.params.get('lifetime', 60)
+    kerberos_ticket = KerberosTicket(module)
 
-    kinit = module.get_bin_path("kinit", required=True)
+    rc, out, err = kerberos_ticket.get_existing_tickets()
 
-    cmd = shlex.split('{0} {1} -l {2}'.format(kinit, principal, lifetime))
-
-    (rc, out, err) = module.run_command(cmd, data=password, binary_data=False)
+    # when rc != 0, klist returns stderr message that there are no existing tickets for the principal
     if rc:
-        module.fail_json(msg=err, rc=rc)
-    else:
-        module.exit_json(changed=True, msg='Successfully obtained Kerberos ticket', rc=rc)
+        if kerberos_ticket.state == 'present':
+            if module.check_mode:
+                module.exit_json(changed=True)
+
+            kerberos_ticket.generate_new_ticket()
+
+        elif kerberos_ticket.state == 'absent':
+            module.exit_json(changed=False, msg='No existing Kerberos tickets to destroy')
+
+    if kerberos_ticket.state == 'absent':
+        if module.check_mode:
+            module.exit_json(changed=True)
+
+        kerberos_ticket.destroy_existing_tickets()
+
+    klist_output = filter(None, out.split('\n'))
+
+    # info on tickets within the keytab starts from the 4th element in the list
+    for ticket in klist_output[3:]:
+
+        # we're only concerned with ticket-granting tickets (TGT)
+        if 'krbtgt/' not in ticket:
+            continue
+
+        ticket_expiry_datetime = datetime.datetime.strptime(' '.join(ticket.split()[2:4]), '%m/%d/%Y %H:%M:%S')
+
+        if kerberos_ticket.max_ticket_expiry_datetime > ticket_expiry_datetime:
+            if module.check_mode:
+                module.exit_json(changed=True)
+
+            kerberos_ticket.generate_new_ticket()
+
+        else:
+            module.exit_json(changed=False, msg='An existing ticket has yet to expire', ticket=ticket)
 
 if __name__ == '__main__':
     main()
