@@ -71,11 +71,17 @@ class TestCallbackResults(unittest.TestCase):
         cb = CallbackBase()
         result = {'item': 'some_item',
                   'invocation': 'foo --bar whatever [some_json]',
+                  'a': 'a single a in result',
+                  'b': 'a single b in result',
                   'changed': True}
 
-        self.assertTrue('changed' in result)
-        self.assertTrue('invocation' in result)
         cb._clean_results(result, 'debug')
+
+        # See https://github.com/ansible/ansible/issues/33723
+        self.assertTrue('a' in result)
+        self.assertTrue('b' in result)
+        self.assertFalse('invocation' in result)
+        self.assertTrue('changed' in result)
 
 
 class TestCallbackDumpResults(unittest.TestCase):
