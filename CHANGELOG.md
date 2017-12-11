@@ -30,6 +30,7 @@ Ansible Changes By Release
 * Fix fetch on Windows failing to fetch files or particular block size
   (https://github.com/ansible/ansible/pull/33697)
 * preserve certain fields during no log. https://github.com/ansible/ansible/pull/33637
+* fix issue with order of declaration of sections in ini inventory https://github.com/ansible/ansible/pull/33781
 
 
 <a id="2.4.2"></a>
