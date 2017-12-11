@@ -50,8 +50,6 @@ class TaskInclude(Task):
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = TaskInclude(block=block, role=role, task_include=task_include)
-        if t.action == 'include_task':
-            t._inheritable = False
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def copy(self, exclude_parent=False, exclude_tasks=False):

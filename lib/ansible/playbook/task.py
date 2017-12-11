@@ -67,7 +67,7 @@ class Task(Base, Conditional, Taggable, Become):
     # might be possible to define others
 
     _args = FieldAttribute(isa='dict', default=dict())
-    _action = FieldAttribute(isa='string')
+    _action = FieldAttribute(isa='string', inherit=False)
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
     _changed_when = FieldAttribute(isa='list', default=[])
@@ -77,7 +77,7 @@ class Task(Base, Conditional, Taggable, Become):
     _failed_when = FieldAttribute(isa='list', default=[])
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
-    _name = FieldAttribute(isa='string', default='')
+    _name = FieldAttribute(isa='string', default='', inherit=False)
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
     _register = FieldAttribute(isa='string')
@@ -416,14 +416,16 @@ class Task(Base, Conditional, Taggable, Become):
         '''
 
         value = None
+        parent_value = None
         try:
-            value = self._attributes[attr]
+            # attributes might not be inheritable for current or the partent but still should be for other ancestors
+            if getattr(self, 'action', None) not in ('include_tasks', 'include_role'):
+                value = self._attributes[attr]
             if self._parent and (value is None or extend):
                 if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
-                    # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
+                    if hasattr(self._parent, '_get_parent_attribute'):
                         parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
-                    else:
+                    elif getattr(self._parent, 'action', None) not in ('include_tasks', 'include_role'):
                         parent_value = getattr(self._parent, attr, None)
 
                     if extend:
