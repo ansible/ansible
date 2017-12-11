@@ -27,8 +27,7 @@ description:
   - Use the OpenShift Python client to perform CRUD operations on OpenShift objects.
   - Supports authentication using either a config file, certificates, password or token.
 
-extends_documentation_fragment:
-  - kubernetes
+extends_documentation_fragment: kubernetes
 
 requirements:
     - "python >= 2.7"
@@ -39,45 +38,103 @@ requirements:
 EXAMPLES = '''
 - name: Create a project
   openshift:
-    name: testing
     api_version: v1
-    kind: namespace
+    kind: Project
+    name: testing
+    description: Testing
+    display_name: "This is a test project."
     state: present
 
-- name: Create a Service object from an inline definition
+- name: Create a Persistent Volume Claim from an inline definition
   openshift:
     state: present
     definition:
       apiVersion: v1
-      kind: Service
+      kind: PersistentVolumeClaim
       metadata:
-        name: web
+        name: elastic-volume
         namespace: testing
-        labels:
-          app: galaxy
-          service: web
       spec:
-        selector:
-          app: galaxy
-          service: web
-        ports:
-        - protocol: TCP
-          targetPort: 8000
-          name: port-8000-tcp
-          port: 8000
+        resources:
+          requests:
+            storage: 5Gi
+        accessModes:
+        - ReadWriteOnce
 
-- name: Create a Service object by reading the definition from a file
+- name: Create a Deployment from an inline definition
   openshift:
     state: present
-    src: /testing/service.yml
+    definition:
+      apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+        name: elastic
+        labels:
+          app: galaxy
+          service: elastic
+        namespace: testing
+      spec:
+        template:
+          metadata:
+            labels:
+              app: galaxy
+              service: elastic
+          spec:
+            containers:
+              - name: elastic
+                volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elastic-volume
+                command: ["elasticsearch"]
+                image: "ansible/galaxy-elasticsearch:2.4.6"
+            volumes:
+              - name: elastic-volume
+                persistentVolumeClaim:
+                  claimName: elastic-volume
+          replicas: 1
+          strategy:
+            type: Rolling
 
-- name: Remove an existing Service object
+- name: Create a Deployment by reading the definition from a file
   openshift:
-    state: absent
+    state: present
+    src: /testing/deployment.yml
+
+- name: Get the list of all Deployments
+  openshift:
     api_version: v1
-    kind: service
+    kind: DeploymentConfigList
     namespace: testing
-    name: web
+  register: deployment_list
+
+- name: Remove an existing Deployment
+  openshift:
+    api_version: v1
+    kind: DeploymentConfig
+    name: elastic
+    namespace: testing
+    state: absent
+
+- name: Create a Secret
+  openshift:
+    inline:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: mysecret
+        namespace: testing
+      type: Opaque
+      data:
+        username: "{{ 'admin' | b64encode }}"
+        password: "{{ 'foobard' | b64encode }}"
+
+- name: Retrieve the Secret
+  openshift:
+    api: v1
+    kind: Secret
+    name: mysecret
+    namespace: testing
+  register: mysecret
 '''
 
 RETURN = '''

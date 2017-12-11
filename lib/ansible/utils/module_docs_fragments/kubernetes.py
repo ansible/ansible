@@ -21,22 +21,17 @@ class ModuleDocFragment(object):
 options:
   state:
     description:
-    - Determines if an object should be created, patched, or deleted. When set to
-      C(present), the object will be created, if it does not exist, or patched, if
-      parameter values differ from the existing object's attributes, and deleted,
-      if set to C(absent). A patch operation results in merging lists and updating
-      dictionaries, with lists being merged into a unique set of values. If a list
-      contains a dictionary with a I(name) or I(type) attribute, a strategic merge
-      is performed, where individual elements with a matching I(name_) or I(type)
-      are merged. To force the replacement of lists, set the I(force) option to C(True).
+    - Determines if an object should be created, patched, or deleted. When set to C(present), an object will be
+      created, if it does not already exist. If set to C(absent), an existing object will be deleted. If set to
+      C(present), an existing object will be patched, if its attributes differ from those specified using
+      I(resource_definition) or I(src).
     default: present
     choices:
     - present
     - absent
   force:
     description:
-    - If set to C(True), and I(state) is C(present), an existing object will be updated,
-      and lists will be replaced, rather than merged.
+    - If set to C(True), and I(state) is C(present), an existing object will be replaced.
     default: false
     type: bool
   resource_definition:
@@ -53,23 +48,39 @@ options:
       overwritten by corresponding values found in the configuration read in from the I(src) file."
   api_version:
     description:
-    - Use to specify the API version when deleting an object, or when creating an object, such as namespace or
-      project, that only requires a I(name) attribute.
+    - Use to specify the API version. Use to create, delete, or discover an object without providing a full
+      resource definition. Use in conjunction with I(kind), I(name), and I(namespace) to identify a
+      specific object. If I(resource definition) is provided, the I(apiVersion) from the I(resource_definition)
+      will override this option.
     aliases:
     - api
     - version
   kind:
     description:
-    - Use to specify the object kind when deleting an object, or when creating an object, such as namespace or
-      project, that only requires a I(name) attribute.
+    - Use to specify an object model. Use to create, delete, or discover an object without providing a full
+      resource definition. Use in conjunction with I(api_version), I(name), and I(namespace) to identify a
+      specific object. If I(resource definition) is provided, the I(kind) from the I(resource_definition)
+      will override this option.
   name:
     description:
-    - Use to specify an object name when deleting an object, or when creating an object, such as namespace or
-      project, that only requires a name attribute.
+    - Use to specify an object name. Use to create, delete, or discover an object without providing a full
+      resource definition. Use in conjunction with I(api_version), I(kind) and I(namespace) to identify a
+      specific object. If I(resource definition) is provided, the I(metadata.name) value from the
+      I(resource_definition) will override this option.
   namespace:
     description:
-    - Use to specify the namespace or project when deleting an object, or when creating an object, such as namespace
-      or project, that only requires a I(name) attribute.
+    - Use to specify an object namespace. Useful when creating, deleting, or discovering an object without
+      providing a full resource definition. Use in conjunction with I(api_version), I(kind), and I(name)
+      to identify a specfic object. If I(resource definition) is provided, the I(metadata.namespace) value
+      from the I(resource_definition) will override this option.
+  description:
+    description:
+    - Used only when creating an OpenShift project, otherwise ignored. Adds a description to the project meta
+      data.
+  display_name:
+    description:
+    - Use only when creating an OpenShift project, otherwise ignored. Adds a display name to the project meta
+      data.
   host:
     description:
     - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
@@ -107,10 +118,11 @@ options:
       environment variable.
   verify_ssl:
     description:
-    - Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL
-      environment variable.
+    - "Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL
+      environment variable."
     type: bool
 
 notes:
-  - "To learn more about the OpenShift Python client, visit: https://github.com/openshift/openshift-restclient-python"
+  - "To learn more about the OpenShift Python client and available object models, visit:
+    https://github.com/openshift/openshift-restclient-python"
 '''
