@@ -41,7 +41,7 @@ EXAMPLES = '''
   k8s:
     name: testing
     api_version: v1
-    kind: namespace
+    kind: Namespace
     state: present
 
 - name: Create a Service object from an inline definition
@@ -71,11 +71,26 @@ EXAMPLES = '''
     state: present
     src: /testing/service.yml
 
+- name: Get an existing Service object
+  k8s:
+    api_version: v1
+    kind: Service
+    name: web
+    namespace: testing
+  register: web_service
+
+- name: Get a list of all service objects
+  k8s:
+    api_version: v1
+    kind: ServiceList
+    namespace: testing
+  register: service_list
+  
 - name: Remove an existing Service object
   k8s:
     state: absent
     api_version: v1
-    kind: service
+    kind: Service
     namespace: testing
     name: web
 '''
