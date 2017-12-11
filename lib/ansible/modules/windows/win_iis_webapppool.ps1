@@ -255,11 +255,13 @@ if ($state -eq "absent") {
         }
     }
 
+    $stateChanged=$false # tracks if a status happened
     # Set the state of the pool
     if (($state -eq "stopped") -and ($pool.State -eq "Started")) {
         if (-not $check_mode) {
             try {
                 Stop-WebAppPool -Name $name
+                $stateChanged=$true                
             } catch {
                 Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
             }
@@ -267,37 +269,40 @@ if ($state -eq "absent") {
         $result.changed = $true
     }
 
-    
-    if ($pool.State -eq "Stopped") {
-        if ($state -eq "started" -or $state -eq "restarted") {
-            if (-not $check_mode) {
-                try {
-                    Start-WebAppPool -Name $name
-                } catch {
-                    Fail-Json $result "Failed to start Web App Pool $($name): $($_.Exception.Message)"
+    if (-not $stateChanged){        
+        if ($pool.State -eq "Stopped") {
+            if ($state -eq "started" -or $state -eq "restarted") {
+                if (-not $check_mode) {
+                    try {
+                        Start-WebAppPool -Name $name
+                        $stateChanged=$true
+                    } catch {
+                        Fail-Json $result "Failed to start Web App Pool $($name): $($_.Exception.Message)"
+                    }
                 }
+                $result.changed = $true
             }
-            $result.changed = $true
-        }
-    } else {
-        if ($state -eq "stopped") {
-            if (-not $check_mode) {
-                try {
-                    Stop-WebAppPool -Name $name
-                } catch {
-                    Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
+        } else {
+            if ($state -eq "stopped") {
+                if (-not $check_mode) {
+                    try {
+                        Stop-WebAppPool -Name $name
+                        $stateChanged=$true
+                    } catch {
+                        Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
+                    }
                 }
-            }
-            $result.changed = $true
-        } elseif ($state -eq "restarted") {
-            if (-not $check_mode) {
-                try {
-                    Restart-WebAppPool -Name $name
-                } catch {
-                    Fail-Json $result "Failed to restart Web App Pool $($name): $($_.Exception.Message)"
+                $result.changed = $true
+            } elseif ($state -eq "restarted") {
+                if (-not $check_mode) {
+                    try {
+                        Restart-WebAppPool -Name $name
+                    } catch {
+                        Fail-Json $result "Failed to restart Web App Pool $($name): $($_.Exception.Message)"
+                    }
                 }
+                $result.changed = $true
             }
-            $result.changed = $true
         }
     }
 }
