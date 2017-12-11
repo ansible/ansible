@@ -631,6 +631,92 @@
       that:
           - "not zabbix_host1 is changed"
 
+- name: "test: add IPMI settings"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add IPMI settings again"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: verify that an empty change is idempotent"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: IPMI set default values"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: -1
+    ipmi_privilege: 2
+    ipmi_username: ""
+    ipmi_password: ""
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: IPMI set default values (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: -1
+    ipmi_privilege: 2
+    ipmi_username: ""
+    ipmi_password: ""
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
 - name: "test: attempt to delete host created earlier"
   local_action:
     module: zabbix_host

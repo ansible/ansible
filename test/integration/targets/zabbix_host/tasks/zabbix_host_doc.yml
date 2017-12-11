@@ -7,7 +7,7 @@
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
-    host_name: ExampleHost
+    host_name: ExampleHost1
     visible_name: ExampleName
     description: My ExampleHost Description
     host_groups:
@@ -27,6 +27,10 @@
       site_rack: test-rack
       os: test-os
       hardware: test-hw
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
     interfaces:
       - type: 1
         main: 1
