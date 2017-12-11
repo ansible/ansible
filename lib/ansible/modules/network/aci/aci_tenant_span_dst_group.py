@@ -100,13 +100,13 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='spanDestGrp',
             aci_rn='destgrp-{}'.format(dst_group),
-            filter_target='(spanDestGrp.name, "{}")'.format(dst_group),
+            filter_target='eq(spanDestGrp.name, "{}")'.format(dst_group),
             module_object=dst_group,
         ),
     )

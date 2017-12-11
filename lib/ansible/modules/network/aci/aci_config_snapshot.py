@@ -156,7 +156,7 @@ def main():
             root_class=dict(
                 aci_class='configExportP',
                 aci_rn='fabric/configexp-{}'.format(export_policy),
-                filter_target='(configExportP.name, "{}")'.format(export_policy),
+                filter_target='eq(configExportP.name, "{}")'.format(export_policy),
                 module_object=export_policy,
             ),
         )

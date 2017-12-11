@@ -182,7 +182,7 @@ def main():
         root_class=dict(
             aci_class='lacpLagPol',
             aci_rn='infra/lacplagp-{}'.format(port_channel),
-            filter_target='(lacpLagPol.name, "{}")'.format(port_channel),
+            filter_target='eq(lacpLagPol.name, "{}")'.format(port_channel),
             module_object=port_channel,
         ),
     )

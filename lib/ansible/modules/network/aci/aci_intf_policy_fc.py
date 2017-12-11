@@ -97,7 +97,7 @@ def main():
         root_class=dict(
             aci_class='fcIfPol',
             aci_rn='infra/fcIfPol-{}'.format(fc_policy),
-            filter_target='(fcIfPol.name, "{}")'.format(fc_policy),
+            filter_target='eq(fcIfPol.name, "{}")'.format(fc_policy),
             module_object=fc_policy,
         ),
     )

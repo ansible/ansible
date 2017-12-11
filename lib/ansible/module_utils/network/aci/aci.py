@@ -381,7 +381,7 @@ class ACIModule(object):
         # Query for all objects of the module's class that match the provided ID value
         else:
             path = 'api/class/{}.json'.format(obj_class)
-            filter_string = '?query-target-filter=eq{}'.format(obj_filter) + child_includes
+            filter_string = '?query-target-filter={}'.format(obj_filter) + child_includes
 
         # Append child_includes to filter_string if filter string is empty
         if child_includes is not None and filter_string == '':
@@ -437,7 +437,7 @@ class ACIModule(object):
             # Query for all objects of the module's class that match the provided ID value and belong to a specefic root object
             elif mo is not None:
                 path = 'api/mo/uni/{}.json'.format(root_rn)
-                filter_string = '?rsp-subtree-filter=eq{}{}'.format(obj_filter, self_child_includes)
+                filter_string = '?rsp-subtree-filter={}{}'.format(obj_filter, self_child_includes)
             # Query for all objects of the module's class that belong to a specific root object
             else:
                 path = 'api/mo/uni/{}.json'.format(root_rn)
@@ -448,17 +448,17 @@ class ACIModule(object):
             # matching the provided ID values for both object and parent object
             if mo is not None:
                 path = 'api/class/{}.json'.format(parent_class)
-                filter_string = '?query-target-filter=eq{}{}&rsp-subtree-filter=eq{}'.format(
+                filter_string = '?query-target-filter={}{}&rsp-subtree-filter={}'.format(
                     parent_filter, self_child_includes, obj_filter)
             # Query for all objects of the module's class that belong to any parent class
             # matching the provided ID value for the parent object
             else:
                 path = 'api/class/{}.json'.format(parent_class)
-                filter_string = '?query-target-filter=eq{}{}'.format(parent_filter, self_child_includes)
+                filter_string = '?query-target-filter={}{}'.format(parent_filter, self_child_includes)
         # Query for all objects of the module's class matching the provided ID value of the object
         else:
             path = 'api/class/{}.json'.format(obj_class)
-            filter_string = '?query-target-filter=eq{}'.format(obj_filter) + child_includes
+            filter_string = '?query-target-filter={}'.format(obj_filter) + child_includes
 
         # append child_includes to filter_string if filter string is empty
         if child_includes is not None and filter_string == '':

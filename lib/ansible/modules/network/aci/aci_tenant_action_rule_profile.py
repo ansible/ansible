@@ -98,13 +98,13 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='rtctrlAttrP',
             aci_rn='attr-{}'.format(action_rule),
-            filter_target='(rtctrlAttrP.name, "{}")'.format(action_rule),
+            filter_target='eq(rtctrlAttrP.name, "{}")'.format(action_rule),
             module_object=action_rule,
         ),
     )

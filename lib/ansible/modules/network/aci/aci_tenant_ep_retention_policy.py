@@ -192,13 +192,13 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvEpRetPol',
             aci_rn='epRPol-{}'.format(epr_policy),
-            filter_target='(fvEpRetPol.name, "{}")'.format(epr_policy),
+            filter_target='eq(fvEpRetPol.name, "{}")'.format(epr_policy),
             module_object=epr_policy,
         ),
     )
