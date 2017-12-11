@@ -5,3 +5,4 @@
     - cloudscale
   roles:
     - { role: cloudscale_server,            tags: cloudscale_server }
+    - { role: cloudscale_floating_ip,       tags: cloudscale_floating_ip }
