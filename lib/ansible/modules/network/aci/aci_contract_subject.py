@@ -191,19 +191,19 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
             aci_rn='brc-{}'.format(contract),
-            filter_target='(vzBrCP.name, "{}")'.format(contract),
+            filter_target='eq(vzBrCP.name, "{}")'.format(contract),
             module_object=contract,
         ),
         subclass_2=dict(
             aci_class='vzSubj',
             aci_rn='subj-{}'.format(subject),
-            filter_target='(vzSubj.name, "{}")'.format(subject),
+            filter_target='eq(vzSubj.name, "{}")'.format(subject),
             module_object=subject,
         ),
     )

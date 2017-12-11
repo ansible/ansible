@@ -98,7 +98,7 @@ def main():
         root_class=dict(
             aci_class='l2PortSecurityPol',
             aci_rn='infra/portsecurityP-{}'.format(port_security),
-            filter_target='(l2PortSecurityPol.name, "{}")'.format(port_security),
+            filter_target='eq(l2PortSecurityPol.name, "{}")'.format(port_security),
             module_object=port_security,
         ),
     )

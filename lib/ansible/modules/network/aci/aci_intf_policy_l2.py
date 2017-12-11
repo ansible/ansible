@@ -115,7 +115,7 @@ def main():
         root_class=dict(
             aci_class='l2IfPol',
             aci_rn='infra/l2IfP-{}'.format(l2_policy),
-            filter_target='(l2IfPol.name, "{}")'.format(l2_policy),
+            filter_target='eq(l2IfPol.name, "{}")'.format(l2_policy),
             module_object=l2_policy,
         ),
     )
