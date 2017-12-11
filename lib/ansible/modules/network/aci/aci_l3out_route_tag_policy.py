@@ -107,13 +107,13 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='l3extRouteTagPol',
             aci_rn='rttag-{}'.format(rtp),
-            filter_target='(l3extRouteTagPol.name, "{}")'.format(rtp),
+            filter_target='eq(l3extRouteTagPol.name, "{}")'.format(rtp),
             module_object=rtp,
         ),
     )

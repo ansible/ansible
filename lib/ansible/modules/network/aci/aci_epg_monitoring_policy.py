@@ -100,13 +100,13 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='monEPGPol',
             aci_rn='monepg-{}'.format(monitoring_policy),
-            filter_target='(monEPGPol.name, "{}")'.format(monitoring_policy),
+            filter_target='eq(monEPGPol.name, "{}")'.format(monitoring_policy),
             module_object=monitoring_policy,
         ),
     )

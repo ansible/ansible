@@ -112,7 +112,7 @@ def main():
         root_class=dict(
             aci_class='infraAttEntityP',
             aci_rn='infra/attentp-{}'.format(aep),
-            filter_target='(infraAttEntityP.name, "{}")'.format(aep),
+            filter_target='eq(infraAttEntityP.name, "{}")'.format(aep),
             module_object=aep,
         ),
     )

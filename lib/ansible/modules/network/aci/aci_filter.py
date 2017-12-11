@@ -128,13 +128,13 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='vzFilter',
             aci_rn='flt-{}'.format(filter_name),
-            filter_target='(vzFilter.name, "{}")'.format(filter_name),
+            filter_target='eq(vzFilter.name, "{}")'.format(filter_name),
             module_object=filter_name,
         ),
     )

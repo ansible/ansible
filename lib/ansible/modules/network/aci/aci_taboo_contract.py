@@ -108,13 +108,13 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='vzTaboo',
             aci_rn='taboo-{}'.format(taboo_contract),
-            filter_target='(vzTaboo.name, "{}")'.format(taboo_contract),
+            filter_target='eq(vzTaboo.name, "{}")'.format(taboo_contract),
             module_object=taboo_contract,
         ),
     )

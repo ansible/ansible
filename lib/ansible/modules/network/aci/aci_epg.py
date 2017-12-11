@@ -201,19 +201,19 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{}'.format(ap),
-            filter_target='(fvAp.name, "{}")'.format(ap),
+            filter_target='eq(fvAp.name, "{}")'.format(ap),
             module_object=ap,
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{}'.format(epg),
-            filter_target='(fvAEPg.name, "{}")'.format(epg),
+            filter_target='eq(fvAEPg.name, "{}")'.format(epg),
             module_object=epg,
         ),
         child_classes=['fvRsBd'],
