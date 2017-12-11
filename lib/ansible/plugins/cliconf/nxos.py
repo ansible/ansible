@@ -43,11 +43,16 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, source='running'):
+    def get_config(self, source='running', flags=None):
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
-        return self.send_command(b'show %s' % lookup[source])
 
-    def edit_config(self, command):
+        cmd = b'show {} '.format(lookup[source])
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        return self.send_command(cmd)
+
+    def edit_config(self, command, return_error=False, opts=None):
         for cmd in chain([b'configure'], to_list(command), [b'end']):
             self.send_command(cmd)
 

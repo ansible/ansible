@@ -107,39 +107,34 @@ class Cli:
     def __init__(self, module):
         self._module = module
         self._device_configs = {}
+        self._connection = None
 
-    def exec_command(self, command):
-        if isinstance(command, dict):
-            command = self._module.jsonify(command)
-        return exec_command(self._module, command)
+    def _get_connection(self):
+        if self._connection:
+            return self._connection
+        self._connection = Connection(self._module._socket_path)
+
+        return self._connection
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
         flags = [] if flags is None else flags
 
-        cmd = 'show running-config '
-        cmd += ' '.join(flags)
-        cmd = cmd.strip()
-
-        try:
-            return self._device_configs[cmd]
-        except KeyError:
-            rc, out, err = self.exec_command(cmd)
-            if rc != 0:
-                self._module.fail_json(msg=to_text(err))
-            try:
-                cfg = to_text(out, errors='surrogate_or_strict').strip()
-            except UnicodeError as e:
-                self._module.fail_json(msg=u'Failed to decode config: %s' % to_text(out))
-
-            self._device_configs[cmd] = cfg
+        if self._device_configs is not {}:
+            return self._device_configs
+        else:
+            connection = self._get_connection()
+            out = connection.get_config(flags)
+            cfg = to_text(out, errors='surrogate_then_replace').strip()
+            self._device_configs = cfg
             return cfg
 
     def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         responses = list()
+        connection = self._get_connection()
 
         for item in to_list(commands):
             if item['output'] == 'json' and not is_json(item['command']):
@@ -149,55 +144,19 @@ class Cli:
             else:
                 cmd = item['command']
 
-            rc, out, err = self.exec_command(cmd)
-            try:
-                out = to_text(out, errors='surrogate_or_strict')
-            except UnicodeError:
-                self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+            out = connection.get(cmd)
+            responses.append(to_text(out, errors='surrogate_then_replace'))
 
-            if check_rc and rc != 0:
-                self._module.fail_json(msg=to_text(err))
-
-            if not check_rc and rc != 0:
-                try:
-                    out = self._module.from_json(err)
-                except ValueError:
-                    out = to_text(err).strip()
-            else:
-                try:
-                    out = self._module.from_json(out)
-                except ValueError:
-                    out = to_text(out).strip()
-
-            if item['output'] == 'json' and out != '' and isinstance(out, string_types):
-                self._module.fail_json(msg='failed to retrieve output of %s in json format' % item['command'])
-
-            responses.append(out)
         return responses
 
     def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
         """
-        if opts is None:
-            opts = {}
-
-        rc, out, err = self.exec_command('configure')
-        if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err))
-
-        msgs = []
-        for cmd in config:
-            rc, out, err = self.exec_command(cmd)
-            if opts.get('ignore_timeout') and rc == 1:
-                msgs.append(err)
-                return msgs
-            elif rc != 0:
-                self._module.fail_json(msg=to_text(err))
-            elif out:
-                msgs.append(out)
-
-        self.exec_command('end')
-        return msgs
+        try:
+            connection = self._get_connection()
+            connection.edit_config(config, return_error=return_error, opts=opts)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
 
 
 class Nxapi:
@@ -435,4 +394,4 @@ def run_commands(module, commands, check_rc=True):
 
 def load_config(module, config, return_error=False, opts=None):
     conn = get_connection(module)
-    return conn.load_config(config, return_error, opts)
+    return conn.load_config(config, return_error=return_error, opts=opts)
