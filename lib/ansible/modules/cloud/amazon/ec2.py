@@ -992,9 +992,9 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
-        warn_if_public_ip_assignment_changed(module, inst)
 
         if not isinstance(inst, dict):
+            warn_if_public_ip_assignment_changed(module, inst)
             inst = get_instance_info(inst)
         all_instances.append(inst)
 
