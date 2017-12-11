@@ -17,16 +17,11 @@ short_description: Manage encap pools on Cisco ACI fabrics (fvns:VlanInstP, fvns
 description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(fvns:VlanInstP) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvnsVlanInstP.html).
-  I(fvns:VxlanInstP) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvnsVxlanInstP.html).
-  I(fvns:VsanInstP) at U(https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvnsVsanInstP.html).
+  I(fvns:VlanInstP), I(fvns:VxlanInstP), and I(fvns:VsanInstP) at
+  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   allocation_mode:
     description:
@@ -99,7 +94,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 ACI_MAPPING = dict(
@@ -153,6 +148,10 @@ def main():
             pool_name = '[{0}]-{1}'.format(pool, allocation_mode)
         else:
             module.fail_json(msg='ACI requires the "allocation_mode" for "pool_type" of "vlan" and "vsan" when the "pool" is provided')
+
+    # Vxlan pools do not support allocation modes
+    if pool_type == 'vxlan' and allocation_mode is not None:
+        module.fail_json(msg='vxlan pools do not support setting the allocation_mode; please remove this parameter from the task')
 
     aci = ACIModule(module)
     aci.construct_url(
