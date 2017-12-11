@@ -128,10 +128,10 @@ commands:
 import re
 from copy import deepcopy
 
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec
+from ansible.module_utils.network.common.utils import remove_default_spec
 
 
 def execute_show_command(command, module):
@@ -172,6 +172,12 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent':
             if obj_in_have:
+                members_to_remove = list(set(obj_in_have['members']) - set(members))
+                if members_to_remove:
+                    for m in members_to_remove:
+                        commands.append('interface {0}'.format(m))
+                        commands.append('no channel-group {0}'.format(obj_in_have['group']))
+                        commands.append('exit')
                 commands.append('no interface port-channel {0}'.format(group))
 
         elif state == 'present':

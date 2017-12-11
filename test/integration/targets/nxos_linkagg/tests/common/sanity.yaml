@@ -48,7 +48,7 @@
     that:
       - 'result.changed == false'
 
-- name: set link aggregation group to members
+- name: set link aggregation group to members declaratively
   nxos_linkagg: &configure_member
     group: 20
     mode: active
@@ -75,7 +75,7 @@
     that:
       - 'result.changed == false'
 
-- name: remove link aggregation group from member
+- name: remove link aggregation group from member declaratively
   nxos_linkagg: &remove_member
     group: 20
     mode: active
