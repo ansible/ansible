@@ -1,8 +1,14 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# TODO: Update to pass all sanity checks
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: Write quick & dirty test playbook
 # TODO: Review & Submit PR
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -12,17 +18,17 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: thycotic_secret
+module: "thycotic_secret"
 
-short_description: Allows the retrieval or addition of secrets from a instance of Thycotic Secret Server
+short_description: "Add or retrieve secrets from of Thycotic Secret Server"
 
 version_added: "2.4"
 
 description:
-    - NOTE: Requires Zeep library. The module interacts with the SOAP API of the instance.
-    - Webservices must be enabled for this work correctly
-    - This module works by editing a single field value of a secret at a time
-    - The field value can be a file or text value
+    - "NOTE: Requires Zeep library. The module interacts with the SOAP API of the instance."
+    - "Webservices must be enabled for this work correctly."
+    - "This module works by editing a single field value of a secret at a time."
+    - "The field value can be a file or text value."
 
 options:
     endpoint:
@@ -132,21 +138,24 @@ EXAMPLES = '''
     src: '/tmp/test_file.jpg'
     folder: 'demo'
     mode: 'put'
-
 '''
 
 RETURN = '''
 secret_value:
     description: The secret field value that you requested; Only populated when getting text
     type: str
+    returned: success
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+import os
+
+import_failed = False
 try:
-    from ansible.module_utils.basic import AnsibleModule
     from zeep import Client, helpers
-    import os
 except:
-    module.fail_json(msg="Zeep is a required library", **result)
+    import_failed = True
+
 
 def run_module():
     module_args = dict(
@@ -165,8 +174,7 @@ def run_module():
 
     result = dict(
         changed=False,
-        secret_value=dict(),
-        debug=dict()
+        secret_value="test"
     )
 
     module = AnsibleModule(
@@ -176,6 +184,10 @@ def run_module():
             ["mode", "put", ["type"]]
         ]
     )
+
+    # Error checking for imports
+    if import_failed:
+        module.fail_json(msg="Zeep is a required library", **result)
 
     # authenticates & retrieves token
     token_args = {'username': module.params['username'], 'password': module.params['password']}
@@ -200,7 +212,6 @@ def run_module():
 
     # non production, testing mode
     if module.params['mode'] == 'debug':
-        result['debug'] = 'test'
         result['changed'] = False
 
     # retrieves a secret and returns it
@@ -220,7 +231,7 @@ def run_module():
                     module.fail_json(msg="Field is a file and no destination was given", **result)
 
                 # Downloading file
-                get_file_args = {'token': token, 'secretId': secret_id, 'secretItemId': field['Id']}
+                get_file_args = {'token': token, 'secretId': secret['Id'], 'secretItemId': field['Id']}
                 get_file_result = make_soap_request(module.params['endpoint'], 'DownloadFileAttachmentByItemId', get_file_args)
                 file_bytes = get_file_result["FileAttachment"]
                 download_location = os.path.join(module.params['dest'], get_file_result["FileName"])
@@ -284,7 +295,7 @@ def run_module():
                 field = field_name_filter(secret, module.params['field_name'])
 
                 if template_field['IsFile']:
-                    #error check for 'src'
+                    # error check for 'src'
                     if not module.params['src']:
                         module.fail_json(msg="Field is a file and no src was given", **result)
 
