@@ -667,11 +667,6 @@
       that:
           - "zabbix_host1 is not changed"
 
-- name: expect to succeed and that things have not changed
-  assert:
-      that:
-          - "zabbix_host1 is not changed"
-
 - name: "test: verify that an empty change is idempotent"
   local_action:
     module: zabbix_host
