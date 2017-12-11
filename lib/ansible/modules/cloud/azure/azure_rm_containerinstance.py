@@ -247,9 +247,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             ip_address=dict(
                 type='str',
-                required=True,
                 default='none',
-                choices=['public']
+                choices=['public', 'none']
             ),
             ports=dict(
                 type='list',
