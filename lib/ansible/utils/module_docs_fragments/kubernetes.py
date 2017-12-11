@@ -53,23 +53,31 @@ options:
       overwritten by corresponding values found in the configuration read in from the I(src) file."
   api_version:
     description:
-    - Use to specify the API version when deleting an object, or when creating an object, such as namespace or
-      project, that only requires a I(name) attribute.
+    - Use to specify the API version. Use to create, delete, or discover an object without providing a full
+      resource definition. Use in conjunction with I(kind), I(name), and I(namespace) to identify a
+      specific object. If I(resource definition) is provided, the I(apiVersion) from the I(resource_definition)
+      will override this option.
     aliases:
     - api
     - version
   kind:
     description:
-    - Use to specify the object kind when deleting an object, or when creating an object, such as namespace or
-      project, that only requires a I(name) attribute.
+    - Use to specify an object model. Use to create, delete, or discover an object without providing a full
+      resource definition. Use in conjunction with I(api_version), I(name), and I(namespace) to identify a
+      specific object. If I(resource definition) is provided, the I(kind) from the I(resource_definition)
+      will override this option.
   name:
     description:
-    - Use to specify an object name when deleting an object, or when creating an object, such as namespace or
-      project, that only requires a name attribute.
+    - Use to specify an object name. Use to create, delete, or discover an object without providing a full
+      resource definition. Use in conjunction with I(api_version), I(kind) and I(namespace) to identify a
+      specific object. If I(resource definition) is provided, the I(metadata.name) value from the
+      I(resource_definition) will override this option.
   namespace:
     description:
-    - Use to specify the namespace or project when deleting an object, or when creating an object, such as namespace
-      or project, that only requires a I(name) attribute.
+    - Use to specify an object namespace. Useful when creating, deleting, or discovering an object without
+      providing a full resource definition. Use in conjunction with I(api_version), I(kind), and I(name)
+      to identify a specfic object. If I(resource definition) is provided, the I(metadata.namespace) value
+      from the I(resource_definition) will override this option.
   host:
     description:
     - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
