@@ -102,19 +102,19 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='spanSrcGrp',
             aci_rn='srcgrp-{}'.format(src_group),
-            filter_target='(spanSrcGrp.name, "{}")'.format(src_group),
+            filter_target='eq(spanSrcGrp.name, "{}")'.format(src_group),
             module_object=src_group,
         ),
         subclass_2=dict(
             aci_class='spanSpanLbl',
             aci_rn='spanlbl-{}'.format(dst_group),
-            filter_target='(spanSpanLbl.name, "{}")'.format(dst_group),
+            filter_target='eq(spanSpanLbl.name, "{}")'.format(dst_group),
             module_object=dst_group,
         ),
     )

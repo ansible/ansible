@@ -128,25 +128,25 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{}'.format(tenant),
-            filter_target='(fvTenant.name, "{}")'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{}'.format(ap),
-            filter_target='(fvAp.name, "{}")'.format(ap),
+            filter_target='eq(fvAp.name, "{}")'.format(ap),
             module_object=ap,
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{}'.format(epg),
-            filter_target='(fvAEPg.name, "{}")'.format(epg),
+            filter_target='eq(fvAEPg.name, "{}")'.format(epg),
             module_object=epg,
         ),
         subclass_3=dict(
             aci_class=aci_class,
             aci_rn='{}{}'.format(aci_rn, contract),
-            filter_target='({}.tnVzBrCPName, "{}'.format(aci_class, contract),
+            filter_target='eq({}.tnVzBrCPName, "{}'.format(aci_class, contract),
             module_object=contract,
         ),
     )
