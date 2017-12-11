@@ -46,9 +46,10 @@ options:
             - present
     ip_address:
         description:
-            - The IP address type of the container group.
+            - The IP address type of the container group (default is 'none')
         choices:
             - public
+            - none
         default: None
     ports:
         description:
@@ -246,13 +247,14 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             ip_address=dict(
                 type='str',
-                required=False,
-                default=None,
+                required=True,
+                default='none',
                 choices=['public']
             ),
             ports=dict(
                 type='list',
-                required=False
+                required=False,
+                default=[]
             ),
             registry_login_server=dict(
                 type='str',
@@ -370,7 +372,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         ip_address = None
 
-        if self.ip_address is not None:
+        if self.ip_address == 'public':
             # get list of ports
             if self.ports:
                 ports = []
