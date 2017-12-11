@@ -19,7 +19,7 @@ module: "thycotic_secret"
 
 short_description: "Add or retrieve secrets from of Thycotic Secret Server"
 
-version_added: "2.4"
+version_added: "2.5"
 
 description:
     - "NOTE: Requires Zeep library. The module interacts with the SOAP API of the instance."
