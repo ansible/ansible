@@ -4,6 +4,7 @@
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     os_type: linux
     ip_address: public
+    location: eastus
     ports:
       - 80
     containers:
@@ -30,6 +31,7 @@
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     os_type: linux
     ip_address: public
+    location: eastus
     ports:
       - 80
     containers:
