@@ -1050,10 +1050,27 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies)
         info.update(r.info())
+
+        # Don't be lossy, append header values for duplciate headers
+        try:
+            # Py3
+            _h = {}
+            for k, v in r.headers.items():
+                if k in _h:
+                    _h[k] = ', '.join((_h[k], v))
+                else:
+                    _h[k] = v
+            info.update(_h)
+        except AttributeError:
+            # In Py2 there is nothing that needs done, py2 does this for us
+            pass
+
         # parse the cookies into a nice dictionary
         cookie_dict = dict()
         for cookie in cookies:
             cookie_dict[cookie.name] = cookie.value
+        info['cookie_string'] = '; '.join('%s=%s' % c for c in cookie_dict.items())
+
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
