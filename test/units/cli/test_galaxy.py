@@ -126,7 +126,7 @@ class TestGalaxy(unittest.TestCase):
 
     def test_execute_remove(self):
         # installing role
-        gc = GalaxyCLI(args=["ansible-galaxy", "install", "--offline", "-p", self.role_path, "-r", self.role_req, '--force'])
+        gc = GalaxyCLI(args=["ansible-galaxy", "install", "-p", self.role_path, "-r", self.role_req, '--force'])
         gc.parse()
         gc.run()
 
@@ -134,7 +134,7 @@ class TestGalaxy(unittest.TestCase):
         role_file = os.path.join(self.role_path, self.role_name)
 
         # removing role
-        gc = GalaxyCLI(args=["ansible-galaxy", "remove", "--init-path", role_file, self.role_name])
+        gc = GalaxyCLI(args=["ansible-galaxy", "remove", role_file, self.role_name])
         gc.parse()
         gc.run()
 
