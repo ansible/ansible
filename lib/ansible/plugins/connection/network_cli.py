@@ -159,7 +159,7 @@ class Connection(ConnectionBase):
         '''
         Connects to the remote device and starts the terminal
         '''
-        if self.connected:
+        if self._connected:
             return
 
         p = connection_loader.get('paramiko', self._play_context, '/dev/null')
