@@ -1,0 +1,94 @@
+- name: Request floating IP
+  cloudscale_floating_ip:
+    server: '{{ test01.uuid }}'
+    ip_version: '{{ item.ip_version }}'
+    reverse_ptr: '{{ item.reverse_ptr | default(omit) }}'
+    prefix_length: '{{ item.prefix_length | default(omit) }}'
+  register: floating_ip
+- name: Verify request floating IP
+  assert:
+    that:
+      - floating_ip | success
+      - floating_ip | changed
+      - (item.ip_version == 4 and floating_ip.ip | ipv4) or (item.ip_version == 6 and floating_ip.ip | ipv6)
+      - floating_ip.server == test01.uuid
+
+- name: Check floating IP indempotence
+  cloudscale_floating_ip:
+    server: '{{ test01.uuid }}'
+    ip: '{{ floating_ip.ip }}'
+  register: floating_ip_indempotence
+- name: Verify floating IP indempotence
+  assert:
+    that:
+      - floating_ip_indempotence | success
+      - not floating_ip_indempotence | changed
+      - floating_ip_indempotence.server == test01.uuid
+
+- name: Check network parameter alias
+  cloudscale_floating_ip:
+    server: '{{ test01.uuid }}'
+    network: '{{ floating_ip.ip }}'
+  register: floating_ip_network
+- name: Verify network parameter alias
+  assert:
+    that:
+      - floating_ip_network | success
+
+- name: Move floating IP to second server
+  cloudscale_floating_ip:
+    server: '{{ test02.uuid }}'
+    ip: '{{ floating_ip.ip }}'
+  register: move_ip
+- name: Verify move floating IPv4 to second server
+  assert:
+    that:
+      - move_ip | success
+      - move_ip | changed
+      - move_ip.server == test02.uuid
+
+- name: Fail if server is missing on update
+  cloudscale_floating_ip:
+    ip: '{{ floating_ip.ip }}'
+  register: update_failed
+  ignore_errors: True
+- name: Verify fail if server is missing on update
+  assert:
+    that:
+      - update_failed | failed
+      - "'Missing required parameter' in update_failed.msg"
+
+- name: Release floating IP
+  cloudscale_floating_ip:
+    ip: '{{ floating_ip.ip }}'
+    state: 'absent'
+  register: release_ip
+- name: Verify release floating IPs
+  assert:
+    that:
+      - release_ip | success
+      - release_ip | changed
+      - release_ip.state == 'absent'
+
+- name: Release floating IP indempotence
+  cloudscale_floating_ip:
+    ip: '{{ floating_ip.ip }}'
+    state: 'absent'
+  register: release_ip
+- name: Verify release floating IPs indempotence
+  assert:
+    that:
+      - release_ip | success
+      - not release_ip | changed
+      - release_ip.state == 'absent'
+
+- name: Fail if server is missing on request
+  cloudscale_floating_ip:
+    ip_version: 6
+  register: request_failed
+  ignore_errors: True
+- name: Verify fail if server is missing on request
+  assert:
+    that:
+      - request_failed | failed
+      - "'Missing required parameter' in request_failed.msg"
