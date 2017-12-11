@@ -33,8 +33,8 @@ import time
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
@@ -150,7 +150,6 @@ class Cli:
         """Run list of commands on remote device and return results
         """
         responses = list()
-
         for cmd in to_list(commands):
             rc, out, err = self.exec_command(cmd)
             out = to_text(out, errors='surrogate_then_replace')
@@ -429,22 +428,6 @@ def is_eapi(module):
     return 'eapi' in (transport, provider_transport)
 
 
-def to_command(module, commands):
-    if is_eapi(module):
-        default_output = 'json'
-    else:
-        default_output = 'text'
-
-    transform = ComplexList(dict(
-        command=dict(key=True),
-        output=dict(default=default_output),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-
-    return transform(to_list(commands))
-
-
 def get_config(module, flags=None):
     flags = None if flags is None else flags
 
@@ -454,7 +437,15 @@ def get_config(module, flags=None):
 
 def run_commands(module, commands):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands))
+    if is_eapi(module):
+        default_output = 'json'
+    else:
+        default_output = 'text'
+
+    for index, cmd in enumerate(to_list(commands)):
+        if isinstance(cmd, string_types):
+            commands[index] = {'command': cmd, 'output': default_output}
+    return conn.run_commands(to_list(commands))
 
 
 def load_config(module, config, commit=False, replace=False):
