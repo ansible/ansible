@@ -111,6 +111,7 @@ changed:
 
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import exec_command

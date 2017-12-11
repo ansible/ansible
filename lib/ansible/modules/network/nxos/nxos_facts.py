@@ -169,6 +169,7 @@ vlan_list:
 import re
 
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
+from ansible.module_utils.network.nxos.nxos import get_capabilities, is_json
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import exec_command

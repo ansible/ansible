@@ -126,7 +126,7 @@ install_state:
 
 import re
 from time import sleep
-from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import exec_command
