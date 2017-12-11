@@ -37,7 +37,7 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon']
+    choices: ['Openshift', 'Amazon', 'oVirt']
   zone:
     description: The ManageIQ zone name that will manage the provider.
     required: false
@@ -310,6 +310,22 @@ EXAMPLES = '''
       url: 'https://127.0.0.1'
       token: 'VeryLongToken'
       verify_ssl: true
+
+
+- name: Create a new oVirt provider in ManageIQ
+  manageiq_provider:
+    name: 'RHEV'
+    type: 'oVirt'
+    state: 'present'
+    provider:
+      hostname: 'rhev01.example.com'
+      userid: 'admin@internal'
+      password: 'password'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
 '''
 
 RETURN = '''
@@ -330,6 +346,9 @@ def supported_providers():
         ),
         Amazon=dict(
             class_name='ManageIQ::Providers::Amazon::CloudManager',
+        ),
+        oVirt=dict(
+            class_name='ManageIQ::Providers::Redhat::InfraManager',
         ),
     )
 
