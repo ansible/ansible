@@ -97,7 +97,7 @@ def main():
         root_class=dict(
             aci_class='mcpIfPol',
             aci_rn='infra/mcpIfP-{}'.format(mcp),
-            filter_target='(mcpIfPol.name, "{}")'.format(mcp),
+            filter_target='eq(mcpIfPol.name, "{}")'.format(mcp),
             module_object=mcp,
         ),
     )
