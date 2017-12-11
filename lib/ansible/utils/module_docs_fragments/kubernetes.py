@@ -21,22 +21,17 @@ class ModuleDocFragment(object):
 options:
   state:
     description:
-    - Determines if an object should be created, patched, or deleted. When set to
-      C(present), the object will be created, if it does not exist, or patched, if
-      parameter values differ from the existing object's attributes, and deleted,
-      if set to C(absent). A patch operation results in merging lists and updating
-      dictionaries, with lists being merged into a unique set of values. If a list
-      contains a dictionary with a I(name) or I(type) attribute, a strategic merge
-      is performed, where individual elements with a matching I(name_) or I(type)
-      are merged. To force the replacement of lists, set the I(force) option to C(True).
+    - Determines if an object should be created, patched, or deleted. When set to C(present), an object will be
+      created, if it does not already exist. If set to C(absent), an existing object will be deleted. If set to
+      C(present), an existing object will be patched, if its attributes differ from those specified using
+      I(resource_definition) or I(src).
     default: present
     choices:
     - present
     - absent
   force:
     description:
-    - If set to C(True), and I(state) is C(present), an existing object will be updated,
-      and lists will be replaced, rather than merged.
+    - If set to C(True), and I(state) is C(present), an existing object will be replaced.
     default: false
     type: bool
   resource_definition:
