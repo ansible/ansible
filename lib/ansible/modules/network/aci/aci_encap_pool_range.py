@@ -237,7 +237,7 @@ def main():
             range_filter_target = 'eq({0}.name, "{1}")'.format(aci_range_class, range_name)
     elif range_start is not None:
         if range_name is None:
-            range_filter_target = 'eq({0}.from, "{1}-{2}")'.format(aci_range_class, encap_start)
+            range_filter_target = 'eq({0}.from, "{1}")'.format(aci_range_class, encap_start)
         else:
             range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.name, "{2}"))'.format(aci_range_class, encap_start, range_name)
     else:
