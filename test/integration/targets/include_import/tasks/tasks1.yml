@@ -1,5 +1,5 @@
 - name: Set variable inside tasks1.yml
   set_fact:
-    var_set_in_task1: yes
+    set_in_tasks1: yes
   tags:
     - task1

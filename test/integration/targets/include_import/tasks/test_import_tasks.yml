@@ -8,7 +8,7 @@
     - name: Assert that fact was set in import
       assert:
         that:
-          - var_set_in_task1
+          - set_in_tasks1
 
     - name: Test conditional task import
       import_tasks: tasks2.yml
@@ -17,4 +17,4 @@
     - name: Assert that tasks were skipped
       assert:
         that:
-          - var_set_in_task2 is not defined
+          - set_in_tasks2 is not defined

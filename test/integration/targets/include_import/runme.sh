@@ -12,8 +12,8 @@ ANSIBLE_STRATEGY='free' ansible-playbook playbook/test_import_playbook.yml -i ..
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i ../../inventory "$@" --tags canary1,canary22,validate --skip-tags skipme
 
 # Tasks
-# ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_import_tasks.yml -i ../../inventory "$@"
-# ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks.yml -i ../../inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_import_tasks.yml -i ../../inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks.yml -i ../../inventory "$@"
 
 # Role
 # ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i ../../inventory "$@"
@@ -33,4 +33,4 @@ ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.ym
 
 ## Recursion
 # https://github.com/ansible/ansible/issues/23609
-ANSIBLE_STRATEGY='linear' ansible-playbook test_recursion.yml -i ../../inventory "$@"
+# ANSIBLE_STRATEGY='linear' ansible-playbook test_recursion.yml -i ../../inventory "$@"
