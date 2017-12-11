@@ -111,10 +111,7 @@ changed:
 
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import exec_command
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -130,24 +127,6 @@ def execute_show_command(command, module, command_type='cli_show'):
         body = run_commands(module, cmds)
 
     return body
-
-
-def check_load_config(module, config, return_error=False):
-
-    rc, out, err = exec_command(module, 'configure')
-    if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', output=to_text(err))
-
-    msgs = []
-    for cmd in config:
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            module.fail_json(msg=to_text(err))
-        elif out:
-            msgs.append(out)
-
-    exec_command(module, 'end')
-    return msgs
 
 
 def flatten_list(command_lists):
@@ -302,12 +281,8 @@ def main():
             module.exit_json(changed=True, commands=cmds)
         else:
             changed = True
-            info = get_capabilities(module)
             # set the return_error to True for load_config
-            if info and info['network_api'] == 'cliconf':
-                msgs = check_load_config(module, cmds, True)
-            elif info is None:
-                msgs = load_config(module, cmds, True)
+            msgs = load_config(module, cmds, True)
             # since there are multiple commands sent simultaneously
             # the output will have one error code for each command.
             # For commands which are successful, it is empty

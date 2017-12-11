@@ -169,10 +169,7 @@ vlan_list:
 import re
 
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
-from ansible.module_utils.network.nxos.nxos import get_capabilities, is_json
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import exec_command
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
 
@@ -187,53 +184,13 @@ class FactsBase(object):
     def populate(self):
         pass
 
-    def execute_module_command(self, command, output):
-        resp = list()
-
-        if command['output'] == 'json' and not is_json(command['command']):
-            cmd = '%s | json' % command['command']
-        elif command['output'] == 'text' and is_json(command['command']):
-            cmd = command['command'].rsplit('|', 1)[0]
-        else:
-            cmd = command['command']
-
-        rc, out, err = exec_command(self.module, cmd)
-        try:
-            out = to_text(out, errors='surrogate_or_strict')
-        except UnicodeError:
-            self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
-
-        if rc != 0:
-            try:
-                out = self.module.from_json(err)
-            except ValueError:
-                out = to_text(err).strip()
-        else:
-            try:
-                out = self.module.from_json(out)
-            except ValueError:
-                out = to_text(out).strip()
-
-        resp.append(out)
-
-        return resp
-
-    def run(self, command, output=None):
+    def run(self, command, output='text'):
         command_string = command
-        info = get_capabilities(self.module)
-
-        if info and info['network_api'] == 'cliconf':
-            if output:
-                command = {'command': command, 'output': output}
-            else:
-                command = {'command': command, 'output': ''}
-            resp = self.execute_module_command(command=command, output=output)
-
-        elif info is None:
-            if output:
-                command = {'command': command, 'output': output}
-            resp = run_commands(self.module, command, check_rc=False)
-
+        command = {
+            'command': command,
+            'output': output
+        }
+        resp = run_commands(self.module, [command], check_rc=False)
         try:
             return resp[0]
         except IndexError:
@@ -271,7 +228,7 @@ class Default(FactsBase):
     ])
 
     def populate(self):
-        data = self.run('show version', 'json')
+        data = self.run('show version', output='json')
         if data:
             if data.get('sys_ver_str'):
                 self.facts.update(self.transform_dict(data, self.VERSION_MAP_7K))
@@ -289,11 +246,11 @@ class Config(FactsBase):
 class Hardware(FactsBase):
 
     def populate(self):
-        data = self.run('dir', 'text')
+        data = self.run('dir')
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.run('show system resources', 'json')
+        data = self.run('show system resources', output='json')
         if data:
             self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
             self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
@@ -327,7 +284,7 @@ class Interfaces(FactsBase):
     ])
 
     def ipv6_structure_op_supported(self):
-        data = self.run('show version', 'json')
+        data = self.run('show version', output='json')
         if data:
             unsupported_versions = ['I2', 'F1', 'A8']
             for ver in unsupported_versions:
@@ -339,11 +296,11 @@ class Interfaces(FactsBase):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.run('show interface', 'json')
+        data = self.run('show interface', output='json')
         if data:
             self.facts['interfaces'] = self.populate_interfaces(data)
 
-        data = self.run('show ipv6 interface', 'json') if self.ipv6_structure_op_supported() else None
+        data = self.run('show ipv6 interface', output='json') if self.ipv6_structure_op_supported() else None
         if data and not isinstance(data, string_types):
             self.parse_ipv6_interfaces(data)
 
@@ -351,7 +308,7 @@ class Interfaces(FactsBase):
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
 
-        data = self.run('show cdp neighbors detail', 'json')
+        data = self.run('show cdp neighbors detail', output='json')
         if data:
             self.facts['neighbors'] = self.populate_neighbors_cdp(data)
 
@@ -473,23 +430,23 @@ class Legacy(FactsBase):
     ])
 
     def populate(self):
-        data = self.run('show version', 'json')
+        data = self.run('show version', output='json')
         if data:
             self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
-        data = self.run('show interface', 'json')
+        data = self.run('show interface', output='json')
         if data:
             self.facts['_interfaces_list'] = self.parse_interfaces(data)
 
-        data = self.run('show vlan brief', 'json')
+        data = self.run('show vlan brief', output='json')
         if data:
             self.facts['_vlan_list'] = self.parse_vlans(data)
 
-        data = self.run('show module', 'json')
+        data = self.run('show module', output='json')
         if data:
             self.facts['_module'] = self.parse_module(data)
 
-        data = self.run('show environment', 'json')
+        data = self.run('show environment', output='json')
         if data:
             self.facts['_fan_info'] = self.parse_fan_info(data)
             self.facts['_power_supply_info'] = self.parse_power_supply_info(data)

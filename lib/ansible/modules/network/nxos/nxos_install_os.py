@@ -126,10 +126,8 @@ install_state:
 
 import re
 from time import sleep
-from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import exec_command
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -160,30 +158,6 @@ def execute_show_command(module, command, output='text'):
     }]
 
     return run_commands(module, cmds)
-
-
-def load_config(module, config, return_error=False, opts=None):
-    """Sends configuration commands to the remote device"""
-    if opts is None:
-        opts = {}
-
-    rc, out, err = exec_command(module, 'configure')
-    if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', output=to_text(err))
-
-    msgs = []
-    for cmd in config:
-        rc, out, err = exec_command(module, cmd)
-        if opts.get('ignore_timeout') and rc == 1:
-            msgs.append(err)
-            return msgs
-        elif rc != 0:
-            module.fail_json(msg=to_text(err))
-        elif out:
-            msgs.append(out)
-
-    exec_command(module, 'end')
-    return msgs
 
 
 def get_platform(module):

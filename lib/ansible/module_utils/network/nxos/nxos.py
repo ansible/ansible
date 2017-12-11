@@ -145,16 +145,33 @@ class Cli:
             else:
                 cmd = item['command']
 
-            out = connection.get(cmd)
+            out = ''
+            try:
+                out = connection.get(cmd)
+                code = 0
+            except ConnectionError as e:
+                code = getattr(e, 'code', 1)
+                message = getattr(e, 'err', e)
+                err = to_text(message, errors='surrogate_then_replace')
+
             try:
                 out = to_text(out, errors='surrogate_or_strict')
             except UnicodeError:
                 self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
-            try:
-                out = self._module.from_json(out)
-            except ValueError:
-                out = to_text(out).strip()
+            if check_rc and code != 0:
+                self._module.fail_json(msg=err)
+
+            if not check_rc and code != 0:
+                try:
+                    out = self._module.from_json(err)
+                except ValueError:
+                    out = to_text(message).strip()
+            else:
+                try:
+                    out = self._module.from_json(out)
+                except ValueError:
+                    out = to_text(out).strip()
 
             responses.append(out)
         return responses
@@ -162,11 +179,26 @@ class Cli:
     def load_config(self, config, return_error=False, opts=None):
         """Sends configuration commands to the remote device
         """
-        connection = self._get_connection()
-        out = connection.edit_config(config)
-        msg = json.loads(out)[1:-1]
+        if opts is None:
+            opts = {}
 
-        return msg
+        connection = self._get_connection()
+
+        msgs = []
+        try:
+            responses = connection.edit_config(config)
+            out = json.loads(responses)[1:-1]
+            msg = out
+        except ConnectionError as e:
+            code = getattr(e, 'code', 1)
+            message = getattr(e, 'err', e)
+            err = to_text(message, errors='surrogate_then_replace')
+            if opts.get('ignore_timeout') and code == 1:
+                return msgs.append(err)
+            elif code != 0:
+                self._module.fail_json(msg=err)
+
+        return msgs.append(msg)
 
     def get_capabilities(self):
         """Returns platform info of the remove device

@@ -19,8 +19,7 @@
   - assert: &fail
       that:
         - "result.failed == true"
-        - "'Invalid command' in result.module_stderr"
-        - "'MODULE FAILURE' in result.msg"
+        - "'Invalid command' in result.msg"
 
   - name: "Enable feature BGP"
     nxos_feature:
