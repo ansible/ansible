@@ -168,6 +168,10 @@ def describe_iam_roles(module, client):
     else:
         params = dict()
         if path_prefix:
+            if not path_prefix.startswith('/'):
+                path_prefix = '/' + path_prefix
+            if not path_prefix.endswith('/'):
+                path_prefix = path_prefix + '/'
             params['PathPrefix'] = path_prefix
         try:
             roles = list_iam_roles_with_backoff(client, **params)['Roles']
