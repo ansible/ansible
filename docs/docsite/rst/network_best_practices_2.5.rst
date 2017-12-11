@@ -361,27 +361,9 @@ Troubleshooting
 
 If you receive an connection error please double check the inventory and Playbook for typos or missing lines, if the issue still occurs follow the debug steps in :doc:`network_debug_troubleshooting`.
 
-
-Platform specific notes
-========================
-
-Juniper (junos)
----------------
-
-From Ansible 2.5 the Juniper (``junos_*``) modules support netconf. This operates in the same was as the ``network_cli`` examples, apart from the ``netconf`` connection method must be specified:
-
-**group_vars/junos.yml**
-
-.. code-block:: yaml
-
-   ansible_connection: netconf
-   ansible_network_os: junos
-
-To enable ``netconf`` use the :ref:`junos_netconf <junos_netconf>` module with ``network_cli``.
-
 .. seealso::
 
-  * Network landing page
+  * intro_network
   * intro_inventory
   * playbooks_best_practices.html#best-practices-for-variables-and-vaults
 
