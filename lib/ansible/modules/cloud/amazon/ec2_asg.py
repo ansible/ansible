@@ -265,7 +265,7 @@ availability_zones:
     ]
 created_time:
     description: Timestamp of create time of the auto scaling group
-    reurned: success
+    returned: success
     type: str
     sample: "2017-11-08T14:41:48.272000+00:00"
 default_cooldown:
