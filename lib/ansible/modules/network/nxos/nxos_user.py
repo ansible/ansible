@@ -147,13 +147,14 @@ delta:
 """
 import re
 
+from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.network.nxos.nxos import run_commands, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
-from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import remove_default_spec, to_list
 
 VALID_ROLES = ['network-admin', 'network-operator', 'vdc-admin', 'vdc-operator',
                'priv-15', 'priv-14', 'priv-13', 'priv-12', 'priv-11', 'priv-10',
@@ -316,21 +317,26 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        aggregate=dict(type='list', no_log=True, aliases=['collection', 'users']),
+    element_spec = dict(
         name=dict(),
-
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
-
         roles=dict(type='list', aliases=['role']),
-
         sshkey=dict(),
-
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['collection', 'users']),
+        purge=dict(type='bool', default=False)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(nxos_argument_spec)
 
     mutually_exclusive = [('name', 'aggregate')]
@@ -339,8 +345,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    result = {'changed': False}
-
     warnings = list()
     if module.params['password'] and not module.params['configured_password']:
         warnings.append(
@@ -348,7 +352,7 @@ def main():
             'To set a user password use "configured_password" instead.'
         )
 
-    check_args(module, warnings)
+    result = {'changed': False}
     result['warnings'] = warnings
 
     want = map_params_to_obj(module)

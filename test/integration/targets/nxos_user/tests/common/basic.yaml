@@ -2,9 +2,9 @@
 - name: Remove old entries of user
   nxos_user:
     aggregate:
-      - name: ansibletest1
-      - name: ansibletest2
-      - name: ansibletest3
+      - { name: ansibletest1 }
+      - { name: ansibletest2 }
+      - { name: ansibletest3 }
     state: absent
     provider: "{{ connection }}"
 
@@ -26,8 +26,8 @@
 - name: Collection of users
   nxos_user:
     aggregate:
-      - name: ansibletest2
-      - name: ansibletest3
+      - { name: ansibletest2 }
+      - { name: ansibletest3 }
     state: present
     roles: network-admin
     provider: "{{ connection }}"
@@ -40,9 +40,9 @@
 - name: tearDown
   nxos_user:
     aggregate:
-      - name: ansibletest1
-      - name: ansibletest2
-      - name: ansibletest3
+      - { name: ansibletest1 }
+      - { name: ansibletest2 }
+      - { name: ansibletest3 }
     state: absent
     provider: "{{ connection }}"
   register: result
