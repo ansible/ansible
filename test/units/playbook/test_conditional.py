@@ -17,8 +17,7 @@ class TestConditional(unittest.TestCase):
         self.shared_loader = SharedPluginLoaderObj()
         self.templar = Templar(loader=self.loader, variables={})
 
-    def _eval_con(self, when=None, variables=None):
-        when = when or []
+    def _eval_con(self, when, variables=None):
         variables = variables or {}
         self.cond.when = when
         ret = self.cond.evaluate_conditional(self.templar, variables)
@@ -50,7 +49,7 @@ class TestConditional(unittest.TestCase):
 
     def test_undefined(self):
         when = [u"{{ some_undefined_thing }}"]
-        self.assertRaisesRegexp(errors.AnsibleError, "The conditional check '{{ some_undefined_thing }}' failed",
+        self.assertRaisesRegexp(errors.AnsibleError, r"error while evaluating conditional \({{ some_undefined_thing }}\)",
                                 self._eval_con, when, {})
 
     def test_defined(self):
@@ -96,7 +95,7 @@ class TestConditional(unittest.TestCase):
 
         when = [u"some_defined_dict_with_undefined_values is defined"]
         self.assertRaisesRegexp(errors.AnsibleError,
-                                "The conditional check 'some_defined_dict_with_undefined_values is defined' failed.",
+                                r"error while evaluating conditional \(some_defined_dict_with_undefined_values is defined\)",
                                 self._eval_con,
                                 when, variables)
 
@@ -114,7 +113,7 @@ class TestConditional(unittest.TestCase):
         when = [u"some_dict.some_dict_key1 == hostvars['host3']"]
         # self._eval_con(when, variables)
         self.assertRaisesRegexp(errors.AnsibleError,
-                                r"The conditional check 'some_dict.some_dict_key1 == hostvars\['host3'\]' failed",
+                                r"error while evaluating conditional \(some_dict.some_dict_key1 == hostvars\['host3'\]\)",
                                 # "The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed",
                                 # "The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed.",
                                 self._eval_con,
@@ -130,7 +129,7 @@ class TestConditional(unittest.TestCase):
         # raises an exception when a non-string conditional is passed to extract_defined_undefined()
         when = [u"some_defined_dict_with_undefined_values"]
         self.assertRaisesRegexp(errors.AnsibleError,
-                                "The conditional check 'some_defined_dict_with_undefined_values' failed.",
+                                r"error while evaluating conditional \(some_defined_dict_with_undefined_values\): 'undefined_dict_value' is undefined",
                                 self._eval_con,
                                 when, variables)
 
@@ -143,7 +142,7 @@ class TestConditional(unittest.TestCase):
 
         when = [u"some_defined_dict_with_undefined_values is defined"]
         self.assertRaisesRegexp(errors.AnsibleError,
-                                "The conditional check 'some_defined_dict_with_undefined_values is defined' failed.",
+                                r"error while evaluating conditional \(some_defined_dict_with_undefined_values is defined\)",
                                 self._eval_con,
                                 when, variables)
 
@@ -209,7 +208,7 @@ class TestConditional(unittest.TestCase):
                 u"{{ compare_targets.triple }} is defined",
                 u"{{ compare_targets.quadruple }} is defined"]
         self.assertRaisesRegexp(errors.AnsibleError,
-                                "The conditional check '{{ compare_targets.triple }} is defined' failed",
+                                r"error while evaluating conditional \({{ compare_targets.triple }} is defined\)",
                                 self._eval_con,
                                 when, variables)
 
@@ -236,3 +235,8 @@ class TestConditional(unittest.TestCase):
         when = [u"hostvars['some_undefined_host'] is not defined"]
         ret = self._eval_con(when, variables)
         self.assertTrue(ret)
+
+    def test_empty_list(self):
+        when = []
+        ret = self._eval_con(when, {})
+        self.assertFalse(ret)

@@ -81,21 +81,28 @@ class Conditional:
         False if any of them evaluate as such.
         '''
 
-        # since this is a mix-in, it may not have an underlying datastructure
-        # associated with it, so we pull it out now in case we need it for
-        # error reporting below
+        # since this is a mix-in, it may not have an underlying datastructure associated with it,
+        # so we pull it out now in case we need it for error reporting below
         ds = None
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
+        if not self.when:
+            # empty list
+            return False
+
         try:
+            # its always a list at this point
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
-        except Exception as e:
-            raise AnsibleError(
-                "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
-            )
+            except AnsibleUndefinedVariable as e:
+                raise AnsibleUndefinedVariable(to_native(e), obj=ds)
+            except AnsibleError as e:
+                raise AnsibleError(to_native(e), obj=ds)
+            except Exception as e:
+                # FIXME: narrow down possible exceptions
+                raise AnsibleError("Attempting to evaluate the conditional '%s' produced this error: %s" % (to_native(conditional), to_native(e)), obj=ds)
 
         return True
 
