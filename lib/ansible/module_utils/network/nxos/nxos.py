@@ -32,7 +32,7 @@ import collections
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
@@ -399,28 +399,6 @@ def is_nxapi(module):
     return 'nxapi' in (transport, provider_transport)
 
 
-def to_command(module, commands):
-    if is_nxapi(module):
-        default_output = 'json'
-    else:
-        default_output = 'text'
-
-    transform = ComplexList(dict(
-        command=dict(key=True),
-        output=dict(default=default_output),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-
-    commands = transform(to_list(commands))
-
-    for item in commands:
-        if is_json(item['command']):
-            item['output'] = 'json'
-
-    return commands
-
-
 def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
@@ -430,7 +408,20 @@ def get_config(module, flags=None):
 
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands), check_rc)
+
+    if is_nxapi(module):
+        default_output = 'json'
+    else:
+        default_output = 'text'
+
+    for index, cmd in enumerate(to_list(commands)):
+        if isinstance(cmd, string_types):
+            commands[index] = cmd = {'command': cmd, 'output': default_output}
+
+        if is_json(cmd['command']):
+            cmd['output'] = 'json'
+
+    return conn.run_commands(to_list(commands), check_rc)
 
 
 def load_config(module, config, return_error=False, opts=None):

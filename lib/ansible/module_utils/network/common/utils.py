@@ -65,6 +65,10 @@ def sort_list(val):
 class Entity(object):
     """Transforms a dict to with an argument spec
 
+    This class has been deprecated as of Ansible 2.5 and will be
+    removed from the code in future release.
+    Please use the suboptions in module argument spec instead.
+
     This class will take a dict and apply an Ansible argument spec to the
     values.  The resulting dict will contain all of the keys in the param
     with appropriate values set.
@@ -183,7 +187,12 @@ class Entity(object):
 
 
 class EntityCollection(Entity):
-    """Extends ```Entity``` to handle a list of dicts """
+    """Extends ```Entity``` to handle a list of dicts
+
+    This class has been deprecated as of Ansible 2.5 and will be
+    removed from the code in future release.
+    Please use the suboptions in module argument spec instead.
+    """
 
     def __call__(self, iterable, strict=True):
         if iterable is None:
@@ -198,11 +207,21 @@ class EntityCollection(Entity):
 # these two are for backwards compatibility and can be removed once all of the
 # modules that use them are updated
 class ComplexDict(Entity):
+    """
+    This class has been deprecated as of Ansible 2.5 and will be
+    removed from the code in future release.
+    Please use the suboptions in module argument spec instead.
+    """
     def __init__(self, attrs, module, *args, **kwargs):
         super(ComplexDict, self).__init__(module, attrs, *args, **kwargs)
 
 
 class ComplexList(EntityCollection):
+    """
+    This class has been deprecated as of Ansible 2.5 and will be
+    removed from the code in future release.
+    Please use the suboptions in module argument spec instead.
+    """
     def __init__(self, attrs, module, *args, **kwargs):
         super(ComplexList, self).__init__(module, attrs, *args, **kwargs)
 

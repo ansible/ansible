@@ -112,11 +112,10 @@ commands:
 import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.config import NetworkConfig
-from ansible.module_utils.network.common.utils import ComplexList
 
 _CONFIGURED_VRFS = None
 
@@ -302,30 +301,11 @@ def map_params_to_obj(module):
     obj = {
         'hostname': module.params['hostname'],
         'domain_lookup': module.params['domain_lookup'],
-        'system_mtu': module.params['system_mtu']
+        'system_mtu': module.params['system_mtu'],
+        'domain_name': module.params['domain_name'],
+        'domain_search': module.params['domain_search'],
+        'name_servers': module.params['name_servers']
     }
-
-    domain_name = ComplexList(dict(
-        name=dict(key=True),
-        vrf=dict()
-    ), module)
-
-    domain_search = ComplexList(dict(
-        name=dict(key=True),
-        vrf=dict()
-    ), module)
-
-    name_servers = ComplexList(dict(
-        server=dict(key=True),
-        vrf=dict()
-    ), module)
-
-    for arg, cast in [('domain_name', domain_name), ('domain_search', domain_search),
-                      ('name_servers', name_servers)]:
-        if module.params[arg] is not None:
-            obj[arg] = cast(module.params[arg])
-        else:
-            obj[arg] = None
 
     return obj
 
@@ -333,18 +313,33 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
+    domain_name_spec = dict(
+        name=dict(key=True),
+        vrf=dict()
+    )
+
+    domain_search_spec = dict(
+        name=dict(key=True),
+        vrf=dict()
+    )
+
+    name_servers_spec = dict(
+        server=dict(key=True),
+        vrf=dict()
+    )
+
     argument_spec = dict(
         hostname=dict(),
         domain_lookup=dict(type='bool'),
 
         # { name: <str>, vrf: <str> }
-        domain_name=dict(type='list'),
+        domain_name=dict(type='list', elements='dict', options=domain_name_spec),
 
         # {name: <str>, vrf: <str> }
-        domain_search=dict(type='list'),
+        domain_search=dict(type='list', elements='dict', options=domain_search_spec),
 
         # { server: <str>; vrf: <str> }
-        name_servers=dict(type='list'),
+        name_servers=dict(type='list', elements='dict', options=name_servers_spec),
 
         system_mtu=dict(type='int'),
         lookup_source=dict(),
@@ -357,7 +352,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:
@@ -375,6 +369,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
