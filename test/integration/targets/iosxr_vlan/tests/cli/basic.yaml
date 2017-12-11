@@ -1,0 +1,59 @@
+---
+- name: setup - remove vlan used in test
+  iosxr_config:
+    lines:
+      - no dot1q native vlan 100
+    parents: "{{ item }}"
+  with_items:
+    - interface GigabitEthernet0/0/0/0
+    - interface GigabitEthernet0/0/0/1
+
+- name: Assign vlan to single subinterface
+  iosxr_vlan: &single
+    vlan_id: 100
+    interfaces: GigabitEthernet0/0/0/0
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'interface GigabitEthernet0/0/0/0' in result.commands"
+      - "'dot1q native vlan 100' in result.commands"
+
+- name: Assign vlan to single subinterface(idempotence)
+  iosxr_vlan: *single
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete vlan assigned to subinterface
+  iosxr_vlan: &delete
+    vlan_id: 100
+    interfaces: GigabitEthernet0/0/0/0
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'interface GigabitEthernet0/0/0/0' in result.commands"
+      - "'no dot1q native vlan 100' in result.commands"
+
+- name: Delete vlan assigned to subinterface(idempotence)
+  iosxr_vlan: *delete
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: TearDown
+  iosxr_config:
+    lines:
+      - no dot1q native vlan 100
+    parents: "{{ item }}"
+  with_items:
+    - interface GigabitEthernet0/0/0/0
+    - interface GigabitEthernet0/0/0/1
