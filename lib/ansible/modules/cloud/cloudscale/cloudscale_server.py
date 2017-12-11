@@ -202,27 +202,23 @@ anti_affinity_with:
   sample: []
 '''
 
-import json
 import os
 from datetime import datetime, timedelta
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.cloudscale import AnsibleCloudscaleBase, cloudscale_argument_spec
 
-
-API_URL = 'https://api.cloudscale.ch/v1/'
 ALLOWED_STATES = ('running',
                   'stopped',
                   'absent',
                   )
 
 
-class AnsibleCloudscaleServer(object):
+class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
-    def __init__(self, module, api_token):
-        self._module = module
-        self._auth_header = {'Authorization': 'Bearer %s' % api_token}
+    def __init__(self, module):
+        super(AnsibleCloudscaleServer, self).__init__(module)
 
         # Check if server already exists and load properties
         uuid = self._module.params['uuid']
@@ -250,49 +246,6 @@ class AnsibleCloudscaleServer(object):
                 self._module.fail_json(msg="More than one server with name '%s' exists. "
                                        "Use the 'uuid' parameter to identify the server." % name)
 
-    def _get(self, api_call):
-        resp, info = fetch_url(self._module, API_URL + api_call, headers=self._auth_header, timeout=self._module.params['api_timeout'])
-
-        if info['status'] == 200:
-            return json.loads(resp.read())
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with GET for '
-                                       '"%s".' % api_call, fetch_url_info=info)
-
-    def _post(self, api_call, data=None):
-        headers = self._auth_header.copy()
-        if data is not None:
-            data = self._module.jsonify(data)
-            headers['Content-type'] = 'application/json'
-
-        resp, info = fetch_url(self._module,
-                               API_URL + api_call,
-                               headers=headers,
-                               method='POST',
-                               data=data,
-                               timeout=self._module.params['api_timeout'])
-
-        if info['status'] == 201:
-            return json.loads(resp.read())
-        elif info['status'] == 204:
-            return None
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with POST for '
-                                       '"%s".' % api_call, fetch_url_info=info)
-
-    def _delete(self, api_call):
-        resp, info = fetch_url(self._module,
-                               API_URL + api_call,
-                               headers=self._auth_header,
-                               method='DELETE',
-                               timeout=self._module.params['api_timeout'])
-
-        if info['status'] == 204:
-            return None
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with DELETE for '
-                                       '"%s".' % api_call, fetch_url_info=info)
-
     @staticmethod
     def _transform_state(server):
         if 'status' in server:
@@ -308,21 +261,15 @@ class AnsibleCloudscaleServer(object):
         if 'uuid' not in self.info:
             return
 
-        # Can't use _get here because we want to handle 404
         url_path = 'servers/' + self.info['uuid']
-        resp, info = fetch_url(self._module,
-                               API_URL + url_path,
-                               headers=self._auth_header,
-                               timeout=self._module.params['api_timeout'])
-        if info['status'] == 200:
-            self.info = self._transform_state(json.loads(resp.read()))
-        elif info['status'] == 404:
+        resp = self._get(url_path)
+
+        if resp:
+            self.info = self._transform_state(resp)
+        else:
             self.info = {'uuid': self.info['uuid'],
                          'name': self.info.get('name', None),
                          'state': 'absent'}
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with GET for '
-                                       '"%s".' % url_path, fetch_url_info=info)
 
     def wait_for_state(self, states):
         start = datetime.now()
@@ -378,41 +325,36 @@ class AnsibleCloudscaleServer(object):
         self.wait_for_state(('stopped', ))
 
     def list_servers(self):
-        return self._get('servers')
+        return self._get('servers') or []
 
 
 def main():
+    argument_spec = cloudscale_argument_spec()
+    argument_spec.update(dict(
+        state=dict(default='running', choices=ALLOWED_STATES),
+        name=dict(),
+        uuid=dict(),
+        flavor=dict(),
+        image=dict(),
+        volume_size_gb=dict(type='int', default=10),
+        bulk_volume_size_gb=dict(type='int'),
+        ssh_keys=dict(type='list'),
+        use_public_network=dict(type='bool', default=True),
+        use_private_network=dict(type='bool', default=False),
+        use_ipv6=dict(type='bool', default=True),
+        anti_affinity_with=dict(),
+        user_data=dict(),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(default='running', choices=ALLOWED_STATES),
-            name=dict(),
-            uuid=dict(),
-            flavor=dict(),
-            image=dict(),
-            volume_size_gb=dict(type='int', default=10),
-            bulk_volume_size_gb=dict(type='int'),
-            ssh_keys=dict(type='list'),
-            use_public_network=dict(type='bool', default=True),
-            use_private_network=dict(type='bool', default=False),
-            use_ipv6=dict(type='bool', default=True),
-            anti_affinity_with=dict(),
-            user_data=dict(),
-            api_token=dict(no_log=True),
-            api_timeout=dict(default=30, type='int'),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(('name', 'uuid'),),
         mutually_exclusive=(('name', 'uuid'),),
         supports_check_mode=True,
     )
 
-    api_token = module.params['api_token'] or os.environ.get('CLOUDSCALE_API_TOKEN')
-
-    if not api_token:
-        module.fail_json(msg='The api_token module parameter or the CLOUDSCALE_API_TOKEN '
-                             'environment varialbe are required for this module.')
-
     target_state = module.params['state']
-    server = AnsibleCloudscaleServer(module, api_token)
+    server = AnsibleCloudscaleServer(module)
     # The server could be in a changeing or error state.
     # Wait for one of the allowed states before doing anything.
     # If an allowed state can't be reached, this module fails.
