@@ -33,4 +33,4 @@ ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks.yml -i ../../in
 
 ## Recursion
 # https://github.com/ansible/ansible/issues/23609
-# ANSIBLE_STRATEGY='linear' ansible-playbook test_recursion.yml -i ../../inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook test_recursion.yml -i ../../inventory "$@"
