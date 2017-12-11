@@ -278,6 +278,9 @@ def run_module():
                 module.fail_json(msg='Secret Type Is Not Present On This Server', **result)
             template = template_test[0]
 
+            if template['Fields'] is None:
+                module.fail_json(msg='Secret Has No Fields', **result)
+
             template_fields = template['Fields']['SecretField']
             template_field_name_test = [x for x in template_fields if x['DisplayName'] == module.params['field_name']]
             # Ensuring the field name is on the template
