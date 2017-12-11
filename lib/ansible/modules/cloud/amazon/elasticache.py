@@ -208,8 +208,6 @@ class ElastiCacheManager(object):
             else:
                 msg = "'%s' is currently deleting. Cannot create."
                 self.module.fail_json(msg=msg % self.name)
-        if self.zone is None:
-            self.zone = ''
 
         kwargs = dict(CacheClusterId=self.name,
                       NumCacheNodes=self.num_nodes,
@@ -219,10 +217,11 @@ class ElastiCacheManager(object):
                       CacheSecurityGroupNames=self.cache_security_groups,
                       SecurityGroupIds=self.security_group_ids,
                       CacheParameterGroupName=self.cache_parameter_group,
-                      CacheSubnetGroupName=self.cache_subnet_group,
-                      PreferredAvailabilityZone=self.zone)
+                      CacheSubnetGroupName=self.cache_subnet_group)
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
+        if self.zone is not None:
+            kwargs['PreferredAvailabilityZone'] = self.zone
 
         try:
             self.conn.create_cache_cluster(**kwargs)
