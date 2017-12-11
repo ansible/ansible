@@ -30,7 +30,9 @@ from ansible.cli.playbook import PlaybookCLI
 
 class TestPlaybookCLI(unittest.TestCase):
     def test_flush_cache(self):
-        cli = PlaybookCLI(args=["--flush-cache", "foobar.yml"])
+        cli = PlaybookCLI(args=["ansible-playbook", "--flush-cache", "foobar.yml"])
+        cli.parse()
+        self.assertTrue(cli.options.flush_cache)
 
         variable_manager = VariableManager()
         fake_loader = DictDataLoader({'foobar.yml': ""})
