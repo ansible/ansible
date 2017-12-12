@@ -27,6 +27,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/33698
 * Fix setting of environment in a task that uses a loop:
   https://github.com/ansible/ansible/issues/32685
+* Fix fetch on Windows failing to fetch files or particular block size
+  (https://github.com/ansible/ansible/pull/33697)
 
 
 <a id="2.4.2"></a>
