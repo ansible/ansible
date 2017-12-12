@@ -29,6 +29,7 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/issues/32685
 * Fix fetch on Windows failing to fetch files or particular block size
   (https://github.com/ansible/ansible/pull/33697)
+* preserve certain fields during no log. https://github.com/ansible/ansible/pull/33637
 
 
 <a id="2.4.2"></a>
