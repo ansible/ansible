@@ -70,6 +70,7 @@ options:
       - admin_distance
   aggregate:
     description: List of static route definitions
+    version_added: 2.5
   state:
     description:
       - Manage the state of the resource.
@@ -300,7 +301,7 @@ def main():
     )
 
     warnings = list()
-    result = {'changed': False}
+    result = {'changed': False, 'commands': []}
     if warnings:
         result['warnings'] = warnings
 
@@ -313,13 +314,12 @@ def main():
         if candidate:
             candidate = candidate.items_text()
             load_config(module, candidate)
-            result['commands'] = candidate
+            result['commands'].extend(candidate)
             result['changed'] = True
         else:
             result['commands'] = []
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()
