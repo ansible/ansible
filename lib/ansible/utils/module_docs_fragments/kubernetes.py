@@ -73,6 +73,14 @@ options:
       providing a full resource definition. Use in conjunction with I(api_version), I(kind), and I(name)
       to identify a specfic object. If I(resource definition) is provided, the I(metadata.namespace) value
       from the I(resource_definition) will override this option.
+  description:
+    description:
+    - Used only when creating an OpenShift project, otherwise ignored. Adds a description to the project meta
+      data. 
+  display_name:
+    description:
+    - Use only when creating an OpenShift project, otherwise ignored. Adds a display name to the project meta
+      data. 
   host:
     description:
     - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
@@ -110,10 +118,11 @@ options:
       environment variable.
   verify_ssl:
     description:
-    - Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL
-      environment variable.
+    - "Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL
+      environment variable."
     type: bool
 
 notes:
-  - "To learn more about the OpenShift Python client, visit: https://github.com/openshift/openshift-restclient-python"
+  - "To learn more about the OpenShift Python client and available object models, visit:
+    https://github.com/openshift/openshift-restclient-python"
 '''
