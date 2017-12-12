@@ -30,9 +30,6 @@ options:
         description:
             - The name of the server.
         required: True
-    tags:
-        description:
-            - Resource tags.
     location:
         description:
             - Resource location.
@@ -125,10 +122,6 @@ class AzureRMServers(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            tags=dict(
-                type='dict',
-                required=False
-            ),
             location=dict(
                 type='str',
                 required=False
@@ -161,9 +154,8 @@ class AzureRMServers(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.parameters = dict()
-        self.parameters['identity'] = dict()
 
-        self.results = dict(changed=False, state=dict())
+        self.results = dict(changed=False)
         self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
@@ -178,31 +170,28 @@ class AzureRMServers(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
-            elif key == "tags":
-                self.parameters["tags"] = kwargs[key]
-            elif key == "location":
-                self.parameters["location"] = kwargs[key]
-            elif key == "admin_username":
-                self.parameters["administrator_login"] = kwargs[key]
-            elif key == "admin_password":
-                self.parameters["administrator_login_password"] = kwargs[key]
-            elif key == "version":
-                self.parameters["version"] = kwargs[key]
-            elif key == "identity":
-                self.parameters['identity']["type"] = kwargs[key]
+            elif kwargs[key] is not None:
+                if key == "location":
+                    self.parameters.update({"location": kwargs[key]})
+                elif key == "admin_username":
+                    self.parameters.update({"administrator_login": kwargs[key]})
+                elif key == "admin_password":
+                    self.parameters.update({"administrator_login_password": kwargs[key]})
+                elif key == "version":
+                    self.parameters.update({"version": kwargs[key]})
+                elif key == "identity":
+                    self.parameters.update({"identity": {"type": kwargs[key]}})
 
         old_response = None
+        response = None
         results = dict()
 
         self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {0} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
 
-        if not ("location" in self.parameters):
+        if "location" not in self.parameters:
             self.parameters["location"] = resource_group.location
 
         old_response = self.get_sqlserver()
@@ -228,30 +217,31 @@ class AzureRMServers(AzureRMModuleBase):
                 return self.results
 
             response = self.create_update_sqlserver()
+            response.pop('administrator_login_password', None)
+
             if not old_response:
                 self.results['changed'] = True
             else:
                 self.results['changed'] = old_response.__ne__(response)
-            self.results.update(response)
-
-            # remove unnecessary fields from return state
-            self.results.pop('name', None)
-            self.results.pop('type', None)
-            self.results.pop('tags', None)
-            self.results.pop('location', None)
-            self.results.pop('identity', None)
-            self.results.pop('kind', None)
-            self.results.pop('administrator_login', None)
-            self.results.pop('administrator_login_password', None)
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("SQL Server instance deleted")
+
+            if self.check_mode:
+                return self.results
+
             self.delete_sqlserver()
             self.results['changed'] = True
         else:
             self.log("SQL Server instance unchanged")
-            self.results['state'] = old_response
             self.results['changed'] = False
+            response = old_response
+
+        if response is not None:
+            self.results["id"] = response["id"]
+            self.results["version"] = response["version"]
+            self.results["state"] = response["state"]
+            self.results["fully_qualified_domain_name"] = response["fully_qualified_domain_name"]
 
         return self.results
 
