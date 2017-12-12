@@ -1,9 +1,9 @@
 - name: Validate public key (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
 
 - name: Validate public key (test - publickey modulus)
-  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey.pub  | openssl md5'
+  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey.pub'
   register: publickey_modulus
 
 - name: Validate public key (assert)
@@ -46,12 +46,12 @@
 
 
 - name: Validate publickey3 (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey3.pem -passin pass:ansible | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey3.pem -passin pass:ansible'
   register: privatekey3_modulus
   when: openssl_version.stdout is version('0.9.8zh', '>=')
 
 - name: Validate publickey3 (test - publickey modulus)
-  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey3.pub  | openssl md5'
+  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey3.pub'
   register: publickey3_modulus
   when: openssl_version.stdout is version('0.9.8zh', '>=')
 
@@ -67,12 +67,12 @@
       - publickey3_idempotence is not changed
 
 - name: Validate publickey4 (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey4_modulus
   when: openssl_version.stdout is version('0.9.8zh', '>=')
 
 - name: Validate publickey4 (test - publickey modulus)
-  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey4.pub  | openssl md5'
+  shell: 'openssl rsa -pubin -noout -modulus < {{ output_dir }}/publickey4.pub'
   register: publickey4_modulus
   when: openssl_version.stdout is version('0.9.8zh', '>=')
 
