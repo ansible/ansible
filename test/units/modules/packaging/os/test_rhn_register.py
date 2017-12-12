@@ -1,14 +1,15 @@
+import contextlib
 import json
+import os
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import PropertyMock, patch, mock_open
+from ansible.compat.tests.mock import mock_open
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_native
+import ansible.module_utils.six
 from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.modules.packaging.os import rhn_register
 
-from units.modules.packaging.utils import mock_request
-from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
+import pytest
 
 
 SYSTEMID = """<?xml version="1.0"?>
@@ -30,250 +31,233 @@ def skipWhenAllModulesMissing(modules):
     for module in modules:
         try:
             __import__(module)
-            return lambda func: func
+            return False
         except ImportError:
             continue
 
-    return unittest.skip("{0}: none are available".format(', '.join(modules)))
+    return True
 
 
-class TestRhnRegister(ModuleTestCase):
+orig_import = __import__
 
-    def setUp(self):
-        super(TestRhnRegister, self).setUp()
 
-        self.module = rhn_register
-        self.module.HAS_UP2DATE_CLIENT = True
+@pytest.fixture
+def import_libxml(mocker):
+    def mock_import(name, *args, **kwargs):
+        if name in ['libxml2', 'libxml']:
+            raise ImportError()
+        else:
+            return orig_import(name, *args, **kwargs)
 
-        load_config_return = {
-            'serverURL': 'https://xmlrpc.rhn.redhat.com/XMLRPC',
-            'systemIdPath': '/etc/sysconfig/rhn/systemid'
+    if ansible.module_utils.six.PY3:
+        mocker.patch('builtins.__import__', side_effect=mock_import)
+    else:
+        mocker.patch('__builtin__.__import__', side_effect=mock_import)
+
+
+@pytest.fixture
+def patch_rhn(mocker):
+    load_config_return = {
+        'serverURL': 'https://xmlrpc.rhn.redhat.com/XMLRPC',
+        'systemIdPath': '/etc/sysconfig/rhn/systemid'
+    }
+
+    mocker.patch.object(rhn_register.Rhn, 'load_config', return_value=load_config_return)
+    mocker.patch.object(rhn_register, 'HAS_UP2DATE_CLIENT', mocker.PropertyMock(return_value=True))
+
+
+@pytest.mark.skipif(skipWhenAllModulesMissing(['libxml2', 'libxml']), reason='none are available: libxml2, libxml')
+def test_systemid_with_requirements(capfd, mocker, patch_rhn):
+    """Check 'msg' and 'changed' results"""
+
+    mocker.patch.object(rhn_register.Rhn, 'enable')
+    mock_isfile = mocker.patch('os.path.isfile', return_value=True)
+    mocker.patch('ansible.modules.packaging.os.rhn_register.open', mock_open(read_data=SYSTEMID), create=True)
+    rhn = rhn_register.Rhn()
+    assert '123456789' == to_native(rhn.systemid)
+
+
+@pytest.mark.parametrize('patch_ansible_module', [{}], indirect=['patch_ansible_module'])
+@pytest.mark.usefixtures('patch_ansible_module')
+def test_systemid_requirements_missing(capfd, mocker, patch_rhn, import_libxml):
+    """Check that missing dependencies are detected"""
+
+    mocker.patch('os.path.isfile', return_value=True)
+    mocker.patch('ansible.modules.packaging.os.rhn_register.open', mock_open(read_data=SYSTEMID), create=True)
+
+    with pytest.raises(SystemExit):
+        rhn_register.main()
+
+    out, err = capfd.readouterr()
+    results = json.loads(out)
+    assert results['failed']
+    assert 'Missing arguments' in results['msg']
+
+
+@pytest.mark.parametrize('patch_ansible_module', [{}], indirect=['patch_ansible_module'])
+@pytest.mark.usefixtures('patch_ansible_module')
+def test_without_required_parameters(capfd, patch_rhn):
+    """Failure must occurs when all parameters are missing"""
+
+    with pytest.raises(SystemExit):
+        rhn_register.main()
+    out, err = capfd.readouterr()
+    results = json.loads(out)
+    assert results['failed']
+    assert 'Missing arguments' in results['msg']
+
+
+TESTED_MODULE = rhn_register.__name__
+TEST_CASES = [
+    [
+        # Registering an unregistered host
+        {
+            'activationkey': 'key',
+            'username': 'user',
+            'password': 'pass',
+        },
+        {
+            'calls': [
+                ('auth.login', ['X' * 43]),
+                ('channel.software.listSystemChannels',
+                    [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]),
+                ('channel.software.setSystemChannels', [1]),
+                ('auth.logout', [1]),
+            ],
+            'is_registered': False,
+            'is_registered.call_count': 1,
+            'enable.call_count': 1,
+            'systemid.call_count': 2,
+            'changed': True,
+            'msg': "System successfully registered to 'rhn.redhat.com'.",
+            'run_command.call_count': 1,
+            'run_command.call_args': '/usr/sbin/rhnreg_ks',
+            'request_called': True,
+            'unlink.call_count': 0,
         }
-        self.mock_load_config = patch.object(rhn_register.Rhn, 'load_config', return_value=load_config_return)
-        self.mock_load_config.start()
-        self.addCleanup(self.mock_load_config.stop)
-
-        enable_patcher = patch.object(rhn_register.Rhn, 'enable')
-        self.mock_enable = enable_patcher.start()
-        self.addCleanup(enable_patcher.stop)
-
-#    This one fails, module needs to be fixed.
-#    @patch('os.path.isfile')
-#    def test_systemid_requirements_missing(self, mock_isfile):
-#        """Check that missing dependencies are detected"""
-#
-#        def mock_import(name, *args):
-#            if name in ['libxml2', 'libxml']:
-#                raise ImportError()
-#            else:
-#                return orig_import(name, *args)
-#
-#        mock_isfile.return_value = True
-#        with patch('ansible.modules.packaging.os.rhn_register.open', mock_open(read_data=SYSTEMID), create=True):
-#            orig_import = __import__
-#            with patch('__builtin__.__import__', side_effect=mock_import):
-#                rhn = self.module.Rhn()
-#                with self.assertRaises(AnsibleFailJson):
-#                    rhn.systemid
-
-    @skipWhenAllModulesMissing(['libxml2', 'libxml'])
-    @patch('os.path.isfile')
-    def test_systemid_with_requirements(self, mock_isfile):
-        """Check systemid property"""
-
-        def mock_import(name, *args):
-            if name in ['libxml2', 'libxml']:
-                raise ImportError()
-            else:
-                return orig_import(name, *args)
-
-        mock_isfile.return_value = True
-        with patch('ansible.modules.packaging.os.rhn_register.open', mock_open(read_data=SYSTEMID), create=True):
-            orig_import = __import__
-            with patch('__builtin__.__import__', side_effect=mock_import):
-                rhn = self.module.Rhn()
-                self.assertEqual('123456789', to_native(rhn.systemid))
-
-    def test_without_required_parameters(self):
-        """Failure must occurs when all parameters are missing"""
-        with self.assertRaises(AnsibleFailJson):
-            set_module_args({})
-            self.module.main()
-
-    def test_register_parameters(self):
-        """Registering an unregistered host"""
-        set_module_args({
+    ],
+    [
+        # Register an host already registered, check that result is unchanged
+        {
             'activationkey': 'key',
             'username': 'user',
             'password': 'pass',
-        })
-
-        responses = [
-            ('auth.login', ['X' * 43]),
-            ('channel.software.listSystemChannels',
-                [[{'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)', 'channel_label': 'rhel-x86_64-server-6'}]]),
-            ('channel.software.setSystemChannels', [1]),
-            ('auth.logout', [1]),
-        ]
-
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            run_command.return_value = 0, '', ''  # successful execution, no output
-            with patch.object(rhn_register.Rhn, 'systemid', PropertyMock(return_value=12345)):
-                with mock_request(responses, self.module.__name__):
-                    with self.assertRaises(AnsibleExitJson) as result:
-                        self.module.main()
-                    self.assertTrue(result.exception.args[0]['changed'])
-                self.assertFalse(responses)  # all responses should have been consumed
-
-        self.assertEqual(self.mock_enable.call_count, 1)
-        self.mock_enable.reset_mock()
-        self.assertEqual(run_command.call_count, 1)
-        self.assertEqual(run_command.call_args[0][0][0], '/usr/sbin/rhnreg_ks')
-
-    def test_register_add_channel(self):
-        """Register an unregistered host and add another channel"""
-        set_module_args({
-            'activationkey': 'key',
-            'username': 'user',
-            'password': 'pass',
-            'channels': 'rhel-x86_64-server-6-debuginfo'
-        })
-
-        responses = [
-            ('auth.login', ['X' * 43]),
-            ('channel.software.listSystemChannels', [[{
-                'channel_name': 'Red Hat Enterprise Linux Server (v. 6 for 64-bit x86_64)',
-                'channel_label': 'rhel-x86_64-server-6'}]]),
-            ('channel.software.setSystemChannels', [1]),
-            ('auth.logout', [1]),
-        ]
-
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            run_command.return_value = 0, '', ''  # successful execution, no output
-            with patch.object(rhn_register.Rhn, 'systemid', PropertyMock(return_value=12345)):
-                with mock_request(responses, self.module.__name__):
-                    with self.assertRaises(AnsibleExitJson) as result:
-                        self.module.main()
-                    self.assertTrue(result.exception.args[0]['changed'])
-                self.assertFalse(responses)  # all responses should have been consumed
-
-        self.assertEqual(self.mock_enable.call_count, 1)
-        self.mock_enable.reset_mock()
-        self.assertEqual(run_command.call_count, 1)
-        self.assertEqual(run_command.call_args[0][0][0], '/usr/sbin/rhnreg_ks')
-
-    def test_already_registered(self):
-        """Register an host already registered, check that result is
-        unchanged"""
-        set_module_args({
-            'activationkey': 'key',
-            'username': 'user',
-            'password': 'pass',
-        })
-
-        responses = []
-
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            with patch.object(rhn_register.Rhn, 'is_registered', PropertyMock(return_value=True)) as mock_systemid:
-                with mock_request(responses, self.module.__name__) as req:
-                    with self.assertRaises(AnsibleExitJson) as result:
-                        self.module.main()
-                    self.assertFalse(result.exception.args[0]['changed'])
-                self.assertFalse(req.called)
-            self.assertEqual(mock_systemid.call_count, 1)
-
-        self.assertEqual(self.mock_enable.call_count, 0)
-        self.assertFalse(run_command.called)
-
-    @patch('os.unlink')
-    def test_unregister(self, mock_unlink):
-        """Unregister an host, check that result is changed"""
-
-        mock_unlink.return_value = True
-
-        set_module_args({
+        },
+        {
+            'calls': [
+            ],
+            'is_registered': True,
+            'is_registered.call_count': 1,
+            'enable.call_count': 0,
+            'systemid.call_count': 0,
+            'changed': False,
+            'msg': 'System already registered.',
+            'run_command.call_count': 0,
+            'request_called': False,
+            'unlink.call_count': 0,
+        },
+    ],
+    [
+        # Unregister an host, check that result is changed
+        {
             'activationkey': 'key',
             'username': 'user',
             'password': 'pass',
             'state': 'absent',
-        })
-
-        responses = [
-            ('auth.login', ['X' * 43]),
-            ('system.deleteSystems', [1]),
-            ('auth.logout', [1]),
-        ]
-
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            run_command.return_value = 0, '', ''  # successful execution, no output
-            mock_is_registered = PropertyMock(return_value=True)
-            mock_systemid = PropertyMock(return_value=12345)
-            with patch.multiple(rhn_register.Rhn, systemid=mock_systemid, is_registered=mock_is_registered):
-                with mock_request(responses, self.module.__name__):
-                    with self.assertRaises(AnsibleExitJson) as result:
-                        self.module.main()
-                    self.assertTrue(result.exception.args[0]['changed'])
-                self.assertFalse(responses)  # all responses should have been consumed
-            self.assertEqual(mock_systemid.call_count, 1)
-            self.assertEqual(mock_is_registered.call_count, 1)
-        self.assertFalse(run_command.called)
-        self.assertEqual(mock_unlink.call_count, 1)
-
-    @patch('os.unlink')
-    def test_unregister_not_registered(self, mock_unlink):
-        """Unregister a unregistered host (systemid missing)
-        locally, check that result is unchanged"""
-
-        mock_unlink.return_value = True
-
-        set_module_args({
+        },
+        {
+            'calls': [
+                ('auth.login', ['X' * 43]),
+                ('system.deleteSystems', [1]),
+                ('auth.logout', [1]),
+            ],
+            'is_registered': True,
+            'is_registered.call_count': 1,
+            'enable.call_count': 0,
+            'systemid.call_count': 1,
+            'changed': True,
+            'msg': 'System successfully unregistered from rhn.redhat.com.',
+            'run_command.call_count': 0,
+            'request_called': True,
+            'unlink.call_count': 1,
+        }
+    ],
+    [
+        # Unregister a unregistered host (systemid missing) locally, check that result is unchanged
+        {
             'activationkey': 'key',
             'username': 'user',
             'password': 'pass',
             'state': 'absent',
-        })
+        },
+        {
+            'calls': [],
+            'is_registered': False,
+            'is_registered.call_count': 1,
+            'enable.call_count': 0,
+            'systemid.call_count': 0,
+            'changed': False,
+            'msg': 'System already unregistered.',
+            'run_command.call_count': 0,
+            'request_called': False,
+            'unlink.call_count': 0,
+        }
 
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            with patch.object(rhn_register.Rhn, 'is_registered', PropertyMock(return_value=False)) as mock_is_registered:
-                with patch('ansible.modules.packaging.os.rhn_register.xmlrpc_client.Transport.request') as req:
-                    with self.assertRaises(AnsibleExitJson) as result:
-                        self.module.main()
-                    self.assertFalse(result.exception.args[0]['changed'])
-                self.assertFalse(req.called)
-            self.assertEqual(mock_is_registered.call_count, 1)
-
-        self.assertFalse(run_command.called)
-        self.assertFalse(mock_unlink.called)
-
-    @patch('os.unlink')
-    def test_unregister_unknown_host(self, mock_unlink):
-        """Unregister an unknown host (an host with a systemid available
-        locally, check that result contains failed"""
-
-        set_module_args({
+    ],
+    [
+        # Unregister an unknown host (an host with a systemid available locally, check that result contains failed
+        {
             'activationkey': 'key',
             'username': 'user',
             'password': 'pass',
             'state': 'absent',
-        })
+        },
+        {
+            'calls': [
+                ('auth.login', ['X' * 43]),
+                ('system.deleteSystems', xmlrpc_client.Fault(1003, 'The following systems were NOT deleted: 123456789')),
+                ('auth.logout', [1]),
+            ],
+            'is_registered': True,
+            'is_registered.call_count': 1,
+            'enable.call_count': 0,
+            'systemid.call_count': 1,
+            'failed': True,
+            'msg': "Failed to unregister: <Fault 1003: 'The following systems were NOT deleted: 123456789'>",
+            'run_command.call_count': 0,
+            'request_called': True,
+            'unlink.call_count': 0,
+        }
+    ],
+]
 
-        responses = [
-            ('auth.login', ['X' * 43]),
-            ('system.deleteSystems', xmlrpc_client.Fault(1003, 'The following systems were NOT deleted: 123456789')),
-            ('auth.logout', [1]),
-        ]
 
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            run_command.return_value = 0, '', ''  # successful execution, no output
-            mock_is_registered = PropertyMock(return_value=True)
-            mock_systemid = PropertyMock(return_value=12345)
-            with patch.multiple(rhn_register.Rhn, systemid=mock_systemid, is_registered=mock_is_registered):
-                with mock_request(responses, self.module.__name__):
-                    with self.assertRaises(AnsibleFailJson) as result:
-                        self.module.main()
-                    self.assertTrue(result.exception.args[0]['failed'])
-                self.assertFalse(responses)  # all responses should have been consumed
-            self.assertEqual(mock_systemid.call_count, 1)
-            self.assertEqual(mock_is_registered.call_count, 1)
-        self.assertFalse(run_command.called)
-        self.assertFalse(mock_unlink.called)
+@pytest.mark.parametrize('patch_ansible_module, testcase', TEST_CASES, indirect=['patch_ansible_module'])
+@pytest.mark.usefixtures('patch_ansible_module')
+def test_register_parameters(mocker, capfd, mock_request, patch_rhn, testcase):
+    # successful execution, no output
+    mocker.patch.object(basic.AnsibleModule, 'run_command', return_value=(0, '', ''))
+    mock_is_registered = mocker.patch.object(rhn_register.Rhn, 'is_registered', mocker.PropertyMock(return_value=testcase['is_registered']))
+    mocker.patch.object(rhn_register.Rhn, 'enable')
+    mock_systemid = mocker.patch.object(rhn_register.Rhn, 'systemid', mocker.PropertyMock(return_value=12345))
+    mocker.patch('os.unlink', return_value=True)
+
+    with pytest.raises(SystemExit):
+        rhn_register.main()
+
+    assert basic.AnsibleModule.run_command.call_count == testcase['run_command.call_count']
+    if basic.AnsibleModule.run_command.call_count:
+        assert basic.AnsibleModule.run_command.call_args[0][0][0] == testcase['run_command.call_args']
+
+    assert mock_is_registered.call_count == testcase['is_registered.call_count']
+    assert rhn_register.Rhn.enable.call_count == testcase['enable.call_count']
+    assert mock_systemid.call_count == testcase['systemid.call_count']
+    assert xmlrpc_client.Transport.request.called == testcase['request_called']
+    assert os.unlink.call_count == testcase['unlink.call_count']
+
+    out, err = capfd.readouterr()
+    results = json.loads(out)
+    assert results.get('changed') == testcase.get('changed')
+    assert results.get('failed') == testcase.get('failed')
+    assert results['msg'] == testcase['msg']
+    assert not testcase['calls']  # all calls should have been consumed
