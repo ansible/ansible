@@ -104,7 +104,7 @@ commands:
   description: The list of configuration mode commands to send to the device
   returned: always, except for the platforms that use Netconf transport to manage the device.
   type: list
-  sample: 
+  sample:
     - interface eth1/5
     - switchport access vlan 20
 """
@@ -534,13 +534,13 @@ def main():
         # Current mode will return layer3, layer2, or unknown
         if current_mode == 'unknown' or current_mode == 'layer3':
             module.fail_json(msg='Ensure interface is configured to be a L2'
-                            '\nport first before using this module. You can use'
-                            '\nthe nxos_interface module for this.')
+                             '\nport first before using this module. You can use'
+                             '\nthe nxos_interface module for this.')
 
         if interface_is_portchannel(name, module):
             module.fail_json(msg='Cannot change L2 config on physical '
-                            '\nport because it is in a portchannel. '
-                            '\nYou should update the portchannel config.')
+                             '\nport because it is in a portchannel. '
+                             '\nYou should update the portchannel config.')
 
         # existing will never be null for Eth intfs as there is always a default
         existing = get_switchport(name, module)
@@ -567,12 +567,12 @@ def main():
         if state == 'present':
             if access_vlan and access_vlan not in current_vlans:
                 module.fail_json(msg='You are trying to configure a VLAN'
-                                ' on an interface that\ndoes not exist on the '
-                                ' switch yet!', vlan=access_vlan)
+                                 ' on an interface that\ndoes not exist on the '
+                                 ' switch yet!', vlan=access_vlan)
             elif native_vlan and native_vlan not in current_vlans:
                 module.fail_json(msg='You are trying to configure a VLAN'
-                                ' on an interface that\ndoes not exist on the '
-                                ' switch yet!', vlan=native_vlan)
+                                 ' on an interface that\ndoes not exist on the '
+                                 ' switch yet!', vlan=native_vlan)
             else:
                 command = get_switchport_config_commands(name, existing, proposed, module)
                 commands.append(command)
