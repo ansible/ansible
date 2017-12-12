@@ -36,29 +36,16 @@ See the `list of supported platforms and versions <https://github.com/ansible/an
 Environment Variables
 ---------------------
 
-Having a generic note about the limitations of using --docker (or --remote) is probably better than specifically mentioning ANSIBLE_KEEP_REMOTE_FILES in relation to those options. The limitations would be:
-When using Environment Variables along with test cases to attempt and manipulate
-the test runtimes, there some limitations to keep in mind:
+When using environment variables to manipulate tests there some limitations to keep in mind. Environment variables are:
 
-* Environment variables are not propogated from the host to the container
-  (``--docker``) or remote (``--remote``) unless defined as whitelisted in
-  ``test/runner/lib/util.py`` in the ``common_environment`` function.
+* Not propagated from the host to the test environment when using the ``--docker`` or ``--remote`` options. 
+* Not exposed to the test environment unless whitelisted in ``test/runner/lib/util.py`` in the ``common_environment`` function.
+* Not exposed to the test environment when using the ``--tox`` option unless whitelisted in ``test/runner/tox.ini`` by the ``passenv`` definition.
 
-  *  As an example, this can be useful when using ``ansible-test shell
-    --docker`` to run local tests inside of a docker container with the testing
-    environment pre-setup and want to pass `ANSIBLE_KEEP_REMOTE_FILES=1` on to
-    the tests inside the container and follow the :ref:`Debugging
-    AnsibleModule-based modules <debugging_ansiblemodule_based_modules>`
-    practices. This can be useful for testing and debugging on operating systems
-    or Linux distributions other than what you have installed on your local
-    system.
-
-* Environemnt Variables are not propogated to the tests when using tox
-  (``--tox``) unless they are defined as whitelisted in ``test/runner/tox.ini``
-  by the ``passenv`` definition.
-* Most files from tests are not copied to the host from the container
-  (``--docker``) or remote (``--remote``)
-
+    Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --tox``. However, using the ``--docker`` option would 
+    require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set 
+    and the tests executed. This is useful for debugging tests inside a container by following the 
+    :ref:`Debugging AnsibleModule-based modules <debugging_ansiblemodule_based_modules>` instructions.
 
 Interactive Shell
 =================
