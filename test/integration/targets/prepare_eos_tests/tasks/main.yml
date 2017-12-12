@@ -4,9 +4,8 @@
       - no shutdown
       - no switchport
     parents: int Ethernet1
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
+  connection: network_cli
 
 - name: Enable Ethernet2 interface and disable switchport
   eos_config:
@@ -14,6 +13,5 @@
       - no shutdown
       - no switchport
     parents: int Ethernet2
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
+  connection: network_cli
