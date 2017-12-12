@@ -19,7 +19,7 @@ DOCUMENTATION = """
     options:
       remote_addr:
         description:
-            - Zone identifire
+            - Zone identifier
         default: inventory_hostname
         vars:
             - name: ansible_host
