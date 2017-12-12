@@ -36,14 +36,6 @@ options:
     location:
         description:
             - Resource location.
-    identity:
-        description:
-            - The Azure Active Directory identity of the server.
-        suboptions:
-            type:
-                description:
-                    - "The identity type. Set this to 'SystemAssigned' in order to automatically create and assign an Azure Active Directory principal for th
-                       e resource. Possible values include: 'SystemAssigned'"
     admin_username:
         description:
             - Administrator username for the server. Once created it cannot be changed.
@@ -52,7 +44,11 @@ options:
             - The administrator login password (required for server creation).
     version:
         description:
-            - The version of the server.
+            - "The version of the server. For example '12.0'."
+    identity:
+        description:
+            - "The identity type. Set this to 'SystemAssigned' in order to automatically create and assign an Azure Active Directory principal for the resour
+               ce. Possible values include: 'SystemAssigned'"
 
 extends_documentation_fragment:
     - azure
@@ -137,19 +133,20 @@ class AzureRMServers(AzureRMModuleBase):
                 type='str',
                 required=False
             ),
-            identity=dict(
-                type='dict',
-                required=False
-            ),
             admin_username=dict(
                 type='str',
                 required=False
             ),
             admin_password=dict(
                 type='str',
+                no_log=True,
                 required=False
             ),
             version=dict(
+                type='str',
+                required=False
+            ),
+            identity=dict(
                 type='str',
                 required=False
             ),
@@ -164,6 +161,7 @@ class AzureRMServers(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.parameters = dict()
+        self.parameters['identity'] = dict()
 
         self.results = dict(changed=False, state=dict())
         self.mgmt_client = None
@@ -184,14 +182,14 @@ class AzureRMServers(AzureRMModuleBase):
                 self.parameters["tags"] = kwargs[key]
             elif key == "location":
                 self.parameters["location"] = kwargs[key]
-            elif key == "identity":
-                self.parameters["identity"] = kwargs[key]
             elif key == "admin_username":
                 self.parameters["administrator_login"] = kwargs[key]
             elif key == "admin_password":
                 self.parameters["administrator_login_password"] = kwargs[key]
             elif key == "version":
                 self.parameters["version"] = kwargs[key]
+            elif key == "identity":
+                self.parameters['identity']["type"] = kwargs[key]
 
         old_response = None
         results = dict()

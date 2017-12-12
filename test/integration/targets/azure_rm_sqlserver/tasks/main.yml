@@ -1,7 +1,11 @@
+- name: Prepare random number
+  set_fact:
+    random_postfix: "{{ 1000 | random }}"
+  run_once: yes
 - name: Create instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: sql-test-server-dauih
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
@@ -15,7 +19,7 @@
 - name: Update instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: sql-test-server-dauih
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     location: eastus
     admin_username: mylogin
     admin_password: Testpasswordxyz12!
@@ -29,7 +33,7 @@
 - name: Delete instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
-    name: sql-test-server-dauih
+    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
     state: absent
   register: output
 - name: Assert the state has changed
