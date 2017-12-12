@@ -251,7 +251,7 @@ auto_scaling_group_name:
     returned: success
     type: str
     sample: "myasg"
-auto_scaling_group_name:
+auto_scaling_group_arn:
     description: The unique ARN of the autoscaling group
     returned: success
     type: str
