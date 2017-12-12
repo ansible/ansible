@@ -118,7 +118,7 @@ def human_readable(size, isbits=False, unit=None):
     ''' Return a human readable string '''
     try:
         return basic.bytes_to_human(size, isbits, unit)
-    except:
+    except Exception:
         raise errors.AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
 
@@ -126,7 +126,7 @@ def human_to_bytes(size, default_unit=None, isbits=False):
     ''' Return bytes count from a human readable string '''
     try:
         return basic.human_to_bytes(size, default_unit, isbits)
-    except:
+    except Exception:
         raise errors.AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
 
