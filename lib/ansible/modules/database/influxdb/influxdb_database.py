@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: influxdb_database
-short_description: Manage InfluxDB databases
+short_description: Manage InfluxDB databases.
 description:
-    - Manage InfluxDB databases
+    - Manage InfluxDB databases.
 version_added: 2.1
 author: "Kamil Szczygiel (@kamsz)"
 requirements:
@@ -26,33 +26,29 @@ requirements:
 options:
     hostname:
         description:
-            - The hostname or IP address on which InfluxDB server is listening
+            - The hostname or IP address on which InfluxDB server is listening.
         required: true
     username:
         description:
-            - Username that will be used to authenticate against InfluxDB server
+            - Username that will be used to authenticate against InfluxDB server.
         default: root
-        required: false
     password:
         description:
-            - Password that will be used to authenticate against InfluxDB server
+            - Password that will be used to authenticate against InfluxDB server.
         default: root
-        required: false
     port:
         description:
-            - The port on which InfluxDB server is listening
+            - The port on which InfluxDB server is listening.
         default: 8086
-        required: false
     database_name:
         description:
-            - Name of the database that will be created/destroyed
+            - Name of the database that will be created/destroyed.
         required: true
     state:
         description:
-            - Determines if the database should be created or destroyed
-        choices: ['present', 'absent']
+            - Determines if the database should be created or destroyed.
+        choices: [ present, absent ]
         default: present
-        required: false
 '''
 
 EXAMPLES = '''
@@ -79,79 +75,49 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-#only defaults
+# only defaults
 '''
 
-try:
-    import requests.exceptions
-    from influxdb import InfluxDBClient
-    from influxdb import exceptions
-    HAS_INFLUXDB = True
-except ImportError:
-    HAS_INFLUXDB = False
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.database.influxdb import (
+    influxdb_argument_spec,
+    AnsibleInfluxDB
+)
 
 
-def influxdb_argument_spec():
-    return dict(
-        hostname=dict(required=True, type='str'),
-        port=dict(default=8086, type='int'),
-        username=dict(default='root', type='str'),
-        password=dict(default='root', type='str', no_log=True),
-        database_name=dict(required=True, type='str')
-    )
+class AnsibleInfluxDBDatabase(AnsibleInfluxDB):
 
+    def create_database(self, database_name):
+        client = self.connect()
+        if not self.module.check_mode:
+            try:
+                client.create_database(database_name)
+            except Exception as e:
+                self.module.fail_json(msg=to_native(e))
+        self.module.exit_json(changed=True)
 
-def connect_to_influxdb(module):
-    hostname = module.params['hostname']
-    port = module.params['port']
-    username = module.params['username']
-    password = module.params['password']
-    database_name = module.params['database_name']
+    def drop_database(self, database_name):
+        client = self.connect()
+        if not self.module.check_mode:
+            try:
+                client.drop_database(database_name)
+            except Exception as e:
+                self.module.fail_json(msg=to_native(e))
+        self.module.exit_json(changed=True)
 
-    client = InfluxDBClient(
-        host=hostname,
-        port=port,
-        username=username,
-        password=password,
-        database=database_name
-    )
-    return client
-
-
-def find_database(module, client, database_name):
-    database = None
-
-    try:
-        databases = client.get_list_database()
-        for db in databases:
-            if db['name'] == database_name:
-                database = db
-                break
-    except requests.exceptions.ConnectionError as e:
-        module.fail_json(msg=str(e))
-    return database
-
-
-def create_database(module, client, database_name):
-    if not module.check_mode:
+    def find_database(self, database_name):
+        client = self.connect()
+        database = None
         try:
-            client.create_database(database_name)
-        except requests.exceptions.ConnectionError as e:
-            module.fail_json(msg=str(e))
-
-    module.exit_json(changed=True)
-
-
-def drop_database(module, client, database_name):
-    if not module.check_mode:
-        try:
-            client.drop_database(database_name)
-        except exceptions.InfluxDBClientError as e:
-            module.fail_json(msg=e.content)
-
-    module.exit_json(changed=True)
+            databases = client.get_list_database()
+            for db in databases:
+                if db['name'] == database_name:
+                    database = db
+                    break
+        except Exception as e:
+            self.module.fail_json(msg=to_native(e))
+        return database
 
 
 def main():
@@ -164,24 +130,21 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_INFLUXDB:
-        module.fail_json(msg='influxdb python package is required for this module')
+    influx = AnsibleInfluxDBDatabase(module)
 
     state = module.params['state']
     database_name = module.params['database_name']
 
-    client = connect_to_influxdb(module)
-    database = find_database(module, client, database_name)
-
+    database = influx.find_database(database_name)
     if state == 'present':
         if database:
             module.exit_json(changed=False)
         else:
-            create_database(module, client, database_name)
+            influx.create_database(database_name)
 
     if state == 'absent':
         if database:
-            drop_database(module, client, database_name)
+            influx.drop_database(database_name)
         else:
             module.exit_json(changed=False)
 
