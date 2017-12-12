@@ -1,5 +1,4 @@
 #!powershell
-# This file is part of Ansible
 
 # Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 # Copyright: (c) 2017, Ansible Project
@@ -71,19 +70,19 @@ Function Copy-File($source, $dest) {
             Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': object at dest parent dir is not a folder"
         } elseif (-not (Test-Path -Path $file_dir)) {
             # directory doesn't exist, need to create
-            New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode > $null
             $diff += "+$file_dir\`n"
         }
 
         if (Test-Path -Path $dest -PathType Leaf) {
-            Remove-Item -Path $dest -Force -Recurse -WhatIf:$check_mode | Out-Null
+            Remove-Item -Path $dest -Force -Recurse -WhatIf:$check_mode > $null
             $diff += "-$dest`n"
         }
 
         if (-not $check_mode) {
             # cannot run with -WhatIf:$check_mode as if the parent dir didn't
             # exist and was created above would still not exist in check mode
-            Copy-Item -Path $source -Destination $dest -Force | Out-Null
+            Copy-Item -Path $source -Destination $dest -Force > $null
         }
         $diff += "+$dest`n"
 
@@ -108,7 +107,7 @@ Function Copy-Folder($source, $dest) {
             Fail-Json -obj $result -message "cannot copy folder from '$source' to '$dest': dest is already a file"
         }
 
-        New-Item -Path $dest -ItemType Container -WhatIf:$check_mode | Out-Null
+        New-Item -Path $dest -ItemType Container -WhatIf:$check_mode > $null
         $diff += "+$dest\`n"
         $result.changed = $true
     }
@@ -174,7 +173,7 @@ Function Extract-Zip($src, $dest) {
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
         if (-not (Test-Path -Path $entry_dir)) {
-            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode > $null
         }
 
         if ($is_dir -eq $false) {
@@ -187,7 +186,7 @@ Function Extract-Zip($src, $dest) {
 
 Function Extract-ZipLegacy($src, $dest) {
     if (-not (Test-Path -Path $dest)) {
-        New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode | Out-Null
+        New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode > $null
     }
     $shell = New-Object -ComObject Shell.Application
     $zip = $shell.NameSpace($src)
@@ -206,7 +205,7 @@ Function Extract-ZipLegacy($src, $dest) {
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
         if (-not (Test-Path -Path $entry_dir)) {
-            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode > $null
         }
 
         if ($is_dir -eq $false -and (-not $check_mode)) {
@@ -219,7 +218,7 @@ Function Extract-ZipLegacy($src, $dest) {
 
             # once file is extraced, we need to rename it with non base64 name
             $combined_encoded_path = [System.IO.Path]::Combine($dest, $encoded_archive_entry)
-            Move-Item -Path $combined_encoded_path -Destination $entry_target_path -Force | Out-Null
+            Move-Item -Path $combined_encoded_path -Destination $entry_target_path -Force > $null
         }
     }
 }
@@ -282,8 +281,8 @@ if ($mode -eq "query") {
     # Detect if the PS zip assemblies are available or whether to use Shell
     $use_legacy = $false
     try {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
-        Add-Type -AssemblyName System.IO.Compression | Out-Null
+        Add-Type -AssemblyName System.IO.Compression.FileSystem > $null
+        Add-Type -AssemblyName System.IO.Compression > $null
     } catch {
         $use_legacy = $true
     }
@@ -376,7 +375,7 @@ if ($mode -eq "query") {
         if (Test-Path -Path $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
         } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
-            New-Item -Path $parent_dir -ItemType Directory | Out-Null
+            New-Item -Path $parent_dir -ItemType Directory > $null
         }
     } else {
         $remote_dest = $dest
@@ -390,7 +389,7 @@ if ($mode -eq "query") {
         }
     }
 
-    Copy-Item -Path $src -Destination $remote_dest -Force | Out-Null
+    Copy-Item -Path $src -Destination $remote_dest -Force > $null
     $result.changed = $true
 }
 
