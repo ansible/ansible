@@ -66,7 +66,7 @@ class InventoryData(object):
         data = {
             'groups': self.groups,
             'hosts': self.hosts,
-            'local': self.locahost,
+            'local': self.localhost,
             'source': self.current_source,
         }
         return data
