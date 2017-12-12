@@ -440,7 +440,7 @@ def main():
             if prev_state == 'absent':
                 try:
                     open(b_path, 'wb').close()
-                except OSError as e:
+                except (OSError, IOError) as e:
                     module.fail_json(path=path, msg='Error, could not touch target: %s' % to_native(e, nonstring='simplerepr'))
             elif prev_state in ('file', 'directory', 'hard'):
                 try:
