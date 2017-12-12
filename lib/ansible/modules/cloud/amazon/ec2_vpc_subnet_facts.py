@@ -44,6 +44,7 @@ options:
       - Optional attribute for sorting the results by specified key
     choices: ['subnet_id', 'cidr_block', 'availability_zone']
     required: false
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
