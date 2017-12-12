@@ -80,6 +80,7 @@ options:
   mode:
     description:
       - Set VLAN mode to classical ethernet or fabricpath.
+        This is a valid option for Nexus 5000 and 7000 series.
     required: false
     default: ce
     choices: ['ce','fabricpath']
@@ -134,9 +135,9 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
+from ansible.module_utils.network.common.utils import remove_default_spec
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -156,20 +157,24 @@ def get_diff(w, have):
             return diff_dict
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates, module, os_platform):
     commands = list()
     want, have = updates
 
     for w in want:
         vlan_id = w['vlan_id']
         name = w['name']
-        interfaces = w['interfaces']
+        interfaces = w.get('interfaces') or []
         mapped_vni = w['mapped_vni']
-        mode = w['mode']
         vlan_state = w['vlan_state']
         admin_state = w['admin_state']
         state = w['state']
         del w['state']
+        if any(i in os_platform for i in ['5K', '7K']):
+            mode = w['mode']
+        else:
+            w['mode'] = None
+            mode = w['mode']
 
         obj_in_have = search_obj_in_list(vlan_id, have)
 
@@ -312,12 +317,13 @@ def map_params_to_obj(module):
                     item[key] = module.params[key]
 
             d = item.copy()
+            d['vlan_id'] = str(d['vlan_id'])
             d['mapped_vni'] = str(d['mapped_vni'])
 
             obj.append(d)
     else:
         obj.append({
-            'vlan_id': module.params['vlan_id'],
+            'vlan_id': str(module.params['vlan_id']),
             'name': module.params['name'],
             'interfaces': module.params['interfaces'],
             'vlan_state': module.params['vlan_state'],
@@ -338,7 +344,10 @@ def parse_admin_state(vlan):
         return 'down'
 
 
-def parse_mode(output, vlan_id):
+def parse_mode(os_platform, output, vlan_id):
+    if not any(i in os_platform for i in ['5K', '7K']):
+        return None
+
     try:
         mtus = output['TABLE_mtuinfo']['ROW_mtuinfo']
     except KeyError:
@@ -399,20 +408,20 @@ def parse_interfaces(module, vlan):
     return vlan_int
 
 
-def parse_vlan_options(module, output, vlan):
+def parse_vlan_options(module, os_platform, output, vlan):
     obj = {}
     vlan_id = vlan['vlanshowbr-vlanid-utf']
-    obj['vlan_id'] = vlan_id
+    obj['vlan_id'] = str(vlan_id)
     obj['name'] = vlan.get('vlanshowbr-vlanname')
     obj['vlan_state'] = vlan.get('vlanshowbr-vlanstate')
     obj['admin_state'] = parse_admin_state(vlan)
-    obj['mode'] = parse_mode(output, vlan_id)
+    obj['mode'] = parse_mode(os_platform, output, vlan_id)
     obj['mapped_vni'] = parse_vni(module, vlan_id)
     obj['interfaces'] = parse_interfaces(module, vlan)
     return obj
 
 
-def map_config_to_obj(module):
+def map_config_to_obj(module, os_platform):
     objs = list()
     output = run_commands(module, ['show vlan | json'])[0]
     try:
@@ -423,20 +432,20 @@ def map_config_to_obj(module):
     if vlans:
         if isinstance(vlans, list):
             for vlan in vlans:
-                obj = parse_vlan_options(module, output, vlan)
+                obj = parse_vlan_options(module, os_platform, output, vlan)
                 objs.append(obj)
 
         elif isinstance(vlans, dict):
-            obj = parse_vlan_options(module, output, vlans)
+            obj = parse_vlan_options(module, os_platform, output, vlans)
             objs.append(obj)
 
     return objs
 
 
-def check_declarative_intent_params(want, module):
+def check_declarative_intent_params(want, module, os_platform):
     if module.params['interfaces']:
         time.sleep(module.params['delay'])
-        have = map_config_to_obj(module)
+        have = map_config_to_obj(module, os_platform)
 
         for w in want:
             for i in w['interfaces']:
@@ -485,19 +494,22 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
+    info = get_capabilities(module).get('device_info', {})
+    os_platform = info.get('network_os_platform', '')
+
     warnings = list()
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings
 
-    have = map_config_to_obj(module)
+    have = map_config_to_obj(module, os_platform)
     want = map_params_to_obj(module)
 
     if module.params['vlan_range']:
         commands = vlan_range_commands(module, have)
         result['commands'] = commands
     else:
-        commands = map_obj_to_commands((want, have), module)
+        commands = map_obj_to_commands((want, have), module, os_platform)
         result['commands'] = commands
 
     if commands:
@@ -506,7 +518,7 @@ def main():
         result['changed'] = True
 
     if want and result['changed']:
-        check_declarative_intent_params(want, module)
+        check_declarative_intent_params(want, module, os_platform)
 
     module.exit_json(**result)
 
