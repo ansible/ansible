@@ -80,6 +80,12 @@ options:
         description:
             - The interpreter cache to use for keeping track of
               interpreter dependencies for the pex tool.
+    interpreter_constraint:
+        default: null
+        description:
+            - A list of constraints that determines the interpreter compatibility for
+              this pex, using the Requirement-style format, e.g. C(CPython>=3), or
+              C(>=2.7) for requirements agnostic to interpreter class.
     packages:
         default: []
         description:
@@ -91,6 +97,10 @@ options:
             - >
               The path to save the generated .pex file: Omiting this will
               run PEX immediately and not save it to a file.
+    pex_path:
+        default: None
+        description:
+            - A list of other pex files to merge into the runtime environment.
     pex_root:
         default: ~/.pex
         description:
@@ -101,6 +111,19 @@ options:
             - >
               The platform for which to build the PEX.
               Defaults: Auto determine on the target machine.
+    preamble_file:
+        default: null
+        description:
+            - The name of a file to be included as the preamble for
+              the generated .pex file
+    prereleases_allowed:
+        aliases:
+            - pre
+        default: False
+        description:
+            - Whether to include pre-release and development versions of
+              requirements if not explicitly requested.
+        type: bool
     python:
         default: null
         description:
@@ -162,6 +185,7 @@ notes:
     - When not supplying I(pex_name) the module will always report a change,
       as the pex will be built and destroyed in a single execution. Supplying
       I(pex_name) is idempotent.
+    - Tested up to C(pex==1.2.15)
 '''
 
 EXAMPLES = '''
@@ -251,6 +275,7 @@ def setup_options(params):
 
     packages = options.pop('packages')
     use_pypi = options.pop('use_pypi')
+    allow_prereleases = options.pop('pre')
     args = options.pop('args')
 
     builder = ResolverOptionsBuilder()
@@ -264,7 +289,9 @@ def setup_options(params):
         builder.add_index(PyPIFetcher.PYPI_BASE)
         options.repos.append(PyPIFetcher())
 
-    return options, packages, args
+    builder.allow_prereleases(allow_prereleases)
+
+    return options, packages, args, builder
 
 
 def pex_info_dict(pex_info):
@@ -354,6 +381,10 @@ def main():
                 'type': 'path',
                 'default': '~/.pex/interpreters',
             },
+            'interpreter_constraint': {
+                'type': 'list',
+                'default': [],
+            },
             'use_pypi': {
                 'type': 'bool',
                 'default': True,
@@ -373,7 +404,20 @@ def main():
             'verbosity': {
                 'type': 'int',
                 'default': 0,
-            }
+            },
+            'preamble_file': {
+                'type': 'path',
+                'default': None,
+            },
+            'pex_path': {
+                'type': 'list',
+                'default': None,
+            },
+            'pre': {
+                'aliases': ['prereleases_allowed'],
+                'type': 'bool',
+                'default': False,
+            },
         },
         mutually_exclusive=[
             ['entry_point', 'script'],
@@ -387,14 +431,14 @@ def main():
     if not HAS_PEX:
         module.fail_json(msg="The pex python package is required for this module")
 
-    options, packages, args = setup_options(module.params)
+    options, packages, args, resolver_option_builder = setup_options(module.params)
 
     build_log = StringIO()
     TRACER._output = build_log
     ENV.set('PEX_VERBOSE', str(options.verbosity))
 
     try:
-        pex_builder = build_pex(packages, options, None)
+        pex_builder = build_pex(packages, options, resolver_option_builder)
     except AttributeError as e:
         module.fail_json(
             msg='Module not compatible with the installed version of pex: %s' % e,
@@ -421,7 +465,7 @@ def main():
     changed = False
     try:
         current_info = PexInfo.from_pex(options.pex_name)
-    except IOError:
+    except (IOError, TypeError):
         changed = True
     else:
         if are_pex_equal(current_info, pex_builder.info):
