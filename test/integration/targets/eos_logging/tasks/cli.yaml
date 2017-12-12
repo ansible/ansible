@@ -16,7 +16,7 @@
     loop_var: test_case_to_run
 
 - name: run test case (connection=local)
-  include: "{{ test_case_to_run }} ansible_connection=local"
+  include: "{{ test_case_to_run }} ansible_connection=local ansible_become=no"
   with_first_found: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
