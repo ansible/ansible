@@ -126,7 +126,7 @@ The "Vault" feature of Ansible allows keeping sensitive data such as passwords o
 
   The ansible-connection setting tells Ansible how it should connect to a remote device. When working with Ansible Networking, setting this to ``ansible_connection: network_cli`` informs Ansible that the remote node is a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
 :ansible_network_os:
-  Informs Ansible which Network platform this hosts corresponds to. This is required when using ``network_cli``
+  Informs Ansible which Network platform this hosts corresponds to. This is required when using ``network_cli`` or ``netconf``.
 :ansible_user: The user to connect to the remote device (switch) as. Without this the user that is running ``ansible-playbook`` would be used.
   Specifies which user on the network device the connection
 :ansible_ssh_pass:
@@ -150,7 +150,7 @@ Certain network platforms, such as eos and ios, have the concept of different pr
    ansible_become: yes
    ansible_become_method: enable
 
-For more information, see the :doc:`Ansible Privilege Escalation<become>` guide.
+For more information, see the :ref:`using become with network modules<become-and-networks>` guide.
 
 
 Jump hosts
@@ -215,15 +215,15 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
        #
        - name: Gather facts (eos)
          eos_facts:
-         when: "'eos' in group_names"
+         when: ansible_network_os == 'eos'
 
        - name: Gather facts (ops)
          ios_facts:
-         when: "'ios' in group_names"
+         when: ansible_network_os == 'ios'
 
        - name: Gather facts (vyos)
          vyos_facts:
-         when: "'vyos' in group_names"
+         when: ansible_network_os == 'vyos'
 
        ###
        # Demonstrate variables
@@ -274,13 +274,13 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
          eos_config:
            backup: yes
          register: backup_eos_location
-         when: "'eos' in group_names"
+         when: ansible_network_os == 'eos'
 
        - name: backup switch (vyos)
          vyos_config:
            backup: yes
          register: backup_vyos_location
-         when: "'vyos' in group_names"
+         when: ansible_network_os == 'vyos'
 
        - name: Create backup dir
          file:
@@ -292,13 +292,13 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
          copy:
            src: "{{ backup_eos_location.backup_path }}"
            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
-         when: "'eos' in group_names"
+         when: ansible_network_os == 'eos'
 
        - name: Copy backup files into /tmp/backups/ (vyos)
          copy:
            src: "{{ backup_vyos_location.backup_path }}"
            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
-         when: "'vyos' in group_names"
+         when: ansible_network_os == 'vyos'
 
 Running the playbook
 --------------------
