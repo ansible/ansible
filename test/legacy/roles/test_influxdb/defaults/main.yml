@@ -1,0 +1,3 @@
+---
+influxdb_ip_address: localhost
+influxdb_database_name: ansible-test
