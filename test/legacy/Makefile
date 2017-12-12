@@ -87,6 +87,11 @@ exoscale:
 	RC=$$? ; \
 	exit $$RC;
 
+influxdb:
+	ansible-playbook influxdb.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
 jenkins:
 	ansible-playbook jenkins.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
 	RC=$$? ; \

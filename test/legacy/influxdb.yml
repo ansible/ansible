@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: yes
+  pre_tasks:
+  - shell: nc -z -w5 localhost 8086 || docker run -d -p 8086:8086 influxdb
+  roles:
+    - { role: test_influxdb, tags: test_influxdb }

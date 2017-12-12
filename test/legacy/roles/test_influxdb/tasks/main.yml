@@ -1,0 +1,125 @@
+---
+- name: setup
+  influxdb_database:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+    state: absent
+  register: idb
+- name: verify setup
+  assert:
+    that:
+      - idb is success
+
+- name: test create database in check mode
+  influxdb_database:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+  check_mode: true
+  register: idb
+- name: verify test create database in check mode
+  assert:
+    that:
+      - idb is changed
+
+- name: test create database
+  influxdb_database:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+  register: idb
+- name: verify test create database
+  assert:
+    that:
+      - idb is changed
+
+- name: test create database idempotence
+  influxdb_database:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+  register: idb
+- name: verify test create database idempotence
+  assert:
+    that:
+      - idb is not changed
+
+- name: test write points into database
+  influxdb_write:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+    data_points:
+    - measurement: connections
+      tags:
+        host: server01
+        region: us-west
+      time: "{{ ansible_date_time.iso8601 }}"
+      fields:
+        value: 2000
+    - measurement: connections
+      tags:
+        host: server02
+        region: us-east
+      time: "{{ ansible_date_time.iso8601 }}"
+      fields:
+        value: 3000
+  register: idb
+- name: verify write points into database
+  assert:
+    that:
+      - idb is changed
+
+- name: test read points from database
+  influxdb_query:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+    query: "select mean(value) from connections"
+  register: idb
+- name: verify test read points from database
+  assert:
+    that:
+      - idb is changed
+      - idb.results[0].mean == 2500
+
+- name: test read points from database
+  influxdb_query:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+    query: "select mean(value) from connections where region='us-east'"
+  register: idb
+- name: verify test read points from database
+  assert:
+    that:
+      - idb is changed
+      - idb.results[0].mean == 3000
+
+- name: test remove database in check mode
+  influxdb_database:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+    state: absent
+  check_mode: true
+  register: idb
+- name: verify test remove database in check mode
+  assert:
+    that:
+      - idb is changed
+
+- name: test remove database
+  influxdb_database:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+    state: absent
+  register: idb
+- name: verify test remove database
+  assert:
+    that:
+      - idb is changed
+
+- name: test remove database idempotence
+  influxdb_database:
+    hostname: "{{ influxdb_ip_address }}"
+    database_name: "{{ influxdb_database_name }}"
+    state: absent
+  register: idb
+- name: verify test remove database idempotence
+  assert:
+    that:
+      - idb is not changed
