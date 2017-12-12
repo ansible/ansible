@@ -33,6 +33,32 @@ An API key is required to use this feature.
 
 See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/runner/completion/remote.txt>`_ for additional details.
 
+Environment Variables
+---------------------
+
+Having a generic note about the limitations of using --docker (or --remote) is probably better than specifically mentioning ANSIBLE_KEEP_REMOTE_FILES in relation to those options. The limitations would be:
+When using Environment Variables along with test cases to attempt and manipulate
+the test runtimes, there some limitations to keep in mind:
+
+* Environment variables are not propogated from the host to the container
+  (``--docker``) or remote (``--remote``) unless defined as whitelisted in
+  ``test/runner/lib/util.py`` in the ``common_environment`` function.
+
+  *  As an example, this can be useful when using ``ansible-test shell
+    --docker`` to run local tests inside of a docker container with the testing
+    environment pre-setup and want to pass `ANSIBLE_KEEP_REMOTE_FILES=1` on to
+    the tests inside the container and follow the :ref:`Debugging
+    AnsibleModule-based modules <debugging_ansiblemodule_based_modules>`
+    practices. This can be useful for testing and debugging on operating systems
+    or Linux distributions other than what you have installed on your local
+    system.
+
+* Environemnt Variables are not propogated to the tests when using tox
+  (``--tox``) unless they are defined as whitelisted in ``test/runner/tox.ini``
+  by the ``passenv`` definition.
+* Most files from tests are not copied to the host from the container
+  (``--docker``) or remote (``--remote``)
+
 
 Interactive Shell
 =================
@@ -42,13 +68,6 @@ Use the ``ansible-test shell`` command to get an interactive shell in the same e
 * ``ansible-test shell --docker`` - Open a shell in the default docker container.
 * ``ansible-test shell --tox --python 3.6`` - Open a shell in the Python 3.6 ``tox`` environment.
 
-.. note:: When using ``ansible-test shell --docker`` to run local tests inside
-          of a docker container with the testing environment pre-setup, you can
-          optionally pass `ANSIBLE_KEEP_REMOTE_FILES=1` and follow the
-          :ref:`Debugging AnsibleModule-based modules
-          <debugging_ansiblemodule_based_modules>` practices. This can be
-          useful for testing and debugging on operating systems or Linux
-          distributions other than what you have installed on your local system.
 
 Code Coverage
 =============
