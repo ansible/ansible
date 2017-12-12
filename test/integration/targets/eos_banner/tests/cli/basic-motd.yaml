@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/basic-motd.yaml on connection={{ ansible_connection }}"
+
 - name: Remove previous motd banner
   eos_config:
     lines: no banner motd

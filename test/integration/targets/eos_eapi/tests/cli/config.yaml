@@ -1,7 +1,6 @@
+---
 - debug: msg="START cli/config.yaml on connection={{ ansible_connection }}"
 
-
-#----
 - name: Setup
   eos_config:
     lines: no management api http-commands

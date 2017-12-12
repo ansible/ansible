@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/basic-login.yaml on connection={{ ansible_connection }}"
+
 - name: Remove previous login banner
   eos_config:
     lines: no banner login

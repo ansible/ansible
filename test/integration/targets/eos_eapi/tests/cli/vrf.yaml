@@ -1,7 +1,6 @@
+---
 - debug: msg="START cli/vrf.yaml on connection={{ ansible_connection }}"
 
-
-#----
 - name: Set invalid VRF
   eos_eapi:
     vrf: foobar
