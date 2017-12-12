@@ -1,20 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
 
-# this is a windows documentation stub, actual code lives in the .ps1
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -73,13 +63,13 @@ EXAMPLES = r'''
     path: C:\foo.ini
   register: file_info
 
-# Obtain information about a folder
-- win_stat:
+- name: Obtain information about a folder
+  win_stat:
     path: C:\bar
   register: folder_info
 
-# Get MD5 checksum of a file
-- win_stat:
+- name: Get MD5 checksum of a file
+  win_stat:
     path: C:\foo.ini
     get_checksum: yes
     checksum_algorithm: md5
@@ -88,8 +78,8 @@ EXAMPLES = r'''
 - debug:
     var: md5_checksum.stat.checksum
 
-# Get SHA1 checksum of file
-- win_stat:
+- name: Get SHA1 checksum of file
+  win_stat:
     path: C:\foo.ini
     get_checksum: yes
   register: sha1_checksum
@@ -97,8 +87,8 @@ EXAMPLES = r'''
 - debug:
     var: sha1_checksum.stat.checksum
 
-# Get SHA256 checksum of file
-- win_stat:
+- name: Get SHA256 checksum of file
+  win_stat:
     path: C:\foo.ini
     get_checksum: yes
     checksum_algorithm: sha256
@@ -120,7 +110,7 @@ stat:
     type: complex
     contains:
         attributes:
-            description: attributes of the file at path in raw form
+            description: Attributes of the file at path in raw form
             returned: success, path exists
             type: string
             sample: "Archive, Hidden"
@@ -131,97 +121,119 @@ stat:
             type: string
             sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
         creationtime:
-            description: the create time of the file represented in seconds since epoch
+            description: The create time of the file represented in seconds since epoch
             returned: success, path exists
             type: float
             sample: 1477984205.15
         exists:
-            description: if the path exists or not
+            description: If the path exists or not
             returned: success
             type: boolean
             sample: True
         extension:
-            description: the extension of the file at path
+            description: The extension of the file at path
             returned: success, path exists, path is a file
             type: string
             sample: ".ps1"
         filename:
-            description: the name of the file (without path)
+            description: The name of the file (without path)
             returned: success, path exists, path is a file
             type: string
             sammple: foo.ini
+        hlnk_targets:
+            description: List of other files pointing to the same file (hard links), excludes the current file
+            returned: success, path exists
+            type: list
+            sample:
+            - C:\temp\file.txt
+            - C:\Windows\update.log
         isarchive:
-            description: if the path is ready for archiving or not
+            description: If the path is ready for archiving or not
             returned: success, path exists
             type: boolean
             sample: True
         isdir:
-            description: if the path is a directory or not
+            description: If the path is a directory or not
             returned: success, path exists
             type: boolean
             sample: True
         ishidden:
-            description: if the path is hidden or not
+            description: If the path is hidden or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        isjunction:
+            description: If the path is a junction point or not
             returned: success, path exists
             type: boolean
             sample: True
         islnk:
-            description: if the path is a symbolic link or junction or not
+            description: If the path is a symbolic link or not
             returned: success, path exists
             type: boolean
             sample: True
         isreadonly:
-            description: if the path is read only or not
+            description: If the path is read only or not
             returned: success, path exists
             type: boolean
             sample: True
         isreg:
-            description: if the path is a regular file
+            description: If the path is a regular file
             returned: success, path exists
             type: boolean
             sample: True
         isshared:
-            description: if the path is shared or not
+            description: If the path is shared or not
             returned: success, path exists
             type: boolean
             sample: True
         lastaccesstime:
-            description: the last access time of the file represented in seconds since epoch
+            description: The last access time of the file represented in seconds since epoch
             returned: success, path exists
             type: float
             sample: 1477984205.15
         lastwritetime:
-            description: the last modification time of the file represented in seconds since epoch
+            description: The last modification time of the file represented in seconds since epoch
             returned: success, path exists
             type: float
             sample: 1477984205.15
         lnk_source:
-            description: the target of the symbolic link, will return null if not a link or the link is broken
-            return: success, path exists, file is a symbolic link
+            description: Target of the symlink normalized for the remote filesystem
+            returned: success, path exists and the path is a symbolic link or junction point
             type: string
-            sample: C:\temp
+            sample: C:\temp\link
+        lnk_target:
+            description: Target of the symlink. Note that relative paths remain relative
+            returned: success, path exists and the path is a symbolic link or junction point
+            type: string
+            sample: ..\link
         md5:
             description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash), will be removed in 2.9
             returned: success, path exist, path is a file, get_md5 == True
             type: string
             sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
+        nlink:
+            description: Number of links to the file (hard links)
+            returned: success, path exists
+            type: int
+            sample: 1
         owner:
-            description: the owner of the file
+            description: The owner of the file
             returned: success, path exists
             type: string
             sample: BUILTIN\Administrators
         path:
-            description: the full absolute path to the file
+            description: The full absolute path to the file
             returned: success, path exists, file exists
             type: string
             sample: C:\foo.ini
         sharename:
-            description: the name of share if folder is shared
+            description: The name of share if folder is shared
             returned: success, path exists, file is a directory and isshared == True
             type: string
             sample: file-share
         size:
-            description: the size in bytes of a file or folder
+            description: The size in bytes of a file or folder
             returned: success, path exists, file is not a link
             type: int
             sample: 1024
