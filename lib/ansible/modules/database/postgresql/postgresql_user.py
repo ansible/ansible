@@ -54,7 +54,7 @@ options:
     description:
       - if C(yes), fail when user can't be removed. Otherwise just log and continue
     default: 'yes'
-    choices: [ "yes", "no" ]
+    choices: [ yes, no ]
   port:
     description:
       - Database port to connect to.
@@ -82,14 +82,14 @@ options:
   role_attr_flags:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
+      - Note that '[NO]CREATEUSER' is deprecated.
     default: ""
-    choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
-                    "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
+    choices: [ "[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
   state:
     description:
       - The user (role) state
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ present, absent ]
   encrypted:
     description:
       - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
@@ -108,7 +108,7 @@ options:
       - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
     default: 'no'
-    choices: [ "yes", "no" ]
+    choices: [ yes, no ]
     version_added: '2.0'
   ssl_mode:
     description:
@@ -216,7 +216,7 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 
 
-FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
+FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
@@ -226,8 +226,7 @@ VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRU
 
 # map to cope with idiosyncracies of SUPERUSER and LOGIN
 PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
-                             CREATEUSER='rolcreateuser', CREATEDB='rolcreatedb',
-                             INHERIT='rolinherit', LOGIN='rolcanlogin',
+                             CREATEDB='rolcreatedb', INHERIT='rolinherit', LOGIN='rolcanlogin',
                              REPLICATION='rolreplication', BYPASSRLS='rolbypassrls')
 
 
@@ -619,11 +618,12 @@ def parse_role_attrs(cursor, role_attr_flags):
     Where:
 
         attributes := CREATEDB,CREATEROLE,NOSUPERUSER,...
-        [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
+        [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEDB",
                             "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION",
                             "[NO]BYPASSRLS" ]
 
     Note: "[NO]BYPASSRLS" role attribute introduced in 9.5
+    Note: "[NO]CREATEUSER" role attribute is deprecated.
 
     """
     flags = frozenset(role.upper() for role in role_attr_flags.split(',') if role)
