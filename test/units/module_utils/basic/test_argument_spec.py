@@ -27,6 +27,14 @@ VALID_SPECS = (
     ({'arg': {'type': 'int'}}, {'arg': 42}, 42),
     # Type=int with conversion from string
     ({'arg': {'type': 'int'}}, {'arg': '42'}, 42),
+    # Simple type=float
+    ({'arg': {'type': 'float'}}, {'arg': 42.0}, 42.0),
+    # Type=float conversion from int
+    ({'arg': {'type': 'float'}}, {'arg': 42}, 42.0),
+    # Type=float conversion from string
+    ({'arg': {'type': 'float'}}, {'arg': '42.0'}, 42.0),
+    # Type=float conversion from string without decimal point
+    ({'arg': {'type': 'float'}}, {'arg': '42'}, 42.0),
     # Simple type=bool
     ({'arg': {'type': 'bool'}}, {'arg': True}, True),
     # Type=int with conversion from string
@@ -40,8 +48,10 @@ VALID_SPECS = (
 )
 
 INVALID_SPECS = (
-    # Type is int; unable to convert parameter
+    # Type is int; unable to convert this string
     ({'arg': {'type': 'int'}}, {'arg': "bad"}, "invalid literal for int() with base 10: 'bad'"),
+    # Type is int; unable to convert float
+    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> cannot be converted to an int"),
     # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
     # unknown parameter
@@ -70,7 +80,6 @@ def complex_argspec():
         mutually_exclusive=mut_ex,
         required_together=req_to,
         no_log=True,
-        check_invalid_arguments=False,
         add_file_common_args=True,
         supports_check_mode=True,
     )
@@ -113,7 +122,6 @@ def options_argspec_list():
     kwargs = dict(
         argument_spec=arg_spec,
         no_log=True,
-        check_invalid_arguments=False,
         add_file_common_args=True,
         supports_check_mode=True
     )
@@ -294,7 +302,7 @@ class TestComplexOptions:
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
         # Invalid option
-        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'bad'),
+        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: invalid found in foobar. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]},
          'parameters are mutually exclusive: bam, bam1 found in foobar'),
@@ -314,7 +322,8 @@ class TestComplexOptions:
         # Missing required option
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
         # Invalid option
-        ({'foobar': {"foo": "hello", "bam": "good", "invalid": "bad"}}, 'bad'),
+        ({'foobar': {"foo": "hello", "bam": "good", "invalid": "bad"}},
+         'module: invalid found in foobar. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': {"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}},
          'parameters are mutually exclusive: bam, bam1 found in foobar'),
@@ -356,9 +365,8 @@ class TestComplexOptions:
         out, err = capfd.readouterr()
         results = json.loads(out)
 
-        print(results)
         assert results['failed']
-        assert results['msg'] == expected
+        assert expected in results['msg']
 
     @pytest.mark.parametrize('stdin, expected', FAILING_PARAMS_LIST, indirect=['stdin'])
     def test_fail_validate_options_list(self, capfd, stdin, options_argspec_list, expected):
@@ -369,9 +377,8 @@ class TestComplexOptions:
         out, err = capfd.readouterr()
         results = json.loads(out)
 
-        print(results)
         assert results['failed']
-        assert results['msg'] == expected
+        assert expected in results['msg']
 
     @pytest.mark.parametrize('stdin', [{'foobar': {'foo': 'required', 'bam1': 'test', 'bar': 'case'}}], indirect=['stdin'])
     def test_fallback_in_option(self, mocker, stdin, options_argspec_dict):
@@ -386,115 +393,23 @@ class TestComplexOptions:
         assert am.params['foobar']['baz'] == 'test data'
 
 
-class TestArgSpec(ModuleTestCase):
-
-    def test_module_utils_basic_ansible_module_type_check(self):
-        from ansible.module_utils import basic
-
-        arg_spec = dict(
-            foo=dict(type='float'),
-            foo2=dict(type='float'),
-            foo3=dict(type='float'),
-            bar=dict(type='int'),
-            bar2=dict(type='int'),
-        )
-
-        # should test ok
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={
-            "foo": 123.0,  # float
-            "foo2": 123,  # int
-            "foo3": "123",  # string
-            "bar": 123,  # int
-            "bar2": "123",  # string
-        }))
-
-        with swap_stdin_and_argv(stdin_data=args):
-            basic._ANSIBLE_ARGS = None
-            am = basic.AnsibleModule(
-                argument_spec=arg_spec,
-                no_log=True,
-                check_invalid_arguments=False,
-                add_file_common_args=True,
-                supports_check_mode=True,
-            )
-
-        # fail, because bar does not accept floating point numbers
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bar": 123.0}))
-
-        with swap_stdin_and_argv(stdin_data=args):
-            basic._ANSIBLE_ARGS = None
-            self.assertRaises(
-                SystemExit,
-                basic.AnsibleModule,
-                argument_spec=arg_spec,
-                no_log=True,
-                check_invalid_arguments=False,
-                add_file_common_args=True,
-                supports_check_mode=True,
-            )
-
-    def test_module_utils_basic_ansible_module_options_type_check(self):
-        from ansible.module_utils import basic
-
-        options_spec = dict(
-            foo=dict(type='float'),
-            foo2=dict(type='float'),
-            foo3=dict(type='float'),
-            bar=dict(type='int'),
-            bar2=dict(type='int'),
-        )
-
-        arg_spec = dict(foobar=dict(type='list', elements='dict', options=options_spec))
-        # should test ok
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{
-            "foo": 123.0,  # float
-            "foo2": 123,  # int
-            "foo3": "123",  # string
-            "bar": 123,  # int
-            "bar2": "123",  # string
-        }]}))
-
-        with swap_stdin_and_argv(stdin_data=args):
-            basic._ANSIBLE_ARGS = None
-            am = basic.AnsibleModule(
-                argument_spec=arg_spec,
-                no_log=True,
-                check_invalid_arguments=False,
-                add_file_common_args=True,
-                supports_check_mode=True,
-            )
-
-        # fail, because bar does not accept floating point numbers
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'foobar': [{"bar": 123.0}]}))
-
-        with swap_stdin_and_argv(stdin_data=args):
-            basic._ANSIBLE_ARGS = None
-            self.assertRaises(
-                SystemExit,
-                basic.AnsibleModule,
-                argument_spec=arg_spec,
-                no_log=True,
-                check_invalid_arguments=False,
-                add_file_common_args=True,
-                supports_check_mode=True,
-            )
-
-    def test_module_utils_basic_ansible_module_load_file_common_arguments(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
-
+class TestLoadFileCommonArguments:
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_smoketest_load_file_common_args(self, am):
+        """With no file arguments, an empty dict is returned"""
         am.selinux_mls_enabled = MagicMock()
         am.selinux_mls_enabled.return_value = True
         am.selinux_default_context = MagicMock()
         am.selinux_default_context.return_value = 'unconfined_u:object_r:default_t:s0'.split(':', 3)
 
-        # with no params, the result should be an empty dict
-        res = am.load_file_common_arguments(params=dict())
-        self.assertEqual(res, dict())
+        assert am.load_file_common_arguments(params={}) == {}
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_load_file_common_args(self, am, mocker):
+        am.selinux_mls_enabled = MagicMock()
+        am.selinux_mls_enabled.return_value = True
+        am.selinux_default_context = MagicMock()
+        am.selinux_default_context.return_value = 'unconfined_u:object_r:default_t:s0'.split(':', 3)
 
         base_params = dict(
             path='/path/to/file',
@@ -524,7 +439,9 @@ class TestArgSpec(ModuleTestCase):
         # only those params which have something to do with the file arguments, excluding
         # other params and updated as required with proper values which may have been
         # massaged by the method
-        with patch('os.path.islink', return_value=True):
-            with patch('os.path.realpath', return_value='/path/to/real_file'):
-                res = am.load_file_common_arguments(params=extended_params)
-                self.assertEqual(res, final_params)
+        mocker.patch('os.path.islink', return_value=True)
+        mocker.patch('os.path.realpath', return_value='/path/to/real_file')
+
+        res = am.load_file_common_arguments(params=extended_params)
+
+        assert res == final_params
