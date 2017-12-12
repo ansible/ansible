@@ -68,6 +68,7 @@ Ansible Changes By Release
 * ec2_placement_group
 * ecs_taskdefinition_facts
 * elasticache_facts
+* iam_role_facts
 
 #### Windows
 
