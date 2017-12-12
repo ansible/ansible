@@ -162,6 +162,8 @@ def rekey_on_member(data, key, duplicates='error'):
         except Exception as e:
             raise errors.AnsibleFilterError(to_native(e))
 
+        # Note: if new_obj[key_elem] exists it will always be a non-empty dict (it will at
+        # minimun contain {key: key_elem}
         if new_obj.get(key_elem, None):
             if duplicates == 'error':
                 raise errors.AnsibleFilterError("Key {0} is not unique, cannot correctly turn into dict".format(key_elem))
