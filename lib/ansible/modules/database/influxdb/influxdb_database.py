@@ -53,6 +53,18 @@ options:
         choices: ['present', 'absent']
         default: present
         required: false
+    ssl:
+        description:
+            - Use https instead of http to connect to InfluxDB, defaults to False
+        required: false
+        default: false
+        version_added: 2.5
+    validate_certs:
+        description:
+            - verify SSL certificates for HTTPS requests, defaults to True
+        required: false
+        default: true
+        version_added: 2.5
 '''
 
 EXAMPLES = '''
@@ -61,6 +73,14 @@ EXAMPLES = '''
   influxdb_database:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
+      state: present
+
+- name: Create database, use HTTPs to connect to the server and validate the cert
+  influxdb_database:
+      hostname: "{{influxdb_ip_address}}"
+      database_name: "{{influxdb_database_name}}"
+      ssl: true
+      validate_certs: true
       state: present
 
 - name: Destroy database
@@ -99,7 +119,9 @@ def influxdb_argument_spec():
         port=dict(default=8086, type='int'),
         username=dict(default='root', type='str'),
         password=dict(default='root', type='str', no_log=True),
-        database_name=dict(required=True, type='str')
+        database_name=dict(required=True, type='str'),
+        ssl=dict(required=False, type="bool", default=False),
+        validate_certs=dict(required=False, type="bool", default=True)
     )
 
 
@@ -109,13 +131,17 @@ def connect_to_influxdb(module):
     username = module.params['username']
     password = module.params['password']
     database_name = module.params['database_name']
+    ssl = module.params['ssl']
+    validate_certs = module.params['validate_certs']
 
     client = InfluxDBClient(
         host=hostname,
         port=port,
         username=username,
         password=password,
-        database=database_name
+        database=database_name,
+        ssl=ssl,
+        verify_ssl=validate_certs
     )
     return client
 
