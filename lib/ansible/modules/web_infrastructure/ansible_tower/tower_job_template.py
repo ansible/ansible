@@ -177,6 +177,8 @@ def update_fields(p):
         'ask_tags': 'ask_tags_on_launch',
         'ask_job_type': 'ask_job_type_on_launch',
         'machine_credential': 'credential',
+        'ask_inventory': 'ask_inventory_on_launch',
+        'ask_credential': 'ask_credential_on_launch',
     }
 
     params_update = {}
