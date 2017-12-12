@@ -1,0 +1,15 @@
+- name: Test import_tasks using tags
+  hosts: testhost
+
+  tasks:
+    - name: Import tasks1.yml
+      import_tasks: tasks1.yml
+
+    - name: Import tasks2.yml
+      import_tasks: tasks2.yml
+
+    - name: Assert that fact was set in import
+      assert:
+        that:
+          - set_in_tasks1
+          - set_in_tasks2 is not defined

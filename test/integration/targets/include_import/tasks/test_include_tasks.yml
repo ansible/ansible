@@ -4,3 +4,7 @@
   tasks:
     - name: Test basic task include
       include_tasks: tasks1.yml
+
+# loops
+# tags
+# blocks

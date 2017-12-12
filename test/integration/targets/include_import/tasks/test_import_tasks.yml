@@ -18,3 +18,25 @@
       assert:
         that:
           - set_in_tasks2 is not defined
+
+    - block:
+        - name: Import tasks inside a block
+          import_tasks: tasks3.yml
+
+        - name: Assert that task3 was included
+          assert:
+            that:
+              - set_in_tasks3
+
+      always:
+        - name: Import task inside always
+          import_tasks: tasks4.yml
+
+        - name: Validate that variables set in previously improted tasks are passed down.
+          import_tasks: validate3.yml
+
+        - name: Assert that tasks4 was included
+          assert:
+            that:
+              - set_in_tasks4
+
