@@ -6,7 +6,6 @@ from itertools import product
 import json
 
 from ansible.modules.packaging.os import rhn_channel
-from units.modules.packaging.utils import get_method_name, mock_request
 
 import pytest
 
@@ -24,6 +23,7 @@ def test_without_required_parameters(capfd):
     assert 'missing required arguments' in results['msg']
 
 
+TESTED_MODULE = rhn_channel.__name__
 TEST_CASES = [
     [
         # add channel already added, check that result isn't changed
@@ -129,13 +129,11 @@ TEST_CASES = [
 
 
 @pytest.mark.parametrize('patch_ansible_module, testcase', TEST_CASES, indirect=['patch_ansible_module'])
-def test_rhn_channel(capfd, mocker, testcase):
+def test_rhn_channel(capfd, mocker, testcase, mock_request):
     """Check 'msg' and 'changed' results"""
 
-    request = mock_request(mocker, testcase['calls'], rhn_channel.__name__)
-    with request() as req:
-        with pytest.raises(SystemExit):
-            rhn_channel.main()
+    with pytest.raises(SystemExit):
+        rhn_channel.main()
 
     out, err = capfd.readouterr()
     results = json.loads(out)

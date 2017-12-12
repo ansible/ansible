@@ -9,8 +9,6 @@ import ansible.module_utils.six
 from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.modules.packaging.os import rhn_register
 
-from units.modules.packaging.utils import mock_request
-
 import pytest
 
 
@@ -109,6 +107,7 @@ def test_without_required_parameters(capfd, patch_rhn):
     assert 'Missing arguments' in results['msg']
 
 
+TESTED_MODULE = rhn_register.__name__
 TEST_CASES = [
     [
         # Registering an unregistered host
@@ -235,7 +234,7 @@ TEST_CASES = [
 
 @pytest.mark.parametrize('patch_ansible_module, testcase', TEST_CASES, indirect=['patch_ansible_module'])
 @pytest.mark.usefixtures('patch_ansible_module')
-def test_register_parameters(mocker, capfd, patch_rhn, testcase):
+def test_register_parameters(mocker, capfd, mock_request, patch_rhn, testcase):
     # successful execution, no output
     mocker.patch.object(basic.AnsibleModule, 'run_command', return_value=(0, '', ''))
     mock_is_registered = mocker.patch.object(rhn_register.Rhn, 'is_registered', mocker.PropertyMock(return_value=testcase['is_registered']))
@@ -243,10 +242,8 @@ def test_register_parameters(mocker, capfd, patch_rhn, testcase):
     mock_systemid = mocker.patch.object(rhn_register.Rhn, 'systemid', mocker.PropertyMock(return_value=12345))
     mocker.patch('os.unlink', return_value=True)
 
-    request = mock_request(mocker, testcase['calls'], rhn_register.__name__)
-    with request() as req:
-        with pytest.raises(SystemExit):
-            rhn_register.main()
+    with pytest.raises(SystemExit):
+        rhn_register.main()
 
     assert basic.AnsibleModule.run_command.call_count == testcase['run_command.call_count']
     if basic.AnsibleModule.run_command.call_count:
@@ -255,7 +252,7 @@ def test_register_parameters(mocker, capfd, patch_rhn, testcase):
     assert mock_is_registered.call_count == testcase['is_registered.call_count']
     assert rhn_register.Rhn.enable.call_count == testcase['enable.call_count']
     assert mock_systemid.call_count == testcase['systemid.call_count']
-    assert req.called == testcase['request_called']
+    assert xmlrpc_client.Transport.request.called == testcase['request_called']
     assert os.unlink.call_count == testcase['unlink.call_count']
 
     out, err = capfd.readouterr()
