@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: os_volume_snapshot
 short_description: Create/Delete Cinder Volume Snapshot
 extends_documentation_fragment: openstack
-version_added: "2.4"
+version_added: "2.5"
 author: "Nicolas Hicher"
 description:
    - Create or Remove cinder block storage volume snapshot
