@@ -55,7 +55,7 @@ EXAMPLES = '''
 
 - name: lookup ssm parameter store with all options.
   debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
-  
+
 - name: lookup a single ssm parameter at the end of a path.
   debug: msg="{{ lookup('aws_ssm', '/PATH/to/params/Hello', 'aws_profile=myprofile') }}"
 
