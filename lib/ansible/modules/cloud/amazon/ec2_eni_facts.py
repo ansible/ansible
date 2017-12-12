@@ -89,6 +89,8 @@ def list_ec2_eni_boto3(connection, module):
     camel_network_interfaces = []
     for network_interface in network_interfaces_result:
         network_interface['TagSet'] = boto3_tag_list_to_ansible_dict(network_interface['TagSet'])
+        # Added id to interface info to be compatible with return values of ec2_eni module:
+        network_interface['Id'] = network_interface['NetworkInterfaceId']
         camel_network_interfaces.append(camel_dict_to_snake_dict(network_interface))
 
     module.exit_json(network_interfaces=camel_network_interfaces)
