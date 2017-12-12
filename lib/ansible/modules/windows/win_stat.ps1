@@ -6,55 +6,10 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.FileUtil
+#Requires -Module Ansible.ModuleUtils.LinkUtil
 
-# C# code to determine link target, copied from http://chrisbensen.blogspot.com.au/2010/06/getfinalpathnamebyhandle.html
-$symlink_util = @"
-using System;
-using System.Text;
-using Microsoft.Win32.SafeHandles;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-
-namespace Ansible.Command
-{
-    public class SymLinkHelper
-    {
-        private const int FILE_SHARE_WRITE = 2;
-        private const int CREATION_DISPOSITION_OPEN_EXISTING = 3;
-        private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
-
-        [DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern int GetFinalPathNameByHandle(IntPtr handle, [In, Out] StringBuilder path, int bufLen, int flags);
-
-        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess,
-        int dwShareMode, IntPtr SecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, IntPtr hTemplateFile);
-
-        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink)
-        {
-            SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
-            if(directoryHandle.IsInvalid)
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-
-            StringBuilder path = new StringBuilder(512);
-            int size = GetFinalPathNameByHandle(directoryHandle.DangerousGetHandle(), path, path.Capacity, 0);
-
-            if (size<0)
-                throw new Win32Exception(Marshal.GetLastWin32Error()); // The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\" // More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
-            if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\')
-                return path.ToString().Substring(4);
-            else
-                return path.ToString();
-        }
-    }
-}
-"@
-Add-Type -TypeDefinition $symlink_util
-
-function Date_To_Timestamp($start_date, $end_date)
-{
-    If($start_date -and $end_date)
-    {
+function DateTo-Timestamp($start_date, $end_date) {
+    if ($start_date -and $end_date) {
         return (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
     }
 }
@@ -80,98 +35,116 @@ if (Get-Member -inputobject $params -name "get_md5") {
 }
 
 $info = Get-FileItem -path $path
-If ($info -ne $null)
-{
-    $result.stat.exists = $true
-
-    # Initial values
-    $result.stat.isdir = $false
-    $result.stat.islnk = $false
-    $result.stat.isreg = $false
-    $result.stat.isshared = $false
-
+If ($info -ne $null) {
     $epoch_date = Get-Date -Date "01/01/1970"
-    $result.stat.creationtime = (Date_To_Timestamp $epoch_date $info.CreationTime)
-    $result.stat.lastaccesstime = (Date_To_Timestamp $epoch_date $info.LastAccessTime)
-    $result.stat.lastwritetime = (Date_To_Timestamp $epoch_date $info.LastWriteTime)
-
-    $result.stat.filename = $info.Name
-    $result.stat.path = $info.FullName
-
     $attributes = @()
     foreach ($attribute in ($info.Attributes -split ',')) {
         $attributes += $attribute.Trim()
     }
-    $result.stat.attributes = $info.Attributes.ToString()
-    $result.stat.isarchive = $attributes -contains "Archive"
-    $result.stat.ishidden = $attributes -contains "Hidden"
-    $result.stat.isreadonly = $attributes -contains "ReadOnly"
 
-    If ($info)
-    {
-        $accesscontrol = $info.GetAccessControl()
+    # default values that are always set, specific values are set below this
+    # but are kept commented for easier readability
+    $stat = @{
+        exists = $true
+        attributes = $info.Attributes.ToString()
+        isarchive = ($attributes -contains "Archive")
+        isdir = $false
+        ishidden = ($attributes -contains "Hidden")
+        isjunction = $false
+        islnk = $false
+        isreadonly = ($attributes -contains "ReadOnly")
+        isreg = $false
+        isshared = $false
+        nlink = 1  # Number of links to the file (hard links), overriden below if islnk
+        # lnk_target = islnk or isjunction Target of the symlink. Note that relative paths remain relative
+        # lnk_source = islnk os isjunction Target of the symlink normalized for the remote filesystem
+        hlnk_targets = @()
+        creationtime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.CreationTime)
+        lastaccesstime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.LastAccessTime)
+        lastwritetime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.LastWriteTime)
+        # size = a file and directory - calculated below
+        path = $info.FullName
+        filename = $info.Name
+        # extension = a file
+        # owner = set outsite this dict in case it fails
+        # sharename = a directory and isshared is True
+        # checksum = a file and get_checksum: True
+        # md5 = a file and get_md5: True
     }
-    Else
-    {
-        $accesscontrol = $null
-    }
-    $result.stat.owner = $accesscontrol.Owner
+    $stat.owner = $info.GetAccessControl().Owner
 
-    $iscontainer = $info.PSIsContainer
-    If ($attributes -contains 'ReparsePoint')
-    {
-        # TODO: Find a way to differenciate between soft and junction links
-        $result.stat.islnk = $true
-        $result.stat.isdir = $true
-        # Try and get the symlink source, can result in failure if link is broken
-        try {
-            $result.stat.lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($path)
-        } catch {
-            $result.stat.lnk_source = $null
-        }
-    }
-    ElseIf ($iscontainer)
-    {
-        $result.stat.isdir = $true
-
-        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($info.Fullname -replace '\\', '\\')'"
-        If ($share_info -ne $null)
-        {
-            $result.stat.isshared = $true
-            $result.stat.sharename = $share_info.Name
+    # values that are set according to the type of file
+    if ($info.PSIsContainer) {
+        $stat.isdir = $true
+        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($stat.path -replace '\\', '\\')'"
+        if ($share_info -ne $null) {
+            $stat.isshared = $true
+            $stat.sharename = $share_info.Name
         }
 
-        $dir_files_sum = Get-ChildItem $info.FullName -Recurse | Measure-Object -property length -sum
-        If ($dir_files_sum -eq $null)
-        {
-            $result.stat.size = 0
+        $dir_files_sum = Get-ChildItem $stat.path -Recurse | Measure-Object -property length -sum
+        if ($dir_files_sum -eq $null) {
+            $stat.size = 0
+        } else {
+            $stat.size = $dir_files_sum.Sum
         }
-        Else{
-            $result.stat.size = $dir_files_sum.Sum
-        }
-    }
-    Else
-    {
-        $result.stat.extension = $info.Extension
-        $result.stat.isreg = $true
-        $result.stat.size = $info.Length
+    } else {
+        $stat.extension = $info.Extension
+        $stat.isreg = $true
+        $stat.size = $info.Length
 
-        If ($get_md5) {
+        if ($get_md5) {
             try {
-                $result.stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
+                $stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
             } catch {
                 Fail-Json -obj $result -message "failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)"
             }
         }
-
-        If ($get_checksum) {
+        if ($get_checksum) {
             try {
-                $result.stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+                $stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
             } catch {
                 Fail-Json -obj $result -message "failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)"
             }
         }
     }
+
+    # Get symbolic link, junction point, hard link info
+    Load-LinkUtils
+    try {
+        $link_info = Get-Link -link_path $info.FullName
+    } catch {
+        Add-Warning -obj $result -message "Failed to check/get link info for file: $($_.Exception.Message)"
+    }
+    if ($link_info -ne $null) {
+        switch ($link_info.Type) {
+            "SymbolicLink" {
+                $stat.islnk = $true
+                $stat.isreg = $false
+                $stat.lnk_target = $link_info.TargetPath
+                $stat.lnk_source = $link_info.AbsolutePath                
+                break
+            }
+            "JunctionPoint" {
+                $stat.isjunction = $true
+                $stat.isreg = $false
+                $stat.lnk_target = $link_info.TargetPath
+                $stat.lnk_source = $link_info.AbsolutePath                
+                break
+            }
+            "HardLink" {
+                $stat.lnk_type = "hard"
+                $stat.nlink = $link_info.HardTargets.Count
+
+                # remove current path from the targets
+                $hlnk_targets = $link_info.HardTargets | Where-Object { $_ -ne $stat.path }
+                $stat.hlnk_targets = @($hlnk_targets)
+                break
+            }
+        }
+    }
+
+    $result.stat = $stat
 }
 
 Exit-Json $result

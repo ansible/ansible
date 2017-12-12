@@ -13,15 +13,19 @@
     - stat_file.stat.exists == True
     - stat_file.stat.extension == '.ps1'
     - stat_file.stat.filename == 'file.ps1'
+    - stat_file.stat.hlnk_targets == []
     - stat_file.stat.isarchive == True
     - stat_file.stat.isdir == False
     - stat_file.stat.ishidden == False
+    - stat_file.stat.isjunction == False
     - stat_file.stat.islnk == False
     - stat_file.stat.isreadonly == False
+    - stat_file.stat.isreg == True
     - stat_file.stat.isshared == False
     - stat_file.stat.lastaccesstime == 1477984205
     - stat_file.stat.lastwritetime == 1477984205
     - stat_file.stat.md5 is not defined
+    - stat_file.stat.nlink == 1
     - stat_file.stat.owner == 'BUILTIN\Administrators'
     - stat_file.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file.stat.size == 3
@@ -36,24 +40,7 @@
 - name: check actual for file without md5
   assert:
     that:
-    - stat_file_md5.stat.attributes == 'Archive'
     - stat_file_md5.stat.checksum == 'a9993e364706816aba3e25717850c26c9cd0d89d'
-    - stat_file_md5.stat.creationtime == 1477984205
-    - stat_file_md5.stat.exists == True
-    - stat_file_md5.stat.extension == '.ps1'
-    - stat_file_md5.stat.filename == 'file.ps1'
-    - stat_file_md5.stat.isarchive == True
-    - stat_file_md5.stat.isdir == False
-    - stat_file_md5.stat.ishidden == False
-    - stat_file_md5.stat.islnk == False
-    - stat_file_md5.stat.isreadonly == False
-    - stat_file_md5.stat.isshared == False
-    - stat_file_md5.stat.lastaccesstime == 1477984205
-    - stat_file_md5.stat.lastwritetime == 1477984205
-    - stat_file_md5.stat.md5 == '900150983cd24fb0d6963f7d28e17f72'
-    - stat_file_md5.stat.owner == 'BUILTIN\Administrators'
-    - stat_file_md5.stat.path == win_stat_dir + '\\nested\\file.ps1'
-    - stat_file_md5.stat.size == 3
 
 - name: test win_stat module on file with sha256
   win_stat:
@@ -64,24 +51,7 @@
 - name: check actual for file with sha256
   assert:
     that:
-    - stat_file_sha256.stat.attributes == 'Archive'
     - stat_file_sha256.stat.checksum == 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
-    - stat_file_sha256.stat.creationtime == 1477984205
-    - stat_file_sha256.stat.exists == True
-    - stat_file_sha256.stat.extension == '.ps1'
-    - stat_file_sha256.stat.filename == 'file.ps1'
-    - stat_file_sha256.stat.isarchive == True
-    - stat_file_sha256.stat.isdir == False
-    - stat_file_sha256.stat.ishidden == False
-    - stat_file_sha256.stat.islnk == False
-    - stat_file_sha256.stat.isreadonly == False
-    - stat_file_sha256.stat.isshared == False
-    - stat_file_sha256.stat.lastaccesstime == 1477984205
-    - stat_file_sha256.stat.lastwritetime == 1477984205
-    - stat_file_sha256.stat.md5 is not defined
-    - stat_file_sha256.stat.owner == 'BUILTIN\Administrators'
-    - stat_file_sha256.stat.path == win_stat_dir + '\\nested\\file.ps1'
-    - stat_file_sha256.stat.size == 3
 
 - name: test win_stat module on file with sha384
   win_stat:
@@ -92,24 +62,7 @@
 - name: check actual for file with sha384
   assert:
     that:
-    - stat_file_sha384.stat.attributes == 'Archive'
     - stat_file_sha384.stat.checksum == 'cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7'
-    - stat_file_sha384.stat.creationtime == 1477984205
-    - stat_file_sha384.stat.exists == True
-    - stat_file_sha384.stat.extension == '.ps1'
-    - stat_file_sha384.stat.filename == 'file.ps1'
-    - stat_file_sha384.stat.isarchive == True
-    - stat_file_sha384.stat.isdir == False
-    - stat_file_sha384.stat.ishidden == False
-    - stat_file_sha384.stat.islnk == False
-    - stat_file_sha384.stat.isreadonly == False
-    - stat_file_sha384.stat.isshared == False
-    - stat_file_sha384.stat.lastaccesstime == 1477984205
-    - stat_file_sha384.stat.lastwritetime == 1477984205
-    - stat_file_sha384.stat.md5 is not defined
-    - stat_file_sha384.stat.owner == 'BUILTIN\Administrators'
-    - stat_file_sha384.stat.path == win_stat_dir + '\\nested\\file.ps1'
-    - stat_file_sha384.stat.size == 3
 
 - name: test win_stat module on file with sha512
   win_stat:
@@ -120,24 +73,7 @@
 - name: check actual for file with sha512
   assert:
     that:
-    - stat_file_sha512.stat.attributes == 'Archive'
     - stat_file_sha512.stat.checksum == 'ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f'
-    - stat_file_sha512.stat.creationtime == 1477984205
-    - stat_file_sha512.stat.exists == True
-    - stat_file_sha512.stat.extension == '.ps1'
-    - stat_file_sha512.stat.filename == 'file.ps1'
-    - stat_file_sha512.stat.isarchive == True
-    - stat_file_sha512.stat.isdir == False
-    - stat_file_sha512.stat.ishidden == False
-    - stat_file_sha512.stat.islnk == False
-    - stat_file_sha512.stat.isreadonly == False
-    - stat_file_sha512.stat.isshared == False
-    - stat_file_sha512.stat.lastaccesstime == 1477984205
-    - stat_file_sha512.stat.lastwritetime == 1477984205
-    - stat_file_sha512.stat.md5 is not defined
-    - stat_file_sha512.stat.owner == 'BUILTIN\Administrators'
-    - stat_file_sha512.stat.path == win_stat_dir + '\\nested\\file.ps1'
-    - stat_file_sha512.stat.size == 3
 
 - name: test win_stat on hidden file
   win_stat:
@@ -153,15 +89,19 @@
     - stat_file_hidden.stat.exists == True
     - stat_file_hidden.stat.extension == '.ps1'
     - stat_file_hidden.stat.filename == 'hidden.ps1'
+    - stat_file_hidden.stat.hlnk_targets == []
     - stat_file_hidden.stat.isarchive == True
     - stat_file_hidden.stat.isdir == False
     - stat_file_hidden.stat.ishidden == True
+    - stat_file_hidden.stat.isjunction == False
     - stat_file_hidden.stat.islnk == False
     - stat_file_hidden.stat.isreadonly == False
+    - stat_file_hidden.stat.isreg == True
     - stat_file_hidden.stat.isshared == False
     - stat_file_hidden.stat.lastaccesstime == 1477984205
     - stat_file_hidden.stat.lastwritetime == 1477984205
     - stat_file_hidden.stat.md5 is not defined
+    - stat_file_hidden.stat.nlink == 1
     - stat_file_hidden.stat.owner == 'BUILTIN\Administrators'
     - stat_file_hidden.stat.path == win_stat_dir + '\\nested\\hidden.ps1'
     - stat_file_hidden.stat.size == 3
@@ -180,15 +120,19 @@
     - stat_readonly.stat.exists == True
     - stat_readonly.stat.extension == '.ps1'
     - stat_readonly.stat.filename == 'read-only.ps1'
+    - stat_readonly.stat.hlnk_targets == []
     - stat_readonly.stat.isarchive == True
     - stat_readonly.stat.isdir == False
     - stat_readonly.stat.ishidden == False
+    - stat_readonly.stat.isjunction == False
     - stat_readonly.stat.islnk == False
     - stat_readonly.stat.isreadonly == True
+    - stat_readonly.stat.isreg == True
     - stat_readonly.stat.isshared == False
     - stat_readonly.stat.lastaccesstime == 1477984205
     - stat_readonly.stat.lastwritetime == 1477984205
     - stat_readonly.stat.md5 is not defined
+    - stat_readonly.stat.nlink == 1
     - stat_readonly.stat.owner == 'BUILTIN\Administrators'
     - stat_readonly.stat.path == win_stat_dir + '\\nested\\read-only.ps1'
     - stat_readonly.stat.size == 3
@@ -207,15 +151,18 @@
     - stat_hard_link.stat.exists == True
     - stat_hard_link.stat.extension == '.ps1'
     - stat_hard_link.stat.filename == 'hard-link.ps1'
+    - stat_hard_link.stat.hlnk_targets == [ win_stat_dir + '\\nested\hard-target.txt' ]
     - stat_hard_link.stat.isarchive == True
     - stat_hard_link.stat.isdir == False
     - stat_hard_link.stat.ishidden == False
+    - stat_hard_link.stat.isjunction == False
     - stat_hard_link.stat.islnk == False
     - stat_hard_link.stat.isreadonly == False
     - stat_hard_link.stat.isshared == False
     - stat_hard_link.stat.lastaccesstime == 1477984205
     - stat_hard_link.stat.lastwritetime == 1477984205
     - stat_hard_link.stat.md5 is not defined
+    - stat_hard_link.stat.nlink == 2
     - stat_hard_link.stat.owner == 'BUILTIN\Administrators'
     - stat_hard_link.stat.path == win_stat_dir + '\\nested\\hard-link.ps1'
     - stat_hard_link.stat.size == 3
@@ -234,18 +181,22 @@
     - stat_directory.stat.exists == True
     - stat_directory.stat.extension is not defined
     - stat_directory.stat.filename == 'nested'
+    - stat_directory.stat.hlnk_targets == []
     - stat_directory.stat.isarchive == False
     - stat_directory.stat.isdir == True
     - stat_directory.stat.ishidden == False
+    - stat_directory.stat.isjunction == False
     - stat_directory.stat.islnk == False
     - stat_directory.stat.isreadonly == False
+    - stat_directory.stat.isreg == False
     - stat_directory.stat.isshared == False
     - stat_directory.stat.lastaccesstime == 1477984205
     - stat_directory.stat.lastwritetime == 1477984205
     - stat_directory.stat.md5 is not defined
+    - stat_directory.stat.nlink == 1
     - stat_directory.stat.owner == 'BUILTIN\Administrators'
     - stat_directory.stat.path == win_stat_dir + '\\nested'
-    - stat_directory.stat.size == 15
+    - stat_directory.stat.size == 21
 
 - name: test win_stat on empty directory
   win_stat:
@@ -261,15 +212,19 @@
     - stat_directory_empty.stat.exists == True
     - stat_directory_empty.stat.extension is not defined
     - stat_directory_empty.stat.filename == 'folder'
+    - stat_directory_empty.stat.hlnk_targets == []
     - stat_directory_empty.stat.isarchive == False
     - stat_directory_empty.stat.isdir == True
     - stat_directory_empty.stat.ishidden == False
+    - stat_directory_empty.stat.isjunction == False
     - stat_directory_empty.stat.islnk == False
     - stat_directory_empty.stat.isreadonly == False
+    - stat_directory_empty.stat.isreg == False
     - stat_directory_empty.stat.isshared == False
     - stat_directory_empty.stat.lastaccesstime == 1477984205
     - stat_directory_empty.stat.lastwritetime == 1477984205
     - stat_directory_empty.stat.md5 is not defined
+    - stat_directory_empty.stat.nlink == 1
     - stat_directory_empty.stat.owner == 'BUILTIN\Administrators'
     - stat_directory_empty.stat.path == win_stat_dir + '\\folder'
     - stat_directory_empty.stat.size == 0
@@ -288,15 +243,19 @@
     - stat_directory_space.stat.exists == True
     - stat_directory_space.stat.extension is not defined
     - stat_directory_space.stat.filename == 'folder space'
+    - stat_directory_space.stat.hlnk_targets == []
     - stat_directory_space.stat.isarchive == False
     - stat_directory_space.stat.isdir == True
     - stat_directory_space.stat.ishidden == False
+    - stat_directory_space.stat.isjunction == False
     - stat_directory_space.stat.islnk == False
     - stat_directory_space.stat.isreadonly == False
+    - stat_directory_space.stat.isreg == False
     - stat_directory_space.stat.isshared == False
     - stat_directory_space.stat.lastaccesstime == 1477984205
     - stat_directory_space.stat.lastwritetime == 1477984205
     - stat_directory_space.stat.md5 is not defined
+    - stat_directory_space.stat.nlink == 1
     - stat_directory_space.stat.owner == 'BUILTIN\Administrators'
     - stat_directory_space.stat.path == win_stat_dir + '\\folder space'
     - stat_directory_space.stat.size == 3
@@ -315,15 +274,19 @@
     - stat_hidden.stat.exists == True
     - stat_hidden.stat.extension is not defined
     - stat_hidden.stat.filename == 'hidden'
+    - stat_hidden.stat.hlnk_targets == []
     - stat_hidden.stat.isarchive == False
     - stat_hidden.stat.isdir == True
     - stat_hidden.stat.ishidden == True
+    - stat_hidden.stat.isjunction == False
     - stat_hidden.stat.islnk == False
     - stat_hidden.stat.isreadonly == False
+    - stat_hidden.stat.isreg == False
     - stat_hidden.stat.isshared == False
     - stat_hidden.stat.lastaccesstime == 1477984205
     - stat_hidden.stat.lastwritetime == 1477984205
     - stat_hidden.stat.md5 is not defined
+    - stat_hidden.stat.nlink == 1
     - stat_hidden.stat.owner == 'BUILTIN\Administrators'
     - stat_hidden.stat.path == win_stat_dir + '\\hidden'
     - stat_hidden.stat.size == 0
@@ -342,74 +305,147 @@
     - stat_shared.stat.exists == True
     - stat_shared.stat.extension is not defined
     - stat_shared.stat.filename == 'shared'
+    - stat_shared.stat.hlnk_targets == []
     - stat_shared.stat.isarchive == False
     - stat_shared.stat.isdir == True
     - stat_shared.stat.ishidden == False
+    - stat_shared.stat.isjunction == False
     - stat_shared.stat.islnk == False
     - stat_shared.stat.isreadonly == False
+    - stat_shared.stat.isreg == False
     - stat_shared.stat.isshared == True
     - stat_shared.stat.lastaccesstime == 1477984205
     - stat_shared.stat.lastwritetime == 1477984205
     - stat_shared.stat.md5 is not defined
+    - stat_shared.stat.nlink == 1
     - stat_shared.stat.owner == 'BUILTIN\Administrators'
     - stat_shared.stat.path == win_stat_dir + '\\shared'
     - stat_shared.stat.sharename == 'folder-share'
     - stat_shared.stat.size == 0
 
-- name: test win_stat on symlink
+- name: test win_stat on directory symlink
   win_stat:
     path: '{{win_stat_dir}}\link'
   register: stat_symlink
 
-# I cannot change modification time on links so we don't check those values
-- name: assert symlink actual
+- name: assert directory symlink actual
   assert:
     that:
     - stat_symlink.stat.attributes == 'Directory, ReparsePoint'
     - stat_symlink.stat.creationtime is defined
     - stat_symlink.stat.exists == True
     - stat_symlink.stat.filename == 'link'
+    - stat_symlink.stat.hlnk_targets == []
     - stat_symlink.stat.isarchive == False
     - stat_symlink.stat.isdir == True
     - stat_symlink.stat.ishidden == False
     - stat_symlink.stat.islnk == True
+    - stat_symlink.stat.isjunction == False
     - stat_symlink.stat.isreadonly == False
+    - stat_symlink.stat.isreg == False
     - stat_symlink.stat.isshared == False
     - stat_symlink.stat.lastaccesstime is defined
     - stat_symlink.stat.lastwritetime is defined
     - stat_symlink.stat.lnk_source == win_stat_dir + '\\link-dest'
+    - stat_symlink.stat.lnk_target == win_stat_dir + '\\link-dest'
+    - stat_symlink.stat.nlink == 1
     - stat_symlink.stat.owner == 'BUILTIN\\Administrators'
     - stat_symlink.stat.path == win_stat_dir + '\\link'
-    - stat_symlink.stat.size is not defined
     - stat_symlink.stat.checksum is not defined
     - stat_symlink.stat.md5 is not defined
+
+- name: test win_stat on file symlink
+  win_stat:
+    path: '{{win_stat_dir}}\file-link.txt'
+  register: stat_file_symlink
+
+- name: assert file symlink actual
+  assert:
+    that:
+    - stat_file_symlink.stat.attributes == 'Archive, ReparsePoint'
+    - stat_file_symlink.stat.checksum == 'a9993e364706816aba3e25717850c26c9cd0d89d'
+    - stat_file_symlink.stat.creationtime is defined
+    - stat_file_symlink.stat.exists == True
+    - stat_file_symlink.stat.extension == '.txt'
+    - stat_file_symlink.stat.filename == 'file-link.txt'
+    - stat_file_symlink.stat.hlnk_targets == []
+    - stat_file_symlink.stat.isarchive == True
+    - stat_file_symlink.stat.isdir == False
+    - stat_file_symlink.stat.ishidden == False
+    - stat_file_symlink.stat.isjunction == False
+    - stat_file_symlink.stat.islnk == True
+    - stat_file_symlink.stat.isreadonly == False
+    - stat_file_symlink.stat.isreg == False
+    - stat_file_symlink.stat.isshared == False
+    - stat_file_symlink.stat.lastaccesstime is defined
+    - stat_file_symlink.stat.lastwritetime is defined
+    - stat_file_symlink.stat.lnk_source == win_stat_dir + '\\nested\\file.ps1'
+    - stat_file_symlink.stat.lnk_target == win_stat_dir + '\\nested\\file.ps1'
+    - stat_file_symlink.stat.md5 is not defined
+    - stat_file_symlink.stat.nlink == 1
+    - stat_file_symlink.stat.owner == 'BUILTIN\\Administrators'
+    - stat_file_symlink.stat.path == win_stat_dir + '\\file-link.txt'
+
+- name: test win_stat on relative symlink
+  win_stat:
+    path: '{{win_stat_dir}}\nested\nested\link-rel'
+  register: stat_rel_symlink
+
+- name: assert directory relative symlink actual
+  assert:
+    that:
+    - stat_rel_symlink.stat.attributes == 'Directory, ReparsePoint'
+    - stat_rel_symlink.stat.creationtime is defined
+    - stat_rel_symlink.stat.exists == True
+    - stat_rel_symlink.stat.filename == 'link-rel'
+    - stat_rel_symlink.stat.hlnk_targets == []
+    - stat_rel_symlink.stat.isarchive == False
+    - stat_rel_symlink.stat.isdir == True
+    - stat_rel_symlink.stat.ishidden == False
+    - stat_rel_symlink.stat.isjunction == False
+    - stat_rel_symlink.stat.islnk == True
+    - stat_rel_symlink.stat.isreadonly == False
+    - stat_rel_symlink.stat.isreg == False
+    - stat_rel_symlink.stat.isshared == False
+    - stat_rel_symlink.stat.lastaccesstime is defined
+    - stat_rel_symlink.stat.lastwritetime is defined
+    - stat_rel_symlink.stat.lnk_source == win_stat_dir + '\\link-dest'
+    - stat_rel_symlink.stat.lnk_target == '..\\..\\link-dest'
+    - stat_rel_symlink.stat.nlink == 1
+    - stat_rel_symlink.stat.owner == 'BUILTIN\\Administrators'
+    - stat_rel_symlink.stat.path == win_stat_dir + '\\nested\\nested\\link-rel'
+    - stat_rel_symlink.stat.checksum is not defined
+    - stat_rel_symlink.stat.md5 is not defined
 
 - name: test win_stat on junction
   win_stat:
     path: '{{win_stat_dir}}\junction-link'
   register: stat_junction_point
 
-- name: assert symlink actual
+- name: assert junction actual
   assert:
     that:
     - stat_junction_point.stat.attributes == 'Directory, ReparsePoint'
     - stat_junction_point.stat.creationtime is defined
     - stat_junction_point.stat.exists == True
     - stat_junction_point.stat.filename == 'junction-link'
+    - stat_junction_point.stat.hlnk_targets == []
     - stat_junction_point.stat.isarchive == False
     - stat_junction_point.stat.isdir == True
     - stat_junction_point.stat.ishidden == False
-    - stat_junction_point.stat.islnk == True
+    - stat_junction_point.stat.isjunction == True
+    - stat_junction_point.stat.islnk == False
     - stat_junction_point.stat.isreadonly == False
+    - stat_junction_point.stat.isreg == False
     - stat_junction_point.stat.isshared == False
     - stat_junction_point.stat.lastaccesstime is defined
     - stat_junction_point.stat.lastwritetime is defined
     - stat_junction_point.stat.lnk_source == win_stat_dir + '\\junction-dest'
+    - stat_junction_point.stat.lnk_target == win_stat_dir + '\\junction-dest'
+    - stat_junction_point.stat.nlink == 1
     - stat_junction_point.stat.owner == 'BUILTIN\\Administrators'
     - stat_junction_point.stat.path == win_stat_dir + '\\junction-link'
-    - stat_junction_point.stat.size is not defined
-    - stat_junction_point.stat.checksum is not defined
-    - stat_junction_point.stat.md5 is not defined
+    - stat_junction_point.stat.size == 0
 
 - name: test win_stat module non-existent path
   win_stat:
@@ -432,9 +468,100 @@
 - name: get stat of pagefile
   win_stat:
     path: C:\pagefile.sys
+    get_md5: no
+    get_checksum: no
   register: pagefile_stat
 
 - name: assert get stat of pagefile
   assert:
     that:
     - pagefile_stat.stat.exists == True
+
+# Tests with normal user
+- set_fact:
+    gen_pw: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+
+- name: create test user
+  win_user:
+    name: '{{win_stat_user}}'
+    password: '{{gen_pw}}'
+    update_password: always
+    groups: Users
+
+- name: get become user profile dir so we can clean it up later
+  vars: &become_vars
+    ansible_become_user: '{{win_stat_user}}'
+    ansible_become_password: '{{gen_pw}}'
+    ansible_become_method: runas
+    ansible_become: yes
+  win_shell: $env:USERPROFILE
+  register: profile_dir_out
+
+- name: ensure profile dir contains test username (eg, if become fails silently, prevent deletion of real user profile)
+  assert:
+    that:
+    - win_stat_user in profile_dir_out.stdout_lines[0]
+
+- name: test stat with non admin user on a normal file
+  vars: *become_vars
+  win_stat:
+    path: '{{win_stat_dir}}\nested\file.ps1'
+  register: user_file
+
+- name: asert test stat with non admin user on a normal file
+  assert:
+    that:
+    - user_file.stat.attributes == 'Archive'
+    - user_file.stat.checksum == 'a9993e364706816aba3e25717850c26c9cd0d89d'
+    - user_file.stat.creationtime == 1477984205
+    - user_file.stat.exists == True
+    - user_file.stat.extension == '.ps1'
+    - user_file.stat.filename == 'file.ps1'
+    - user_file.stat.hlnk_targets == []
+    - user_file.stat.isarchive == True
+    - user_file.stat.isdir == False
+    - user_file.stat.ishidden == False
+    - user_file.stat.isjunction == False
+    - user_file.stat.islnk == False
+    - user_file.stat.isreadonly == False
+    - user_file.stat.isreg == True
+    - user_file.stat.isshared == False
+    - user_file.stat.lastaccesstime == 1477984205
+    - user_file.stat.lastwritetime == 1477984205
+    - user_file.stat.md5 is not defined
+    - user_file.stat.nlink == 1
+    - user_file.stat.owner == 'BUILTIN\\Administrators'
+    - user_file.stat.path == win_stat_dir + '\\nested\\file.ps1'
+    - user_file.stat.size == 3
+
+- name: test stat on a symbolic link as normal user
+  vars: *become_vars
+  win_stat:
+    path: '{{win_stat_dir}}\link'
+  register: user_symlink
+
+- name: assert test stat on a symbolic link as normal user
+  assert:
+    that:
+    - user_symlink.stat.attributes == 'Directory, ReparsePoint'
+    - user_symlink.stat.creationtime is defined
+    - user_symlink.stat.exists == True
+    - user_symlink.stat.filename == 'link'
+    - user_symlink.stat.hlnk_targets == []
+    - user_symlink.stat.isarchive == False
+    - user_symlink.stat.isdir == True
+    - user_symlink.stat.ishidden == False
+    - user_symlink.stat.islnk == True
+    - user_symlink.stat.isjunction == False
+    - user_symlink.stat.isreadonly == False
+    - user_symlink.stat.isreg == False
+    - user_symlink.stat.isshared == False
+    - user_symlink.stat.lastaccesstime is defined
+    - user_symlink.stat.lastwritetime is defined
+    - user_symlink.stat.lnk_source == win_stat_dir + '\\link-dest'
+    - user_symlink.stat.lnk_target == win_stat_dir + '\\link-dest'
+    - user_symlink.stat.nlink == 1
+    - user_symlink.stat.owner == 'BUILTIN\\Administrators'
+    - user_symlink.stat.path == win_stat_dir + '\\link'
+    - user_symlink.stat.checksum is not defined
+    - user_symlink.stat.md5 is not defined
