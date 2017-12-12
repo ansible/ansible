@@ -337,7 +337,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi)
@@ -1451,7 +1451,13 @@ class PyVmomiHelper(PyVmomi):
 
                 clonespec.config = self.configspec
                 clone_method = 'Clone'
-                task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
+                try:
+                    task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
+                except vim.fault.NoPermission as e:
+                    self.module.fail_json(msg="Failed to clone virtual machine %s to folder %s "
+                                              "due to permission issue: %s" % (self.params['name'],
+                                                                               destfolder,
+                                                                               to_native(e.msg)))
                 self.change_detected = True
             else:
                 # ConfigSpec require name for VM creation
