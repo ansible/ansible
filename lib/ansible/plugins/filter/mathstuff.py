@@ -130,12 +130,18 @@ def human_to_bytes(size, default_unit=None, isbits=False):
         raise errors.AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
 
-def rekey_on_member(data, key):
+def rekey_on_member(data, key, duplicates='error'):
     """
     Rekey a dict of dicts on another member
 
     May also create a dict from a list of dicts.
+
+    duplicates can be one of ``error`` or ``overwrite`` to specify whether to error out if the key
+    value would be duplicated or to overwrite previous entries if that's the case.
     """
+    if duplicates not in ('error', 'overwrite'):
+        raise errors.AnsibleFilterError("duplicates parameter to rekey_on_member has unknown value: {0}".format(duplicates))
+
     new_obj = {}
 
     if isinstance(data, collections.Mapping):
@@ -156,9 +162,11 @@ def rekey_on_member(data, key):
         except Exception as e:
             raise errors.AnsibleFilterError(to_native(e))
 
-        # TODO: We may want to add parameters to allow overwrite or constructing lists instead of erroring
         if new_obj.get(key_elem, None):
-            raise errors.AnsibleFilterError("Key {0} is not unique, cannot correctly turn into dict".format(key_elem))
+            if duplicates == 'error':
+                raise errors.AnsibleFilterError("Key {0} is not unique, cannot correctly turn into dict".format(key_elem))
+            elif duplicates == 'overwrite':
+                new_obj[key_elem] = item
         else:
             new_obj[key_elem] = item
 
