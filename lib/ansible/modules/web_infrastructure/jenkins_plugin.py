@@ -526,13 +526,8 @@ class JenkinsPlugin(object):
             params.update(self.params)
             file_args = self.module.load_file_common_arguments(params)
 
-            if not self.module.check_mode:
-                # Not sure how to run this in the check mode
-                changed = self.module.set_fs_attributes_if_different(
-                    file_args, changed)
-            else:
-                # See the comment above
-                changed = True
+            changed = self.module.set_fs_attributes_if_different(
+                file_args, changed)
 
         return changed
 
