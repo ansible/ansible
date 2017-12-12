@@ -11,6 +11,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.vars.clean import strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
+_PRESERVE = ('attempts', 'changed', 'retries')
 
 
 class TaskResult:
@@ -90,7 +91,11 @@ class TaskResult:
             ignore = _IGNORE
 
         if self._result.get('_ansible_no_log', False):
-            result._result = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
+            x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
+            for preserve in _PRESERVE:
+                if preserve in self._result:
+                    x[preserve] = self._result[preserve]
+            result._result = x
         elif self._result:
             result._result = deepcopy(self._result)
 
