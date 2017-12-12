@@ -96,6 +96,19 @@ def load_certificate_request(path):
         raise OpenSSLObjectError(exc)
 
 
+def parse_name_field(input_dict):
+    """Take a dict with key: value or key: list_of_values mappings and return a list of tuples"""
+
+    result = []
+    for key in input_dict:
+        if isinstance(input_dict[key], list):
+            for entry in input_dict[key]:
+                result.append((key, entry))
+        else:
+            result.append((key, input_dict[key]))
+    return result
+
+
 @six.add_metaclass(abc.ABCMeta)
 class OpenSSLObject(object):
 

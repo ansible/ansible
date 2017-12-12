@@ -1,5 +1,5 @@
 - name: Validate CSR (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
 
 - name: Validate CSR (test - Common Name)
@@ -7,7 +7,7 @@
   register: csr_cn
 
 - name: Validate CSR (test - csr modulus)
-  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr.csr | openssl md5'
+  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr.csr'
   register: csr_modulus
 
 - name: Validate CSR (assert)
@@ -20,3 +20,17 @@
   assert:
     that:
       - csr_ku_xku.changed == False
+
+- name: Validate old_API CSR (test - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr_oldapi.csr -nameopt oneline,-space_eq"
+  register: csr_oldapi_cn
+
+- name: Validate old_API CSR (test - csr modulus)
+  shell: 'openssl req -noout -modulus -in {{ output_dir }}/csr_oldapi.csr'
+  register: csr_oldapi_modulus
+
+- name: Validate old_API CSR (assert)
+  assert:
+    that:
+      - csr_oldapi_cn.stdout.split('=')[-1] == 'www.ansible.com'
+      - csr_oldapi_modulus.stdout == privatekey_modulus.stdout

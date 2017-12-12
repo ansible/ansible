@@ -7,7 +7,8 @@
       openssl_csr:
         path: '{{ output_dir }}/csr.csr'
         privatekey_path: '{{ output_dir }}/privatekey.pem'
-        commonName: 'www.ansible.com'
+        subject:
+          commonName: www.ansible.com
 
     # keyUsage longname and shortname should be able to be used
     # interchangeably. Hence the long name is specified here
@@ -17,7 +18,8 @@
       openssl_csr:
         path: '{{ output_dir }}/csr_ku_xku.csr'
         privatekey_path: '{{ output_dir }}/privatekey.pem'
-        commonName: 'www.ansible.com'
+        subject:
+          CN: www.ansible.com
         keyUsage:
           - digitalSignature
           - keyAgreement
@@ -31,7 +33,8 @@
       openssl_csr:
         path: '{{ output_dir }}/csr_ku_xku.csr'
         privatekey_path: '{{ output_dir }}/privatekey.pem'
-        commonName: 'www.ansible.com'
+        subject:
+          commonName: 'www.ansible.com'
         keyUsage:
           - digitalSignature
           - keyAgreement
@@ -41,6 +44,12 @@
           - DVCS
           - Biometric Info
       register: csr_ku_xku
+
+    - name: Generate CSR with old API
+      openssl_csr:
+        path: '{{ output_dir }}/csr_oldapi.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        commonName: www.ansible.com
 
     - import_tasks: ../tests/validate.yml
 

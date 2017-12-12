@@ -7,7 +7,8 @@
       openssl_csr:
         path: '{{ output_dir }}/csr.csr'
         privatekey_path: '{{ output_dir }}/privatekey.pem'
-        commonName: 'www.ansible.com'
+        subject:
+          commonName: www.example.com
 
     - name: Generate selfsigned certificate
       openssl_certificate:
@@ -27,6 +28,8 @@
         signature_algorithms:
           - sha256WithRSAEncryption
           - sha256WithECDSAEncryption
+        subject:
+          commonName: www.example.com
 
     - name: Generate selfsigned v2 certificate
       openssl_certificate:
@@ -43,14 +46,17 @@
 
     - name: Generate CSR2
       openssl_csr:
-        C: US
-        ST: California
-        L: Los Angeles
-        O: ACME Inc.
-        OU: Roadrunner pest control
+        subject:
+          CN: www.example.com
+          C: US
+          ST: California
+          L: Los Angeles
+          O: ACME Inc.
+          OU:
+            - Roadrunner pest control
+            - Pyrotechnics
         path: '{{ output_dir }}/csr2.csr'
         privatekey_path: '{{ output_dir }}/privatekey2.pem'
-        CN: 'www.example.com'
         keyUsage:
           - digitalSignature
         extendedKeyUsage:
@@ -76,12 +82,14 @@
           - sha256WithRSAEncryption
           - sha256WithECDSAEncryption
         subject:
-          CN: www.example.com
+          commonName: www.example.com
           C: US
           ST: California
           L: Los Angeles
           O: ACME Inc.
-          OU: Roadrunner pest control
+          OU:
+            - Roadrunner pest control
+            - Pyrotechnics
         keyUsage:
           - digitalSignature
         extendedKeyUsage:

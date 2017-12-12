@@ -1,9 +1,9 @@
 - name: Validate certificate (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
 
 - name: Validate certificate (test - certificate modulus)
-  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert.pem | openssl md5'
+  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert.pem'
   register: cert_modulus
 
 - name: Validate certificate (test - certficate version == default == 3)
@@ -26,11 +26,11 @@
       - cert_v2_version.stdout == '2'
 
 - name: Validate certificate2 (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey2.pem | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey2.pem'
   register: privatekey2_modulus
 
 - name: Validate certificate2 (test - certificate modulus)
-  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert2.pem | openssl md5'
+  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert2.pem'
   register: cert2_modulus
 
 - name: Validate certificate2 (assert)
