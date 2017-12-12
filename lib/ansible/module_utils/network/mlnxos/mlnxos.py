@@ -26,7 +26,7 @@ from ansible.module_utils.network.common.utils import to_list, EntityCollection
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
 
-command_spec = {
+_COMMAND_SPEC = {
     'command': dict(key=True),
     'prompt': dict(),
     'answer': dict()
@@ -45,7 +45,7 @@ def to_commands(module, commands):
     if not isinstance(commands, list):
         raise AssertionError('argument must be of type <list>')
 
-    transform = EntityCollection(module, command_spec)
+    transform = EntityCollection(module, _COMMAND_SPEC)
     commands = transform(commands)
     return commands
 
