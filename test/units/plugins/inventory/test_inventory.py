@@ -168,8 +168,8 @@ class IniInventory(unittest.TestCase):
         ---
         all:
             hosts:
-                test1
-                test2
+                test1:
+                test2:
         """)}
         C.INVENTORY_ENABLED = ['yaml']
         fake_loader = DictDataLoader(inventory_content)
