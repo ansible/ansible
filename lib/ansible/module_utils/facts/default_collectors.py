@@ -43,6 +43,7 @@ from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
+from ansible.module_utils.facts.system.os_release import OSReleaseFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
@@ -89,7 +90,8 @@ from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
 _base = [
     PlatformFactCollector,
     DistributionFactCollector,
-    LSBFactCollector
+    LSBFactCollector,
+    OSReleaseFactCollector
 ]
 
 # These restrict what is possible in others

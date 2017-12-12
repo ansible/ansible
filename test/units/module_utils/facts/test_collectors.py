@@ -32,6 +32,7 @@ from ansible.module_utils.facts.system.distribution import DistributionFactColle
 from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.env import EnvFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
+from ansible.module_utils.facts.system.os_release import OSReleaseFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector, OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
 from ansible.module_utils.facts.system.python import PythonFactCollector
@@ -216,6 +217,14 @@ class TestNetworkCollector(BaseFactsTest):
     valid_subsets = ['network']
     fact_namespace = 'ansible_network'
     collector_class = NetworkCollector
+
+
+class TestOSReleaseFacts(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'os_release']
+    valid_subsets = ['os_release']
+    fact_namespace = 'ansible_os_release'
+    collector_class = OSReleaseFactCollector
 
 
 class TestPkgMgrFacts(BaseFactsTest):
