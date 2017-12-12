@@ -39,6 +39,11 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
+  sort:
+    description:
+      - Optional attribute for sorting the results by specified key
+    choices: ['subnet_id', 'cidr_block', 'availability_zone']
+    required: false
 extends_documentation_fragment:
     - aws
     - ec2
@@ -197,6 +202,7 @@ def describe_subnets(connection, module):
     # collect parameters
     filters = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
     subnet_ids = module.params.get('subnet_ids')
+    sort = module.params.get('sort')
 
     if subnet_ids is None:
         # Set subnet_ids to empty list if it is None
@@ -218,6 +224,9 @@ def describe_subnets(connection, module):
         # convert tag list to ansible dict
         subnet_info[-1]['tags'] = boto3_tag_list_to_ansible_dict(subnet.get('Tags', []))
 
+    if sort:
+        subnet_info.sort(key=lambda e: e[sort])
+
     module.exit_json(subnets=subnet_info)
 
 
@@ -225,7 +234,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         subnet_ids=dict(type='list', default=[], aliases=['subnet_id']),
-        filters=dict(type='dict', default={})
+        filters=dict(type='dict', default={}),
+        sort=dict(required=False, default=None, choices=['subnet_id', 'cidr_block', 'availability_zone'])
     ))
 
     module = AnsibleModule(argument_spec=argument_spec,
