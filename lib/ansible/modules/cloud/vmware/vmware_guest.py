@@ -337,7 +337,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi)
@@ -1463,7 +1463,11 @@ class PyVmomiHelper(PyVmomi):
 
                 clone_method = 'CreateVM_Task'
                 resource_pool = self.get_resource_pool()
-                task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
+                try:
+                    task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
+                except vim.fault.RestrictedVersion as e:
+                    self.module.fail_json(msg="Failed to create virtual machine due to "
+                                              "product versioning restrictions: %s" % to_native(e.msg))
                 self.change_detected = True
             self.wait_for_task(task)
         except TypeError as e:
@@ -1551,7 +1555,12 @@ class PyVmomiHelper(PyVmomi):
 
         # Only send VMWare task if we see a modification
         if self.change_detected:
-            task = self.current_vm_obj.ReconfigVM_Task(spec=self.configspec)
+            task = None
+            try:
+                task = self.current_vm_obj.ReconfigVM_Task(spec=self.configspec)
+            except vim.fault.RestrictedVersion as e:
+                self.module.fail_json(msg="Failed to reconfigure virtual machine due to"
+                                          " product versioning restrictions: %s" % to_native(e.msg))
             self.wait_for_task(task)
             change_applied = True
 
