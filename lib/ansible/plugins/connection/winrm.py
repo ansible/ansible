@@ -67,7 +67,7 @@ DOCUMENTATION = """
           - name: ansible_winrm_transport
       kerberos_command:
         description: kerberos command to use to request a authentication ticket
-        default: kinit
+        default: /usr/bin/kinit
         vars:
           - name: ansible_winrm_kinit_cmd
       kerberos_mode:
@@ -94,6 +94,7 @@ DOCUMENTATION = """
 import base64
 import inspect
 import os
+import pty
 import re
 import shlex
 import traceback
@@ -238,22 +239,51 @@ class Connection(ConnectionBase):
     # auth itself with a private CCACHE.
     def _kerb_auth(self, principal, password):
         if password is None:
-            password = ""
+            password = b""
+        else:
+            password = to_bytes(password, encoding="utf-8", errors='surrogate_or_strict')
+
         self._kerb_ccache = tempfile.NamedTemporaryFile()
         display.vvvvv("creating Kerberos CC at %s" % self._kerb_ccache.name)
         krb5ccname = "FILE:%s" % self._kerb_ccache.name
-        krbenv = dict(KRB5CCNAME=krb5ccname)
         os.environ["KRB5CCNAME"] = krb5ccname
         kinit_cmdline = [self._kinit_cmd, principal]
 
         display.vvvvv("calling kinit for principal %s" % principal)
-        p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=krbenv)
 
-        # TODO: unicode/py3
-        stdout, stderr = p.communicate(password + b'\n')
+        # We run with a pty fork so that we can control the IO of the kinit
+        # process, running a PIPE with subprocess will hang on an interactive
+        # shell as the secure keyboard input takes over the input of the kinit
+        # process and sending the pass over stdin won't ever reach the kinit
+        # process.
+        pid, child_fd = pty.fork()
+        if not pid:
+            # child process, run kinit
+            os.execv(kinit_cmdline[0], kinit_cmdline)
+        else:
+            # parent process
+            stdout = b""
 
-        if p.returncode != 0:
-            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % stderr.strip())
+            # check the output for the password prompt and send it through
+            matched = False
+            while True:
+                output = os.read(child_fd, 1024)
+                stdout += output + b"\n"
+                if b"password:" in output.lower():
+                    os.write(child_fd, password + b"\n")
+                    matched = True
+                else:
+                    break
+
+            if not matched:
+                raise AnsibleConnectionFailure("Kerberos auth failure, no "
+                                               "password prompt detected: %s"
+                                               % stdout.strip())
+            else:
+                output = os.read(child_fd, 1024)
+                if b"password incorrect" in output.lower():
+                    stdout += output + b"\n"
+                os.close(child_fd)
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
