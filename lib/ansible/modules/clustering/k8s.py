@@ -85,7 +85,7 @@ EXAMPLES = '''
     kind: ServiceList
     namespace: testing
   register: service_list
-  
+
 - name: Remove an existing Service object
   k8s:
     state: absent

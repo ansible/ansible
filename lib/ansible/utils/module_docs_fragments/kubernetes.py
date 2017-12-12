@@ -76,11 +76,11 @@ options:
   description:
     description:
     - Used only when creating an OpenShift project, otherwise ignored. Adds a description to the project meta
-      data. 
+      data.
   display_name:
     description:
     - Use only when creating an OpenShift project, otherwise ignored. Adds a display name to the project meta
-      data. 
+      data.
   host:
     description:
     - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
