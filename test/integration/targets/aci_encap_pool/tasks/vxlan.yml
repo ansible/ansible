@@ -1,0 +1,164 @@
+---
+- name: ensure vxlan pool does not exist for tests to kick off
+  aci_encap_pool: &aci_vxlan_absent
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: no
+    state: absent
+    pool: anstest
+    pool_type: vxlan
+
+- name: create vxlan pool - check mode works
+  aci_encap_pool: &aci_vxlan_present
+    <<: *aci_vxlan_absent
+    state: present
+    descr: Ansible Test
+  check_mode: yes
+  register: create_vxlan_check_mode
+
+- name: assertion test - present
+  assert:
+    that:
+      - create_vxlan_check_mode.changed == true
+      - 'create_vxlan_check_mode.config == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+
+- name: create vxlan pool - creation works
+  aci_encap_pool:
+    <<: *aci_vxlan_present
+  register: create_vxlan
+
+- name: assertion test - present
+  assert:
+    that:
+      - create_vxlan.changed == true
+      - create_vxlan.existing == []
+      - create_vxlan.config == create_vxlan_check_mode.config
+
+- name: create vxlan pool again - idempotency works
+  aci_encap_pool:
+    <<: *aci_vxlan_present
+  register: idempotent_vxlan
+
+- name: assertion test - present
+  assert:
+    that:
+      - idempotent_vxlan.changed == false
+      - 'idempotent_vxlan.existing.0.fvnsVxlanInstP.attributes.name == "anstest"'
+      - idempotent_vxlan.config == {}
+
+- name: update vxlan pool - update works
+  aci_encap_pool:
+    <<: *aci_vxlan_present
+    descr: Ansible Test Change
+  register: update_vxlan
+
+- name: assertion test - present
+  assert:
+    that:
+      - update_vxlan.changed == true
+      - 'update_vxlan.config == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
+
+- name: create vxlan pool - used for query
+  aci_encap_pool:
+    <<: *aci_vxlan_present
+    name: anstest_2
+  register: create_vxlan_2
+
+- name: assertion test - present
+  assert:
+    that:
+      - create_vxlan_2.changed == true
+
+- name: create vxlan pool with allocation mode - failure message works
+  aci_encap_pool:
+    <<: *aci_vxlan_present
+    name: anstest_3
+    allocation_mode: dynamic
+  ignore_errors: yes
+  register: create_vxlan_alloc_mode
+
+- name: assertion test - present
+  assert:
+    that:
+      - create_vxlan_alloc_mode.failed == true
+      - 'create_vxlan_alloc_mode.msg == "vxlan pools do not support setting the allocation_mode; please remove this parameter from the task"'
+
+- name: get vxlan pool - get object works
+  aci_encap_pool: &aci_vxlan_query
+    <<: *aci_vxlan_present
+    state: query
+  register: query_vxlan
+
+- name: assertion test - query
+  assert:
+    that:
+      - query_vxlan.changed == false
+      - query_vxlan.existing | length == 1
+      - '"infra/vxlanns-anstest.json" in query_vxlan.url'
+
+- name: get created static vlan pool - get class works
+  aci_encap_pool:
+    <<: *aci_vxlan_query
+    pool: "{{ fake_var | default(omit) }}"
+  register: query_vxlan_all
+
+- name: assertion test - query
+  assert:
+    that:
+      - query_vxlan_all.changed == false
+      - query_vxlan_all.existing | length > 1
+      - '"class/fvnsVxlanInstP.json" in query_vxlan_all.url'
+
+- name: delete vxlan pool - check mode works
+  aci_encap_pool:
+    <<: *aci_vxlan_absent
+  check_mode: yes
+  register: delete_vxlan_check_mode
+
+- name: assertion test - absent
+  assert:
+    that:
+      - delete_vxlan_check_mode.changed == true
+      - delete_vxlan_check_mode.existing != []
+
+- name: delete vxlan pool - deletion works
+  aci_encap_pool:
+    <<: *aci_vxlan_absent
+  register: delete_vxlan
+
+- name: assertion test - absent
+  assert:
+    that:
+      - delete_vxlan.changed == true
+      - delete_vxlan.existing == delete_vxlan_check_mode.existing
+      - delete_vxlan.existing.0.fvnsVxlanInstP.attributes.name == "anstest"
+
+- name: delete vxlan pool again - idempotency works
+  aci_encap_pool:
+    <<: *aci_vxlan_absent
+  register: delete_vxlan_idempotent
+
+- name: missing param - failure message works
+  aci_encap_pool:
+    <<: *aci_vxlan_absent
+    pool: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: delete_vxlan_pool_fail
+
+- name: assertion test - absent
+  assert:
+    that:
+      - delete_vxlan_idempotent.changed == false
+      - delete_vxlan_idempotent.existing == []
+
+- name: delete vxlan pool - cleanup
+  aci_encap_pool:
+    <<: *aci_vxlan_absent
+    pool: anstest_2
+
+- name: assertion test - absent
+  assert:
+    that:
+      - delete_vxlan_pool_fail.failed == true
+      - 'delete_vxlan_pool_fail.msg == "state is absent but all of the following are missing: pool"'
