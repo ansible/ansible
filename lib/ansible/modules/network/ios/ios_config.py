@@ -183,6 +183,7 @@ options:
         I(never), the running-config will never be copied to the
         startup-config.  If the argument is set to I(changed), then the running-config
         will only be copied to the startup-config if the task has made a change.
+        I(changed) was added in Ansible 2.5.
     required: false
     default: never
     choices: ['always', 'never', 'modified', 'changed']
