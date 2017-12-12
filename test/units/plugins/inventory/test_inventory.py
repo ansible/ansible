@@ -113,7 +113,7 @@ class TestInventory(unittest.TestCase):
             )
 
 
-class IniInventory(unittest.TestCase):
+class TestInventoryPlugins(unittest.TestCase):
 
     def test_empty_inventory(self):
         inventory = self._get_inventory('')
@@ -175,6 +175,14 @@ class IniInventory(unittest.TestCase):
         fake_loader = DictDataLoader(inventory_content)
         im = InventoryManager(loader=fake_loader, sources=filename)
         self.assertTrue(im._inventory.hosts)
+        self.assertIn('test1', im._inventory.hosts)
+        self.assertIn('test2', im._inventory.hosts)
+        self.assertIn(im._inventory.get_host('test1'), im._inventory.groups['all'].hosts)
+        self.assertIn(im._inventory.get_host('test2'), im._inventory.groups['all'].hosts)
+        self.assertEqual(len(im._inventory.groups['all'].hosts), 2)
+        self.assertIn(im._inventory.get_host('test1'), im._inventory.groups['ungrouped'].hosts)
+        self.assertIn(im._inventory.get_host('test2'), im._inventory.groups['ungrouped'].hosts)
+        self.assertEqual(len(im._inventory.groups['ungrouped'].hosts), 2)
 
     def _get_inventory(self, inventory_content):
 
