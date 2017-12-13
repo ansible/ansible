@@ -191,6 +191,15 @@ session   \trequired\tpam_unix.so"""
         line_to_test += str(new_rule).rstrip()
         self.assertIn(line_to_test, str(self.pamd))
 
+    def test_insert_after_rule_last_rule(self):
+        old_rule = PamdRule.rulefromstring('session   	required	pam_unix.so')
+        new_rule = PamdRule.rulefromstring('session   	required	pam_permit.so arg1 arg2 arg3')
+        insert_after_rule(self.pamd, old_rule, new_rule)
+        line_to_test = str(old_rule).rstrip()
+        line_to_test += '\n'
+        line_to_test += str(new_rule).rstrip()
+        self.assertIn(line_to_test, str(self.pamd))
+
     def test_remove_module_arguments_one(self):
         old_rule = PamdRule.rulefromstring('auth      	sufficient	pam_unix.so nullok try_first_pass')
         new_rule = PamdRule.rulefromstring('auth      	sufficient	pam_unix.so try_first_pass')
