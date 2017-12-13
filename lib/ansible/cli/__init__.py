@@ -323,11 +323,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         try:
             if op.ask_pass:
                 sshpass = getpass.getpass(prompt="SSH password: ")
-                become_prompt = "%s password[defaults to SSH password]: " % op.become_method.upper()
+                become_prompt = "BECOME password[defaults to SSH password]: "
                 if sshpass:
                     sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
             else:
-                become_prompt = "%s password: " % op.become_method.upper()
+                become_prompt = "BECOME password: "
 
             if op.become_ask_pass:
                 becomepass = getpass.getpass(prompt=become_prompt)
