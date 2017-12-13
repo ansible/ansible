@@ -218,6 +218,8 @@ class ConsulInventory(object):
         self.nodes_by_kv = {}
         self.nodes_by_availability = {}
         self.current_dc = None
+        self.inmemory_kv = []
+        self.inmemory_nodes = []
 
         config = ConsulConfig()
         self.config = config
@@ -235,12 +237,21 @@ class ConsulInventory(object):
         self.combine_all_results()
         print(json.dumps(self.inventory, sort_keys=True, indent=2))
 
+    def bulk_load(self, datacenter):
+        index, groups_list = self.consul_api.kv.get(self.config.kv_groups, recurse=True, dc=datacenter)
+        index, metadata_list = self.consul_api.kv.get(self.config.kv_metadata, recurse=True, dc=datacenter)
+        index, nodes = self.consul_api.catalog.nodes(dc=datacenter)
+        self.inmemory_kv += groups_list
+        self.inmemory_kv += metadata_list
+        self.inmemory_nodes += nodes
+
     def load_all_data_consul(self):
         ''' cycle through each of the datacenters in the consul catalog and process
             the nodes in each '''
         self.datacenters = self.consul_api.catalog.datacenters()
         for datacenter in self.datacenters:
             self.current_dc = datacenter
+            self.bulk_load(datacenter)
             self.load_data_for_datacenter(datacenter)
 
     def load_availability_groups(self, node, datacenter):
@@ -262,9 +273,20 @@ class ConsulInventory(object):
                             self.add_node_to_map(self.nodes_by_availability,
                                                  service_name + suffix, node['Node'])
 
+    def consul_get_kv_inmemory(self, key):
+        result = filter(lambda x: x['Key'] == key, self.inmemory_kv)
+        return result.pop() if result else None
+
+    def consul_get_node_inmemory(self, node):
+        result = filter(lambda x: x['Node'] == node, self.inmemory_nodes)
+        return {"Node": result.pop(), "Services": {}} if result else None
+
     def load_data_for_datacenter(self, datacenter):
         '''processes all the nodes in a particular datacenter'''
-        index, nodes = self.consul_api.catalog.nodes(dc=datacenter)
+        if self.config.bulk_load == 'true':
+            nodes = self.inmemory_nodes
+        else:
+            index, nodes = self.consul_api.catalog.nodes(dc=datacenter)
         for node in nodes:
             self.add_node_to_map(self.nodes_by_datacenter, datacenter, node)
             self.load_data_for_node(node['Node'], datacenter)
@@ -273,18 +295,22 @@ class ConsulInventory(object):
         '''loads the data for a sinle node adding it to various groups based on
         metadata retrieved from the kv store and service availability'''
 
-        index, node_data = self.consul_api.catalog.node(node, dc=datacenter)
+        if self.config.suffixes == 'true':
+            index, node_data = self.consul_api.catalog.node(node, dc=datacenter)
+        else:
+            node_data = self.consul_get_node_inmemory(node)
         node = node_data['Node']
+
         self.add_node_to_map(self.nodes, 'all', node)
         self.add_metadata(node_data, "consul_datacenter", datacenter)
         self.add_metadata(node_data, "consul_nodename", node['Node'])
 
         self.load_groups_from_kv(node_data)
         self.load_node_metadata_from_kv(node_data)
-        self.load_availability_groups(node_data, datacenter)
-
-        for name, service in node_data['Services'].items():
-            self.load_data_from_service(name, service, node_data)
+        if self.config.suffixes == 'true':
+            self.load_availability_groups(node_data, datacenter)
+            for name, service in node_data['Services'].items():
+                self.load_data_from_service(name, service, node_data)
 
     def load_node_metadata_from_kv(self, node_data):
         ''' load the json dict at the metadata path defined by the kv_metadata value
@@ -293,7 +319,10 @@ class ConsulInventory(object):
         node = node_data['Node']
         if self.config.has_config('kv_metadata'):
             key = "%s/%s/%s" % (self.config.kv_metadata, self.current_dc, node['Node'])
-            index, metadata = self.consul_api.kv.get(key)
+            if self.config.bulk_load == 'true':
+                metadata = self.consul_get_kv_inmemory(key)
+            else:
+                index, metadata = self.consul_api.kv.get(key)
             if metadata and metadata['Value']:
                 try:
                     metadata = json.loads(metadata['Value'])
@@ -309,7 +338,10 @@ class ConsulInventory(object):
         node = node_data['Node']
         if self.config.has_config('kv_groups'):
             key = "%s/%s/%s" % (self.config.kv_groups, self.current_dc, node['Node'])
-            index, groups = self.consul_api.kv.get(key)
+            if self.config.bulk_load == 'true':
+                groups = self.consul_get_kv_inmemory(key)
+            else:
+                index, groups = self.consul_api.kv.get(key)
             if groups and groups['Value']:
                 for group in groups['Value'].split(','):
                     self.add_node_to_map(self.nodes_by_kv, group.strip(), node)
@@ -434,11 +466,11 @@ class ConsulConfig(dict):
         config_options = ['host', 'token', 'datacenter', 'servers_suffix',
                           'tags', 'kv_metadata', 'kv_groups', 'availability',
                           'unavailable_suffix', 'available_suffix', 'url',
-                          'domain']
+                          'domain', 'suffixes', 'bulk_load']
         for option in config_options:
             value = None
             if config.has_option('consul', option):
-                value = config.get('consul', option)
+                value = config.get('consul', option).lower()
             setattr(self, option, value)
 
     def read_cli_args(self):
