@@ -166,18 +166,10 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.enos.enos import load_config, get_config
 from ansible.module_utils.network.enos.enos import enos_argument_spec
-from ansible.module_utils.network.enos.enos import check_args as enos_check_args
+from ansible.module_utils.network.enos.enos import check_args
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
-
 DEFAULT_COMMIT_COMMENT = 'configured by enos_config'
-
-
-def check_args(module, warnings):
-    enos_check_args(module, warnings)
-    if module.params['comment']:
-        if len(module.params['comment']) > 60:
-            module.fail_json(msg='comment argument cannot be more than 60 characters')
 
 
 def get_running_config(module):
@@ -190,7 +182,7 @@ def get_running_config(module):
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        candidate.loadfp(module.params['src'])
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -200,43 +192,45 @@ def get_candidate(module):
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
-    replace_config = replace == 'config'
     path = module.params['parents']
-    comment = module.params['comment']
-    admin = module.params['admin']
-    check_mode = module.check_mode
 
     candidate = get_candidate(module)
-
-    if match != 'none' and replace != 'config':
-        contents = get_running_config(module)
-        configobj = NetworkConfig(contents=contents, indent=1)
-        commands = candidate.difference(configobj, path=path, match=match,
-                                        replace=replace)
+    if match != 'none':
+        contents = module.params['config']
+        if not contents:
+            contents = get_config(module)
+            config = NetworkConfig(indent=1, contents=contents)
+            configobjs = candidate.difference(config, path=path, match=match,
+                                              replace=replace)
     else:
-        commands = candidate.items
+        configobjs = candidate.items
 
-    if commands:
-        commands = dumps(commands, 'commands').split('\n')
+    if configobjs:
+        commands = dumps(configobjs, 'commands').split('\n')
 
-        if any((module.params['lines'], module.params['src'])):
+        if module.params['lines']:
             if module.params['before']:
                 commands[:0] = module.params['before']
 
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-            result['commands'] = commands
+        result['updates'] = commands
 
-        diff = load_config(module, commands, result['warnings'],
-                           not check_mode, replace_config, comment, admin)
-        if diff:
-            result['diff'] = dict(prepared=diff)
-            result['changed'] = True
+        # send the configuration commands to the device and merge
+        # them with the current running config
+        if not module.check_mode:
+            load_config(module, commands)
+        result['changed'] = True
+
+    if module.params['save']:
+        if not module.check_mode:
+            run_commands(module, 'write mem')
+        result['changed'] = True
 
 
 def main():
-    """main entry point for module execution
+    """ main entry point for module execution
     """
     argument_spec = dict(
         src=dict(type='path'),
@@ -248,32 +242,35 @@ def main():
         after=dict(type='list'),
 
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
-        replace=dict(default='line', choices=['line', 'block', 'config']),
+        replace=dict(default='line', choices=['line', 'block']),
 
         config=dict(),
+        defaults=dict(type='bool', default=False),
+        passwords=dict(type='bool', default=False),
+
         backup=dict(type='bool', default=False),
-        comment=dict(default=DEFAULT_COMMIT_COMMENT),
-        admin=dict(type='bool', default=False)
+        save=dict(type='bool', default=False),
     )
 
     argument_spec.update(enos_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
-                   ('replace', 'block', ['lines']),
-                   ('replace', 'config', ['src'])]
+                   ('replace', 'block', ['lines'])]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
 
+    result = {'changed': False}
+
     warnings = list()
     check_args(module, warnings)
 
-    result = dict(changed=False, warnings=warnings)
+    config = None
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)
@@ -282,6 +279,6 @@ def main():
 
     module.exit_json(**result)
 
-
 if __name__ == '__main__':
     main()
+
