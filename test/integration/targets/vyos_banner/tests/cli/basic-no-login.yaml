@@ -1,4 +1,7 @@
 ---
+- debug:
+    msg: "cli/basic-no-login.yaml on connection={{ ansible_connection }}"
+
 - name: Setup
   vyos_banner:
     banner: pre-login
