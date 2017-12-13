@@ -1,4 +1,7 @@
 ---
+- debug:
+    msg: "cli/basic-post-login.yaml on connection={{ ansible_connection }}"
+
 - name: setup - remove post-login
   vyos_banner:
     banner: post-login

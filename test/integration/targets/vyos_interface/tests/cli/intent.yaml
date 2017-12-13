@@ -1,5 +1,5 @@
 ---
-- debug: msg="START vyos_interface cli/intent.yaml"
+- debug: msg="START cli/intent.yaml on connection={{ ansible_connection }}"
 
 - name: Run vyos lsmod command
   vyos_command:
