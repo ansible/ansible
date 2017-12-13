@@ -52,6 +52,138 @@ EXAMPLES = '''
 
 '''
 
+RETURN = '''
+network_interfaces:
+  description: List of matching elastic network interfaces
+  returned: always
+  type: complext
+  contains:
+    association:
+      description: Info of associated elastic IP (EIP)
+      returned: always, empty dict if no association exists
+      type: dict
+      sample: {
+          allocation_id: "eipalloc-5sdf123",
+          association_id: "eipassoc-8sdf123",
+          ip_owner_id: "4415120123456",
+          public_dns_name: "ec2-52-1-0-63.compute-1.amazonaws.com",
+          public_ip: "52.1.0.63"
+        }
+    attachment:
+      description: Infor about attached ec2 instance
+      returned: always, empty dict if ENI is not attached
+      type: dict
+      sample: {
+        attach_time: "2017-08-05T15:25:47+00:00",
+        attachment_id: "eni-attach-149d21234",
+        delete_on_termination: false,
+        device_index: 1,
+        instance_id: "i-15b8d3cadbafa1234",
+        instance_owner_id: "4415120123456",
+        status: "attached"
+      }
+    availability_zone:
+      description: Availability zone of ENI
+      returned: always
+      type: string
+      sample: "us-east-1b"
+    description:
+      description: Description text for ENI
+      returned: always
+      type: string
+      sample: "My favourite network interface"
+    groups:
+      description: List of attached security groups
+      returned: always
+      type: list
+      sample: [
+        {
+          group_id: "sg-26d0f1234",
+          group_name: "my_ec2_security_group"
+        }
+      ]
+    id:
+      description: The id of the ENI (alias for network_interface_id)
+      returned: always
+      type: string
+      sample: "eni-392fsdf"
+    interface_type:
+      description: Type of the network interface
+      returned: always
+      type: string
+      sample: "interface"
+    ipv6_addresses:
+      description: List of IPv6 addresses for this interface
+      returned: always
+      type: list
+      sample: []
+    mac_address:
+      description: MAC address of the network interface
+      returned: always
+      type: string
+      sample: "0a:f8:10:2f:ab:a1"
+    network_interface_id:
+      description: The id of the ENI
+      returned: always
+      type: string
+      sample: "eni-392fsdf"
+    owner_id:
+      description: AWS account id of the owner of the ENI
+      returned: always
+      type: string
+      sample: "4415120123456"
+    private_dns_name:
+      description: Private DNS name for the ENI
+      returned: always
+      type: string
+      sample: "ip-172-16-1-180.ec2.internal"
+    private_ip_address:
+      description: Private IP address for the ENI
+      returned: always
+      type: string
+      sample: "172.16.1.180"
+    private_ip_addresses:
+      description: List of private IP addresses attached to the ENI
+      returned: always
+      type: list
+      sample: []
+    requester_id:
+      description: The ID of the entity that launched the ENI
+      returned: always
+      type: string
+      sample: "AIDAIONYVJQNIAZFT3ABC"
+    requester_managed:
+      description:  Indicates whether the network interface is being managed by an AWS service.
+      returned: always
+      type: bool
+      sample: false
+    source_dest_check:
+      description: Indicates whether the network interface performs source/destination checking.
+      returned: always
+      type: bool
+      sample: false
+    status:
+      description: Indicates if the network interface is attached to an instance or not
+      returned: always
+      type: string
+      sample: "in-use"
+    subnet_id:
+      description: Subnet ID the ENI is in
+      returned: always
+      type: string
+      sample: "subnet-7bbf01234"
+    tag_set:
+      description: Dictionary of tags added to the ENI
+      returned: always
+      type: dict
+      sample: {}
+    vpc_id:
+      description: ID of the VPC the network interface it part of
+      returned: always
+      type: string
+      sample: "vpc-b3f1f123"
+'''
+
 try:
     import boto.ec2
     from boto.exception import BotoServerError
