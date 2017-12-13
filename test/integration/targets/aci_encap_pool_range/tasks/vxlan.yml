@@ -1,0 +1,16 @@
+- name: ensure vxlan pool exists for tests to kick off
+  aci_encap_pool: &aci_pool_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: no
+    state: present
+    pool: anstest
+    pool_type: vxlan
+    description: Ansible Test
+
+- name: cleanup vxlan pool
+  aci_encap_pool:
+    <<: *aci_pool_present
+    state: absent
+  when: pool_present.changed == true
