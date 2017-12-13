@@ -112,7 +112,7 @@ options:
     profile:
         description:
             - "Disk profile name to be attached to disk. By default profile is chosen by oVirt/RHV engine."
-    quota:
+    quota_id:
         description:
             - "Disk quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine."
         version_added: "2.5"
@@ -224,7 +224,7 @@ EXAMPLES = '''
     size: 10GiB
     storage_domain: data
     description: somedescriptionhere
-    quota: "{{ ovirt_quotas[0]['id'] }}"
+    quota_id: "{{ ovirt_quotas[0]['id'] }}"
 '''
 
 
@@ -450,7 +450,7 @@ class DisksModule(BaseModule):
                     name=self._module.params.get('storage_domain'),
                 ),
             ],
-            quota=otypes.Quota(id=self._module.params.get('quota')),
+            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') else None,
             shareable=self._module.params.get('shareable'),
             lun_storage=otypes.HostStorage(
                 type=otypes.StorageType(
@@ -519,6 +519,7 @@ class DisksModule(BaseModule):
     def _update_check(self, entity):
         return (
             equal(self._module.params.get('description'), entity.description) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
             equal(self._module.params.get('shareable'), entity.shareable)
         )
@@ -560,7 +561,7 @@ def main():
         storage_domain=dict(default=None),
         storage_domains=dict(default=None, type='list'),
         profile=dict(default=None),
-        quota=dict(default=None),
+        quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
