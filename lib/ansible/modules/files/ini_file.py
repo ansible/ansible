@@ -160,8 +160,22 @@ def do_ini(module, filename, section=None, option=None, value=None,
         ini_lines[-1] += '\n'
         changed = True
 
-    # append a fake section line to simplify the logic
+    # append fake section lines to simplify the logic
+    # At top:
+    # Generate fake section name to manage options without section.
+    # The idea is to generate a section name strange enough to do not match any other in the file
+    # Name is created using a uniq of every letter in option and value (Max 8), wrapped between the sequence '_-_'
+    # For drink = water, the fake section name will be: _-_aediknrt_-_
+    fake_section_name = '_-_%s_-_'
+    fake_section_name = fake_section_name % ''.join((set(option).union(set(value))))[:8]
+    ini_lines.insert(0, '[%s]' % fake_section_name)
+
+    # At botton:
     ini_lines.append('[')
+
+    # If no section is defined, fake section is used
+    if section == '' or not section:
+        section = fake_section_name
 
     within_section = not section
     section_start = 0
@@ -223,7 +237,8 @@ def do_ini(module, filename, section=None, option=None, value=None,
                         msg = 'option changed'
                         break
 
-    # remove the fake section line
+    # remove the fake section lines
+    del ini_lines[0]
     del ini_lines[-1:]
 
     if not within_section and option and state == 'present':
