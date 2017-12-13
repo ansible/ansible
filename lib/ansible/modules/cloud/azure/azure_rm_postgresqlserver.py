@@ -77,9 +77,6 @@ options:
     location:
         description:
             - The location the resource resides in.
-    tags:
-        description:
-            - Application-specific metadata in the form of key-value pairs.
 
 extends_documentation_fragment:
     - azure
@@ -109,41 +106,36 @@ EXAMPLES = '''
         admin_username: administrator_login
         admin_password: administrator_login_password
       location: location
-      tags: tags
 '''
 
 RETURN = '''
-state:
-    description: Current state of PostgreSQL Server
+id:
+    description:
+        - Resource ID
     returned: always
-    type: complex
-    contains:
-        id:
-            description:
-                - Resource ID
-            returned: always
-            type: str
-            sample: id
-        version:
-            description:
-                - "Server version. Possible values include: '9.5', '9.6'"
-            returned: always
-            type: str
-            sample: version
-        user_visible_state:
-            description:
-                - "A state of a server that is visible to user. Possible values include: 'Ready', 'Dropping', 'Disabled'"
-            returned: always
-            type: str
-            sample: user_visible_state
-        fully_qualified_domain_name:
-            description:
-                - The fully qualified domain name of a server.
-            returned: always
-            type: str
-            sample: fully_qualified_domain_name
+    type: str
+    sample: id
+version:
+    description:
+        - "Server version. Possible values include: '9.5', '9.6'"
+    returned: always
+    type: str
+    sample: version
+user_visible_state:
+    description:
+        - "A state of a server that is visible to user. Possible values include: 'Ready', 'Dropping', 'Disabled'"
+    returned: always
+    type: str
+    sample: user_visible_state
+fully_qualified_domain_name:
+    description:
+        - The fully qualified domain name of a server.
+    returned: always
+    type: str
+    sample: fully_qualified_domain_name
 '''
 
+import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -185,10 +177,6 @@ class AzureRMServers(AzureRMModuleBase):
                 type='str',
                 required=False
             ),
-            tags=dict(
-                type='dict',
-                required=False
-            ),
             state=dict(
                 type='str',
                 required=False,
@@ -201,7 +189,7 @@ class AzureRMServers(AzureRMModuleBase):
         self.name = None
         self.parameters = dict()
 
-        self.results = dict(changed=False, state=dict())
+        self.results = dict(changed=False)
         self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
@@ -216,29 +204,26 @@ class AzureRMServers(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
-            elif key == "sku":
-                self.parameters["sku"] = kwargs[key]
-            elif key == "properties":
-                self.parameters["properties"] = kwargs[key]
-            elif key == "location":
-                self.parameters["location"] = kwargs[key]
-            elif key == "tags":
-                self.parameters["tags"] = kwargs[key]
+            elif kwargs[key] is not None:
+                if key == "sku":
+                    self.parameters.update({"sku": kwargs[key]})
+                elif key == "properties":
+                    self.parameters.update({"properties": kwargs[key]})
+                elif key == "location":
+                    self.parameters.update({"location": kwargs[key]})
 
         self.adjust_parameters()
 
         old_response = None
+        response = None
         results = dict()
 
         self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {0} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
 
-        if not ("location" in self.parameters):
+        if "location" not in self.parameters:
             self.parameters["location"] = resource_group.location
 
         old_response = self.get_postgresqlserver()
@@ -261,32 +246,38 @@ class AzureRMServers(AzureRMModuleBase):
             self.log("Need to Create / Update the PostgreSQL Server instance")
 
             if self.check_mode:
+                self.results['changed'] = True
                 return self.results
 
-            self.results['state'] = self.create_update_postgresqlserver()
+            response = self.create_update_postgresqlserver()
+
             if not old_response:
                 self.results['changed'] = True
             else:
-                self.results['changed'] = old_response.__ne__(self.results['state'])
-
-            # remove unnecessary fields from return state
-            self.results['state'].pop('name', None)
-            self.results['state'].pop('type', None)
-            self.results['state'].pop('location', None)
-            self.results['state'].pop('tags', None)
-            self.results['state'].pop('sku', None)
-            self.results['state'].pop('administrator_login', None)
-            self.results['state'].pop('storage_mb', None)
-            self.results['state'].pop('ssl_enforcement', None)
+                self.results['changed'] = old_response.__ne__(response)
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("PostgreSQL Server instance deleted")
-            self.delete_postgresqlserver()
             self.results['changed'] = True
+
+            if self.check_mode:
+                return self.results
+
+            self.delete_postgresqlserver()
+            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
+            # for some time after deletion -- this should be really fixed in Azure
+            while self.get_postgresqlserver():
+                time.sleep(20)
         else:
             self.log("PostgreSQL Server instance unchanged")
-            self.results['state'] = old_response
             self.results['changed'] = False
+            response = old_response
+
+        if response:
+            self.results["id"] = response["id"]
+            self.results["version"] = response["version"]
+            self.results["user_visible_state"] = response["user_visible_state"]
+            self.results["fully_qualified_domain_name"] = response["fully_qualified_domain_name"]
 
         return self.results
 
