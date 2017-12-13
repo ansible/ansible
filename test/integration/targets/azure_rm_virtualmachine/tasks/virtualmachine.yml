@@ -130,7 +130,7 @@
 - assert:
       that: not output.changed
 
-- name: Create an image from VM
+- name: Create an image from VM (check mode)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
       source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
@@ -155,7 +155,7 @@
           - output.changed
           - output.state.sourceVirtualMachine == "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
 
-- name: Create an image from VM
+- name: Create an image from VM (idempotent)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
       source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
