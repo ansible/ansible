@@ -264,13 +264,8 @@ if ($DPartStyle -ne "RAW") {
                 }
                 Fail-Json -obj $result -message "Failed to set the disk online: $($_.Exception.Message)"
             }
-            if ($diff_mode) {
-                $result.change_log.operational_status = "Disk set online"
-            }
             $result.changed = $true
             $SetOnline = $true
-        } else {
-            $result.change_log.operational_status = "Disk is offline but was not set online due to activated check_mode"
         }
     }      
     if ($DROState -eq "True") {
@@ -279,9 +274,6 @@ if ($DPartStyle -ne "RAW") {
             try {
                 Set-DiskWriteable -Disk $disk
             } catch {
-                if ($diff_mode) {
-                    $result.change_log.writeable_status = "Disk failed to set from read-only to writeable"
-                }
                 if ($SetOnline) {
                     try {
                         Set-OperationalStatus -Disk $disk -Deactivate
@@ -289,26 +281,14 @@ if ($DPartStyle -ne "RAW") {
                         $OPStatusFailed = $true
                     } finally {
                         if (-not $OPStatusFailed) {
-                            if ($diff_mode) {
-                                $result.change_log.operational_status = "Disk set online and now offline again"
-                            }
                             $result.changed = $true
-                        } else {
-                            if ($diff_mode) {
-                                $result.change_log.operational_status = "Disk failed to set offline again"
-                            }
                         }
                     }
                 }
                 Fail-Json -obj $result -message "Failed to set the disk from read-only to writeable state: $($_.Exception.Message)"
             }
-            if ($diff_mode) {
-                $result.change_log.writeable_status = "Disk set from read-only to writeable"
-            }
             $result.changed = $true
             $SetWriteable = $true
-        } else {
-            $result.change_log.writeable_status = "Disk is read-only but was not set writeable due to activated check_mode"
         }
     } 
 }
@@ -328,14 +308,7 @@ if ($PartNumber -ge 1) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -346,14 +319,7 @@ if ($PartNumber -ge 1) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -370,14 +336,7 @@ if ($PartNumber -ge 1) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -388,14 +347,7 @@ if ($PartNumber -ge 1) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -410,14 +362,7 @@ if ($PartNumber -ge 1) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -428,14 +373,7 @@ if ($PartNumber -ge 1) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -448,14 +386,7 @@ if ($PartNumber -ge 1) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -466,14 +397,7 @@ if ($PartNumber -ge 1) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -497,14 +421,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                     $OPStatusFailed = $true
                 } finally {
                     if (-not $OPStatusFailed) {
-                        if ($diff_mode) {
-                            $result.change_log.operational_status = "Disk set online and now offline again"
-                        }
                         $result.changed = $true
-                    } else {
-                        if ($diff_mode) {
-                            $result.change_log.operational_status = "Disk failed to set offline again"
-                        }
                     }
                 }
             }
@@ -515,14 +432,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                     $ROStatusFailed = $true
                 } finally {
                     if (-not $ROStatusFailed) {
-                        if ($diff_mode) {
-                            $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                        }
                         $result.changed = $true
-                    } else {
-                        if ($diff_mode) {
-                            $result.change_log.writeable_status = "Disk failed to set read-only again"
-                        }
                     }
                 }
             }
@@ -538,14 +448,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                     $OPStatusFailed = $true
                 } finally {
                     if (-not $OPStatusFailed) {
-                        if ($diff_mode) {
-                            $result.change_log.operational_status = "Disk set online and now offline again"
-                        }
                         $result.changed = $true
-                    } else {
-                        if ($diff_mode) {
-                            $result.change_log.operational_status = "Disk failed to set offline again"
-                        }
                     }
                 }
             }
@@ -556,14 +459,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                     $ROStatusFailed = $true
                 } finally {
                     if (-not $ROStatusFailed) {
-                        if ($diff_mode) {
-                            $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                        }
                         $result.changed = $true
-                    } else {
-                        if ($diff_mode) {
-                            $result.change_log.writeable_status = "Disk failed to set read-only again"
-                        }
                     }
                 }
             }
@@ -583,14 +479,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -601,14 +490,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -622,14 +504,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -640,14 +515,7 @@ if (($DriveLetter -eq $null) -and ($PartitionAccessPath -eq $null)) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -665,14 +533,7 @@ if ($FileSystem -eq "ntfs") {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -683,14 +544,7 @@ if ($FileSystem -eq "ntfs") {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -698,10 +552,7 @@ if ($FileSystem -eq "ntfs") {
     }
 } elseif ($FileSystem -eq "refs") {
     if ($AllocUnitSize -ne 64) {
-        $AllocUnitSize = 64
-        if ($diff_mode) {
-            $result.change_log.allocation_unit = "Size was automatically adjusted to 64kb due to file_system option value refs"
-        }      
+        $AllocUnitSize = 64    
     }
 }
 
@@ -733,18 +584,7 @@ if ($DPartStyle -eq "RAW") {
                             $OPStatusFailed = $true
                         }
                         if (-not $OPStatusFailed) {
-                            if ($diff_mode) {
-                                $result.change_log.operational_status = "Disk was tried to set online during failed disk initalization and set now to it's initial state offline again"
-                            }
                             $result.changed = $true
-                        } else {
-                            if ($diff_mode) {
-                                $result.change_log.operational_status = "Disk was tried to set online during failed disk initalization, set it to it's inital state offline again failed also now"
-                            }
-                        }
-                    } else {
-                        if ($diff_mode) {
-                            $result.change_log.operational_status = "Disk was tried to set online during failed disk initalization and was now tried to set offline again but disk could not be found anymore"
                         }
                     }
                 }
@@ -764,19 +604,8 @@ if ($DPartStyle -eq "RAW") {
                         $ROStatusFailed = $true
                     } finally {
                         if (-not $ROStatusFailed) {
-                            if ($diff_mode) {
-                                $result.change_log.writeable_status = "Disk was tried to set writeable during failed disk initalization and set now to it's initial state read-only again"
-                            }
                             $result.changed = $true
-                        } else {
-                            if ($diff_mode) {
-                                $result.change_log.writeable_status = "Disk was tried to set writeable during failed disk initalization, set it to it's inital state read-only again failed also now"
-                            }
                         }
-                    }
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk was tried to set writeable during failed disk initalization and was now tried to set read-only again but disk could not be found anymore"
                     }
                 }
             }
@@ -803,14 +632,7 @@ if ($DPartStyle -eq "RAW") {
                         $OPStatusFailed = $true
                     } finally {
                         if (-not $OPStatusFailed) {
-                            if ($diff_mode) {
-                                $result.change_log.operational_status = "Disk set online and now offline again"
-                            }
                             $result.changed = $true
-                        } else {
-                            if ($diff_mode) {
-                                $result.change_log.operational_status = "Disk failed to set offline again"
-                            }
                         }
                     }
                 }
@@ -821,14 +643,7 @@ if ($DPartStyle -eq "RAW") {
                         $ROStatusFailed = $true
                     } finally {
                         if (-not $ROStatusFailed) {
-                            if ($diff_mode) {
-                                $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                            }
                             $result.changed = $true
-                        } else {
-                            if ($diff_mode) {
-                                $result.change_log.writeable_status = "Disk failed to set read-only again"
-                            }
                         }
                     }
                 }
@@ -864,19 +679,10 @@ try {
                 $StopFailed = $true
             } finally {
                 if (-not $StopFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.shellhw_service_state = "Set from 'Running' to 'Stopped'"
-                    }
                     $StopSuccess = $true
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.shellhw_service_state = "Could not be set from 'Running' to 'Stopped'"
-                    }
                 }
             }
-        } else {
-            $result.change_log.shellhw_service_state = "Service will not be set from 'Running' to 'Stopped' due to activated check_mode"
         }
     } elseif ($CheckFailed) {
         if ($diff_mode) {
@@ -897,14 +703,7 @@ if (-not $check_mode) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -915,14 +714,7 @@ if (-not $check_mode) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -933,9 +725,6 @@ if (-not $check_mode) {
                 $StartFailed = $true
             } finally {
                 if (-not $StartFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
-                    }
                     $result.changed = $true
                 } else {
                     if ($diff_mode) {
@@ -973,14 +762,7 @@ if (-not $PartitionAccessPath -eq [String]::Empty) {
                     $OPStatusFailed = $true
                 } finally {
                     if (-not $OPStatusFailed) {
-                        if ($diff_mode) {
-                            $result.change_log.operational_status = "Disk set online and now offline again"
-                        }
                         $result.changed = $true
-                    } else {
-                        if ($diff_mode) {
-                            $result.change_log.operational_status = "Disk failed to set offline again"
-                        }
                     }
                 }
             }
@@ -991,14 +773,7 @@ if (-not $PartitionAccessPath -eq [String]::Empty) {
                     $ROStatusFailed = $true
                 } finally {
                     if (-not $ROStatusFailed) {
-                        if ($diff_mode) {
-                            $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                        }
                         $result.changed = $true
-                    } else {
-                        if ($diff_mode) {
-                            $result.change_log.writeable_status = "Disk failed to set read-only again"
-                        }
                     }
                 }
             }
@@ -1009,9 +784,6 @@ if (-not $PartitionAccessPath -eq [String]::Empty) {
                     $StartFailed = $true
                 } finally {
                     if (-not $StartFailed) {
-                        if ($diff_mode) {
-                            $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
-                        }
                         $result.changed = $true
                     } else {
                         if ($diff_mode) {
@@ -1052,14 +824,7 @@ if (-not $check_mode) {
                 $OPStatusFailed = $true
             } finally {
                 if (-not $OPStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk set online and now offline again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.operational_status = "Disk failed to set offline again"
-                    }
                 }
             }
         }
@@ -1070,14 +835,7 @@ if (-not $check_mode) {
                 $ROStatusFailed = $true
             } finally {
                 if (-not $ROStatusFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk set writeable and now read-only again"
-                    }
                     $result.changed = $true
-                } else {
-                    if ($diff_mode) {
-                        $result.change_log.writeable_status = "Disk failed to set read-only again"
-                    }
                 }
             }
         }
@@ -1088,9 +846,6 @@ if (-not $check_mode) {
                 $StartFailed = $true
             } finally {
                 if (-not $StartFailed) {
-                    if ($diff_mode) {
-                        $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
-                    }
                     $result.changed = $true
                 } else {
                     if ($diff_mode) {
@@ -1119,9 +874,6 @@ if (-not $check_mode) {
             $StartFailed = $true
         } finally {
             if (-not $StartFailed) {
-                if ($diff_mode) {
-                    $result.change_log.shellhw_service_state = "Set from 'Stopped' to 'Running' again"
-                }
                 $result.changed = $true
             } else {
                 if ($diff_mode) {
