@@ -79,6 +79,12 @@ iosxr_argument_spec = {
     'provider': dict(type='dict', options=iosxr_provider_spec)
 }
 
+command_spec = {
+    'command': dict(),
+    'prompt': dict(default=None),
+    'answer': dict(default=None)
+}
+
 iosxr_top_spec = {
     'host': dict(removed_in_version=2.9),
     'port': dict(removed_in_version=2.9, type='int'),

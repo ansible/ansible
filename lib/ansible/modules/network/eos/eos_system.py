@@ -129,6 +129,7 @@ session_name:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.eos.eos import load_config, get_config
 from ansible.module_utils.network.eos.eos import eos_argument_spec
 
@@ -269,10 +270,24 @@ def map_params_to_obj(module):
     obj = {
         'hostname': module.params['hostname'],
         'domain_name': module.params['domain_name'],
-        'domain_list': module.params['domain_list'],
-        'lookup_source': module.params['lookup_source'],
-        'name_servers': module.params['name_servers'],
+        'domain_list': module.params['domain_list']
     }
+
+    lookup_source = ComplexList(dict(
+        interface=dict(key=True),
+        vrf=dict()
+    ), module)
+
+    name_servers = ComplexList(dict(
+        server=dict(key=True),
+        vrf=dict(default='default')
+    ), module)
+
+    for arg, cast in [('lookup_source', lookup_source), ('name_servers', name_servers)]:
+        if module.params[arg] is not None:
+            obj[arg] = cast(module.params[arg])
+        else:
+            obj[arg] = None
 
     return obj
 
@@ -280,16 +295,6 @@ def map_params_to_obj(module):
 def main():
     """ main entry point for module execution
     """
-    lookup_source_spec = dict(
-        interface=dict(key=True),
-        vrf=dict()
-    )
-
-    name_servers_spec = dict(
-        server=dict(key=True),
-        vrf=dict()
-    )
-
     argument_spec = dict(
         hostname=dict(),
 
@@ -297,10 +302,10 @@ def main():
         domain_list=dict(type='list', aliases=['domain_search']),
 
         # { interface: <str>, vrf: <str> }
-        lookup_source=dict(type='list', elements='dict', options=lookup_source_spec),
+        lookup_source=dict(type='list'),
 
         # { server: <str>; vrf: <str> }
-        name_servers=dict(type='list', elements='dict', options=name_servers_spec),
+        name_servers=dict(type='list'),
 
         state=dict(default='present', choices=['present', 'absent'])
     )
@@ -327,7 +332,6 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()

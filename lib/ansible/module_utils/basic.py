@@ -1929,23 +1929,14 @@ class AnsibleModule(object):
 
                 self._options_context.append(k)
 
-                key = None
-                for (name, value) in spec.items():
-                    # specifies how to map a single value to spec
-                    if value.get('key'):
-                        key = name
-                        break
-
                 if isinstance(params[k], dict):
                     elements = [params[k]]
                 else:
                     elements = params[k]
 
-                for index, param in enumerate(elements):
+                for param in elements:
                     if not isinstance(param, dict):
-                        if key is None:
-                            self.fail_json(msg="options spec require a key argument to map it to a single value '%s'" % param)
-                        elements[index] = param = {key: param}
+                        self.fail_json(msg="value of %s must be of type dict or list of dict" % k)
 
                     self._set_fallbacks(spec, param)
                     options_aliases = self._handle_aliases(spec, param)

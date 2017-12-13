@@ -120,7 +120,8 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.utils import ComplexList
 
 _CONFIGURED_VRFS = None
 
@@ -306,10 +307,31 @@ def map_params_to_obj(module):
         'hostname': module.params['hostname'],
         'lookup_source': module.params['lookup_source'],
         'lookup_enabled': module.params['lookup_enabled'],
-        'domain_name': module.params['domain_name'],
-        'domain_search': module.params['domain_search'],
-        'name_servers': module.params['name_servers']
     }
+
+    domain_name = ComplexList(dict(
+        name=dict(key=True),
+        vrf=dict()
+    ), module)
+
+    domain_search = ComplexList(dict(
+        name=dict(key=True),
+        vrf=dict()
+    ), module)
+
+    name_servers = ComplexList(dict(
+        server=dict(key=True),
+        vrf=dict()
+    ), module)
+
+    for arg, cast in [('domain_name', domain_name),
+                      ('domain_search', domain_search),
+                      ('name_servers', name_servers)]:
+
+        if module.params[arg]:
+            obj[arg] = cast(module.params[arg])
+        else:
+            obj[arg] = None
 
     return obj
 
@@ -317,32 +339,12 @@ def map_params_to_obj(module):
 def main():
     """ Main entry point for Ansible module execution
     """
-    domain_name_spec = dict(
-        name=dict(key=True),
-        vrf=dict()
-    )
-
-    domain_search_spec = dict(
-        name=dict(key=True),
-        vrf=dict()
-    )
-
-    name_servers_spec = dict(
-        server=dict(key=True),
-        vrf=dict()
-    )
-
     argument_spec = dict(
         hostname=dict(),
 
-        # { name: <str>, vrf: <str> }
-        domain_name=dict(type='list', elements='dict', options=domain_name_spec),
-
-        # {name: <str>, vrf: <str> }
-        domain_search=dict(type='list', elements='dict', options=domain_search_spec),
-
-        # { server: <str>; vrf: <str> }
-        name_servers=dict(type='list', elements='dict', options=name_servers_spec),
+        domain_name=dict(type='list'),
+        domain_search=dict(type='list'),
+        name_servers=dict(type='list'),
 
         lookup_source=dict(),
         lookup_enabled=dict(type='bool'),
@@ -358,6 +360,7 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
     result['warnings'] = warnings
 
     want = map_params_to_obj(module)
@@ -372,7 +375,6 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
-
 
 if __name__ == "__main__":
     main()

@@ -147,7 +147,8 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, run_commands
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.nxos.nxos import check_args, nxos_argument_spec, run_commands
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -162,7 +163,14 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    commands = module.params['commands']
+    transform = ComplexList(dict(
+        command=dict(key=True),
+        output=dict(),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+
+    commands = transform(module.params['commands'])
 
     if module.check_mode:
         for item in list(commands):
@@ -186,16 +194,9 @@ def to_cli(obj):
 def main():
     """entry point for module execution
     """
-    command_spec = dict(
-        command=dict(key=True),
-        output=dict(),
-        prompt=dict(),
-        answer=dict()
-    )
-
     argument_spec = dict(
         # { command: <str>, output: <str>, prompt: <str>, response: <str> }
-        commands=dict(type='list', elements='dict', options=command_spec, required=True),
+        commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['any', 'all']),
@@ -212,6 +213,7 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 

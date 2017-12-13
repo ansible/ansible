@@ -140,8 +140,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import string_types
 from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.eos.eos import run_commands
-from ansible.module_utils.network.eos.eos import eos_argument_spec
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
@@ -156,7 +157,16 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    commands = module.params['commands']
+    spec = dict(
+        command=dict(key=True),
+        output=dict(),
+        prompt=dict(),
+        answer=dict()
+    )
+
+    transform = ComplexList(spec, module)
+    commands = transform(module.params['commands'])
+
     if module.check_mode:
         for item in list(commands):
             if not item['command'].startswith('show'):
@@ -179,15 +189,8 @@ def to_cli(obj):
 def main():
     """entry point for module execution
     """
-    command_spec = dict(
-        command=dict(key=True),
-        output=dict(),
-        prompt=dict(),
-        answer=dict()
-    )
-
     argument_spec = dict(
-        commands=dict(type='list', elements='dict', options=command_spec, required=True),
+        commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
@@ -204,6 +207,7 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     if warnings:
         result['warnings'] = warnings
