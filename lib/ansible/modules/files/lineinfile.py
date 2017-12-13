@@ -110,6 +110,7 @@ options:
         a first line has regular expression matches.
     type: bool
     default: 'no'
+    version_added: "2.5"
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
