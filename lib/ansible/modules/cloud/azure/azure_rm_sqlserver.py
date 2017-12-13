@@ -93,6 +93,7 @@ fully_qualified_domain_name:
     sample: sqlcrudtest-4645.database.windows.net
 '''
 
+import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -233,6 +234,10 @@ class AzureRMServers(AzureRMModuleBase):
                 return self.results
 
             self.delete_sqlserver()
+            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
+            # for some time after deletion -- this should be really fixed in Azure
+            while self.get_sqlserver():
+                time.sleep(20)
         else:
             self.log("SQL Server instance unchanged")
             self.results['changed'] = False
