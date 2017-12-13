@@ -227,7 +227,7 @@ EXAMPLES = """
 import base64
 import json
 import sys
-import six
+import ansible.module_utils.six as six
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
