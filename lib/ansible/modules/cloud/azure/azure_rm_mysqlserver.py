@@ -135,6 +135,7 @@ fully_qualified_domain_name:
     sample: fully_qualified_domain_name
 '''
 
+import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -263,6 +264,10 @@ class AzureRMServers(AzureRMModuleBase):
                 return self.results
 
             self.delete_mysqlserver()
+            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
+            # for some time after deletion -- this should be really fixed in Azure
+            while self.get_mysqlserver():
+                time.sleep(20)
         else:
             self.log("MySQL Server instance unchanged")
             self.results['changed'] = False
