@@ -333,6 +333,12 @@ def main():
         mutually_exclusive=[['content', 'path']],
     )
 
+    if not HAS_LXML_ETREE:
+        module.fail_json(msg='module requires the lxml Python library installed on the managed host')
+
+    if not HAS_XMLJSON_COBRA:
+        module.fail_json(msg='module requires the xmljson (>= 0.1.8) Python library installed on the managed host')
+
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
