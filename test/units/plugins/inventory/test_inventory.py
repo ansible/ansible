@@ -180,6 +180,9 @@ class TestInventoryPlugins(unittest.TestCase):
         self.assertIn(im._inventory.get_host('test1'), im._inventory.groups['all'].hosts)
         self.assertIn(im._inventory.get_host('test2'), im._inventory.groups['all'].hosts)
         self.assertEqual(len(im._inventory.groups['all'].hosts), 2)
+        self.assertIn(im._inventory.get_host('test1'), im._inventory.groups['ungrouped'].hosts)
+        self.assertIn(im._inventory.get_host('test2'), im._inventory.groups['ungrouped'].hosts)
+        self.assertEqual(len(im._inventory.groups['ungrouped'].hosts), 2)
 
     def _get_inventory(self, inventory_content):
 
