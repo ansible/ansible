@@ -30,11 +30,16 @@ from ansible.cli.playbook import PlaybookCLI
 
 class TestPlaybookCLI(unittest.TestCase):
     def test_flush_cache(self):
-        cli = PlaybookCLI(args=["--flush-cache", "foobar.yml"])
+        cli = PlaybookCLI(args=["ansible-playbook", "--flush-cache", "foobar.yml"])
+        cli.parse()
+        self.assertTrue(cli.options.flush_cache)
 
         variable_manager = VariableManager()
         fake_loader = DictDataLoader({'foobar.yml': ""})
         inventory = InventoryManager(loader=fake_loader, sources='testhost,')
+
+        variable_manager.set_host_facts(inventory.get_host('testhost'), {'canary': True})
+        self.assertTrue('testhost' in variable_manager._fact_cache)
 
         cli._flush_cache(inventory, variable_manager)
         self.assertFalse('testhost' in variable_manager._fact_cache)
