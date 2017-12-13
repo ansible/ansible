@@ -72,8 +72,10 @@ options:
   insertafter:
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        after the last match of specified regular expression. A special value is
-        available; C(EOF) for inserting the line at the end of the file.
+        after the last match of specified regular expression.
+        If the first match is required, use(firstmatch=yes).
+        A special value is available; C(EOF) for inserting the line at the
+        end of the file.
         If specified regular expression has no matches, EOF will be used instead.
         May not be used with C(backrefs).
     choices: [ EOF, '*regex*' ]
@@ -81,8 +83,10 @@ options:
   insertbefore:
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        before the last match of specified regular expression. A value is
-        available; C(BOF) for inserting the line at the beginning of the file.
+        before the last match of specified regular expression.
+        If the first match is required, use(firstmatch=yes).
+        A value is available; C(BOF) for inserting the line at
+        the beginning of the file.
         If specified regular expression has no matches, the line will be
         inserted at the end of the file.  May not be used with C(backrefs).
     choices: [ BOF, '*regex*' ]
@@ -100,6 +104,13 @@ options:
          get the original file back if you somehow clobbered it incorrectly.
      type: bool
      default: 'no'
+  firstmatch:
+    description:
+      - Used with C(insertafter) or C(insertbefore). If set, C(insertafter) and C(inserbefore) find
+        a first line has regular expression matches.
+    type: bool
+    default: 'no'
+    version_added: "2.5"
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
@@ -214,7 +225,7 @@ def check_file_attrs(module, changed, message, diff):
 
 
 def present(module, dest, regexp, line, insertafter, insertbefore, create,
-            backup, backrefs):
+            backup, backrefs, firstmatch):
 
     diff = {'before': '',
             'after': '',
@@ -264,9 +275,13 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             if insertafter:
                 # + 1 for the next line
                 index[1] = lineno + 1
+                if firstmatch:
+                    break
             if insertbefore:
                 # + 1 for the previous line
                 index[1] = lineno
+                if firstmatch:
+                    break
 
     msg = ''
     changed = False
@@ -407,6 +422,7 @@ def main():
             backrefs=dict(type='bool', default=False),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
+            firstmatch=dict(default=False, type='bool'),
             validate=dict(type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
@@ -419,6 +435,7 @@ def main():
     backup = params['backup']
     backrefs = params['backrefs']
     path = params['path']
+    firstmatch = params['firstmatch']
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
@@ -440,7 +457,7 @@ def main():
         line = params['line']
 
         present(module, path, params['regexp'], line,
-                ins_aft, ins_bef, create, backup, backrefs)
+                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if params['regexp'] is None and params.get('line', None) is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
