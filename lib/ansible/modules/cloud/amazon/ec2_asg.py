@@ -246,6 +246,28 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+auto_scaling_group_name:
+    description: The unique name of the auto scaling group
+    returned: success
+    type: str
+    sample: "myasg"
+auto_scaling_group_arn:
+    description: The unique ARN of the autoscaling group
+    returned: success
+    type: str
+    sample: "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:6a09ad6d-eeee-1234-b987-ee123ced01ad:autoScalingGroupName/myasg"
+availability_zones:
+    description: The availability zones for the auto scaling group
+    returned: success
+    type: list
+    sample: [
+        "us-east-1d"
+    ]
+created_time:
+    description: Timestamp of create time of the auto scaling group
+    returned: success
+    type: str
+    sample: "2017-11-08T14:41:48.272000+00:00"
 default_cooldown:
     description: The default cooldown time in seconds.
     returned: success
@@ -372,6 +394,11 @@ viable_instances:
     returned: success
     type: int
     sample: 1
+vpc_zone_identifier:
+    description: VPC zone ID / subnet id for the auto scaling group
+    returned: success
+    type: str
+    sample: "subnet-a31ef45f"
 '''
 
 import time
@@ -537,6 +564,11 @@ def get_properties(autoscaling_group):
                 properties['pending_instances'] += 1
     else:
         properties['instances'] = []
+
+    properties['auto_scaling_group_name'] = autoscaling_group.get('AutoScalingGroupName')
+    properties['auto_scaling_group_arn'] = autoscaling_group.get('AutoScalingGroupARN')
+    properties['availability_zones'] = autoscaling_group.get('AvailabilityZones')
+    properties['created_time'] = autoscaling_group.get('CreatedTime')
     properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.get('LoadBalancerNames')
     properties['launch_config_name'] = autoscaling_group.get('LaunchConfigurationName')
@@ -550,6 +582,8 @@ def get_properties(autoscaling_group):
     properties['default_cooldown'] = autoscaling_group.get('DefaultCooldown')
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
+    properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
+
     if properties['target_group_arns']:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
         elbv2_connection = boto3_conn(module,
