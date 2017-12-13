@@ -101,6 +101,7 @@ $dns_domain_name = Get-AnsibleParam $param "dns_domain_name"
 $safe_mode_password= Get-AnsibleParam $param "safe_mode_password"
 $domain_admin_user = Get-AnsibleParam $param "domain_admin_user" -failifempty $result
 $domain_admin_password= Get-AnsibleParam $param "domain_admin_password" -failifempty $result
+$local_admin_password= Get-AnsibleParam $param "local_admin_password"
 $database_path = Get-AnsibleParam $param "database_path" -type "path"
 $sysvol_path = Get-AnsibleParam $param "sysvol_path" -type "path"
 $read_only = Get-AnsibleParam $param "read_only" -type "bool" -default $false
