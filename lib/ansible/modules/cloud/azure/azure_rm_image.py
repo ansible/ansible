@@ -102,48 +102,25 @@ state:
           type: str
           example: "foobar"
         location:
-          description: Location of the image
+          description: Location of the image.
           type: str
           example: "eastus"
-        resource_group:
-          description: Resource group of the image
+        resourceGroup:
+          description: Resource group of the image.
           type: str
           example: "Testing"
-        provisioning_state:
-          description: Success or failure of the provisioning event.
+        osDisk:
+          description: OS disk id if the image is created from disks.
           type: str
-          example: "Succeeded"
-        properties:
-          description: Facts about the current image
-          type: complex
-          contains: {
-              "storageProfile": {
-                "osDisk": {
-                "storageAccountType": "Standard_LRS",
-                "managedDisk": {
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001"
-                },
-                "diskSizeGB": 32,
-                "osState": "Generalized",
-                "caching": "ReadOnly",
-                "osType": "Linux"
-                },
-                "dataDisks": [
-                    {
-                        "caching": "ReadOnly",
-                        "diskSizeGB": 64,
-                        "storageAccountType": "Standard_LRS",
-                        "managedDisk": {
-                        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001-datadisk-0"
-                        },
-                        "lun": 0
-                    }
-                ]
-            },
-            "sourceVirtualMachine": {
-                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/testvm001"
-            }
-          }
+          example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001"
+        dataDisks:
+          description: Data disk id if the image is created from disks.
+          type: list
+          example: ["/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001-datadisk-0"]
+        sourceVirtualMachine:
+          description: Source virtual machine id if the image is created from vm.
+          type: str
+          example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/testvm001"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
@@ -166,7 +143,7 @@ class AzureRMImage(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            source=dict(type='str', required=True),
+            source=dict(type='str'),
             data_disk_sources=dict(type='list', default=[]),
             os_type=dict(type='str', choices=['Windows', 'Linux'])
         )
@@ -175,6 +152,10 @@ class AzureRMImage(AzureRMModuleBase):
             changed=False,
             state=dict()
         )
+
+        required_if = [
+            ('state', 'present', ['source'])
+        ]
 
         self.resource_group = None
         self.name = None
@@ -185,7 +166,7 @@ class AzureRMImage(AzureRMModuleBase):
         self.os_type = None
         self.tags = None
 
-        super(AzureRMImage, self).__init__(self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMImage, self).__init__(self.module_arg_spec, supports_check_mode=True, required_if=required_if)
 
     def exec_module(self, **kwargs):
 
@@ -248,7 +229,15 @@ class AzureRMImage(AzureRMModuleBase):
         return self.results
 
     def _image_to_dict(self, image):
-        return image.as_dict()
+        return dict(
+            id=image.id,
+            name=image.name,
+            location=image.location
+            resourceGroup=image.resource_group,
+            osDisk=image.storage_profile.os_disk.managedDisk.id if image.storage_profile and image.storage_profile.os_disk else None,
+            dataDisks=[item.managedDisk.id for item in image.storage_profile.data_disks] if image.storage_profile and image.storage_profile.data_disks else None,
+            sourceVirtualMachine=image.source_virtual_machine.id if image.source_virtual_machine else None
+        )
 
     def resolve_storage_source(self, source):
         blob_uri = None
