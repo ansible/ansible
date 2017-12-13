@@ -31,19 +31,6 @@
       - output.changed
       - output.state == 'Ready'
 
-- name: Create again instance of SQL Server -- check mode
-  azure_rm_sqlserver:
-    resource_group: "{{ resource_group }}"
-    name: "sqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
-    location: eastus
-    admin_username: mylogin
-    admin_password: Testpasswordxyz12!
-  register: output
-- name: Assert the state has not changed
-  assert:
-    that:
-      - output.changed == false
-
 - name: Create again instance of SQL Server
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
