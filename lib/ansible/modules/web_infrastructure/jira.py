@@ -227,6 +227,7 @@ EXAMPLES = """
 import base64
 import json
 import sys
+import six
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -243,7 +244,10 @@ def request(url, user, passwd, timeout, data=None, method=None):
     # resulting in unexpected results. To work around this we manually
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    auth = base64.b64encode('{}:{}'.format(user, passwd).encode())
+    if six.PY3:
+        auth = auth.decode()
+
     response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
                                headers={'Content-Type': 'application/json',
                                         'Authorization': "Basic %s" % auth})
