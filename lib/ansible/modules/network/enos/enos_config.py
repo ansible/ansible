@@ -166,6 +166,7 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.enos.enos import load_config, get_config
 from ansible.module_utils.network.enos.enos import enos_argument_spec
+from ansible.module_utils.network.enos.enos import run_commands
 from ansible.module_utils.network.enos.enos import check_args
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
@@ -281,4 +282,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
