@@ -59,7 +59,13 @@ class Cliconf(CliconfBase):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(to_bytes(command), prompt=to_bytes(prompt), answer=to_bytes(answer), sendonly=sendonly)
+        # Avoid setting either value to b'None'
+        if prompt is not None:
+            prompt = to_bytes(prompt)
+        if answer is not None:
+            answer = to_bytes(answer)
+
+        return self.send_command(to_bytes(command), prompt=prompt, answer=answer, sendonly=sendonly)
 
     def commit(self, comment=None):
         if comment:
