@@ -153,13 +153,13 @@ def get_interface_mode(name, module):
     Returns:
         str: 'layer2' or 'layer3'
     """
-    command = 'show interface ' + name
+    command = 'show interface {0} | json'.format(name)
     intf_type = get_interface_type(name)
     mode = 'unknown'
     interface_table = {}
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         interface_table = body['TABLE_interface']['ROW_interface']
     except (KeyError, AttributeError, IndexError):
         return mode
@@ -187,9 +187,9 @@ def interface_is_portchannel(name, module):
     intf_type = get_interface_type(name)
 
     if intf_type == 'ethernet':
-        command = 'show interface ' + name
+        command = 'show interface {0} | json'.format(name)
         try:
-            body = execute_show_command(command, module)[0]
+            body = run_commands(module, [command])[0]
             interface_table = body['TABLE_interface']['ROW_interface']
         except (KeyError, AttributeError, IndexError):
             interface_table = None
@@ -214,10 +214,10 @@ def get_switchport(port, module):
         dictionary with k/v pairs for L2 vlan config
     """
 
-    command = 'show interface {0} switchport'.format(port)
+    command = 'show interface {0} switchport | json'.format(port)
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         sp_table = body['TABLE_interface']['ROW_interface']
     except (KeyError, AttributeError, IndexError):
         sp_table = None
@@ -373,11 +373,11 @@ def vlan_range_to_list(vlans):
 
 def get_list_of_vlans(module):
 
-    command = 'show vlan'
+    command = 'show vlan | json'
     vlan_list = []
 
     try:
-        body = execute_show_command(command, module)[0]
+        body = run_commands(module, [command])[0]
         vlan_table = body['TABLE_vlanbrief']['ROW_vlanbrief']
     except (KeyError, AttributeError, IndexError):
         return []
@@ -410,7 +410,7 @@ def apply_key_map(key_map, table):
     for key, value in table.items():
         new_key = key_map.get(key)
         if new_key:
-            new_dict[new_key] = value
+            new_dict[new_key] = str(value)
     return new_dict
 
 
@@ -418,19 +418,6 @@ def apply_value_map(value_map, resource):
     for key, value in value_map.items():
         resource[key] = value[resource.get(key)]
     return resource
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    provider = module.params['provider']
-    if provider['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif provider['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def flatten_list(command_lists):
@@ -501,7 +488,7 @@ def main():
 
     warnings = list()
     commands = []
-    result = {'changed': False, 'commands': []}
+    result = {'changed': False}
     if warnings:
         result['warnings'] = warnings
 
@@ -589,19 +576,18 @@ def main():
             existing.pop('trunk_vlans_list')
             proposed.pop('trunk_vlans_list')
 
-        cmds = flatten_list(commands)
+    cmds = flatten_list(commands)
+    if cmds:
+        if module.check_mode:
+            module.exit_json(changed=True, commands=cmds)
+        else:
+            result['changed'] = True
+            load_config(module, cmds)
+            if 'configure' in cmds:
+                cmds.pop(0)
 
-        if cmds:
-            if module.check_mode:
-                module.exit_json(changed=True, commands=cmds)
-            else:
-                result['changed'] = True
-                load_config(module, cmds)
-                if 'configure' in cmds:
-                    cmds.pop(0)
-
-        result['commands'].extend(cmds)
-        result['warnings'] = warnings
+    result['commands'] = cmds
+    result['warnings'] = warnings
 
     module.exit_json(**result)
 
