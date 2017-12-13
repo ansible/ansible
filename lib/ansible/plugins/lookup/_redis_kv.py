@@ -10,7 +10,7 @@ DOCUMENTATION = """
     version_added: "0.9"
     short_description: fetch data from Redis
     deprecated:
-        why: This lookup uses options intermingled with terms which blurs the interface between settinsg and data
+        why: This lookup uses options intermingled with terms which blurs the interface between settings and data
         version: '2.9'
         alternative: new 'redis' lookup
     description:
