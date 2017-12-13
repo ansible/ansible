@@ -180,6 +180,9 @@ options:
     - ' - C(gateway) (string): Static gateway.'
     - ' - C(dns_servers) (string): DNS servers for this network interface (Windows).'
     - ' - C(domain) (string): Domain name for this network interface (Windows).'
+    - ' - C(wake_on_lan) (bool): Indicates if wake-on-LAN is enabled on this virtual network adapter. version_added: 2.5'
+    - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on. version_added: 2.5'
+    - ' - C(allow_guest_control) (bool): Enables guest control over whether the connectable device is connected. version_added: 2.5'
     version_added: '2.3'
   customization:
     description:
@@ -474,13 +477,13 @@ class PyVmomiDeviceHelper(object):
         else:
             self.module.fail_json(msg='Invalid device_type "%s" for network "%s"' % (device_type, device_infos['name']))
 
-        nic.device.wakeOnLanEnabled = True
+        nic.device.wakeOnLanEnabled = bool(device_infos.get('wake_on_lan', True))
         nic.device.deviceInfo = vim.Description()
         nic.device.deviceInfo.label = device_label
         nic.device.deviceInfo.summary = device_infos['name']
         nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-        nic.device.connectable.startConnected = True
-        nic.device.connectable.allowGuestControl = True
+        nic.device.connectable.startConnected = bool(device_infos.get('start_connected', True))
+        nic.device.connectable.allowGuestControl = bool(device_infos.get('allow_guest_control', True))
         nic.device.connectable.connected = True
         if 'mac' in device_infos and self.is_valid_mac_addr(device_infos['mac']):
             nic.device.addressType = 'manual'
@@ -844,6 +847,19 @@ class PyVmomiHelper(PyVmomi):
                                               "The failing new MAC address is %s" % nic.device.macAddress)
 
                 nic.device = current_net_devices[key]
+                if ('wake_on_lan' in network_devices[key] and
+                        nic.device.wakeOnLanEnabled != network_devices[key].get('wake_on_lan')):
+                    nic.device.wakeOnLanEnabled = network_devices[key].get('wake_on_lan')
+                    nic_change_detected = True
+                if ('start_connected' in network_devices[key] and
+                        nic.device.connectable.startConnected != network_devices[key].get('start_connected')):
+                    nic.device.connectable.startConnected = network_devices[key].get('start_connected')
+                    nic_change_detected = True
+                if ('allow_guest_control' in network_devices[key] and
+                        nic.device.connectable.allowGuestControl != network_devices[key].get('allow_guest_control')):
+                    nic.device.connectable.allowGuestControl = network_devices[key].get('allow_guest_control')
+                    nic_change_detected = True
+
                 nic.device.deviceInfo = vim.Description()
             else:
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
