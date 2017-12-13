@@ -492,8 +492,6 @@ def main():
                         break
                 except IOError:
                     break
-                except OSError:
-                    break
             elif port:
                 try:
                     s = _create_connection(host, port, connect_timeout)
