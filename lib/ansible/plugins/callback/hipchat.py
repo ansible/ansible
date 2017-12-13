@@ -17,10 +17,16 @@ DOCUMENTATION = '''
       - prettytable (python lib)
     options:
       token:
-        description: HipChat API token
+        description: HipChat API token for v1 or v2 API.
         required: True
         env:
           - name: HIPCHAT_TOKEN
+      api_version:
+        description: HipChat API version.
+        required: False
+        default: v1
+        env:
+          - name: HIPCHAT_API_VERSION
       room:
         description: HipChat room to post in.
         default: ansible
@@ -61,6 +67,7 @@ class CallbackModule(CallbackBase):
         HIPCHAT_ROOM  (optional): HipChat room to post in. Default: ansible
         HIPCHAT_FROM  (optional): Name to post as. Default: ansible
         HIPCHAT_NOTIFY (optional): Add notify flag to important messages ("true" or "false"). Default: true
+        HIPCHAT_API_VERSION (optional): v1 is default.
 
     Requires:
         prettytable
@@ -71,6 +78,9 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'hipchat'
     CALLBACK_NEEDS_WHITELIST = True
 
+    API_V1_URL = 'https://api.hipchat.com/v1/rooms/message'
+    API_V2_URL = 'https://api.hipchat.com/v2/'
+
     def __init__(self):
 
         super(CallbackModule, self).__init__()
@@ -80,11 +90,17 @@ class CallbackModule(CallbackBase):
             self._display.warning('The `prettytable` python module is not installed. '
                                   'Disabling the HipChat callback plugin.')
 
-        self.msg_uri = 'https://api.hipchat.com/v1/rooms/message'
         self.token = os.getenv('HIPCHAT_TOKEN')
         self.room = os.getenv('HIPCHAT_ROOM', 'ansible')
         self.from_name = os.getenv('HIPCHAT_FROM', 'ansible')
         self.allow_notify = (os.getenv('HIPCHAT_NOTIFY') != 'false')
+        self.hipchat_api_version = os.getenv('HIPCHAT_API_VERSION', 'v1')
+
+        # Pick the request handler.
+        if self.hipchat_api_version == 'v2':
+            self.send_msg = self.send_msg_v2
+        else:
+            self.send_msg = self.send_msg_v1
 
         if self.token is None:
             self.disabled = True
@@ -96,7 +112,29 @@ class CallbackModule(CallbackBase):
         self.playbook_name = None
         self.play = None
 
-    def send_msg(self, msg, msg_format='text', color='yellow', notify=False):
+    def send_msg_v2(self, msg, msg_format='text', color='yellow', notify=False):
+        """Method for sending a message to HipChat"""
+        #print ("msg: {}, msg_format: {}, color: {}, notify: {}".format(msg, msg_format, color, notify))
+
+        headers = {'Authorization': 'Bearer %s' % self.token, 'Content-Type': 'application/json'}
+
+        body = {}
+        body['room_id'] = self.room
+        body['from'] = self.from_name[:15]  # max length is 15
+        body['message'] = msg
+        body['message_format'] = msg_format
+        body['color'] = color
+        body['notify'] = self.allow_notify or notify
+
+        data = json.dumps(body)
+        url = self.API_V2_URL + "room/{room_id}/notification".format(room_id=self.room)
+        try:
+            response = open_url(url, data=data, headers=headers, method='POST')
+            return response.read()
+        except Exception as ex:
+            self._display.warning('Could not submit message to hipchat: {}'.format(ex))
+
+    def send_msg_v1(self, msg, msg_format='text', color='yellow', notify=False):
         """Method for sending a message to HipChat"""
 
         params = {}
@@ -107,7 +145,7 @@ class CallbackModule(CallbackBase):
         params['color'] = color
         params['notify'] = int(self.allow_notify and notify)
 
-        url = ('%s?auth_token=%s' % (self.msg_uri, self.token))
+        url = ('%s?auth_token=%s' % (self.API_V1_URL, self.token))
         try:
             response = open_url(url, data=urlencode(params))
             return response.read()
