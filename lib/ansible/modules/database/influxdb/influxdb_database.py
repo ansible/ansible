@@ -25,17 +25,12 @@ requirements:
     - "influxdb >= 0.9"
     - requests
 options:
-    database_name:
-        description:
-            - Name of the database that will be created/destroyed
-        required: true
     state:
         description:
-            - Determines if the database should be created or destroyed
-        choices: ['present', 'absent']
+            - Determines if the database should be created or destroyed.
+        choices: [ present, absent ]
         default: present
-        required: false
-extends_documentation_fragment: influxdb.documentation
+extends_documentation_fragment: influxdb
 '''
 
 EXAMPLES = '''
@@ -44,7 +39,6 @@ EXAMPLES = '''
   influxdb_database:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
-      state: present
 
 - name: Destroy database
   influxdb_database:
@@ -58,18 +52,16 @@ EXAMPLES = '''
       username: "{{influxdb_username}}"
       password: "{{influxdb_password}}"
       database_name: "{{influxdb_database_name}}"
-      state: present
-      ssl: False
-      validate_certs: False
+      ssl: yes
+      validate_certs: yes
 '''
 
 RETURN = '''
-#only defaults
+# only defaults
 '''
 
 try:
     import requests.exceptions
-    from influxdb import InfluxDBClient
     from influxdb import exceptions
 except ImportError:
     pass

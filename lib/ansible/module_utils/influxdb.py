@@ -2,6 +2,9 @@
 # Copyright: (c) 2017, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 try:
     import requests.exceptions
     HAS_REQUESTS = True
@@ -16,7 +19,7 @@ except ImportError:
     HAS_INFLUXDB = False
 
 
-class InfluxDb(object):
+class InfluxDb():
     def __init__(self, module):
         self.module = module
         self.params = self.module.params
@@ -44,9 +47,11 @@ class InfluxDb(object):
             database_name=dict(required=True, type='str'),
             ssl=dict(default=False, type='bool'),
             validate_certs=dict(default=True, type='bool'),
-            timeout=dict(default=None, type='int'),
+            timeout=dict(type='int'),
             retries=dict(default=3, type='int'),
             proxies=dict(default={}, type='dict'),
+            use_udp=dict(default=False, type='bool'),
+            udp_port=dict(type=int)
         )
 
     def connect_to_influxdb(self):
