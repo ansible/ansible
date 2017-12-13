@@ -55,6 +55,7 @@ options:
   recurse:
     description:
       - Recursively expand zipped files within the src file.
+      - Setting to a value of C(yes) requires the PSCX module to be installed.
     type: bool
     default: 'no'
   creates:
