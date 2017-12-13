@@ -34,6 +34,7 @@ Ansible Changes By Release
 * Fix win_iis_webapppool to correctly stop a apppool
   (https://github.com/ansible/ansible/pull/33777)
 * Fix CloudEngine host failed (https://github.com/ansible/ansible/pull/27876)
+* Fix ios_config save issue (https://github.com/ansible/ansible/pull/33791)
 
 <a id="2.4.2"></a>
 
