@@ -49,7 +49,6 @@
 
 - debug: var=dc1
 
-
 - name: get a list of Cluster from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=CCR
@@ -61,7 +60,7 @@
 
 - debug: var=ccr1
 
-# Testcase 0001: Add Host
+# Testcase: Add Host
 - name: add host
   vmware_host:
     hostname: "{{ vcsim }}"
@@ -74,23 +73,20 @@
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
     state: present
-  register: host_system_result_0001
+  register: add_host_result
 
 - name: get a list of host system from vcsim after adding host system
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=H
-  register: new_host_list
-
-- set_fact:
-    new_host: "{% for host in new_host_list.json %} {{ True if (host | basename) == 'test_host_system_0001' else False }} {% endfor %}"
+  register: host_list
 
 - name: ensure host system is present
   assert:
     that:
-        - host_system_result_0001.changed == true
-        - "'True' in new_host"
+        - add_host_result | changed
+        - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0001') -%} True {%- else -%} False {%- endfor %}"
 
-# Testcase 0002: Add Host again
+# Testcase: Add Host again
 - name: add host again
   vmware_host:
     hostname: "{{ vcsim }}"
@@ -103,9 +99,111 @@
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
     state: present
-  register: host_system_result_0002
+  register: readd_host_result
+
+- name: ensure precend task didn't changed anything
+  assert:
+    that:
+        - not (readd_host_result|changed)
+
+# Testcase: Add Host via add_or_reconnect state
+- name: add host via add_or_reconnect
+  vmware_host:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    esxi_hostname: test_host_system_0002
+    esxi_username: "{{ vcsim_instance.json.username }}"
+    esxi_password: "{{ vcsim_instance.json.password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: "{{ ccr1 }}"
+    state: add_or_reconnect
+  register: add_or_reconnect_host_result
+
+- name: get a list of host system from vcsim after adding host system
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=H
+  register: host_list
 
 - name: ensure host system is present
   assert:
     that:
-        - host_system_result_0002.changed == false
+        - add_or_reconnect_host_result | changed
+        - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0002') -%} True {%- else -%} False {%- endfor %}"
+
+## Testcase: Reconnect Host
+#
+# ReconnectHost_Task need to be implemented in vcsim for this test to work
+# https://github.com/vmware/govmomi/tree/master/vcsim#supported-methods
+#
+#- name: reconnect host
+#  vmware_host:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    validate_certs: no
+#    esxi_hostname: test_host_system_0001
+#    datacenter_name: "{{ dc1 }}"
+#    cluster_name: "{{ ccr1 }}"
+#    state: reconnect
+#  register: reconnect_host_result
+#
+#- name: ensure host system has been reconnected
+#  assert:
+#    that:
+#        - reconnect_host_result | changed
+#        # it would be a good idea to check the events on the host to see the reconnect
+#        # https://github.com/vmware/govmomi/blob/master/govc/USAGE.md#events
+#        # "govc events ..." need to be callable from
+#        # test/utils/docker/vcenter-simulator/flask_control.py
+
+## Testcase: Remove Host
+#
+# EnterMaintenanceMode_Task need to be implemented in vcsim for this test to work
+# https://github.com/vmware/govmomi/tree/master/vcsim#supported-methods
+#
+#- name: remove host
+#  vmware_host:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    validate_certs: no
+#    esxi_hostname: test_host_system_0001
+#    datacenter_name: "{{ dc1 }}"
+#    cluster_name: "{{ ccr1 }}"
+#    state: absent
+#  register: remove_host_result
+#
+#- name: get a list of host system from vcsim after removing host system
+#  uri:
+#    url: http://{{ vcsim }}:5000/govc_find?filter=H
+#  register: host_list
+#
+#- name: ensure host system is absent
+#  assert:
+#    that:
+#        - remove_host_result | changed
+#        - "{% for host in host_list.json if ((host | basename) == 'test_host_system_0001') -%} False {%- else -%} True {%- endfor %}"
+
+## Testcase: Remove Host again
+#
+# EnterMaintenanceMode_Task need to be implemented in vcsim for this test to work
+# https://github.com/vmware/govmomi/tree/master/vcsim#supported-methods
+#
+#- name: remove host again
+#  vmware_host:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    validate_certs: no
+#    esxi_hostname: test_host_system_0001
+#    datacenter_name: "{{ dc1 }}"
+#    cluster_name: "{{ ccr1 }}"
+#    state: absent
+#  register: reremove_host_result
+#
+#- name: ensure precend task didn't changed anything
+#  assert:
+#    that:
+#        - not (reremove_host_result|changed)
