@@ -210,4 +210,3 @@
   assert:
     that:
       - content9 == expected9
-
