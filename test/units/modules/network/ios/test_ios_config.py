@@ -74,7 +74,35 @@ class TestIosConfigModule(TestIosModule):
         self.run_commands.return_value = "Hostname foo"
         set_module_args(dict(save_when='always'))
         self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 2)
+        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.load_config.call_count, 0)
+        args = self.run_commands.call_args[0][1]
+        self.assertIn('copy running-config startup-config\r', args)
+
+    def test_ios_config_save_changed_true(self):
+        src = load_fixture('ios_config_src.cfg')
+        set_module_args(dict(src=src, save_when='changed'))
+        commands = ['hostname foo', 'interface GigabitEthernet0/0', 'no ip address']
+        self.execute_module(changed=True, commands=commands)
+        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.load_config.call_count, 1)
+        args = self.run_commands.call_args[0][1]
+        self.assertIn('copy running-config startup-config\r', args)
+
+    def test_aruba_config_save_changed_false(self):
+        set_module_args(dict(save_when='changed'))
+        self.execute_module(changed=False)
+        self.assertEqual(self.run_commands.call_count, 0)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.load_config.call_count, 0)
+
+    def test_ios_config_save(self):
+        self.run_commands.return_value = "hostname foo"
+        set_module_args(dict(save=True))
+        self.execute_module(changed=True)
+        self.assertEqual(self.run_commands.call_count, 1)
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
         args = self.run_commands.call_args[0][1]
