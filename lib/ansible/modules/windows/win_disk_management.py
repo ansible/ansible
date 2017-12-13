@@ -17,7 +17,7 @@ short_description: Select and manage a disk, its partitions and file systems
 description:
    - With the module you can select a disk on the target and manage it (e.g. initializing, partitioning, formatting) with several options.
 requirements:
-    - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
+    - Windows 8.1 / Windows 2012R2 (NT 6.3) / PowerShell 4.0 or newer
 author:
     - Marc Tschapek (@marqelme)
 options:
