@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ios_logging
-version_added: "2.4"
+version_added: "2.5"
 author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
