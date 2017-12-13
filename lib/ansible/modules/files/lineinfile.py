@@ -105,11 +105,11 @@ options:
      type: bool
      default: 'no'
   firstmatch:
-     description:
-       - Used with C(insertafter) or C(insertbefore). If set, C(insertafter) and C(inserbefore) find
-         a first line has regular expression matches.
-     type: bool
-     default: 'no'
+    description:
+      - Used with C(insertafter) or C(insertbefore). If set, C(insertafter) and C(inserbefore) find
+        a first line has regular expression matches.
+    type: bool
+    default: 'no'
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
