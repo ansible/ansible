@@ -164,10 +164,18 @@ def do_ini(module, filename, section=None, option=None, value=None,
     # At top:
     # Generate fake section name to manage options without section.
     # The idea is to generate a section name strange enough to do not match any other in the file
-    # Name is created using a uniq of every letter in option and value (Max 8), wrapped between the sequence '_-_'
+    # Name is created using a uniq of every letter in option and value (Max 8)
+    # and wrapped between the sequence '_-_'. Example:
     # For drink = water, the fake section name will be: _-_aediknrt_-_
-    fake_section_name = '_-_%s_-_'
-    fake_section_name = fake_section_name % ''.join((set(option).union(set(value))))[:8]
+    fake_section_template = '_-_%s_-_'
+
+    # As option and value are not mandatory, we have to control how it's used
+    fake_section_pseudo_rand_name = ''.join((set(option or "NO_OPTION").union(set(value or "NO_VALUE"))))
+
+    # Generate fake section name, using first 8 chars of fake_section_pseudo_rand_name
+    fake_section_name = fake_section_template % fake_section_pseudo_rand_name[:8]
+
+    # Insert it at the beginning
     ini_lines.insert(0, '[%s]' % fake_section_name)
 
     # At botton:
