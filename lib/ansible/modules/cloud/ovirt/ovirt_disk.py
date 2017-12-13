@@ -216,14 +216,15 @@ EXAMPLES = '''
 
 # Defining a specific quota while creating a disk image:
 # Since Ansible 2.5
-        - ovirt_quotas_facts:
-            data_center: Default
-            name: myquota
-        - ovirt_disk:
-            name: mydisk
-            size: 10GiB
-            storage_domain: data
-            quota: "{{ ovirt_quotas[0]['id'] }}"
+- ovirt_quotas_facts:
+    data_center: Default
+    name: myquota
+- ovirt_disk:
+    name: mydisk
+    size: 10GiB
+    storage_domain: data
+    description: somedescriptionhere
+    quota: "{{ ovirt_quotas[0]['id'] }}"
 '''
 
 
