@@ -40,6 +40,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33931)
 * Fix extended file attributes detection and changing:
   (https://github.com/ansible/ansible/pull/18731)
+* correctly ensure 'ungrouped' membership rules (https://github.com/ansible/ansible/pull/33878)
+
 
 <a id="2.4.2"></a>
 
