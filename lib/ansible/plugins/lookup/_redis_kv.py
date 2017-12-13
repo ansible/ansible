@@ -9,6 +9,10 @@ DOCUMENTATION = """
     author: Jan-Piet Mens <jpmens(at)gmail.com>
     version_added: "0.9"
     short_description: fetch data from Redis
+    deprecated:
+        why: This lookup uses options intermingled with terms which blurs the interface between settinsg and data
+        version: '2.9'
+        alternative: new 'redis' lookup
     description:
       - this looup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
     requirements:
