@@ -233,9 +233,7 @@ import time
 import traceback
 import ssl
 
-from httplib import HTTPSConnection
-from httplib import IncompleteRead
-
+from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
