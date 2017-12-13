@@ -181,10 +181,12 @@ options:
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
-        startup-config
+        startup-config.  If the argument is set to I(changed), then the running-config
+        will only be copied to the startup-config if the task has made a change.
+        I(changed) was added in Ansible 2.5.
     required: false
     default: never
-    choices: ['always', 'never', 'modified']
+    choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.4"
   diff_against:
     description:
@@ -366,6 +368,16 @@ def get_candidate(module):
     return candidate, banners
 
 
+def save_config(module, result):
+    result['changed'] = True
+    if not module.check_mode:
+        run_commands(module, 'copy running-config startup-config\r')
+    else:
+        module.warn('Skipping command `copy running-config startup-config` '
+                    'due to check_mode.  Configuration not copied to '
+                    'non-volatile storage')
+
+
 def main():
     """ main entry point for module execution
     """
@@ -388,7 +400,7 @@ def main():
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+        save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['startup', 'intended', 'running']),
         diff_ignore_lines=dict(type='list'),
@@ -474,20 +486,18 @@ def main():
 
     diff_ignore_lines = module.params['diff_ignore_lines']
 
-    if module.params['save_when'] != 'never':
+    if module.params['save_when'] == 'always' or module.params['save']:
+        save_config(module, result)
+    elif module.params['save_when'] == 'modified':
         output = run_commands(module, ['show running-config', 'show startup-config'])
 
         running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
 
-        if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
-            result['changed'] = True
-            if not module.check_mode:
-                run_commands(module, 'copy running-config startup-config\r')
-            else:
-                module.warn('Skipping command `copy running-config startup-config` '
-                            'due to check_mode.  Configuration not copied to '
-                            'non-volatile storage')
+        if running_config.sha1 != startup_config.sha1:
+            save_config(module, result)
+    elif module.params['save_when'] == 'changed' and result['changed']:
+        save_config(module, result)
 
     if module._diff:
         if not running_config:
