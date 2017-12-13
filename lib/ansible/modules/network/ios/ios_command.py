@@ -134,8 +134,9 @@ failed_conditions:
 import time
 
 from ansible.module_utils.network.ios.ios import run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
@@ -148,8 +149,13 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    commands = module.params['commands']
-    for item in commands:
+    command = ComplexList(dict(
+        command=dict(key=True),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+    commands = command(module.params['commands'])
+    for item in list(commands):
         if module.check_mode and not item['command'].startswith('show'):
             warnings.append(
                 'only show commands are supported when using check mode, not '
@@ -167,14 +173,8 @@ def parse_commands(module, warnings):
 def main():
     """main entry point for module execution
     """
-    command_spec = dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict()
-    )
-
     argument_spec = dict(
-        commands=dict(type='list', elements='dict', options=command_spec, required=True),
+        commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
@@ -191,6 +191,7 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 
