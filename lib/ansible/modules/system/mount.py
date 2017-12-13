@@ -104,7 +104,7 @@ EXAMPLES = '''
     path: /mnt/dvd
     src: /dev/sr0
     fstype: iso9660
-    opts: ro
+    opts: ro,noauto
     state: present
 
 - name: Mount up device by label
