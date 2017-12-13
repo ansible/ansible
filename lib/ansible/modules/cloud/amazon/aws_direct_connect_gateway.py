@@ -13,6 +13,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: aws_direct_connect_gateway
+author: Gobin Sougrakpam (gobins@github)
+version_added: "2.5"
 short_description: Manage AWS Direct Connect Gateway.
 description:
   - Creates AWS Direct Connect Gateway
@@ -44,7 +46,6 @@ options:
     description:
         - vpn gateway id of an existing virtual gateway
     required: false
-author: Gobin Sougrakpam (gobins@github)
 '''
 
 EXAMPLES = '''
@@ -72,15 +73,16 @@ result:
   type: dict
   returned: I(state=present)
   contains:
-    {
-        "amazon_side_asn": 64512, 
-        "changed": false, 
-        "direct_connect_gateway_id": "38c2ebfa-76eb-4dcb-bd5e-123456ds", 
-        "direct_connect_gateway_name": "my-direct-connect-gateway", 
-        "direct_connect_gateway_state": "available", 
-        "failed": false, 
-        "owner_account": "0123456789"
-    }
+    amazon_side_asn:
+      description: ASN on the amazon side.
+    direct_connect_gateway_id:
+      description: The ID of the direct connect gateway.
+    direct_connect_gateway_name:
+      description: The name of the direct connect gateway.
+    direct_connect_gateway_state:
+      description: The state of the direct connect gateway.
+    owner_account:
+      description: The AWS account ID of the owner of the direct connect gateway.
 '''
 
 import time
@@ -109,6 +111,7 @@ def dx_gateway_info(client, gateway_id):
     else:
         None
 
+
 def wait_for_status(client, module, gateway_id, virtual_gateway_id, status):
     polling_increment_secs = 15
     max_retries = 3
@@ -117,8 +120,8 @@ def wait_for_status(client, module, gateway_id, virtual_gateway_id, status):
     for x in range(0, max_retries):
         try:
             response = check_dxgw_association(
-                client, 
-                module, 
+                client,
+                module,
                 gateway_id=gateway_id,
                 virtual_gateway_id=virtual_gateway_id)
             if len(response['directConnectGatewayAssociations']) > 0:
@@ -170,6 +173,7 @@ def delete_association(client, module, gateway_id, virtual_gateway_id):
     result = response
     return result
 
+
 def create_dx_gateway(client, module):
     params = dict()
     params['name'] = module.params.get('name')
@@ -177,8 +181,7 @@ def create_dx_gateway(client, module):
     try:
         response = client.create_direct_connect_gateway(
             directConnectGatewayName=params['name'],
-            amazonSideAsn=int(params['amazon_asn'])
-            )
+            amazonSideAsn=int(params['amazon_asn']))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -200,7 +203,6 @@ def find_dx_gateway(client, module, gateway_id=None):
             break
     if gateways != []:
         count = 0
-        
         for gateway in gateways:
             if module.params.get('name') == gateway['directConnectGatewayName']:
                 count += 1
@@ -270,7 +272,7 @@ def ensure_present(client, module):
                 )
             if bool(resp["directConnectGatewayAssociations"]):
                 for association in resp['directConnectGatewayAssociations']:
-                    if association['associationState'] not in ['disassociating','disassociated']:
+                    if association['associationState'] not in ['disassociating', 'disassociated']:
                         delete_association(
                             client,
                             module,
@@ -301,12 +303,12 @@ def ensure_absent(client, module):
     # then a match is considered to have been found and we will not create another dxgw.
     if not module.params.get('direct_connect_gateway_id'):
         module.fail_json(msg='A direct_connect_gateway_id is required when a status of \'absent\' is suppled')
- 
+
     changed = False
     result = dict()
     dx_gateway_id = module.params.get('direct_connect_gateway_id')
     existing_dxgw = find_dx_gateway(client, module, dx_gateway_id)
-    
+
     if existing_dxgw != None:
         resp = check_dxgw_association(
             client,
@@ -315,7 +317,7 @@ def ensure_absent(client, module):
             )
         if bool(resp["directConnectGatewayAssociations"]):
             for association in resp['directConnectGatewayAssociations']:
-                if association['associationState'] not in ['disassociating','disassociated']:
+                if association['associationState'] not in ['disassociating', 'disassociated']:
                     delete_association(
                         client,
                         module,
@@ -323,14 +325,14 @@ def ensure_absent(client, module):
                         virtual_gateway_id=association['virtualGatewayId'])
         # wait for deleting association
         timeout = time.time() + 60*10
-        while time.time() < timeout: 
+        while time.time() < timeout:
             resp = check_dxgw_association(
                 client,
                 module,
                 gateway_id=dx_gateway_id
                 )
             if resp["directConnectGatewayAssociations"] != []:
-                time.sleep(15)                
+                time.sleep(15)
             else:
                 break
 
@@ -350,8 +352,7 @@ def main():
         virtual_gateway_id=dict(),
         direct_connect_gateway_id=dict(),
         wait_timeout=dict(type='int', default=320),
-        )
-    )
+        ))
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
