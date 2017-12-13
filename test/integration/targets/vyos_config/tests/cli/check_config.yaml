@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/config_check.yaml"
+- debug: msg="START cli/config_check.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   vyos_config:
@@ -23,4 +23,4 @@
     that:
       - "result.changed == false"
 
-- debug: msg="END cli/config_check.yaml"
+- debug: msg="END cli/config_check.yaml on connection={{ ansible_connection }}"

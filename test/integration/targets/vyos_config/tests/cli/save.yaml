@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/save.yaml"
+- debug: msg="START cli/save.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   vyos_config:
@@ -51,4 +51,4 @@
     match: none
     save: true
 
-- debug: msg="END cli/simple.yaml"
+- debug: msg="END cli/simple.yaml on connection={{ ansible_connection }}"
