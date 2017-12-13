@@ -17,11 +17,12 @@ DOCUMENTATION = r'''
 module: vmware_host
 short_description: Add/remove ESXi host to/from vCenter
 description:
-- This module can be used to add/remove an ESXi host to/from vCenter.
+- This module can be used to add/remove/reconnect an ESXi host to/from vCenter.
 version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
+- Maxime de Roucy (@tchernomax)
 notes:
 - Tested on vSphere 5.5
 requirements:
@@ -35,6 +36,7 @@ options:
   cluster_name:
     description:
     - Name of the cluster to add the host.
+    - Required from version 2.5.
     required: yes
   esxi_hostname:
     description:
@@ -43,16 +45,29 @@ options:
   esxi_username:
     description:
     - ESXi username.
-    required: yes
+    - Required for adding a host.
+    - Optional for reconnect.
+    - Unused for removing.
+    - No longer required from version 2.5.
   esxi_password:
     description:
     - ESXi password.
-    required: yes
+    - Required for adding a host.
+    - Optional for reconnect.
+    - Unused for removing.
+    - No longer required from version 2.5.
   state:
     description:
-    - Add or remove the host.
-    choices: [absent, present]
+    - "present: add the host if it's absent else do nothing."
+    - "absent: remove the host if it's present else do nothing."
+    - "add_or_reconnect: add the host if it's absent else reconnect it."
+    - "reconnect: reconnect the host if it's present else fail."
     default: present
+    choices:
+    - present
+    - absent
+    - add_or_reconnect
+    - reconnect
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -68,6 +83,30 @@ EXAMPLES = r'''
     esxi_username: '{{ esxi_username }}'
     esxi_password: '{{ esxi_password }}'
     state: present
+  delegate_to: localhost
+
+- name: Reconnect ESXi Host (with username/password set)
+  vmware_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: datacenter_name
+    cluster_name: cluster_name
+    esxi_hostname: '{{ esxi_hostname }}'
+    esxi_username: '{{ esxi_username }}'
+    esxi_password: '{{ esxi_password }}'
+    state: reconnect
+  delegate_to: localhost
+
+- name: Reconnect ESXi Host (with default username/password)
+  vmware_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: datacenter_name
+    cluster_name: cluster_name
+    esxi_hostname: '{{ esxi_hostname }}'
+    state: reconnect
   delegate_to: localhost
 '''
 
@@ -99,7 +138,6 @@ class VMwareHost(object):
         self.esxi_username = module.params['esxi_username']
         self.esxi_password = module.params['esxi_password']
         self.state = module.params['state']
-        self.dc = None
         self.cluster = None
         self.host = None
         self.content = connect_to_api(module)
@@ -115,6 +153,13 @@ class VMwareHost(object):
                 'present': {
                     'present': self.state_exit_unchanged,
                     'absent': self.state_add_host,
+                },
+                'add_or_reconnect': {
+                    'present': self.state_reconnect_host,
+                    'absent': self.state_add_host,
+                },
+                'reconnect': {
+                    'present': self.state_reconnect_host,
                 }
             }
 
@@ -128,6 +173,10 @@ class VMwareHost(object):
             self.module.fail_json(msg=str(e))
 
     def add_host_to_vcenter(self):
+
+        if self.esxi_username is None or self.esxi_password is None:
+            self.module.fail_json(msg='esxi_username and esxi_password are required to add a host')
+
         host_connect_spec = vim.host.ConnectSpec()
         host_connect_spec.hostName = self.esxi_hostname
         host_connect_spec.userName = self.esxi_username
@@ -153,6 +202,32 @@ class VMwareHost(object):
             host_connect_spec.sslThumbprint = ssl_verify_fault.thumbprint
 
         task = self.cluster.AddHost_Task(host_connect_spec, as_connected, resource_pool, esxi_license)
+        success, result = wait_for_task(task)
+        return success, result
+
+    def reconnect_host_to_vcenter(self):
+        reconnecthost_args = {}
+        reconnecthost_args['reconnectSpec'] = vim.HostSystem.ReconnectSpec()
+        reconnecthost_args['reconnectSpec'].syncState = True
+
+        if self.esxi_username is not None or self.esxi_password is not None:
+            reconnecthost_args['cnxSpec'] = vim.host.ConnectSpec()
+            reconnecthost_args['cnxSpec'].hostName = self.esxi_hostname
+            reconnecthost_args['cnxSpec'].userName = self.esxi_username
+            reconnecthost_args['cnxSpec'].password = self.esxi_password
+            reconnecthost_args['cnxSpec'].force = True
+            reconnecthost_args['cnxSpec'].sslThumbprint = ""
+
+            try:
+                task = self.host.ReconnectHost_Task(**reconnecthost_args)
+                success, result = wait_for_task(task)
+                return success, result
+            except TaskError as add_task_error:
+                # See add_host_to_vcenter
+                ssl_verify_fault = add_task_error.args[0]
+                reconnecthost_args['cnxSpec'].sslThumbprint = ssl_verify_fault.thumbprint
+
+        task = self.host.ReconnectHost_Task(**reconnecthost_args)
         success, result = wait_for_task(task)
         return success, result
 
@@ -185,6 +260,14 @@ class VMwareHost(object):
             changed, result = self.add_host_to_vcenter()
         self.module.exit_json(changed=changed, result=str(result))
 
+    def state_reconnect_host(self):
+        changed = True
+        result = None
+
+        if not self.module.check_mode:
+            changed, result = self.reconnect_host_to_vcenter()
+        self.module.exit_json(changed=changed, result=str(result))
+
     def check_host_state(self):
         self.host, self.cluster = find_host_by_cluster_datacenter(self.module, self.content, self.datacenter_name,
                                                                   self.cluster_name, self.esxi_hostname)
@@ -199,17 +282,20 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         datacenter_name=dict(type='str', required=True),
-        cluster_name=dict(type='str'),
+        cluster_name=dict(type='str', required=True),
         esxi_hostname=dict(type='str', required=True),
-        esxi_username=dict(type='str', required=True),
-        esxi_password=dict(type='str', required=True, no_log=True),
-        state=dict(type='str', default='present', choices=['absent', 'present'])
-    )
+        esxi_username=dict(type='str', required=False),
+        esxi_password=dict(type='str', required=False, no_log=True),
+        state=dict(default='present',
+                   choices=['present', 'absent', 'add_or_reconnect', 'reconnect'],
+                   type='str'))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-    )
+        required_if=[
+            ['state', 'present', ['esxi_username', 'esxi_password']],
+            ['state', 'add_or_reconnect', ['esxi_username', 'esxi_password']]])
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
