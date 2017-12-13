@@ -114,7 +114,6 @@ class CallbackModule(CallbackBase):
 
     def send_msg_v2(self, msg, msg_format='text', color='yellow', notify=False):
         """Method for sending a message to HipChat"""
-        #print ("msg: {}, msg_format: {}, color: {}, notify: {}".format(msg, msg_format, color, notify))
 
         headers = {'Authorization': 'Bearer %s' % self.token, 'Content-Type': 'application/json'}
 
@@ -124,7 +123,7 @@ class CallbackModule(CallbackBase):
         body['message'] = msg
         body['message_format'] = msg_format
         body['color'] = color
-        body['notify'] = self.allow_notify or notify
+        body['notify'] = self.allow_notify and notify
 
         data = json.dumps(body)
         url = self.API_V2_URL + "room/{room_id}/notification".format(room_id=self.room)
@@ -149,8 +148,8 @@ class CallbackModule(CallbackBase):
         try:
             response = open_url(url, data=urlencode(params))
             return response.read()
-        except:
-            self._display.warning('Could not submit message to hipchat')
+        except Exception as ex:
+            self._display.warning('Could not submit message to hipchat: {}'.format(ex))
 
     def v2_playbook_on_play_start(self, play):
         """Display Playbook and play start messages"""
