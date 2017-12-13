@@ -91,7 +91,6 @@ import re
 
 try:
     import requests.exceptions
-    from influxdb import InfluxDBClient
     from influxdb import exceptions
 except ImportError:
     pass
