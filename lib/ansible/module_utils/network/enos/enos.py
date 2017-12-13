@@ -97,7 +97,11 @@ def get_connection(module):
 def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
-    passwords = module.params['passwords']
+    passwords = None
+    try:
+        passwords = module.params['passwords']
+    except KeyError:
+        passwords = None
     if passwords:
         cmd = 'more system:running-config'
     else:
@@ -147,6 +151,7 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, config):
     try:
         conn = get_connection(module)
+        conn.get('enable')
         conn.edit_config(config)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
