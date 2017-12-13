@@ -483,7 +483,10 @@ def insert_after_rule(service, old_rule, new_rule):
         if (old_rule.rule_type == rule.rule_type and
                 old_rule.rule_control == rule.rule_control and
                 old_rule.rule_module_path == rule.rule_module_path):
-            if (new_rule.rule_type != service.rules[index + 1].rule_type or
+            if (index == len(service.rules) - 1):
+                service.rules.insert(len(service.rules), new_rule)
+                changed = True
+            elif (new_rule.rule_type != service.rules[index + 1].rule_type or
                     new_rule.rule_control !=
                     service.rules[index + 1].rule_control or
                     new_rule.rule_module_path !=
