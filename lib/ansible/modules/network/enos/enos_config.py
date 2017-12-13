@@ -166,18 +166,11 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.enos.enos import load_config, get_config
 from ansible.module_utils.network.enos.enos import enos_argument_spec
-from ansible.module_utils.network.enos.enos import check_args as enos_check_args
+from ansible.module_utils.network.enos.enos import check_args
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 DEFAULT_COMMIT_COMMENT = 'configured by enos_config'
-
-
-def check_args(module, warnings):
-    enos_check_args(module, warnings)
-    if module.params['comment']:
-        if len(module.params['comment']) > 60:
-            module.fail_json(msg='comment argument cannot be more than 60 characters')
 
 
 def get_running_config(module):
@@ -190,7 +183,10 @@ def get_running_config(module):
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        try:
+            candidate.loadfp(module.params['src'])
+        except IOError:
+            candidate.load(module.params['src'])
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -228,8 +224,7 @@ def run(module, result):
 
             result['commands'] = commands
 
-        diff = load_config(module, commands, result['warnings'],
-                           not check_mode, replace_config, comment, admin)
+        diff = load_config(module, commands)
         if diff:
             result['diff'] = dict(prepared=diff)
             result['changed'] = True
