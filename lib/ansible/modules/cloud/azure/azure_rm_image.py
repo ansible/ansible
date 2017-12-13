@@ -232,10 +232,12 @@ class AzureRMImage(AzureRMModuleBase):
         return dict(
             id=image.id,
             name=image.name,
-            location=image.location
+            location=image.location,
             resourceGroup=image.resource_group,
             osDisk=image.storage_profile.os_disk.managedDisk.id if image.storage_profile and image.storage_profile.os_disk else None,
-            dataDisks=[item.managedDisk.id for item in image.storage_profile.data_disks] if image.storage_profile and image.storage_profile.data_disks else None,
+            dataDisks=([item.managedDisk.id for item in
+                       image.storage_profile.data_disks] if image.storage_profile
+                       and image.storage_profile.data_disks else None),
             sourceVirtualMachine=image.source_virtual_machine.id if image.source_virtual_machine else None
         )
 
