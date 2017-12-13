@@ -206,12 +206,13 @@ class LinuxNetwork(Network):
                         if secondary:
                             if "ipv4_secondaries" not in interfaces[device]:
                                 interfaces[device]["ipv4_secondaries"] = []
-                            interfaces[device]["ipv4_secondaries"].append({
-                                'address': address,
-                                'broadcast': broadcast,
-                                'netmask': netmask,
-                                'network': network,
-                            })
+                            if device != iface:
+                                interfaces[device]["ipv4_secondaries"].append({
+                                    'address': address,
+                                    'broadcast': broadcast,
+                                    'netmask': netmask,
+                                    'network': network,
+                                })
 
                         # NOTE: default_ipv4 is ref to outside scope
                         # If this is the default address, update default_ipv4
