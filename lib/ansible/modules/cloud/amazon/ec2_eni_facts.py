@@ -56,7 +56,7 @@ RETURN = '''
 network_interfaces:
   description: List of matching elastic network interfaces
   returned: always
-  type: complext
+  type: complex
   contains:
     association:
       description: Info of associated elastic IP (EIP)
