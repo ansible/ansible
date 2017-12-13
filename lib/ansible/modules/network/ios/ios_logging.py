@@ -55,6 +55,11 @@ options:
   level:
     description:
       - Set logging severity levels.
+  trap:
+    description:
+      - Set logging trap levels.
+    default: informational
+    choices: ['emergencies', 'alerts', 'critical', 'errors', 'warnings', 'notifications', 'informational', 'debugging']
   aggregate:
     description: List of logging definitions.
   state:
@@ -106,14 +111,15 @@ EXAMPLES = """
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
     state: absent
+
 - name : Configure logging with trap
   ios_logging:
-  dest: host
-  name: 172.16.0.1
-  facility: local6
-  level: warnings
-  trap: warnings
-  state: present
+    dest: host
+    name: 172.16.0.1
+    facility: local6
+    level: warnings
+    trap: warnings
+    state: present
 """
 
 RETURN = """
