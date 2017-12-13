@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ios_logging
-version_added: "2.5"
+version_added: "2.4"
 author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
@@ -56,6 +56,7 @@ options:
     description:
       - Set logging severity levels.
   trap:
+    version_added: "2.5"
     description:
       - Set logging trap levels.
     default: informational
