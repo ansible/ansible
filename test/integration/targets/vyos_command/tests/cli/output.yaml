@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/output.yaml"
+- debug: msg="START cli/output.yaml on connection={{ ansible_connection }}"
 
 - name: get output for single command
   vyos_command:
@@ -41,4 +41,4 @@
       - result.stdout_lines is defined
       - result.stdout_lines[2] | length >= 20
 
-- debug: msg="END cli/output.yaml"
+- debug: msg="END cli/output.yaml on connection={{ ansible_connection }}"
