@@ -378,7 +378,7 @@ class ModuleValidator(Validator):
     def _check_gpl3_header(self):
         header = '\n'.join(self.text.split('\n')[:20])
         if ('GNU General Public License' not in header or
-                'version 3' not in header):
+                ('version 3' not in header and 'v3.0' not in header)):
             self.reporter.error(
                 path=self.object_path,
                 code=105,
