@@ -132,9 +132,6 @@ def find_datacenter_by_name(content, datacenter_name):
     return find_object_by_name(content, datacenter_name, [vim.Datacenter])
 
 
-    return None
-
-
 def get_parent_datacenter(obj):
     """ Walk the parent tree to find the objects datacenter """
     if isinstance(obj, vim.Datacenter):

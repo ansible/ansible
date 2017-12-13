@@ -227,7 +227,7 @@ class VMwareDeployOvf:
     def get_objects(self):
         self.datastore = find_datastore_by_name(self.si, self.params['datastore'])
         if not self.datastore:
-            self.module.fail_json(msg='%(datastore) could not be located' % self.params)
+            self.module.fail_json(msg='%(datastore)s could not be located' % self.params)
 
         self.datacenter = find_datacenter_by_name(self.si, self.params['datacenter'])
         if not self.datacenter:
@@ -253,7 +253,7 @@ class VMwareDeployOvf:
             self.tar = tarfile.open(self.params['ovf'])
             ovf = None
             for candidate in self.tar.getmembers():
-                _, ext = os.path.splitext(candidate.name)
+                dummy, ext = os.path.splitext(candidate.name)
                 if ext.lower() == '.ovf':
                     ovf = candidate
                     break
