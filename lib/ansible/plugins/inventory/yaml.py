@@ -140,9 +140,6 @@ class InventoryModule(BaseFileInventoryPlugin):
                     for host_pattern in group_data['hosts']:
                         hosts, port = self._parse_host(host_pattern)
                         self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
-                        if group == 'all':
-                            for host in hosts:
-                                self.inventory.add_host(host, group='ungrouped', port=port)
                 else:
                     self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
 
