@@ -125,10 +125,6 @@ class InventoryData(object):
 
             mygroups = host.get_groups()
 
-            # ensure hosts are always in 'all'
-            if 'all' not in mygroups and not host.implicit:
-                self.add_child('all', host.name)
-
             if self.groups['ungrouped'] in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
                 if set(mygroups).difference(set([self.groups['all'], self.groups['ungrouped']])):
@@ -137,7 +133,7 @@ class InventoryData(object):
             elif not host.implicit:
                 # add ungrouped hosts to ungrouped, except implicit
                 length = len(mygroups)
-                if length == 0 or (length == 1 and all in mygroups):
+                if length == 0 or (length == 1 and self.groups['all'] in mygroups):
                     self.add_child('ungrouped', host.name)
 
             # special case for implicit hosts
