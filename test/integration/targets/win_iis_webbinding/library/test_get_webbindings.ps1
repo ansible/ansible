@@ -1,3 +1,10 @@
+#!powershell
+
+# Copyright: (c) 2017, Noah Sparks <nsparks@outlook.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
+#
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
@@ -19,7 +26,8 @@ function Create-BindingInfo {
     $ht = @{
         'bindingInformation' = $args[0].bindingInformation
         'ip' = $args[0].bindingInformation.split(':')[0]
-        'port' = $args[0].bindingInformation.split(':')[1]
+        'port' = [int]$args[0].bindingInformation.split(':')[1]
+        'hostheader' = $args[0].bindingInformation.split(':')[2]
         'isDsMapperEnabled' = $args[0].isDsMapperEnabled
         'protocol' = $args[0].protocol
         'certificateStoreName' = $args[0].certificateStoreName
@@ -33,7 +41,7 @@ function Create-BindingInfo {
     }
     Else
     {
-        $ht.sslFlags = $args[0].sslFlags
+        $ht.sslFlags = [int]$args[0].sslFlags
     }
 
     Return $ht
@@ -50,16 +58,33 @@ function Get-SingleWebBinding {
         'hostheader' = $args[0].hostheader
     }
 
+    # if no bindings exist, get-webbinding fails with an error that can't be ignored via error actions on older systems
+    # let's ignore that specific error
     If (-not $bind_search_splat['hostheader'])
     {
-        Get-WebBinding @bind_search_splat -ea stop | Where-Object {$_.BindingInformation.Split(':')[-1] -eq [string]::Empty}
+        Try {
+            Get-WebBinding @bind_search_splat | Where-Object {$_.BindingInformation.Split(':')[-1] -eq [string]::Empty}
+        }
+        Catch {
+            If (-not $_.Exception.Message.CompareTo('Cannot process argument because the value of argument "obj" is null. Change the value of argument "obj" to a non-null value'))
+            {
+                Throw $_.Exception.Message
+            }
+        }
     }
     Else
     {
-        Get-WebBinding @bind_search_splat -ea stop
+        Try {
+            Get-WebBinding @bind_search_splat
+        }
+        Catch {
+            If (-not $_.Exception.Message.CompareTo('Cannot process argument because the value of argument "obj" is null. Change the value of argument "obj" to a non-null value'))
+            {
+                Throw $_.Exception.Message
+            }
+        }
     }
 }
-
 
 # create binding search splat
 $binding_parameters = @{
@@ -78,10 +103,20 @@ If ($host_header)
 # Get bindings matching parameters
 Try {
     $current_bindings = Get-SingleWebBinding $binding_parameters
-    $binding_info = Create-BindingInfo $current_bindings
-    $result.binding = $binding_info
-    exit-json -obj $result
 }
 Catch {
     Fail-Json -obj $result -message "Failed to retrieve bindings with Get-SingleWebBinding - $($_.Exception.Message)"
 }
+
+If ($current_bindings)
+{
+    Try {
+        $binding_info = Create-BindingInfo $current_bindings
+    }
+    Catch {
+        Fail-Json -obj $result -message "Failed to create binding info - $($_.Exception.Message)"
+    }
+
+    $result.binding = $binding_info
+}
+exit-json -obj $result

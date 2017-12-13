@@ -23,7 +23,6 @@ options:
     description:
       - Names of web site
     required: true
-    default: null
     aliases: website
   state:
     description:
@@ -31,35 +30,30 @@ options:
     choices:
       - present
       - absent
-    required: false
     default: present
   port:
     description:
       - The port to bind to / use for the new site.
-    required: false
     default: 80
   ip:
     description:
       - The IP address to bind to / use for the new site.
-    required: false
     default: '*'
   host_header:
     description:
       - The host header to bind to / use for the new site.
-    required: false
+      - For state absent, you can use '*' here to remove all bindings for a particular
+        protocol/ip/port combination.
   protocol:
     description:
       - The protocol to be used for the Web binding (usually HTTP, HTTPS, or FTP).
-    required: false
     default: http
   certificate_hash:
     description:
       - Certificate hash (thumbprint) for the SSL binding. The certificate hash is the unique identifier for the certificate.
-    required: false
   certificate_store_name:
     description:
       - Name of the certificate store where the certificate for the binding is located.
-    required: false
     default: "my"
   ssl_flags:
     description:
@@ -89,6 +83,7 @@ EXAMPLES = r'''
   win_iis_webbinding:
     name: Default Web Site
     protocol: https
+    port: 443
     certificate_hash: B0D0FA8408FC67B230338FCA584D03792DA73F4C
     state: present
 
@@ -101,4 +96,63 @@ EXAMPLES = r'''
     ssl_flags: 1
     certificate_hash: D1A3AF8988FD32D1A3AF8988FD323792DA73F4C
     state: present
+
+- name: Remove all https bindings on port 443
+  win_iis_webbinding:
+    name: Default Web Site
+    protocol: https
+    port: 443
+    host_header: '*'
+    state: absent
+'''
+
+RETURN = r'''
+cert_is_wildcard:
+  description:
+    - Tells you if the certificate you are using is a wildcard
+  returned: when certificate_hash is defined
+  type: boolean
+  sample: false
+  version_added: "2.5"
+certificate_subjects:
+  description:
+    - All of the subject names for the certificate you are using
+  returned: when certificate_hash is defined
+  type: list
+  sample: ["*.test.com","test.com"]
+  version_added: "2.5"
+website_state:
+  description:
+    - The state of the website being targetted
+    - Can be helpful in case you accidentally cause a binding collision
+      which can result in the targetted site being stopped
+  returned: always
+  type: string
+  sample: "Started"
+  version_added: "2.5"
+operation_type:
+  description:
+    - The type of operation performed
+    - Can be removed, updated, matched, or added
+  returned: on success
+  type: string
+  sample: "removed"
+  version_added: "2.5"
+binding_info:
+  description:
+    - Information on the binding being manipulated
+  returned: on success
+  type: dictionary
+  sample: |-
+    "binding_info": {
+      "bindingInformation": "127.0.0.1:443:",
+      "certificateHash": "FF3910CE089397F1B5A77EB7BAFDD8F44CDE77DD",
+      "certificateStoreName": "MY",
+      "hostheader": "",
+      "ip": "127.0.0.1",
+      "port": 443,
+      "protocol": "https",
+      "sslFlags": "not supported"
+    }
+  version_added: "2.5"
 '''
