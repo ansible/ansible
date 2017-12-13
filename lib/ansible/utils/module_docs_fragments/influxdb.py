@@ -23,6 +23,10 @@ options:
     description:
     - The port on which InfluxDB server is listening
     default: 8086
+  database_name:
+    description:
+    - Name of the database.
+    required: true
   validate_certs:
     description:
     - If set to C(no), the SSL certificates will not be validated.

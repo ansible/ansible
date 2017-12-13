@@ -25,10 +25,6 @@ requirements:
     - "influxdb >= 0.9"
     - requests
 options:
-    database_name:
-        description:
-            - Name of the database where retention policy will be created
-        required: true
     policy_name:
         description:
             - Name of the retention policy
@@ -45,7 +41,7 @@ options:
         description:
             - Sets the retention policy as default retention policy
         required: true
-extends_documentation_fragment: influxdb.documentation
+extends_documentation_fragment: influxdb
 '''
 
 EXAMPLES = '''
@@ -57,8 +53,8 @@ EXAMPLES = '''
       policy_name: test
       duration: 1h
       replication: 1
-      ssl: True
-      validate_certs: True
+      ssl: yes
+      validate_certs: yes
 
 - name: create 1 day retention policy
   influxdb_retention_policy:
@@ -83,19 +79,18 @@ EXAMPLES = '''
       policy_name: test
       duration: INF
       replication: 1
-      ssl: False
-      validate_certs: False
+      ssl: no
+      validate_certs: no
 '''
 
 RETURN = '''
-#only defaults
+# only defaults
 '''
 
 import re
 
 try:
     import requests.exceptions
-    from influxdb import InfluxDBClient
     from influxdb import exceptions
 except ImportError:
     pass
