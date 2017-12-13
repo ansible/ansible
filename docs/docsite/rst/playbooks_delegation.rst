@@ -23,7 +23,7 @@ Rolling Update Batch Size
 `````````````````````````
 
 
-By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ''serial'' keyword::
+By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ``serial`` keyword::
 
 
     - name: test play
@@ -33,7 +33,7 @@ By default, Ansible will try to manage all of the machines referenced in a play 
 In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
 would complete the play completely before moving on to the next 3 hosts.
 
-The ''serial'' keyword can also be specified as a percentage in Ansible 1.8 and later, which will be applied to the total number of hosts in a
+The ``serial`` keyword can also be specified as a percentage, which will be applied to the total number of hosts in a
 play, in order to determine the number of hosts per pass::
 
     - name: test play
@@ -80,7 +80,7 @@ You can also mix and match the values::
 Maximum Failure Percentage
 ``````````````````````````
 
-By default, Ansible will continue executing actions as long as there are hosts in the batch that have not yet failed. The batch size for a play is all the hosts specified in the ``hosts:`` field.
+By default, Ansible will continue executing actions as long as there are hosts in the batch that have not yet failed. The batch size for a play is determined by the ``serial`` parameter. If ``serial`` is not set, then batch size is all the hosts specified in the ``hosts:`` field.
 In some situations, such as with the rolling updates described above, it may be desirable to abort the play when a
 certain threshold of failures have been reached. To achieve this, you can set a maximum failure
 percentage on a play as follows::
