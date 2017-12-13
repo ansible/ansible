@@ -89,7 +89,7 @@ def sanitize(resp):
     # Takes response from device and adjusts leading whitespace to just 1 space
     cleaned = []
     for line in resp.splitlines():
-        cleaned.append(re.sub("^\s+", " ", line))
+        cleaned.append(re.sub(r"^\s+", " ", line))
     return '\n'.join(cleaned).strip()
 
 
