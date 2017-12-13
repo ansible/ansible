@@ -12,8 +12,7 @@ Also test if the latest release, and master branch are affected too.
 ##### COMPONENT NAME
 <!---
 Name of the module/plugin/task/feature
-Do not include extra details here, e.g. "vyos_command" not "the network module vyos_command" or the full path
--->
+Do not include extra details here, e.g. "vyos_command" not "the network module vyos_command" or the full path-->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from "ansible --version" between quotes below -->
