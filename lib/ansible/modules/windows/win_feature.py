@@ -99,9 +99,13 @@ EXAMPLES = r'''
   win_feature:
     name: Web-Server
     state: present
-    restart: True
     include_sub_features: True
     include_management_tools: True
+  register: win_feature
+
+- name: reboot if installing Web-Server feature requires it
+  win_reboot:
+  when: win_feature.reboot_required
 '''
 
 RETURN = r'''
