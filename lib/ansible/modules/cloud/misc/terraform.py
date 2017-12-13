@@ -257,7 +257,9 @@ def main():
         if state == 'absent' and 'Resources: 0' in out:
             changed = False
         if rc != 0:
-            module.fail_json(msg="Failure when executing Terraform command. Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err), command=' '.join(command))
+            module.fail_json(msg="Failure when executing Terraform command. "
+                    "Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err),
+                    command=' '.join(command))
     else:
         changed = False
         out, err = '', ''
