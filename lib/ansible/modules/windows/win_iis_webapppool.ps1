@@ -254,7 +254,7 @@ if ($state -eq "absent") {
             $result.changed = $true
         }
     }
-   
+
     # Set the state of the pool
     if ($pool.State -eq "Stopped") {
         if ($state -eq "started" -or $state -eq "restarted") {
@@ -287,7 +287,7 @@ if ($state -eq "absent") {
             }
             $result.changed = $true
         }
-    }  
+    }
 }
 
 # Get all the current attributes for the pool
