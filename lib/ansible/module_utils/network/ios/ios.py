@@ -27,9 +27,8 @@
 #
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.six import string_types
 
 _DEVICE_CONFIGS = {}
 
@@ -101,12 +100,20 @@ def get_config(module, flags=None):
         return cfg
 
 
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
+
+
 def run_commands(module, commands, check_rc=True):
     responses = list()
-    for cmd in to_list(commands):
-        if isinstance(cmd, string_types):
-            cmd = {'command': cmd}
-
+    commands = to_commands(module, to_list(commands))
+    for cmd in commands:
         cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
