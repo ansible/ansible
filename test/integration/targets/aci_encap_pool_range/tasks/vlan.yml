@@ -1,0 +1,372 @@
+- name: ensure vlan pool exists for tests to kick off
+  aci_encap_pool:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: no
+    state: absent
+    pool: anstest
+    pool_type: vlan
+    allocation_mode: static
+    description: Ansible Test
+
+- name: ensure vlan pool exists for tests to kick off
+  aci_encap_pool: &aci_pool_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: no
+    state: present
+    pool: anstest
+    pool_type: vlan
+    allocation_mode: static
+    description: Ansible Test
+  register: pool_present
+
+- name: create vlan pool range - check mode works
+  aci_encap_pool_range: &aci_range_present
+    <<: *aci_pool_present
+    range_name: anstest
+    range_start: 20
+    range_end: 40
+    pool: anstest
+    pool_allocation_mode: static
+    allocation_mode: inherit
+    description: Ansible Test
+  check_mode: yes
+  register: range_present_check_mode
+
+- name: present assertions
+  assert:
+    that:
+      - range_present_check_mode.changed == true
+      - 'range_present_check_mode.config == {"fvnsEncapBlk": {"attributes": {"allocMode": "inherit", "descr": "Ansible Test", "from": "vlan-20", "name": "anstest", "to": "vlan-40"}}}'
+
+- name: create vlan pool range - creation works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+  register: range_present
+
+- name: present assertions
+  assert:
+    that:
+      - range_present.changed == true
+      - range_present.existing == []
+      - range_present.config == range_present_check_mode.config
+      - range_present.config == range_present.proposed
+
+- name: create vlan pool range - idempotency works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+  register: range_present_idempotent
+
+- name: present assertions
+  assert:
+    that:
+      - range_present_idempotent.changed == false
+      - 'range_present_idempotent.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+
+- name: update vlan pool range - update works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    description: Ansible Test Update
+    allocation_mode: inherit
+  register: range_present_update
+
+- name: present assertions
+  assert:
+    that:
+      - range_present_update.changed == true
+      - range_present_update.existing != []
+      - range_present_update.config != range_present.config
+
+- name: create vlan pool range - used for query
+  aci_encap_pool_range: &aci_range_present_2
+    <<: *aci_range_present
+    range_name: anstest_2
+    range_start: 50
+    range_end: 55
+  register: range_present_2
+
+- name: present assertions
+  assert:
+    that:
+      - range_present_2.changed == true
+      - range_present_2.existing == []
+
+- name: invalid range_start - error message works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    range_start: 0
+  ignore_errors: yes
+  register: range_start_low
+
+- name: present assertions
+  assert:
+    that:
+      - range_start_low.failed == true
+      - 'range_start_low.msg == "vlan pools must have \"range_start\" and \"range_end\" values between 1 and 4094"'
+
+- name: invalid range_start - error message works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    range_start: 4096
+  ignore_errors: yes
+  register: range_start_high
+
+- name: present assertions
+  assert:
+    that:
+      - range_start_high.failed == true
+      - 'range_start_high.msg == "vlan pools must have \"range_start\" and \"range_end\" values between 1 and 4094"'
+
+- name: invalid range_end - error message works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    range_end: 0
+  ignore_errors: yes
+  register: range_end_low
+
+- name: present assertions
+  assert:
+    that:
+      - range_end_low.failed == true
+      - 'range_end_low.msg == "vlan pools must have \"range_start\" and \"range_end\" values between 1 and 4094"'
+
+- name: invalid range_end - error message works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    range_end: 4096
+  ignore_errors: yes
+  register: range_end_high
+
+- name: present assertions
+  assert:
+    that:
+      - range_end_high.failed == true
+      - 'range_end_high.msg == "vlan pools must have \"range_start\" and \"range_end\" values between 1 and 4094"'
+
+- name: range start higher than range end - error message works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    range_start: 1000
+  ignore_errors: yes
+  register: range_start_end
+
+- name: present assertions
+  assert:
+    that:
+      - range_start_end.failed == true
+      - 'range_start_end.msg == "The \"range_start\" must be less than or equal to the \"range_end\""'
+
+- name: missing required param - error message works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    pool_type: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: range_present_pool_type
+
+- name: present assertions
+  assert:
+    that:
+      - range_present_pool_type.failed == true
+      - 'range_present_pool_type.msg == "missing required arguments: pool_type"'
+
+- name: missing required param - error message works
+  aci_encap_pool_range:
+    <<: *aci_pool_present
+  ignore_errors: yes
+  register: range_present_missing_param
+
+- name: present assertions
+  assert:
+    that:
+      - range_present_missing_param.failed == true
+      - 'range_present_missing_param.msg == "state is present but the following are missing: range_end,range_name,range_start"'
+
+- name: missing required param - error message works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    pool_allocation_mode: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: range_present_allocation
+
+- name: present assertions
+  assert:
+    that:
+      - range_present_allocation.failed == true
+      - 'range_present_allocation.msg == "ACI requires the \"pool_allocation_mode\" for \"pool_type\" of \"vlan\" and \"vsan\" when the \"pool\" is provided"'
+
+- name: query specific vlan pool range
+  aci_encap_pool_range: &aci_range_query
+    <<: *aci_range_present
+    state: query
+  register: range_query
+
+- name: query assertions
+  assert:
+    that:
+      - range_query.changed == false
+      - range_query.url.endswith("infra/vlanns-[anstest]-static/from-[vlan-20]-to-[vlan-40].json")
+      - range_query.existing | length == 1
+      - 'range_query.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+
+- name: query vlan pool range - from, to, and name are filtered
+  aci_encap_pool_range: &aci_range_query_filter
+    <<: *aci_range_query
+    pool: "{{ fake_var | default(omit) }}"
+  register: range_query_from_to_name
+
+- name: query assertions
+  assert:
+    that:
+      - range_query_from_to_name.changed == false
+      - 'range_query_from_to_name.url.endswith("class/fvnsEncapBlk.json")'
+      - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_from_to_name.filter_string'
+      - 'range_query_from_to_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_from_to_name.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_to_name.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+
+- name: query vlan pool range - from and name are filtered
+  aci_encap_pool_range:
+    <<: *aci_range_query_filter
+    range_end: "{{ fake_var | default(omit) }}"
+  register: range_query_from_name
+
+- name: query assertions
+  assert:
+    that:
+      - range_query_from_name.changed == false
+      - 'range_query_from_name.url.endswith("class/fvnsEncapBlk.json")'
+      - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_from_name.filter_string'
+      - 'range_query_from_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_from_name.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+
+- name: query vlan pool range - to and name are filtered
+  aci_encap_pool_range:
+    <<: *aci_range_query_filter
+    range_start: "{{ fake_var | default(omit) }}"
+  register: range_query_to_name
+
+- name: query assertions
+  assert:
+    that:
+      - range_query_to_name.changed == false
+      - 'range_query_to_name.url.endswith("class/fvnsEncapBlk.json")'
+      - '"query-target-filter=and(eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_to_name.filter_string'
+      - 'range_query_to_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_to_name.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+
+- name: query vlan pool range - name is filtered
+  aci_encap_pool_range:
+    <<: *aci_range_query_filter
+    range_start: "{{ fake_var | default(omit) }}"
+    range_end: "{{ fake_var | default(omit) }}"
+  register: range_query_name
+
+- name: query assertions
+  assert:
+    that:
+      - range_query_name.changed == false
+      - 'range_query_name.url.endswith("class/fvnsEncapBlk.json")'
+      - '"query-target-filter=eq(fvnsEncapBlk.name, \"anstest\")" in range_query_name.filter_string'
+      - 'range_query_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+
+- name: query vlan pool range - from and to are filtered
+  aci_encap_pool_range:
+    <<: *aci_range_query_filter
+    range_name: "{{ fake_var | default(omit) }}"
+  register: range_query_from_to
+
+- name: query assertions
+  assert:
+    that:
+      - range_query_from_to.changed == false
+      - 'range_query_from_to.url.endswith("class/fvnsEncapBlk.json")'
+      - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"))" in range_query_from_to.filter_string'
+      - 'range_query_from_to.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_to.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+
+- name: query all ranges in a vlan pool
+  aci_encap_pool_range:
+    <<: *aci_pool_present
+    state: query
+    pool_allocation_mode: static
+  register: range_query_pool
+
+- name: query assertions
+  assert:
+    that:
+      - range_query_pool.existing | length == 1
+      - 'range_query_pool.existing.0.fvnsVlanInstP.attributes.name == "anstest"'
+      - range_query_pool.existing.0.fvnsVlanInstP.children | length > 1
+      - 'range_query_pool.url.endswith("infra/vlanns-[anstest]-static.json")'
+
+- name: query all ranges
+  aci_encap_pool_range:
+    <<: *aci_pool_present
+    state: query
+    pool: "{{ fake_var | default(omit) }}"
+  register: range_query_all
+
+- name: query assertions
+  assert:
+    that:
+      - range_query_all.changed == false
+      - range_query_all.existing | length > 1
+      - range_query_all.existing.0.fvnsEncapBlk is defined
+      - 'range_query_all.url.endswith("class/fvnsEncapBlk.json")'
+
+- name: delete vlan pool range - deletion works
+  aci_encap_pool_range:
+    <<: *aci_range_present
+    state: absent
+  register: delete_range
+
+- name: absent assertions
+  assert:
+    that:
+      - delete_range.changed == true
+      - delete_range.proposed == {}
+      - 'delete_range.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+
+- name: delete vlan pool range - check mode works
+  aci_encap_pool_range: &aci_range_absent
+    <<: *aci_range_present_2
+    state: absent
+  check_mode: yes
+  register: delete_check_mode
+
+- name: absent assertions
+  assert:
+    that:
+      - delete_check_mode.changed == true
+      - delete_check_mode.existing != []
+
+- name: delete vlan pool range - deletion works
+  aci_encap_pool_range:
+    <<: *aci_range_absent
+  register: delete_range_2
+
+- name: absent assertions
+  assert:
+    that:
+      - delete_range_2.changed == true
+      - delete_range_2.existing == delete_check_mode.existing
+
+- name: delete vlan pool range again - idempotency works
+  aci_encap_pool_range:
+    <<: *aci_range_absent
+  register: delete_idempotent
+
+- name: absent assertions
+  assert:
+    that:
+      - delete_idempotent.changed == false
+      - delete_idempotent.existing == []
+
+- name: cleanup vlan pool
+  aci_encap_pool:
+    <<: *aci_pool_present
+    state: absent
+  when: pool_present.changed == true
