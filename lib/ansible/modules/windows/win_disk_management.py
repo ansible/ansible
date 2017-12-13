@@ -198,16 +198,6 @@ change_log:
     returned: if --check or/and --diff option was passed to the module
     type: complex
     contains:
-        operational_status:
-            description: Detailed information about setting operational status of the disk.
-            returned: success or failed
-            type: string
-            sample: "Disk set online"
-        writeable_status:
-            description: Detailed information whether disk was set from read-only to writeable and if not why it was not set to it.
-            returned: success or failed
-            type: string
-            sample: "Disk set from read-only to writeable"
         allocation_unit:
             description: Information whether allocation_unit_size value was automatically adjusted.
             returned: if file_system option value was refs and allocation_unit_size value was not 64
@@ -239,8 +229,8 @@ change_log:
             type: string
             sample: "Volume ReFS was created successfully on partition Basic"
         shellhw_service_state:
-            description: Detailed information about executed ShellHWService action (start, stop).
-            returned: success or failed
+            description: Information whether service could not be stopped or started.
+            returned: if service could not be stopped
             type: string
             sample: "Could not be set from 'Stopped' to 'Running' again"
 '''
