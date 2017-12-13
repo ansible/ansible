@@ -174,8 +174,8 @@
     - name: use flatten
       set_fact:
         flat_full: '{{orig_list|flatten}}'
-        flat_one: '{{orig_list|flatten(level=1)}}'
-        flat_two: '{{orig_list|flatten(level=2)}}'
+        flat_one: '{{orig_list|flatten(levels=1)}}'
+        flat_two: '{{orig_list|flatten(levels=2)}}'
 
     - name: Verify flatten filter works as expected
       assert:
