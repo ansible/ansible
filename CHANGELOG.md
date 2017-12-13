@@ -33,6 +33,7 @@ Ansible Changes By Release
 * fix issue with order of declaration of sections in ini inventory https://github.com/ansible/ansible/pull/33781
 * Fix win_iis_webapppool to correctly stop a apppool
   (https://github.com/ansible/ansible/pull/33777)
+* Fix CloudEngine host failed (https://github.com/ansible/ansible/pull/27876)
 
 <a id="2.4.2"></a>
 
