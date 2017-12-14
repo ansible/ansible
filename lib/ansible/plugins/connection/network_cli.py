@@ -106,6 +106,10 @@ class Connection(ConnectionBase):
                 raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
             return getattr(self._cliconf, name)
 
+    def get_prompt(self):
+        """Returns the current prompt from the device"""
+        return self._matched_prompt
+
     def exec_command(self, cmd, in_data=None, sudoable=True):
         # this try..except block is just to handle the transition to supporting
         # network_cli as a toplevel connection.  Once connection=local is gone,
