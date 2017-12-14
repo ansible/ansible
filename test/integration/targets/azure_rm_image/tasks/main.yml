@@ -1,11 +1,3 @@
-- name: Delete virtual machine
-  azure_rm_virtualmachine:
-      resource_group: "{{ resource_group }}"
-      name: testvm002
-      state: absent
-      vm_size: Standard_A0
-  register: output
-
 - name: Create storage account name
   set_fact:
       storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
@@ -59,7 +51,6 @@
       storage_blob: testvm001.vhd
       admin_username: adminuser
       admin_password: Password123!
-      short_hostname: testvm
       os_type: Linux
       network_interfaces: testvm001
       image:
@@ -67,20 +58,6 @@
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
-  register: output
-
-- name: Restart the virtual machine
-  azure_rm_virtualmachine:
-      resource_group: "{{ resource_group }}"
-      name: testvm002
-      restarted: yes
-      vm_size: Standard_A0
-  register: output
-
-- assert:
-      that:
-          - "azure_vm.powerstate in ['starting', 'running']"
-          - output.changed
 
 - name: Deallocate the virtual machine
   azure_rm_virtualmachine:
@@ -90,45 +67,53 @@
       vm_size: Standard_A0
   register: output
 
-- assert:
-      that:
-          - azure_vm.powerstate == 'deallocated'
-          - output.changed
-
 - name: Start the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
       vm_size: Standard_A0
+
+- name: Create an image from VM (check mode)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      name: testimage001
+      os_type: Linux
+  check_mode: yes
+  register: output
+
+- assert:
+      that: output.changed
+
+- name: Create an image from VM
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      name: testimage001
+      os_type: Linux
   register: output
 
 - assert:
       that:
-          - "azure_vm.powerstate in ['starting', 'running']"
           - output.changed
+          - output.state.osDisk.osDisk == "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
 
-- name: Should be idempotent
-  azure_rm_virtualmachine:
+- name: Create an image from VM (idempotent)
+  azure_rm_image:
       resource_group: "{{ resource_group }}"
-      name: testvm002
-      vm_size: Standard_A0
-      storage_account: "{{ storage_account }}"
-      storage_container: testvm001
-      storage_blob: testvm001.vhd
-      admin_username: adminuser
-      admin_password: Password123!
-      short_hostname: testvm
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      name: testimage001
       os_type: Linux
-      network_interfaces: testvm001
-      image:
-        offer: UbuntuServer
-        publisher: Canonical
-        sku: 16.04-LTS
-        version: latest
   register: output
 
 - assert:
       that: not output.changed
+
+- name: Delete image
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage01
+      state: absent
 
 - name: Delete VM
   azure_rm_virtualmachine:
@@ -137,21 +122,3 @@
       state: absent
       vm_size: Standard_A0
   register: output
-
-- name: NIC should be gone
-  azure_rm_networkinterface_facts:
-      resource_group: "{{ resource_group }}"
-      name: testvm001
-  register: output
-
-- assert:
-      that: azure_networkinterfaces | length == 0
-
-- name: PIP should be gone
-  azure_rm_publicipaddress_facts:
-      resource_group: "{{ resource_group }}"
-      name: testvm001
-  register: output
-
-- assert:
-      that: azure_publicipaddresses | length == 0

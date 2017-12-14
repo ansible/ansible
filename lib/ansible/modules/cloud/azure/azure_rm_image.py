@@ -233,13 +233,18 @@ class AzureRMImage(AzureRMModuleBase):
             id=image.id,
             name=image.name,
             location=image.location,
-            osDisk=(image.storage_profile.os_disk.managed_disk.id if image.storage_profile
-                    and image.storage_profile.os_disk
-                    and image.storage_profile.os_disk.managed_disk else None),
-            dataDisks=([item.managed_disk.id for item in
-                       image.storage_profile.data_disks if item.managed_disk] if image.storage_profile
+            osDisk=self._disk_to_dict(image.storage_profile.os_disk) if image.storage_profile and image.storage_profile.os_disk else None,
+            dataDisks=([self._disk_to_dict(item) for item in
+                       image.storage_profile.data_disks] if image.storage_profile
                        and image.storage_profile.data_disks else None),
             sourceVirtualMachine=image.source_virtual_machine.id if image.source_virtual_machine else None
+        )
+    
+    def _disk_to_dict(self, disk):
+        return dict(
+            blobUri=disk.blob_uri,
+            managedDisk=disk.managed_disk.id if disk.managed_disk else None,
+            snapshot=disk.snapshot.id if disk.snapshot else None
         )
 
     def resolve_storage_source(self, source):
