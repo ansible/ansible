@@ -58,7 +58,7 @@
 
     - name: Gather package facts
       package_facts:
-        manager: zypper
+        manager: rpm
 
     - name: check for ansible_facts.packages exists
       assert:
