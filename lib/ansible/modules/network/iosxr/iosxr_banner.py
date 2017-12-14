@@ -83,9 +83,9 @@ import collections
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, discard_config
-from ansible.module_utils.network.iosxr.iosxr import build_xml, is_cliconf, is_netconf
-from ansible.module_utils.network.iosxr.iosxr import etree_find
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import build_xml, is_cliconf
+from ansible.module_utils.network.iosxr.iosxr import etree_find, is_netconf
 
 
 class ConfigBase(object):
