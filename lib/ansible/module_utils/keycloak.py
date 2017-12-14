@@ -95,6 +95,9 @@ class KeycloakAPI(object):
         try:
             r = json.load(open_url(auth_url, method='POST',
                                    validate_certs=self.validate_certs, data=urlencode(payload)))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned invalid JSON when trying to obtain access token from %s: %s'
+                                      % (auth_url, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain access token from %s: %s'
                                       % (auth_url, str(e)))
@@ -121,6 +124,9 @@ class KeycloakAPI(object):
         try:
             return json.load(open_url(clientlist_url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain list of clients for realm %s: %s'
+                                      % (realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain list of clients for realm %s: %s'
                                       % (realm, str(e)))
@@ -156,6 +162,9 @@ class KeycloakAPI(object):
             else:
                 self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
                                           % (id, realm, str(e)))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain client %s for realm %s: %s'
+                                      % (id, realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
                                       % (id, realm, str(e)))
@@ -231,6 +240,9 @@ class KeycloakAPI(object):
         try:
             return json.load(open_url(url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain list of client templates for realm %s: %s'
+                                      % (realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain list of client templates for realm %s: %s'
                                       % (realm, str(e)))
@@ -247,6 +259,9 @@ class KeycloakAPI(object):
         try:
             return json.load(open_url(url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain client templates %s for realm %s: %s'
+                                      % (id, realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain client template %s for realm %s: %s'
                                       % (id, realm, str(e)))
