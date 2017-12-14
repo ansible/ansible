@@ -239,7 +239,7 @@ class AzureRMImage(AzureRMModuleBase):
                        and image.storage_profile.data_disks else None),
             sourceVirtualMachine=image.source_virtual_machine.id if image.source_virtual_machine else None
         )
-    
+
     def _disk_to_dict(self, disk):
         return dict(
             blobUri=disk.blob_uri,

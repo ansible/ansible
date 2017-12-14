@@ -96,7 +96,7 @@
 - assert:
       that:
           - output.changed
-          - output.state.osDisk.osDisk == "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+          - output.state.osDisk.blobUri == "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
 
 - name: Create an image from VM (idempotent)
   azure_rm_image:
