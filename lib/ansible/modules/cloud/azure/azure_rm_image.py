@@ -233,9 +233,11 @@ class AzureRMImage(AzureRMModuleBase):
             id=image.id,
             name=image.name,
             location=image.location,
-            osDisk=image.storage_profile.os_disk.managed_disk.id if image.storage_profile and image.storage_profile.os_disk else None,
+            osDisk=(image.storage_profile.os_disk.managed_disk.id if image.storage_profile
+                    and image.storage_profile.os_disk
+                    and image.storage_profile.os_disk.managed_disk else None),
             dataDisks=([item.managed_disk.id for item in
-                       image.storage_profile.data_disks] if image.storage_profile
+                       image.storage_profile.data_disks if item.managed_disk] if image.storage_profile
                        and image.storage_profile.data_disks else None),
             sourceVirtualMachine=image.source_virtual_machine.id if image.source_virtual_machine else None
         )
