@@ -77,7 +77,7 @@ from ansible import constants as C
 from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
 
 try:
     from __main__ import display
@@ -663,7 +663,7 @@ class VaultLib:
         if not is_encrypted(b_vaulttext):
             msg = "input is not vault encrypted data"
             if filename:
-                msg += "%s is not a vault encrypted file" % filename
+                msg += "%s is not a vault encrypted file" % to_native(filename)
             raise AnsibleError(msg)
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
@@ -699,7 +699,7 @@ class VaultLib:
             vault_id_matchers.append(vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv('We have a secret associated with vault id (%s), will try to use to decrypt %s' % (vault_id, filename))
+                display.vvvvv('We have a secret associated with vault id (%s), will try to use to decrypt %s' % (vault_id, to_text(filename)))
             else:
                 display.vvvvv('Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % (vault_id))
 
@@ -713,7 +713,7 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv('Trying to use vault secret=(%s) id=%s to decrypt %s' % (vault_secret, vault_secret_id, filename))
+            display.vvvvv('Trying to use vault secret=(%s) id=%s to decrypt %s' % (vault_secret, vault_secret_id, to_text(filename)))
 
             try:
                 # secret = self.secrets[vault_secret_id]
@@ -726,24 +726,24 @@ class VaultLib:
             except AnsibleVaultFormatError as exc:
                 msg = "There was a vault format error"
                 if filename:
-                    msg += ' in %s' % (filename)
+                    msg += ' in %s' % (to_text(filename))
                 msg += ': %s' % exc
                 display.warning(msg)
                 raise
             except AnsibleError as e:
                 display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (vault_secret_id, filename, e))
+                             (vault_secret_id, to_text(filename), e))
                 continue
         else:
             msg = "Decryption failed (no vault secrets were found that could decrypt)"
             if filename:
-                msg += " on %s" % filename
+                msg += " on %s" % to_native(filename)
             raise AnsibleVaultError(msg)
 
         if b_plaintext is None:
             msg = "Decryption failed"
             if filename:
-                msg += " on %s" % filename
+                msg += " on %s" % to_native(filename)
             raise AnsibleError(msg)
 
         return b_plaintext, vault_id_used
