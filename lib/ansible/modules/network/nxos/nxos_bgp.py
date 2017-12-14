@@ -197,13 +197,11 @@ options:
         description:
             - Set maximum time for a restart sent to the BGP peer.
         required: false
-        choices: ['true','false']
         default: null
     graceful_restart_timers_stalepath_time:
         description:
             - Set maximum time that BGP keeps the stale routes from the
               restarting BGP peer.
-        choices: ['true','false']
         default: null
     isolate:
         description:
@@ -264,12 +262,6 @@ options:
             - Specify timeout for the first best path after a restart,
               in seconds.
         required: false
-        default: null
-    timer_bestpath_limit_always:
-        description:
-            - Enable/Disable update-delay-always option.
-        required: false
-        choices: ['true','false']
         default: null
     timer_bgp_hold:
         description:
@@ -349,11 +341,13 @@ GLOBAL_PARAMS = [
     'fast_external_fallover',
     'flush_routes',
     'isolate',
+    'suppress_fib_pending',
     'shutdown'
 ]
 PARAM_TO_DEFAULT_KEYMAP = {
     'timer_bgp_keepalive': '60',
     'timer_bgp_hold': '180',
+    'timer_bestpath_limit': '300',
     'graceful_restart': True,
     'graceful_restart_timers_restart': '120',
     'graceful_restart_timers_stalepath_time': '300',
@@ -362,8 +356,16 @@ PARAM_TO_DEFAULT_KEYMAP = {
     'fast_external_fallover': True,
     'enforce_first_as': True,
     'event_history_cli': True,
+    'event_history_detail': False,
     'event_history_events': True,
     'event_history_periodic': True,
+    'maxas_limit': '',
+    'router_id': '',
+    'cluster_id': '',
+    'disable_policy_batching_ipv4_prefix_list': '',
+    'disable_policy_batching_ipv6_prefix_list': '',
+    'local_as': '',
+    'confederation_id': '',
 }
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -521,11 +523,12 @@ def state_present(module, existing, proposed, candidate):
                 if key == 'confederation peers':
                     existing_value = ' '.join(existing_value)
                 commands.append('no {0} {1}'.format(key, existing_value))
+        elif not value:
+            existing_value = existing_commands.get(key)
+            if existing_value:
+                commands.append('no {0} {1}'.format(key, existing_value))
         elif key == 'confederation peers':
-            existing_confederation_peers = set(existing.get('confederation_peers', []))
-            new_values = set(value.split())
-            peer_string = ' '.join(existing_confederation_peers | new_values)
-            commands.append('{0} {1}'.format(key, peer_string))
+            commands.append('{0} {1}'.format(key, value))
         elif key.startswith('timers bgp'):
             command = 'timers bgp {0} {1}'.format(
                 proposed['timer_bgp_keepalive'],
@@ -580,16 +583,38 @@ def fix_commands(commands):
             confederation_peers_command = command
 
     if local_as_command and confederation_id_command:
-        commands.pop(commands.index(local_as_command))
-        commands.pop(commands.index(confederation_id_command))
-        commands.append(local_as_command)
-        commands.append(confederation_id_command)
+        if 'no' in confederation_id_command:
+            commands.pop(commands.index(local_as_command))
+            commands.pop(commands.index(confederation_id_command))
+            commands.append(confederation_id_command)
+            commands.append(local_as_command)
+        else:
+            commands.pop(commands.index(local_as_command))
+            commands.pop(commands.index(confederation_id_command))
+            commands.append(local_as_command)
+            commands.append(confederation_id_command)
 
-    elif confederation_peers_command and confederation_id_command:
-        commands.pop(commands.index(confederation_peers_command))
-        commands.pop(commands.index(confederation_id_command))
-        commands.append(confederation_id_command)
-        commands.append(confederation_peers_command)
+    if confederation_peers_command and confederation_id_command:
+        if local_as_command:
+            if 'no' in local_as_command:
+                commands.pop(commands.index(local_as_command))
+                commands.pop(commands.index(confederation_id_command))
+                commands.pop(commands.index(confederation_peers_command))
+                commands.append(confederation_id_command)
+                commands.append(confederation_peers_command)
+                commands.append(local_as_command)
+            else:
+                commands.pop(commands.index(local_as_command))
+                commands.pop(commands.index(confederation_id_command))
+                commands.pop(commands.index(confederation_peers_command))
+                commands.append(local_as_command)
+                commands.append(confederation_id_command)
+                commands.append(confederation_peers_command)
+        else:
+            commands.pop(commands.index(confederation_peers_command))
+            commands.pop(commands.index(confederation_id_command))
+            commands.append(confederation_id_command)
+            commands.append(confederation_peers_command)
 
     return commands
 
@@ -608,7 +633,7 @@ def main():
         bestpath_med_non_deterministic=dict(required=False, type='bool'),
         cluster_id=dict(required=False, type='str'),
         confederation_id=dict(required=False, type='str'),
-        confederation_peers=dict(required=False, type='str'),
+        confederation_peers=dict(required=False, type='list'),
         disable_policy_batching=dict(required=False, type='bool'),
         disable_policy_batching_ipv4_prefix_list=dict(required=False, type='str'),
         disable_policy_batching_ipv6_prefix_list=dict(required=False, type='str'),
@@ -672,8 +697,18 @@ def main():
         if key not in ['asn', 'vrf']:
             if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
-            if existing.get(key) != value:
-                proposed[key] = value
+            if key == 'confederation_peers':
+                if value[0] == 'default':
+                    if existing.get(key):
+                        proposed[key] = 'default'
+                else:
+                    v = set([int(i) for i in value])
+                    ex = set([int(i) for i in existing.get(key)])
+                    if v != ex:
+                        proposed[key] = ' '.join(str(s) for s in v)
+            else:
+                if existing.get(key) != value:
+                    proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
     if state == 'present':
