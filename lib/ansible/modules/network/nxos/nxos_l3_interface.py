@@ -164,9 +164,9 @@ def map_params_to_obj(module):
 
 def map_config_to_obj(want, module):
     objs = list()
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     for w in want:
-        netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
         parents = ['interface {0}'.format(w['name'])]
         config = netcfg.get_section(parents)
         obj = dict(name=None, ipv4=None, ipv6=None)
