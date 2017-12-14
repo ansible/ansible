@@ -5,6 +5,7 @@
   ios_command:
     commands: show version
     authorize: yes
+  become: yes
   register: show_version_result
 
 - name: Set test interface to GigabitEthernet0/2 if we are on Cisco IOS
@@ -23,6 +24,7 @@
     tx_rate: ge(0)
     rx_rate: ge(0)
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -36,6 +38,7 @@
     tx_rate: gt(0)
     rx_rate: lt(0)
     authorize: yes
+  become: yes
   ignore_errors: yes
   register: result
 
@@ -52,6 +55,7 @@
     enabled: False
     state: down
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -64,6 +68,7 @@
     enabled: False
     authorize: yes
     state: up
+  become: yes
   ignore_errors: yes
   register: result
 
@@ -77,6 +82,7 @@
     commands:
       - show lldp neighbors
     authorize: yes
+  become: yes
   register: show_lldp_neighbors_result
 
 - block:
@@ -87,6 +93,7 @@
           - port: eth0
             host: netdev
         authorize: yes
+      become: yes
       register: result
 
     - assert:
@@ -100,6 +107,7 @@
           - port: dummy_port
             host: dummy_host
         authorize: yes
+      become: yes
       ignore_errors: yes
       register: result
 
@@ -117,6 +125,7 @@
         enabled: True
         state: up
     authorize: yes
+  become: yes
   ignore_errors: yes
   register: result
 
@@ -133,6 +142,7 @@
               - port: eth0
                 host: netdev
         authorize: yes
+      become: yes
       ignore_errors: yes
       register: result
 
@@ -150,6 +160,7 @@
           - port: dummy_port
             host: dummy_host
         authorize: yes
+      become: yes
       ignore_errors: yes
       register: result
 
