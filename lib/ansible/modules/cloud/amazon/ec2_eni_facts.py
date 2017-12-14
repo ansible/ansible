@@ -26,6 +26,7 @@ description:
     - Gather facts about ec2 ENI interfaces in AWS
 version_added: "2.0"
 author: "Rob White (@wimnat)"
+requirements: [ boto3 ]
 options:
   filters:
     description:
@@ -185,27 +186,18 @@ network_interfaces:
 '''
 
 try:
-    import boto.ec2
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-try:
-    import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError,
-                                      ansible_dict_to_boto3_filter_list, boto3_conn,
-                                      boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-                                      connect_to_aws, ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_conn
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 
-def list_ec2_eni_boto3(connection, module):
+def list_eni(connection, module):
 
     if module.params.get("filters") is None:
         filters = []
@@ -266,22 +258,6 @@ def get_eni_info(interface):
     return interface_info
 
 
-def list_eni(connection, module):
-
-    filters = module.params.get("filters")
-    interface_dict_array = []
-
-    try:
-        all_eni = connection.get_all_network_interfaces(filters=filters)
-    except BotoServerError as e:
-        module.fail_json(msg=e.message)
-
-    for interface in all_eni:
-        interface_dict_array.append(get_eni_info(interface))
-
-    module.exit_json(interfaces=interface_dict_array)
-
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -292,30 +268,14 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
-    if HAS_BOTO3:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-        if region:
-            connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-        else:
-            module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 
-        list_ec2_eni_boto3(connection, module)
-    else:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-
-        if region:
-            try:
-                connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-            except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-                module.fail_json(msg=str(e))
-        else:
-            module.fail_json(msg="region must be specified")
-
-        list_eni(connection, module)
+    list_eni(connection, module)
 
 
 if __name__ == '__main__':

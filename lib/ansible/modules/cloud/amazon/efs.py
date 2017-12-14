@@ -218,13 +218,9 @@ class EFSConnection(object):
     STATE_DELETED = 'deleted'
 
     def __init__(self, module, region, **aws_connect_params):
-        try:
-            self.connection = boto3_conn(module, conn_type='client',
-                                         resource='efs', region=region,
-                                         **aws_connect_params)
-        except Exception as e:
-            module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
-
+        self.connection = boto3_conn(module, conn_type='client',
+                                     resource='efs', region=region,
+                                     **aws_connect_params)
         self.region = region
         self.wait = module.params.get('wait')
         self.wait_timeout = module.params.get('wait_timeout')
@@ -490,7 +486,7 @@ class EFSConnection(object):
 
 def iterate_all(attr, map_method, **kwargs):
     """
-     Method creates iterator from boto result set
+     Method creates iterator from result set
     """
     args = dict((key, value) for (key, value) in kwargs.items() if value is not None)
     wait = 1
