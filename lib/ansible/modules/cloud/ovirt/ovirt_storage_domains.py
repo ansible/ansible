@@ -238,6 +238,7 @@ try:
 
     from ovirtsdk4.types import StorageDomainStatus as sdstate
     from ovirtsdk4.types import HostStatus as hoststate
+    from ovirtsdk4.types import DataCenterStatus as dcstatus
 except ImportError:
     pass
 
@@ -340,6 +341,38 @@ class StorageDomainModule(BaseModule):
             ) if storage_type is not None else None
         )
 
+    def _find_attached_datacenter_name(self, sd_name):
+        """
+        Finds the name of the datacenter that a given
+        storage domain is attached to.
+
+        Args:
+            sd_name (str): Storage Domain name
+
+        Returns:
+            str: Data Center name
+
+        Raises:
+            Exception: In case storage domain in not attached to
+                an active Datacenter
+        """
+        dcs_service = self._connection.system_service().data_centers_service()
+        dc = search_by_attributes(dcs_service, storage=sd_name)
+        if dc is None:
+            raise Exception(
+                "Can't bring storage to state `%s`, because it seems that"
+                "it is not attached to any datacenter"
+                % self._module.params['state']
+            )
+        else:
+            if dc.status == dcstatus.UP:
+                return dc.name
+            else:
+                raise Exception(
+                    "Can't bring storage to state `%s`, because Datacenter "
+                    "%s is not UP"
+                )
+
     def _attached_sds_service(self, dc_name):
         # Get data center object of the storage domain:
         dcs_service = self._connection.system_service().data_centers_service()
@@ -356,13 +389,9 @@ class StorageDomainModule(BaseModule):
 
     def _attached_sd_service(self, storage_domain):
         dc_name = self._module.params['data_center']
-        # Find the DC, where the storage we want to remove reside:
-        if not dc_name and self._module.params['state'] == 'absent':
-            dcs_service = self._connection.system_service().data_centers_service()
-            dc = search_by_attributes(dcs_service, storage=storage_domain.name, status='up')
-            if dc is None:
-                raise Exception("Can't remove storage, because no active datacenter found for it's removal")
-            dc_name = dc.name
+        if not dc_name:
+            # Find the DC, where the storage resides:
+            dc_name = self._find_attached_datacenter_name(storage_domain.name)
         attached_sds_service = self._attached_sds_service(dc_name)
         attached_sd_service = attached_sds_service.storage_domain_service(storage_domain.id)
         return attached_sd_service
@@ -415,6 +444,9 @@ class StorageDomainModule(BaseModule):
     def post_create_check(self, sd_id):
         storage_domain = self._service.service(sd_id).get()
         dc_name = self._module.params['data_center']
+        if not dc_name:
+            # Find the DC, where the storage resides:
+            dc_name = self._find_attached_datacenter_name(storage_domain.name)
         self._service = self._attached_sds_service(dc_name)
 
         # If storage domain isn't attached, attach it:
@@ -436,6 +468,9 @@ class StorageDomainModule(BaseModule):
 
     def unattached_pre_action(self, storage_domain):
         dc_name = self._module.params['data_center']
+        if not dc_name:
+            # Find the DC, where the storage resides:
+            dc_name = self._find_attached_datacenter_name(storage_domain.name)
         self._service = self._attached_sds_service(storage_domain, dc_name)
         self._maintenance(self._service, storage_domain)
 
