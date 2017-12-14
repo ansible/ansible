@@ -66,13 +66,13 @@ class AnsibleCoreCI(object):
                 'aws',
                 'windows',
                 'freebsd',
-                'rhel',
                 'vyos',
                 'junos',
                 'ios',
             ),
             azure=(
                 'azure',
+                'rhel',
             ),
             parallels=(
                 'osx',
