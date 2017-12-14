@@ -26,6 +26,7 @@ description:
     - Gather facts about ec2 ENI interfaces in AWS
 version_added: "2.0"
 author: "Rob White (@wimnat)"
+requirements: [ boto3 ]
 options:
   filters:
     description:
