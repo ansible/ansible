@@ -10,6 +10,7 @@
     wait_for:
       - "result[0] contains Cisco"
       - "result[1] contains Loopback888"
+  become: yes
   register: result
 
 - assert:

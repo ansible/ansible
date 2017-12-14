@@ -5,6 +5,7 @@
   ios_command:
     commands: show foo
     authorize: yes
+  become: yes
   register: result
   ignore_errors: yes
 
@@ -18,6 +19,7 @@
       - show version
       - show foo
     authorize: yes
+  become: yes
   register: result
   ignore_errors: yes
 
