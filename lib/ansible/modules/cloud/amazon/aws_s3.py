@@ -407,11 +407,15 @@ def delete_key(module, s3, bucket, obj):
         module.fail_json(msg="Failed while trying to delete %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
-def create_dirkey(module, s3, bucket, obj):
+def create_dirkey(module, s3, bucket, obj, encrypt):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
-        s3.put_object(Bucket=bucket, Key=obj, Body=b'')
+        params = {'Bucket': bucket, 'Key': obj, 'Body': b''}
+        if encrypt:
+            params['ServerSideEncryption'] = 'AES256'
+
+        s3.put_object(**params)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
         module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
@@ -826,14 +830,14 @@ def main():
                 else:
                     # setting valid object acls for the create_dirkey function
                     module.params['permission'] = object_acl
-                    create_dirkey(module, s3, bucket, dirobj)
+                    create_dirkey(module, s3, bucket, dirobj, encrypt)
             else:
                 # only use valid bucket acls for the create_bucket function
                 module.params['permission'] = bucket_acl
                 created = create_bucket(module, s3, bucket, location)
                 # only use valid object acls for the create_dirkey function
                 module.params['permission'] = object_acl
-                create_dirkey(module, s3, bucket, dirobj)
+                create_dirkey(module, s3, bucket, dirobj, encrypt)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
     if mode == 'geturl':
