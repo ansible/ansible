@@ -1451,7 +1451,13 @@ class PyVmomiHelper(PyVmomi):
 
                 clonespec.config = self.configspec
                 clone_method = 'Clone'
-                task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
+                try:
+                    task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
+                except vim.fault.NoPermission as e:
+                    self.module.fail_json(msg="Failed to clone virtual machine %s to folder %s "
+                                              "due to permission issue: %s" % (self.params['name'],
+                                                                               destfolder,
+                                                                               to_native(e.msg)))
                 self.change_detected = True
             else:
                 # ConfigSpec require name for VM creation
