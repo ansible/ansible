@@ -12,9 +12,14 @@ module: elb_target
 short_description: Manage a target in a target group
 description:
     - Used to register or deregister a target in a target group
-version_added: "2.4"
+version_added: "2.5"
 author: "Rob White (@wimnat)"
 options:
+  deregister_unused:
+    description:
+      - The default behaviour for targets that are unused is to leave them registered. If instead you would like to remove them
+        set I(deregister_unused) to yes.
+    choices: [ 'yes', 'no' ]
   target_group_arn:
     description:
       - The Amazon Resource Name (ARN) of the target group. Mutually exclusive of I(target_group_name).
@@ -31,20 +36,22 @@ options:
         you can register it again using a different port.
     required: false
     default: The default port for a target is the port for the target group.
-  state:
-    description:
-      - Register or deregister the target.
-    required: true
-    choices: [ 'present', 'absent' ]
   target_status:
     description:
-      - Blocks and waits for the target status to equal given value
+      - Blocks and waits for the target status to equal given value. For more detail on target status see
+        U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html#target-health-states)
     required: false
+    choices: [ 'initial', 'healthy', 'unhealthy', 'unused', 'draining', 'unavailable' ]
   target_status_timeout:
     description:
       - Maximum time in seconds to wait for target_status change
     required: false
     default: 60
+  state:
+    description:
+      - Register or deregister the target.
+    required: true
+    choices: [ 'present', 'absent' ]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -183,6 +190,7 @@ def deregister_target(connection, module):
     :return:
     """
 
+    deregister_unused = module.params.get("deregister_unused")
     target_group_arn = module.params.get("target_group_arn")
     target_id = module.params.get("target_id")
     target_port = module.params.get("target_port")
@@ -199,19 +207,26 @@ def deregister_target(connection, module):
 
     try:
         target_description = describe_targets(connection, module, target_group_arn, [target])
+        current_target_state = target_description['TargetHealth']['State']
     except ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    if 'State' in target_description['TargetHealth']:
-        if target_description['TargetHealth']['State'] not in ['draining', 'unused']:
+    if current_target_state == 'unused':
+        current_target_reason = target_description['TargetHealth']['Reason']
+
+        # If target is registered and 'deregister_unused' is set then
+        if deregister_unused and current_target_reason != 'Target.NotRegistered':
             try:
                 connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
                 changed = True
                 if target_status:
                     target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
-
             except ClientError as e:
                 module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        else:
+            if current_target_reason != 'Target.NotRegistered':
+                module.warn(warning="Your specified target has an 'unused' state but is still registered to the target group. " +
+                                    "To force deregistration use the 'deregister_unused' option.")
 
     # Get all targets for the target group
     target_descriptions = describe_targets(connection, module, target_group_arn, [])
@@ -236,6 +251,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
+            deregister_unused=dict(type='bool', default=False),
             target_group_arn=dict(type='str'),
             target_group_name=dict(type='str'),
             target_id=dict(type='str', required=True),
