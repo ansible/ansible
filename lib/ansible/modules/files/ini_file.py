@@ -182,7 +182,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
     ini_lines.append('[')
 
     # If no section is defined, fake section is used
-    if section == '' or not section:
+    if not section:
         section = fake_section_name
 
     within_section = not section
