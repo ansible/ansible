@@ -216,14 +216,20 @@ class AIXHardware(Hardware):
             field = line.split()
 
             device_attrs = {}
-            rc, out_lsattr, err = self.module.run_command("%s -El %s" % (lsattr_cmd, field[0]))
+            device_name = field[0]
+            device_state = field[1]
+            device_type = field[2:]
+            lsattr_cmd_args = [lsattr_cmd, '-E', '-l', device_name]
+            rc, out_lsattr, err = self.module.run_command(lsattr_cmd_args)
             for attr in out_lsattr.splitlines():
-                attr_field = attr.split()
-                device_attrs[attr_field[0]] = attr_field[1]
+                attr_fields = attr.split()
+                attr_name = attr_fields[0]
+                attr_parameter = attr_fields[1]
+                device_attrs[attr_name] = attr_parameter
 
-            device_facts['devices'][field[0]] = {
-                'state': field[1],
-                'type': ' '.join(field[2:]),
+            device_facts['devices'][device_name] = {
+                'state': device_state,
+                'type': ' '.join(device_type),
                 'attributes': device_attrs
             }
 
