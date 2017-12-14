@@ -1,0 +1,142 @@
+# Test code for the UCS modules
+# Copyright 2017, David Soper (@dsoper2)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+
+
+# Setup (clean environment)
+- name: MAC pools absent
+  ucs_macpool: &macpools_absent
+    hostname: "{{ ucs_hostname }}"
+    username: "{{ ucs_username }}"
+    password: "{{ ucs_password }}"
+    mac_list:
+      - name: mac-A
+      - name: mac-B
+    state: absent
+
+
+# Test present (check_mode)
+- name: MAC pools present (check_mode)
+  ucs_macpool: &macpools_present
+    hostname: "{{ ucs_hostname }}"
+    username: "{{ ucs_username }}"
+    password: "{{ ucs_password }}"
+    mac_list:
+      - name: mac-A
+        first_addr: 00:25:B5:00:66:00
+        last_addr: 00:25:B5:00:67:F3
+        order: sequential
+      - name: mac-B
+        first_addr: 00:25:B5:0b:66:00
+        last_addr: 00:25:B5:0b:67:F3
+  check_mode: yes
+  register: cm_macpools_present
+
+
+# Present (normal mode)
+- name: MAC pools present (normal mode)
+  ucs_macpool: *macpools_present
+  register: nm_macpools_present
+
+
+# Test present again (idempotent)
+- name: MAC pools present again (check_mode)
+  ucs_macpool: *macpools_present
+  check_mode: yes
+  register: cm_macpools_present_again
+
+
+# Present again (normal mode)
+- name: MAC pools present again (normal mode)
+  ucs_macpool: *macpools_present
+  register: nm_macpools_present_again
+
+
+# Verfiy present
+- name: Verify MAC present results
+  assert:
+    that:
+    - cm_macpools_present.changed == nm_macpools_present.changed == true
+    - cm_macpools_present_again.changed == nm_macpools_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: MAC pools description change (check_mode)
+  ucs_macpool: &macpools_change
+    <<: *macpools_present
+    mac_list:
+      - name: mac-A
+        descr: Testing Ansible
+        first_addr: 00:25:B5:00:66:00
+        last_addr: 00:25:B5:00:67:F3
+        order: sequential
+      - name: mac-B
+        first_addr: 00:25:B5:0b:66:00
+        last_addr: 00:25:B5:0b:67:F3
+  check_mode: yes
+  register: cm_macpools_descr_change
+
+
+# Change (normal mode)
+- name: MAC pools description change (normal mode)
+  ucs_macpool: *macpools_change
+  register: nm_macpools_descr_change
+
+
+# Test change again (idempotent)
+- name: MAC pools description again (check_mode)
+  ucs_macpool: *macpools_change
+  check_mode: yes
+  register: cm_macpools_descr_change_again
+
+
+# Change again (normal mode)
+- name: MAC pools description change again (normal mode)
+  ucs_macpool: *macpools_change
+  register: nm_macpools_descr_change_again
+
+
+# Verfiy change
+- name: Verify MAC change results
+  assert:
+    that:
+    - cm_macpools_descr_change.changed == nm_macpools_descr_change.changed == true
+    - cm_macpools_descr_change_again.changed == nm_macpools_descr_change_again.changed == false
+
+
+# Teardown (clean environment)
+- name: MAC pools absent (check_mode)
+  ucs_macpool: *macpools_absent
+  check_mode: yes
+  register: cm_macpools_absent
+
+
+# Absent (normal mode)
+- name: MAC pools absent (normal mode)
+  ucs_macpool: *macpools_absent
+  register: nm_macpools_absent
+
+
+# Test absent again (idempotent)
+- name: MAC pools absent again (check_mode)
+  ucs_macpool: *macpools_absent
+  check_mode: yes
+  register: cm_macpools_absent_again
+
+
+# Absent again (normal mode)
+- name: MAC pools absent again (normal mode)
+  ucs_macpool: *macpools_absent
+  register: nm_macpools_absent_again
+
+
+# Verfiy absent
+- name: Verify MAC absent results
+  assert:
+    that:
+    - cm_macpools_absent.changed == nm_macpools_absent.changed == true
+    - cm_macpools_absent_again.changed == nm_macpools_absent_again.changed == false
