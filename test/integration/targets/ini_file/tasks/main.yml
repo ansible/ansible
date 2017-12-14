@@ -195,12 +195,12 @@
         path: "{{ output_file }}"
         section:
         option: like
-        value: beer
+        value: tea
 
 - name: set expected content and get current ini file content
   set_fact:
     expected9: |-
-      like = beer
+      like = tea
 
       [drinks]
       hate = water
