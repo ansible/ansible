@@ -1,32 +1,24 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_l3_interface sanity test"
+- debug: msg="START TRANSPORT:NXAPI nxos_l3_interface sanity test"
 
 # Select interface for test
 - set_fact: testint2="{{ nxos_int2 }}"
 - set_fact: testint3="{{ nxos_int3 }}"
 
-- name: Setup - remove address from interface prior to testing(Part1)
-  nxos_config:
-    lines:
-      - no ip address 192.168.22.1/24
-    parents: no switchport
-    before: "interface {{ testint2 }}"
-    provider: "{{ connection }}"
-
-- name: Setup - remove address from interface prior to testing(Part2)
-  nxos_config:
-    lines:
-      - no ip address 192.168.20.1/24
-      - no ipv6 address 33:db::2/8
-    parents: no switchport
-    before: "interface {{ testint3 }}"
-    provider: "{{ connection }}"
+- name: Setup - Remove address from interfaces aggregate
+  nxos_l3_interface:
+    aggregate:
+      - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
+      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "33:db::2/8" }
+    provider: "{{ nxapi }}"
+    state: absent
+  ignore_errors: yes
 
 - name: Configure ipv4 address to interface
   nxos_l3_interface: &conf
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ connection }}"
+    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -45,7 +37,7 @@
   nxos_l3_interface: &rm
     name: "{{ testint2 }}"
     ipv4: 192.168.22.1/24
-    provider: "{{ connection }}"
+    provider: "{{ nxapi }}"
     state: absent
   register: result
 
@@ -66,7 +58,7 @@
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
       - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "33:db::2/8" }
-    provider: "{{ connection }}"
+    provider: "{{ nxapi }}"
   register: result
 
 - assert:
@@ -86,7 +78,7 @@
     aggregate:
       - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
       - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "33:db::2/8" }
-    provider: "{{ connection }}"
+    provider: "{{ nxapi }}"
     state: absent
   register: result
 
@@ -102,4 +94,4 @@
     that:
       - "result.changed == false"
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_l3_interface sanity test"
+- debug: msg="END TRANSPORT:NXAPI nxos_l3_interface sanity test"

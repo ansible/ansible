@@ -111,32 +111,32 @@ def map_obj_to_commands(updates, module):
 
         obj_in_have = search_obj_in_list(name, have)
 
-        if state == 'absent':
+        if state == 'absent' and obj_in_have:
             command = []
-            if obj_in_have:
-                if obj_in_have['name'] == name:
-                    if ipv4 and obj_in_have['ipv4']:
-                        command.append('no ip address {0}'.format(ipv4))
-                    if ipv6 and obj_in_have['ipv6']:
-                        command.append('no ipv6 address {0}'.format(ipv6))
-                    if command:
-                        command.insert(0, 'interface {0}'.format(name))
-                        command.insert(1, 'no switchport')
+            if obj_in_have['name'] == name:
+                if ipv4 and obj_in_have['ipv4']:
+                    command.append('no ip address {0}'.format(ipv4))
+                if ipv6 and obj_in_have['ipv6']:
+                    command.append('no ipv6 address {0}'.format(ipv6))
+                if command:
+                    command.append('exit')
+                    command.insert(0, 'interface {0}'.format(name))
+                    command.insert(1, 'no switchport')
             commands.extend(command)
 
-        elif state == 'present':
+        elif state == 'present' and obj_in_have:
             command = []
-            if obj_in_have:
-                if obj_in_have['name'] == name:
-                    if ipv4 and ipv4 != obj_in_have['ipv4']:
-                        command.append('ip address {0}'.format(ipv4))
-                    if ipv6 and ipv6 != obj_in_have['ipv6']:
-                        command.append('ipv6 address {0}'.format(ipv6))
-                    if command:
-                        command.insert(0, 'interface {0}'.format(name))
-                        command.insert(1, 'no switchport')
-
+            if obj_in_have['name'] == name:
+                if ipv4 and ipv4 != obj_in_have['ipv4']:
+                    command.append('ip address {0}'.format(ipv4))
+                if ipv6 and ipv6 != obj_in_have['ipv6']:
+                    command.append('ipv6 address {0}'.format(ipv6))
+                if command:
+                    command.append('exit')
+                    command.insert(0, 'interface {0}'.format(name))
+                    command.insert(1, 'no switchport')
             commands.extend(command)
+
     return commands
 
 
