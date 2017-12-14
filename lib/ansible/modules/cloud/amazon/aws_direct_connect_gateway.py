@@ -90,14 +90,13 @@ import traceback
 
 try:
     import botocore
-    import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, ec2_argument_spec, HAS_BOTO3,
-                                      get_aws_connection_info, boto3_conn, AWSRetry)
+                                      get_aws_connection_info, boto3_conn)
 from ansible.module_utils.aws.direct_connect import DirectConnectError
 
 from ansible.module_utils._text import to_native
@@ -247,7 +246,7 @@ def ensure_present(client, module):
     # check if a gateway matching our module args already exists
     existing_dxgw = find_dx_gateway(client, module)
 
-    if existing_dxgw != None and existing_dxgw['directConnectGatewayState'] != 'deleted':
+    if existing_dxgw is not None and existing_dxgw['directConnectGatewayState'] != 'deleted':
         gateway_id = existing_dxgw['directConnectGatewayId']
         # if a gateway_id was provided, check if it is attach to the DXGW
         if params['virtual_gateway_id']:
@@ -255,8 +254,7 @@ def ensure_present(client, module):
                 client,
                 module,
                 gateway_id=gateway_id,
-                virtual_gateway_id=params['virtual_gateway_id']
-                )
+                virtual_gateway_id=params['virtual_gateway_id'])
             if not bool(resp["directConnectGatewayAssociations"]):
                 # attach the dxgw to the supplied virtual_gateway_id
                 associate_direct_connect_gateway(client, module, gateway_id)
@@ -265,11 +263,7 @@ def ensure_present(client, module):
         else:
             existing_dxgw = find_dx_gateway(client, module)
 
-            resp = check_dxgw_association(
-                client,
-                module,
-                gateway_id=gateway_id
-                )
+            resp = check_dxgw_association(client, module, gateway_id=gateway_id)
             if bool(resp["directConnectGatewayAssociations"]):
                 for association in resp['directConnectGatewayAssociations']:
                     if association['associationState'] not in ['disassociating', 'disassociated']:
@@ -287,16 +281,16 @@ def ensure_present(client, module):
         # if a vpc-id was supplied, attempt to attach it to the dxgw
         if params['virtual_gateway_id']:
             associate_direct_connect_gateway(client, module, gateway_id)
-            resp = check_dxgw_association(
-                client,
-                module,
-                gateway_id=gateway_id
-                )
+            resp = check_dxgw_association(client,
+                                          module,
+                                          gateway_id=gateway_id
+                                          )
             if bool(resp["directConnectGatewayAssociations"]):
                 changed = True
 
     result = dx_gateway_info(client, gateway_id)
     return changed, result
+
 
 def ensure_absent(client, module):
     # If an existing direct connect gateway matches our args
@@ -309,28 +303,21 @@ def ensure_absent(client, module):
     dx_gateway_id = module.params.get('direct_connect_gateway_id')
     existing_dxgw = find_dx_gateway(client, module, dx_gateway_id)
 
-    if existing_dxgw != None:
-        resp = check_dxgw_association(
-            client,
-            module,
-            gateway_id=dx_gateway_id
-            )
+    if existing_dxgw is not None:
+        resp = check_dxgw_association(client, module,
+                                      gateway_id=dx_gateway_id)
         if bool(resp["directConnectGatewayAssociations"]):
             for association in resp['directConnectGatewayAssociations']:
                 if association['associationState'] not in ['disassociating', 'disassociated']:
-                    delete_association(
-                        client,
-                        module,
-                        gateway_id=dx_gateway_id,
-                        virtual_gateway_id=association['virtualGatewayId'])
+                    delete_association(client, module,
+                                       gateway_id=dx_gateway_id,
+                                       virtual_gateway_id=association['virtualGatewayId'])
         # wait for deleting association
-        timeout = time.time() + 60*10
+        timeout = time.time() + 60 * 10
         while time.time() < timeout:
-            resp = check_dxgw_association(
-                client,
-                module,
-                gateway_id=dx_gateway_id
-                )
+            resp = check_dxgw_association(client,
+                                          module,
+                                          gateway_id=dx_gateway_id)
             if resp["directConnectGatewayAssociations"] != []:
                 time.sleep(15)
             else:
@@ -345,14 +332,12 @@ def ensure_absent(client, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        state=dict(default='present', choices=['present', 'absent']),
-        name=dict(),
-        amazon_asn=dict(),
-        virtual_gateway_id=dict(),
-        direct_connect_gateway_id=dict(),
-        wait_timeout=dict(type='int', default=320),
-        ))
+    argument_spec.update(dict(state=dict(default='present', choices=['present', 'absent']),
+                              name=dict(),
+                              amazon_asn=dict(),
+                              virtual_gateway_id=dict(),
+                              direct_connect_gateway_id=dict(),
+                              wait_timeout=dict(type='int', default=320)))
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
@@ -384,6 +369,7 @@ def main():
             module.fail_json(msg=e.msg)
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(results))
+
 
 if __name__ == '__main__':
     main()
