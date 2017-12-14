@@ -92,6 +92,8 @@ class Connection(ConnectionBase):
         self._terminal = None
         self._cliconf = None
 
+        self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
+
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
@@ -220,7 +222,7 @@ class Connection(ConnectionBase):
         value to None and the _connected value to False
         '''
         ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(self._play_context.remote_addr, self._play_context.port, self._play_context.remote_user, self._play_context.connection)
+        cp = ssh._create_control_path(self._play_context.remote_addr, self._play_context.port, self._play_context.remote_user, self._play_context.connection, self._ansible_playbook_pid)
 
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         socket_path = unfrackpath(cp % dict(directory=tmp_path))
