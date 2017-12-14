@@ -7,45 +7,63 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     callback: hipchat
-    type: notification
+    callback_type: notification
+    requirements:
+      - whitelist in configuration.
+      - prettytable (python lib)
     short_description: post task events to hipchat
     description:
-      - The chatty part of ChatOps with a Hipchat server as a target
       - This callback plugin sends status updates to a HipChat channel during playbook execution.
+      - Before 2.4 only environment variables were available for configuring this plugin.
     version_added: "1.6"
-    requirements:
-      - prettytable (python lib)
     options:
       token:
         description: HipChat API token for v1 or v2 API.
         required: True
         env:
           - name: HIPCHAT_TOKEN
+        ini:
+          - section: callback_hipchat
+          - key: token
       api_version:
-        description: HipChat API version.
+        description: HipChat API version, v1 or v2.
         required: False
         default: v1
         env:
           - name: HIPCHAT_API_VERSION
+        ini:
+          - section: callback_hipchat
+          - key: api_version
       room:
         description: HipChat room to post in.
         default: ansible
         env:
           - name: HIPCHAT_ROOM
+        ini:
+          - section: callback_hipchat
+          - key: room
       from:
         description:  Name to post as
         default: ansible
         env:
           - name: HIPCHAT_FROM
+        ini:
+          - section: callback_hipchat
+          - key: from
       notify:
         description: Add notify flag to important messages
         type: bool
         default: True
         env:
           - name: HIPCHAT_NOTIFY
+        ini:
+          - section: callback_hipchat
+          - key: notify
+
 '''
 
 import os
+import json
 
 try:
     import prettytable
@@ -61,18 +79,8 @@ from ansible.module_utils.urls import open_url
 class CallbackModule(CallbackBase):
     """This is an example ansible callback plugin that sends status
     updates to a HipChat channel during playbook execution.
-
-    This plugin makes use of the following environment variables:
-        HIPCHAT_TOKEN (required): HipChat API token
-        HIPCHAT_ROOM  (optional): HipChat room to post in. Default: ansible
-        HIPCHAT_FROM  (optional): Name to post as. Default: ansible
-        HIPCHAT_NOTIFY (optional): Add notify flag to important messages ("true" or "false"). Default: true
-        HIPCHAT_API_VERSION (optional): v1 is default.
-
-    Requires:
-        prettytable
-
     """
+
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'hipchat'
@@ -89,18 +97,18 @@ class CallbackModule(CallbackBase):
             self.disabled = True
             self._display.warning('The `prettytable` python module is not installed. '
                                   'Disabling the HipChat callback plugin.')
+        self.printed_playbook = False
+        self.playbook_name = None
+        self.play = None
 
-        self.token = os.getenv('HIPCHAT_TOKEN')
-        self.room = os.getenv('HIPCHAT_ROOM', 'ansible')
-        self.from_name = os.getenv('HIPCHAT_FROM', 'ansible')
-        self.allow_notify = (os.getenv('HIPCHAT_NOTIFY') != 'false')
-        self.hipchat_api_version = os.getenv('HIPCHAT_API_VERSION', 'v1')
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        # Pick the request handler.
-        if self.hipchat_api_version == 'v2':
-            self.send_msg = self.send_msg_v2
-        else:
-            self.send_msg = self.send_msg_v1
+        self.token = self.get_option('token')
+        self.api_version = self.get_option('api_version')
+        self.from_name = self.get_option('from')
+        self.allow_notify = self.get_option('notify')
+        self.room = self.get_option('room')
 
         if self.token is None:
             self.disabled = True
@@ -108,9 +116,11 @@ class CallbackModule(CallbackBase):
                                   'token can be provided using the `HIPCHAT_TOKEN` '
                                   'environment variable.')
 
-        self.printed_playbook = False
-        self.playbook_name = None
-        self.play = None
+        # Pick the request handler.
+        if self.api_version == 'v2':
+            self.send_msg = self.send_msg_v2
+        else:
+            self.send_msg = self.send_msg_v1
 
     def send_msg_v2(self, msg, msg_format='text', color='yellow', notify=False):
         """Method for sending a message to HipChat"""
