@@ -25,6 +25,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+import re
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
@@ -77,9 +80,17 @@ def get_config(module, flags=None):
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
             module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_then_replace'))
-        cfg = to_text(out, errors='surrogate_then_replace').strip()
+        cfg = sanitize(to_text(out, errors='surrogate_then_replace').strip())
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
+
+
+def sanitize(resp):
+    # Takes response from device and adjusts leading whitespace to just 1 space
+    cleaned = []
+    for line in resp.splitlines():
+        cleaned.append(re.sub(r"^\s+", " ", line))
+    return '\n'.join(cleaned).strip()
 
 
 def to_commands(module, commands):
