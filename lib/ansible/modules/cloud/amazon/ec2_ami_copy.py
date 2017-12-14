@@ -154,6 +154,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_b
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
+
 def copy_image(module, ec2):
     """
     Copies an AMI
