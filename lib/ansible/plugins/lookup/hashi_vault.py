@@ -33,6 +33,14 @@ DOCUMENTATION = """
       description: authentication user name
     password:
       description: authentication password
+    role_id:
+      description: Role id for a vault AppRole auth
+      env:
+        - name: VAULT_ROLE_ID
+    secret_id:
+      description: Secret id for a vault AppRole auth
+      env:
+        - name: VAULT_SECRET_ID
     auth_method:
       description: authentication method used
     mount_point:
@@ -65,6 +73,10 @@ EXAMPLES = """
 - name: using certificate auth
   debug:
       msg: "{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
+
+- name: authenticate with a Vault app role
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
 """
 
 RETURN = """
@@ -184,6 +196,17 @@ class HashiVault:
                 return True
         else:
             return False
+
+    def auth_approle(self, **kwargs):
+        role_id = kwargs.get('role_id', os.environ.get('VAULT_ROLE_ID', None))
+        if role_id is None:
+            raise AnsibleError("Authentication method app role requires a role_id")
+
+        secret_id = kwargs.get('secret_id', os.environ.get('VAULT_SECRET_ID', None))
+        if secret_id is None:
+            raise AnsibleError("Authentication method app role requires a secret_id")
+
+        self.client.auth_approle(role_id, secret_id)
 
 
 class LookupModule(LookupBase):
