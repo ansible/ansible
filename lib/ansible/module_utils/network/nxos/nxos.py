@@ -193,12 +193,14 @@ class Cli:
             code = getattr(e, 'code', 1)
             message = getattr(e, 'err', e)
             err = to_text(message, errors='surrogate_then_replace')
-            if opts.get('ignore_timeout') and code == 1:
-                return msgs.append(err)
-            elif code != 0:
+            if opts.get('ignore_timeout') and code:
+                msgs.append(err)
+                return msgs
+            elif code:
                 self._module.fail_json(msg=err)
 
-        return msgs.append(msg)
+        msgs.extend(msg)
+        return msgs
 
     def get_capabilities(self):
         """Returns platform info of the remove device
