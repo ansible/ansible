@@ -475,7 +475,7 @@ def flatten(mylist, levels=None):
         elif isinstance(element, MutableSequence):
             if levels is None:
                 ret.extend(flatten(element))
-            elif levels > 1:
+            elif levels >= 1:
                 levels = int(levels) - 1
                 ret.extend(flatten(element, levels=levels))
             else:
