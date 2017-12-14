@@ -1,5 +1,5 @@
 ---
-- debug: msg="START ios_interface cli/basic.yaml"
+- debug: msg="START ios_interface cli/basic.yaml on connection={{ ansible_connection }}"
 
 - name: Run show version
   ios_command:
@@ -258,4 +258,4 @@
     that:
       - 'result.changed == false'
 
-- debug: msg="END ios_interface cli/basic.yaml"
+- debug: msg="END ios_interface cli/basic.yaml on connection={{ ansible_connection }}"
