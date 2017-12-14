@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# This module is proudly sponsored by CGI (www.cgi.com) and
+# KPN (www.kpn.com).
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,31 +16,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: icinga2_service
-short_description: Manage a service fot a host in Icinga2
+short_description: Manage a service for a host in Icinga2
 description:
    - "Add or remove a services to Icinga2 through the API"
    - "( see https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/ )"
 version_added: "2.5"
-author: "Jurgen Brand"
+author: "Jurgen Brand (@t794104)"
 options:
   url:
     description:
       - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
-  force:
-    description:
-      - If C(yes) and C(dest) is not a directory, will download the file every
-        time and replace the file if the contents change. If C(no), the file
-        will only be downloaded if the destination does not exist. Generally
-        should be C(yes) only for small local files.
-      - Prior to 0.6, this module behaved as if C(yes) was the default.
-    version_added: '0.7'
-    default: 'no'
-    type: bool
-    aliases: [ thirsty ]
   use_proxy:
     description:
-      - if C(no), it will not use a proxy, even if one is defined in
+      - If C(no), it will not use a proxy, even if one is defined in
         an environment variable on the target hosts.
     default: 'yes'
     type: bool
@@ -52,14 +43,11 @@ options:
     description:
       - The username for use in HTTP basic authentication.
       - This parameter can be used without C(url_password) for sites that allow empty passwords.
-    version_added: '1.6'
   url_password:
     description:
         - The password for use in HTTP basic authentication.
         - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
-    version_added: '1.6'
   force_basic_auth:
-    version_added: '2.0'
     description:
       - httplib2, the library used by the uri module only sends authentication information when a webservice
         responds to an initial request with a 401 status. Since some basic auth services do not properly
@@ -72,13 +60,11 @@ options:
       - PEM formatted certificate chain file to be used for SSL client
         authentication. This file can also include the key as well, and if
         the key is included, C(client_key) is not required.
-    version_added: '2.4'
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL
         client authentication. If C(client_cert) contains both the certificate
         and key, this option is not required.
-    version_added: '2.4'
   state:
     description:
       - Apply feature state.
@@ -90,12 +76,9 @@ options:
       - name used to create / delete the host
       - this does not need to be the FQDN, but does needs to be uniuqe
     required: true
-    default: null
   zone:
     description:
-      - ??
-    required: false
-    default: None
+      - The zone from where this host should be polled.
   template:
     description:
       - the template used to define the host
@@ -108,16 +91,16 @@ options:
     default: "hostalive"
   display_name:
     description:
-      - the name used to display the host
+      - the name used to display the service
     required: false
-    default: <name>
+    default: if none is give it is the value of the <name> parameter
   ip:
     description:
-      - the ip-addres of the host
+      - The IP address of the host.
     required: true
   variables:
     description:
-      - list of variables
+      - List of variables.
     required: false
     default: None
 '''
@@ -137,7 +120,14 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-#
+name:
+    description: The name used to create, modify or delete the host
+    type: string
+    returned: always
+data:
+    description: The data structure used for create, modify or delete of the host
+    type: dict
+    returned: always
 '''
 
 import json
@@ -228,11 +218,13 @@ class icinga2_api:
 def main():
     # use the predefined argument spec for url
     argument_spec = url_argument_spec()
+    # remove unnecessary argument 'force'
+    del argument_spec['force']
     # add our own arguments
     argument_spec.update(
         state=dict(default="present", choices=["absent", "present"]),
         name=dict(required=True, aliases=['host']),
-        zone=dict(default=None),
+        zone=dict(),
         template=dict(default=None),
         check_command=dict(default="hostalive"),
         display_name=dict(default=None),
@@ -297,7 +289,6 @@ def main():
                         module.fail_json(msg="bad return code deleting service: %s" % (ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception deleting service: " + str(e))
-                module.exit_json(changed=changed, name=name, data=data)
 
         elif icinga.diff(name, data):
             if module.check_mode:
@@ -310,7 +301,6 @@ def main():
             else:
                 module.fail_json(msg="bad return code modifying service: %s" % (ret['data']))        
 
-        module.exit_json(changed=changed, name=name, data=data)
 
     else:
         if state == "present":
@@ -325,18 +315,8 @@ def main():
                         module.fail_json(msg="bad return code creating service: %s" % (ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception creating service: " + str(e))
-        elif icinga.diff(name, data):
-            if module.check_mode:
-                module.exit_json(changed=False, name=name, data=data)
-            #ret = icinga.modify(name,data)
-            ret = icinga.delete(name)
-            ret = icinga.create(name, data)
-            if ret['code'] == 200:
-                changed = True
-            else:
-                module.fail_json(msg="bad return code modifying service: %s" % (ret['data']))        
 
-        module.exit_json(changed=changed, name=name, data=data)
+    module.exit_json(changed=changed, name=name, data=data)
 
 
 # import module snippets
