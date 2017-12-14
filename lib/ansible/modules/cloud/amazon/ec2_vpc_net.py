@@ -135,6 +135,19 @@ vpc.is_default:
     returned: success
     type: boolean
     sample: false
+vpc.cidr_block_association_set:
+    description: IPv4 CIDR blocks associated with the VPC
+    returned: success
+    sample:
+        "cidr_block_association_set": [
+            {
+                "association_id": "vpc-cidr-assoc-97aeeefd",
+                "cidr_block": "20.0.0.0/24",
+                "cidr_block_state": {
+                    "state": "associated"
+                }
+            }
+        ]
 '''
 
 try:
@@ -173,10 +186,13 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
 
 def get_vpc(module, connection, vpc_id):
     try:
-        return connection.describe_vpcs(VpcIds=[vpc_id])['Vpcs'][0]
+        vpc_obj = connection.describe_vpcs(VpcIds=[vpc_id])['Vpcs'][0]
+        classic_link = connection.describe_vpc_classic_link(VpcIds=[vpc_id])['Vpcs'][0].get('ClassicLinkEnabled')
+        vpc_obj['ClassicLinkEnabled'] = classic_link
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
 
+    return vpc_obj
 
 def update_vpc_tags(connection, module, vpc_id, tags, name):
 
@@ -321,7 +337,10 @@ def main():
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     module.fail_json_aws(e, "Failed to update enabled dns hostnames attribute")
 
-        module.exit_json(changed=changed, vpc=camel_dict_to_snake_dict(get_vpc(module, connection, vpc_id)))
+        final_state = camel_dict_to_snake_dict(get_vpc(module, connection, vpc_id))
+        final_state['id'] = final_state.pop('vpc_id')
+
+        module.exit_json(changed=changed, vpc=final_state)
 
     elif state == 'absent':
 

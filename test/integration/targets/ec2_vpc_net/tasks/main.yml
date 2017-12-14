@@ -29,7 +29,7 @@
       assert:
         that:
           - 'result is failed'
-          - 'result.msg.startswith("No handler was ready to authenticate")'
+          - '"Unable to locate credentials" in result.msg'
 
     # ============================================================
 
