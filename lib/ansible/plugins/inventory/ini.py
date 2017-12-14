@@ -179,7 +179,12 @@ class InventoryModule(BaseFileInventoryPlugin):
                     # Either [groupname] or [groupname:children] is sufficient to declare a group,
                     # but [groupname:vars] is allowed only if the # group is declared elsewhere.
                     # We add the group anyway, but make a note in pending_declarations to check at the end.
-                    if state == 'vars':
+                    #
+                    # It's possible that a group is previously pending due to being defined as a child
+                    # group, in that case we simply pass so that the logic below to process pending
+                    # declarations will take the appropriate action for a pending child group instead of
+                    # incorrectly handling it as a var state pending declaration
+                    if state == 'vars' and groupname not in pending_declarations:
                         pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
 
                     self.inventory.add_group(groupname)

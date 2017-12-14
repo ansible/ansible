@@ -9,6 +9,32 @@ Ansible Changes By Release
 * Fix `pamd` rule args regexp to match file paths (https://github.com/ansible/ansible/pull/33432)
 * Check if SELinux policy exists before setting (https://github.com/ansible/ansible/pull/31834)
 * Set locale to `C` in `letsencrypt` module to fix date parsing errors (https://github.com/ansible/ansible/pull/31339)
+* Fix include in loop when stategy=free
+  (https://github.com/ansible/ansible/pull/33094)
+* Fix save parameter in asa_config (https://github.com/ansible/ansible/pull/32761)
+* Fix --vault-id support in ansible-pull (https://github.com/ansible/ansible/pull/33629)
+* In nxos_interface_ospf, fail nicely if loopback is used with passive_interface:
+  (https://github.com/ansible/ansible/pull/33252)
+* Fix quote filter when given an integer to quote (https://github.com/ansible/ansible/issues/33272)
+* nxos_vrf_interface fix when validating the interface (https://github.com/ansible/ansible/issues/33227)
+* Fix for win_copy when sourcing files from an SMBv1 share
+  (https://github.com/ansible/ansible/pull/33576)
+* correctly report callback plugin file
+* restrict revaulting to vault cli
+  https://github.com/ansible/ansible/pull/33656
+* Fix python3 tracebacks in letsencrypt module (https://github.com/ansible/ansible/pull/32734)
+* Fix ansible_*_interpreter variables to be templated prior to being used:
+  https://github.com/ansible/ansible/pull/33698
+* Fix setting of environment in a task that uses a loop:
+  https://github.com/ansible/ansible/issues/32685
+* Fix fetch on Windows failing to fetch files or particular block size
+  (https://github.com/ansible/ansible/pull/33697)
+* preserve certain fields during no log. https://github.com/ansible/ansible/pull/33637
+* fix issue with order of declaration of sections in ini inventory https://github.com/ansible/ansible/pull/33781
+* Fix win_iis_webapppool to correctly stop a apppool
+  (https://github.com/ansible/ansible/pull/33777)
+* Fix CloudEngine host failed (https://github.com/ansible/ansible/pull/27876)
+* Fix ios_config save issue (https://github.com/ansible/ansible/pull/33791)
 
 <a id="2.4.2"></a>
 

@@ -438,7 +438,8 @@ class PlayIterator:
                                     (not in_child) or
                                     (not (block._role._metadata and
                                           block._role._metadata.allow_duplicates))
-                                )
+                                ) and
+                                not peek
                             ):
                                 block._role._completed[host.name] = True
                     else:

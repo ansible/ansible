@@ -505,23 +505,29 @@ class Connection(ConnectionBase):
             while True:
                 try:
                     script = '''
-                        If (Test-Path -PathType Leaf "%(path)s")
+                        $path = "%(path)s"
+                        If (Test-Path -Path $path -PathType Leaf)
                         {
-                            $stream = New-Object IO.FileStream("%(path)s", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [IO.FileShare]::ReadWrite);
-                            $stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin) | Out-Null;
-                            $buffer = New-Object Byte[] %(buffer_size)d;
-                            $bytesRead = $stream.Read($buffer, 0, %(buffer_size)d);
-                            $bytes = $buffer[0..($bytesRead-1)];
-                            [System.Convert]::ToBase64String($bytes);
-                            $stream.Close() | Out-Null;
+                            $buffer_size = %(buffer_size)d
+                            $offset = %(offset)d
+
+                            $stream = New-Object -TypeName IO.FileStream($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+                            $stream.Seek($offset, [System.IO.SeekOrigin]::Begin) > $null
+                            $buffer = New-Object -TypeName byte[] $buffer_size
+                            $bytes_read = $stream.Read($buffer, 0, $buffer_size)
+                            if ($bytes_read -gt 0) {
+                                $bytes = $buffer[0..($bytes_read - 1)]
+                                [System.Convert]::ToBase64String($bytes)
+                            }
+                            $stream.Close() > $null
                         }
-                        ElseIf (Test-Path -PathType Container "%(path)s")
+                        ElseIf (Test-Path -Path $path -PathType Container)
                         {
                             Write-Host "[DIR]";
                         }
                         Else
                         {
-                            Write-Error "%(path)s does not exist";
+                            Write-Error "$path does not exist";
                             Exit 1;
                         }
                     ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
