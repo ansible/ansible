@@ -165,16 +165,16 @@ changed:
 
 import re
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
-    provider = module.params['provider']
-    if provider['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    if device_info.get('network_api') == 'cliconf':
         body = run_commands(module, cmds)
-    elif provider['transport'] == 'nxapi':
+    else:
         body = run_commands(module, cmds)
 
     return body
@@ -292,7 +292,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     state = module.params['state']
     mode = get_system_mode(module)

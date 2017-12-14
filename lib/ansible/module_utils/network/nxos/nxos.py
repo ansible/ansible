@@ -397,7 +397,7 @@ class Nxapi:
             return []
 
     def get_capabilities(self):
-        pass
+        return {}
 
 
 def is_json(cmd):
