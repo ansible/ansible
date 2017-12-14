@@ -9,7 +9,7 @@ DOCUMENTATION = """
     author:
       - Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
       - Ansible Core
-    version_added: "0.9"
+    version_added: "2.5"
     short_description: fetch data from Redis
     description:
       - This looup returns a list of results from a Redis DB corresponding to a list of items given to it
