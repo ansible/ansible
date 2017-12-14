@@ -138,6 +138,7 @@ vpc.is_default:
 vpc.cidr_block_association_set:
     description: IPv4 CIDR blocks associated with the VPC
     returned: success
+    type: list
     sample:
         "cidr_block_association_set": [
             {
@@ -193,6 +194,7 @@ def get_vpc(module, connection, vpc_id):
         module.fail_json_aws(e, msg="Failed to describe VPCs")
 
     return vpc_obj
+
 
 def update_vpc_tags(connection, module, vpc_id, tags, name):
 
