@@ -15,8 +15,6 @@ matrix:
     - env: T=units/3.5
     - env: T=units/3.6
 
-    - env: T=rhel/7.4
-
     - env: T=windows/1
     - env: T=windows/2
     - env: T=windows/3
@@ -24,6 +22,7 @@ matrix:
     - env: T=network
 
     - env: T=osx/10.11/1
+    - env: T=rhel/7.4/1
     - env: T=freebsd/10.4/1
     - env: T=freebsd/11.1/1
     - env: T=linux/centos6/1
@@ -37,6 +36,7 @@ matrix:
     - env: T=linux/ubuntu1604py3/1
 
     - env: T=osx/10.11/2
+    - env: T=rhel/7.4/2
     - env: T=freebsd/10.4/2
     - env: T=freebsd/11.1/2
     - env: T=linux/centos6/2
@@ -50,6 +50,7 @@ matrix:
     - env: T=linux/ubuntu1604py3/2
 
     - env: T=osx/10.11/3
+    - env: T=rhel/7.4/3
     - env: T=freebsd/10.4/3
     - env: T=freebsd/11.1/3
     - env: T=linux/centos6/3
