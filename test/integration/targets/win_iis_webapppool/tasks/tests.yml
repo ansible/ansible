@@ -416,7 +416,7 @@
       state: present
       attributes:
         startMode: AlwaysRunning
-        processModel.identityType: 3
+        processModel.identityType: SpecificUser
         processModel.userName: '{{ansible_user}}'
         processModel.password: '{{ansible_password}}'
     register: iis_attributes_new_check
@@ -434,7 +434,7 @@
       state: present
       attributes:
         startMode: AlwaysRunning
-        processModel.identityType: 3
+        processModel.identityType: SpecificUser
         processModel.userName: '{{ansible_user}}'
         processModel.password: '{{ansible_password}}'
     register: iis_attributes_new
@@ -446,7 +446,6 @@
       - iis_attributes_new.info.attributes.startMode == 'AlwaysRunning'
       - iis_attributes_new.info.processModel.identityType == 'SpecificUser'
       - iis_attributes_new.info.processModel.userName == ansible_user
-      - iis_attributes_new.info.processModel.password == ansible_password
 
   - name: change attributes for newer IIS version again
     win_iis_webapppool:
