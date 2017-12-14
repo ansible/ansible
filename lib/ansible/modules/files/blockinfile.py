@@ -41,7 +41,8 @@ options:
   marker:
     description:
       - The marker line template.
-        "{mark}" will be replaced with "BEGIN" or "END".
+        "{mark}" will be replaced with the values in marker_begin
+        (default="BEGIN") and marker_end (default="END").
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
@@ -77,6 +78,18 @@ options:
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: 'no'
+  marker_begin:
+    description:
+      - This will be inserted at {mark} in the opening ansible block marker.
+    default: 'BEGIN'
+    version_added: "2.5"
+  marker_end:
+    required: false
+    description:
+      - This will be inserted at {mark} in the closing ansible block marker.
+    default: 'END'
+    version_added: "2.5"
+
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
@@ -190,6 +203,8 @@ def main():
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
             validate=dict(type='str'),
+            marker_begin=dict(type='str', default='BEGIN'),
+            marker_end=dict(type='str', default='END'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -243,8 +258,8 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b('BEGIN'), marker)
-    marker1 = re.sub(b(r'{mark}'), b('END'), marker)
+    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker)
+    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker)
     if present and block:
         # Escape seqeuences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
