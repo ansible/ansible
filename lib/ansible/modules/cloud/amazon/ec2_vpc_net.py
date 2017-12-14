@@ -18,7 +18,9 @@ short_description: Configure AWS virtual private clouds
 description:
     - Create, modify, and terminate AWS virtual private clouds.
 version_added: "2.0"
-author: Jonathan Davila (@defionscode)
+author:
+  - Jonathan Davila (@defionscode)
+  - Sloane Hertel (@s-hertel)
 options:
   name:
     description:
