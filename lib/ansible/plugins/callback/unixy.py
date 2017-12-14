@@ -13,7 +13,7 @@ DOCUMENTATION = '''
     short_description: condensed Ansible output
     version_added: 2.5
     description:
-      - Consolidated Ansible output in the style of *NIX startup logs
+      - Consolidated Ansible output in the style of LINUX/UNIX startup logs.
     extends_documentation_fragment:
       - default_callback
     requirements:

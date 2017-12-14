@@ -280,7 +280,7 @@ If a password is required to enter enable mode this can be specified by doing on
 
 For more information about ``network_cli`` see :ref:`network-cli`.
 
-.. _become-network_auth_and_auth_password
+.. _become-network-auth-and-auth-password:
 
 authorize and auth_pass
 -----------------------
