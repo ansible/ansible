@@ -151,9 +151,7 @@ class LookupModule(LookupBase):
 
         if check_ec2_classic:
             attr = response[0]
-            if any([bool(value['AttributeValue'] == 'EC2') for value in attr['AttributeValues']]):
-                return True
-            return False
+            return any(value['AttributeValue'] == 'EC2' for value in attr['AttributeValues'])
 
         if attribute:
             attr = response[0]
