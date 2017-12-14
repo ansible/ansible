@@ -233,11 +233,11 @@ def get_running_config(module, config=None):
             contents = config
         else:
             contents = get_config(module)
-    return NetworkConfig(indent=1, contents=contents)
+    return NetworkConfig(contents=contents)
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=1)
+    candidate = NetworkConfig()
 
     if module.params['src']:
         candidate.load(module.params['src'])
@@ -307,7 +307,7 @@ def main():
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
-        config = NetworkConfig(indent=1, contents=contents)
+        config = NetworkConfig(contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
 
@@ -354,8 +354,8 @@ def main():
     elif module.params['save_when'] == 'modified':
         output = run_commands(module, ['show running-config', 'show startup-config'])
 
-        running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
-        startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(contents=output[0], ignore_lines=diff_ignore_lines)
+        startup_config = NetworkConfig(contents=output[1], ignore_lines=diff_ignore_lines)
 
         if running_config.sha1 != startup_config.sha1:
             save_config(module, result)
@@ -371,7 +371,7 @@ def main():
             contents = running_config.config_text
 
         # recreate the object in order to process diff_ignore_lines
-        running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(contents=contents, ignore_lines=diff_ignore_lines)
 
         if module.params['diff_against'] == 'running':
             if module.check_mode:
@@ -391,7 +391,7 @@ def main():
             contents = module.params['intended_config']
 
         if contents is not None:
-            base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+            base_config = NetworkConfig(contents=contents, ignore_lines=diff_ignore_lines)
 
             if running_config.sha1 != base_config.sha1:
                 result.update({
