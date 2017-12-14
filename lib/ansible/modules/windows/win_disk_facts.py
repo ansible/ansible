@@ -18,14 +18,12 @@ description:
    - With the module you can retrieve and output detailed information about the attached disks of the target and
      it's volumes and partitions if existent.
 requirements:
-    - Windows 8.1 / Windows 2012R2 (NT 6.3) or newer
+    - Windows 8.1 / Windows 2012R2 (NT 6.3) / PowerShell 4.0 or newer
 author:
     - Marc Tschapek (@marqelme)
 notes:
-  - You can use this module in combination with the win_disk_management module in order to retrieve the disks status
-    on the target.
   - In order to understand all the returned properties and values please visit the following site and open the respective MSFT class
-    https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612(v=vs.85).aspx
+    U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612.aspx)
 '''
 
 EXAMPLES = r'''
@@ -43,16 +41,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-changed:
-    description: Whether anything was changed.
-    returned: always
-    type: boolean
-    sample: true
-msg:
-    description: Possible error message on failure.
-    returned: failed
-    type: string
-    sample: "No disks could be found on the target"
 ansible_facts:
     description: Dictionary containing all the detailed information about the disks of the target.
     returned: always
@@ -65,15 +53,13 @@ ansible_facts:
             contains:
                 total_disks_found:
                     description: Count of found disks on the target.
-                    returned: success or failed
+                    returned: if disks were found
                     type: string
                     sample: "3"
-                disk_identifier:
+                disks:
                     description:
                       - Detailed information about one particular disk.
-                      - The identifier is displayed as a digit in order to structure the output but is not the actual number of the particular disk.
-                      - Please see the containing return property "number" to get the actual disk number of the particular disk.
-                    returned: success or failed
+                    returned: if disks were found
                     type: complex
                     contains:
                         number:
@@ -112,7 +98,7 @@ ansible_facts:
                             type: string
                             sample: "Online"
                         sector_size:
-                            description: Sector size of the particular disk.
+                            description: Sector size in byte of the particular disk.
                             returned: always
                             type: string
                             sample: "512byte"
@@ -176,12 +162,9 @@ ansible_facts:
                             returned: always
                             type: string
                             sample: "\\\\?\\scsi#disk&ven_red_hat&prod_virtio#4&23208fd0&1&000000#{<id>}"
-                        partition_identifier:
+                        partitions:
                             description:
                               - Detailed information about one particular partition on the specified disk.
-                              - The identifier is displayed as a digit in order to structure the output but is not
-                                the actual number of the particular partition.
-                              - Please see the containing return property "number" to get the actual partition number.
                             returned: if existent
                             type: complex
                             contains:
@@ -257,11 +240,9 @@ ansible_facts:
                                     returned: if existent
                                     type: string
                                     sample: "\\\\?\\Volume{85bdc4a8-f8eb-11e6-80fa-806e6f6e6963}\\"
-                                volume_identifier:
+                                volumes:
                                     description:
                                       - Detailed information about one particular volume on the specified partition.
-                                      - Please note that volumes have no "number" property and the identifier is displayed
-                                        as a digit in order to structure the output.
                                     returned: if existent
                                     type: complex
                                     contains:
@@ -300,7 +281,7 @@ ansible_facts:
                                             type: string
                                             sample: "Fixed"
                                         allocation_unit_size:
-                                            description: Allocation unit size of the particular volume.
+                                            description: Allocation unit size in kb of the particular volume.
                                             returned: always
                                             type: string
                                             sample: "64kb"
@@ -324,6 +305,20 @@ ansible_facts:
                                     returned: always
                                     type: string
                                     sample: "UnSpecified"
+                                size:
+                                    description:
+                                      - Size in gb of the particular physical disk.
+                                      - Accurate to three decimal places.
+                                    returned: always
+                                    type: string
+                                    sample: "200gb"
+                                allocated_size:
+                                    description:
+                                      - Allocated size in gb of the particular physical disk.
+                                      - Accurate to three decimal places.
+                                    returned: always
+                                    type: string
+                                    sample: "100gb"
                                 device_id:
                                     description: Device ID of the particular physical disk.
                                     returned: always
@@ -344,6 +339,11 @@ ansible_facts:
                                     returned: always
                                     type: string
                                     sample: "Healthy"
+                                bus_type:
+                                    description: Bus type of the particular physical disk.
+                                    returned: always
+                                    type: string
+                                    sample: "SCSI"
                                 usage_type:
                                     description: Usage type of the particular physical disk.
                                     returned: always
@@ -369,6 +369,21 @@ ansible_facts:
                                     returned: always
                                     type: string
                                     sample: "4294967295rpm"
+                                physical_location:
+                                    description: Physical location of the particular physical disk.
+                                    returned: always
+                                    type: string
+                                    sample: "Integrated : Adapter 3 : Port 0 : Target 0 : LUN 0"
+                                manufacturer:
+                                    description: Manufacturer of the particular physical disk.
+                                    returned: always
+                                    type: string
+                                    sample: "SUSE"
+                                model:
+                                    description: Model of the particular physical disk.
+                                    returned: always
+                                    type: string
+                                    sample: "Xen Block"
                                 can_pool:
                                     description: Information whether the particular physical disk can be added to a storage pool.
                                     returned: always
@@ -379,6 +394,21 @@ ansible_facts:
                                     returned: if can_pool property has value false
                                     type: string
                                     sample: "Insufficient Capacity"
+                                indication_enabled:
+                                    description: Information whether indication is enabled for the particular physical disk.
+                                    returned: always
+                                    type: string
+                                    sample: "True"
+                                partial:
+                                    description: Information whether the particular physical disk is partial.
+                                    returned: always
+                                    type: string
+                                    sample: "False"
+                                serial_number:
+                                    description: Serial number of the particular physical disk.
+                                    returned: always
+                                    type: string
+                                    sample: "b62beac80c3645e5877f"
                                 object_id:
                                     description: Object ID of the particular physical disk.
                                     returned: always
@@ -394,9 +424,177 @@ ansible_facts:
                             returned: if existent
                             type: complex
                             contains:
+                                size:
+                                    description:
+                                      - Size in gb of the particular virtual disk.
+                                      - Accurate to three decimal places.
+                                    returned: always
+                                    type: string
+                                    sample: "300gb"
+                                allocated_size:
+                                    description:
+                                      - Allocated size in gb of the particular virtual disk.
+                                      - Accurate to three decimal places.
+                                    returned: always
+                                    type: string
+                                    sample: "100gb"
+                                footprint_on_pool:
+                                    description:
+                                      - Footprint on pool in gb of the particular virtual disk.
+                                      - Accurate to three decimal places.
+                                    returned: always
+                                    type: string
+                                    sample: "100gb"
+                                name:
+                                    description: Name of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "vDisk1"
                                 friendly_name:
                                     description: Friendly name of the particular virtual disk.
                                     returned: always
                                     type: string
                                     sample: "Prod2 Virtual Disk"
+                                operational_status:
+                                    description: Operational status of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "OK"
+                                health_status:
+                                    description: Health status of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "Healthy"
+                                provisioning_type:
+                                    description: Provisioning type of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "Thin"
+                                allocation_unit_size:
+                                    description: Allocation unit size in kb of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "4kb"
+                                media_type:
+                                    description: Media type of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "Unspecified"
+                                parity_layout:
+                                    description: Parity layout of the particular virtual disk.
+                                    returned: if existent
+                                    type: string
+                                    sample: "1"
+                                access:
+                                    description: Access of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "Read/Write"
+                                detached_reason:
+                                    description: Detached reason of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "None"
+                                write_cache_size:
+                                    description: Write cache size in byte of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "100byte"
+                                fault_domain_awareness:
+                                    description: Fault domain awareness of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "PhysicalDisk"
+                                inter_leave:
+                                    description:
+                                      - Inter leave in kb of the particular virtual disk.
+                                      - Accurate to three decimal places.
+                                    returned: always
+                                    type: string
+                                    sample: "100kb"
+                                deduplication_enabled:
+                                    description:  Information whether deduplication is enabled for the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "True"
+                                enclosure_aware:
+                                    description: Information whether the particular virtual disk is enclosure aware.
+                                    returned: always
+                                    type: string
+                                    sample: "False"
+                                manual_attach:
+                                    description: Information whether the particular virtual disk is manual attached.
+                                    returned: always
+                                    type: string
+                                    sample: "True"
+                                snapshot:
+                                    description: Information whether the particular virtual disk is a snapshot.
+                                    returned: always
+                                    type: string
+                                    sample: "False"
+                                tiered:
+                                    description: Information whether the particular virtual disk is tiered.
+                                    returned: always
+                                    type: string
+                                    sample: "True"
+                                physical_sector_size:
+                                    description: Physical sector size in kb of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "4kb"
+                                logical_sector_size:
+                                    description: Logical sector size in byte of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "512byte"
+                                available_copies:
+                                    description: Number of the available copies of the particular virtual disk.
+                                    returned: if existent
+                                    type: string
+                                    sample: "1"
+                                columns:
+                                    description: Number of the columns of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "2"
+                                groups:
+                                    description: Number of the groups of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "1"
+                                physical_disk_redundancy:
+                                    description: Type of the physical disk redundancy of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "1"
+                                read_cache_size:
+                                    description: Read cache size in byte of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "0"
+                                request_no_spof:
+                                    description: Information whether the particular virtual disk requests no single point of failure.
+                                    returned: always
+                                    type: string
+                                    sample: "True"
+                                resiliency_setting_name:
+                                    description: Type of the physical disk redundancy of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "1"
+                                object_id:
+                                    description: Object ID of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: '{1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_VirtualDisk.ObjectId=\"{<object_id>}:VD:{<vd>}\"'   
+                                unique_id:
+                                    description: Unique ID of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "260542E4C6B01D47A8FA7630FD90FFDE"
+                                unique_id_format:
+                                    description: Unique ID format of the particular virtual disk.
+                                    returned: always
+                                    type: string
+                                    sample: "Vendor Specific"                                 
 '''
