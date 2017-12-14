@@ -19,7 +19,7 @@ description:
     - Creates or deletes instances of task definitions.
 version_added: "2.0"
 author: Mark Chance(@Java1Guy)
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     operation:
         description:
@@ -149,15 +149,9 @@ task:
             returned: only when details is true
             type: string
 '''
-try:
-    import boto
-    import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
 
 try:
-    import boto3
+    import botocore
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -172,13 +166,8 @@ class EcsExecManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg="Can't authorize connection - %s " % str(e))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def list_tasks(self, cluster_name, service_name, status):
         response = self.ecs.list_tasks(
@@ -241,9 +230,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     # Validate Requirements
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
-
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
