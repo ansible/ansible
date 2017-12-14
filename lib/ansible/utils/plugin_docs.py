@@ -62,7 +62,7 @@ def merge_fragment(target, source):
 
 def add_fragments(doc, filename):
 
-    fragments = doc.get('extends_documentation_fragment', [])
+    fragments = doc.pop('extends_documentation_fragment', [])
 
     if isinstance(fragments, string_types):
         fragments = [fragments]
