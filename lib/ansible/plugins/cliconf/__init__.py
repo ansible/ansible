@@ -106,10 +106,6 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         signal.alarm(0)
         return resp
 
-    def get_prompt(self):
-        """Returns the current prompt from the device"""
-        return self._connection._matched_prompt
-
     def get_base_rpc(self):
         """Returns list of base rpc method supported by remote device"""
         return ['get_config', 'edit_config', 'get_capabilities', 'get']
