@@ -154,6 +154,7 @@ try:
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
+
 def copy_image(module, ec2):
     """
     Copies an AMI
