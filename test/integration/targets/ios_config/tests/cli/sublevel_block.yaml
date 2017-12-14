@@ -12,6 +12,7 @@
     after: ['exit']
     authorize: yes
     match: none
+  become: yes
 
 - name: configure sub level command using block resplace
   ios_config:
@@ -24,6 +25,7 @@
     replace: block
     after: ['exit']
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -46,6 +48,7 @@
     replace: block
     after: ['exit']
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -58,5 +61,6 @@
       - no ip access-list extended test
     match: none
     authorize: yes
+  become: yes
 
 - debug: msg="END cli/sublevel_block.yaml on connection={{ ansible_connection }}"

@@ -10,13 +10,14 @@
       - interface Loopback999
     match: none
     authorize: yes
+  become: yes
 
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - name: delete backup files
   file:
@@ -29,6 +30,7 @@
     src: basic/config.j2
     backup: yes
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -42,7 +44,7 @@
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - assert:
     that:

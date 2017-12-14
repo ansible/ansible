@@ -6,12 +6,14 @@
     lines: ['hostname {{ shorter_hostname }}']
     match: none
     authorize: yes
+  become: yes
 
 - name: configure top level command
   ios_config:
     lines: ['hostname foo']
     match: strict
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -24,6 +26,7 @@
     lines: ['hostname foo']
     match: strict
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -35,5 +38,6 @@
     lines: ['hostname {{ shorter_hostname }}']
     match: none
     authorize: yes
+  become: yes
 
 - debug: msg="END cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"

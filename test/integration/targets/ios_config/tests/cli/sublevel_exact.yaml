@@ -14,6 +14,7 @@
     after: exit
     match: none
     authorize: yes
+  become: yes
 
 - name: configure sub level command using exact match
   ios_config:
@@ -27,6 +28,7 @@
     after: exit
     match: exact
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -49,6 +51,7 @@
     parents: ip access-list extended test
     match: exact
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -61,5 +64,6 @@
       - no ip access-list extended test
     match: none
     authorize: yes
+  become: yes
 
 - debug: msg="END cli/sublevel_exact.yaml on connection={{ ansible_connection }}"

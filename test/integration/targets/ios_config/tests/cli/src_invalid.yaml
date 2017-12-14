@@ -7,6 +7,7 @@
   ios_config:
     src: basic/foobar.j2
     authorize: yes
+  become: yes
   register: result
   ignore_errors: yes
 
