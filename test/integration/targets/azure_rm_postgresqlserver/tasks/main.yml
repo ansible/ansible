@@ -7,11 +7,9 @@
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
     name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
-    properties:
-      create_mode: Default
-      admin_username: zimxyz
-      admin_password: Testpasswordxyz12!
     location: westus
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -23,11 +21,9 @@
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
     name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
-    properties:
-      create_mode: Default
-      admin_username: zimxyz
-      admin_password: Testpasswordxyz12!
     location: westus
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -35,30 +31,13 @@
       - output.changed
       - output.user_visible_state == 'Ready'
 
-- name: Create again instance of PostgreSQL Server -- check mode
-  azure_rm_postgresqlserver:
-    resource_group: "{{ resource_group }}"
-    name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
-    properties:
-      create_mode: Default
-      admin_username: zimxyz
-      admin_password: Testpasswordxyz12!
-    location: westus
-  register: output
-- name: Assert the state has not changed
-  assert:
-    that:
-      - output.changed == false
-
 - name: Create again instance of PostgreSQL Server
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
     name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
-    properties:
-      create_mode: Default
-      admin_username: zimxyz
-      admin_password: Testpasswordxyz12!
     location: westus
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
   register: output
 - name: Assert the state has not changed
   assert:
