@@ -236,6 +236,8 @@ import ansible.module_utils.six as six
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
+JSON_CANDIDATES = ('text', 'json', 'javascript')
+
 
 def write_file(module, url, dest, content):
     # create a tempfile with some test content
@@ -475,7 +477,7 @@ def main():
         if 'charset' in params:
             content_encoding = params['charset']
         u_content = to_text(content, encoding=content_encoding)
-        if 'application/json' in content_type or 'text/json' in content_type:
+        if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:
                 js = json.loads(u_content)
                 uresp['json'] = js
