@@ -35,6 +35,7 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33777)
 * Fix CloudEngine host failed (https://github.com/ansible/ansible/pull/27876)
 * Fix ios_config save issue (https://github.com/ansible/ansible/pull/33791)
+* Handle vault filenames with nonascii chars when displaying messages (https://github.com/ansible/ansible/pull/33926)
 
 <a id="2.4.2"></a>
 
