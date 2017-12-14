@@ -7,6 +7,7 @@
     gather_subset:
       - "foobar"
     authorize: yes
+  become: yes
   register: result
   ignore_errors: true
 
@@ -30,6 +31,7 @@
       - "!hardware"
       - "hardware"
     authorize: yes
+  become: yes
   register: result
   ignore_errors: true
 
