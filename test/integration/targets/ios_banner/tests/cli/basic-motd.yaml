@@ -5,6 +5,7 @@
     banner: motd
     state: absent
     authorize: yes
+  become: yes
 
 - name: Set motd
   ios_banner:
@@ -15,6 +16,7 @@
       string
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - debug:
@@ -34,6 +36,7 @@
       string
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
