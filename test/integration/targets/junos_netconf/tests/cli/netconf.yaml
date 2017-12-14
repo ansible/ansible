@@ -18,6 +18,10 @@
 
 ###################################
 
+- name: wait for netconf server to come up
+  pause:
+    seconds: 10
+
 - name: Ensure we can communicate over netconf
   junos_command:
     rpcs: get-software-information
