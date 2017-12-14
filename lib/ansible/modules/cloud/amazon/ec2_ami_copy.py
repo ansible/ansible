@@ -79,7 +79,7 @@ options:
       - Whether to use tags if the source AMI already exists in the target region. If this is set, and all tags match
         in an existing AMI, the AMI will not be copied again.
     default: false
-    version_added: 2.4
+    version_added: 2.5
 author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
 extends_documentation_fragment:
     - aws
