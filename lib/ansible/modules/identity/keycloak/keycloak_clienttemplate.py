@@ -41,8 +41,9 @@ options:
             - State of the client template
             - On C(present), the client template will be created (or updated if it exists already).
             - On C(absent), the client template will be removed if it exists
+            - On C(dump), the client template will be read and provided in the "existing" return value only.
         required: false
-        choices: ['present', 'absent']
+        choices: ['present', 'absent', 'dump']
         default: 'present'
 
     id:
@@ -122,15 +123,65 @@ options:
 
     protocol_mappers:
         description:
-            - a list of dicts defining protocol mappers for this client template.
-              An example of one is given in the examples section.
+            - a list of dicts defining protocol mappers for this client template.              
               This is 'protocolMappers' in the Keycloak REST API.
+              
+            - Each protocol mapper can have the following options:
+
+              consentRequired:
+                - A boolean value specifying whether a user needs to provide consent to a 
+                  client for this mapper to be active.
+              consentText:
+                - A string value specifying the human-readable name of the consent the user is presented to accept.
+              id:
+                - A string value, usually an UUID, specifying the internal ID of this protocol mapper instance.
+              name:
+                - A string valu representing the name of this protocol mapper.
+              protocol:
+                - Either 'openid-connect' or 'saml', this specifies for which protocol this protocol mapper
+                  is active.
+              protocolMapper:
+                - A string referencing the Keycloak-internal name of the type of this protocol-mapper.
+                  While an exhaustive list is impossible to provide since this may be extended through
+                  SPIs by the user of Keycloak, by default Keycloak as of 3.4 ships with at least
+
+                  - C(docker-v2-allow-all-mapper)
+                  - C(oidc-address-mapper)
+                  - C(oidc-full-name-mapper)
+                  - C(oidc-group-membership-mapper)
+                  - C(oidc-hardcoded-claim-mapper)
+                  - C(oidc-hardcoded-role-mapper)
+                  - C(oidc-role-name-mapper)
+                  - C(oidc-script-based-protocol-mapper)
+                  - C(oidc-sha256-pairwise-sub-mapper)
+                  - C(oidc-usermodel-attribute-mapper)
+                  - C(oidc-usermodel-client-role-mapper)
+                  - C(oidc-usermodel-property-mapper)
+                  - C(oidc-usermodel-realm-role-mapper)
+                  - C(oidc-usersessionmodel-note-mapper)
+                  - C(saml-group-membership-mapper)
+                  - C(saml-hardcode-attribute-mapper)
+                  - C(saml-hardcode-role-mapper)
+                  - C(saml-role-list-mapper)
+                  - C(saml-role-name-mapper)
+                  - C(saml-user-attribute-mapper)
+                  - C(saml-user-property-mapper)
+                  - C(saml-user-session-note-mapper)
+
+                - An exhaustive list of available mappers on your installation can be obtained on
+                  the admin console by going to Server Info -> Providers and looking under
+                  'protocol-mapper'.
+              config:
+                - This is a dict specifying the configuration options for the protocol mapper; the
+                  contents differ depending on the value of I(protocolMapper) and are not documented
+                  other than by the source of the mappers. An example is given below.               
         required: false
 
     attributes:
         description:
             - A dict of further attributes for this client template. This can contain various
-              configuration settings.
+              configuration settings, though in the default installation of Keycloak as of 3.4, none
+              are documented or known, so this is usually empty.
         required: false
 
 extends_documentation_fragment:
@@ -243,7 +294,7 @@ def main():
 
     meta_args = dict(
         realm=dict(type='str', default='master'),
-        state=dict(default='present', choices=['present', 'absent']),
+        state=dict(default='present', choices=['present', 'absent', 'dump']),
 
         id=dict(type='str'),
         name=dict(type='str'),
@@ -293,6 +344,8 @@ def main():
     if before_clientt is None:
         before_clientt = dict()
 
+    result['existing'] = before_clientt
+
     # Build a proposed changeset from parameters given to this module
     changeset = dict()
 
@@ -311,7 +364,20 @@ def main():
     updated_clientt.update(changeset)
 
     result['proposed'] = changeset
-    result['existing'] = before_clientt
+    if state == 'dump':
+        result['msg'] = 'Client template %s has been dumped into "existing" variable.' % result['existing']['name']
+        module.exit_json(**result)
+
+    # partially validate protocolmappers
+    if 'protocolMappers' in changeset:
+        for protmapper in changeset['protocolMappers']:
+            for key in protmapper.keys():
+                if key not in ['config', 'consentRequired', 'consentText', 'id', 'name', 'protocol',
+                               'protocolMapper']:
+                    module.fail_json(msg='Protocol mappers cannot contain "%s" as an option.' % key)
+                if key == 'config':
+                    if not isinstance(protmapper[key], dict):
+                        module.fail_json(msg='Protocol mapper "config" option needs to be a dict.')
 
     # If the client template does not exist yet, before_client is still empty
     if before_clientt == dict():
