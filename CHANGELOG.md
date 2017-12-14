@@ -18,6 +18,7 @@ Ansible Changes By Release
 * `stat` and `win_stat` have deprecated `get_md5` and the `md5` return value
   and these options will be removed in Ansible 2.9. `get_md5: no` will still be
   allowed in 2.9 but will finally be removed 2 versions after that.
+* The `redis_kv` lookup in favor of new `redis` lookup
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -52,6 +53,7 @@ Ansible Changes By Release
 * aws_ssm: Query AWS ssm data
 * config: Lookup Ansible settings
 * openshift: Return info from Openshift installation
+* redis: look up date from Redis DB, deprecates the redis_kv one.
 
 ## Callbacks
 * yaml
