@@ -6,6 +6,7 @@
     next_hop: 10.0.0.8
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -20,6 +21,7 @@
     next_hop: 10.0.0.8
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -34,6 +36,7 @@
     admin_distance: 2
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -49,6 +52,7 @@
     admin_distance: 2
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -63,6 +67,7 @@
     admin_distance: 2
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -78,6 +83,7 @@
     admin_distance: 2
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -91,6 +97,7 @@
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -106,6 +113,7 @@
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -121,6 +129,7 @@
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - assert:
