@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -111,12 +111,12 @@ state:
           example: "Testing"
         osDisk:
           description: OS disk id if the image is created from disks.
-          type: str
-          example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001"
+          type: Dict
+          example: { managedDisk: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001" }
         dataDisks:
           description: Data disk id if the image is created from disks.
           type: list
-          example: ["/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001-datadisk-0"]
+          example: [{ managedDisk: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001-datadisk-0" }]
         sourceVirtualMachine:
           description: Source virtual machine id if the image is created from vm.
           type: str
