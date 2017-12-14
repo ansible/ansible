@@ -586,7 +586,7 @@ ansible_facts:
                                     description: Object ID of the particular virtual disk.
                                     returned: always
                                     type: string
-                                    sample: '{1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_VirtualDisk.ObjectId=\"{<object_id>}:VD:{<vd>}\"'   
+                                    sample: '{1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_VirtualDisk.ObjectId=\"{<object_id>}:VD:{<vd>}\"'
                                 unique_id:
                                     description: Unique ID of the particular virtual disk.
                                     returned: always
@@ -596,5 +596,5 @@ ansible_facts:
                                     description: Unique ID format of the particular virtual disk.
                                     returned: always
                                     type: string
-                                    sample: "Vendor Specific"                                 
+                                    sample: "Vendor Specific"
 '''
