@@ -70,7 +70,7 @@ RETURN = '''
 result:
   description:
     - The attributes of the Direct Connect Gateway
-  type: dict
+  type: complex
   returned: I(state=present)
   contains:
     amazon_side_asn:
