@@ -38,10 +38,10 @@ class Cliconf(CliconfBase):
         platform_reply = self.get(b'show inventory | json')
         platform_info = json.loads(platform_reply)
 
-        device_info['network_os_version'] = data['sys_ver_str']
+        device_info['network_os_version'] = data.get('sys_ver_str') or data.get('kickstart_ver_str')
         device_info['network_os_model'] = data['chassis_id']
         device_info['network_os_hostname'] = data['host_name']
-        device_info['network_os_image'] = data['isan_file_name']
+        device_info['network_os_image'] = data.get('isan_file_name') or data.get('kick_file_name')
 
         inventory_table = platform_info['TABLE_inv']['ROW_inv']
         for info in inventory_table:
