@@ -21,7 +21,7 @@ options:
     description:
       - The package manager used by the system so we can query the package information
     default: auto
-    choices: ["auto", "rpm", "zypper", "dnf", "yum", "dpkg", "apt", "aptitude"]
+    choices: ["auto", "rpm", "apt"]
     required: False
 version_added: "2.5"
 author:
@@ -145,10 +145,6 @@ import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 
-# Alias mappings of different ways package namespaces might be referred to
-RPM_ALIASES = ('rpm', 'dnf', 'yum', 'zypper')
-DEB_ALIASES = ('apt', 'aptitude', 'dpkg')
-
 
 def rpm_package_list():
 
@@ -173,7 +169,7 @@ def rpm_package_list():
     return installed_packages
 
 
-def deb_package_list():
+def apt_package_list():
 
     try:
         import apt
@@ -214,10 +210,10 @@ def main():
 
         # FIXME: add more detection methods
     try:
-        if manager in RPM_ALIASES:
+        if manager == "rpm":
             packages = rpm_package_list()
-        elif manager in DEB_ALIASES:
-            packages = deb_package_list()
+        elif manager == "apt":
+            packages = apt_package_list()
         else:
             if manager:
                 results['msg'] = 'Unsupported package manager: %s' % manager
