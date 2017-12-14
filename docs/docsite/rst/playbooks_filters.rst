@@ -122,7 +122,7 @@ Flatten a list (same thing the `flatten` lookup does)::
 
     {{ [3, [4, 2] ]|flatten }}
 
-Flatten only the first level of a list (aking to the `items` lookup)::
+Flatten only the first level of a list (akin to the `items` lookup)::
 
     {{ [3, [4, [2]] ]|flatten(level=1) }}
 
