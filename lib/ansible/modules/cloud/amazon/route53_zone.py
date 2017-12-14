@@ -350,7 +350,10 @@ def main():
     elif state == 'absent':
         changed, result = delete(conn, module, matching_zones=zones)
 
-    module.exit_json(changed=changed, result=result, **result)
+    if isinstance(result, dict):
+        module.exit_json(changed=changed, result=result, **result)
+    else:
+        module.exit_json(changed=changed, result=result)
 
 if __name__ == '__main__':
     main()
