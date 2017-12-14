@@ -34,7 +34,7 @@ import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
 
@@ -203,10 +203,13 @@ class Cli:
     def get_capabilities(self):
         """Returns platform info of the remove device
         """
+        if hasattr(self._module, '_capabilities'):
+            return self._module._capabilities
+
         connection = self._get_connection()
         capabilities = connection.get_capabilities()
-        capabilities = json.loads(capabilities)
-        return capabilities
+        self._module._capabilities = json.loads(capabilities)
+        return self._module._capabilities
 
 
 class Nxapi:
