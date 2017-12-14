@@ -38,6 +38,23 @@
         <<: *aws_connection_info
       register: ecs_cluster
 
+    - name: check that ecs_cluster changed
+      assert:
+        that:
+          - ecs_cluster.changed
+
+    - name: create same ECS cluster (should do nothing)
+      ecs_cluster:
+        name: "{{ ecs_cluster_name }}"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_cluster_again
+
+    - name: check that ecs_cluster did not change
+      assert:
+        that:
+          - not ecs_cluster_again.changed
+
     - name: create a VPC to work in
       ec2_vpc_net:
         cidr_block: 10.0.0.0/16
@@ -142,6 +159,21 @@
         <<: *aws_connection_info
       register: ecs_task_definition
 
+    - name: recreate task definition
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_task_definition_again
+
+    - name: check that task definition does not change
+      assert:
+        that:
+          - not ecs_task_definition_again.changed
+      # FIXME: task definition should not change, will need #26752 or equivalent
+      ignore_errors: yes
+
     - name: obtain ECS task definition facts
       ecs_taskdefinition_facts:
         task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
@@ -162,6 +194,36 @@
             containerPort: "{{ ecs_task_container_port }}"
         role: "ecsServiceRole"
         <<: *aws_connection_info
+      register: ecs_service
+
+    - name: check that ECS service creation changed
+      assert:
+        that:
+          - ecs_service.changed
+
+    - name: create same ECS service definition (should not change)
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        role: "ecsServiceRole"
+        <<: *aws_connection_info
+      register: ecs_service_again
+
+    - name: check that ECS service recreation changed nothing
+      assert:
+        that:
+          - not ecs_service_again.changed
+      # FIXME: service should not change, needs fixing
+      ignore_errors: yes
 
     # FIXME: attempt to update service load balancer
     - name: update ECS service definition (expected to fail)
