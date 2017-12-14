@@ -473,16 +473,13 @@ def flatten(mylist, levels=None):
             # ignore undefined items
             break
         elif isinstance(element, MutableSequence):
-            if levels:
-                levels = int(levels) - 1
-                if levels >= 0:
-                    ret.extend(flatten(element, levels=levels))
-                else:
-                    ret.append(element)
-            elif levels is None:
+            if levels is None:
                 ret.extend(flatten(element))
+            elif levels > 1:
+                levels = int(levels) - 1
+                ret.extend(flatten(element, levels=levels))
             else:
-                break
+                ret.append(element)
         else:
             ret.append(element)
 
