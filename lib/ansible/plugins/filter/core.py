@@ -203,6 +203,16 @@ def regex_search(value, regex, *args, **kwargs):
             return items
 
 
+def regex_split(value, pattern, maxsplit=0, ignorecase=False, multiline=False):
+    ''' Splits a provided string using a regex pattern. '''
+    flags = 0
+    if ignorecase:
+        flags |= re.I
+    if multiline:
+        flags |= re.M
+    return re.split(pattern, value, maxsplit, flags)
+
+
 def ternary(value, true_val, false_val):
     '''  value ? true_val : false_val '''
     if bool(value):
@@ -532,6 +542,7 @@ class FilterModule(object):
             'regex_escape': regex_escape,
             'regex_search': regex_search,
             'regex_findall': regex_findall,
+            'regex_split': regex_split,
 
             # ? : ;
             'ternary': ternary,
