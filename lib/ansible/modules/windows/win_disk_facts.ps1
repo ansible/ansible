@@ -11,121 +11,170 @@ Set-StrictMode -Version 2.0
 $result = @{
     changed = $false
     ansible_facts = @{
-        ansible_disk = @{
-        } 
+        ansible_disk = @(
+        )
     }
 }
 
 # Search disks
-try {
-    $disk = Get-Disk
-} catch {
-    Fail-Json -obj $result -message "Failed to search the disks on the target: $($_.Exception.Message)"
-}
-if ($disk) {
-    [string]$diskcount = $disk | Measure-Object | Select-Object  -ExpandProperty Count
-    $result.ansible_facts.ansible_disk.total_disks_found = $diskcount
-    $i = 1
-    foreach ($disks in $disk) {
-        $result.ansible_facts.ansible_disk["disk_$($i)"] += @{}
-        $pdisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object {
-            $_.SerialNumber -eq $disks.SerialNumber
-        }
-        if ($pdisk) {
-            $result.ansible_facts.ansible_disk["disk_$($i)"]["physical_disk)"] += @{}
-            #$result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].media_type = $pdisk.MediaType
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].device_id = $pdisk.DeviceId
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].friendly_name = $pdisk.FriendlyName
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].operational_status = $pdisk.OperationalStatus
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].health_status = $pdisk.HealthStatus
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].usage_type = $pdisk.Usage
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].supported_usages = $pdisk.SupportedUsages
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].spindle_speed = "$($pdisk.SpindleSpeed)rpm"
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].can_pool = $pdisk.CanPool
-            if (-not $pdisk.CanPool) {
-                $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].cannot_pool_reason = $pdisk.CannotPoolReason
-            }   
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].object_id = $pdisk.ObjectId
-            $result.ansible_facts.ansible_disk."disk_$($i)"["physical_disk)"].unique_id = $pdisk.UniqueId
-            $vdisk = Get-VirtualDisk -PhysicalDisk $pdisk -ErrorAction SilentlyContinue
-            if ($vdisk) {
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["virtual_disk)"] += @{}
-                $result.ansible_facts.ansible_disk."disk_$($i)"["virtual_disk)"].friendly_name = $vdisk.FriendlyName
+if (Get-Command 'Get-Disk') {
+    try {
+        $disks = Get-Disk
+    } catch {
+        Fail-Json -obj $result -message "Failed to search the disks on the target: $($_.Exception.Message)"
+    }
+    if ($disks) {
+        [int32]$diskcount = $disks | Measure-Object | Select-Object  -ExpandProperty Count
+        $result.ansible_facts.ansible_disk += @{total_disks_found = $diskcount}
+        foreach ($disk in $disks) {
+            $disk_results = @{}
+            $pdisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object {
+                $_.DeviceId -eq $disk.Number
             }
-        }
-        $result.ansible_facts.ansible_disk."disk_$($i)".number = $disks.Number
-        $result.ansible_facts.ansible_disk."disk_$($i)".size = "$($disks.Size / 1GB)gb"
-        $result.ansible_facts.ansible_disk."disk_$($i)".bus_type = $disks.BusType
-        $result.ansible_facts.ansible_disk."disk_$($i)".friendly_name = $disks.FriendlyName
-        $result.ansible_facts.ansible_disk."disk_$($i)".partition_style = $disks.PartitionStyle
-        $result.ansible_facts.ansible_disk."disk_$($i)".partition_count = $disks.NumberOfPartitions
-        $result.ansible_facts.ansible_disk."disk_$($i)".operational_status = $disks.OperationalStatus
-        $result.ansible_facts.ansible_disk."disk_$($i)".sector_size = "$($disks.PhysicalSectorSize)byte"
-        $result.ansible_facts.ansible_disk."disk_$($i)".read_only = $disks.IsReadOnly
-        $result.ansible_facts.ansible_disk."disk_$($i)".bootable = $disks.IsBoot
-        $result.ansible_facts.ansible_disk."disk_$($i)".system_disk = $disks.IsSystem
-        $result.ansible_facts.ansible_disk."disk_$($i)".clustered = $disks.IsClustered
-        $result.ansible_facts.ansible_disk."disk_$($i)".manufacturer = $disks.Manufacturer
-        $result.ansible_facts.ansible_disk."disk_$($i)".model = $disks.Model
-        $result.ansible_facts.ansible_disk."disk_$($i)".firmware_version = $disks.FirmwareVersion
-        $result.ansible_facts.ansible_disk."disk_$($i)".location = $disks.Location
-        $result.ansible_facts.ansible_disk."disk_$($i)".serial_number = $disks.SerialNumber
-        $result.ansible_facts.ansible_disk."disk_$($i)".unique_id = $disks.UniqueId
-        $result.ansible_facts.ansible_disk."disk_$($i)".guid = "$([string]$disks.Guid)"
-        $result.ansible_facts.ansible_disk."disk_$($i)".path = $disks.Path
-        $part = Get-Partition -DiskNumber $($disks.Number) -ErrorAction SilentlyContinue
-        if ($part) {
-            $j = 1
-            foreach ($parts in $part) {
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"] += @{}
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].number = $parts.PartitionNumber
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].size = "$($pSize = "{0:N3}" -f ($parts.Size /1GB))$($pSize)gb"
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].type = $parts.Type
-                if ($disks.PartitionStyle -eq "GPT") {
-                    $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].gpt_type = $parts.GptType
-                    $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].no_default_driveletter = $parts.NoDefaultDriveLetter
-                } elseif ($disks.PartitionStyle -eq "MBR") {
-                    $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].mbr_type = $parts.MbrType
-                    $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].active = $parts.IsActive
+            if ($pdisk) {
+                $disk_results["physical_disk"] += @{
+                    #media_type = $pdisk.MediaType
+                    size = "$($pSize = "{0:N3}" -f ($pdisk.Size / 1GB))$($pSize)gb"
+                    allocated_size = "$($pAllocSize = "{0:N3}" -f ($pdisk.AllocatedSize / 1GB))$($pAllocSize)gb"
+                    device_id = $pdisk.DeviceId
+                    friendly_name = $pdisk.FriendlyName
+                    operational_status = $pdisk.OperationalStatus
+                    health_status = $pdisk.HealthStatus
+                    bus_type = $pdisk.BusType
+                    usage_type = $pdisk.Usage
+                    supported_usages = $pdisk.SupportedUsages
+                    spindle_speed = "$($pdisk.SpindleSpeed)rpm"
+                    firmware_version = $pdisk.FirmwareVersion
+                    physical_location = $pdisk.PhysicalLocation
+                    manufacturer = $pdisk.Manufacturer
+                    model = $pdisk.Model
+                    can_pool = $pdisk.CanPool
+                    indication_enabled = "$([string]$pdisk.IsIndicationEnabled)"
+                    partial = $pdisk.IsPartial
+                    serial_number = $pdisk.SerialNumber
+                    object_id = $pdisk.ObjectId
+                    unique_id = $pdisk.UniqueId
                 }
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].drive_letter = "$([string]$parts.DriveLetter)"
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].transition_state = $parts.TransitionState
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].offset = $parts.Offset             
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].hidden = $parts.IsHidden
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].shadow_copy = $parts.IsShadowCopy
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].guid = "$([string]$parts.Guid)"
-                $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"].access_paths = "$([string]$parts.AccessPaths)"
-                $vol = Get-Volume -Partition $parts -ErrorAction SilentlyContinue
-                if ($vol) {
-                    $k = 1
-                    foreach ($vols in $vol) {
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"] += @{}
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].size = "$($vSize = "{0:N3}" -f ($vols.Size / 1GB))$($vSize)gb"
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].size_remaining = "$($vSizeRe = "{0:N3}" -f ($vols.SizeRemaining / 1GB))$($vSizeRe)gb"
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].type = $vols.FileSystem
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].label = $vols.FileSystemLabel
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].health_status = $vols.HealthStatus
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].drive_type = $vols.DriveType
-                        if ([System.Environment]::OSVersion.Version.Major -ge 10) {
-                            $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].allocation_unit_size = "$($vols.AllocationUnitSize /1KB)kb"
-                        } else {
-                            $volsPath = ($vols.Path.TrimStart("\\?\")).TrimEnd("\")
-                            $BlockSize = (Get-CimInstance -Query "SELECT BlockSize FROM Win32_Volume WHERE DeviceID like '%$volsPath%'" -ErrorAction SilentlyContinue | Select-Object BlockSize).BlockSize
-                            $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].allocation_unit_size = "$($BlockSize / 1KB)kb"
-                        }
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].object_id = $vols.ObjectId
-                        $result.ansible_facts.ansible_disk["disk_$($i)"]["partition_$($j)"]["volume_$($k)"].path = $vols.Path
-                        $k++
+                if (-not $pdisk.CanPool) {
+                    $disk_results.physical_disk.cannot_pool_reason = $pdisk.CannotPoolReason
+                }   
+                $vdisk = Get-VirtualDisk -PhysicalDisk $pdisk -ErrorAction SilentlyContinue
+                if ($vdisk) {
+                    $disk_results["virtual_disk"] += @{
+                        size = "$($vDSize = "{0:N3}" -f ($vdisk.Size / 1GB))$($vDSize)gb"
+                        allocated_size = "$($vDAllocSize = "{0:N3}" -f ($vdisk.AllocatedSize / 1GB))$($vDAllocSize)gb"
+                        footprint_on_pool = "$($vDPrint = "{0:N3}" -f ($vdisk.FootprintOnPool / 1GB))$($vDPrint)gb"
+                        name = "$([string]$vdisk.name)"
+                        friendly_name = $vdisk.FriendlyName
+                        operational_status = $vdisk.OperationalStatus
+                        health_status = $vdisk.HealthStatus
+                        provisioning_type = $vdisk.ProvisioningType
+                        allocation_unit_size = "$($vdisk.AllocationUnitSize / 1KB)kb"
+                        media_type = $vdisk.MediaType
+                        parity_layout = "$([string]$vdisk.ParityLayout)"
+                        access = $vdisk.Access
+                        detached_reason = $vdisk.DetachedReason
+                        write_cache_size = "$($vdisk.WriteCacheSize)byte"
+                        fault_domain_awareness = $vdisk.FaultDomainAwareness
+                        inter_leave = "$($vDLeave = "{0:N3}" -f ($vdisk.InterLeave / 1KB))$($vDLeave)kb"
+                        deduplication_enabled = $vdisk.IsDeduplicationEnabled
+                        enclosure_aware = $vdisk.IsEnclosureAware
+                        manual_attach = $vdisk.IsManualAttach
+                        snapshot = $vdisk.IsSnapshot
+                        tiered = $vdisk.IsTiered
+                        physical_sector_size = "$($vdisk.PhysicalSectorSize / 1KB)kb"
+                        logical_sector_size = "$($vdisk.LogicalSectorSize)byte"
+                        available_copies = "$([string]$vdisk.NumberOfAvailableCopies)"
+                        columns = $vdisk.NumberOfColumns
+                        groups = $vdisk.NumberOfGroups
+                        physical_disk_redundancy = $vdisk.PhysicalDiskRedundancy
+                        read_cache_size = $vdisk.ReadCacheSize
+                        request_no_spof = $vdisk.RequestNoSinglePointOfFailure
+                        resiliency_setting_name = $vdisk.ResiliencySettingName
+                        object_id = $vdisk.ObjectId
+                        unique_id_format = $vdisk.UniqueIdFormat
+                        unique_id = $vdisk.UniqueId
                     }
                 }
-                $j++
             }
+            $disk_results.number = $disk.Number
+            $disk_results.size = "$($disk.Size / 1GB)gb"
+            $disk_results.bus_type = $disk.BusType
+            $disk_results.friendly_name = $disk.FriendlyName
+            $disk_results.partition_style = $disk.PartitionStyle
+            $disk_results.partition_count = $disk.NumberOfPartitions
+            $disk_results.operational_status = $disk.OperationalStatus
+            $disk_results.sector_size = "$($disk.PhysicalSectorSize)byte"
+            $disk_results.read_only = $disk.IsReadOnly
+            $disk_results.bootable = $disk.IsBoot
+            $disk_results.system_disk = $disk.IsSystem
+            $disk_results.clustered = $disk.IsClustered
+            $disk_results.manufacturer = $disk.Manufacturer
+            $disk_results.model = $disk.Model
+            $disk_results.firmware_version = $disk.FirmwareVersion
+            $disk_results.location = $disk.Location
+            $disk_results.serial_number = $disk.SerialNumber
+            $disk_results.unique_id = $disk.UniqueId
+            $disk_results.guid = "$([string]$disk.Guid)"
+            $disk_results.path = $disk.Path
+            $parts = Get-Partition -DiskNumber $($disk.Number) -ErrorAction SilentlyContinue
+            if ($parts) {
+                $disk_results["partitions"]  += @()
+                foreach ($part in $parts) {
+                    $partition_results  = @{
+                        number = $part.PartitionNumber
+                        size = "$($pSize = "{0:N3}" -f ($part.Size /1GB))$($pSize)gb"
+                        type = $part.Type
+                        drive_letter = "$([string]$part.DriveLetter)"
+                        transition_state = $part.TransitionState
+                        offset = $part.Offset             
+                        hidden = $part.IsHidden
+                        shadow_copy = $part.IsShadowCopy
+                        guid = "$([string]$part.Guid)"
+                        access_paths = "$([string]$part.AccessPaths)"
+                    }
+                    if ($disks.PartitionStyle -eq "GPT") {
+                        $partition_results.gpt_type = $part.GptType
+                        $partition_results.no_default_driveletter = $part.NoDefaultDriveLetter
+                    } elseif ($disks.PartitionStyle -eq "MBR") {
+                        $partition_results.mbr_type = $part.MbrType
+                        $partition_results.active = $part.IsActive
+                    }
+                    $vols = Get-Volume -Partition $part -ErrorAction SilentlyContinue
+                    if ($vols) {
+                        $partition_results["volumes"]  += @()
+                        foreach ($vol in $vols) {
+                            $volume_results  = @{
+                                size = "$($vSize = "{0:N3}" -f ($vol.Size / 1GB))$($vSize)gb"
+                                size_remaining = "$($vSizeRe = "{0:N3}" -f ($vol.SizeRemaining / 1GB))$($vSizeRe)gb"
+                                type = $vol.FileSystem
+                                label = $vol.FileSystemLabel
+                                health_status = $vol.HealthStatus
+                                drive_type = $vol.DriveType
+                                object_id = $vol.ObjectId
+                                path = $vol.Path
+                            }
+                            if ([System.Environment]::OSVersion.Version.Major -ge 10) {
+                                $volume_results.allocation_unit_size = "$($vol.AllocationUnitSize /1KB)kb"
+                            } else {
+                                $volPath = ($vol.Path.TrimStart("\\?\")).TrimEnd("\")
+                                $BlockSize = (Get-CimInstance -Query "SELECT BlockSize FROM Win32_Volume WHERE DeviceID like '%$volPath%'" -ErrorAction SilentlyContinue | Select-Object BlockSize).BlockSize
+                                $volume_results.allocation_unit_size = "$($BlockSize / 1KB)kb"
+                            }
+                            $partition_results.volumes  += $volume_results
+                        }
+                    }
+                $disk_results.partitions += $partition_results
+                }
+            }
+            $result.ansible_facts.ansible_disk += $disk_results
         }
-        $i++
+    } else {
+            $result.ansible_facts.ansible_disk.total_disks_found = "0"
+            Fail-Json -obj $result -message "No disks could be found on the target"
     }
 } else {
-        $result.ansible_facts.ansible_disk.total_disks_found = "0"
-        Fail-Json -obj $result -message "No disks could be found on the target"
+    Fail-Json -obj $result -message "The required PowerShell Cmdlets of module Storage (e.g. Get-Disk) are not available in your PowerShell version $($host.Version.Major).$($host.Version.Minor)"
 }
 
 # Return result
