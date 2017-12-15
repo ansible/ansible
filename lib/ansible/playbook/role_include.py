@@ -78,9 +78,9 @@ class IncludeRole(TaskInclude):
             if self._parent_role:
                 data['_irole_prole'] = self._parent_role.serialize()
             data['_irole_path'] = self._role_path
-            if getattr(self, '_role', None):
+            if self._role:
                 data['_irole_drole'] = self._role.serialize()
-            if getattr(self, '_play', None) and not no_play:
+            if self._play and not no_play:
                 # avoid deepcopy recurse errors
                 self._play.unregister_dynamic_role(self)
                 data['_irole_play'] = self._play.serialize(
