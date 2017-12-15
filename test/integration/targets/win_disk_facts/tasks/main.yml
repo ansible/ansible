@@ -3,10 +3,11 @@
 - name: Test Windows capabilities
   raw: Get-Command Get-Disk -ErrorAction SilentlyContinue; return $?
   register: new_diskfacts
+  failed_when: new_diskfacts.rc != 0
 
 - name: Fail if Windows is not capable
   fail: msg="Cmdlet Get-Disk is not available in your Windows version"
-  when: new_diskfacts.rc == 1
+  when: new_diskfacts.rc != 0
 
 - name: Only run tests when Windows is capable
   when: new_diskfacts.rc == 0
