@@ -123,7 +123,7 @@ def main():
 
     connection = boto3_conn(module,
                             resource='ec2', conn_type='client',
-                            region=region, **aws_connect_params)
+                            region=region, endpoint=ec2_url, **aws_connect_params)
 
     placement_groups = get_placement_groups_details(connection, module)
     module.exit_json(changed=False, placement_groups=placement_groups)
