@@ -66,7 +66,8 @@ class ConnectionProcess(object):
             # find it now that our cwd is /
             if self.play_context.private_key_file and self.play_context.private_key_file[0] not in '~/':
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
-            self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null', ansible_playbook_pid=self._ansible_playbook_pid)
+            self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
+                                                    ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options()
             self.connection._connect()
             self.connection._socket_path = self.socket_path
