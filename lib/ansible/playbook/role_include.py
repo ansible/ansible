@@ -81,9 +81,19 @@ class IncludeRole(TaskInclude):
             if self._role:
                 data['_irole_drole'] = self._role.serialize()
             if self._play and not no_play:
+                # avoid deepcopy recurse errors
+                self._play.unregister_dynamic_role(self)
                 data['_irole_play'] = self._play.serialize(
                     skip_dynamic_roles=True)
         return data
+
+    def __setstate__(self, sr):
+        self.__init__()
+        self.deserialize(sr)
+
+    def __getstate__(self):
+        sr = self.serialize()
+        return sr
 
     def deserialize(self, data, play=None, include_deps=True):
         from ansible.playbook.play import Play
@@ -93,16 +103,19 @@ class IncludeRole(TaskInclude):
         if play is None and '_irole_play' in data:
             play = Play()
             play.deserialize(data['_irole_play'])
+            del data['_irole_play']
         if play is not None:
             setattr(self, '_play', play)
         if '_irole_drole' in data:
             r = Role()
             r.deserialize(data['_irole_drole'])
             setattr(self, '_role', r)
+            del data['_irole_drole']
         if '_irole_prole' in data:
             r = Role()
             r.deserialize(data['_irole_prole'])
             setattr(self, '_parent_role', r)
+            del data['_irole_prole']
         if play is not None:
             play.register_dynamic_role(self)
         super(IncludeRole, self).deserialize(data)
@@ -160,7 +173,29 @@ class IncludeRole(TaskInclude):
         return ir
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
+        # save our attrs
+        role = self._role
+        cachedvars = self._cached_vars
+        parentrole = self._parent_role
+        parent = self._parent
+        play = self._play
+
+        # be smaller for parent methods to shallow copy
+        self._role = None
+        self._cached_vars = {}
+        self._parent = None
+        self._parent_role = None
+        self._play = None
+
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
+
+        # restore our state
+        self._role = role
+        self._cached_vars = cachedvars
+        self._parent_role = parentrole
+        self._parent = parent
+        self._play = play
+
         new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
@@ -170,6 +205,11 @@ class IncludeRole(TaskInclude):
         new_me._play = self._play
         new_me._role = self._role
         return new_me
+
+    def __deepcopy__(self, memo):
+        ret = self.deserialize(self.serialize())
+        memo[id(self)] = ret
+        return ret
 
     def load_dynamic_role(self, allow_duplicates=None):
         pr = None
