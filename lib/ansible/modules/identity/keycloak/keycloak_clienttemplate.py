@@ -123,27 +123,20 @@ options:
 
     protocol_mappers:
         description:
-            - a list of dicts defining protocol mappers for this client template.              
+            - a list of dicts defining protocol mappers for this client template.
               This is 'protocolMappers' in the Keycloak REST API.
-              
-            - Each protocol mapper can have the following options:
 
-              consentRequired:
-                - A boolean value specifying whether a user needs to provide consent to a 
-                  client for this mapper to be active.
-              consentText:
-                - A string value specifying the human-readable name of the consent the user is presented to accept.
-              id:
-                - A string value, usually an UUID, specifying the internal ID of this protocol mapper instance.
-              name:
-                - A string valu representing the name of this protocol mapper.
-              protocol:
-                - Either 'openid-connect' or 'saml', this specifies for which protocol this protocol mapper
-                  is active.
-              protocolMapper:
-                - A string referencing the Keycloak-internal name of the type of this protocol-mapper.
-                  While an exhaustive list is impossible to provide since this may be extended through
-                  SPIs by the user of Keycloak, by default Keycloak as of 3.4 ships with at least
+            - Each protocol mapper can have the following options
+
+              - I(consentRequired) is a boolean value specifying whether a user needs to provide consent to a client for this mapper to be active.
+              - I(consentText) is a string value specifying the human-readable name of the consent the user is presented to accept.
+              - I(id) is a string value, usually an UUID, specifying the internal ID of this protocol mapper instance.
+              - I(name) is a string value representing the name of this protocol mapper.
+              - I(protocol) is either 'openid-connect' or 'saml', this specifies for which protocol this protocol mapper
+                is active.
+              - I(protocolMapper) is a string referencing the Keycloak-internal name of the type of this protocol-mapper.
+                While an exhaustive list is impossible to provide since this may be extended through
+                SPIs by the user of Keycloak, by default Keycloak as of 3.4 ships with at least
 
                   - C(docker-v2-allow-all-mapper)
                   - C(oidc-address-mapper)
@@ -171,10 +164,11 @@ options:
                 - An exhaustive list of available mappers on your installation can be obtained on
                   the admin console by going to Server Info -> Providers and looking under
                   'protocol-mapper'.
-              config:
-                - This is a dict specifying the configuration options for the protocol mapper; the
-                  contents differ depending on the value of I(protocolMapper) and are not documented
-                  other than by the source of the mappers. An example is given below.               
+              - I(config) is a dict specifying the configuration options for the protocol mapper; the
+                contents differ depending on the value of I(protocolMapper) and are not documented
+                other than by the source of the mappers and its parent class(es). An example is given
+                below -- it is easiest to obtain valid config values by dumping an already-existing
+                protocol mapper configuration.
         required: false
 
     attributes:
