@@ -31,12 +31,11 @@ options:
         required: true
     name:
         description:
-            - Name of the managed disk
+            - Name of the managed disk.
         required: true
     state:
         description:
-            - Assert the state of the managed disk. Use C(present) to create or update a managed disk and
-              'absent' to delete a managed disk.
+            - Assert the state of the managed disk. Use C(present) to create or update a managed disk and 'absent' to delete a managed disk.
         default: present
         choices:
             - absent
@@ -47,13 +46,13 @@ options:
         default: resource_group location
     storage_account_type:
         description:
-            - Type of storage for the managed disk: C(Standard_LRS)  or C(Premium_LRS). If not specified the disk is created C(Standard_LRS)
+            - "Type of storage for the managed disk: C(Standard_LRS)  or C(Premium_LRS). If not specified the disk is created C(Standard_LRS)."
         choices:
             - Standard_LRS
             - Premium_LRS
     create_option:
         description:
-            - Allowed values: empty, import, copy. C(import) from a VHD file in I(source_uri) and C(copy) from previous managed disk I(source_resource_uri).
+            - "Allowed values: empty, import, copy. C(import) from a VHD file in I(source_uri) and C(copy) from previous managed disk I(source_resource_uri)".
         choices:
             - empty
             - import
