@@ -110,6 +110,11 @@ class TestNxosConfigModule(TestNxosModule):
         set_module_args(args)
         result = self.execute_module(failed=True)
 
+    def test_nxos_config_src_and_parents_fails(self):
+        args = dict(src='foo', parents='foo')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
     def test_nxos_config_match_exact_requires_lines(self):
         args = dict(match='exact')
         set_module_args(args)

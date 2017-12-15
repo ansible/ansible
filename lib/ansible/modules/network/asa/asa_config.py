@@ -277,7 +277,7 @@ def main():
 
     argument_spec.update(asa_argument_spec)
 
-    mutually_exclusive = [('lines', 'src'), 
+    mutually_exclusive = [('lines', 'src'),
                           ('parents', 'src'),
                           ('defaults', 'passwords')]
 
