@@ -541,7 +541,7 @@ class InventoryManager(object):
             if implicit:
                 results.append(implicit)
 
-        if not results:
+        if not results and pattern != 'all':
             display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
         return results
 
