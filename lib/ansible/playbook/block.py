@@ -248,6 +248,7 @@ class Block(Base, Become, Conditional, Taggable):
         # import is here to avoid import loops
         from ansible.playbook.task_include import TaskInclude
         from ansible.playbook.handler_task_include import HandlerTaskInclude
+        from ansible.playbook.role_include import IncludeRole
 
         # we don't want the full set of attributes (the task lists), as that
         # would lead to a serialize/deserialize loop
@@ -274,6 +275,9 @@ class Block(Base, Become, Conditional, Taggable):
                 p = TaskInclude()
             elif parent_type == 'HandlerTaskInclude':
                 p = HandlerTaskInclude()
+            elif parent_type == 'IncludeRole':
+                p = IncludeRole()
+
             p.deserialize(parent_data)
             self._parent = p
             self._dep_chain = self._parent.get_dep_chain()
