@@ -1,3 +1,9 @@
+some_var: hello
+
+some_list:
+  - hello
+  - world
+
 some_structure:
   - "this is a list element"
   -
