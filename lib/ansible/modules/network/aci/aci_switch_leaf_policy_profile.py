@@ -22,7 +22,6 @@ description:
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
-notes:
 options:
   switch_profile:
     description:
@@ -58,6 +57,7 @@ RETURN = r'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     argument_spec = aci_argument_spec
