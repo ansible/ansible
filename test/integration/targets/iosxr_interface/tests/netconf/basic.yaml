@@ -27,7 +27,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"GigabitEthernet0/0/0/1" in result.commands[0]'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
 
 - name: Confgure interface (idempotent)
   iosxr_interface:
@@ -55,10 +55,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"GigabitEthernet0/0/0/1" in result.commands[0]'
-      - '"test-interface" in result.commands[0]'
-      - '"100" in result.commands[0]'
-      - '"512" in result.commands[0]'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"test-interface" in result.xml[0]'
+      - '"100" in result.xml[0]'
+      - '"512" in result.xml[0]'
 
 - name: Change interface parameters
   iosxr_interface:
@@ -74,10 +74,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"GigabitEthernet0/0/0/1" in result.commands[0]'
-      - '"test-interface-1" in result.commands[0]'
-      - '"10" in result.commands[0]'
-      - '"256" in result.commands[0]'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"test-interface-1" in result.xml[0]'
+      - '"10" in result.xml[0]'
+      - '"256" in result.xml[0]'
 
 - name: Change interface parameters (idempotent)
   iosxr_interface:
@@ -126,7 +126,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"GigabitEthernet0/0/0/0" in result.commands[0]'
+      - '"GigabitEthernet0/0/0/0" in result.xml[0]'
 
 - name: Delete interface aggregate (setup)
   iosxr_interface:
@@ -150,8 +150,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"GigabitEthernet0/0/0/1" in result.commands[0]'
-      - '"GigabitEthernet0/0/0/0" in result.commands[0]'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"GigabitEthernet0/0/0/0" in result.xml[0]'
 
 - name: Add interface aggregate (idempotent)
   iosxr_interface:
@@ -219,10 +219,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"GigabitEthernet0/0/0/0" in result.commands[0]'
-      - '"GigabitEthernet0/0/0/1" in result.commands[0]'
-      - '"test_interface_1" in result.commands[0]'
-      - '"test_interface_2" in result.commands[0]'
+      - '"GigabitEthernet0/0/0/0" in result.xml[0]'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"test_interface_1" in result.xml[0]'
+      - '"test_interface_2" in result.xml[0]'
 
 - name: Delete interface aggregate
   iosxr_interface:

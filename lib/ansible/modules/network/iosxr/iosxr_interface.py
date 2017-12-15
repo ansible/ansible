@@ -150,14 +150,20 @@ EXAMPLES = """
 
 RETURN = """
 commands:
-  description: The list of configuration mode commands with transport C(cli) and netconf rpc with transport C(netconf) that is send to the device.
-  returned: always
+  description: The list of configuration mode commands sent to device with transport C(cli)
+  returned: always (empty list when no commands to send)
   type: list
   sample:
   - interface GigabitEthernet0/0/0/2
   - description test-interface
   - duplex half
   - mtu 512
+
+xml:
+  description: NetConf rpc xml sent to device with transport C(netconf)
+  returned: always (empty list when no xml rpc to send)
+  type: list
+  version_added: 2.5
   sample:
   - '<config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
     <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg">
@@ -425,7 +431,7 @@ class NCConfiguration(ConfigBase):
         self._data_rate_meta = collections.OrderedDict()
         self._line_state_meta = collections.OrderedDict()
 
-    def map_obj_to_commands(self):
+    def map_obj_to_xml_rpc(self):
         self._intf_meta.update([
             ('interface-configuration', {'xpath': 'interface-configurations/interface-configuration', 'tag': True, 'attrib': 'operation'}),
             ('a:active', {'xpath': 'interface-configurations/interface-configuration/active', 'operation': 'edit'}),
@@ -482,7 +488,7 @@ class NCConfiguration(ConfigBase):
             intf_params = self._want
             opcode = 'merge'
 
-        self._result['commands'] = []
+        self._result['xml'] = []
         _edit_filter_list = list()
         if opcode:
             _edit_filter_list.append(build_xml('interface-configurations', xmap=self._intf_meta,
@@ -505,7 +511,7 @@ class NCConfiguration(ConfigBase):
                 if self._module._diff:
                     self._result['diff'] = dict(prepared=diff)
 
-                self._result['commands'] = _edit_filter_list
+                self._result['xml'] = _edit_filter_list
                 self._result['changed'] = True
 
     def check_declarative_intent_params(self):
@@ -575,7 +581,7 @@ class NCConfiguration(ConfigBase):
 
     def run(self):
         self.map_params_to_obj()
-        self.map_obj_to_commands()
+        self.map_obj_to_xml_rpc()
         self.check_declarative_intent_params()
         return self._result
 

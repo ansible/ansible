@@ -68,14 +68,29 @@ EXAMPLES = """
 
 RETURN = """
 commands:
-  description: The list of configuration mode commands to send to the device
-  returned: always
+  description: The list of configuration mode commands sent to device with transport C(cli)
+  returned: always (empty list when no commands to send)
   type: list
   sample:
     - banner login
     - this is my login banner
     - that contains a multiline
     - string
+
+xml:
+  description: NetConf rpc xml sent to device with transport C(netconf)
+  returned: always (empty list when no xml rpc to send)
+  type: list
+  version_added: 2.5
+  sample:
+    - '<config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+            <banners xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg">
+                <banner xc:operation="merge">
+                  <banner-name>motd</banner-name>
+                  <banner-text>Ansible banner example</banner-text>
+                </banner>
+            </banners>
+        </config>'
 """
 
 import re
@@ -162,7 +177,7 @@ class NCConfiguration(ConfigBase):
             ('a:text', {'xpath': 'banner/banner-text', 'operation': 'edit'})
         ])
 
-    def map_obj_to_commands(self):
+    def map_obj_to_xml_rpc(self):
         state = self._module.params['state']
         _get_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode="filter")
 
@@ -180,7 +195,7 @@ class NCConfiguration(ConfigBase):
         elif state == 'present':
             opcode = 'merge'
 
-        self._result['commands'] = []
+        self._result['xml'] = []
         if opcode:
             _edit_filter = build_xml('banners', xmap=self._banners_meta, params=self._module.params, opcode=opcode)
 
@@ -189,7 +204,7 @@ class NCConfiguration(ConfigBase):
                 diff = load_config(self._module, _edit_filter, commit=commit, running=running, nc_get_filter=_get_filter)
 
                 if diff:
-                    self._result['commands'] = _edit_filter
+                    self._result['xml'] = _edit_filter
                     if self._module._diff:
                         self._result['diff'] = dict(prepared=diff)
 
@@ -197,7 +212,7 @@ class NCConfiguration(ConfigBase):
 
     def run(self):
         self.map_params_to_obj()
-        self.map_obj_to_commands()
+        self.map_obj_to_xml_rpc()
 
         return self._result
 
@@ -219,8 +234,10 @@ def main():
                            required_if=required_if,
                            supports_check_mode=True)
 
+    config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_banner' is deprecated. Use transport netconf instead", version="4 releases from v2.5")
+        module.deprecate(msg="cli support for 'iosxr_banner' is deprecated. Use transport netconf instead",
+                         version="4 releases from v2.5")
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)
