@@ -38,6 +38,8 @@ Ansible Changes By Release
 * Handle vault filenames with nonascii chars when displaying messages (https://github.com/ansible/ansible/pull/33926)
 * Fix win_iis_webapppool to not return passwords
   (https://github.com/ansible/ansible/pull/33931)
+* Fix extended file attributes detection and changing:
+  (https://github.com/ansible/ansible/pull/18731)
 
 <a id="2.4.2"></a>
 
