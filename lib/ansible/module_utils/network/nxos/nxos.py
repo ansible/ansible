@@ -452,7 +452,7 @@ def run_commands(module, commands, check_rc=True):
 
 def load_config(module, config, return_error=False, opts=None):
     conn = get_connection(module)
-    return conn.load_config(config, return_error=return_error, opts=opts)
+    return conn.load_config(config, return_error, opts)
 
 
 def get_capabilities(module):
