@@ -73,9 +73,20 @@ options:
     default: present
   name:
     description:
-      - name used to create / delete the host
-      - this does not need to be the FQDN, but does needs to be uniuqe
+      - Name of the service in Icinga2 style; <host>!<service>. Where <host> is
+        a existing host.
+      - Mutually exclusive with host / service.
     required: true
+  host:
+    description:
+      - The name of the host the service will be create for. 
+      - If used, must be paired with service.
+      - Mutually exclusive with name.
+  service:
+    descritpopn:
+      - The name of the service.
+      - If used, must be paired with host.
+      - Mutually exclusive with name.
   zone:
     description:
       - The zone from where this host should be polled.
@@ -106,7 +117,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Add host to icinga
+- name: Add a service to a host to icinga
   icinga_host:
     icinga_server: "icinga.example.com"
     icinga_user: "anisble"
@@ -117,15 +128,28 @@ EXAMPLES = '''
     check_command: "nrpe"
     variables:
         nrpe_port: "5667"
+
+- name: Same service but with host/service
+  icinga_host:
+    icinga_server: "icinga.example.com"
+    icinga_user: "anisble"
+    icinga_pass: "mypassword"
+    state: present
+    host: "{{ ansible_fqdn }}"
+    service: "nrpe"
+    display_name: "NRPE"
+    check_command: "nrpe"
+    variables:
+        nrpe_port: "5667"
 '''
 
 RETURN = '''
 name:
-    description: The name used to create, modify or delete the host
+    description: The name used to create, modify or delete the service
     type: string
     returned: always
 data:
-    description: The data structure used for create, modify or delete of the host
+    description: The data structure used for create, modify or delete of the service
     type: dict
     returned: always
 '''
@@ -223,7 +247,9 @@ def main():
     # add our own arguments
     argument_spec.update(
         state=dict(default="present", choices=["absent", "present"]),
-        name=dict(required=True, aliases=['host']),
+        name=dict(),
+        host=dict(),
+        service=dict(),
         zone=dict(),
         template=dict(default=None),
         check_command=dict(default="hostalive"),
@@ -235,11 +261,19 @@ def main():
     # Define the main module
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=[['name', 'host'],
+                            ['name', 'service'],
+                            ],
+        required_together=[['host', 'service'],
+                           ],
         supports_check_mode=True
     )
 
     state = module.params["state"]
-    name = module.params["name"]
+    if module.params["host"]
+      name = module.params["host"] + "!" + module.params["service"]
+    else
+      name = module.params["name"]
     zone = module.params["zone"]
     template = []
     template.append(name)
@@ -300,7 +334,6 @@ def main():
                 changed = True
             else:
                 module.fail_json(msg="bad return code modifying service: %s" % (ret['data']))        
-
 
     else:
         if state == "present":
