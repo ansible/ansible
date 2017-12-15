@@ -291,6 +291,12 @@ class Play(Base, Taggable, Become):
     def get_dynamic_roles(self):
         return self._dynamic_roles[:]
 
+    def unregister_dynamic_role(self, drole):
+        try:
+            self._dynamic_roles.pop(self._dynamic_roles.index(drole))
+        except ValueError:
+            pass
+
     def register_dynamic_role(self, drole):
         if not getattr(drole, 'private', None):
             try:
