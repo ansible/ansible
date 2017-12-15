@@ -48,4 +48,4 @@
 - name: make sure no changes were made
   assert:
     that:
-        - "poweroff_d1_c1_f0.results|map(attribute='changed')|unique|list == [False]"
+        - "poweroff_d1_c1_f0.results|map(attribute='changed')|unique|list == [True]"
