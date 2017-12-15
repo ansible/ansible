@@ -49,8 +49,8 @@ class TerminalModule(TerminalBase):
         try:
             for cmd in (b'terminal length 0', b'terminal width 512'):
                 self._exec_cli_command(cmd)
-        except AnsibleConnectionFailure as e:
-            raise AnsibleConnectionFailure('unable to set terminal parameters %s' % e)
+        except AnsibleConnectionFailure:
+            raise AnsibleConnectionFailure('unable to set terminal parameters')
 
     def on_become(self, passwd=None):
         if self._get_prompt().endswith(b'#'):
