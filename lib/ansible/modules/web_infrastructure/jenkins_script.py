@@ -116,7 +116,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
-
+from ansible.module_utils._text import to_native
 
 def is_csrf_protection_enabled(module):
     resp, info = fetch_url(module,
@@ -126,7 +126,7 @@ def is_csrf_protection_enabled(module):
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
     content = resp.read()
-    return json.loads(content).get('useCrumbs', False)
+    return json.loads(to_native(content)).get('useCrumbs', False)
 
 
 def get_crumb(module):
@@ -137,7 +137,7 @@ def get_crumb(module):
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
     content = resp.read()
-    return json.loads(content)
+    return json.loads(to_native(content))
 
 
 def main():
