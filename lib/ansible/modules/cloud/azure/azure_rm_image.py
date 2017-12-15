@@ -39,7 +39,7 @@ options:
             - List of data disk sources, including unmanaged blob uri, managed disk id or name, or snapshot id or name.
     location:
         description:
-            - Location of the image.
+            - Location of the image. Derived from I(resource_group) if not specified.
     os_type:
         description: The OS type of image.
         choices:
@@ -47,7 +47,7 @@ options:
             - Linux
     state:
         description:
-            - Assert the state of the image. Use 'present' to create or update a image and 'absent' to delete an image.
+            - Assert the state of the image. Use C(present) to create or update a image and C(absent) to delete an image.
         default: present
         choices:
             - absent
