@@ -87,11 +87,11 @@
    
   - assert: *true
 
-  - name: "Check Idempotence"
+  - name: "Check NOT Idempotent"
     nxos_aaa_server_host: *configure_tacacs_clear_text
     register: result
 
-  - assert: *false
+  - assert: *true
 
   - name: "Remove tacacs server configuration"
     nxos_aaa_server_host: *remove
