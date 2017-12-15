@@ -808,6 +808,24 @@ class PyVmomi(object):
         self.current_vm_obj = None
         self.content = connect_to_api(self.module)
 
+    def is_vcenter(self):
+        """
+        Check if given hostname is vCenter or ESXi host
+        Returns: True if given connection is with vCenter server
+                 False if given connection is with ESXi server
+
+        """
+        api_type = None
+        try:
+            api_type = self.content.about.apiType
+        except (vmodl.RuntimeFault, vim.fault.VimFault) as exc:
+            self.module.fail_json(msg="Failed to get status of vCenter server : %s" % exc.msg)
+
+        if api_type == 'VirtualCenter':
+            return True
+        elif api_type == 'HostAgent':
+            return False
+
     # Virtual Machine related functions
     def get_vm(self):
         vm = None
