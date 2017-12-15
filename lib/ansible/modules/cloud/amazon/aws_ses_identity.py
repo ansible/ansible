@@ -237,7 +237,7 @@ from ansible.module_utils.ec2 import HAS_BOTO3
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError
+    from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -248,7 +248,7 @@ def call_and_handle_errors(module, method, **kwargs):
     except ClientError as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
-    except Exception as e:
+    except BotoCoreError as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 
