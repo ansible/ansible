@@ -941,7 +941,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
 
-    :returns: A tuple of (**response**, **info**). Use ``response.body()`` to read the data.
+    :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
         occurred then ``info['body']`` contains the error response data::
 
