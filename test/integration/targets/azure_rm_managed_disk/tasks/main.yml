@@ -3,17 +3,14 @@
        managed_disk1: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
        managed_disk2: "{{ resource_group | hash('md5') | truncate(18, True, '') }}"
 
- - name: Clearing (if) previous disks were created (1/2)
+ - name: Clearing (if) previous disks were created
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk2 }}"
+       name: "{{item }}"
        state: absent
-
- - name: Clearing (if) previous disks were created (2/2)
-   azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
-       state: absent
+   with_items:
+     - "{{ managed_disk2 }}"
+     - "{{ managed_disk1 }}"
 
  - name: Create managed disk (Check Mode)
    azure_rm_managed_disk:
@@ -239,6 +236,22 @@
          sku: 16.04-LTS
          version: latest
  
+ - name: Mount the disk to virtual machine (check mode)
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       managed_by: testvm001
+       tags:
+           testing: testing
+           delete: never
+   register: mounted
+   check_mode: yes
+
+ - assert:
+     that:
+       - not mounted.state.managed_by
+
  - name: Mount the disk to virtual machine
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
@@ -252,6 +265,22 @@
 
  - assert:
      that:
+       - "'testvm001' in mounted.state.managed_by"
+
+ - name: Mount the disk to virtual machine (idempotent)
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       managed_by: testvm001
+       tags:
+           testing: testing
+           delete: never
+   register: mounted
+
+ - assert:
+     that:
+       - not mounted.changed
        - "'testvm001' in mounted.state.managed_by"
  
  - name: Unmount the disk to virtual machine (check mode)
@@ -282,6 +311,21 @@
  - assert:
      that:
        - mounted.changed
+       - not mounted.state.managed_by
+ 
+  - name: Unmount the disk to virtual machine (idempotent)
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk1 }}"
+       disk_size_gb: 2
+       tags:
+           testing: testing
+           delete: never
+   register: mounted
+
+ - assert:
+     that:
+       - not mounted.changed
        - not mounted.state.managed_by
 
  - name: Update disk size

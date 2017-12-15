@@ -27,7 +27,7 @@ description:
 options:
     resource_group:
         description:
-            - "Name of a resource group where the managed disk exists or will be created."
+            - Name of a resource group where the managed disk exists or will be created.
         required: true
     name:
         description:
@@ -35,7 +35,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the managed disk. Use 'present' to create or update a managed disk and
+            - Assert the state of the managed disk. Use C(present) to create or update a managed disk and
               'absent' to delete a managed disk.
         default: present
         choices:
@@ -47,35 +47,36 @@ options:
         default: resource_group location
     storage_account_type:
         description:
-            - "Type of storage for the managed disk: 'Standard_LRS'  or 'Premium_LRS'. If not specified the disk is created 'Standard_LRS'"
+            - Type of storage for the managed disk: C(Standard_LRS)  or C(Premium_LRS). If not specified the disk is created C(Standard_LRS)
         choices:
             - Standard_LRS
             - Premium_LRS
     create_option:
         description:
-            - "Allowed values: empty, import, copy. 'import' from a VHD file in 'source_uri' and 'copy' from previous managed disk 'source_resource_uri'."
+            - Allowed values: empty, import, copy. C(import) from a VHD file in I(source_uri) and C(copy) from previous managed disk I(source_resource_uri).
         choices:
             - empty
             - import
             - copy
     source_uri:
         description:
-            - URI to a valid VHD file to be used when 'create_option' is 'import'.
+            - URI to a valid VHD file to be used when I(create_option) is C(import).
     source_resource_uri:
         description:
-            - The resource ID of the managed disk to copy when 'create_option' is 'copy'.
+            - The resource ID of the managed disk to copy when I(create_option) is C(copy).
     os_type:
         description:
-            - "Type of Operating System: 'linux' or 'windows'. Used when 'create_option' is either 'copy' or 'import' and the source is an OS disk."
+            - Type of Operating System: C(linux) or C(windows). Used when I(create_option) is either C(copy) or C(import) and the source is an OS disk.
         choices:
             - linux
             - windows
     disk_size_gb:
         description:
-            - Size in GB of the managed disk to be created. If 'create_option' is 'copy' then the value must be greater than or equal to the source's size.
+            - Size in GB of the managed disk to be created. If I(create_option) is C(copy) then the value must be greater than or equal to the source's size.
     managed_by:
         description:
             - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
+            - C(None) for detaching the disk from a vm.
         version_added: 2.5
     tags:
         description:
@@ -177,44 +178,35 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             storage_account_type=dict(
                 type='str',
-                required=False,
                 choices=['Standard_LRS', 'Premium_LRS']
             ),
             create_option=dict(
                 type='str',
-                required=False,
                 choices=['empty', 'import', 'copy']
             ),
             source_uri=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             source_resource_uri=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             os_type=dict(
                 type='str',
-                required=False,
                 choices=['linux', 'windows']
             ),
             disk_size_gb=dict(
-                type='int',
-                required=False
+                type='int'
             ),
             managed_by=dict(
-                type='str',
-                required=False
+                type='str'
             )
         )
         required_if = [
