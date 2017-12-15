@@ -95,10 +95,8 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, ec2_argument_spec, HAS_BOTO3,
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, ec2_argument_spec,
                                       get_aws_connection_info, boto3_conn)
-from ansible.module_utils.aws.direct_connect import DirectConnectError
-
 from ansible.module_utils._text import to_native
 
 
@@ -132,7 +130,7 @@ def wait_for_status(client, module, gateway_id, virtual_gateway_id, status):
             else:
                 status_achieved = True
                 break
-        except botocore.exceptions.ClientError as e:
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     result = response
@@ -146,7 +144,7 @@ def associate_direct_connect_gateway(client, module, gateway_id):
         response = client.create_direct_connect_gateway_association(
             directConnectGatewayId=gateway_id,
             virtualGatewayId=params['virtual_gateway_id'])
-    except botocore.exceptions.ClientError as e:
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     status_achieved, dxgw = wait_for_status(client, module, gateway_id, params['virtual_gateway_id'], 'associating')
@@ -345,28 +343,17 @@ def main():
 
     state = module.params.get('state').lower()
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        if not region:
-            module.fail_json(msg="Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set.")
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    if not region:
+        module.fail_json(msg="Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set.")
 
-        client = boto3_conn(module, conn_type='client', resource='directconnect', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - %s" % to_native(e), exception=traceback.format_exc())
+    client = boto3_conn(module, conn_type='client', resource='directconnect', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    try:
-        if state == 'present':
-            (changed, results) = ensure_present(client, module)
-        elif state == 'absent':
-            changed = ensure_absent(client, module)
-            results = {}
-    except DirectConnectError as e:
-        if e.response:
-            module.fail_json(msg=e.msg, exception=e.last_traceback, **e.response)
-        elif e.last_traceback:
-            module.fail_json(msg=e.msg, exception=e.last_traceback)
-        else:
-            module.fail_json(msg=e.msg)
+    if state == 'present':
+        (changed, results) = ensure_present(client, module)
+    elif state == 'absent':
+        changed = ensure_absent(client, module)
+        results = {}
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(results))
 
