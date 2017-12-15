@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -35,8 +36,15 @@ options:
       - Snapshot from which to create a clone.
   key_value:
     description:
+      - (**DEPRECATED**) This will be removed in Ansible-2.9.  Set these values in the
+      - C(zfs_properties) option instead.
       - The C(zfs) module takes key=value pairs for zfs properties to be set.
       - See the zfs(8) man page for more information.
+  zfs_properties:
+    description:
+      - A dictionary of zfs properties to be set.
+      - See the zfs(8) man page for more information.
+    version_added: "2.5"
 author:
 - Johan Wiren (@johanwiren)
 '''
@@ -46,13 +54,15 @@ EXAMPLES = '''
   zfs:
     name: rpool/myfs
     state: present
-    setuid: off
+    zfs_properties:
+      setuid: off
 
 - name: Create a new volume called myvol in pool rpool.
   zfs:
     name: rpool/myvol
     state: present
-    volsize: 10M
+    zfs_properties:
+      volsize: 10M
 
 - name: Create a snapshot of rpool/myfs file system.
   zfs:
@@ -63,13 +73,15 @@ EXAMPLES = '''
   zfs:
     name: rpool/myfs2
     state: present
-    snapdir: enabled
+    zfs_properties:
+      snapdir: enabled
 
 - name: Create a new file system by cloning a snapshot
   zfs:
     name: rpool/cloned_fs
     state: present
-    origin: rpool/myfs@mysnapshot
+    zfs_properties:
+      origin: rpool/myfs@mysnapshot
 
 - name: Destroy a filesystem
   zfs:
@@ -216,22 +228,24 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
-            # No longer used. Kept here to not interfere with zfs properties
-            createparent=dict(type='bool'),
+            # No longer used. Deprecated and due for removal
+            createparent=dict(type='bool', default=None),
+            zfs_properties=dict(type='dict', default={}),
         ),
         supports_check_mode=True,
+        # Remove this in Ansible 2.9
         check_invalid_arguments=False,
     )
 
     state = module.params.pop('state')
     name = module.params.pop('name')
 
+    # The following is deprecated.  Remove in Ansible 2.9
     # Get all valid zfs-properties
     properties = dict()
     for prop, value in module.params.items():
         # All freestyle params are zfs properties
         if prop not in module.argument_spec:
-            # Reverse the boolification of freestyle zfs properties
             if isinstance(value, bool):
                 if value is True:
                     properties[prop] = 'on'
@@ -240,12 +254,33 @@ def main():
             else:
                 properties[prop] = value
 
+    if properties:
+        module.deprecate('Passing zfs properties as arbitrary parameters to the zfs module is'
+                         ' deprecated.  Sent them as a dictionary in the zfs_properties parameter'
+                         ' instead.', version='2.9')
+        # Merge, giving the module_params precedence
+        for prop, value in module.params['zfs_properties'].items():
+            properties[prop] = value
+
+        module.params['zfs_properties'] = properties
+    # End deprecated section
+
+    # Reverse the boolification of zfs properties
+    for prop, value in module.params['zfs_properties'].items():
+        if isinstance(value, bool):
+            if value is True:
+                module.params['zfs_properties'][prop] = 'on'
+            else:
+                module.params['zfs_properties'][prop] = 'off'
+        else:
+            module.params['xfs_properties'][prop] = value
+
     result = dict(
         name=name,
         state=state,
     )
 
-    zfs = Zfs(module, name, properties)
+    zfs = Zfs(module, name, module.params['zfs_properties'])
 
     if state == 'present':
         if zfs.exists():

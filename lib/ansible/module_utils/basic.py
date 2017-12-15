@@ -771,7 +771,7 @@ class AnsibleFallbackNotFound(Exception):
 
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-                 check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
+                 check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
                  required_if=None):
 
@@ -787,7 +787,15 @@ class AnsibleModule(object):
         self.check_mode = False
         self.bypass_checks = bypass_checks
         self.no_log = no_log
+
+        # Check whether code set this explicitly for deprecation purposes
+        if check_invalid_arguments is None:
+            check_invalid_arguments = True
+            module_set_check_invalid_arguments = False
+        else:
+            module_set_check_invalid_arguments = True
         self.check_invalid_arguments = check_invalid_arguments
+
         self.mutually_exclusive = mutually_exclusive
         self.required_together = required_together
         self.required_one_of = required_one_of
@@ -875,6 +883,15 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a sane working dir
         self._set_cwd()
+
+        # Do this at the end so that logging parameters have been set up
+        # This is to warn third party module authors that the functionatlity is going away.
+        # We exclude uri and zfs as they have their own deprecation warnings for users and we'll
+        # make sure to update their code to stop using check_invalid_arguments when 2.9 rolls around
+        if module_set_check_invalid_arguments and self._name not in ('uri', 'zfs'):
+            self.deprecate('Setting check_invalid_arguments is deprecated and will be removed.'
+                           ' Update the code for this module  In the future, AnsibleModule will'
+                           ' always check for invalid arguments.', version='2.9')
 
     def warn(self, warning):
 
