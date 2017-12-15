@@ -1,3 +1,13 @@
+- name: get hello package version
+  shell: zypper --xml se -svx hello | grep 'name="hello"' | sed 's/.*edition="\([^ ]*\)".*/\1/'
+  register: hello_version
+
+- name: set URL of test package
+  set_fact:
+    hello_package_url: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/suse/x86_64/hello-{{hello_version.stdout}}.x86_64.rpm
+
+- debug: var=hello_package_url
+
 # UNINSTALL
 - name: uninstall hello
   zypper:
@@ -307,7 +317,7 @@
 
 - name: try rm URL
   zypper:
-    name: http://download.opensuse.org/repositories/openSUSE:/Leap:/{{ ansible_distribution_version }}/standard/x86_64/hello-2.9-6.2.x86_64.rpm
+    name: "{{ hello_package_url }}"
     state: absent
   ignore_errors: yes
   register: zypper_rm
@@ -349,8 +359,7 @@
 - name: install via URL
   zypper:
     state: present
-    name: http://download.opensuse.org/distribution/leap/42.3/repo/oss/suse/x86_64/hello-2.9-9.6.x86_64.rpm
-    # works on 42.1 up to 42.3
+    name: "{{ hello_package_url }}"
   register: zypperin1
 
 - name: test install
