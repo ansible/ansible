@@ -65,7 +65,7 @@ options:
             - The resource ID of the managed disk to copy when I(create_option) is C(copy).
     os_type:
         description:
-            - Type of Operating System: C(linux) or C(windows). Used when I(create_option) is either C(copy) or C(import) and the source is an OS disk.
+            - "Type of Operating System: C(linux) or C(windows). Used when I(create_option) is either C(copy) or C(import) and the source is an OS disk."
         choices:
             - linux
             - windows
