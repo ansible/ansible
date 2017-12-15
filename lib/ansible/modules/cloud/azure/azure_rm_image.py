@@ -150,7 +150,7 @@ class AzureRMImage(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            state=dict()
+            id=None
         )
 
         required_if = [
@@ -173,7 +173,7 @@ class AzureRMImage(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        results = dict()
+        results = None
         changed = False
         image = None
 
@@ -186,7 +186,7 @@ class AzureRMImage(AzureRMModuleBase):
         image = self.get_image()
         if image:
             self.check_provisioning_state(image, self.state)
-            results = self._image_to_dict(image)
+            results = image.id
             # update is not supported
             if self.state == 'absent':
                 changed = True
@@ -195,7 +195,7 @@ class AzureRMImage(AzureRMModuleBase):
             changed = True
 
         self.results['changed'] = changed
-        self.results['state'] = results
+        self.results['id'] = results
 
         if changed:
             if self.state == 'present':
@@ -217,35 +217,16 @@ class AzureRMImage(AzureRMModuleBase):
                 # finally make the change if not check mode
                 if not self.check_mode and image_instance:
                     new_image = self.create_image(image_instance)
-                    self.results['state'] = self._image_to_dict(new_image)
+                    self.results['id'] = new_image.id
 
             elif self.state == 'absent':
                 if not self.check_mode:
                     # delete image
                     self.delete_image()
-                # the delete does not actually return anything. if no exception, then we'll assume it worked.
-                self.results['state']['status'] = 'Deleted'
+                    # the delete does not actually return anything. if no exception, then we'll assume it worked.
+                    self.results['id'] = None
 
         return self.results
-
-    def _image_to_dict(self, image):
-        return dict(
-            id=image.id,
-            name=image.name,
-            location=image.location,
-            osDisk=self._disk_to_dict(image.storage_profile.os_disk) if image.storage_profile and image.storage_profile.os_disk else None,
-            dataDisks=([self._disk_to_dict(item) for item in
-                       image.storage_profile.data_disks] if image.storage_profile
-                       and image.storage_profile.data_disks else None),
-            sourceVirtualMachine=image.source_virtual_machine.id if image.source_virtual_machine else None
-        )
-
-    def _disk_to_dict(self, disk):
-        return dict(
-            blobUri=disk.blob_uri,
-            managedDisk=disk.managed_disk.id if disk.managed_disk else None,
-            snapshot=disk.snapshot.id if disk.snapshot else None
-        )
 
     def resolve_storage_source(self, source):
         blob_uri = None
