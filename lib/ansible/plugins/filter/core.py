@@ -488,6 +488,19 @@ def flatten(mylist, levels=None):
     return ret
 
 
+def dict_to_list_of_dict_key_value_elements(mydict):
+    ''' takes a dictionary and transforms it into a list of dictionaries,
+        with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
+
+    if not isinstance(mydict, MutableMapping):
+        raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
+
+    ret = []
+    for key in mydict:
+        ret.append({'key': key, 'value': mydict[key]})
+    return ret
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -574,4 +587,5 @@ class FilterModule(object):
             'combine': combine,
             'extract': extract,
             'flatten': flatten,
+            'dict2items': dict_to_list_of_dict_key_value_elements,
         }
