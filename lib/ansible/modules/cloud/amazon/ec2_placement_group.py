@@ -182,7 +182,7 @@ def main():
 
     connection = boto3_conn(module,
                             resource='ec2', conn_type='client',
-                            region=region, **aws_connect_params)
+                            region=region, endpoint=ec2_url, **aws_connect_params)
 
     state = module.params.get("state")
 
