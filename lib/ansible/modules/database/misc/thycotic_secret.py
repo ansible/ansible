@@ -158,7 +158,7 @@ def run_module():
     module_args = dict(
         endpoint=dict(type='str', required=True),
         username=dict(type='str', required=True),
-        password=dict(type='str', required=True),
+        password=dict(type='str', required=True, no_log=True),
         folder=dict(type='str', required=True),
         secret_name=dict(type='str', required=True),
         field_name=dict(type='str', required=True),
@@ -166,7 +166,7 @@ def run_module():
         src=dict(type='str', required=False),
         dest=dict(type='str', required=False),
         type=dict(type='str', required=False),
-        field_value=dict(type='str', required=False),
+        field_value=dict(type='str', required=False, no_log=True),
     )
 
     result = dict(
