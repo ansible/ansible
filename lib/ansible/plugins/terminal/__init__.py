@@ -69,7 +69,10 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
         :returns: A byte string of the prompt
         """
-        self._exec_cli_command(b'\n')
+        # do not send '\n' here, exec_cli_command sends '\r' already,
+        # doing so causes double prompts.
+        self._exec_cli_command(b'')
+
         return self._connection._matched_prompt
 
     def on_open_shell(self):
