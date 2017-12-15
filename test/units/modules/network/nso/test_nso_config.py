@@ -51,8 +51,7 @@ class TestNsoConfig(nso_module.TestNsoModule):
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc', 'data': data
         })
-        with self.assertRaises(AnsibleFailJson):
-            self.execute_module(changed=False, changes=[], diffs=[])
+        self.execute_module(failed=True)
 
         self.assertEqual(0, len(calls))
 

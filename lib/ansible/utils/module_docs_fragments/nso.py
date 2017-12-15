@@ -34,4 +34,6 @@ options:
   password:
     description: NSO password
     required: true
+requirements:
+  - Cisco NSO version 4.4.3 or higher
 '''
