@@ -41,7 +41,7 @@ options:
         configured on the remote device.
     required: true
     default: null
-    choices: ['login', 'motd']
+    choices: ['login', 'motd', 'exec', 'incoming', 'slip-ppp']
   text:
     description:
       - The banner text that should be
@@ -151,7 +151,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        banner=dict(required=True, choices=['login', 'motd']),
+        banner=dict(required=True, choices=['login', 'motd', 'exec', 'incoming', 'slip-ppp']),
         text=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
