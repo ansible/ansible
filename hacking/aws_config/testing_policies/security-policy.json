@@ -1,0 +1,22 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "iam:GetPolicy",
+                "iam:GetPolicyVersion",
+                "iam:GetRole",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListGroups",
+                "iam:ListInstanceProfilesForRole",
+                "iam:ListPolicies",
+                "iam:ListRoles",
+                "iam:ListRolePolicies",
+                "iam:ListUsers"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "AllowReadOnlyIAMUse"
+        }
+    ]
+}
