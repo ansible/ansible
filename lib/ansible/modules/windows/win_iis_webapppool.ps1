@@ -305,9 +305,11 @@ foreach ($element in $elements)  {
 
     foreach ($attribute in $attribute_collection) {
         $attribute_name = $attribute.Name
-        $attribute_value = $attribute_parent.$attribute_name
+        if ($attribute_name -notlike "*password*") {
+            $attribute_value = $attribute_parent.$attribute_name
 
-        $result.info.$element.Add($attribute_name, $attribute_value)
+            $result.info.$element.Add($attribute_name, $attribute_value)
+        }
     }
 }
 
