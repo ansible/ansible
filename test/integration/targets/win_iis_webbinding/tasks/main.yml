@@ -8,7 +8,6 @@
   register: os_version
   changed_when: False
 
-
 - block:
   - include_tasks: setup.yml
   - include_tasks: http.yml

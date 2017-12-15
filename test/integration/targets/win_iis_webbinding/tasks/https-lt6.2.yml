@@ -25,7 +25,7 @@
 - name: CM assert changed, but not added
   assert:
     that:
-    - https_no_header | changed
+    - https_no_header is changed
     - https_no_header.operation_type == 'added'
     - https_no_header.binding_info is none
     - get_https_no_header.binding is not defined
@@ -47,7 +47,7 @@
 - name: assert changed and added
   assert:
     that:
-    - https_no_header | changed
+    - https_no_header is changed
     - https_no_header.binding_info is defined
     - https_no_header.operation_type == 'added'
     - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
@@ -73,7 +73,7 @@
 - name: idem assert not changed
   assert:
     that:
-    - not https_no_header | changed
+    -  https_no_header is not changed
 
 #################
 ### CM Modify ###
@@ -104,7 +104,7 @@
 - name: CM assert changed but old cert
   assert:
     that:
-    - https_no_header | changed
+    - https_no_header is changed
     - https_no_header.operation_type == 'updated'
     - https_no_header.binding_info is defined
     - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
@@ -143,7 +143,7 @@
 - name:  modify assert changed and new cert
   assert:
     that:
-    - https_no_header | changed
+    - https_no_header is changed
     - https_no_header.operation_type == 'updated'
     - https_no_header.binding_info is defined
     - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
@@ -176,7 +176,7 @@
 - name: idem assert not changed
   assert:
     that:
-    - not https_header | changed
+    -  https_header is not changed
 
 #################
 ### CM Remove ###
@@ -204,7 +204,7 @@
 - name: cm remove assert changed, but still present
   assert:
     that:
-    - https_no_header | changed
+    - https_no_header is changed
     - https_no_header.operation_type == 'removed'
     - https_no_header.binding_info is defined
     - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
@@ -242,7 +242,7 @@
 - name: remove assert changed and gone
   assert:
     that:
-    - https_no_header | changed
+    - https_no_header is changed
     - https_no_header.operation_type == 'removed'
     - https_no_header.binding_info is defined
     - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
@@ -275,7 +275,7 @@
 - name: idem remove assert changed and gone
   assert:
     that:
-    - not https_no_header | changed
+    -  https_no_header is not changed
     - https_no_header.binding_info is not defined
     - get_https_no_header.binding is not defined
 
@@ -303,7 +303,7 @@
 # - name: assert changed and added
 #   assert:
 #     that:
-#     - https_header | changed
+#     - https_header is changed
 #     - https_header.added is defined
 #     - https_header.added.ip == "{{ https_wc_vars.ip }}"
 #     - https_header.added.port == {{ https_wc_vars.port }}
@@ -348,7 +348,7 @@
 # - name: cm remove assert changed, but still present
 #   assert:
 #     that:
-#     - https_header | changed
+#     - https_header is changed
 #     - https_header.removed is defined
 #     - https_header.removed.ip == "{{ https_wc_vars.ip }}"
 #     - https_header.removed.port == {{ https_wc_vars.port }}
@@ -386,7 +386,7 @@
 # - name: remove assert changed and gone
 #   assert:
 #     that:
-#     - https_header | changed
+#     - https_header is changed
 #     - https_header.removed is defined
 #     - https_header.removed.ip == "{{ https_wc_vars.ip }}"
 #     - https_header.removed.port == {{ https_wc_vars.port }}
@@ -418,6 +418,6 @@
 # - name: idem remove assert changed and gone
 #   assert:
 #     that:
-#     - not https_header | changed
+#     -  https_header is not changed
 #     - https_header.removed is not defined
 #     - get_https_header.binding is not defined

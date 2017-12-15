@@ -43,10 +43,10 @@
 - name: CM assert changed, but not added
   assert:
     that:
-    - http_no_header | changed
+    - http_no_header is changed
     - http_no_header.binding_info is none
     - get_http_no_header.binding is not defined
-    - http_header | changed
+    - http_header is changed
     - http_header.binding_info is none
     - get_http_header.binding is not defined
 
@@ -93,13 +93,13 @@
 - name: assert changed and added
   assert:
     that:
-    - http_no_header | changed
+    - http_no_header is changed
     - http_no_header.binding_info is defined
     - http_no_header.operation_type == 'added'
     - http_no_header.binding_info.ip == "{{ http_vars.ip }}"
     - http_no_header.binding_info.port == {{ http_vars.port }}
     - http_no_header.binding_info.protocol == "{{ http_vars.protocol }}"
-    - http_header | changed
+    - http_header is changed
     - http_header.binding_info is defined
     - http_header.operation_type == 'added'
     - http_header.binding_info.ip == "{{ http_header_vars.ip }}"
@@ -131,8 +131,8 @@
 - name: idem assert not changed
   assert:
     that:
-    - not http_no_header | changed
-    - not http_header | changed
+    -  http_no_header is not changed
+    -  http_header is not changed
 
 #modify
 #can't test modify for http, it will add a new binding instead since
@@ -183,7 +183,7 @@
 - name: cm remove assert changed, but still present
   assert:
     that:
-    - http_no_header | changed
+    - http_no_header is changed
     - http_no_header.binding_info is defined
     - http_no_header.operation_type == 'removed'
     - http_no_header.binding_info.ip == "{{ http_vars.ip }}"
@@ -193,7 +193,7 @@
     - get_http_no_header.binding.ip == "{{ http_vars.ip }}"
     - get_http_no_header.binding.port == {{ http_vars.port }}
     - get_http_no_header.binding.protocol == "{{ http_vars.protocol }}"
-    - http_header | changed
+    - http_header is changed
     - http_header.binding_info is defined
     - http_header.operation_type == 'removed'
     - http_header.binding_info.ip == "{{ http_header_vars.ip }}"
@@ -250,14 +250,14 @@
 - name: remove assert changed and gone
   assert:
     that:
-    - http_no_header | changed
+    - http_no_header is changed
     - http_no_header.operation_type == 'removed'
     - http_no_header.binding_info is defined
     - http_no_header.binding_info.ip == "{{ http_vars.ip }}"
     - http_no_header.binding_info.port == {{ http_vars.port }}
     - http_no_header.binding_info.protocol == "{{ http_vars.protocol }}"
     - get_http_no_header.binding is not defined
-    - http_header | changed
+    - http_header is changed
     - http_header.binding_info is defined
     - http_header.operation_type == 'removed'
     - http_header.binding_info.ip == "{{ http_header_vars.ip }}"
@@ -309,10 +309,10 @@
 - name: idem remove assert changed and gone
   assert:
     that:
-    - not http_no_header | changed
+    -  http_no_header is not changed
     - http_no_header.binding_info is not defined
     - get_http_no_header.binding is not defined
-    - not http_header | changed
+    -  http_header is not changed
     - http_header.binding_info is not defined
     - get_http_header.binding is not defined
 
@@ -334,7 +334,7 @@
 
 - assert:
     that:
-    - http_header | changed
+    - http_header is changed
     - http_header | json_query('results[*].binding_info') | length == 3
 
 #cm remove with host_header: '*' - verify changed true and that bulk remove tries to get them all
@@ -367,5 +367,5 @@
 - name: bulk remove assert that bindings are gone
   assert:
     that:
-    - http_header | changed
+    - http_header is changed
     - http_header.binding_info | length == 3

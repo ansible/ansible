@@ -1,5 +1,5 @@
-#  - name: reboot before feature install to ensure server is in clean state
-#    win_reboot:
+- name: reboot before feature install to ensure server is in clean state
+  win_reboot:
 
 - name: ensure IIS features are installed
   win_feature:
