@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "prefix": "ncs",
+    "namespace": "http://tail-f.com/ns/ncs",
+    "types": {
+    },
+    "keypath": "/ncs:devices/device{ce0}/description"
+  },
+  "data": {
+    "info": {
+      "string": "Free form textual description"
+    },
+    "kind": "leaf",
+    "name": "description",
+    "qname": "ncs:description",
+    "access": {
+      "read": true,
+      "create": true,
+      "execute": false,
+      "update": true,
+      "delete": true
+    },
+    "type": {
+      "primitive": true,
+      "name": "string"
+    }
+  }
+}
