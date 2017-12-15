@@ -40,7 +40,7 @@ class ConnectionProcess(object):
     The connection process wraps around a Connection object that manages
     the connection to a remote device that persists over the playbook
     '''
-    def __init__(self, fd, play_context, socket_path, original_path):
+    def __init__(self, fd, play_context, socket_path, original_path, ansible_playbook_pid=None):
         self.play_context = play_context
         self.socket_path = socket_path
         self.original_path = original_path
@@ -52,6 +52,7 @@ class ConnectionProcess(object):
         self.sock = None
 
         self.connection = None
+        self._ansible_playbook_pid = ansible_playbook_pid
 
     def start(self):
         try:
@@ -65,8 +66,8 @@ class ConnectionProcess(object):
             # find it now that our cwd is /
             if self.play_context.private_key_file and self.play_context.private_key_file[0] not in '~/':
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
-
-            self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null')
+            self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
+                                                    ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options()
             self.connection._connect()
             self.connection._socket_path = self.socket_path
@@ -244,7 +245,8 @@ def main():
 
     if rc == 0:
         ssh = connection_loader.get('ssh', class_only=True)
-        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection)
+        ansible_playbook_pid = sys.argv[1]
+        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)
 
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
@@ -268,7 +270,7 @@ def main():
                 try:
                     os.close(r)
                     wfd = os.fdopen(w, 'w')
-                    process = ConnectionProcess(wfd, play_context, socket_path, original_path)
+                    process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
                     process.start()
                 except Exception:
                     messages.append(traceback.format_exc())
