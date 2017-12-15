@@ -116,6 +116,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
 
 
 def is_csrf_protection_enabled(module):
@@ -125,7 +126,7 @@ def is_csrf_protection_enabled(module):
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
-    content = resp.read()
+    content = to_native(resp.read())
     return json.loads(content).get('useCrumbs', False)
 
 
@@ -136,7 +137,7 @@ def get_crumb(module):
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
-    content = resp.read()
+    content = to_native(resp.read())
     return json.loads(content)
 
 
@@ -182,7 +183,7 @@ def main():
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
-    result = resp.read()
+    result = to_native(resp.read())
 
     if 'Exception:' in result and 'at java.lang.Thread' in result:
         module.fail_json(msg="script failed with stacktrace:\n " + result)
