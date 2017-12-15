@@ -112,19 +112,13 @@ class AdHocCLI(CLI):
 
         loader, inventory, variable_manager = self._play_prereqs(self.options)
 
-        no_hosts = False
-        if len(inventory.list_hosts()) == 0:
-            # Empty inventory
-            display.warning("provided hosts list is empty, only localhost is available")
-            no_hosts = True
-
-        inventory.subset(self.options.subset)
-        hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0:
-            if no_hosts is False and self.options.subset:
-                # Invalid limit
-                raise AnsibleError("Specified --limit does not match any hosts")
+        try:
+            hosts = CLI.get_host_list(inventory, self.options.subset, pattern)
+        except AnsibleError:
+            if self.options.subset:
+                raise
             else:
+                hosts = []
                 display.warning("No hosts matched, nothing to do")
 
         if self.options.listhosts:
