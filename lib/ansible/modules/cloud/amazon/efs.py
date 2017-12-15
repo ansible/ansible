@@ -220,10 +220,11 @@ from time import time as timestamp
 import traceback
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError as e:
     pass  # Taken care of by ec2.HAS_BOTO3
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_tag_list,
@@ -378,7 +379,11 @@ class EFSConnection(object):
                 self.connection.create_file_system(**params)
                 changed = True
             except ClientError as e:
-                self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
+                                      exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except BotoCoreError as e:
+                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
+                                      exception=traceback.format_exc())
 
         # we always wait for the state to be available when creating.
         # if we try to take any actions on the file system before it's available
@@ -408,7 +413,11 @@ class EFSConnection(object):
                         TagKeys=tags_to_delete
                     )
                 except ClientError as e:
-                    self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                except BotoCoreError as e:
+                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc())
 
                 result = True
 
@@ -419,7 +428,11 @@ class EFSConnection(object):
                         Tags=ansible_dict_to_boto3_tag_list(tags_need_modify)
                     )
                 except ClientError as e:
-                    self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                except BotoCoreError as e:
+                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc())
 
                 result = True
 
