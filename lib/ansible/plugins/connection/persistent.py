@@ -75,7 +75,7 @@ class Connection(ConnectionBase):
         Starts the persistent connection
         '''
         master, slave = pty.openpty()
-        p = subprocess.Popen(["ansible-connection"], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(["ansible-connection", to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
