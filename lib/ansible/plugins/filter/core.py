@@ -465,6 +465,27 @@ def b64decode(string):
     return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')))
 
 
+def flatten(mylist, levels=None):
+
+    ret = []
+    for element in mylist:
+        if element in (None, 'None', 'null'):
+            # ignore undefined items
+            break
+        elif isinstance(element, MutableSequence):
+            if levels is None:
+                ret.extend(flatten(element))
+            elif levels >= 1:
+                levels = int(levels) - 1
+                ret.extend(flatten(element, levels=levels))
+            else:
+                ret.append(element)
+        else:
+            ret.append(element)
+
+    return ret
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -472,6 +493,7 @@ class FilterModule(object):
         return {
             # jinja2 overrides
             'groupby': do_groupby,
+            'flatten': flatten,
 
             # base 64
             'b64decode': b64decode,

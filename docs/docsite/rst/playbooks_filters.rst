@@ -116,6 +116,19 @@ To get the maximum value from a list of numbers::
 
     {{ [3, 4, 2] | max }}
 
+.. versionadded:: 2.5
+
+Flatten a list (same thing the `flatten` lookup does)::
+
+    {{ [3, [4, 2] ]|flatten }}
+
+Flatten only the first level of a list (akin to the `items` lookup)::
+
+    {{ [3, [4, [2]] ]|flatten(level=1) }}
+
+
+To get the minimum value from list of numbers::
+
 .. _set_theory_filters:
 
 Set Theory Filters
