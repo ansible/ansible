@@ -1291,7 +1291,7 @@ class AnsibleModule(object):
             try:
                 rc, out, err = self.run_command(attrcmd)
                 if rc == 0:
-                    res = out.split(' ')[0:2]
+                    res = out.split()[0:2]
                     output['attr_flags'] = res[1].replace('-', '').strip()
                     output['version'] = res[0].strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
