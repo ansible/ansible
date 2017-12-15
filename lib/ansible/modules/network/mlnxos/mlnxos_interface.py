@@ -31,10 +31,10 @@ DOCUMENTATION = """
 module: mlnxos_interface
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: Manage Interface on MLNX-OS network devices
+short_description: Manage Interfaces on Mellanox MLNX-OS network devices
 description:
   - This module provides declarative management of Interfaces
-    on MLNX-OS network devices.
+    on Mellanox MLNX-OS network devices.
 notes:
 options:
   name:
