@@ -1233,6 +1233,11 @@ class PyVmomiHelper(PyVmomi):
             if current_parent.name == parent.name:
                 return True
 
+            # Check if we have reached till root folder
+            moid = current_parent._moId
+            if moid in ['group-d1', 'ha-folder-root']:
+                return False
+
             current_parent = current_parent.parent
             if current_parent is None:
                 return False
