@@ -273,8 +273,9 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, monitoring=False, virtio=True, private_networking=False, backups_enabled=False, user_data=None,
-            ipv6=False):
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None,
+            monitoring=False, virtio=True, private_networking=False,
+            backups_enabled=False, user_data=None, ipv6=False):
         private_networking_lower = str(private_networking).lower()
         backups_enabled_lower = str(backups_enabled).lower()
         ipv6_lower = str(ipv6).lower()
