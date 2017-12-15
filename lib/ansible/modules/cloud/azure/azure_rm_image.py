@@ -91,6 +91,7 @@ RETURN = '''
 id:
     description: Image resource path.
     type: str
+    returned: success
     example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/images/foobar"
 '''  # NOQA
 
