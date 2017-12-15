@@ -270,9 +270,9 @@ def main():
     )
 
     state = module.params["state"]
-    if module.params["host"]
+    if module.params["host"]:
       name = module.params["host"] + "!" + module.params["service"]
-    else
+    else:
       name = module.params["name"]
     zone = module.params["zone"]
     template = []
