@@ -1,0 +1,35 @@
+# http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+# amzn-ami-2017.09.b-amazon-ecs-optimized
+ecs_agent_images:
+  us-east-1: ami-71ef560b
+  us-east-2: ami-1b8ca37e
+
+ecs_cluster_name: "{{ resource_prefix }}"
+user_data: |
+  #!/bin/bash
+  echo ECS_CLUSTER={{ ecs_cluster_name }} >> /etc/ecs/ecs.config
+
+ecs_service_name: "{{ resource_prefix }}-service"
+ecs_task_image_path: nginx
+ecs_task_name: "{{ resource_prefix }}-task"
+ecs_task_memory: 128
+ecs_task_containers:
+- name: "{{ ecs_task_name }}"
+  image: "{{ ecs_task_image_path }}"
+  essential: true
+  memory: "{{ ecs_task_memory }}"
+  portMappings:
+  - containerPort: "{{ ecs_task_container_port }}"
+    hostPort: "{{ ecs_task_host_port|default(0) }}"
+  mountPoints: "{{ ecs_task_mount_points|default([]) }}"
+ecs_service_deployment_configuration:
+  minimum_healthy_percent: 0
+  maximum_percent: 100
+ecs_service_placement_strategy:
+  - type: binpack
+    field: memory
+  - type: spread
+    field: attribute:ecs.availability-zone
+ecs_task_container_port: 8080
+ecs_target_group_name: "{{ resource_prefix[:29] }}-tg"
+ecs_load_balancer_name: "{{ resource_prefix[:29] }}-lb"
