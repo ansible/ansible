@@ -240,8 +240,13 @@ class PyVmomiHelper(PyVmomi):
     def snapshot_vm(self, vm):
         memory_dump = False
         quiesce = False
-        # Check if Virtual Machine provides capabilities for Quiesce and Memory
-        # Snapshots
+        # Check if there is a latest snapshot already present as specified by user
+        snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
+                                                          self.module.params["snapshot_name"])
+        if snap_obj:
+            # Snapshot already exists, do not anything.
+            self.module.exit_json(changed=False, msg="Snapshot named [%(snapshot_name)s] already exists." % self.module.params)
+        # Check if Virtual Machine provides capabilities for Quiesce and Memory Snapshots
         if vm.capability.quiescedSnapshotsSupported:
             quiesce = self.module.params['quiesce']
         if vm.capability.memorySnapshotsSupported:
@@ -257,7 +262,6 @@ class PyVmomiHelper(PyVmomi):
             self.module.fail_json(msg="Failed to take snapshot due to VMware Licence: %s" % to_native(exc.msg))
         except Exception as exc:
             self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc)))
-
         return task
 
     def rename_snapshot(self, vm):
@@ -282,7 +286,6 @@ class PyVmomiHelper(PyVmomi):
                 msg="Couldn't find any snapshots with specified name: %s on VM: %s" %
                     (self.module.params["snapshot_name"],
                      self.module.params.get('uuid') or self.module.params.get('name')))
-
         return task
 
     def remove_or_revert_snapshot(self, vm):
