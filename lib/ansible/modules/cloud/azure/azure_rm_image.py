@@ -88,39 +88,10 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-state:
-    description: Current state of the image.
-    returned: success
-    type: complex
-    contains:
-        id:
-          description: Image resource path.
-          type: str
-          example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/images/foobar"
-        name:
-          description: Image name.
-          type: str
-          example: "foobar"
-        location:
-          description: Location of the image.
-          type: str
-          example: "eastus"
-        resourceGroup:
-          description: Resource group of the image.
-          type: str
-          example: "Testing"
-        osDisk:
-          description: OS disk id if the image is created from disks.
-          type: Dict
-          example: { managedDisk: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001" }
-        dataDisks:
-          description: Data disk id if the image is created from disks.
-          type: list
-          example: [{ managedDisk: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/testvm001-datadisk-0" }]
-        sourceVirtualMachine:
-          description: Source virtual machine id if the image is created from vm.
-          type: str
-          example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/testvm001"
+id:
+    description: Image resource path.
+    type: str
+    example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/images/foobar"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
