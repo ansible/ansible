@@ -65,8 +65,12 @@ class TerminalModule(TerminalBase):
 
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
+            prompt = self._get_prompt()
+            if not prompt.endswith(b'#'):
+                raise AnsibleConnectionFailure('failed to elevate privilege to enable mode still at prompt [%s]' % prompt)
         except AnsibleConnectionFailure:
-            raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
+            prompt = self._get_prompt()
+            raise AnsibleConnectionFailure('unable to elevate privilege to enable mode, at prompt [%s]' % prompt)
 
     def on_unbecome(self):
         prompt = self._get_prompt()
