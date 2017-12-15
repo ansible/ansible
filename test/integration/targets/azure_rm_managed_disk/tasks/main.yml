@@ -314,7 +314,7 @@
        - not mounted.state.managed_by
  
   - name: Unmount the disk to virtual machine (idempotent)
-   azure_rm_managed_disk:
+    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "{{ managed_disk1 }}"
        disk_size_gb: 2

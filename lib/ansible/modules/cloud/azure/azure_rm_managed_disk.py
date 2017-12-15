@@ -52,7 +52,7 @@ options:
             - Premium_LRS
     create_option:
         description:
-            - "Allowed values: empty, import, copy. C(import) from a VHD file in I(source_uri) and C(copy) from previous managed disk I(source_resource_uri)".
+            - "Allowed values: empty, import, copy. C(import) from a VHD file in I(source_uri) and C(copy) from previous managed disk I(source_resource_uri)."
         choices:
             - empty
             - import
