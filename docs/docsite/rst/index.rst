@@ -30,7 +30,7 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    playbooks
    playbooks_special_topics
    modules
-   modules_by_category
+   modules/modules_by_category
    vault
    command_line_tools
    plugins_by_category
