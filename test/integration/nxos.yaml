@@ -376,6 +376,42 @@
 
     - block:
       - include_role:
+          name: nxos_aaa_server
+        when: "limit_to in ['*', 'nxos_aaa_server']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_aaa_server' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_aaa_server_host
+        when: "limit_to in ['*', 'nxos_aaa_server_host']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_aaa_server_host' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_gir
+        when: "limit_to in ['*', 'nxos_gir']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_gir' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_gir_profile_management
+        when: "limit_to in ['*', 'nxos_gir_profile_management']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_gir_profile_management' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_file_copy
         when: "limit_to in ['*', 'nxos_file_copy']"
       rescue:

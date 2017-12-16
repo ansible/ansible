@@ -1,0 +1,38 @@
+---
+- name: collect common nxapi test cases
+  find:
+    paths: "{{ role_path }}/tests/common"
+    patterns: "{{ testcase }}.yaml"
+  register: test_cases
+
+- name: collect nxapi test cases
+  find:
+    paths: "{{ role_path }}/tests/nxapi"
+    patterns: "{{ testcase }}.yaml"
+  register: nxapi_cases
+
+- set_fact:
+    test_cases:
+      files: "{{ test_cases.files }} + {{ nxapi_cases.files }}"
+
+- name: set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+
+- name: enable nxapi
+  nxos_config:
+    lines:
+      - feature nxapi
+      - nxapi http port 80
+    provider: "{{ cli }}"
+
+- name: run test case
+  include: "{{ test_case_to_run }} connection={{ nxapi }}"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
+
+- name: disable nxapi
+  nxos_config:
+    lines:
+      - no feature nxapi
+    provider: "{{ cli }}"

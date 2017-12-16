@@ -1,0 +1,138 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_aaa_server_host tacacs.yaml sanity test"
+
+- name: "Enable feature tacacs+"
+  nxos_feature:
+    feature: tacacs+
+    state: enabled
+    provider: "{{ connection }}"
+
+- name: "Setup"
+  nxos_aaa_server_host: &remove
+    server_type: tacacs
+    address: 8.8.8.8
+    state: absent
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+
+  - name: "Configure tacacs server defaults"
+    nxos_aaa_server_host: &configure_default_tacacs
+      server_type: tacacs
+      address: 8.8.8.8
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_default_tacacs
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Remove tacacs server configuration"
+    nxos_aaa_server_host: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *remove
+    register: result
+
+  - assert: *false
+  
+  - name: "Configure tacacs server non defaults"
+    nxos_aaa_server_host: &configure_tacacs_non_default
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: 25
+      tacacs_port: 89
+      state: present
+      provider: "{{ connection }}"
+    register: result
+  
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_tacacs_non_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove tacacs server configuration"
+    nxos_aaa_server_host: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure tacacs server with clear text pwd"
+    nxos_aaa_server_host: &configure_tacacs_clear_text
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: 25
+      tacacs_port: 89
+      encrypt_type: 0
+      key: hello
+      state: present
+      provider: "{{ connection }}"
+    register: result
+   
+  - assert: *true
+
+  - name: "Check NOT Idempotent"
+    nxos_aaa_server_host: *configure_tacacs_clear_text
+    register: result
+
+  - assert: *true
+
+  - name: "Remove tacacs server configuration"
+    nxos_aaa_server_host: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure tacacs server with type 7 encryption"
+    nxos_aaa_server_host: &configure_tacacs_type7
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: 25
+      tacacs_port: 89
+      encrypt_type: 7
+      key: hello
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_tacacs_type7
+    register: result
+
+  - assert: *true
+
+  rescue:
+
+  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_aaa_server_host failure detected"
+
+  always:
+
+  - name: "Remove tacacs server configuration"
+    nxos_aaa_server_host: *remove
+    register: result
+
+  - name: "Enable feature tacacs+"
+    nxos_feature:
+      feature: tacacs+
+      state: disabled
+      provider: "{{ connection }}"
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_aaa_server_host tacacs.yaml sanity test"  
