@@ -30,6 +30,7 @@ All modules must have the following sections defined in this order:
   If you look at some existing older modules, you may find imports at the bottom of the file. Do not copy that idiom into new modules as it is a historical oddity due to how modules used to be combined with libraries. Over time we're moving the imports to be in their proper place.
 
 
+.. _copyright:
 
 Copyright
 ----------------------
