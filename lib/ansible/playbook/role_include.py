@@ -85,6 +85,7 @@ class IncludeRole(TaskInclude):
                 self._play.unregister_dynamic_role(self)
                 data['_irole_play'] = self._play.serialize(
                     skip_dynamic_roles=True)
+                self._play.register_dynamic_role(self)
         return data
 
     def __setstate__(self, sr):
