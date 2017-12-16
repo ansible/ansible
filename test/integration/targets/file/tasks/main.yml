@@ -18,6 +18,13 @@
 
 - set_fact: output_file={{output_dir}}/foo.txt
 
+# same as expanduser & expandvars called on managed host
+- command: 'echo {{ output_file }}'
+  register: echo
+
+- set_fact:
+    remote_file_expanded: '{{ echo.stdout }}'
+
 - name: prep with a basic copy
   copy: src=foo.txt dest={{output_file}}
 
@@ -121,8 +128,8 @@
   assert:
     that:
       - "file5a_result.changed == true"
-      - "file5a_result.diff.before.src == output_file|expanduser"
-      - "file5a_result.diff.after.src == output_file|basename"
+      - "file5a_result.diff.before.src == remote_file_expanded"
+      - "file5a_result.diff.after.src == remote_file_expanded|basename"
 
 - name: soft link idempotency check
   file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
