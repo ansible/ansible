@@ -1,0 +1,101 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_aaa_server tacacs.yaml sanity test"
+
+- name: "Enable feature tacacs+"
+  nxos_feature:
+    feature: tacacs+
+    state: enabled
+    provider: "{{ connection }}"
+
+- name: "Setup"
+  nxos_aaa_server: &remove
+    server_type: tacacs
+    deadtime: default
+    server_timeout: default
+    directed_request: default
+    state: default
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: "Configure tacacs server defaults"
+    nxos_aaa_server: &configure_default_tacacs
+      server_type: tacacs
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_default_tacacs
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Configure tacacs server non defaults"
+    nxos_aaa_server: &configure_tacacs_non_default
+      server_type: tacacs
+      server_timeout: 9
+      deadtime: 20
+      directed_request: enabled
+      state: present
+      provider: "{{ connection }}"
+    register: result
+  
+  - assert: &true
+     that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_tacacs_non_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove tacacs server configuration"
+    nxos_aaa_server: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure tacacs server with global key"
+    nxos_aaa_server: &configure_tacacs_global_key
+      server_type: tacacs
+      encrypt_type: 7
+      global_key: test_key
+      state: present
+      provider: "{{ connection }}"
+    register: result
+   
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_tacacs_global_key
+    register: result
+
+  - assert: *false
+
+  - name: "Remove tacacs server configuration"
+    nxos_aaa_server: *remove
+    register: result
+
+  - assert: *true
+
+  rescue:
+
+  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_aaa_server failure detected"
+
+  always:
+
+  - name: "Remove tacacs server configuration"
+    nxos_aaa_server: *remove
+    register: result
+
+  - name: "Disable feature tacacs+"
+    nxos_feature:
+      feature: tacacs+
+      state: disabled
+      provider: "{{ connection }}"
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_aaa_server tacacs.yaml sanity test"  
