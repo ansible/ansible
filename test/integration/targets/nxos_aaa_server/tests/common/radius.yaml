@@ -1,0 +1,95 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_aaa_server radius.yaml sanity test"
+
+- name: "Setup"
+  nxos_aaa_server: &remove
+    server_type: radius
+    deadtime: default
+    server_timeout: default
+    directed_request: default
+    state: default
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: "Configure radius server defaults"
+    nxos_aaa_server: &configure_default_radius
+      server_type: radius
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_default_radius
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Configure radius server non defaults"
+    nxos_aaa_server: &configure_radius_non_default
+      server_type: radius
+      server_timeout: 9
+      deadtime: 20
+      directed_request: enabled
+      state: present
+      provider: "{{ connection }}"
+    register: result
+  
+  - assert: &true
+     that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_radius_non_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove radius server configuration"
+    nxos_aaa_server: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure radius server with global key"
+    nxos_aaa_server: &configure_radius_global_key
+      server_type: radius
+      encrypt_type: 7
+      global_key: test_key
+      state: present
+      provider: "{{ connection }}"
+    register: result
+   
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_radius_global_key
+    register: result
+
+  - assert: *false
+
+  - name: "Remove radius server configuration"
+    nxos_aaa_server:
+      server_type: radius
+      deadtime: default
+      server_timeout: default
+      global_key: default
+      directed_request: default
+      state: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  rescue:
+
+  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_aaa_server failure detected"
+
+  always:
+  - name: "Remove radius server configuration"
+    nxos_aaa_server: *remove
+    register: result
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_aaa_server radius.yaml sanity test"  

@@ -1,0 +1,103 @@
+#---
+#- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_gir sanity test"
+#
+#- name: "Setup"
+#  nxos_gir: &setup
+#    system_mode_maintenance: false
+#    provider: "{{ connection }}"
+#  ignore_errors: yes
+#
+#- block:
+#  - name: "Put system in maintenance mode"
+#    nxos_gir: &configure_system_mode_maintenance
+#      system_mode_maintenance: true
+#      provider: "{{ connection }}"
+#    register: result
+#
+#  - assert: &true
+#      that:
+#        - "result.changed == true"
+#
+#  - name: "Check Idempotence"
+#    nxos_gir: *configure_system_mode_maintenance
+#    register: result
+#
+#  - assert: &false
+#      that:
+#        - "result.changed == false"
+#
+#  - name: "Put system back in normal mode"
+#    nxos_gir: *setup
+#    register: result
+#  
+#  - assert: *true
+#
+#  - name: "Check Idempotence"
+#    nxos_gir: *setup
+#    register: result
+#
+#  - assert: *false
+#
+#  - name: "Put system in maintenance mode with reload reset reason"
+#    nxos_gir:
+#      system_mode_maintenance: true
+#      system_mode_maintenance_on_reload_reset_reason: manual_reload
+#    register: result
+#
+#  - assert: *true
+#
+#  - name: "Remove reload reason"
+#    nxos_gir: &remove_reason
+#      system_mode_maintenance_on_reload_reset_reason: manual_reload
+#      state: absent
+#      provider: "{{ connection }}"
+#    register: result
+#   
+#  - assert: *true
+#
+#  - name: "Check Idempotence"
+#    nxos_gir: *remove_reason
+#    register: result
+#
+#  - assert: *false
+#
+#  - name: "Put system in maintenance mode with timeout"
+#    nxos_gir:
+#      system_mode_maintenance: true
+#      system_mode_maintenance_timeout: 30
+#    register: result 
+#
+#  - assert: *true
+#
+#  - name: "Remove maintenance mode timeout"
+#    nxos_gir: &remove_timeout
+#      system_mode_maintenance_timeout: 30
+#      state: absent
+#      provider: "{{ connection }}"
+#    register: result
+#
+#  - assert: *true
+#    
+#  - name: "Check Idempotence"
+#    nxos_gir: *remove_timeout
+#    register: result
+#
+#  - assert: *false
+#
+#  - name: "Put system back in normal mode"
+#    nxos_gir: *setup
+#    register: result
+#
+#  - assert: *true
+#
+#  rescue:
+#
+#  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_gir failure detected"
+#
+#  always:
+#
+#  - name: "Put system back in normal mode"
+#    nxos_gir: *setup
+#    register: result
+#
+#  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_gir sanity test"  
