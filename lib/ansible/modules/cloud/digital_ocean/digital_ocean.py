@@ -61,6 +61,12 @@ options:
   ssh_key_ids:
     description:
      - Optional, array of SSH key (numeric) ID that you would like to be added to the server.
+  monitoring:
+    description:
+     - "A boolean indicating whether to install the DigitalOcean agent for monitoring."
+    version_added: "2.5"
+    default: "no"
+    choices: [ "yes", "no" ]
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
@@ -267,14 +273,18 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None,
-            ipv6=False):
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None,
+            monitoring=False, virtio=True, private_networking=False,
+            backups_enabled=False, user_data=None, ipv6=False):
         private_networking_lower = str(private_networking).lower()
         backups_enabled_lower = str(backups_enabled).lower()
         ipv6_lower = str(ipv6).lower()
         json = cls.manager.new_droplet(name, size_id, image_id, region_id,
-                                       ssh_key_ids=ssh_key_ids, virtio=virtio, private_networking=private_networking_lower,
-                                       backups_enabled=backups_enabled_lower, user_data=user_data, ipv6=ipv6_lower)
+                                       ssh_key_ids=ssh_key_ids,
+                                       monitoring=monitoring, virtio=virtio,
+                                       private_networking=private_networking_lower,
+                                       backups_enabled=backups_enabled_lower,
+                                       user_data=user_data, ipv6=ipv6_lower)
         droplet = cls(json)
         return droplet
 
@@ -372,6 +382,7 @@ def core(module):
                     image_id=getkeyordie('image_id'),
                     region_id=getkeyordie('region_id'),
                     ssh_key_ids=module.params['ssh_key_ids'],
+                    monitoring=module.params['monitoring'],
                     virtio=module.params['virtio'],
                     private_networking=module.params['private_networking'],
                     backups_enabled=module.params['backups_enabled'],
@@ -438,6 +449,7 @@ def main():
             image_id=dict(),
             region_id=dict(),
             ssh_key_ids=dict(type='list'),
+            monitoring=dict(type='bool', default='no'),
             virtio=dict(type='bool', default='yes'),
             private_networking=dict(type='bool', default='no'),
             backups_enabled=dict(type='bool', default='no'),
