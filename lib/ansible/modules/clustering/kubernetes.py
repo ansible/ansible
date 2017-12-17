@@ -59,6 +59,14 @@ options:
     required: true
     choices: [ absent, present, replace, update ]
     default: present
+  delete_propagation_policy:
+    description: >
+      - Specify delete propogation policy to be used for delete requests. Refer to Garbage Collection:
+        U(https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/).
+    required: false
+    default: null
+    choices: ["Orphan", "Foreground", "Background"]
+    version_added: 2.4
   url_password:
     description:
       - The HTTP Basic Auth password for the API I(endpoint). This should be set
@@ -269,13 +277,23 @@ def k8s_create_resource(module, url, data):
     return True, body
 
 
-def k8s_delete_resource(module, url, data):
+def k8s_delete_resource(module, url, data, delete_propagation_policy):
     name = data.get('metadata', {}).get('name')
     if name is None:
         module.fail_json(msg="Missing a named resource in object metadata when trying to remove a resource")
 
     url = url + '/' + name
-    info, body = api_request(module, url, method="DELETE")
+    info, body = api_request(
+                             module,
+                             url,
+                             method="DELETE",
+                             headers={"Content-Type": "application/json"},
+                             data={
+                                   "kind":"DeleteOptions",
+                                   "apiVersion":"v1",
+                                   "propagationPolicy": delete_propagation_policy
+                                  }
+                            )
     if info['status'] == 404:
         return False, "Resource name '%s' already absent" % name
     elif info['status'] >= 400:
@@ -340,12 +358,13 @@ def main():
                                  choices=['JSON Patch', 'Merge Patch', 'Strategic Merge Patch']),
             file_reference=dict(type='str'),
             inline_data=dict(type='str'),
-            state=dict(type='str', default='present', choices=['absent', 'present', 'replace', 'update'])
+            state=dict(type='str', default='present', choices=['absent', 'present', 'replace', 'update']),
+            delete_propagation_policy=dict(default=None, choices=["Orphan", "Foreground", "Background"])
         ),
         mutually_exclusive=(('file_reference', 'inline_data'),
                             ('url_username', 'insecure'),
                             ('url_password', 'insecure')),
-        required_one_of=(('file_reference', 'inline_data')),
+        required_one_of=(('file_reference', 'inline_data'),),
     )
 
     if not HAS_LIB_YAML:
@@ -355,6 +374,7 @@ def main():
 
     api_endpoint = module.params.get('api_endpoint')
     state = module.params.get('state')
+    delete_propagation_policy = module.params.get('delete_propagation_policy')
     insecure = module.params.get('insecure')
     inline_data = module.params.get('inline_data')
     file_reference = module.params.get('file_reference')
@@ -405,7 +425,7 @@ def main():
         if state == 'present':
             item_changed, item_body = k8s_create_resource(module, url, item)
         elif state == 'absent':
-            item_changed, item_body = k8s_delete_resource(module, url, item)
+            item_changed, item_body = k8s_delete_resource(module, url, item, delete_propagation_policy)
         elif state == 'replace':
             item_changed, item_body = k8s_replace_resource(module, url, item)
         elif state == 'update':
