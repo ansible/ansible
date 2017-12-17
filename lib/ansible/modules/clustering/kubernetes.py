@@ -66,7 +66,7 @@ options:
     required: false
     default: null
     choices: ["Orphan", "Foreground", "Background"]
-    version_added: 2.4
+    version_added: 2.5
   url_password:
     description:
       - The HTTP Basic Auth password for the API I(endpoint). This should be set
@@ -284,16 +284,16 @@ def k8s_delete_resource(module, url, data, delete_propagation_policy):
 
     url = url + '/' + name
     info, body = api_request(
-                             module,
-                             url,
-                             method="DELETE",
-                             headers={"Content-Type": "application/json"},
-                             data={
-                                   "kind":"DeleteOptions",
-                                   "apiVersion":"v1",
-                                   "propagationPolicy": delete_propagation_policy
-                                  }
-                            )
+        module,
+        url,
+        method="DELETE",
+        headers={"Content-Type": "application/json"},
+        data={
+            "kind": "DeleteOptions",
+            "apiVersion": "v1",
+            "propagationPolicy": delete_propagation_policy
+        }
+    )
     if info['status'] == 404:
         return False, "Resource name '%s' already absent" % name
     elif info['status'] >= 400:
