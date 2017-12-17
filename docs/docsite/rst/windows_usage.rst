@@ -300,7 +300,7 @@ With those rules in mind, here are some examples of quoting::
     argv[2] = unquoted-end-backslash\
 
     # due to YAML and Ansible parsing '\"' must be written as '{% raw %}\\{% endraw %}"'
-    - win_command: C:\temp\executable.exe C:\no\space\path "arg with end \ before end quote{% raw %]\\{% endraw %}"
+    - win_command: C:\temp\executable.exe C:\no\space\path "arg with end \ before end quote{% raw %}\\{% endraw %}"
 
     argv[0] = C:\temp\executable.exe
     argv[1] = C:\no\space\path
