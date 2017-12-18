@@ -34,7 +34,7 @@ options:
         description:
             - whether or not the zone should exist or not
         required: false
-        default: true
+        default: present
         choices: [ "present", "absent" ]
     vpc_id:
         description:
@@ -65,36 +65,22 @@ author: "Christopher Troup (@minichate)"
 '''
 
 EXAMPLES = '''
-# create a public zone
-- route53_zone:
+- name: create a public zone
+  route53_zone:
     zone: example.com
-    state: present
     comment: this is an example
 
-# delete a public zone
-- route53_zone:
+- name: delete a public zone
+  route53_zone:
     zone: example.com
     state: absent
 
-- name: private zone for devel
+- name: create a private zone
   route53_zone:
     zone: devel.example.com
-    state: present
     vpc_id: '{{ myvpc_id }}'
     vpc_region: us-west-2
     comment: developer domain
-
-# more complex example
-- name: register output after creating zone in parameterized region
-  route53_zone:
-    vpc_id: '{{ vpc.vpc_id }}'
-    vpc_region: '{{ ec2_region }}'
-    zone: '{{ vpc_dns_zone }}'
-    state: present
-  register: zone_out
-
-- debug:
-    var: zone_out
 '''
 
 RETURN = '''
