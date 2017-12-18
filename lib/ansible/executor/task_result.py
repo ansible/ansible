@@ -64,6 +64,9 @@ class TaskResult:
     def is_unreachable(self):
         return self._check_key('unreachable')
 
+    def needs_debugger(self):
+        return self._task_fields.get('debugger')
+
     def _check_key(self, key):
         '''get a specific key from the result or its items'''
 

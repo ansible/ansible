@@ -93,7 +93,7 @@ class StrategyModule(LinearStrategyModule):
         return results
 
     def _need_debug(self, results):
-        return reduce(lambda total, res: res.is_failed() or res.is_unreachable() or total, results, False)
+        return reduce(lambda total, res: res.needs_debugger() or res.is_failed() or res.is_unreachable() or total, results, False)
 
 
 class Debugger(cmd.Cmd):
