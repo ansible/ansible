@@ -114,7 +114,7 @@
 - name: Delete image (check mode)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      name: testimage01
+      name: testimage001
       state: absent
   register: output
   check_mode: yes
@@ -126,7 +126,7 @@
 - name: Delete image
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      name: testimage01
+      name: testimage001
       state: absent
   register: output
 
@@ -137,7 +137,7 @@
 - name: Delete image (idempotent)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
-      name: testimage01
+      name: testimage001
       state: absent
   register: output
 
