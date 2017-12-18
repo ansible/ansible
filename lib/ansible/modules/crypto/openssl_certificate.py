@@ -378,7 +378,6 @@ class SelfSignedCertificate(Certificate):
 
     def __init__(self, module):
         super(SelfSignedCertificate, self).__init__(module)
-        self.serial_number = randint(1000, 99999)
         self.notBefore = module.params['selfsigned_notBefore']
         self.notAfter = module.params['selfsigned_notAfter']
         self.digest = module.params['selfsigned_digest']
@@ -387,7 +386,6 @@ class SelfSignedCertificate(Certificate):
         self.privatekey = crypto_utils.load_privatekey(
             self.privatekey_path, self.privatekey_passphrase
         )
-        self.cert = None
 
     def generate(self, module):
 
@@ -403,7 +401,7 @@ class SelfSignedCertificate(Certificate):
 
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
-            cert.set_serial_number(self.serial_number)
+            cert.set_serial_number(randint(1000, 99999))
             if self.notBefore:
                 cert.set_notBefore(self.notBefore)
             else:
@@ -420,11 +418,11 @@ class SelfSignedCertificate(Certificate):
             cert.add_extensions(self.csr.get_extensions())
 
             cert.sign(self.privatekey, self.digest)
-            self.certificate = cert
+            self.cert = cert
 
             try:
                 with open(self.path, 'wb') as cert_file:
-                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.certificate))
+                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
             except EnvironmentError as exc:
                 raise CertificateError(exc)
 
@@ -441,9 +439,9 @@ class SelfSignedCertificate(Certificate):
             'filename': self.path,
             'privatekey': self.privatekey_path,
             'csr': self.csr_path,
-            'notBefore': self.notBefore,
-            'notAfter': self.notAfter,
-            'serial_number': self.serial_number,
+            'notBefore': self.cert.get_notBefore(),
+            'notAfter': self.cert.get_notAfter(),
+            'serial_number': self.cert.get_serial_number(),
         }
 
         return result
