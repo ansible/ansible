@@ -382,6 +382,11 @@
     path: '{{win_cert_dir}}\subj-cert-without-pass.pfx'
     state: present
     key_exportable: no
+  vars: &become_vars
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: '{{ansible_user}}'
+    ansible_become_pass: '{{ansible_password}}'
   register: import_pfx_without_pass_check
   check_mode: yes
 
@@ -401,10 +406,12 @@
     path: '{{win_cert_dir}}\subj-cert-without-pass.pfx'
     state: present
     key_exportable: no
+  vars: *become_vars
   register: import_pfx_without_pass
 
 - name: get results of import pfx without password and non exportable
   win_shell: (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }).PrivateKey.CspKeyContainerInfo.Exportable
+  vars: *become_vars
   register: import_pfx_without_pass_result
 
 - name: assert results of import pfx without password and non exportable
@@ -419,6 +426,7 @@
     path: '{{win_cert_dir}}\subj-cert-without-pass.pfx'
     state: present
     key_exportable: no
+  vars: *become_vars
   register: import_pfx_without_pass_again
 
 - name: assert results of import pfx without password and non exportable (idempotent)
@@ -443,6 +451,7 @@
     store_location: CurrentUser
     store_name: TrustedPeople
   register: import_pfx_with_pass_check
+  vars: *become_vars
   check_mode: yes
 
 - name: get results of import pfx with password (check)
@@ -463,10 +472,12 @@
     password: '{{key_password}}'
     store_location: CurrentUser
     store_name: TrustedPeople
+  vars: *become_vars
   register: import_pfx_with_pass
 
 - name: get results of import pfx with password
   win_shell: (Get-ChildItem -Path Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }).PrivateKey.CspKeyContainerInfo.Exportable
+  vars: *become_vars
   register: import_pfx_with_pass_result
 
 - name: assert results of import pfx with password
@@ -483,6 +494,7 @@
     password: '{{key_password}}'
     store_location: CurrentUser
     store_name: TrustedPeople
+  vars: *become_vars
   register: import_pfx_with_pass_again
 
 - name: assert results of import pfx with password (idempotent)
@@ -653,6 +665,7 @@
     store_name: TrustedPeople
     password: '{{key_password}}'
   register: export_pfx_with_pass_check
+  vars: *become_vars
   check_mode: yes
 
 - name: get result of export cert with key and password as pfx (check)
@@ -676,6 +689,7 @@
     store_location: CurrentUser
     store_name: TrustedPeople
     password: '{{key_password}}'
+  vars: *become_vars
   register: export_pfx_with_pass
 
 - name: get result of export cert with key and password as pfx
@@ -683,6 +697,7 @@
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
     $cert.Import("{{win_cert_dir}}\exported\cert-pass.pfx", "{{key_password}}", 0)
     $cert.HasPrivateKey
+  vars: *become_vars
   register: export_pfx_with_pass_result
 
 - name: assert results of export cert with key and password as pfx
@@ -701,6 +716,7 @@
     store_location: CurrentUser
     store_name: TrustedPeople
     password: '{{key_password}}'
+  vars: *become_vars
   register: export_pfx_with_pass_again
 
 - name: assert results of export cert with key and password as pfx (idempotent)
@@ -716,6 +732,7 @@
     file_type: pkcs12
     store_location: CurrentUser
     store_name: TrustedPeople
+  vars: *become_vars
   register: export_pfx_without_pass_check
   check_mode: yes
 
@@ -739,6 +756,7 @@
     file_type: pkcs12
     store_location: CurrentUser
     store_name: TrustedPeople
+  vars: *become_vars
   register: export_pfx_without_pass
 
 - name: get result of export cert with key without password as pfx
@@ -746,6 +764,7 @@
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
     $cert.Import("{{win_cert_dir}}\exported\cert-without-pass.pfx", $null, 0)
     $cert.HasPrivateKey
+  vars: *become_vars
   register: export_pfx_without_pass_result
 
 - name: assert results of export cert with key without password as pfx
@@ -763,6 +782,7 @@
     file_type: pkcs12
     store_location: CurrentUser
     store_name: TrustedPeople
+  vars: *become_vars
   register: export_pfx_without_pass_again
 
 - name: assert results of export cert with key without password as pfx (idempotent)
@@ -776,5 +796,6 @@
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12
+  vars: *become_vars
   register: fail_export_non_exportable
   failed_when: fail_export_non_exportable.msg != 'Cannot export cert with key as PKCS12 when the key is not marked as exportable or not accesible by the current user'

@@ -119,6 +119,10 @@ options:
     - pkcs12
     default: der
 notes:
+- Some actions on PKCS12 certificates and keys may fail with the error
+  C(the specified network password is not correct), either use CredSSP or
+  Kerberos with credential delegation, or use C(become) to bypass these
+  restrictions.
 - The certificates must be located on the Windows host to be set with I(path).
 author:
 - Jordan Borean (@jborean93)
@@ -135,12 +139,17 @@ EXAMPLES = r'''
     path: C:\temp\cert.pfx
     state: present
     password: VeryStrongPasswordHere!
+  become: yes
+  become_method: runas
 
 - name: import pfx certificate without password and set private key as un-exportable
   win_certificate_store:
     path: C:\temp\cert.pfx
     state: present
-    exportable: no
+    key_exportable: no
+  # usually you don't set this here but it is for illustrative purposes
+  vars:
+    ansible_winrm_transport: credssp
 
 - name: remove a certificate based on file thumbprint
   win_certificate_store:
@@ -171,6 +180,9 @@ EXAMPLES = r'''
     state: exported
     file_type: pkcs12
     password: AnotherStrongPass!
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
 '''
 
 RETURN = r'''
