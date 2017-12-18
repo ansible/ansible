@@ -8,7 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -209,7 +208,7 @@ from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
-
+from distutils.version import LooseVersion
 
 VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'LOCK TABLES', 'REFERENCES', 'EVENT', 'ALTER',
@@ -234,27 +233,26 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
 class InvalidPrivsError(Exception):
     pass
 
+
 # ===========================================
 # MySQL module specific support methods.
 #
 
 
-# User Authentication Management was change in MySQL 5.7
-# This is a generic check for if the server version is less than version 5.7
-def server_version_check(cursor):
+# User Authentication Management was changed in MySQL 5.7.6 and MariaDB 10.2.0.
+# This is a check to verify whether old or new style needs to be used.
+def use_user_for_non_privilege_actions(cursor):
     cursor.execute("SELECT VERSION()")
     result = cursor.fetchone()
-    version_str = result[0]
-    version = version_str.split('.')
+    version_signature = result[0]
 
-    # Currently we have no facility to handle new-style password update on
-    # mariadb and the old-style update continues to work
-    if 'mariadb' in version_str.lower():
-        return True
-    if int(version[0]) <= 5 and int(version[1]) < 7:
-        return True
+    # MariaDB version looks like: 10.0.3-MariaDB-1~precise-log
+    # MySQL version looks like 5.6.10
+    version = re.search('([0-9.]+)', version_signature).group(1)
+    if 'mariadb' in version_signature.lower():
+        return LooseVersion(version) >= LooseVersion('10.2.0')
     else:
-        return False
+        return LooseVersion(version) >= LooseVersion('5.7.6')
 
 
 def get_mode(cursor):
@@ -319,7 +317,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
         # Handle clear text and hashed passwords.
         if bool(password):
             # Determine what user management method server uses
-            old_user_mgmt = server_version_check(cursor)
+            old_user_mgmt = False if use_user_for_non_privilege_actions(cursor) else True
 
             if old_user_mgmt:
                 cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user, host))
@@ -336,10 +334,12 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                         if old_user_mgmt:
                             cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                         else:
-                            cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                            cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s",
+                                           (user, host, password))
                         changed = True
                 else:
-                    module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
+                    module.fail_json(
+                        msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
             else:
                 if old_user_mgmt:
                     cursor.execute("SELECT PASSWORD(%s)", (password,))
@@ -352,7 +352,8 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if old_user_mgmt:
                         cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
                     else:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s", (user, host, password))
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s",
+                                       (user, host, password))
                     changed = True
 
         # Handle privileges
@@ -544,11 +545,10 @@ def privileges_grant(cursor, user, host, db_table, priv):
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
+
 # ===========================================
 # Module execution.
 #
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -612,8 +612,9 @@ def main():
             cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,
                                    connect_timeout=connect_timeout)
     except Exception as e:
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                             "Exception message: %s" % (config_file, to_native(e)))
+        module.fail_json(
+            msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                "Exception message: %s" % (config_file, to_native(e)))
 
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")
