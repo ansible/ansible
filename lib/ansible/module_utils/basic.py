@@ -1923,7 +1923,7 @@ class AnsibleModule(object):
             wanted = v.get('type', None)
             if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
                 spec = v.get('options', None)
-                if spec is None or not params[k]:
+                if spec is None or k not in params or params[k] is None:
                     continue
 
                 self._options_context.append(k)
