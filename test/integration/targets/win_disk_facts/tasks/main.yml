@@ -1,25 +1,12 @@
 # NOTE: The win_disk_facts module only works on Win2012R2+
 
-- name: register os version (seems integration tests don't gather this fact)
-  raw: powershell.exe "gwmi Win32_OperatingSystem | select -expand version"
-  register: os_version
-  changed_when: False
-
-- name: check if module fails gracefully when older than 2012
-  win_disk_facts:
-    name: "Gather facts"
-  when: os_version.stdout_lines[0]  is version('6.2','lt')
-  check_mode: yes
-  register: old_os_check
-  failed_when: old_os_check.msg != 'The win_disk_facts Ansible module is only available on Server 2012 (6.2) and newer'
-    
-- name: Test Windows capabilities
-  raw: Get-Command Get-Disk -ErrorAction SilentlyContinue; return $?
-  failed_when: no
-  register: new_diskfacts
+- name: check whether storage module is available (windows 2008 r2 or later)
+  raw: PowerShell -Command Import-Module Storage
+  register: win_feature_has_storage_module
+  ignore_errors: true
 
 - name: Only run tests when Windows is capable
-  when: new_diskfacts.rc == 0
+  when: (win_feature_has_storage_module|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 3)
   block:
 
   - name: Test in normal mode
