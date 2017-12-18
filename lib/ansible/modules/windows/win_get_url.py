@@ -74,6 +74,7 @@ options:
     - If enabled, win_get_url uses "Authorization" header to provide Basic Authentication authorization mechanism instead of Microsoft's WebClient.
     type: bool
     default: false
+    version_added: "2.5"
   skip_certificate_validation:
     description:
     - This option is deprecated since v2.4, please use C(validate_certs) instead.
