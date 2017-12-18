@@ -349,9 +349,9 @@ class ActionModule(ActionBase):
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
-            if not src.startswith('/'):
+            if ':' not in src and not src.startswith('/'):
                 src = self._get_absolute_path(path=src)
-            if not dest.startswith('/'):
+            if ':' not in dest and not dest.startswith('/'):
                 dest = self._get_absolute_path(path=dest)
 
         _tmp_args['src'] = src
