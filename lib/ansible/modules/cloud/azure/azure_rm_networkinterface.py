@@ -248,6 +248,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_
 def get_config_name(name, index):
     return name or 'ipconfig{0}'.format(index)
 
+
 def subnet_to_dict(subnet):
     dic = azure_id_to_dict(subnet.id)
     return dict(
@@ -256,6 +257,7 @@ def subnet_to_dict(subnet):
         resource_group=dic.get('resourceGroups'),
         name=dic.get('subnets')
     )
+
 
 def nic_to_dict(nic):
     ip_configurations = [
