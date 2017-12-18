@@ -27,6 +27,10 @@ options:
     description:
       - Peering connection id.
     required: false
+  peer_region:
+    description:
+      - Region of the accepting VPC.
+    required: false
   peer_vpc_id:
     description:
       - VPC id of the accepting VPC.
@@ -110,6 +114,27 @@ EXAMPLES = '''
     region: ap-southeast-2
     peering_id: "{{ vpc_peer.peering_id }}"
     profile: bot03_profile_for_cross_account
+    state: accept
+  register: vpc_peer
+
+# Complete example to create and accept an intra-region peering connection.
+- name: Create intra-region VPC peering Connection
+  ec2_vpc_peer:
+    region: us-east-1
+    vpc_id: vpc-12345678
+    peer_vpc_id: vpc-87654321
+    peer_vpc_region: us-west-2
+    state: present
+    tags:
+      Name: Peering connection for us-east-1 VPC to us-west-2 VPC
+      CostCode: CC1234
+      Project: phoenix
+  register: vpc_peer
+
+- name: Accept peering connection from peer region
+  ec2_vpc_peer:
+    region: us-west-2
+    peering_id: "{{ vpc_peer.peering_id }}"
     state: accept
   register: vpc_peer
 
@@ -247,6 +272,7 @@ def create_peer_connection(client, module):
     params = dict()
     params['VpcId'] = module.params.get('vpc_id')
     params['PeerVpcId'] = module.params.get('peer_vpc_id')
+    params['PeerRegion'] = module.params.get('peer_region')
     if module.params.get('peer_owner_id'):
         params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
     params['DryRun'] = module.check_mode
@@ -276,6 +302,7 @@ def remove_peer_connection(client, module):
     if not pcx_id:
         params['VpcId'] = module.params.get('vpc_id')
         params['PeerVpcId'] = module.params.get('peer_vpc_id')
+        params['PeerRegion'] = module.params.get('peer_region')
         if module.params.get('peer_owner_id'):
             params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
         params['DryRun'] = module.check_mode
@@ -356,6 +383,7 @@ def main():
         dict(
             vpc_id=dict(),
             peer_vpc_id=dict(),
+            peer_region=dict(),
             peering_id=dict(),
             peer_owner_id=dict(),
             tags=dict(required=False, type='dict'),
