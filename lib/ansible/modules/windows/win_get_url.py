@@ -69,6 +69,13 @@ options:
     description:
     - Basic authentication password.
     aliases: [ password ]
+  force_basic_auth:
+    description:
+    - If C(yes), will add a Basic authentication header on the initial request.
+    - If C(no), will use Microsoft's WebClient to handle authentication.
+    type: bool
+    default: 'no'
+    version_added: "2.5"
   skip_certificate_validation:
     description:
     - This option is deprecated since v2.4, please use C(validate_certs) instead.

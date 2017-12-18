@@ -106,7 +106,11 @@ Function Download-File($result, $url, $dest, $headers, $credentials, $timeout, $
     }
 
     if ($credentials) {
-        $extWebClient.Credentials = $credentials
+        if ($force_basic_auth) {
+            $extWebClient.Headers.Add("Authorization","Basic $credentials")
+        } else {
+            $extWebClient.Credentials = $credentials
+        }
     }
 
     if (-not $whatif) {
@@ -138,6 +142,7 @@ $skip_certificate_validation = Get-AnsibleParam -obj $params -name "skip_certifi
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $url_username = Get-AnsibleParam -obj $params -name "url_username" -type "str" -aliases "username"
 $url_password = Get-AnsibleParam -obj $params -name "url_password" -type "str" -aliases "password"
+$force_basic_auth = Get-AnsibleParam -obj $params -name "force_basic_auth" -type "bool" -default $false
 $use_proxy = Get-AnsibleParam -obj $params -name "use_proxy" -type "bool" -default $true
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
@@ -170,7 +175,12 @@ if ($proxy_url) {
 
 $credentials = $null
 if ($url_username -and $url_password) {
-    $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password)
+    if ($force_basic_auth) {
+        $credentials = [convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($url_username+":"+$url_password))
+    } else {
+        $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password) 
+    }
+    
 }
 
 # If skip_certificate_validation was specified, use validate_certs
