@@ -42,9 +42,6 @@ options:
       - Whether to install the domain controller as a read only replica for an
         existing domain.
     type: bool
-    choices:
-    - 'yes'
-    - 'no'
     default: 'no'
     version_added: '2.5'
   site_name:
