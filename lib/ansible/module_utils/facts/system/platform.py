@@ -14,6 +14,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import re
@@ -90,5 +91,16 @@ class PlatformFactCollector(BaseFactCollector):
         if machine_id:
             machine_id = machine_id.splitlines()[0]
             platform_facts["machine_id"] = machine_id
+
+        GOARCH_DICT = {
+            'x86_64': 'amd64',
+            'aarch64': 'arm64',
+            'i386': '386'
+        }
+
+        if platform_facts['architecture'] in GOARCH_DICT:
+            platform_facts['goarch'] = GOARCH_DICT[platform_facts['architecture']]
+        else:
+            platform_facts['goarch'] = platform_facts['architecture']
 
         return platform_facts
