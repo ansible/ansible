@@ -6,8 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import sys
-import json
 import syslog
 from itertools import product
 
@@ -15,15 +13,6 @@ import pytest
 
 import ansible.module_utils.basic
 from ansible.module_utils.six import PY3
-
-try:
-    # Python 3.4+
-    from importlib import reload
-except ImportError:
-    # Python 2 has reload as a builtin
-
-    # Ignoring python3.0-3.3 (those have imp.reload if we decide we care)
-    pass
 
 
 class TestAnsibleModuleLogSmokeTest:
