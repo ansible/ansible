@@ -22,15 +22,15 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.2',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: win_firewall
-version_added: '2.5'
 short_description: Enable or disable the Windows Firewall
+version_added: '2.4'
 description:
 - Enable or Disable Windows Firewall profiles.
 options:
@@ -55,6 +55,7 @@ options:
     - block
     - allow
     - notconfigured
+    version_added: '2.5'
   defaultoutboundaction:
     description:
     - Specifies how to filter outbound traffic.
@@ -62,6 +63,7 @@ options:
     - block
     - allow
     - notconfigured
+    version_added: '2.5'
   allowinboundrules:
     description:
     - Specifies that the firewall blocks inbound traffic.
@@ -69,6 +71,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   allowlocalfirewallrules:
     description:
     - Specifies that the local firewall rules should be merged into the effective policy along with Group Policy settings.
@@ -76,6 +79,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   allowlocalipsecrules:
     description:
     - Specifies that the local IPsec rules should be merged into the effective policy along with Group Policy settings.
@@ -83,6 +87,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   allowuserapps:
     description:
     - Specifies that the local IPsec rules should be merged into the effective policy along with Group Policy settings.
@@ -90,6 +95,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   allowuserports:
     description:
     - Determines how the Windows XP policy is applied to the newer Windows Firewall. Defines how to use the policy merge field for older operating systems.
@@ -97,6 +103,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   allowunicastresponsetomulticast:
     description:
     - Allows unicast responses to multi-cast traffic.
@@ -104,6 +111,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   notifyonlisten:
     description:
     - Allows the notification of listening for inbound connections by a service.
@@ -111,6 +119,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   enablestealthmodeforipsec:
     description:
     - Enables stealth mode for IPsec traffic.
@@ -118,13 +127,16 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   logfilename:
     description:
     - Specifies the path and filename of the file to which Windows Server writes log entries.
     - '%windir%\system32\logfiles\firewall\pfirewall.log'
+    version_added: '2.5'
   logmaxsizekilobytes:
     description:
     - Specifies the maximum file size of the log, in kilobytes. The acceptable values for this parameter are: 1 through 32767
+    version_added: '2.5'
   logallowed:
     description:
     - Specifies how to log the allowed packets in the location specified by the LogFileName parameter.
@@ -132,6 +144,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   logblocked:
     description:
     - Specifies how to log the dropped packets in the location specified by the LogFileName parameter.
@@ -139,6 +152,7 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
   logignored:
     description:
     - Specifies how to log the ignored packets in the location specified by the LogFileName parameter.
@@ -146,9 +160,10 @@ options:
     - true
     - false
     - notconfigured
+    version_added: '2.5'
 requirements:
   - This module requires Windows Management Framework 5 or later.
-author: Michael Eaton (@if-meaton)
+author: Michael Eaton (@if-meaton), Jamie Thompson
 '''
 
 EXAMPLES = r'''
