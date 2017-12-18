@@ -20,6 +20,12 @@
     provider: "{{ connection }}"
 
 - block:
+  - name: Ensure interface is in L2 state
+    nxos_interface:
+      interface: "{{ intname }}"
+      mode: 'layer2'
+      provider: "{{ connection }}"
+
   - name: Ensure interface is in its default switchport state
     nxos_switchport: &def_swi
       interface: "{{ intname }}"
