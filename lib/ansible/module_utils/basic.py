@@ -2166,6 +2166,9 @@ class AnsibleModule(object):
            - opt_dirs:  optional list of directories to search in addition to PATH
         if found return full path; otherwise return None
         '''
+        if arg is None:
+            self.fail_json(msg='Name of required executable can not be None')
+
         opt_dirs = [] if opt_dirs is None else opt_dirs
 
         sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
