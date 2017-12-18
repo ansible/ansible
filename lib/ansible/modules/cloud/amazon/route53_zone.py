@@ -81,6 +81,7 @@ EXAMPLES = '''
     zone: devel.example.com
     state: present
     vpc_id: '{{ myvpc_id }}'
+    vpc_region: us-west-2
     comment: developer domain
 
 # more complex example
