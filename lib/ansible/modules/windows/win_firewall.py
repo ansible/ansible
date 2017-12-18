@@ -135,7 +135,8 @@ options:
     version_added: '2.5'
   logmaxsizekilobytes:
     description:
-    - Specifies the maximum file size of the log, in kilobytes. The acceptable values for this parameter are: 1 through 32767
+    - 'Specifies the maximum file size of the log, in kilobytes. The acceptable values for this parameter are: 1 through 32767.'
+    type: bool
     version_added: '2.5'
   logallowed:
     description:
@@ -163,7 +164,9 @@ options:
     version_added: '2.5'
 requirements:
   - This module requires Windows Management Framework 5 or later.
-author: Michael Eaton (@if-meaton), Jamie Thompson
+author:
+  - Michael Eaton (@if-meaton)
+  - Jamie Thompson
 '''
 
 EXAMPLES = r'''
