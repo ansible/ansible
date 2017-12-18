@@ -61,6 +61,7 @@ options:
       - Primarily used for enabling and disabling server name indication (SNI).
       - Set to c(0) to disable SNI.
       - Set to c(1) to enable SNI.
+    version_added: "2.5"
 author:
   - Noah Sparks (@nwsparks)
   - Henrik Wallström

@@ -152,8 +152,8 @@
 - name: idem assert not changed
   assert:
     that:
-    -  https_no_header is not changed
-    -  https_header is not changed
+    - https_no_header is not changed
+    - https_header is not changed
 
 #################
 ### CM Modify ###
@@ -271,7 +271,7 @@
 - name: idem assert not changed
   assert:
     that:
-    -  https_header is not changed
+    - https_header is not changed
 
 #################
 ### CM Remove ###
@@ -451,9 +451,9 @@
 - name: idem remove assert changed and gone
   assert:
     that:
-    -  https_no_header is not changed
+    - https_no_header is not changed
     - https_no_header.binding_info is not defined
     - get_https_no_header.binding is not defined
-    -  https_header is not changed
+    - https_header is not changed
     - https_header.binding_info is not defined
     - get_https_header.binding is not defined

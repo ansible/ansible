@@ -131,8 +131,8 @@
 - name: idem assert not changed
   assert:
     that:
-    -  http_no_header is not changed
-    -  http_header is not changed
+    - http_no_header is not changed
+    - http_header is not changed
 
 #modify
 #can't test modify for http, it will add a new binding instead since
@@ -309,10 +309,10 @@
 - name: idem remove assert changed and gone
   assert:
     that:
-    -  http_no_header is not changed
+    - http_no_header is not changed
     - http_no_header.binding_info is not defined
     - get_http_no_header.binding is not defined
-    -  http_header is not changed
+    - http_header is not changed
     - http_header.binding_info is not defined
     - get_http_header.binding is not defined
 
@@ -332,7 +332,8 @@
    - test2.com
    - test3.com
 
-- assert:
+- name: assert that 3 bindings were added
+  assert:
     that:
     - http_header is changed
     - http_header | json_query('results[*].binding_info') | length == 3
