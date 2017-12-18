@@ -89,6 +89,27 @@
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 3
 
+- name: Update the NIC with mutilple ip configurations (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      security_group: testnic001
+      virtual_network: "{{ vn.state.id }}"
+      subnet: testnic001
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: testnic002
+        - name: default
+          public_ip_name: testnic001
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
 - name: Remove one ip configuration
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
@@ -110,8 +131,25 @@
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 2
 
+- name: Delete the NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      state: absent
+  check_mode: yes
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
 - name: Delete the NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
       state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
