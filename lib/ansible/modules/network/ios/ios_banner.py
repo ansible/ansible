@@ -37,8 +37,8 @@ notes:
 options:
   banner:
     description:
-      - Specifies which banner that should be
-        configured on the remote device.
+      - Specifies which banner should be configured on the remote device.
+        In Ansible 2.4 and earlier only I(login) and I(motd) were supported.
     required: true
     default: null
     choices: ['login', 'motd', 'exec', 'incoming', 'slip-ppp']
