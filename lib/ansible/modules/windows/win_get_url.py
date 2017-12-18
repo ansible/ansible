@@ -71,9 +71,10 @@ options:
     aliases: [ password ]
   force_basic_auth:
     description:
-    - If enabled, win_get_url uses "Authorization" header to provide Basic Authentication authorization mechanism instead of Microsoft's WebClient.
+    - If C(yes), will add a Basic authentication header on the initial request.
+    - If C(no), will use Microsoft's WebClient to handle authentication.
     type: bool
-    default: false
+    default: 'no'
     version_added: "2.5"
   skip_certificate_validation:
     description:
