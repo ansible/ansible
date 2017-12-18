@@ -67,7 +67,7 @@ DOCUMENTATION = """
           - name: ansible_winrm_transport
       kerberos_command:
         description: kerberos command to use to request a authentication ticket
-        default: /usr/bin/kinit
+        default: kinit
         vars:
           - name: ansible_winrm_kinit_cmd
       kerberos_mode:
@@ -75,6 +75,10 @@ DOCUMENTATION = """
             - kerberos usage mode.
             - The managed option means Ansible will obtain kerberos ticket.
             - While the manual one means a ticket must already have been obtained by the user.
+            - If having issues with Ansible freezing when trying to obtain the
+              Kerberos ticket, you can either set this to C(manual) and obtain
+              it outside Ansible or install C(pexpect) through pip and try
+              again.
         choices: [managed, manual]
         vars:
           - name: ansible_winrm_kinit_mode
@@ -94,7 +98,6 @@ DOCUMENTATION = """
 import base64
 import inspect
 import os
-import pty
 import re
 import shlex
 import traceback
@@ -111,7 +114,6 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
-from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
@@ -135,6 +137,12 @@ try:
 except ImportError as e:
     HAS_XMLTODICT = False
     XMLTODICT_IMPORT_ERR = e
+
+try:
+    import pexpect
+    HAS_PEXPECT = True
+except ImportError as e:
+    HAS_PEXPECT = False
 
 try:
     from __main__ import display
@@ -239,51 +247,47 @@ class Connection(ConnectionBase):
     # auth itself with a private CCACHE.
     def _kerb_auth(self, principal, password):
         if password is None:
-            password = b""
-        else:
-            password = to_bytes(password, encoding="utf-8", errors='surrogate_or_strict')
+            password = ""
 
         self._kerb_ccache = tempfile.NamedTemporaryFile()
         display.vvvvv("creating Kerberos CC at %s" % self._kerb_ccache.name)
         krb5ccname = "FILE:%s" % self._kerb_ccache.name
         os.environ["KRB5CCNAME"] = krb5ccname
-        kinit_cmdline = [self._kinit_cmd, principal]
+        krb5env = dict(KRB5CCNAME=krb5ccname)
 
-        display.vvvvv("calling kinit for principal %s" % principal)
+        # pexpect runs the process in its own pty so it can correctly send
+        # the password as input even on MacOS which blocks subprocess from
+        # doing so. Unfortunately it is not available on the built in Python
+        # so we can only use it if someone has installed it
+        if HAS_PEXPECT:
+            kinit_cmdline = "%s %s" % (self._kinit_cmd, principal)
+            password = to_text(password, encoding='utf-8',
+                               errors='surrogate_or_strict')
 
-        # We run with a pty fork so that we can control the IO of the kinit
-        # process, running a PIPE with subprocess will hang on an interactive
-        # shell as the secure keyboard input takes over the input of the kinit
-        # process and sending the pass over stdin won't ever reach the kinit
-        # process.
-        pid, child_fd = pty.fork()
-        if not pid:
-            # child process, run kinit
-            os.execv(kinit_cmdline[0], kinit_cmdline)
+            display.vvvv("calling kinit with pexpect for principal %s"
+                         % principal)
+            events = {
+                "%s's password:" % principal: password + "\n"
+            }
+            # technically this is the stdout but to match subprocess we wil call
+            # it stderr
+            stderr, rc = pexpect.run(kinit_cmdline, withexitstatus=True, events=events, env=krb5env, timeout=60)
         else:
-            # parent process
-            stdout = b""
+            kinit_cmdline = [self._kinit_cmd, principal]
+            password = to_bytes(password, encoding='utf-8',
+                                errors='surrogate_or_strict')
 
-            # check the output for the password prompt and send it through
-            matched = False
-            while True:
-                output = os.read(child_fd, 1024)
-                stdout += output + b"\n"
-                if b"password:" in output.lower():
-                    os.write(child_fd, password + b"\n")
-                    matched = True
-                else:
-                    break
+            display.vvvv("calling kinit with subprocess for principal %s"
+                         % principal)
+            p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 env=krb5env)
+            stdout, stderr = p.communicate(password + b'\n')
+            rc = p.returncode != 0
 
-            if not matched:
-                raise AnsibleConnectionFailure("Kerberos auth failure, no "
-                                               "password prompt detected: %s"
-                                               % stdout.strip())
-            else:
-                output = os.read(child_fd, 1024)
-                if b"password incorrect" in output.lower():
-                    stdout += output + b"\n"
-                os.close(child_fd)
+        if rc != 0:
+            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % stderr.strip())
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
