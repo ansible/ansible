@@ -163,6 +163,8 @@ def main():
 
     state = module.params['state']
 
+    if module.check_mode:                                                                                                       
+        module.exit_json(changed=_system_state_change(module, service))
     try:
         cloud = shade.openstack_cloud(**module.params)
         if state == 'present':
