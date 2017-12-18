@@ -217,7 +217,6 @@ from datetime import datetime, timedelta
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 
 
@@ -273,12 +272,14 @@ class AnsibleCloudscaleServer(object):
 
 
     def _post(self, api_call, data=None):
+        headers = self._auth_header.copy()
         if data is not None:
-            data = urlencode(data)
+            data = self._module.jsonify(data)
+            headers['Content-type'] = 'application/json'
 
         resp, info = fetch_url(self._module,
                                API_URL+api_call,
-                               headers = self._auth_header,
+                               headers = headers,
                                method='POST',
                                data=data)
 
