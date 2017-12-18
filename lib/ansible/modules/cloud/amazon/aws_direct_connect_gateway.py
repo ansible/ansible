@@ -100,7 +100,7 @@ from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, ec2_argument_spe
 from ansible.module_utils._text import to_native
 
 
-def dx_gateway_info(client, gateway_id):
+def dx_gateway_info(client, gateway_id, module):
     try:
         resp = client.describe_direct_connect_gateways(
             directConnectGatewayId=gateway_id)
@@ -283,7 +283,7 @@ def ensure_present(client, module):
             if resp["directConnectGatewayAssociations"]:
                 changed = True
 
-    result = dx_gateway_info(client, gateway_id)
+    result = dx_gateway_info(client, gateway_id, module)
     return changed, result
 
 
