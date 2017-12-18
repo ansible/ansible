@@ -16,8 +16,8 @@ Ansible Changes By Release
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
 * Using Ansible provided Jinja tests as filters is deprecated and will be removed in Ansible 2.9
 * `stat` and `win_stat` have deprecated `get_md5` and the `md5` return value
-  and these options will be removed in Ansible 2.9. `get_md5: no` will still be
-  allowed in 2.9 but will finally be removed 2 versions after that.
+  and these options will become undocumented in Ansible 2.9 and removed in a
+  later version.
 * The `redis_kv` lookup in favor of new `redis` lookup
 
 ### Minor Changes
