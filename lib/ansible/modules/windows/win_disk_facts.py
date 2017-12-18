@@ -505,7 +505,7 @@ ansible_facts:
                             type: string
                             sample: "100kb"
                         deduplication_enabled:
-                            description:  Information whether deduplication is enabled for the particular virtual disk.
+                            description: Information whether deduplication is enabled for the particular virtual disk.
                             returned: always
                             type: string
                             sample: "True"
