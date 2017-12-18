@@ -23,7 +23,7 @@ options:
     description:
       - Names of web site
     required: true
-    aliases: website
+    aliases: [website]
   state:
     description:
       - State of the binding
@@ -42,7 +42,7 @@ options:
   host_header:
     description:
       - The host header to bind to / use for the new site.
-      - For state absent, you can use '*' here to remove all bindings for a particular
+      - For state absent, you can use c('*') here to remove all bindings for a particular
         protocol/ip/port combination.
   protocol:
     description:
@@ -59,8 +59,8 @@ options:
     description:
       - This parameter is only valid on Server 2012 and newer.
       - Primarily used for enabling and disabling server name indication (SNI).
-      - Set to 0 to disable SNI.
-      - Set to 1 to enable SNI.
+      - Set to c(0) to disable SNI.
+      - Set to c(1) to enable SNI.
 author:
   - Noah Sparks (@nwsparks)
   - Henrik Wallström
