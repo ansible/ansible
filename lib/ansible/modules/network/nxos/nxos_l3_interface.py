@@ -135,6 +135,9 @@ def map_obj_to_commands(updates, module):
                     command.append('exit')
                     command.insert(0, 'interface {0}'.format(name))
                     command.insert(1, 'no switchport')
+                elif not ipv4 and not ipv6:
+                    command.append('interface {0}'.format(name))
+                    command.append('no switchport')
             commands.extend(command)
 
     return commands
