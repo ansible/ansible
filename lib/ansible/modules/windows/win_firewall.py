@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright 2017, Jamie Thompson <jamiet@datacom.co.nz>
 # (c) 2017, Michael Eaton <meaton@iforium.com>
 #
 # This file is part of Ansible
@@ -21,7 +22,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -47,6 +48,104 @@ options:
     choices:
     - enabled
     - disabled
+  defaultinboundaction:
+    description:
+    - Specifies how to filter inbound traffic.
+    choices:
+    - block
+    - allow
+    - notconfigured
+  defaultoutboundaction:
+    description:
+    - Specifies how to filter outbound traffic.
+    choices:
+    - block
+    - allow
+    - notconfigured
+  allowinboundrules:
+    description:
+    - Specifies that the firewall blocks inbound traffic.
+    choices:
+    - true
+    - false
+    - notconfigured
+  allowlocalfirewallrules:
+    description:
+    - Specifies that the local firewall rules should be merged into the effective policy along with Group Policy settings.
+    choices:
+    - true
+    - false
+    - notconfigured
+  allowlocalipsecrules:
+    description:
+    - Specifies that the local IPsec rules should be merged into the effective policy along with Group Policy settings.
+    choices:
+    - true
+    - false
+    - notconfigured
+  allowuserapps:
+    description:
+    - Specifies that the local IPsec rules should be merged into the effective policy along with Group Policy settings.
+    choices:
+    - true
+    - false
+    - notconfigured
+  allowuserports:
+    description:
+    - Determines how the Windows XP policy is applied to the newer Windows Firewall. Defines how to use the policy merge field for older operating systems.
+    choices:
+    - true
+    - false
+    - notconfigured
+  allowunicastresponsetomulticast:
+    description:
+    - Allows unicast responses to multi-cast traffic.
+    choices:
+    - true
+    - false
+    - notconfigured
+  notifyonlisten:
+    description:
+    - Allows the notification of listening for inbound connections by a service.
+    choices:
+    - true
+    - false
+    - notconfigured
+  enablestealthmodeforipsec:
+    description:
+    - Enables stealth mode for IPsec traffic.
+    choices:
+    - true
+    - false
+    - notconfigured
+  logfilename:
+    description:
+    - Specifies the path and filename of the file to which Windows Server writes log entries.
+    - '%windir%\system32\logfiles\firewall\pfirewall.log'
+  logmaxsizekilobytes:
+    description:
+    - Specifies the maximum file size of the log, in kilobytes. The acceptable values for this parameter are: 1 through 32767
+  logallowed:
+    description:
+    - Specifies how to log the allowed packets in the location specified by the LogFileName parameter.
+    choices:
+    - true
+    - false
+    - notconfigured
+  logblocked:
+    description:
+    - Specifies how to log the dropped packets in the location specified by the LogFileName parameter.
+    choices:
+    - true
+    - false
+    - notconfigured
+  logignored:
+    description:
+    - Specifies how to log the ignored packets in the location specified by the LogFileName parameter.
+    choices:
+    - true
+    - false
+    - notconfigured
 requirements:
   - This module requires Windows Management Framework 5 or later.
 author: Michael Eaton (@if-meaton)
@@ -68,6 +167,20 @@ EXAMPLES = r'''
     profiles:
     - Domain
   tags: disable_firewall
+
+- name: Apply Domain Firewall settings
+  win_firewall:
+    profiles: Domain
+    state: enabled
+    defaultinboundaction: block
+    defaultoutboundaction: allow
+    notifyonlisten: true
+    allowlocalfirewallrules: true
+    allowlocalipsecrules: true
+    logblocked: true
+    logallowed: true
+    logmaxsizekilobytes: 16364
+    logfilename: "%systemroot%\\system32\\logfiles\\firewall\\domainfw.log"
 '''
 
 RETURN = r'''
@@ -86,4 +199,9 @@ state:
     returned: always
     type: list
     sample: enabled
+msg:
+    description: Possible error message on failure
+    returned: failed
+    type: string
+    sample: "an error occurred when attempting to change firewall status for profile <profilename>"
 '''
