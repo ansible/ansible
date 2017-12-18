@@ -7,8 +7,6 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import json
-import sys
-from itertools import chain
 
 import pytest
 
@@ -103,7 +101,7 @@ class TestAnsibleModuleExitValuesRemoved:
                               for s, r, e in DATA),  # pylint: disable=undefined-variable
                              indirect=['am', 'stdin'])
     def test_exit_json_removes_values(self, am, capfd, return_val, expected):
-        with pytest.raises(SystemExit) as ctx:
+        with pytest.raises(SystemExit):
             am.exit_json(**return_val)
         out, err = capfd.readouterr()
 
@@ -116,7 +114,7 @@ class TestAnsibleModuleExitValuesRemoved:
                              indirect=['am', 'stdin'])
     def test_fail_json_removes_values(self, am, capfd, return_val, expected):
         expected['failed'] = True
-        with pytest.raises(SystemExit) as ctx:
+        with pytest.raises(SystemExit):
             am.fail_json(**return_val) == expected
         out, err = capfd.readouterr()
 
