@@ -353,7 +353,7 @@ def get_config(module, config_filter=None, source='running'):
         if is_netconf(module):
             out = to_xml(conn.get_config(source=source, filter=config_filter))
 
-        cfg = to_bytes(out, errors='surrogate_then_replace').strip()
+        cfg = out.strip()
         _DEVICE_CONFIGS.update({key: cfg})
         return cfg
 
