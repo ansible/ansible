@@ -267,7 +267,7 @@ class Connection(ConnectionBase):
             display.vvvv("calling kinit with pexpect for principal %s"
                          % principal)
             events = {
-                "%s's password:" % principal: password + "\n"
+                ".*:": password + "\n"
             }
             # technically this is the stdout but to match subprocess we wil call
             # it stderr
