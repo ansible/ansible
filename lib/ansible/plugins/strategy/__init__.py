@@ -358,7 +358,7 @@ class StrategyBase:
 
             # get the correct loop var for use later
             if original_task.loop_control:
-                loop_var = original_task.loop_control.loop_var or 'item'
+                loop_var = original_task.loop_control.loop_var
             else:
                 loop_var = 'item'
 
