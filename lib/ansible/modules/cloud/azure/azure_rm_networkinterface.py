@@ -472,9 +472,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         private_ip_address=ip_config.get('private_ip_address'),
                         name=ip_config.get('name'),
                         subnet=subnet,
-                        public_ip_address=self.get_or_create_public_ip_address(idx, ip_config),
+                        public_ip_address=self.get_or_create_public_ip_address(ip_config),
                         primary=ip_config.get('primary')
-                    ) for idx, ip_config in enumerate(self.ip_configurations)
+                    ) for ip_config in self.ip_configurations
                 ]
 
                 nsg = nsg or self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type, self.open_ports)
@@ -495,13 +495,17 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         return self.results
 
-    def get_or_create_public_ip_address(self, index, ip_config):
+    def get_or_create_public_ip_address(self, ip_config):
+        if not ip_config.get('public_ip'):
+            return None
         pip = None
         name = ip_config.get('public_ip_address_name')
         if name:
             pip = self.get_public_ip_address(name)
-        if not pip and ip_config.get('public_ip'):
-            pip = self.create_default_pip(self.resource_group, self.location, name or 'pip-{0}'.format(index), ip_config.get('public_ip_allocation_method'))
+        else:
+            self.fail('ip_configuration should have public_ip_address_name parameter if have public_ip')
+        if not pip:
+            pip = self.create_default_pip(self.resource_group, self.location, name, ip_config.get('public_ip_allocation_method'))
         return pip
 
     def create_or_update_nic(self, nic):

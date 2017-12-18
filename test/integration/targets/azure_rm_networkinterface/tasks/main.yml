@@ -59,6 +59,7 @@
           primary: True
           public_ip_allocation_method: Static
         - name: ipconfig1
+          public_ip_name: testnic003
   register: output
   check_mode: yes
 
@@ -81,6 +82,7 @@
           primary: True
           public_ip_allocation_method: Static
         - name: ipconfig1
+          public_ip_name: testnic003
   register: output
 
 - assert:
@@ -104,6 +106,7 @@
           primary: True
           public_ip_allocation_method: Static
         - name: ipconfig1
+          public_ip_name: testnic003
   register: output
 
 - assert:
