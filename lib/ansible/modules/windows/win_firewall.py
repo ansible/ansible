@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.2',
 DOCUMENTATION = r'''
 ---
 module: win_firewall
-version_added: '2.4'
+version_added: '2.5'
 short_description: Enable or disable the Windows Firewall
 description:
 - Enable or Disable Windows Firewall profiles.
