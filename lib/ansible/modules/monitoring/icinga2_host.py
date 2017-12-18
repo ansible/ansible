@@ -81,6 +81,7 @@ options:
   template:
     description:
       - The template used to define the host.
+      - Template cannot be modified after object creation.
     required: false
     default: None
   check_command:
@@ -294,7 +295,12 @@ def main():
         elif icinga.diff(name, data):
             if module.check_mode:
                 module.exit_json(changed=False, name=name, data=data)
+
+            # Template attribute is not allowed in modification
+            del data['attrs']['templates']
+
             ret = icinga.modify(name, data)
+
             if ret['code'] == 200:
                 changed = True
             else:
