@@ -81,9 +81,8 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create a VPC with dedicate tenancy and a couple of tags
-
-- ec2_vpc_net:
+- name: create a VPC with dedicated tenancy and a couple of tags
+  ec2_vpc_net:
     name: Module_dev2
     cidr_block: 10.10.0.0/16
     region: us-east-1
@@ -91,55 +90,24 @@ EXAMPLES = '''
       module: ec2_vpc_net
       this: works
     tenancy: dedicated
-
 '''
 
 RETURN = '''
-vpc.id:
-    description: VPC resource id
-    returned: success
-    type: string
-    sample: vpc-b883b2c4
-vpc.cidr_block:
-    description: The CIDR of the VPC
-    returned: success
-    type: string
-    sample: "10.0.0.0/16"
-vpc.state:
-    description: state of the VPC
-    returned: success
-    type: string
-    sample: available
-vpc.tags:
-    description: tags attached to the VPC, includes name
-    returned: success
-    type: dict
-    sample: {"Name": "My VPC", "env": "staging"}
-vpc.classic_link_enabled:
-    description: indicates whether ClassicLink is enabled
-    returned: success
-    type: boolean
-    sample: false
-vpc.dhcp_options_id:
-    description: the id of the DHCP options assocaited with this VPC
-    returned: success
-    type: string
-    sample: dopt-67236184
-vpc.instance_tenancy:
-    description: indicates whther VPC uses default or dedicated tenancy
-    returned: success
-    type: string
-    sample: default
-vpc.is_default:
-    description: indicates whether this is the default VPC
-    returned: success
-    type: boolean
-    sample: false
-vpc.cidr_block_association_set:
-    description: IPv4 CIDR blocks associated with the VPC
-    returned: success
-    type: list
-    sample:
+vpc:
+  description: info about the VPC that was created or deleted
+  returned: always
+  type: complex
+  contains:
+    cidr_block:
+      description: The CIDR of the VPC
+      returned: always
+      type: string
+      sample: 10.0.0.0/16
+    cidr_block_association_set:
+      description: IPv4 CIDR blocks associated with the VPC
+      returned: success
+      type: list
+      sample:
         "cidr_block_association_set": [
             {
                 "association_id": "vpc-cidr-assoc-97aeeefd",
@@ -149,6 +117,46 @@ vpc.cidr_block_association_set:
                 }
             }
         ]
+    classic_link_enabled:
+      description: indicates whether ClassicLink is enabled
+      returned: always
+      type: NoneType
+      sample: null
+    dhcp_options_id:
+      description: the id of the DHCP options assocaited with this VPC
+      returned: always
+      type: string
+      sample: dopt-0fb8bd6b
+    id:
+      description: VPC resource id
+      returned: always
+      type: string
+      sample: vpc-c2e00da5
+    instance_tenancy:
+      description: indicates whether VPC uses default or dedicated tenancy
+      returned: always
+      type: string
+      sample: default
+    is_default:
+      description: indicates whether this is the default VPC
+      returned: always
+      type: bool
+      sample: false
+    state:
+      description: state of the VPC
+      returned: always
+      type: string
+      sample: available
+    tags:
+      description: tags attached to the VPC, includes name
+      returned: always
+      type: complex
+      contains:
+        Name:
+          description: name tag for the VPC
+          returned: always
+          type: string
+          sample: pk_vpc4
 '''
 
 try:
