@@ -29,11 +29,13 @@
 #
 
 import collections
+import json
+import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
 
@@ -107,39 +109,34 @@ class Cli:
     def __init__(self, module):
         self._module = module
         self._device_configs = {}
+        self._connection = None
 
-    def exec_command(self, command):
-        if isinstance(command, dict):
-            command = self._module.jsonify(command)
-        return exec_command(self._module, command)
+    def _get_connection(self):
+        if self._connection:
+            return self._connection
+        self._connection = Connection(self._module._socket_path)
+
+        return self._connection
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
         """
         flags = [] if flags is None else flags
 
-        cmd = 'show running-config '
-        cmd += ' '.join(flags)
-        cmd = cmd.strip()
-
-        try:
-            return self._device_configs[cmd]
-        except KeyError:
-            rc, out, err = self.exec_command(cmd)
-            if rc != 0:
-                self._module.fail_json(msg=to_text(err))
-            try:
-                cfg = to_text(out, errors='surrogate_or_strict').strip()
-            except UnicodeError as e:
-                self._module.fail_json(msg=u'Failed to decode config: %s' % to_text(out))
-
-            self._device_configs[cmd] = cfg
+        if self._device_configs != {}:
+            return self._device_configs
+        else:
+            connection = self._get_connection()
+            out = connection.get_config(flags=flags)
+            cfg = to_text(out, errors='surrogate_then_replace').strip()
+            self._device_configs = cfg
             return cfg
 
     def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         responses = list()
+        connection = self._get_connection()
 
         for item in to_list(commands):
             if item['output'] == 'json' and not is_json(item['command']):
@@ -149,28 +146,33 @@ class Cli:
             else:
                 cmd = item['command']
 
-            rc, out, err = self.exec_command(cmd)
+            out = ''
+            try:
+                out = connection.get(cmd)
+                code = 0
+            except ConnectionError as e:
+                code = getattr(e, 'code', 1)
+                message = getattr(e, 'err', e)
+                err = to_text(message, errors='surrogate_then_replace')
+
             try:
                 out = to_text(out, errors='surrogate_or_strict')
             except UnicodeError:
                 self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
-            if check_rc and rc != 0:
-                self._module.fail_json(msg=to_text(err))
+            if check_rc and code != 0:
+                self._module.fail_json(msg=err)
 
-            if not check_rc and rc != 0:
+            if not check_rc and code != 0:
                 try:
                     out = self._module.from_json(err)
                 except ValueError:
-                    out = to_text(err).strip()
+                    out = to_text(message).strip()
             else:
                 try:
                     out = self._module.from_json(out)
                 except ValueError:
                     out = to_text(out).strip()
-
-            if item['output'] == 'json' and out != '' and isinstance(out, string_types):
-                self._module.fail_json(msg='failed to retrieve output of %s in json format' % item['command'])
 
             responses.append(out)
         return responses
@@ -181,23 +183,36 @@ class Cli:
         if opts is None:
             opts = {}
 
-        rc, out, err = self.exec_command('configure')
-        if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err))
+        connection = self._get_connection()
 
         msgs = []
-        for cmd in config:
-            rc, out, err = self.exec_command(cmd)
-            if opts.get('ignore_timeout') and rc == 1:
-                msgs.append(err)
+        try:
+            responses = connection.edit_config(config)
+            out = json.loads(responses)[1:-1]
+            msg = out
+        except ConnectionError as e:
+            code = getattr(e, 'code', 1)
+            message = getattr(e, 'err', e)
+            err = to_text(message, errors='surrogate_then_replace')
+            if opts.get('ignore_timeout') and code:
+                msgs.append(code)
                 return msgs
-            elif rc != 0:
-                self._module.fail_json(msg=to_text(err))
-            elif out:
-                msgs.append(out)
+            elif code:
+                self._module.fail_json(msg=err)
 
-        self.exec_command('end')
+        msgs.extend(msg)
         return msgs
+
+    def get_capabilities(self):
+        """Returns platform info of the remove device
+        """
+        if hasattr(self._module, '_capabilities'):
+            return self._module._capabilities
+
+        connection = self._get_connection()
+        capabilities = connection.get_capabilities()
+        self._module._capabilities = json.loads(capabilities)
+        return self._module._capabilities
 
 
 class Nxapi:
@@ -301,8 +316,8 @@ class Nxapi:
             )
             self._nxapi_auth = headers.get('set-cookie')
 
-            if opts.get('ignore_timeout') and headers['status'] == -1:
-                result.append(headers['msg'])
+            if opts.get('ignore_timeout') and re.search(r'(-1|5\d\d)', str(headers['status'])):
+                result.append(headers['status'])
                 return result
             elif headers['status'] != 200:
                 self._error(**headers)
@@ -384,6 +399,9 @@ class Nxapi:
         else:
             return []
 
+    def get_capabilities(self):
+        return {}
+
 
 def is_json(cmd):
     return str(cmd).endswith('| json')
@@ -425,7 +443,7 @@ def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
     conn = get_connection(module)
-    return conn.get_config(flags)
+    return conn.get_config(flags=flags)
 
 
 def run_commands(module, commands, check_rc=True):
@@ -436,3 +454,8 @@ def run_commands(module, commands, check_rc=True):
 def load_config(module, config, return_error=False, opts=None):
     conn = get_connection(module)
     return conn.load_config(config, return_error, opts)
+
+
+def get_capabilities(module):
+    conn = get_connection(module)
+    return conn.get_capabilities()
