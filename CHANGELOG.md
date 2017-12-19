@@ -51,6 +51,8 @@ Ansible Changes By Release
 
 ## Lookups
 * aws_ssm: Query AWS ssm data
+* aws_account_attribute: Query AWS account attributes such as EC2-Classic
+    availability
 * config: Lookup Ansible settings
 * openshift: Return info from Openshift installation
 * redis: look up date from Redis DB, deprecates the redis_kv one.
