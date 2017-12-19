@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: s3_cors
+module: aws_s3_cors
 short_description: Manage CORS for S3 buckets in AWS
 description:
     - Manage CORS for S3 buckets in AWS
@@ -38,7 +38,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Create a simple cors for s3 bucket
-- s3_cors:
+- aws_s3_cors:
     name: mys3bucket
     state: present
     rules:
@@ -55,7 +55,7 @@ EXAMPLES = '''
         max_age_seconds: 30000
 
 # Remove cors for s3 bucket
-- s3_cors:
+- aws_s3_cors:
     name: mys3bucket
     state: absent
 '''
