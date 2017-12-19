@@ -126,17 +126,16 @@ import re
 
 from ansible.module_utils.network.nxos.nxos import run_commands, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
-from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
+from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 
 def check_args(module, warnings):
-    provider = module.params['provider']
-    if provider['transport'] == 'nxapi':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+    if network_api == 'nxapi':
         module.fail_json(msg='module not supported over nxapi transport')
-
-    nxos_check_args(module, warnings)
 
     state = module.params['state']
 
