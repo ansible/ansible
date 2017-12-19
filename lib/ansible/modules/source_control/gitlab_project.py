@@ -113,7 +113,7 @@ options:
         default: 0
     import_url:
         description:
-            - Git repository which will me imported into gitlab.
+            - Git repository which will be imported into gitlab.
             - Gitlab server needs read access to this git repository.
         required: false
         default: false
