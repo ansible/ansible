@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/invalid.yaml"
+- debug: msg="START cli/invalid.yaml on connection={{ ansible_connection }}"
 
 - name: run invalid command
   eos_command:
@@ -27,4 +27,4 @@
       - "result.failed == true"
       - "result.msg is defined"
 
-- debug: msg="END cli/invalid.yaml"
+- debug: msg="END cli/invalid.yaml on connection={{ ansible_connection }}"

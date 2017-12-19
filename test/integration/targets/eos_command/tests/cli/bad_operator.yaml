@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/bad_operator.yaml"
+- debug: msg="START cli/bad_operator.yaml on connection={{ ansible_connection }}"
 
 - name: test bad operator
   eos_command:
@@ -17,4 +17,4 @@
       - "result.failed == true"
       - "result.msg is defined"
 
-- debug: msg="END cli/bad_operator.yaml"
+- debug: msg="END cli/bad_operator.yaml on connection={{ ansible_connection }}"

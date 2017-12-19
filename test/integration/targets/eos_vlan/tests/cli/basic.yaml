@@ -8,6 +8,7 @@
       - no vlan 4002
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: setup - remove switchport settings on interface Ethernet1 used in test
   eos_config:
@@ -17,6 +18,7 @@
     parents: interface Ethernet1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: setup - remove switchport settings on interface Ethernet2 used in test
   eos_config:
@@ -26,6 +28,7 @@
     parents: interface Ethernet2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create vlan
   eos_vlan:
@@ -34,6 +37,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -51,6 +55,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -67,6 +72,7 @@
     state: suspend
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -85,6 +91,7 @@
     state: suspend
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -100,6 +107,7 @@
     state: active
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -119,6 +127,7 @@
       - Ethernet2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -141,6 +150,7 @@
       - Ethernet2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -158,6 +168,7 @@
       - Ethernet1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -177,6 +188,7 @@
       - Ethernet1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -194,6 +206,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -213,6 +226,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -231,6 +245,7 @@
     purge: yes
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -251,6 +266,7 @@
     purge: yes
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:

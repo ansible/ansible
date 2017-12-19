@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/equal.yaml"
+- debug: msg="START cli/equal.yaml on connection={{ ansible_connection }}"
 
 - name: test eq operator
   eos_command:
@@ -31,4 +31,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/equal.yaml"
+- debug: msg="END cli/equal.yaml on connection={{ ansible_connection }}"
