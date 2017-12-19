@@ -31,6 +31,7 @@ options:
     description:
       - Region of the accepting VPC.
     required: false
+    version_added: '2.5'
   peer_vpc_id:
     description:
       - VPC id of the accepting VPC.
