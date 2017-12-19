@@ -25,6 +25,10 @@ requirements:
     - "influxdb >= 0.9"
     - requests
 options:
+    database_name:
+        description:
+            - Name of the database.
+        required: true
     policy_name:
         description:
             - Name of the retention policy
@@ -165,6 +169,7 @@ def alter_retention_policy(module, client, retention_policy):
 def main():
     argument_spec = InfluxDb.influxdb_argument_spec()
     argument_spec.update(
+        database_name=dict(required=True, type='str'),
         policy_name=dict(required=True, type='str'),
         duration=dict(required=True, type='str'),
         replication=dict(required=True, type='int'),
