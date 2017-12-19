@@ -1,0 +1,5 @@
+---
+
+setup_vpc_name: '{{ resource_prefix }}_setup_vpc'
+zone_domain_name: '{{ resource_prefix }}.example.com'
+zone_comment: 'Created by ansible integration tests'

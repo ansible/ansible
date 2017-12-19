@@ -1,0 +1,246 @@
+---
+
+- block:
+
+    # ============================================================
+
+    - name: create a VPC to test in
+      ec2_vpc_net:
+        ec2_region: '{{ ec2_region }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+        cidr_block: 10.0.0.0/24
+        name: '{{ setup_vpc_name }}'
+        resource_tags:
+          Name: '{{ setup_vpc_name }}'
+      register: setup_vpc
+
+    # ============================================================
+
+    - name: test failure if zone is missing
+      route53_zone:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure if zone is missing
+      assert:
+        that:
+          - result.failed
+          - "result.msg == 'missing required arguments: zone'"
+
+    # ============================================================
+
+    - name: 'create a public hosted zone (expect: changed=True)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        comment: '{{ zone_comment }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert creation of public hosted zone (expect: changed=True)'
+      assert:
+        that:
+          - result.changed
+          - result.name == '{{ zone_domain_name }}'
+          - result.comment == '{{ zone_comment }}'
+          - not result.private_zone
+          - zone_id in result
+
+    - set_fact:
+        public_zone_id: result.zone_id
+
+    # ============================================================
+
+    - name: 'create a public hosted zone (expect: changed=False)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        comment: '{{ zone_comment }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert creation of public hosted zone (expect: changed=False)'
+      assert:
+        that:
+          - not result.changed
+          - result.zone_id == public_zone_id
+
+    # ============================================================
+
+    - name: 'delete public hosted zone (expect: changed=True)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        state: absent
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert deletion of public hosted zone (expect: changed=True)'
+      assert:
+        that:
+          - result.changed
+          - "result.result == 'Successfully deleted zone: {{ public_zone_id }}'"
+
+    # ============================================================
+
+    - name: 'delete public hosted zone (expect: changed=False)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        state: absent
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert deletion of public hosted zone (expect: changed=False)'
+      assert:
+        that:
+          - not result.changed
+          - "result.result == 'No zone to delete.'"
+
+    # ============================================================
+
+    - name: 'create a private hosted zone (expect: changed=True)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        comment: '{{ zone_comment }}'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        vpc_region: '{{ ec2_region }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert creation of private hosted zone (expect: changed=True)'
+      assert:
+        that:
+          - result.changed
+          - result.name == '{{ zone_domain_name }}'
+          - result.comment == '{{ zone_comment }}'
+          - result.private_zone
+          - zone_id in result
+
+    - set_fact:
+        private_zone_id: result.zone_id
+
+    # ============================================================
+
+    - name: 'create a private hosted zone (expect: changed=False)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        comment: '{{ zone_comment }}'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        vpc_region: '{{ ec2_region }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert creation of private hosted zone (expect: changed=False)'
+      assert:
+        that:
+          - not result.changed
+          - result.zone_id == private_zone_id
+
+    # ============================================================
+
+    - name: 'delete private hosted zone (expect: changed=True)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        state: absent
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert deletion of private hosted zone (expect: changed=True)'
+      assert:
+        that:
+          - result.changed
+          - "result.result == 'Successfully deleted zone: {{ private_zone_id }}'"
+
+    # ============================================================
+
+    - name: 'delete private hosted zone (expect: changed=False)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        state: absent
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert deletion of private hosted zone (expect: changed=False)'
+      assert:
+        that:
+          - not result.changed
+          - "result.result == 'No zone to delete.'"
+
+    # ============================================================
+
+    # Test hosted_zone_id option
+
+    - name: 'create a public hosted zone'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        comment: '{{ zone_comment }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: hosted_zone
+
+    - name: 'delete hosted zone using hosted_zone_id (expect: changed=True)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        state: absent
+        hosted_zone_id: '{{ hosted_zone.id }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert deletion of hosted zone (expect: changed=True)'
+      assert:
+        that:
+          - result.changed
+          - "result.result == 'Successfully deleted zone: {{ hosted_zone.id }}'"
+
+    - name: 'delete hosted zone using hosted_zone_id (expect: changed=False)'
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        state: absent
+        hosted_zone_id: '{{ hosted_zone.id }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      register: result
+
+    - name: 'assert deletion of hosted zone (expect: changed=False)'
+      assert:
+        that:
+          - not result.changed
+          - "result.result == 'There is no zone to delete that matches hosted_zone_id {{ hosted_zone.id }}.'"
+
+    # ============================================================
+
+    # hosted_zone_id can also be used to distinguish between multiple matching zones
+    # but testing that would require us to have the ability to create multiple hosted zones
+    # with the same domain name
+
+    # ============================================================
+
+  always:
+    - name: remove setup VPC
+      ec2_vpc_net:
+        ec2_region: '{{ ec2_region }}'
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+        cidr_block: 10.0.0.0/24
+        state: absent
+        name: '{{ setup_vpc_name }}'
