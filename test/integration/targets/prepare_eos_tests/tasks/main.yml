@@ -15,3 +15,13 @@
     parents: int Ethernet2
   become: yes
   connection: network_cli
+
+- name: enable eapi
+  eos_eapi:
+    http: yes
+    https: yes
+    local_http: no
+    enable_socket: yes
+  become: yes
+  connection: network_cli
+  tags: eapi
