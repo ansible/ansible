@@ -17,6 +17,21 @@ $result = @{
     }
 }
 
+# Functions 
+function Test-Admin {
+        $CurrentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
+        $IsAdmin = $CurrentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+
+        return $IsAdmin
+}
+
+# Check admin rights
+if (-not (Test-Admin)) {
+    $result.Remove("total_disks")
+    $result.Remove("disks")
+    Fail-Json -obj $result -message "Cmdlet was not started with elevated rights"
+}
+
 # Search disks
 try {
     $disks = Get-Disk
