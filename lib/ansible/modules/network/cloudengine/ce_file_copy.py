@@ -32,6 +32,8 @@ author:
 notes:
     - The feature must be enabled with feature scp-server.
     - If the file is already present, no transfer will take place.
+requirements:
+    - paramiko
 options:
     local_file:
         description:
@@ -111,9 +113,14 @@ import re
 import os
 import time
 from xml.etree import ElementTree
-import paramiko
 from ansible.module_utils.basic import get_exception, AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 try:
     from scp import SCPClient
@@ -326,6 +333,10 @@ class FileCopy(object):
         if not HAS_SCP:
             self.module.fail_json(
                 msg="'Error: No scp package, please install it.'")
+
+        if not HAS_PARAMIKO:
+            self.module.fail_json(
+                msg="'Error: No paramiko package, please install it.'")
 
         if self.local_file and len(self.local_file) > 4096:
             self.module.fail_json(
