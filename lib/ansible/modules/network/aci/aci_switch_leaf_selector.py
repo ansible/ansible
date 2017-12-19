@@ -24,7 +24,8 @@ author:
 version_added: '2.5'
 notes:
 - This module is to be used with M(aci_switch_policy_leaf_profile) and M(aci_switch_leaf_selector_node_block)
-- One first creates a leaf profile (infra:NodeP), then creates an associated selector (infra:LeafS) and finally adds a node block range to the selector (infra:NodeBlk)
+- One first creates a leaf profile (infra:NodeP), then creates an associated selector (infra:LeafS)
+- and finally adds a node block range to the selector (infra:NodeBlk)
 options:
   leaf_profile:
     description:
@@ -104,8 +105,8 @@ def main():
         aci.payload(
             aci_class='infraLeafS',
             class_config=dict(
-                 name=leaf
-             )
+                name=leaf
+            )
         )
 
         # Generate config diff which will be used as POST request body
