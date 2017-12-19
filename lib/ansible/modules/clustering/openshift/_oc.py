@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
-    'status': ['preview'],
+    'status': ['deprecated'],
     'supported_by': 'community'
 }
 
@@ -17,6 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 author:
   - "Kenneth D. Evensen (@kevensen)"
+deprecated: In 2.5 use M(oc_raw) instead.
 description:
   - This module allows management of resources in an OpenShift cluster. The
     inventory host can be any host with network connectivity to the OpenShift

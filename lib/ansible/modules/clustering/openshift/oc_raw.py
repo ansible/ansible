@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: openshift
+module: oc_raw.py 
 
 short_description: Manage OpenShift objects
 
@@ -37,7 +37,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Create a project
-  openshift:
+  oc_raw:
     api_version: v1
     kind: Project
     name: testing
@@ -46,7 +46,7 @@ EXAMPLES = '''
     state: present
 
 - name: Create a Persistent Volume Claim from an inline definition
-  openshift:
+  oc_raw:
     state: present
     definition:
       apiVersion: v1
@@ -62,7 +62,7 @@ EXAMPLES = '''
         - ReadWriteOnce
 
 - name: Create a Deployment from an inline definition
-  openshift:
+  oc_raw:
     state: present
     definition:
       apiVersion: v1
@@ -96,19 +96,19 @@ EXAMPLES = '''
             type: Rolling
 
 - name: Create a Deployment by reading the definition from a file
-  openshift:
+  oc_raw:
     state: present
     src: /testing/deployment.yml
 
 - name: Get the list of all Deployments
-  openshift:
+  oc_raw:
     api_version: v1
     kind: DeploymentConfigList
     namespace: testing
   register: deployment_list
 
 - name: Remove an existing Deployment
-  openshift:
+  oc_raw:
     api_version: v1
     kind: DeploymentConfig
     name: elastic
@@ -116,7 +116,7 @@ EXAMPLES = '''
     state: absent
 
 - name: Create a Secret
-  openshift:
+  oc_raw:
     inline:
       apiVersion: v1
       kind: Secret
@@ -129,7 +129,7 @@ EXAMPLES = '''
         password: "{{ 'foobard' | b64encode }}"
 
 - name: Retrieve the Secret
-  openshift:
+  oc_raw:
     api: v1
     kind: Secret
     name: mysecret
