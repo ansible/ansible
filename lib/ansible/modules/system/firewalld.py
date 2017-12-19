@@ -156,7 +156,7 @@ EXAMPLES = '''
     fw_family: ipv4
     table: filter
     direct_rule: '-m tcp -p tcp --dport 332 -j ACCEPT'
-    permanent: true 
+    permanent: true
     state: disabled
 
 - firewalld:
@@ -309,6 +309,7 @@ class FirewallTransaction(object):
         if self.fw_offline:
             self.fw.config.set_zone_config(fw_settings.settings)
         else:
+	    fw_zone = self.fw.config().getZoneByName(self.zone)
             fw_zone.update(fw_settings)
 
     def get_enabled_immediate(self):
@@ -499,6 +500,7 @@ class ServiceTransaction(FirewallTransaction):
         fw_settings.removeService(service)
         self.update_fw_settings(fw_zone, fw_settings)
 
+
 class DirectRuleTransaction(FirewallTransaction):
     """
     DirectRuleTransaction
@@ -510,18 +512,19 @@ class DirectRuleTransaction(FirewallTransaction):
             fw, action_args=action_args, desired_state=desired_state,
             permanent=permanent, immediate=immediate, fw_offline=fw_offline)
 
-    def get_enabled_immediate(self, direct_rule,  rule_priority, chain, table, fw_family):
-        if chain  is not None and chain in fw.getChains(ipv=fw_family, table=table) and direct_rule is None:
+    def get_enabled_immediate(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+        if chain is not None and chain in fw.getChains(ipv=fw_family, table=table) and direct_rule is None:
             return True
         elif chain is not None and chain not in fw.getChains(ipv=fw_family, table=table) and direct_rule is None:
             return False
         elif (chain is not None) and direct_rule is not None and fw.queryRule(ipv=fw_family, table=table, chain=chain,
-                                                                               priority=rule_priority,
-                                                                               args=direct_rule.split()):
+                                                                              priority=rule_priority,
+                                                                              args=direct_rule.split()):
             return True
         elif (chain is not None) and direct_rule is not None and not fw.queryRule(ipv=fw_family, table=table,
-                                                                                   chain=chain, priority=rule_priority,
-                                                                                   args=direct_rule.split()):
+                                                                                  chain=chain, priority=rule_priority,
+                                                                                  args=direct_rule.split()):
             return False
         elif (chain is None) and fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
             return True
@@ -531,7 +534,6 @@ class DirectRuleTransaction(FirewallTransaction):
 
     def get_enabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
         fw, fwd = self.get_direct_settings()
-
         if (chain in fwd.getChains(ipv=fw_family, table=table)) and direct_rule is None:
             return True
         elif (chain not in fwd.getChains(ipv=fw_family, table=table)) and direct_rule is None:
@@ -570,24 +572,23 @@ class DirectRuleTransaction(FirewallTransaction):
 
     def set_disabled_immediate(self, direct_rule, rule_priority, chain, table, fw_family):
         if direct_rule is None:
-            fw.removeChain(ipv=fw_family, table=table,chain=chain)
+            fw.removeChain(ipv=fw_family, table=table, chain=chain)
         elif direct_rule is not None and chain is not None:
             fw.removeRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority,
-                                   args=direct_rule.split())
+                          args=direct_rule.split())
         elif chain is None:
             fw.removePassthrough(ipv=fw_family, args=direct_rule.split())
 
     def set_disabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
         fw, fwd = self.get_direct_settings()
         if direct_rule is None:
-            fwd.removeChain(ipv=fw_family, table=table,chain=chain)
+            fwd.removeChain(ipv=fw_family, table=table, chain=chain)
         elif direct_rule is not None and chain is not None:
             fwd.removeRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority,
-                                   args=direct_rule.split())
+                           args=direct_rule.split())
         elif chain is None:
             fwd.removePassthrough(ipv=fw_family, args=direct_rule.split())
         self.update_direct_settings(fw=fw, fw_settings=fwd)
-
 
 
 class MasqueradeTransaction(FirewallTransaction):
@@ -927,7 +928,6 @@ def main():
     rule_priority = module.params['rule_priority']
     table = module.params['table']
 
-
     # If neither permanent or immediate is provided, assume immediate (as
     # written in the module's docs)
     if not permanent and not immediate:
@@ -973,14 +973,12 @@ def main():
     if chain is not None or direct_rule is not None:
         modification_count += 1
 
-
     if modification_count > 1:
         module.fail_json(
             msg='can only operate on port, service, rich_rule, or interface at once'
         )
 
     if service is not None:
-
         transaction = ServiceTransaction(
             fw,
             action_args=(service, timeout),
@@ -1069,7 +1067,6 @@ def main():
         if changed is True and (direct_rule is not None and chain is None):
             msgs.append("Changed rule %s to %s" % (direct_rule, desired_state))
 
-
     if interface is not None:
 
         transaction = InterfaceTransaction(
@@ -1108,4 +1105,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
