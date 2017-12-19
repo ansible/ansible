@@ -17,8 +17,8 @@ module: aci_aep_to_domain
 short_description: Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics (infra:RsDomP)
 description:
 - Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(infra:RsDomP) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information from the internal APIC class I(infra:RsDomP) at
+  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
@@ -58,7 +58,12 @@ RETURN = ''' # '''
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-VM_PROVIDER_MAPPING = dict(microsoft="uni/vmmp-Microsoft/dom-", openstack="uni/vmmp-OpenStack/dom-", vmware="uni/vmmp-VMware/dom-")
+VM_PROVIDER_MAPPING = dict(
+    microsoft='Microsoft',
+    openstack='OpenStack',
+    redhat='Redhat',
+    vmware='VMware',
+)
 
 
 def main():
@@ -68,7 +73,7 @@ def main():
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'vmware']),
+        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'redhat', 'vmware']),
     )
 
     module = AnsibleModule(
@@ -87,14 +92,21 @@ def main():
     vm_provider = module.params['vm_provider']
     state = module.params['state']
 
-    if domain_type == 'phys' and vm_provider is not None:
-        module.fail_json(msg="Domain type 'phys' cannot have a 'vm_provider'")
+    # Report when vm_provider is set when type is not virtual
+    if domain_type != 'vmm' and vm_provider is not None:
+        module.fail_json(msg="Domain type '{}' cannot have a 'vm_provider'".format(domain_type))
 
     # Compile the full domain for URL building
-    if domain_type == 'vmm':
-        aep_domain = '{}{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-    elif domain_type is not None:
+    if domain_type == 'fc':
+        aep_domain = 'uni/fc-{}'.format(domain)
+    elif domain_type == 'l2ext':
+        aep_domain = 'uni/l2dom-{}'.format(domain)
+    elif domain_type == 'l3ext':
+        aep_domain = 'uni/l3dom-{}'.format(domain)
+    elif domain_type == 'phys':
         aep_domain = 'uni/phys-{}'.format(domain)
+    elif domain_type == 'vmm':
+        aep_domain = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     else:
         aep_domain = None
 
