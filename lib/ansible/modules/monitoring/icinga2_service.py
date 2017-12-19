@@ -79,11 +79,11 @@ options:
     required: true
   host:
     description:
-      - The name of the host the service will be create for. 
+      - The name of the host the service will be create for.
       - If used, must be paired with service.
       - Mutually exclusive with name.
   service:
-    descritpopn:
+    description:
       - The name of the service.
       - If used, must be paired with host.
       - Mutually exclusive with name.
@@ -194,7 +194,7 @@ class icinga2_api:
 
     def exists(self, service):
         ret = self.call_url(
-            path="v1/objects/services?service="+service,
+            path="v1/objects/services?service=" + service,
         )
         if ret['code'] == 200:
             if len(ret['data']['results']) == 1:
@@ -203,16 +203,16 @@ class icinga2_api:
 
     def create(self, service, data):
         ret = self.call_url(
-            path="v1/objects/services/"+ service,
+            path="v1/objects/services/" + service,
             data=self.module.jsonify(data),
             method="PUT"
         )
         return ret
 
     def delete(self, service):
-        data = { "cascade": 1 }
+        data = {"cascade": 1}
         ret = self.call_url(
-            path="v1/objects/services/"+ service,
+            path="v1/objects/services/" + service,
             data=self.module.jsonify(data),
             method="DELETE"
         )
@@ -220,18 +220,18 @@ class icinga2_api:
 
     def modify(self, service, data):
         ret = self.call_url(
-            path="v1/objects/services/"+ service,
+            path="v1/objects/services/" + service,
             data=self.module.jsonify(data),
             method="POST"
         )
         return ret
 
     def check(self, service):
-        data={
+        data = {
             "type": "Service",
             "filter": "service.__name==\"" + service + "\"",
             "force_check": True,
-        };
+        }
         ret = self.call_url(
             path="v1/actions/reschedule-check",
             data=self.module.jsonify(data),
@@ -290,9 +290,9 @@ def main():
 
     state = module.params["state"]
     if module.params["host"]:
-      name = module.params["host"] + "!" + module.params["service"]
+        name = module.params["host"] + "!" + module.params["service"]
     else:
-      name = module.params["name"]
+        name = module.params["name"]
     zone = module.params["zone"]
     template = []
     template.append(name)
@@ -347,7 +347,7 @@ def main():
         elif icinga.diff(name, data):
             if module.check_mode:
                 module.exit_json(changed=False, name=name, data=data)
-            #ret = icinga.modify(name,data)
+            # ret = icinga.modify(name,data)
             ret = icinga.delete(name)
             ret = icinga.create(name, data)
             if ret['code'] == 200:
@@ -357,7 +357,7 @@ def main():
                     if ret['code'] != 200:
                         module.fail_json(msg="bad return code checking service: %s" % (ret['data']))
             else:
-                module.fail_json(msg="bad return code modifying service: %s" % (ret['data']))        
+                module.fail_json(msg="bad return code modifying service: %s" % (ret['data']))
 
     else:
         if state == "present":
