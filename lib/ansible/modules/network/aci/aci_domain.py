@@ -18,7 +18,7 @@ description:
 - Manage physical, virtual, bridged, routed or FC domain profiles.
 - More information from the internal APIC classes I(phys:DomP),
   I(vmm:DomP), I(l2ext:DomP), I(l3ext:DomP), I(fc:DomP) at
-  I(fv:RsDomAtt) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
@@ -46,7 +46,7 @@ options:
   vm_provider:
     description:
     - The VM platform for VMM Domains.
-    choices: [ microsoft, openstack, vmware ]
+    choices: [ microsoft, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
@@ -54,12 +54,13 @@ EXAMPLES = r''' # '''
 
 RETURN = r''' # '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VM_PROVIDER_MAPPING = dict(
     microsoft="Microsoft",
     openstack="OpenStack",
+    redhat="Redhat",
     vmware="VMware",
 )
 
@@ -70,7 +71,7 @@ def main():
         domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),
         domain_type=dict(type='str', choices=['fc', 'l2ext', 'l3ext', 'phys', 'vmm'], aliases=['type']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'vmware']),
+        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'redhat', 'vmware']),
     )
 
     module = AnsibleModule(
