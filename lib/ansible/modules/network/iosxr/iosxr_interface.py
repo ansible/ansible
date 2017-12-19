@@ -40,11 +40,13 @@ options:
     description:
       - Removes the shutdown configuration, which removes the forced administrative down on the interface,
         enabling it to move to an up or down state.
-    choices: ['True', 'False']
+    type: bool
     default: True
   active:
     description:
-      - Whether the interface is C(active) or C(preconfigured)
+      - Whether the interface is C(active) or C(preconfigured). Preconfiguration allows you to configure modular
+        services cards before they are inserted into the router. When the cards are inserted, they are instantly
+        configured. Active cards are the ones already inserted.
     choices: ['active', 'preconfigure']
     default: active
     version_added: 2.5
