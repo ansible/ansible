@@ -23,11 +23,11 @@ author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- This module is to be used with:
-- M(aci_switch_policy_leaf_profile) and M(aci_switch_leaf_selector_node_block)
-- One first creates a leaf profile (infra:NodeP)
-- Creates an associated selector (infra:LeafS)
-- Finally adds a node block range to the selector (infra:NodeBlk)
+- This module is to be used with
+  M(aci_switch_policy_leaf_profile) and M(aci_switch_leaf_selector_node_block).
+  One first creates a leaf profile (infra:NodeP),
+  creates an associated selector (infra:LeafS),
+  finally adds a node block range to the selector (infra:NodeBlk).
 options:
   leaf_profile:
     description:
