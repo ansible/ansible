@@ -98,6 +98,26 @@ options:
       - Whether to run this module even when firewalld is offline.
     type: bool
     version_added: "2.3"
+  direct_rule:
+    description:
+      - 'The firewalld iptables direct rule you would like to enable/disable.'
+    version_added: "2.8"
+  chain:
+    description:
+      - 'The iptables chain in which to insert the direct_rule, used with the C(direct_rule) option.'
+    version_added: "2.8"
+  table:
+    description:
+      - 'The iptables table in which to insert the direct_rule, used with the C(direct_rule) option.'
+    version_added: "2.8"
+  fw_family:
+    description:
+      - 'The ip address family for the firewall direct_rule (C(ipv4) or C(ipv6)), used with the C(direct_rule) option.'
+    version_added: "2.8"
+  rule_priority:
+    description:
+      - 'The priority of the direct firewalld iptables rule, used with the C(direct_rule) option.'
+    version_added: "2.8"
 notes:
   - Not tested on any Debian based system.
   - Requires the python2 bindings of firewalld, which may not be installed by default.
@@ -181,6 +201,39 @@ EXAMPLES = r'''
     permanent: yes
     immediate: yes
     state: enabled
+  loop:
+    - ipv4
+    - ipv6
+
+- firewalld:
+    chain: sshg
+    fw_family: ipv4
+    table: filter
+    permanent: true
+    state: enabled
+
+- firewalld:
+    chain: sshg
+    fw_family: ipv4
+    table: filter
+    direct_rule: '-m tcp -p tcp --dport 332 -j ACCEPT'
+    permanent: true
+    state: enabled
+
+- firewalld:
+    chain: sshg
+    fw_family: ipv4
+    table: filter
+    direct_rule: '-m tcp -p tcp --dport 332 -j ACCEPT'
+    permanent: true
+    state: disabled
+
+- firewalld:
+    chain: sshg
+    fw_family: ipv4
+    table: filter
+    permanent: true
+    state: disabled
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -308,6 +361,94 @@ class ServiceTransaction(FirewallTransaction):
         fw_zone, fw_settings = self.get_fw_zone_settings()
         fw_settings.removeService(service)
         self.update_fw_settings(fw_zone, fw_settings)
+
+
+class DirectRuleTransaction(FirewallTransaction):
+    """
+    DirectRuleTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(DirectRuleTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate)
+
+    def get_enabled_immediate(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+        if chain is not None and chain in fw.getChains(ipv=fw_family, table=table) and direct_rule is None:
+            return True
+        elif chain is not None and chain not in fw.getChains(ipv=fw_family, table=table) and direct_rule is None:
+            return False
+        elif (chain is not None) and direct_rule is not None and fw.queryRule(ipv=fw_family, table=table, chain=chain,
+                                                                              priority=rule_priority,
+                                                                              args=direct_rule.split()):
+            return True
+        elif (chain is not None) and direct_rule is not None and not fw.queryRule(ipv=fw_family, table=table,
+                                                                                  chain=chain, priority=rule_priority,
+                                                                                  args=direct_rule.split()):
+            return False
+        elif (chain is None) and fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return True
+        elif (chain is None) and not fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return False
+        return True
+
+    def get_enabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+        if (chain in fwd.getChains(ipv=fw_family, table=table)) and direct_rule is None:
+            return True
+        elif (chain not in fwd.getChains(ipv=fw_family, table=table)) and direct_rule is None:
+            return False
+        elif (chain is not None) and direct_rule is not None and fwd.queryRule(ipv=fw_family, table=table, chain=chain,
+                                                                               priority=rule_priority,
+                                                                               args=direct_rule.split()):
+            return True
+        elif (chain is not None) and direct_rule is not None and not fwd.queryRule(ipv=fw_family, table=table,
+                                                                                   chain=chain, priority=rule_priority,
+                                                                                   args=direct_rule.split()):
+            return False
+        elif (chain is None) and fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return True
+        elif (chain is None) and not fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return False
+        return True
+
+    def set_enabled_immediate(self, direct_rule, rule_priority, chain, table, fw_family):
+        if direct_rule is None:
+            self.fw.addChain(ipv=fw_family, table=table, chain=chain)
+        elif direct_rule is not None and chain is not None:
+            self.fw.addRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority, args=direct_rule.split())
+        elif chain is None:
+            self.fw.addPassthrough(ipv=fw_family, args=direct_rule.split())
+
+    def set_enabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+        if direct_rule is None:
+            fwd.addChain(ipv=fw_family, table=table, chain=chain)
+        elif direct_rule is not None and chain is not None:
+            fwd.addRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority, args=direct_rule.split())
+        elif chain is None:
+            fwd.addPassthrough(ipv=fw_family, args=direct_rule.split())
+        self.update_direct_settings(fw=fw, fw_settings=fwd)
+
+    def set_disabled_immediate(self, direct_rule, rule_priority, chain, table, fw_family):
+        if direct_rule is None:
+            self.fw.removeChain(ipv=fw_family, table=table, chain=chain)
+        elif direct_rule is not None and chain is not None:
+            self.fw.removeRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority,
+                               args=direct_rule.split())
+        elif chain is None:
+            self.fw.removePassthrough(ipv=fw_family, args=direct_rule.split())
+
+    def set_disabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+        if direct_rule is None:
+            fwd.removeChain(ipv=fw_family, table=table, chain=chain)
+        elif direct_rule is not None and chain is not None:
+            fwd.removeRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority,
+                           args=direct_rule.split())
+        elif chain is None:
+            fwd.removePassthrough(ipv=fw_family, args=direct_rule.split())
+        self.update_direct_settings(fw=fw, fw_settings=fwd)
 
 
 class MasqueradeTransaction(FirewallTransaction):
@@ -646,6 +787,11 @@ def main():
             interface=dict(type='str'),
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
+            chain=dict(required=False, default=None),
+            table=dict(required=False, default=None),
+            direct_rule=dict(required=False, default=None),
+            fw_family=dict(required=False, default=None),
+            rule_priority=dict(type='int', required=False, default=0)
         ),
         supports_check_mode=True
     )
@@ -656,6 +802,11 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    chain = None if not module.params['chain'] else module.params['chain']
+    direct_rule = None if not module.params['direct_rule'] else module.params['direct_rule']
+    fw_family = None if not module.params['fw_family'] else module.params['fw_family']
+    rule_priority = None if not module.params['rule_priority'] else module.params['rule_priority']
+    table = module.params['table']
 
     # Sanity checks
     FirewallTransaction.sanity_check(module)
@@ -702,6 +853,8 @@ def main():
     if interface is not None:
         modification_count += 1
     if masquerade is not None:
+        modification_count += 1
+    if chain is not None or direct_rule is not None:
         modification_count += 1
 
     if modification_count > 1:
@@ -795,6 +948,26 @@ def main():
                 )
             )
 
+    if (direct_rule is None and chain is not None) or\
+            (direct_rule is not None and chain is not None and table is not None) or\
+            (direct_rule is not None and chain is None and table is None):
+        transaction = DirectRuleTransaction(
+            module,
+            action_args=(direct_rule, rule_priority, chain, table, fw_family),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True and (direct_rule is None and chain is not None):
+            msgs.append("Changed chain %s to %s" % (chain, desired_state))
+
+        if changed is True and (direct_rule is not None and chain is None):
+            msgs.append("Changed rule %s to %s" % (direct_rule, desired_state))
+
     if rich_rule is not None:
 
         transaction = RichRuleTransaction(
@@ -841,7 +1014,6 @@ def main():
 
     ''' If there are no changes within the zone we are operating on the zone itself '''
     if modification_count == 0 and desired_state in ['absent', 'present']:
-
         transaction = ZoneTransaction(
             module,
             action_args=(),
