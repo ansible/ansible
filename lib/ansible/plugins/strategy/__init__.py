@@ -140,6 +140,7 @@ def debug_closure(func):
                     self._queue_task(host, task, task_vars, play_context)
 
                     _processed_results.extend(debug_closure(func)(self, iterator, one_pass))
+                    break
                 elif next_action.result == NextAction.CONTINUE:
                     _processed_results.append(result)
                     break
