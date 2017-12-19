@@ -52,8 +52,23 @@ options:
     required: false
   token:
     description:
-      - "The token with which to authenticate agains the OpenShift cluster."
-    required: true
+      - "The token with which to authenticate against the OpenShift cluster."
+    required: false
+  kube_config:
+    description:
+      - "A path to the Kubernetes configuration file containing the cluster login credentials.  If the 'token'
+         option isn't defined this is taken as the default login mechanism.  The 'kube_config' is mutually
+         exclusive with 'token'."
+    required: false
+    default: ~/.kube/config
+    version_added: 2.5
+  kube_context:
+    description:
+      - "The login context to use when accessing the OpenShift cluster.  The last login credentials are indicated
+         by 'current-context' which is the default context for the option."
+    required: false
+    default: current-context
+    version_added: 2.5
   state:
     choices:
       - present
@@ -85,7 +100,6 @@ EXAMPLES = """
     name: myservice
     namespace: mynamespace
     kind: Service
-    token: << redacted >>
 
 - name: Add project role Admin to a user
   oc:
@@ -128,8 +142,18 @@ method:
 ...
 '''
 
+import base64
+import os
+import tempfile
+import sys
+try:
+    import yaml
+except ImportError:
+    pass
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import urls
+from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native
 
 
 class ApiEndpoint(object):
@@ -140,14 +164,7 @@ class ApiEndpoint(object):
         self.version = version
 
     def __str__(self):
-        url = "https://"
-        url += self.host
-        url += ":"
-        url += str(self.port)
-        url += "/"
-        url += self.api
-        url += "/"
-        url += self.version
+        url = "https://{0}:{1}/{2}/{3}".format(self.host, self.port, self.api, self.version)
         return url
 
 
@@ -184,17 +201,15 @@ class NamedResource(object):
             self.definition = definition
 
     def url(self, create=False):
-        url = str(self.resource_endpoint)
-        url += '/'
+        url = [str(self.resource_endpoint)]
+
         if self.resource_endpoint.namespaced:
-            url += 'namespaces/'
-            url += self.namespace()
-            url += '/'
-        url += self.resource_endpoint.name
+            url.append('namespaces')
+            url.append(self.namespace())
+        url.append(self.resource_endpoint.name)
         if not create:
-            url += '/'
-            url += self.name()
-        return url
+            url.append(self.name())
+        return '/'.join(url)
 
     def __dict__(self):
         return self.definition
@@ -204,8 +219,8 @@ class NamedResource(object):
 
 
 class OC(object):
-    def __init__(self, module, token, host, port,
-                 apis=None):
+    def __init__(self, module, host, port,
+                 apis=None, token=None):
         apis = ['api', 'oapi'] if apis is None else apis
 
         self.apis = apis
@@ -216,9 +231,15 @@ class OC(object):
         self.port = port
         self.kinds = {}
 
-        self.bearer = "Bearer " + self.token
-        self.headers = {"Authorization": self.bearer,
-                        "Content-type": "application/json"}
+        # If the authentication mechanism is a token, we set the appropriate header
+        if self.token:
+            self.bearer = "Bearer " + self.token
+            self.headers = {"Authorization": self.bearer,
+                            "Content-type": "application/json"}
+        # Otherwise, just set the content-type.
+        else:
+            self.headers = {"Content-type": "application/json"}
+
         # Build Endpoints
         for api in self.apis:
             endpoint = ApiEndpoint(self.host,
@@ -310,21 +331,22 @@ class OC(object):
                                         method=method,
                                         data=data)
         if response is not None:
-            body = response.read()
+            body = to_text(response.read(), errors='surrogate_or_strict')
         if info['status'] >= 300:
-            body = info['body']
+            body = to_native(info['body'])
+        elif info['status'] == -1:
+            body = str(info)
 
-        message = "The URL, method, and code for connect is %s, %s, %d." % (url, method, info['status'])
+        message = "The URL, method, and code for connect is {0}, {1}, {2}: {3}".format(url, method, info['status'], body)
         if info['status'] == 401:
-            self.module.fail_json(msg=message + "  Unauthorized.  Check that you have a valid serivce account and token.")
+            self.module.fail_json(msg="{0}  Unauthorized.  Check that you have a valid serivce account and token.".format(message))
 
         self.module.log(msg=message)
 
         try:
             json_body = self.module.from_json(body)
         except TypeError:
-            self.module.fail_json(msg="Response from %s expected to be a " +
-                                  "expected string or buffer." % url)
+            self.module.fail_json(msg="Response from {0} expected to be a expected string or buffer.  Instead was {1}".format(url, str(type(body))))
         except ValueError:
             return body, info['status']
 
@@ -358,6 +380,90 @@ class OC(object):
         return destination, changed
 
 
+class KubeConfig(object):
+    def __init__(self, module, config_file, context):
+        self.module = module
+        with open(config_file, 'r') as kube_file:
+            kube_data = yaml.load(kube_file)
+            # By default we will use the 'current-context' from the .kube/config file.  We also allow
+            # for the user to specify the context to use.  While this is an unlikely scenario, it's
+            # still possible.
+            if context == 'current-context':
+                self.context = kube_data['current-context']
+            else:
+                self.context = context
+            self.context_info = [context['context'] for context in kube_data['contexts'] if context['name'] == self.context]
+
+            if not self.context_info:
+                raise self.module.fail_json(msg="Could not find context info from context {0} in kube config file {1}.".format(module.params['kube_context'],
+                                                                                                                               module.params['kube_confg']))
+
+            self.login_info = [user['user'] for user in kube_data['users'] if user['name'] in self.context_info[0]['user']]
+
+            self.cluster_info = [cluster['cluster'] for cluster in kube_data['clusters'] if cluster['name'] == self.context_info[0]['cluster']]
+
+            self.cert_file_name = None
+            self.cert_file = None
+            self.key_file_name = None
+            self.key_file = None
+
+    # The user authenticaion mechanism in the kubeconfig file may very well be a token.  If so, we will use it.
+    def user_token(self):
+        try:
+            return self.login_info[0]['token']
+        except KeyError:
+            pass
+        return None
+
+    # The client certificate in the kube/config file is Base64 encoded.  We have to decode it.
+    def user_client_cert(self):
+        try:
+            return base64.b64decode(self.login_info[0]['client-certificate-data'])
+        except KeyError:
+            pass
+        return None
+
+    # The client key in the kube/config file is Base64 encoded.  We have to decode it.
+    def user_client_key(self):
+        try:
+            return base64.b64decode(self.login_info[0]['client-key-data'])
+        except KeyError:
+            pass
+        return None
+
+    # Because Python requests doesn't take a certificate as a string, but rather a file,
+    # we will have to create a temporary file for the client certificate.  Alternatively the
+    # kube/config file can accept a path to the certificate.
+    def user_client_cert_file(self):
+        if self.user_client_cert():
+            self.cert_file, self.cert_file_name = tempfile.mkstemp()
+            os.write(self.cert_file, self.user_client_cert())
+            self.module.log('cert file name {0}'.format(self.cert_file_name))
+            return self.cert_file_name
+        elif self.login_info[0]['client-certificate']:
+            return self.login_info[0]['client-certificate']
+        return None
+
+    # Because Python requests doesn't take a certificate as a string, but rather a file,
+    # we will have to create a temporary file for the client key.  Alternatively the
+    # kube/config file can accept a path to the key.
+    def user_client_key_file(self):
+        if self.user_client_key():
+            self.key_file, self.key_file_name = tempfile.mkstemp()
+            os.write(self.key_file, self.user_client_key())
+            self.module.log('key file name {0}'.format(self.key_file_name))
+            return self.key_file_name
+        elif self.login_info[0]['client-key']:
+            return self.login_info[0]['client-key']
+        return None
+
+    def clean(self):
+        if os.path.isfile(self.cert_file_name):
+            os.remove(self.cert_file_name)
+        if os.path.isfile(self.key_file_name):
+            os.remove(self.key_file_name)
+
+
 def main():
 
     module = AnsibleModule(
@@ -369,14 +475,18 @@ def main():
             kind=dict(type='str'),
             name=dict(type='str'),
             namespace=dict(type='str'),
-            token=dict(required=True, type='str', no_log=True),
+            token=dict(required=False, type='str', no_log=True),
+            kube_config=dict(required=False, type='path', default='~/.kube/config'),
+            kube_context=dict(required=False, type='str', default='current-context'),
             state=dict(required=True,
                        choices=['present', 'absent']),
             validate_certs=dict(type='bool', default='yes')
         ),
         mutually_exclusive=(['kind', 'definition'],
                             ['name', 'definition'],
-                            ['namespace', 'definition']),
+                            ['namespace', 'definition'],
+                            ['kube_config', 'token'],
+                            ['kube_context', 'token']),
         required_if=([['state', 'absent', ['kind']]]),
         required_one_of=([['kind', 'definition']]),
         no_log=False,
@@ -394,7 +504,31 @@ def main():
     kind = module.params['kind']
     name = module.params['name']
     namespace = module.params['namespace']
-    token = module.params['token']
+    token = None
+    kube_config = None
+
+    # If the token is set in the module arguments, that takes priority.  Otherwise, the default
+    # is to use the credentials in the kube/config.
+    if module.params['token']:
+        token = module.params['token']
+        module.log("Using token specified in module args.")
+    elif 'yaml' in sys.modules:
+        kube_config = KubeConfig(module, module.params['kube_config'], module.params['kube_context'])
+        if kube_config.user_token():
+            token = kube_config.user_token()
+            module.log("Using token from config file {0}".format(module.params['kube_config']))
+
+        elif kube_config.user_client_cert():
+            # By setting the client_cert and client_key module params, the values get passed down
+            # to the Ansible urls module.
+            module.params['client_cert'] = kube_config.user_client_cert_file()
+            module.params['client_key'] = kube_config.user_client_key_file()
+            module.log("Using client cert and key from config file {0}".format(module.params['kube_config']))
+    # If a token isn't specified in the module arguments, we expect to use .kube/config.  However, this
+    # requires PyYAML.  If it isn't found, we will raise an error.
+    else:
+        module.fail_json(msg='''Attempted to read configuration file {0} but PyYAML isn't found \
+                              on this host.  Install PyYAML or consider using the \'token\' module argument.'''.format(module.params['kube_config']))
 
     if definition is None:
         definition = {}
@@ -408,7 +542,8 @@ def main():
         definition['kind'] = kind
 
     result = None
-    oc = OC(module, token, host, port)
+
+    oc = OC(module, host, port, token=token)
     resource = NamedResource(module,
                              definition,
                              oc.get_resource_endpoint(definition['kind']))
@@ -446,8 +581,11 @@ def main():
                    'url': resource.url(),
                    'method': method}
 
-    module.exit_json(changed=changed, ansible_facts=facts)
+    # Remove the temporary files if they exist.
+    if kube_config:
+        kube_config.clean()
 
+    module.exit_json(changed=changed, ansible_facts=facts)
 
 if __name__ == '__main__':
     main()
