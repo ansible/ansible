@@ -266,9 +266,9 @@ When using complex data structures for looping the display might get a bit too "
             nic02: 10Gb
             ...
       loop_control:
-        label: "{{item.name}}"
+        label: "{{ item.name }}"
 
-This will now display just the 'label' field instead of the whole structure per 'item', it defaults to '"{{item}}"' to display things as usual.
+This will now display just the ``label`` field instead of the whole structure per ``item``, it defaults to ``{{ item }}`` to display things as usual.
 
 .. versionadded:: 2.2
 
