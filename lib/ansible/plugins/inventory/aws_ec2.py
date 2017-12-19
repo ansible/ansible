@@ -339,7 +339,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         for group_name, group_value in self._get_group_by_name_and_value(group_by_name):
             groups[group_name] = groups.get(group_name) or {}
 
-
             if group_name == 'aws_ec2' and group_value is None:
                 groups['aws_ec2'] = instances
                 continue
@@ -462,7 +461,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             if value == v:
                 return k
 
-    def _get_tag_hostname(self, preference):
+    def _get_tag_hostname(self, preference, instance):
         have_hostname = None
         for key, value in self._get_group_by_name_and_value([preference]):
             if ',' in value:
@@ -503,7 +502,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         hostname = None
         for preference in hostnames:
             if 'tag' in preference:
-                hostname = self._get_tag_hostname(preference)
+                hostname = self._get_tag_hostname(preference, instance)
             else:
                 hostname = self._get_boto_attr_chain(preference, instance)
         if hostname:

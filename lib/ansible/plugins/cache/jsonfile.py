@@ -52,6 +52,7 @@ except ImportError:
 from ansible.module_utils.basic import jsonify
 from ansible.plugins.cache import BaseFileCacheModule
 
+
 class CacheModule(BaseFileCacheModule):
     """
     A caching module backed by json files.
