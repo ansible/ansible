@@ -25,18 +25,14 @@ options:
     - If C(absent), will verify SAN Connectivity Policies are absent and will delete if needed.
     choices: [present, absent]
     default: present
-  san_connectivity_list:
-    description:
-    - List of SAN Connectivity Policies.  Allows multiple resource updates with a single UCSM connection.
-    - Either san_connectivity_list or name is required (user can specify either a list or single resource)
-    - See descriptions for name and other options for information on specifying each list element
   name:
     description:
     - Name of the SAN Connectivity Policy
-    - If specifying a single SAN Connectivity Policy, name is required
-  descr:
+    required: yes
+  description:
     description:
     - Description for the SAN Connectivity Policy
+    aliases: [ descr ]
   wwnn_pool:
     description:
     - WWNN Pool name
@@ -62,32 +58,28 @@ version_added: '2.5'
 '''
 
 EXAMPLES = r'''
-- name: Configure multiple SAN Connectivity Policies
+- name: Configure SAN Connectivity Policy
   ucs_san_connectivity:
     hostname: 172.16.143.150
     username: admin
     password: password
-    san_connectivity_list:
-    - name: Cntr-FC-Boot
-      wwnn_pool: WWNN-Pool
-      vhba_list:
-      - name: Fabric-A
-        vhba_template: vHBA-Template-A
-        adapter_policy: Linux
-      - name: Fabric-B
-        vhba_template: vHBA-Template-B
-        adapter_policy: Linux
-
-- name: Configure single SAN Connectivity Policy
-  ucs_san_connectivity:
-    hostname: 172.16.143.150
-    username: admin
     name: Cntr-FC-Boot
     wwnn_pool: WWNN-Pool
     vhba_list:
     - name: Fabric-A
       vhba_template: vHBA-Template-A
       adapter_policy: Linux
+    - name: Fabric-B
+      vhba_template: vHBA-Template-B
+      adapter_policy: Linux
+
+- name: Remove SAN Connectivity Policy
+  ucs_san_connectivity:
+    hostname: 172.16.143.150
+    username: admin
+    password: password
+    name: Cntr-FC-Boot
+    state: absent
 '''
 
 RETURN = r'''
@@ -100,21 +92,30 @@ from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_s
 
 def main():
     argument_spec = ucs_argument_spec
-    argument_spec.update(san_connectivity_list=dict(type='list'),
-                         org_dn=dict(type='str', default='org-root'),
-                         name=dict(type='str'),
-                         descr=dict(type='str'),
-                         wwnn_pool=dict(type='str', default='default'),
-                         vhba_list=dict(type='list'),
-                         state=dict(type='str', default='present', choices=['present', 'absent']))
-    module = AnsibleModule(argument_spec,
-                           supports_check_mode=True,
-                           required_one_of=[
-                               ['san_connectivity_list', 'name']
-                           ],
-                           mutually_exclusive=[
-                               ['san_connectivity_list', 'name']
-                           ])
+    argument_spec.update(
+        org_dn=dict(type='str', default='org-root'),
+        name=dict(type='str'),
+        descr=dict(type='str'),
+        wwnn_pool=dict(type='str', default='default'),
+        vhba_list=dict(type='list'),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        san_connectivity_list=dict(type='list'),
+    )
+
+    # Note that use of san_connectivity_list is an experimental feature which allows multiple resource updates with a single UCSM connection.
+    # Support for san_connectivity_list may change or be removed once persistent UCS connections are supported.
+    # Either san_connectivity_list or name is required (user can specify either a list or single resource).
+
+    module = AnsibleModule(
+        argument_spec,
+        supports_check_mode=True,
+        required_one_of=[
+            ['san_connectivity_list', 'name'],
+        ],
+        mutually_exclusive=[
+            ['san_connectivity_list', 'name'],
+        ],
+    )
     ucs = UCSModule(module)
 
     err = False
@@ -126,6 +127,9 @@ def main():
 
     changed = False
     try:
+        # Only documented use is a single resource, but to also support experimental
+        # feature allowing multiple updates all params are converted to a san_connectivity_list below.
+
         if module.params['san_connectivity_list']:
             # directly use the list (single resource and list are mutually exclusive
             san_connectivity_list = module.params['san_connectivity_list']
@@ -133,7 +137,8 @@ def main():
             # single resource specified, create list from the current params
             san_connectivity_list = [module.params]
         for san_connectivity in san_connectivity_list:
-            exists = False
+            mo_exists = False
+            props_match = False
             # set default params.  Done here to set values for lists which can't be done in the argument_spec
             if not san_connectivity.get('descr'):
                 san_connectivity['descr'] = ''
@@ -150,6 +155,7 @@ def main():
 
             mo = ucs.login_handle.query_dn(dn)
             if mo:
+                mo_exists = True
                 # check top-level mo props
                 kwargs = {}
                 kwargs['descr'] = san_connectivity['descr']
@@ -163,7 +169,7 @@ def main():
                         kwargs['ident_pool_name'] = san_connectivity['wwnn_pool']
                         if (mo_1.check_prop_match(**kwargs)):
                             if not san_connectivity.get('vhba_list'):
-                                exists = True
+                                props_match = True
                             else:
                                 # check vnicFc props
                                 for vhba in san_connectivity['vhba_list']:
@@ -174,32 +180,42 @@ def main():
                                     kwargs['order'] = vhba['order']
                                     kwargs['nw_templ_name'] = vhba['vhba_template']
                                     if (mo_2.check_prop_match(**kwargs)):
-                                        exists = True
+                                        props_match = True
 
             if module.params['state'] == 'absent':
-                if exists:
+                # mo must exist but all properties do not have to match
+                if mo_exists:
                     if not module.check_mode:
                         ucs.login_handle.remove_mo(mo)
                         ucs.login_handle.commit()
                     changed = True
             else:
-                if not exists:
+                if not props_match:
                     if not module.check_mode:
                         # create if mo does not already exist
-                        mo = VnicSanConnPolicy(parent_mo_or_dn=module.params['org_dn'],
-                                               name=san_connectivity['name'],
-                                               descr=san_connectivity['descr'])
-                        mo_1 = VnicFcNode(parent_mo_or_dn=mo,
-                                          ident_pool_name=san_connectivity['wwnn_pool'],
-                                          addr='pool-derived')
+                        mo = VnicSanConnPolicy(
+                            parent_mo_or_dn=module.params['org_dn'],
+                            name=san_connectivity['name'],
+                            descr=san_connectivity['descr'],
+                        )
+                        mo_1 = VnicFcNode(
+                            parent_mo_or_dn=mo,
+                            ident_pool_name=san_connectivity['wwnn_pool'],
+                            addr='pool-derived',
+                        )
                         if san_connectivity.get('vhba_list'):
                             for vhba in san_connectivity['vhba_list']:
-                                mo_2 = VnicFc(parent_mo_or_dn=mo,
-                                              name=vhba['name'],
-                                              adaptor_profile_name=vhba['adapter_policy'],
-                                              nw_templ_name=vhba['vhba_template'],
-                                              order=vhba['order'])
-                                mo_2_1 = VnicFcIf(parent_mo_or_dn=mo_2, name='default')
+                                mo_2 = VnicFc(
+                                    parent_mo_or_dn=mo,
+                                    name=vhba['name'],
+                                    adaptor_profile_name=vhba['adapter_policy'],
+                                    nw_templ_name=vhba['vhba_template'],
+                                    order=vhba['order'],
+                                )
+                                mo_2_1 = VnicFcIf(
+                                    parent_mo_or_dn=mo_2,
+                                    name='default',
+                                )
 
                         ucs.login_handle.add_mo(mo, True)
                         ucs.login_handle.commit()

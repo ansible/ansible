@@ -13,10 +13,8 @@
     hostname: "{{ ucs_hostname }}"
     username: "{{ ucs_username }}"
     password: "{{ ucs_password }}"
-    san_connectivity_list:
-    - name: Cntr-FC-Boot
+    name: Cntr-FC-Boot
     state: absent
-
 
 # Test present (check_mode)
 - name: SAN Connectivity Policies present (check_mode)
@@ -24,16 +22,15 @@
     hostname: "{{ ucs_hostname }}"
     username: "{{ ucs_username }}"
     password: "{{ ucs_password }}"
-    san_connectivity_list:
-    - name: Cntr-FC-Boot
-      wwnn_pool: WWNN-Pool
-      vhba_list:
-      - name: Fabric-A
-        vhba_template: vHBA-Template-A
-        adapter_policy: Linux
-      - name: Fabric-B
-        vhba_template: vHBA-Template-B
-        adapter_policy: Linux
+    name: Cntr-FC-Boot
+    wwnn_pool: WWNN-Pool
+    vhba_list:
+    - name: Fabric-A
+      vhba_template: vHBA-Template-A
+      adapter_policy: Linux
+    - name: Fabric-B
+      vhba_template: vHBA-Template-B
+      adapter_policy: Linux
   check_mode: yes
   register: cm_san_connectivity_present
 
@@ -69,17 +66,7 @@
 - name: SAN Connectivity Policies description change (check_mode)
   ucs_san_connectivity: &san_connectivity_change
     <<: *san_connectivity_present
-    san_connectivity_list:
-    - name: Cntr-FC-Boot
-      descr: Testing Ansible
-      wwnn_pool: WWNN-Pool
-      vhba_list:
-      - name: Fabric-A
-        vhba_template: vHBA-Template-A
-        adapter_policy: Linux
-      - name: Fabric-B
-        vhba_template: vHBA-Template-B
-        adapter_policy: Linux
+    descr: Testing Ansible
   check_mode: yes
   register: cm_san_connectivity_descr_change
 
@@ -113,29 +100,27 @@
 
 # Teardown (clean environment)
 - name: SAN Connectivity Policies absent (check_mode)
-  ucs_san_connectivity: &san_connectivity_change_absent
-    <<: *san_connectivity_change
-    state: absent
+  ucs_san_connectivity: *san_connectivity_absent
   check_mode: yes
   register: cm_san_connectivity_absent
 
 
 # Absent (normal mode)
 - name: SAN Connectivity Policies absent (normal mode)
-  ucs_san_connectivity: *san_connectivity_change_absent
+  ucs_san_connectivity: *san_connectivity_absent
   register: nm_san_connectivity_absent
 
 
 # Test absent again (idempotent)
 - name: SAN Connectivity Policies absent again (check_mode)
-  ucs_san_connectivity: *san_connectivity_change_absent
+  ucs_san_connectivity: *san_connectivity_absent
   check_mode: yes
   register: cm_san_connectivity_absent_again
 
 
 # Absent again (normal mode)
 - name: SAN Connectivity Policies absent again (normal mode)
-  ucs_san_connectivity: *san_connectivity_change_absent
+  ucs_san_connectivity: *san_connectivity_absent
   register: nm_san_connectivity_absent_again
 
 
