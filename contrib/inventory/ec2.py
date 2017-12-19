@@ -927,14 +927,12 @@ class Ec2Inventory(object):
                 if name.endswith(self.route53_hostnames):
                     hostname = name
 
-        # If we can't get a nice hostname, use the destination address
-        if not hostname:
-            hostname = dest
-        # to_safe strips hostname characters like dots, so don't strip route53 hostnames
-        elif self.route53_enabled and self.route53_hostnames and hostname.endswith(self.route53_hostnames):
-            hostname = hostname.lower()
+        # If we have a hostname, sanitize it. If we can't
+        # get a nice hostname, use the destination address
+        if hostname:
+            hostname = re.sub('[^a-z0-9\-\.]+', '', hostname.lower())
         else:
-            hostname = self.to_safe(hostname).lower()
+            hostname = dest
 
         # if we only want to include hosts that match a pattern, skip those that don't
         if self.pattern_include and not self.pattern_include.match(hostname):
