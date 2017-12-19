@@ -320,7 +320,6 @@ def remove_peer_connection(client, module):
 
     try:
         params = dict()
-        params['DryRun'] = module.check_mode
         params['VpcPeeringConnectionId'] = pcx_id
         client.delete_vpc_peering_connection(**params)
         module.exit_json(changed=True)
