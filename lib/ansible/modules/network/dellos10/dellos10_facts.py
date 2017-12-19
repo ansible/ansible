@@ -160,7 +160,7 @@ class Default(FactsBase):
     def populate(self):
         super(Default, self).populate()
         data = self.responses[0]
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['name'] = self.parse_name(xml_data)
         self.facts['version'] = self.parse_version(xml_data)
@@ -168,7 +168,7 @@ class Default(FactsBase):
         self.facts['hostname'] = self.parse_hostname(xml_data)
 
         data = self.responses[1]
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['servicetag'] = self.parse_servicetag(xml_data)
 
@@ -220,7 +220,7 @@ class Hardware(FactsBase):
         super(Hardware, self).populate()
         data = self.responses[0]
 
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['cpu_arch'] = self.parse_cpu_arch(xml_data)
 
@@ -277,7 +277,7 @@ class Interfaces(FactsBase):
         for line in int_show_data:
             if pattern in line:
                 if skip is False:
-                    xml_data = ET.fromstring(data)
+                    xml_data = ET.fromstring(data.encode('utf8'))
                     self.populate_interfaces(xml_data)
                     data = ''
                 else:
@@ -286,7 +286,7 @@ class Interfaces(FactsBase):
             data += line
 
         if skip is False:
-            xml_data = ET.fromstring(data)
+            xml_data = ET.fromstring(data.encode('utf8'))
             self.populate_interfaces(xml_data)
 
         self.facts['interfaces'] = self.intf_facts
@@ -299,7 +299,7 @@ class Interfaces(FactsBase):
         for line in lldp_data:
             if pattern in line:
                 if skip is False:
-                    xml_data = ET.fromstring(data)
+                    xml_data = ET.fromstring(data.encode('utf8'))
                     self.populate_neighbors(xml_data)
                     data = ''
                 else:
@@ -308,7 +308,7 @@ class Interfaces(FactsBase):
             data += line
 
         if skip is False:
-            xml_data = ET.fromstring(data)
+            xml_data = ET.fromstring(data.encode('utf8'))
             self.populate_neighbors(xml_data)
 
         self.facts['neighbors'] = self.lldp_facts
