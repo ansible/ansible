@@ -139,7 +139,7 @@ def main():
                 name=leaf_node_blk,
                 to_=to_,
                 from_=from_
-             )
+            )
         )
 
         # Generate config diff which will be used as POST request body
