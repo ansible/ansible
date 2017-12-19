@@ -110,24 +110,23 @@ changed:
     sample: true
 '''
 
+import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
-
-
 def execute_show_command(command, module, command_type='cli_show'):
-    provider = module.params['provider']
-    if provider['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif provider['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -227,7 +226,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     aggressive = module.params['aggressive']
     msg_time = module.params['msg_time']

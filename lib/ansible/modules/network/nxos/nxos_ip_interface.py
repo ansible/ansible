@@ -176,7 +176,7 @@ except ImportError:
     HAS_IPADDRESS = False
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -457,6 +457,9 @@ def flatten_list(command_lists):
 
 
 def validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version, state, intf_type, module):
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
     if state == "present":
         if addr is None or mask is None:
             module.fail_json(msg="An IP address AND a mask must be provided "
@@ -466,7 +469,7 @@ def validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version,
             module.fail_json(msg="IPv6 address and mask must be provided when "
                                  "state=absent.")
 
-    if intf_type != "ethernet" and module.params["provider"]["transport"] == "cli":
+    if intf_type != "ethernet" and network_api == 'cliconf':
         if is_default(interface, module) == "DNE":
             module.fail_json(msg="That interface does not exist yet. Create "
                                  "it first.", interface=interface)
@@ -538,7 +541,6 @@ def main():
         module.fail_json(msg="ipaddress is required for this module. Run 'pip install ipaddress' for install.")
 
     warnings = list()
-    check_args(module, warnings)
 
     addr = module.params['addr']
     version = module.params['version']

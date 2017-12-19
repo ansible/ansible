@@ -42,11 +42,16 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_ip_interface.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_ip_interface.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
         super(TestNxosIPInterfaceModule, self).tearDown()
         self.mock_get_interface_mode.stop()
         self.mock_send_show_command.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, device=''):
         self.get_interface_mode.return_value = 'layer3'
