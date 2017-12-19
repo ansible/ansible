@@ -164,16 +164,12 @@ EXAMPLES = '''
 #
 # Example of how to authenticate
 #
-# my_jenkins_params:
-#   url_username: admin
-#
 - name: Install plugin
   jenkins_plugin:
     name: build-pipeline-plugin
-    params: "{{ my_jenkins_params }}"
+    url_username: admin
     url_password: p4ssw0rd
     url: http://localhost:8888
-# Note that url_password **can not** be placed in params as params could end up in a log file
 
 #
 # Example of a Play which handles Jenkins restarts during the state changes
