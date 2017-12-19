@@ -71,12 +71,9 @@ options:
     version_added: "1.9"
   state:
     description:
-      - >
-        Enable or disable a setting.
-        For ports: Should this port accept(enabled) or reject(disabled) connections.
-        The states "present" and "absent" can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
+      - "Should this port accept(enabled) or reject(disabled) connections."
     required: true
-    choices: [ "enabled", "disabled", "present", "absent" ]
+    choices: [ "enabled", "disabled" ]
   timeout:
     description:
       - "The amount of time the rule should be in effect for when non-permanent."
@@ -91,12 +88,6 @@ options:
 notes:
   - Not tested on any Debian based system.
   - Requires the python2 bindings of firewalld, which may not be installed by default if the distribution switched to python 3
-  - Zone transactions (creating, deleting) can be performed by using only the zone and state parameters "present" or "absent".
-    Note that zone transactions must explicitly be permanent. This is a limitation in firewalld.
-    This also means that you will have to reload firewalld after adding a zone that you wish to perfom immediate actions on.
-    The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
-    permanent. Therefor, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
-    creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
 requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
 '''
@@ -146,9 +137,34 @@ EXAMPLES = '''
     zone: dmz
 
 - firewalld:
-    zone: custom
-    state: present
+    chain: sshg
+    fw_family: ipv4
+    table: filter
     permanent: true
+    state: enabled
+
+- firewalld:
+    chain: sshg
+    fw_family: ipv4
+    table: filter
+    direct_rule: '-m tcp -p tcp --dport 332 -j ACCEPT'
+    permanent: true
+    state: enabled
+
+- firewalld:
+    chain: sshg
+    fw_family: ipv4
+    table: filter
+    direct_rule: '-m tcp -p tcp --dport 332 -j ACCEPT'
+    permanent: true 
+    state: disabled
+
+- firewalld:
+    chain: sshg
+    fw_family: ipv4
+    table: filter
+    permanent: true
+    state: disabled
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -163,7 +179,6 @@ try:
 
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClient
-    from firewall.client import FirewallClientZoneSettings
     fw = None
     fw_offline = False
     import_failure = False
@@ -173,17 +188,20 @@ try:
         fw.getDefaultZone()
     except AttributeError:
         # Firewalld is not currently running, permanent-only operations
-        fw_offline = True
 
         # Import other required parts of the firewalld API
         #
         # NOTE:
         #  online and offline operations do not share a common firewalld API
         from firewall.core.fw_test import Firewall_test
+        from firewall.client import FirewallClientZoneSettings
+        from firewall.client import FirewallClientDirect
+
         fw = Firewall_test()
         fw.start()
+        fw_offline = True
 
-except ImportError:
+except ImportError as e:
     import_failure = True
 
 
@@ -197,21 +215,19 @@ class FirewallTransaction(object):
     global module
 
     def __init__(self, fw, action_args=(), zone=None, desired_state=None,
-                 permanent=False, immediate=False, fw_offline=False,
-                 enabled_values=None, disabled_values=None):
-        # type: (firewall.client, tuple, str, bool, bool, bool)
+                 permanent=False, immediate=False, fw_offline=False):
+        # type:
+        # (firewall.client, tuple, str, bool, bool, bool)
         """
         initializer the transaction
 
-        :fw:              firewall client instance
-        :action_args:     tuple, args to pass for the action to take place
-        :zone:            str,  firewall zone
-        :desired_state:   str,  the desired state (enabled, disabled, etc)
-        :permanent:       bool, action should be permanent
-        :immediate:       bool, action should take place immediately
-        :fw_offline:      bool, action takes place as if the firewall were offline
-        :enabled_values:  str[], acceptable values for enabling something (default: enabled)
-        :disabled_values: str[], acceptable values for disabling something (default: disabled)
+        :fw:            firewall client instance
+        :action_args:   tuple, args to pass for the action to take place
+        :zone:          str,  firewall zone
+        :desired_state: str,  the desired state (enabled, disabled, etc)
+        :permanent:     bool, action should be permanent
+        :immediate:     bool, action should take place immediately
+        :fw_offline:    bool, action takes place as if the firewall were offline
         """
 
         self.fw = fw
@@ -221,8 +237,6 @@ class FirewallTransaction(object):
         self.permanent = permanent
         self.immediate = immediate
         self.fw_offline = fw_offline
-        self.enabled_values = enabled_values or ["enabled"]
-        self.disabled_values = disabled_values or ["disabled"]
 
         # List of messages that we'll call module.fail_json or module.exit_json
         # with.
@@ -232,6 +246,12 @@ class FirewallTransaction(object):
         # types
         self.enabled_msg = None
         self.disabled_msg = None
+
+        # List of acceptable values to enable/diable something
+        # Right now these are only 1 each but in the event we want to add more
+        # later, this will make it easy.
+        self.enabled_values = ["enabled"]
+        self.disabled_values = ["disabled"]
 
     #####################
     # exception handling
@@ -270,9 +290,24 @@ class FirewallTransaction(object):
 
         return (fw_zone, fw_settings)
 
-    def update_fw_settings(self, fw_zone, fw_settings):
+    def get_direct_settings(self):
         if self.fw_offline:
-            self.fw.config.set_zone_config(fw_zone, fw_settings.settings)
+            fw_direct = self.fw.config.get_direct()
+            fw_settings = FirewallClientDirect(settings=fw_direct.export_config())
+        else:
+            fw_direct = self.fw.config().direct()
+            fw_settings = fw_direct.getSettings()
+        return fw_direct, fw_settings
+
+    def update_direct_settings(self, fw, fw_settings):
+        if self.fw_offline:
+            fw.import_config(fw_settings.settings)
+        else:
+            fw.update(fw_settings)
+
+    def update_fw_settings(self, fw_settings):
+        if self.fw_offline:
+            self.fw.config.set_zone_config(fw_settings.settings)
         else:
             fw_zone.update(fw_settings)
 
@@ -463,6 +498,96 @@ class ServiceTransaction(FirewallTransaction):
         fw_zone, fw_settings = self.get_fw_zone_settings()
         fw_settings.removeService(service)
         self.update_fw_settings(fw_zone, fw_settings)
+
+class DirectRuleTransaction(FirewallTransaction):
+    """
+    DirectRuleTransaction
+    """
+
+    def __init__(self, fw, action_args=None, zone=None, desired_state=None,
+                 permanent=False, immediate=False, fw_offline=False):
+        super(DirectRuleTransaction, self).__init__(
+            fw, action_args=action_args, desired_state=desired_state,
+            permanent=permanent, immediate=immediate, fw_offline=fw_offline)
+
+    def get_enabled_immediate(self, direct_rule,  rule_priority, chain, table, fw_family):
+        if chain  is not None and chain in fw.getChains(ipv=fw_family, table=table) and direct_rule is None:
+            return True
+        elif chain is not None and chain not in fw.getChains(ipv=fw_family, table=table) and direct_rule is None:
+            return False
+        elif (chain is not None) and direct_rule is not None and fw.queryRule(ipv=fw_family, table=table, chain=chain,
+                                                                               priority=rule_priority,
+                                                                               args=direct_rule.split()):
+            return True
+        elif (chain is not None) and direct_rule is not None and not fw.queryRule(ipv=fw_family, table=table,
+                                                                                   chain=chain, priority=rule_priority,
+                                                                                   args=direct_rule.split()):
+            return False
+        elif (chain is None) and fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return True
+        elif (chain is None) and not fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return False
+        return True
+
+    def get_enabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+
+        if (chain in fwd.getChains(ipv=fw_family, table=table)) and direct_rule is None:
+            return True
+        elif (chain not in fwd.getChains(ipv=fw_family, table=table)) and direct_rule is None:
+            return False
+        elif (chain is not None) and direct_rule is not None and fwd.queryRule(ipv=fw_family, table=table, chain=chain,
+                                                                               priority=rule_priority,
+                                                                               args=direct_rule.split()):
+            return True
+        elif (chain is not None) and direct_rule is not None and not fwd.queryRule(ipv=fw_family, table=table,
+                                                                                   chain=chain, priority=rule_priority,
+                                                                                   args=direct_rule.split()):
+            return False
+        elif (chain is None) and fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return True
+        elif (chain is None) and not fwd.queryPassthrough(ipv=fw_family, args=direct_rule.split()):
+            return False
+        return True
+
+    def set_enabled_immediate(self, direct_rule, rule_priority, chain, table, fw_family):
+        if direct_rule is None:
+            fw.addChain(ipv=fw_family, table=table, chain=chain)
+        elif direct_rule is not None and chain is not None:
+            fw.addRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority, args=direct_rule.split())
+        elif chain is None:
+            fw.addPassthrough(ipv=fw_family, args=direct_rule.split())
+
+    def set_enabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+        if direct_rule is None:
+            fwd.addChain(ipv=fw_family, table=table, chain=chain)
+        elif direct_rule is not None and chain is not None:
+            fwd.addRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority, args=direct_rule.split())
+        elif chain is None:
+            fwd.addPassthrough(ipv=fw_family, args=direct_rule.split())
+        self.update_direct_settings(fw=fw, fw_settings=fwd)
+
+    def set_disabled_immediate(self, direct_rule, rule_priority, chain, table, fw_family):
+        if direct_rule is None:
+            fw.removeChain(ipv=fw_family, table=table,chain=chain)
+        elif direct_rule is not None and chain is not None:
+            fw.removeRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority,
+                                   args=direct_rule.split())
+        elif chain is None:
+            fw.removePassthrough(ipv=fw_family, args=direct_rule.split())
+
+    def set_disabled_permanent(self, direct_rule, rule_priority, chain, table, fw_family):
+        fw, fwd = self.get_direct_settings()
+        if direct_rule is None:
+            fwd.removeChain(ipv=fw_family, table=table,chain=chain)
+        elif direct_rule is not None and chain is not None:
+            fwd.removeRule(ipv=fw_family, table=table, chain=chain, priority=rule_priority,
+                                   args=direct_rule.split())
+        elif chain is None:
+            fwd.removePassthrough(ipv=fw_family, args=direct_rule.split())
+        self.update_direct_settings(fw=fw, fw_settings=fwd)
+
 
 
 class MasqueradeTransaction(FirewallTransaction):
@@ -741,52 +866,6 @@ class SourceTransaction(FirewallTransaction):
         self.update_fw_settings(fw_zone, fw_settings)
 
 
-class ZoneTransaction(FirewallTransaction):
-    """
-    ZoneTransaction
-    """
-
-    def __init__(self, fw, action_args=None, zone=None, desired_state=None,
-                 permanent=True, immediate=False, fw_offline=False,
-                 enabled_values=None, disabled_values=None):
-        super(ZoneTransaction, self).__init__(
-            fw, action_args=action_args, desired_state=desired_state, zone=zone,
-            permanent=permanent, immediate=immediate, fw_offline=fw_offline,
-            enabled_values=enabled_values or ["present"],
-            disabled_values=disabled_values or ["absent"])
-
-        self.enabled_msg = "Added zone %s" % \
-            (self.zone)
-
-        self.disabled_msg = "Removed zone %s" % \
-            (self.zone)
-
-        self.tx_not_permanent_error_msg = "Zone operations must be permanent. " \
-            "Make sure you didn't set the 'permanent' flag to 'false' or the 'immediate' flag to 'true'."
-
-    def get_enabled_immediate(self):
-        module.fail_json(msg=self.tx_not_permanent_error_msg)
-
-    def get_enabled_permanent(self):
-        if self.zone in fw.config().getZoneNames():
-            return True
-        else:
-            return False
-
-    def set_enabled_immediate(self):
-        module.fail_json(msg=self.tx_not_permanent_error_msg)
-
-    def set_enabled_permanent(self):
-        fw.config().addZone(self.zone, FirewallClientZoneSettings())
-
-    def set_disabled_immediate(self):
-        module.fail_json(msg=self.tx_not_permanent_error_msg)
-
-    def set_disabled_permanent(self):
-        zone_obj = self.fw.config().getZoneByName(self.zone)
-        zone_obj.remove()
-
-
 def main():
 
     global module
@@ -799,14 +878,25 @@ def main():
             immediate=dict(type='bool', default=False),
             source=dict(required=False, default=None),
             permanent=dict(type='bool', required=False, default=None),
-            state=dict(choices=['enabled', 'disabled', 'present', 'absent'], required=True),
+            state=dict(choices=['enabled', 'disabled'], required=True),
             timeout=dict(type='int', required=False, default=0),
             interface=dict(required=False, default=None),
             masquerade=dict(required=False, default=None),
             offline=dict(type='bool', required=False, default=None),
+            chain=dict(required=False, default=None),
+            table=dict(required=False, default=None),
+            direct_rule=dict(required=False, default=None),
+            fw_family=dict(required=False, default=None),
+            rule_priority=dict(type='int', required=False, default=0)
         ),
         supports_check_mode=True
     )
+
+    if import_failure:
+        module.fail_json(
+            msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required (3.0.9 or newer for offline operations) \n %s'
+            % e
+        )
 
     if fw_offline:
         # Pre-run version checking
@@ -825,17 +915,18 @@ def main():
             module.fail_json(msg="firewalld connection can't be established,\
                     installed version (%s) likely too old. Requires firewalld >= 0.2.11" % FW_VERSION)
 
-    if import_failure:
-        module.fail_json(
-            msg='firewalld and its python module are required for this module, version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
-        )
-
     permanent = module.params['permanent']
     desired_state = module.params['state']
     immediate = module.params['immediate']
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    chain = module.params['chain']
+    direct_rule = module.params['direct_rule']
+    fw_family = module.params['fw_family']
+    rule_priority = module.params['rule_priority']
+    table = module.params['table']
+
 
     # If neither permanent or immediate is provided, assume immediate (as
     # written in the module's docs)
@@ -879,14 +970,13 @@ def main():
         modification_count += 1
     if masquerade is not None:
         modification_count += 1
+    if chain is not None or direct_rule is not None:
+        modification_count += 1
+
 
     if modification_count > 1:
         module.fail_json(
             msg='can only operate on port, service, rich_rule, or interface at once'
-        )
-    elif modification_count > 0 and desired_state in ['absent', 'present']:
-        module.fail_json(
-            msg='absent and present state can only be used in zone level operations'
         )
 
     if service is not None:
@@ -959,6 +1049,27 @@ def main():
         if changed is True:
             msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
 
+    if (direct_rule is None and chain is not None) or\
+            (direct_rule is not None and chain is not None and table is not None) or\
+            (direct_rule is not None and chain is None and table is None):
+        transaction = DirectRuleTransaction(
+            fw,
+            action_args=(direct_rule, rule_priority, chain, table, fw_family),
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+            fw_offline=fw_offline
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True and (direct_rule is None and chain is not None):
+            msgs.append("Changed chain %s to %s" % (chain, desired_state))
+
+        if changed is True and (direct_rule is not None and chain is None):
+            msgs.append("Changed rule %s to %s" % (direct_rule, desired_state))
+
+
     if interface is not None:
 
         transaction = InterfaceTransaction(
@@ -989,24 +1100,6 @@ def main():
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
 
-    ''' If there are no changes within the zone we are operating on the zone itself '''
-    if modification_count == 0 and desired_state in ['absent', 'present']:
-
-        transaction = ZoneTransaction(
-            fw,
-            action_args=(),
-            zone=zone,
-            desired_state=desired_state,
-            permanent=permanent,
-            immediate=immediate,
-            fw_offline=fw_offline
-        )
-
-        changed, transaction_msgs = transaction.run()
-        msgs = msgs + transaction_msgs
-        if changed is True:
-            msgs.append("Changed zone %s to %s" % (zone, desired_state))
-
     if fw_offline:
         msgs.append("(offline operation: only on-disk configs were altered)")
 
@@ -1015,3 +1108,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
