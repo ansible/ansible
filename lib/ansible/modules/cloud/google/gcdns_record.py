@@ -319,8 +319,11 @@ try:
     from libcloud.dns.types import RecordDoesNotExistError
     from libcloud.dns.types import ZoneDoesNotExistError
     HAS_LIBCLOUD = True
+    # The libcloud Google Cloud DNS provider.
+    PROVIDER = Provider.GOOGLE
 except ImportError:
     HAS_LIBCLOUD = False
+    PROVIDER = None
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcdns import gcdns_connect
@@ -334,9 +337,6 @@ from ansible.module_utils.gcdns import gcdns_connect
 # v1 API. Earlier versions contained the beta v1 API, which has since been
 # deprecated and decommissioned.
 MINIMUM_LIBCLOUD_VERSION = '0.19.0'
-
-# The libcloud Google Cloud DNS provider.
-PROVIDER = Provider.GOOGLE
 
 # The records that libcloud's Google Cloud DNS provider supports.
 #
