@@ -15,8 +15,8 @@ $host_header = Get-AnsibleParam $params -name "host_header" -type str
 $protocol = Get-AnsibleParam $params -name "protocol" -type str -default 'http'
 $port = Get-AnsibleParam $params -name "port" -default '80'
 $ip = Get-AnsibleParam $params -name "ip" -default '*'
-$certificateHash = Get-AnsibleParam $params -name "certificate_hash" -type str
-$certificateStoreName = Get-AnsibleParam $params -name "certificate_store_name" -type str #default value gets applied later in script
+$certificateHash = Get-AnsibleParam $params -name "certificate_hash" -type str -default ([string]::Empty)
+$certificateStoreName = Get-AnsibleParam $params -name "certificate_store_name" -type str -default ([string]::Empty)
 $sslFlags = Get-AnsibleParam $params -name "ssl_flags" -default '0' -ValidateSet '0','1','2','3'
 
 $result = @{
@@ -67,8 +67,6 @@ function Get-SingleWebBinding {
     If (-not $bind_search_splat['hostheader'])
     {
         Try {
-            # need to apply filter otherwise it's possible to return multiple items.
-            # without a host header, there *should* only ever be one binding on an ip/port combination.
             Get-WebBinding @bind_search_splat | Where-Object {$_.BindingInformation.Split(':')[-1] -eq [string]::Empty}
         }
         Catch {
@@ -231,7 +229,7 @@ If ($certificateHash -and $state -eq 'present')
 }
 
 # make sure binding info is valid for central cert store if sslflags -gt 1
-If ($sslFlags -gt 1 -and ($certificateHash -or $certificateStoreName))
+If ($sslFlags -gt 1 -and ($certificateHash -ne [string]::Empty -or $certificateStoreName -ne [string]::Empty))
 {
     Fail-Json -obj $result -message "You set sslFlags to $sslFlags. This indicates you wish to use the Central Certificate Store feature.
     This cannot be used in combination with certficiate_hash and certificate_store_name. When using the Central Certificate Store feature,
