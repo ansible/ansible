@@ -4,15 +4,14 @@
   eos_eapi:
     state: started
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
 
 - eos_command:
     commands:
       - show management api http-commands | json
     provider: "{{ cli }}"
   register: http_config
-  connection: local
 
 - debug: var=http_config
   when: debug
@@ -25,8 +24,8 @@
   eos_eapi:
     state: started
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
 
 - debug: var=eos_eapi_output
   when: debug

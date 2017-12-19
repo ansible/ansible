@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/contains.yaml"
+- debug: msg="START cli/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator
   eos_command:
@@ -17,4 +17,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/contains.yaml"
+- debug: msg="END cli/contains.yaml on connection={{ ansible_connection }}"

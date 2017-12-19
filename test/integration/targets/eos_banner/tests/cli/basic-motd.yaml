@@ -1,9 +1,12 @@
 ---
+- debug: msg="START cli/basic-motd.yaml on connection={{ ansible_connection }}"
+
 - name: Remove previous motd banner
   eos_config:
     lines: no banner motd
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create motd
   eos_banner:
@@ -15,6 +18,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -35,6 +39,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -54,6 +59,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -73,6 +79,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
