@@ -38,26 +38,26 @@ options:
     local_file:
         description:
             - Path to local file. Local directory must exist.
-              The maximum length of local_file is 4096.
+              The maximum length of I(local_file) is C(4096).
         required: true
     remote_file:
         description:
             - Remote file path of the copy. Remote directories must exist.
               If omitted, the name of the local file will be used.
-              The maximum length of remote_file is 4096.
+              The maximum length of I(remote_file) is C(4096).
         required: false
         default: null
     file_system:
         description:
             - The remote file system of the device. If omitted,
-              devices that support a file_system parameter will use
+              devices that support a I(file_system) parameter will use
               their default values.
               File system indicates the storage medium and can be set to as follows,
-              1) 'flash:' is root directory of the flash memory on the master MPU.
-              2) 'slave#flash:' is root directory of the flash memory on the slave MPU.
+              1) C(flash) is root directory of the flash memory on the master MPU.
+              2) C(slave#flash) is root directory of the flash memory on the slave MPU.
                  If no slave MPU exists, this drive is unavailable.
-              3) 'chassis ID/slot number#flash:' is root directory of the flash memory on
-                 a device in a stack. For example, 1/5#flash indicates the flash memory
+              3) C(chassis ID/slot number#flash) is root directory of the flash memory on
+                 a device in a stack. For example, C(1/5#flash) indicates the flash memory
                  whose chassis ID is 1 and slot number is 5.
         required: false
         default: 'flash:'
