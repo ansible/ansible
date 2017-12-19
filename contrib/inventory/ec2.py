@@ -1026,7 +1026,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by AWS account ID
         if self.group_by_aws_account:
-            self.push(self.inventory, self.aws_account_id, dest)
+            self.push(self.inventory, self.aws_account_id, hostname)
             if self.nested_groups:
                 self.push_group(self.inventory, 'accounts', self.aws_account_id)
 
