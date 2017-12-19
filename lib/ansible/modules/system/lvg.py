@@ -32,7 +32,8 @@ options:
     - The module will take care of running pvcreate if needed.
   pesize:
     description:
-    - The size of the physical extent in megabytes. Must be a power of 2.
+    - The size of the physical extent. The value must be either a power of 2 of at least 1 sector, or at least 128KiB
+    - Size[m|UNIT]. (32=32m, 1280k)
     default: 4
   pv_options:
     description:
@@ -63,6 +64,16 @@ EXAMPLES = '''
     pvs: /dev/sda1
     pesize: 32
 
+<<<<<<< HEAD
+# Create a volume group on with extent size specified in kB (1280k).
+- lvg:
+    vg: vg.services2
+    pvs: /dev/sda2
+    pesize: 1280k
+
+# Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5.
+=======
+>>>>>>> upstream/devel
 # If, for example, we already have VG vg.services on top of /dev/sdb1,
 # this VG will be extended by /dev/sdc5.  Or if vg.services was created on
 # top of /dev/sda5, we first extend it with /dev/sdb1 and /dev/sdc5,
@@ -124,11 +135,19 @@ def main():
         argument_spec=dict(
             vg=dict(type='str', required=True),
             pvs=dict(type='list'),
+<<<<<<< HEAD
+            pesize=dict(type='str', default='4'),
+            pv_options=dict(default=''),
+            vg_options=dict(default=''),
+            state=dict(choices=["absent", "present"], default='present'),
+            force=dict(type='bool', default='no'),
+=======
             pesize=dict(type='int', default=4),
             pv_options=dict(type='str', default=''),
             vg_options=dict(type='str', default=''),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             force=dict(type='bool', default=False),
+>>>>>>> upstream/devel
         ),
         supports_check_mode=True,
     )
@@ -200,7 +219,11 @@ def main():
                     else:
                         module.fail_json(msg="Creating physical volume '%s' failed" % current_dev, rc=rc, err=err)
                 vgcreate_cmd = module.get_bin_path('vgcreate')
+<<<<<<< HEAD
+                rc,_,err = module.run_command([vgcreate_cmd] + vgoptions + ['-s', pesize, vg] + dev_list)
+=======
                 rc, _, err = module.run_command([vgcreate_cmd] + vgoptions + ['-s', str(pesize), vg] + dev_list)
+>>>>>>> upstream/devel
                 if rc == 0:
                     changed = True
                 else:
