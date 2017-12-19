@@ -37,12 +37,10 @@ options:
   vlan:
     description:
       - The VLAN ID.
-    type: integer
     default: 100
   bgp_asn:
     description:
       - The autonomous system (AS) number for Border Gateway Protocol (BGP) configuration.
-    type: integer
     default: 65000
   authentication_key:
     description:
@@ -149,7 +147,6 @@ customer_router_config:
   description: Information for generating the customer router configuration.
   returned: always
   type: string
-  sample: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<logical_connection id=\"dxvif-fg337gug\">\n  <vlan>100</vlan>\n  <customer_address>54.227.92.217/30</customer_address>\n  <amazon_address>54.227.92.217/30</amazon_address>\n  <bgp_asn>65000</bgp_asn>\n  <bgp_auth_key>0xmERkyYOxjzoWrppxf8hZIm</bgp_auth_key>\n  <amazon_bgp_asn>7224</amazon_bgp_asn>\n  <connection_type>public</connection_type>\n</logical_connection>\n"
 location:
   description: Where the connection is located.
   returned: always
@@ -227,7 +224,7 @@ from ansible.module_utils.ec2 import (AWSRetry, HAS_BOTO3, boto3_conn,
                                       camel_dict_to_snake_dict)
 
 try:
-    import botocore
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     # handled by HAS_BOTO3
     pass
@@ -241,7 +238,7 @@ def try_except_ClientError(failure_msg):
         def run_func(*args, **kwargs):
             try:
                 result = AWSRetry.backoff(tries=8, delay=5, catch_extra_error_codes=['DirectConnectClientException'])(f)(*args, **kwargs)
-            except botocore.exceptions.ClientError as e:
+            except (ClientError, BotoCoreError) as e:
                 raise DirectConnectError(failure_msg, traceback.format_exc(), e)
             return result
         return run_func
