@@ -8,12 +8,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: openshift
+    lookup: k8s
+    
     version_added: "2.5"
-    short_description: Returns the JSON definition of an object in OpenShift
+    
+    short_description: Returns the JSON definition of an object in Kubernetes
+    
     description:
         - This lookup plugin provides the ability to query for information about objects. Uses the OpenShift
           Python client to enable authentication via config file, token, password, or certificates.
+          
     options:
       kind:
         description:
@@ -94,10 +98,10 @@ RETURN = """
 
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.openshift_lookup import OpenShiftLookup
+from ansible.module_utils.k8s_lookup import KubernetesLookup
 
 
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-        return OpenShiftLookup().run(terms, variables=variables, **kwargs)
+        return KubernetesLookup().run(terms, variables=variables, **kwargs)
