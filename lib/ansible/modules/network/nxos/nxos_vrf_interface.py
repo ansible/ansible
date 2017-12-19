@@ -206,6 +206,7 @@ def main():
     state = module.params['state']
 
     device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     current_vrfs = get_vrf_list(module)
     if vrf not in current_vrfs:
@@ -213,7 +214,7 @@ def main():
                         "Use nxos_vrf to fix this.")
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and device_info.get('network_api') == 'cliconf'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg="interface does not exist on switch. Verify "
                                  "switch platform or create it first with "

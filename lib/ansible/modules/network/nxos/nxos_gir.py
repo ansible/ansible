@@ -172,9 +172,11 @@ from ansible.module_utils.basic import AnsibleModule
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
     device_info = get_capabilities(module)
-    if device_info.get('network_api') == 'cliconf':
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         body = run_commands(module, cmds)
-    else:
+    elif network_api == 'nxapi':
         body = run_commands(module, cmds)
 
     return body

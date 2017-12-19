@@ -355,12 +355,13 @@ def main():
     admin_state = module.params['admin_state']
 
     device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and device_info.get('network_api') == 'cliconf'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)

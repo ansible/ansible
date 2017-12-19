@@ -162,12 +162,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 def execute_show_command(command, module, command_type='cli_show'):
     device_info = get_capabilities(module)
-    if device_info.get('network_api') == 'cliconf':
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    else:
+    elif network_api == 'nxapi':
         cmds = {'command': command, 'output': 'text'}
         body = run_commands(module, cmds)
 

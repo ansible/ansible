@@ -30,6 +30,7 @@
 
 import collections
 import json
+import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
@@ -194,7 +195,7 @@ class Cli:
             message = getattr(e, 'err', e)
             err = to_text(message, errors='surrogate_then_replace')
             if opts.get('ignore_timeout') and code:
-                msgs.append(err)
+                msgs.append(code)
                 return msgs
             elif code:
                 self._module.fail_json(msg=err)
@@ -315,8 +316,8 @@ class Nxapi:
             )
             self._nxapi_auth = headers.get('set-cookie')
 
-            if opts.get('ignore_timeout') and headers['status'] == -1:
-                result.append(headers['msg'])
+            if opts.get('ignore_timeout') and re.search(r'(-1|5\d\d)', str(headers['status'])):
+                result.append(headers['status'])
                 return result
             elif headers['status'] != 200:
                 self._error(**headers)

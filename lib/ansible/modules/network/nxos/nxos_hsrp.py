@@ -130,11 +130,13 @@ from ansible.module_utils.basic import AnsibleModule
 
 def execute_show_command(command, module):
     device_info = get_capabilities(module)
-    if device_info.get('network_api') == 'cliconf':
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    else:
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -395,6 +397,7 @@ def main():
     auth_string = module.params['auth_string']
 
     device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
@@ -404,7 +407,7 @@ def main():
             validate_params(param, module)
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and device_info.get('network_api') == 'cliconf'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)
@@ -462,7 +465,7 @@ def main():
             load_config(module, commands)
 
             # validate IP
-            if device_info.get('network_api') == 'cliconf' and state == 'present':
+            if network_api == 'cliconf' and state == 'present':
                 commands.insert(0, 'config t')
                 body = run_commands(module, commands)
                 validate_config(body, vip, module)

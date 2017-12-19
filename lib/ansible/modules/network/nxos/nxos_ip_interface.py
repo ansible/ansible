@@ -458,6 +458,7 @@ def flatten_list(command_lists):
 
 def validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version, state, intf_type, module):
     device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == "present":
         if addr is None or mask is None:
@@ -468,7 +469,7 @@ def validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version,
             module.fail_json(msg="IPv6 address and mask must be provided when "
                                  "state=absent.")
 
-    if intf_type != "ethernet" and device_info.get('network_api') == 'cliconf':
+    if intf_type != "ethernet" and network_api == 'cliconf':
         if is_default(interface, module) == "DNE":
             module.fail_json(msg="That interface does not exist yet. Create "
                                  "it first.", interface=interface)

@@ -133,7 +133,8 @@ from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
     device_info = get_capabilities(module)
-    if not device_info.get('network_api'):
+    network_api = device_info.get('network_api', 'nxapi')
+    if network_api == 'nxapi':
         module.fail_json(msg='module not supported over nxapi transport')
 
     state = module.params['state']
