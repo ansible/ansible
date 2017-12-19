@@ -24,10 +24,12 @@ import os
 import re
 import string
 
+from time import time
 from collections import MutableMapping
 
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.plugins import AnsiblePlugin
+from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -142,6 +144,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
+        self.cache = None
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
@@ -185,8 +188,14 @@ class BaseInventoryPlugin(AnsiblePlugin):
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config)
+        self._set_cache_options(self._options)
 
         return config
+
+    def _set_cache_options(self, options):
+        self.cache = InventoryFileCacheModule(plugin_name=options['cache_plugin'],
+                                              timeout=options['cache_timeout'],
+                                              cache_dir=options['cache_connection'])
 
     def _consume_options(self, data):
         ''' update existing options from file data'''
@@ -226,8 +235,28 @@ class Cacheable(object):
 
         return 's_'.join([d1[:5], d2[:5]])
 
+    def _get_config_identifier(self, path):
+        ''' create predictable config-specific prefix for plugin/inventory '''
+
+        return hashlib.md5(path.encode()).hexdigest()
+
     def clear_cache(self):
         self._cache = {}
+
+    def _valid_cache(self, directory, filename, timeout):
+        cache_path = "{0}/{1}".format(directory, filename)
+        if not os.path.isdir(directory):
+            raise AnsibleError("Cache directory {0} does not exist.".format(directory))
+        if os.path.isfile(cache_path):
+            return not self._needs_reset(cache_path, timeout)
+        elif not os.path.exists(cache_path):
+            return False
+        else:
+            raise AnsibleError("Cache {0} is not a file.".format(cache_path))
+
+    def _needs_reset(self, path, timeout):
+        last_cache_update = os.path.getmtime(path)
+        return not (last_cache_update + timeout > time())
 
 
 class Constructable(object):

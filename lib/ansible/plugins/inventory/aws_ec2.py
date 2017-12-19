@@ -86,7 +86,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.basic import jsonify
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
-from ansible.plugins.cache import BaseFileCacheModule
+from ansible.plugins.cache import InventoryFileCacheModule
 
 from collections import namedtuple
 import os
@@ -542,6 +542,32 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 self._add_hosts(hosts=hosts, group=groupname, hostnames=hostnames)
                 self.inventory.add_child('all', groupname)
 
+    def _populate_from_source(self, source_data):
+        hostvars = source_data.pop('_meta', {}).get('hostvars', {})
+        for group in source_data:
+            if group == 'all':
+                continue
+            else:
+                self.inventory.add_group(group)
+                hosts = source_data[group].get('hosts', [])
+                for host in hosts:
+                    self._populate_host_vars([host], hostvars.get(host, {}), group)
+                self.inventory.add_child('all', group)
+
+    def _format_inventory(self, groups, hostnames):
+        results = {'_meta': {'hostvars': {}}}
+        for group_n in groups:
+            for groupname, hosts in self.groupname_gen(groups, group_n):
+                results[groupname] = {'hosts': []}
+                for host in hosts:
+                    hostname = self._get_hostname(host, hostnames)
+                    if not hostname:
+                        continue
+                    results[groupname]['hosts'].append(hostname)
+                    h = self.inventory.get_host(hostname)
+                    results['_meta']['hostvars'][h.name] = h.vars
+        return results
+
     def _add_hosts(self, hosts, group, hostnames):
         '''
             :param hosts: a list of hosts to be added to a group
@@ -580,18 +606,22 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise AnsibleParserError("Not a ec2 inventory plugin configuration file")
         return self._read_config_data(path)
 
-    def _set_cache(self, path):
+    def _set_cache(self, path, options):
         '''
             :param inventory: an ansible.inventory.data.InventoryData object
             :param path: the path to the inventory config file
         '''
         # get unique cache key
-        cache_key = self._get_cache_prefix(path)
+        cache_key = "aws_ec2_" + self._get_cache_prefix(path) + "_" + self._get_config_identifier(path)
         if cache_key not in self._cache:
             self._cache[cache_key] = {}
         else:
             self.cache = self._cache[cache_key]
-        return cache_key
+
+        cache_dir = options['cache_connection']
+        cache_timeout = options['cache_timeout']
+
+        return cache_key, cache_dir, cache_timeout
 
     def _get_query_options(self, config_data):
         '''
@@ -651,11 +681,42 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
         config_data = self._validate_config(loader, path)
-        self.set_options(direct=config_data)
         self._set_credentials(config_data)
 
         # get user specifications
         regions, filters, group_by, hostnames, strict_permissions = self._get_query_options(config_data)
 
-        results = self._query(regions, filters, group_by, strict_permissions)
-        self._populate(results, hostnames)
+        results = {}
+
+        cache = self._options['cache']
+        cache_key, cache_connection, cache_timeout = self._set_cache(path, self._options)
+        cache_path = cache_connection + "/" + cache_key
+
+        using_current_cache = False
+        if cache and not cache_connection:
+            raise AnsibleError("Must specify a cache directory using ini option cache_connection in the inventory section, "
+                               "or using env var ANSIBLE_INVENTORY_CACHE_CONNECTION.")
+
+        if cache:
+            if self._valid_cache(cache_connection, cache_key, cache_timeout):
+                # FIXME Take --refresh-cache into account
+                using_current_cache = True
+            else:
+                pass
+
+        formatted_inventory = {}
+        if using_current_cache:
+            if self._cache.get(cache_key):
+                results = self._cache[cache_key]
+            else:
+                results = self.cache._load(cache_path)
+            self._populate_from_source(results)
+        else:
+            results = self._query(regions, filters, group_by, strict_permissions)
+            self._populate(results, hostnames)
+            formatted_inventory = self._format_inventory(results, hostnames)
+
+        if cache and not using_current_cache:
+            # update cache
+            self._cache[cache_key] = jsonify(formatted_inventory, sort_keys=True, indent=4)
+            self.cache._dump(formatted_inventory, cache_path)
