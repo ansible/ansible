@@ -47,9 +47,11 @@ options:
   enabled:
     description:
       - Interface link status.
+    type: bool
   speed:
     description:
       - Interface link speed.
+    choices: ['1G', '10G', '25G', '40G', '50G', '56G', '100G']
   mtu:
     description:
       - Maximum size of transmit packet.
