@@ -19,13 +19,14 @@ Ansible Changes By Release
   and these options will be removed in Ansible 2.9. `get_md5: no` will still be
   allowed in 2.9 but will finally be removed 2 versions after that.
 * The `redis_kv` lookup in favor of new `redis` lookup
-* Passing arbitrary parameters that begin with `HEADER_`(used for passing http
-  headers) is deprecated.  Use the ``headers`` parameter with a dictionary of
-  header names to value instead.  This will be removed in Ansible-2.9
+* Passing arbitrary parameters that begin with `HEADER_` to the uri module,
+  used for passing http headers, is deprecated.  Use the ``headers`` parameter
+  with a dictionary of header names to value instead.  This will be removed in
+  Ansible-2.9
 * Passing arbitrary parameters to the zfs module to set zfs properties is
-  deprecated.  Use the ``properties`` parameter with a dictionary of property
-  names to values instead.  This will be removed in Ansible-2.9.
-* Use of the AnsibleModule parameter, check_invalid_arguments in custom modules
+  deprecated.  Use the ``extra_zfs_properties`` parameter with a dictionary of
+  property names to values instead.  This will be removed in Ansible-2.9.
+* Use of the AnsibleModule parameter, check_invalid_arguments, in custom modules
   is deprecated.  In the future, all parameters will be checked to see whether
   they are listed in the arg spec and an error raised if they are not listed.
   This behaviour is the current and future default so most custom modules can
