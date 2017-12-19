@@ -14,8 +14,8 @@
   find:
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
+  connection: local
   register: backup_files
-  delegate_to: localhost
 
 - name: delete backup files
   file:
@@ -38,8 +38,8 @@
   find:
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
+  connection: local
   register: backup_files
-  delegate_to: localhost
 
 - assert:
     that:
