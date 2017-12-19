@@ -71,7 +71,8 @@ vars:
   # vpc-xxxxxxxx | none
 
   account_details: "{{ lookup('aws_account_attribute', wantlist='true') }}"
-  # [{'AttributeName': 'supported-platforms', 'AttributeValues': [{'AttributeValue': 'VPC'}],...}]
+  # {'default-vpc': ['vpc-xxxxxxxx'], 'max-elastic-ips': ['5'], 'max-instances': ['20'], 'supported-platforms': ['VPC', 'EC2'], 'vpc-max-elastic-ips': ['5'], 'vpc-max-security-groups-per-interface': ['5']}
+
 """
 
 RETURN = """
@@ -157,4 +158,7 @@ class LookupModule(LookupBase):
             attr = response[0]
             return [value['AttributeValue'] for value in attr['AttributeValues']]
 
-        return response
+        flattened = {}
+        for k_v_dict in response:
+            flattened[k_v_dict['AttributeName']] = [value['AttributeValue'] for value in k_v_dict['AttributeValues']]
+        return flattened
