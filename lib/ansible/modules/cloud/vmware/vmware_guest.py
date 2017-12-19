@@ -216,6 +216,16 @@ options:
     - ' - C(runonce) (list): List of commands to run at first user logon.'
     - ' - C(timezone) (int): Timezone (See U(https://msdn.microsoft.com/en-us/library/ms912391.aspx)).'
     version_added: '2.3'
+  vapp_properties:
+    description:
+    - A list of vApp properties
+    - 'For full list of attibutes and types refer to: U(https://github.com/vmware/pyvmomi/blob/master/docs/vim/vApp/PropertyInfo.rst)'
+    - 'Basic attributes are:'
+    - ' - C(id) (string): Property id - required'
+    - ' - C(value) (string): Property value'
+    - ' - C(type) (string): Value type, string type by default.'
+    - ' - C(operation) (string): add, edit, remove. Required only when removing properties. If property present the parameter will be defaulted to "edit".'
+    version_added: '2.5'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -334,6 +344,22 @@ EXAMPLES = r'''
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     state: absent
   delegate_to: localhost
+
+- name: Manipulate vApp properties
+  vmware_guest:
+    hostname: 192.168.1.209
+    username: administrator@vsphere.local
+    password: vmware
+    name: vm_name
+    state: present
+    vapp_properties:
+      - id: remoteIP
+        category: Backup
+        label: Backup server IP
+        type: string
+        value: 10.10.10.1
+      - id: old_property
+        operation: remove
 '''
 
 RETURN = r'''
@@ -974,6 +1000,68 @@ class PyVmomiHelper(PyVmomi):
             if nic_change_detected:
                 self.configspec.deviceChange.append(nic)
                 self.change_detected = True
+
+    def configure_vapp_properties(self, vm_obj):
+        if len(self.params['vapp_properties']) == 0:
+            return
+
+        for x in self.params['vapp_properties']:
+            if not x.get('id'):
+                self.module.fail_json(msg="id is required to set vApp property")
+
+        spec = vim.vApp.VmConfigSpec()
+
+        # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
+        orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else spec
+
+        vappProperties = dict((x.id, x) for x in orig_spec.property)
+        propsToChange = dict((x['id'], x) for x in self.params['vapp_properties'])
+
+        # each property must have a unique key
+        # init key counter with max value + 1
+        allKeys = [x.key for x in orig_spec.property]
+        newPropIndex = max(allKeys) + 1 if allKeys else 0
+
+        for k, v in propsToChange.items():
+            tmp = vim.VAppPropertySpec()
+            if k in vappProperties.keys():
+                tmp.operation = v.get('operation', 'edit')
+                if tmp.operation == 'remove':
+                    tmp.removeKey = vappProperties[k].key
+                else:
+                    # this is 'edit' branch
+                    # updating only required properties
+                    tmp.info = vappProperties[k]
+                    try:
+                        for infoPropName, infoPropVal in v.items():
+                            setattr(tmp.info, infoPropName, infoPropVal)
+                    except Exception as e:
+                        self.module.fail_json(msg="Failed to set vApp property field='%s' and value='%s'. Error was: %s"
+                                              % (infoPropName, infoPropVal, to_text(e)))
+            else:
+                if v.get('operation') == 'remove':
+                    # attemp to delete non-existent property
+                    continue
+                tmp.operation = 'add'
+                tmp.info = vim.VAppPropertyInfo()
+                tmp.info.key = newPropIndex
+                newPropIndex += 1  # maybe use cycle from itertools?
+                tmp.info.classId = v.get('classId')
+                tmp.info.instanceId = v.get('instanceId')
+                tmp.info.id = v.get('id')
+                tmp.info.category = v.get('category')
+                tmp.info.label = v.get('label')
+                tmp.info.type = v.get('type', 'string')
+                tmp.info.userConfigurable = v.get('userConfigurable', True)
+                tmp.info.defaultValue = v.get('defaultValue')
+                tmp.info.value = v.get('value', '')
+                tmp.info.description = v.get('description')
+
+            spec.property.append(tmp)
+
+        if len(spec.property) > 0:
+            self.configspec.vAppConfig = spec
+            self.change_detected = True
 
     def customize_customvalues(self, vm_obj, config_spec):
         if len(self.params['customvalues']) == 0:
@@ -1641,6 +1729,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_cdrom(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
+        self.configure_vapp_properties(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
@@ -1772,6 +1861,7 @@ def main():
         networks=dict(type='list', default=[]),
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
+        vapp_properties=dict(type='list', default=[]),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,

@@ -25,3 +25,4 @@
 - include: disk_type_d1_c1_f0.yml
 - include: create_nw_d1_c1_f0.yml
 #- include: template_d1_c1_f0.yml
+- include: vapp_d1_c1_f0.yml
