@@ -431,25 +431,6 @@ EXAMPLES = '''
     name: epel
     file: external_repos
     state: absent
-
-#
-# Allow to overwrite the yum_repository parameters by defining the parameters
-# as a variable in the defaults or vars file:
-#
-# my_role_somerepo_params:
-#   # Disable GPG checking
-#   gpgcheck: no
-#   # Remove the gpgkey option
-#   gpgkey: null
-#
-- name: Add Some repo
-  yum_repository:
-    name: somerepo
-    description: Some YUM repo
-    baseurl: http://server.com/path/to/the/repo
-    gpgkey: http://server.com/keys/somerepo.pub
-    gpgcheck: yes
-    params: "{{ my_role_somerepo_params }}"
 '''
 
 RETURN = '''
