@@ -13,43 +13,58 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_switch_leaf_selector
-short_description: Add a leaf Selector to a Switch Policy Leaf Profile on Cisco ACI fabrics (infra:LeafS)
+module: aci_switch_leaf_selector_node_block
+short_description: Add a leaf Selector Node Block Range to a Switch Policy Leaf Profile on Cisco ACI fabrics (infra:NodeBlk)
 description:
-- Add a leaf Selector (without associated Node Block) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
+- Add a leaf Selector Node Block range to a Switch Policy Leaf Profile on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(infra:LeafS) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  I(infra:NodeBlk) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- This module is to be used with M(aci_switch_policy_leaf_profile) and M(aci_switch_leaf_selector_node_block)
+- This module is to be used with M(aci_switch_leaf_policy_profile) and is directly associated to M(aci_switch_leaf_selector)
 - One first creates a leaf profile (infra:NodeP), then creates an associated selector (infra:LeafS) and finally adds a node block range to the selector (infra:NodeBlk)
 options:
-  leaf_profile:
-    description:
-    - Name of the Leaf Profile to which we add a Selector.
-    aliases: [ leaf_profile_name ]
-  leaf:
-    description:
-    - Name of Leaf Selector to be added and associated with the Leaf Profile.
-    aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
-  state:
-    description:
-    - Use C(present) or C(absent) for adding or removing.
-    - Use C(query) for listing an object or multiple objects.
-    choices: [ absent, present, query ]
-    default: present
+ leaf_profile:
+   description:
+   - Name of the Leaf Profile to which we add a Selector Node Block range.
+   aliases: [ leaf_profile_name ]
+ leaf:
+   description:
+   - Name of Leaf Selector to which we add an associated Node Block range for the given Leaf Profile.
+   aliases: [ leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
+ leaf_node_blk:
+   description:
+   - Name of Node Block range to be added to Leaf Selector of given Leaf Profile
+   aliases: [ name, leaf_node_blk_name, node_blk_name ]
+ from:
+   description:
+   - Start of Node Block Range
+   aliases: [ node_blk_range_from, from_range, range_from ]
+ to:
+   description:
+   - Start of Node Block Range
+   aliases: [ node_blk_range_to, to_range, range_to ]
+ state:
+   description:
+   - Use C(present) or C(absent) for adding or removing.
+   - Use C(query) for listing an object or multiple objects.
+   choices: [ absent, present, query ]
+   default: present
 '''
 
 EXAMPLES = r'''
-- name: creating a switch policy leaf profile selector (with no associated Node Block range)
-  aci_switch_leaf_selector:
+- name: adding a switch policy leaf profile selector associated Node Block range
+  aci_switch_leaf_selector_node_block:
     hostname: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name
     leaf: leaf_selector_name
+    leaf_node_blk: node_blk_name
+    from_: 1011
+    to_: 1011
     state: present
 '''
 
@@ -63,7 +78,10 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         leaf_profile=dict(type='str', aliases=['leaf_profile_name']),
-        leaf=dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
+        leaf=dict(type='str', aliases=['leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
+        leaf_node_blk=dict(type='str', aliases=['name', 'leaf_node_blk_name', 'node_blk_name']),
+        from_=dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
+        to_=dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
 
@@ -71,13 +89,16 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['leaf_profile', 'leaf']],
-            ['state', 'present', ['leaf_profile', 'leaf']]
-        ],
+            ['state', 'absent', ['leaf_profile', 'leaf', 'leaf_node_blk']],
+            ['state', 'present', ['leaf_profile', 'leaf', 'leaf_node_blk', 'from_', 'to_']]
+        ]
     )
 
     leaf_profile = module.params['leaf_profile']
     leaf = module.params['leaf']
+    leaf_node_blk = module.params['leaf_node_blk']
+    to_ =  module.params['to_']
+    from_ = module.params['from_']
     state = module.params['state']
 
     aci = ACIModule(module)
@@ -94,7 +115,14 @@ def main():
             aci_rn='leaves-{}-typ-range'.format(leaf),
             filter_target='eq(infraLeafS.name, "{}")'.format(leaf),
             module_object=leaf,
+        ),
+        subclass_2=dict(
+            aci_class='infraNodeBlk',
+            aci_rn='nodeblk-{}'.format(leaf_node_blk),
+            filter_target='eq(infraNodeBlk.name, "{}")'.format(leaf_node_blk),
+            module_object=leaf_node_blk,
         )
+
     )
 
     aci.get_existing()
@@ -102,14 +130,16 @@ def main():
     if state == 'present':
         # Filter out module params with null values
         aci.payload(
-            aci_class='infraLeafS',
+            aci_class='infraNodeBlk',
             class_config=dict(
-                 name=leaf
+                 name=leaf_node_blk,
+                 to_=to_,
+                 from_=from_,
              )
         )
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='infraLeafS')
+        aci.get_diff(aci_class='infraNodeBlk')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
