@@ -1,16 +1,18 @@
 ---
-- debug: msg="START cli/toplevel.yaml"
+- debug: msg="START cli/toplevel.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
     lines: hostname veos01
     match: none
     provider: "{{ cli }}"
+  become: yes
 
 - name: configure top level command
   eos_config:
     lines: hostname foo
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -22,6 +24,7 @@
   eos_config:
     lines: hostname foo
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -33,5 +36,6 @@
     lines: hostname veos01
     match: none
     provider: "{{ cli }}"
+  become: yes
 
-- debug: msg="END cli/toplevel.yaml"
+- debug: msg="END cli/toplevel.yaml on connection={{ ansible_connection }}"

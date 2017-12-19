@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/sublevel_exact.yaml"
+- debug: msg="START cli/sublevel_exact.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -14,6 +14,7 @@
     after: exit
     match: none
     provider: "{{ cli }}"
+  become: yes
 
 - name: configure sub level command using exact match
   eos_config:
@@ -28,6 +29,7 @@
     match: exact
     replace: block
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -50,6 +52,7 @@
     parents: ip access-list test
     match: exact
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -61,5 +64,6 @@
     lines: no ip access-list test
     match: none
     provider: "{{ cli }}"
+  become: yes
 
-- debug: msg="END cli/sublevel_exact.yaml"
+- debug: msg="END cli/sublevel_exact.yaml on connection={{ ansible_connection }}"
