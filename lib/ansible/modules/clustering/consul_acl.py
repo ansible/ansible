@@ -238,8 +238,8 @@ def set_acl(consul_client, configuration):
     existing_acls_mapped_by_name = dict((acl.name, acl) for acl in acls_as_json if acl.name is not None)
     existing_acls_mapped_by_token = dict((acl.token, acl) for acl in acls_as_json)
     if None in existing_acls_mapped_by_token:
-        raise AssertionError("expecting ACL list to be associated to a token: %s" %
-                             existing_acls_mapped_by_token[None])
+        raise AssertionError("Expecting ACL list to be associated to a token: %s"
+                             % existing_acls_mapped_by_token[None])
 
     if configuration.token is None and configuration.name is not None \
             and configuration.name in existing_acls_mapped_by_name:
@@ -252,7 +252,8 @@ def set_acl(consul_client, configuration):
         # token
         remove_old_result = remove_acl(consul_client, existing_acls_mapped_by_name[configuration.name].token)
         if not remove_old_result.changed:
-            raise AssertionError()
+            raise AssertionError("Expecting the old ACL with the token \"%s\" to have been removed"
+                                 % (existing_acls_mapped_by_name[configuration.name].token, ))
         del existing_acls_mapped_by_name[configuration.name]
 
     if configuration.token and configuration.token in existing_acls_mapped_by_token:
@@ -261,9 +262,9 @@ def set_acl(consul_client, configuration):
             consul_client, configuration.token, configuration.name, configuration.token_type, configuration.rules)
     else:
         if configuration.token in existing_acls_mapped_by_token:
-            raise AssertionError()
+            raise AssertionError("Expecting ACL with token \"%s\" not to exist" % (configuration.token, ))
         if configuration.name in existing_acls_mapped_by_name:
-            raise AssertionError()
+            raise AssertionError("Expecting ACL with name \"%s\" not to exist" % (configuration.name, ))
         return create_acl(
             consul_client, configuration.token, configuration.name, configuration.token_type, configuration.rules)
 
@@ -286,7 +287,7 @@ def update_acl(consul_client, token, name, token_type, rules):
         rules_as_hcl = encode_rules_as_hcl_string(rules)
         updated_token = consul_client.acl.update(token, name=name, type=token_type, rules=rules_as_hcl)
         if updated_token != token:
-            raise AssertionError()
+            raise AssertionError("Unexpected ACL token returned by Consul client")
 
     return Output(changed=changed, token=token, rules=rules, operation=UPDATE_OPERATION)
 
@@ -401,13 +402,13 @@ def encode_rules_as_json(rules):
     for rule in rules:
         if rule.pattern is not None:
             if rule.pattern in rules_as_json[rule.scope]:
-                raise AssertionError()
+                raise AssertionError("Duplicate pattern for \"%s\" scope in the rule: %s" % (rule.scope, rule))
             rules_as_json[rule.scope][rule.pattern] = {
                 _POLICY_JSON_PROPERTY: rule.policy
             }
         else:
             if rule.scope in rules_as_json:
-                raise AssertionError()
+                raise AssertionError("Duplicate \"%s\" scope in the rule: %s" % (rule.scope, rule))
             rules_as_json[rule.scope] = rule.policy
     return rules_as_json
 
