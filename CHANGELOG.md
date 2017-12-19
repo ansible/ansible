@@ -69,9 +69,6 @@ Ansible Changes By Release
   * aws_s3_cors
   * aws_ssm_parameter_store
   * ec2_ami_facts
-  * ec2_elb
-  * ec2_elb_facts
-  * ec2_elb_lb
   * ec2_placement_group
   * ec2_placement_group_facts
   * ecs_taskdefinition_facts
@@ -196,10 +193,6 @@ Ansible Changes By Release
 #### System
   * mksysb
   * nosh
-
-#### Utilities
-- logic
-  * import_playbook
 
 #### Windows
   * win_audit_policy_system
