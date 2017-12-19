@@ -309,7 +309,7 @@ class FirewallTransaction(object):
         if self.fw_offline:
             self.fw.config.set_zone_config(fw_settings.settings)
         else:
-	    fw_zone = self.fw.config().getZoneByName(self.zone)
+            fw_zone = self.fw.config().getZoneByName(self.zone)
             fw_zone.update(fw_settings)
 
     def get_enabled_immediate(self):
