@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: openshift_raw.py
+module: openshift_raw
 
 short_description: Manage OpenShift objects
 
