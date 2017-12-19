@@ -23,8 +23,10 @@ author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- This module is to be used with M(aci_switch_leaf_policy_profile) and is directly associated to M(aci_switch_leaf_selector)
-- One first creates a leaf profile (infra:NodeP), then creates an associated selector (infra:LeafS) and finally adds a node block range to the selector (infra:NodeBlk)
+- This module is to be used with M(aci_switch_leaf_policy_profile) and M(aci_switch_leaf_selector)
+- One first creates a leaf profile (infra:NodeP)
+- Creates an associated selector (infra:LeafS)
+- Finally adds a node block range to the selector (infra:NodeBlk)
 options:
  leaf_profile:
    description:
@@ -97,7 +99,7 @@ def main():
     leaf_profile = module.params['leaf_profile']
     leaf = module.params['leaf']
     leaf_node_blk = module.params['leaf_node_blk']
-    to_ =  module.params['to_']
+    to_ = module.params['to_']
     from_ = module.params['from_']
     state = module.params['state']
 
@@ -132,9 +134,9 @@ def main():
         aci.payload(
             aci_class='infraNodeBlk',
             class_config=dict(
-                 name=leaf_node_blk,
-                 to_=to_,
-                 from_=from_,
+                name=leaf_node_blk,
+                to_=to_,
+                from_=from_
              )
         )
 
