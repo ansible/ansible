@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Nandor Sivok <nandor@gawker.com>
+# Copyright: (c) 2013, Nandor Sivok <nandor@gawker.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -24,84 +22,68 @@ deprecated: In 2.4 use M(netscaler_service) and M(netscaler_server) instead.
 options:
   nsc_host:
     description:
-      - hostname or ip of your netscaler
+      - Hostname or ip of your netscaler.
     required: true
-    default: null
-    aliases: []
   nsc_protocol:
     description:
-      - protocol used to access netscaler
-    required: false
+      - Protocol used to access netscaler.
     default: https
-    aliases: []
   user:
     description:
-      - username
+      - Username.
     required: true
-    default: null
-    aliases: []
   password:
     description:
-      - password
+      - Password.
     required: true
-    default: null
-    aliases: []
   action:
     description:
-      - the action you want to perform on the entity
-    required: false
+      - The action you want to perform on the entity.
+    choices: [ disable, enable ]
     default: disable
-    choices: ["enable", "disable"]
-    aliases: []
   name:
     description:
-      - name of the entity
+      - Name of the entity.
     required: true
     default: hostname
-    aliases: []
   type:
     description:
-      - type of the entity
-    required: false
+      - Type of the entity.
+    choices: [ server, service ]
     default: server
-    choices: ["server", "service"]
-    aliases: []
   validate_certs:
     description:
-      - If C(no), SSL certificates for the target url will not be validated. This should only be used
-        on personally controlled sites using self-signed certificates.
-    required: false
+      - If C(no), SSL certificates for the target url will not be validated.
+      - This should only be used on personally controlled sites using self-signed certificates.
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
-
-requirements: []
-author: "Nandor Sivok (@dominis)"
+author:
+- Nandor Sivok (@dominis)
 '''
 
 EXAMPLES = '''
-# Disable the server
-- netscaler:
+- name: Disable the server
+  netscaler:
     nsc_host: nsc.example.com
     user: apiuser
     password: apipass
 
-# Enable the server
-- netscaler:
+- name: Enable the server
+  netscaler:
     nsc_host: nsc.example.com
     user: apiuser
     password: apipass
     action: enable
 
-# Disable the service local:8080
-- netscaler:
+- name: Disable the service local:8080
+  netscaler:
     nsc_host: nsc.example.com
     user: apiuser
     password: apipass
-    name: 'local:8080'
+    name: local:8080
     type: service
     action: disable
 '''
-
 
 import base64
 import json
@@ -133,7 +115,7 @@ class netscaler(object):
         auth = base64.encodestring('%s:%s' % (self._nsc_user, self._nsc_pass)).replace('\n', '').strip()
         headers = {
             'Authorization': 'Basic %s' % auth,
-            'Content-Type' : 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/x-www-form-urlencoded',
         }
 
         response, info = fetch_url(self.module, request_url, data=data_json, headers=headers)
@@ -173,16 +155,16 @@ def core(module):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            nsc_host = dict(required=True),
-            nsc_protocol = dict(default='https'),
-            user = dict(required=True),
-            password = dict(required=True, no_log=True),
-            action = dict(default='enable', choices=['enable','disable']),
-            name = dict(default=socket.gethostname()),
-            type = dict(default='server', choices=['service', 'server']),
-            validate_certs=dict(default='yes', type='bool'),
-        )
+        argument_spec=dict(
+            nsc_host=dict(type='str', required=True),
+            nsc_protocol=dict(type='str', default='https'),
+            user=dict(type='str', required=True),
+            password=dict(type='str', required=True, no_log=True),
+            action=dict(type='str', default='enable', choices=['disable', 'enable']),
+            name=dict(type='str', default=socket.gethostname()),
+            type=dict(type='str', default='server', choices=['server', 'service']),
+            validate_certs=dict(type='bool', default=True),
+        ),
     )
 
     rc = 0

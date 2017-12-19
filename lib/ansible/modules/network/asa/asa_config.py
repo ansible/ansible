@@ -93,28 +93,6 @@ options:
     required: false
     default: line
     choices: ['line', 'block']
-  update:
-    description:
-      - The I(update) argument controls how the configuration statements
-        are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
-        the configuration updates are determined but not actually configured
-        on the remote device.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
-  commit:
-    description:
-      - This argument specifies the update method to use when applying the
-        configuration changes to the remote node.  If the value is set to
-        I(merge) the configuration updates are merged with the running-
-        config.  If the value is set to I(check), no changes are made to
-        the remote host.
-    required: false
-    default: merge
-    choices: ['merge', 'check']
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -217,11 +195,10 @@ backup_path:
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import get_config, load_config, run_commands
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils._text import to_native
-
 
 
 def get_candidate(module):
@@ -232,6 +209,7 @@ def get_candidate(module):
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
     return candidate
+
 
 def run(module, result):
     match = module.params['match']
@@ -270,8 +248,9 @@ def run(module, result):
 
     if module.params['save']:
         if not module.check_mode:
-            module.config.save_config()
+            run_commands(module, 'write mem')
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -314,7 +293,6 @@ def main():
     check_args(module)
 
     config = None
-
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)

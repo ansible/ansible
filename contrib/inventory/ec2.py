@@ -12,9 +12,9 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
-optional region environment variable if region is 'auto'
+Optional region environment variable if region is 'auto'
 
-This script also assumes there is an ec2.ini file alongside it.  To specify a
+This script also assumes that there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
     export EC2_INI_PATH=/path/to/my_ec2.ini
@@ -95,12 +95,37 @@ consistency with variable spellings (camelCase and underscores) since this
 just loops through all variables the object exposes. It is preferred to use the
 ones with underscores when multiple exist.
 
-In addition, if an instance has AWS Tags associated with it, each tag is a new
+In addition, if an instance has AWS tags associated with it, each tag is a new
 variable named:
  - ec2_tag_[Key] = [Value]
 
 Security groups are comma-separated in 'ec2_security_group_ids' and
 'ec2_security_group_names'.
+
+When destination_format and destination_format_tags are specified
+the destination_format can be built from the instance tags and attributes.
+The behavior will first check the user defined tags, then proceed to
+check instance attributes, and finally if neither are found 'nil' will
+be used instead.
+
+'my_instance': {
+    'region': 'us-east-1',             # attribute
+    'availability_zone': 'us-east-1a', # attribute
+    'private_dns_name': '172.31.0.1',  # attribute
+    'ec2_tag_deployment': 'blue',      # tag
+    'ec2_tag_clusterid': 'ansible',    # tag
+    'ec2_tag_Name': 'webserver',       # tag
+    ...
+}
+
+Inside of the ec2.ini file the following settings are specified:
+...
+destination_format: {0}-{1}-{2}-{3}
+destination_format_tags: Name,clusterid,deployment,private_dns_name
+...
+
+These settings would produce a destination_format as the following:
+'webserver-ansible-blue-172.31.0.1'
 '''
 
 # (c) 2012, Peter Sankauskas
@@ -858,8 +883,22 @@ class Ec2Inventory(object):
             return
 
         # Select the best destination address
+        # When destination_format and destination_format_tags are specified
+        # the following code will attempt to find the instance tags first,
+        # then the instance attributes next, and finally if neither are found
+        # assign nil for the desired destination format attribute.
         if self.destination_format and self.destination_format_tags:
-            dest = self.destination_format.format(*[getattr(instance, 'tags').get(tag, '') for tag in self.destination_format_tags])
+            dest_vars = []
+            inst_tags = getattr(instance, 'tags')
+            for tag in self.destination_format_tags:
+                if tag in inst_tags:
+                    dest_vars.append(inst_tags[tag])
+                elif hasattr(instance, tag):
+                    dest_vars.append(getattr(instance, tag))
+                else:
+                    dest_vars.append('nil')
+
+            dest = self.destination_format.format(*dest_vars)
         elif instance.subnet_id:
             dest = getattr(instance, self.vpc_destination_variable, None)
             if dest is None:
@@ -1641,9 +1680,9 @@ class Ec2Inventory(object):
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        regex = "[^A-Za-z0-9\_"
+        regex = r"[^A-Za-z0-9\_"
         if not self.replace_dash_in_groups:
-            regex += "\-"
+            regex += r"\-"
         return re.sub(regex + "]", "_", word)
 
     def json_format_dict(self, data, pretty=False):

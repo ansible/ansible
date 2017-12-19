@@ -141,7 +141,7 @@ def strftime(string_format, second=None):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return shlex_quote(a)
+    return shlex_quote(to_text(a))
 
 
 def fileglob(pathname):
@@ -322,14 +322,19 @@ def combine(*terms, **kwargs):
     if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
         raise errors.AnsibleFilterError("'recursive' is the only valid keyword argument")
 
+    dicts = []
     for t in terms:
-        if not isinstance(t, dict):
+        if isinstance(t, MutableMapping):
+            dicts.append(t)
+        elif isinstance(t, list):
+            dicts.append(combine(*t, **kwargs))
+        else:
             raise errors.AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
 
     if recursive:
-        return reduce(merge_hash, terms)
+        return reduce(merge_hash, dicts)
     else:
-        return dict(itertools.chain(*map(iteritems, terms)))
+        return dict(itertools.chain(*map(iteritems, dicts)))
 
 
 def comment(text, style='plain', **kw):
@@ -460,6 +465,27 @@ def b64decode(string):
     return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')))
 
 
+def flatten(mylist, levels=None):
+
+    ret = []
+    for element in mylist:
+        if element in (None, 'None', 'null'):
+            # ignore undefined items
+            break
+        elif isinstance(element, MutableSequence):
+            if levels is None:
+                ret.extend(flatten(element))
+            elif levels >= 1:
+                levels = int(levels) - 1
+                ret.extend(flatten(element, levels=levels))
+            else:
+                ret.append(element)
+        else:
+            ret.append(element)
+
+    return ret
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -467,6 +493,7 @@ class FilterModule(object):
         return {
             # jinja2 overrides
             'groupby': do_groupby,
+            'flatten': flatten,
 
             # base 64
             'b64decode': b64decode,

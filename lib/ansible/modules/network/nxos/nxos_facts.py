@@ -128,7 +128,7 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP neighbors from the remote device
+  description: The list of LLDP/CDP neighbors from the remote device
   returned: when interfaces is configured
   type: dict
 
@@ -168,10 +168,10 @@ vlan_list:
 """
 import re
 
-from ansible.module_utils.nxos import run_commands, get_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands, get_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import string_types, iteritems
 
 
 class FactsBase(object):
@@ -184,11 +184,13 @@ class FactsBase(object):
     def populate(self):
         pass
 
-    def run(self, command, output=None):
+    def run(self, command, output='text'):
         command_string = command
-        if output:
-            command = {'command': command, 'output': output}
-        resp = run_commands(self.module, command, check_rc=False)
+        command = {
+            'command': command,
+            'output': output
+        }
+        resp = run_commands(self.module, [command], check_rc=False)
         try:
             return resp[0]
         except IndexError:
@@ -226,7 +228,7 @@ class Default(FactsBase):
     ])
 
     def populate(self):
-        data = self.run('show version', 'json')
+        data = self.run('show version', output='json')
         if data:
             if data.get('sys_ver_str'):
                 self.facts.update(self.transform_dict(data, self.VERSION_MAP_7K))
@@ -244,11 +246,11 @@ class Config(FactsBase):
 class Hardware(FactsBase):
 
     def populate(self):
-        data = self.run('dir', 'text')
+        data = self.run('dir')
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.run('show system resources', 'json')
+        data = self.run('show system resources', output='json')
         if data:
             self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
             self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
@@ -281,21 +283,34 @@ class Interfaces(FactsBase):
         ('prefix', 'subnet')
     ])
 
+    def ipv6_structure_op_supported(self):
+        data = self.run('show version', output='json')
+        if data:
+            unsupported_versions = ['I2', 'F1', 'A8']
+            for ver in unsupported_versions:
+                if ver in data.get('kickstart_ver_str'):
+                    return False
+            return True
+
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.run('show interface', 'json')
+        data = self.run('show interface', output='json')
         if data:
             self.facts['interfaces'] = self.populate_interfaces(data)
 
-        data = self.run('show ipv6 interface', 'json')
-        if data:
+        data = self.run('show ipv6 interface', output='json') if self.ipv6_structure_op_supported() else None
+        if data and not isinstance(data, string_types):
             self.parse_ipv6_interfaces(data)
 
         data = self.run('show lldp neighbors')
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
+
+        data = self.run('show cdp neighbors detail', output='json')
+        if data:
+            self.facts['neighbors'] = self.populate_neighbors_cdp(data)
 
     def populate_interfaces(self, data):
         interfaces = dict()
@@ -344,6 +359,23 @@ class Interfaces(FactsBase):
                 nbor['port'] = item['port_id']
                 nbor['host'] = item['chassis_id']
                 objects[local_intf].append(nbor)
+
+        return objects
+
+    def populate_neighbors_cdp(self, data):
+        objects = dict()
+        data = data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
+            local_intf = item['intf_id']
+            objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['port_id']
+            nbor['sysname'] = item['device_id']
+            objects[local_intf].append(nbor)
 
         return objects
 
@@ -398,23 +430,23 @@ class Legacy(FactsBase):
     ])
 
     def populate(self):
-        data = self.run('show version', 'json')
+        data = self.run('show version', output='json')
         if data:
             self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
-        data = self.run('show interface', 'json')
+        data = self.run('show interface', output='json')
         if data:
             self.facts['_interfaces_list'] = self.parse_interfaces(data)
 
-        data = self.run('show vlan brief', 'json')
+        data = self.run('show vlan brief', output='json')
         if data:
             self.facts['_vlan_list'] = self.parse_vlans(data)
 
-        data = self.run('show module', 'json')
+        data = self.run('show module', output='json')
         if data:
             self.facts['_module'] = self.parse_module(data)
 
-        data = self.run('show environment', 'json')
+        data = self.run('show environment', output='json')
         if data:
             self.facts['_fan_info'] = self.parse_fan_info(data)
             self.facts['_power_supply_info'] = self.parse_power_supply_info(data)

@@ -175,8 +175,8 @@ try:
 except ImportError:
     HAS_IPADDRESS = False
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -306,9 +306,9 @@ def parse_unstructured_data(body, interface_name, version, module):
     else:
         for index in range(0, len(splitted_body) - 1):
             if "IP address" in splitted_body[index]:
-                regex = '.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:' + \
-                        '\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?' + \
-                        '(.+?tag:\s(?P<tag>\d+).*)?'
+                regex = r'.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:' + \
+                        r'\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?' + \
+                        r'(.+?tag:\s(?P<tag>\d+).*)?'
                 match = re.match(regex, splitted_body[index])
                 if match:
                     match_dict = match.groupdict()
@@ -325,7 +325,7 @@ def parse_unstructured_data(body, interface_name, version, module):
                     interface['prefixes'].append(prefix)
 
     try:
-        vrf_regex = '.+?VRF\s+(?P<vrf>\S+?)\s'
+        vrf_regex = r'.+?VRF\s+(?P<vrf>\S+?)\s'
         match_vrf = re.match(vrf_regex, body, re.DOTALL)
         vrf = match_vrf.groupdict()['vrf']
     except AttributeError:
@@ -343,13 +343,13 @@ def parse_interface_data(body):
     splitted_body = body.split('\n')
 
     for index in range(0, len(splitted_body) - 1):
-            if "Encapsulation 802.1Q" in splitted_body[index]:
-                regex = '(.+?ID\s(?P<dot1q>\d+).*)?'
-                match = re.match(regex, splitted_body[index])
-                if match:
-                    match_dict = match.groupdict()
-                    if match_dict['dot1q'] is not None:
-                        return int(match_dict['dot1q'])
+        if "Encapsulation 802.1Q" in splitted_body[index]:
+            regex = r'(.+?ID\s(?P<dot1q>\d+).*)?'
+            match = re.match(regex, splitted_body[index])
+            if match:
+                match_dict = match.groupdict()
+                if match_dict['dot1q'] is not None:
+                    return int(match_dict['dot1q'])
     return 0
 
 
@@ -457,6 +457,9 @@ def flatten_list(command_lists):
 
 
 def validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version, state, intf_type, module):
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
     if state == "present":
         if addr is None or mask is None:
             module.fail_json(msg="An IP address AND a mask must be provided "
@@ -466,7 +469,7 @@ def validate_params(addr, interface, mask, dot1q, tag, allow_secondary, version,
             module.fail_json(msg="IPv6 address and mask must be provided when "
                                  "state=absent.")
 
-    if intf_type != "ethernet" and module.params["provider"]["transport"] == "cli":
+    if intf_type != "ethernet" and network_api == 'cliconf':
         if is_default(interface, module) == "DNE":
             module.fail_json(msg="That interface does not exist yet. Create "
                                  "it first.", interface=interface)
@@ -538,7 +541,6 @@ def main():
         module.fail_json(msg="ipaddress is required for this module. Run 'pip install ipaddress' for install.")
 
     warnings = list()
-    check_args(module, warnings)
 
     addr = module.params['addr']
     version = module.params['version']

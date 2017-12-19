@@ -89,6 +89,12 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
+  - Prior to 2.4, testing for the absense of a directory or UNIX socket did not work correctly.
+  - Prior to 2.4, testing for the presence of a file did not work correctly if the remote user did not have read access to that file.
+  - Under some circumstances when using mandatory access control, a path may always be treated as being absent even if it exists, but
+    can't be modified or created by the remote user either.
+  - When waiting for a path, symbolic links will be followed.  Many other modules that manipulate files do not follow symbolic links,
+    so operations on the path using other modules may not work exactly as expected.
   - This module is also supported for Windows targets.
   - See also M(wait_for_connection)
 author:
@@ -482,8 +488,8 @@ def main():
         while datetime.datetime.utcnow() < end:
             if path:
                 try:
-                    f = open(path)
-                    f.close()
+                    if not os.access(path, os.F_OK):
+                        break
                 except IOError:
                     break
             elif port:

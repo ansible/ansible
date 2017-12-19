@@ -20,6 +20,7 @@ description:
     - Update the retention period of a Kinesis Stream.
     - Update Tags on a Kinesis Stream.
 version_added: "2.2"
+requirements: [ boto3 ]
 author: Allen Sanabria (@linuxdynasty)
 options:
   name:

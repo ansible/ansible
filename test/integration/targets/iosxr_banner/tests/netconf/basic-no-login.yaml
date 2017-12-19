@@ -1,0 +1,43 @@
+---
+- name: Enable Netconf service
+  iosxr_netconf:
+    netconf_port: 830
+    netconf_vrf: 'default'
+    state: present
+  register: result
+
+- name: Setup
+  iosxr_banner:
+    banner: login
+    text: |
+      Junk login banner
+      over multiple lines
+    provider: "{{ netconf }}"
+    state: present
+
+- name: remove login
+  iosxr_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'xc:operation=\"delete\"' in result.commands"
+
+- name: remove login (idempotent)
+  iosxr_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"

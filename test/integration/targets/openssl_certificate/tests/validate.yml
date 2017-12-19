@@ -1,9 +1,9 @@
 - name: Validate certificate (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
 
 - name: Validate certificate (test - certificate modulus)
-  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert.pem | openssl md5'
+  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert.pem'
   register: cert_modulus
 
 - name: Validate certificate (test - certficate version == default == 3)
@@ -16,6 +16,13 @@
       - cert_modulus.stdout == privatekey_modulus.stdout
       - cert_version.stdout == '3'
 
+- name: Validate certificate idempotence
+  assert:
+    that:
+      - selfsigned_certificate.serial_number == selfsigned_certificate_idempotence.serial_number
+      - selfsigned_certificate.notBefore == selfsigned_certificate_idempotence.notBefore
+      - selfsigned_certificate.notAfter == selfsigned_certificate_idempotence.notAfter
+
 - name: Validate certificate v2 (test - certificate version == 2)
   shell: 'openssl x509 -noout  -in {{ output_dir}}/cert_v2.pem -text | grep "Version" | sed "s/.*: \(.*\) .*/\1/g"'
   register: cert_v2_version
@@ -26,11 +33,11 @@
       - cert_v2_version.stdout == '2'
 
 - name: Validate certificate2 (test - privatekey modulus)
-  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey2.pem | openssl md5'
+  shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey2.pem'
   register: privatekey2_modulus
 
 - name: Validate certificate2 (test - certificate modulus)
-  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert2.pem | openssl md5'
+  shell: 'openssl x509 -noout -modulus -in {{ output_dir }}/cert2.pem'
   register: cert2_modulus
 
 - name: Validate certificate2 (assert)

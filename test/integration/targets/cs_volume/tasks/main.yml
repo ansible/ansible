@@ -5,7 +5,7 @@
 - name: verify setup
   assert:
     that:
-    - vol|success
+    - vol is successful
 
 - name: setup instance 1
   cs_instance:
@@ -16,7 +16,7 @@
 - name: verify create instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: setup instance 2
   cs_instance:
@@ -27,7 +27,7 @@
 - name: verify create instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: test fail if missing name
   action: cs_volume
@@ -36,7 +36,7 @@
 - name: verify results of fail if missing name
   assert:
     that:
-    - vol|failed
+    - vol is failed
     - "vol.msg == 'missing required arguments: name'"
 
 - name: test create volume in check mode
@@ -49,7 +49,7 @@
 - name: verify results test create volume in check mode
   assert:
     that:
-    - vol|changed
+    - vol is changed
 
 - name: test create volume
   cs_volume:
@@ -60,7 +60,7 @@
 - name: verify results test create volume
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.size == 20 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
@@ -73,7 +73,7 @@
 - name: verify results test create volume idempotence
   assert:
     that:
-    - not vol|changed
+    - vol is not changed
     - vol.size == 20 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
@@ -88,7 +88,7 @@
 - name: verify results test create volume in check mode
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.size == 20 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
@@ -102,7 +102,7 @@
 - name: verify results test create volume
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.size == 10 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
@@ -116,7 +116,7 @@
 - name: verify results test create volume
   assert:
     that:
-    - not vol|changed
+    - vol is not changed
     - vol.size == 10 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
@@ -130,7 +130,7 @@
 - name: verify results test attach volume in check mode
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.attached is not defined
 
@@ -143,7 +143,7 @@
 - name: verify results test attach volume
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.vm == "{{ test_cs_instance_1 }}"
     - vol.attached is defined
@@ -157,7 +157,7 @@
 - name: verify results test attach volume idempotence
   assert:
     that:
-    - not vol|changed
+    - vol is not changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.vm == "{{ test_cs_instance_1 }}"
     - vol.attached is defined
@@ -172,7 +172,7 @@
 - name: verify results test attach attached volume to another vm in check mode
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.vm == "{{ test_cs_instance_1 }}"
     - vol.attached is defined
@@ -186,7 +186,7 @@
 - name: verify results test attach attached volume to another vm
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.vm == "{{ test_cs_instance_2 }}"
     - vol.attached is defined
@@ -200,7 +200,7 @@
 - name: verify results test attach attached volume to another vm idempotence
   assert:
     that:
-    - not vol|changed
+    - vol is not changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.vm == "{{ test_cs_instance_2 }}"
     - vol.attached is defined
@@ -214,7 +214,7 @@
 - name: verify results test detach volume in check mdoe
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.attached is defined
 
@@ -226,7 +226,7 @@
 - name: verify results test detach volume
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.attached is undefined
 
@@ -238,7 +238,7 @@
 - name: verify results test detach volume idempotence
   assert:
     that:
-    - not vol|changed
+    - vol is not changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
     - vol.attached is undefined
 
@@ -251,7 +251,7 @@
 - name: verify results test create volume in check mode
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
 - name: test delete volume
@@ -262,7 +262,7 @@
 - name: verify results test create volume
   assert:
     that:
-    - vol|changed
+    - vol is changed
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
 - name: test delete volume idempotence
@@ -273,7 +273,7 @@
 - name: verify results test delete volume idempotence
   assert:
     that:
-    - not vol|changed
+    - vol is not changed
 
 - name: cleanup instance 1
   cs_instance:
@@ -283,7 +283,7 @@
 - name: verify create instance
   assert:
     that:
-    - instance|success
+    - instance is successful
 
 - name: cleanup instance 2
   cs_instance:
@@ -293,4 +293,4 @@
 - name: verify create instance
   assert:
     that:
-    - instance|success
+    - instance is successful

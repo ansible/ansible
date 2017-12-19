@@ -89,13 +89,13 @@ class CallbackModule(CallbackBase):
         # than 1 simultaneous playbooks running
         self.guid = uuid.uuid4().hex[:6]
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        self.webhook_url = self._plugin_options['webhook_url']
-        self.channel = self._plugin_options['channel']
-        self.username = self._plugin_options['username']
+        self.webhook_url = self.get_option('webhook_url')
+        self.channel = self.get_option('channel')
+        self.username = self.get_option('username')
         self.show_invocation = (self._display.verbosity > 1)
 
         if self.webhook_url is None:
@@ -133,12 +133,12 @@ class CallbackModule(CallbackBase):
         ]
         invocation_items = []
         if self._plugin_options and self.show_invocation:
-            tags = self._plugin_options.tags
-            skip_tags = self._plugin_options.skip_tags
-            extra_vars = self._plugin_options.extra_vars
-            subset = self._plugin_options.subset
+            tags = self.get_option('tags')
+            skip_tags = self.get_option('skip_tags')
+            extra_vars = self.get_option('extra_vars')
+            subset = self.get_option('subset')
             inventory = os.path.basename(
-                os.path.realpath(self._plugin_options.inventory)
+                os.path.realpath(self.get_option('inventory'))
             )
 
             invocation_items.append('Inventory:  %s' % inventory)
@@ -152,7 +152,7 @@ class CallbackModule(CallbackBase):
                 invocation_items.append('Extra Vars: %s' %
                                         ' '.join(extra_vars))
 
-            title.append('by *%s*' % self._plugin_options.remote_user)
+            title.append('by *%s*' % self.get_options('remote_user'))
 
         title.append('\n\n*%s*' % self.playbook_name)
         msg_items = [' '.join(title)]

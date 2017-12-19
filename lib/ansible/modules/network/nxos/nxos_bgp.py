@@ -310,10 +310,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -461,7 +461,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
-    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     asn_match = asn_re.match(str(netcfg))
 
     if asn_match:
@@ -615,7 +615,7 @@ def main():
         enforce_first_as=dict(required=False, type='bool'),
         event_history_cli=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_detail=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-        event_history_events=dict(required=False, choices=['true', 'false', 'default' 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        event_history_events=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_periodic=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         fast_external_fallover=dict(required=False, type='bool'),
         flush_routes=dict(required=False, type='bool'),
@@ -683,7 +683,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        warnings.extend(load_config(module, candidate))
+        load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
     else:

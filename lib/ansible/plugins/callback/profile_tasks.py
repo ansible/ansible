@@ -18,7 +18,7 @@ DOCUMENTATION = '''
       - Ansible callback plugin for timing individual tasks and overall execution time.
       - "Mashup of 2 excellent original works: https://github.com/jlafon/ansible-profile,
          https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old"
-      - "Format: ``<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>``"
+      - "Format: C(<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>)"
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
@@ -119,11 +119,11 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        self.sort_order = self._plugin_options['sort_order']
+        self.sort_order = self.get_option('sort_order')
         if self.sort_order is not None:
             if self.sort_order == 'ascending':
                 self.sort_order = False
@@ -132,7 +132,7 @@ class CallbackModule(CallbackBase):
             elif self.sort_order == 'none':
                 self.sort_order = None
 
-        self.task_output_limit = self._plugin_options['output_limit']
+        self.task_output_limit = self.get_option('output_limit')
         if self.task_output_limit is not None:
             if self.task_output_limit == 'all':
                 self.task_output_limit = None

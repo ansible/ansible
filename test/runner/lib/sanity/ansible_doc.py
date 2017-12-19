@@ -11,14 +11,11 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
+    intercept_command,
 )
 
 from lib.ansible_util import (
     ansible_environment,
-)
-
-from lib.executor import (
-    intercept_command,
 )
 
 from lib.config import (
@@ -43,6 +40,10 @@ class AnsibleDocTest(SanityMultipleVersion):
                          skip_modules)
 
         if not modules:
+            return SanitySkipped(self.name, python_version=python_version)
+
+        # ansible-doc fails due to async syntax errors on Python 3.7 currently
+        if python_version == '3.7':
             return SanitySkipped(self.name, python_version=python_version)
 
         env = ansible_environment(args, color=False)

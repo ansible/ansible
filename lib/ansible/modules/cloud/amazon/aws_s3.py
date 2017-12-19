@@ -101,7 +101,10 @@ options:
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
-        Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
+        Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0.
+        When this is set to 'different', the md5 sum of the local file is compared with the 'ETag' of the object/key in S3.
+        The ETag may or may not be an MD5 digest of the object data. See the ETag response header here
+        U(http://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html)
     default: 'always'
     aliases: ['force']
     version_added: "1.2"
@@ -404,16 +407,18 @@ def delete_key(module, s3, bucket, obj):
         module.fail_json(msg="Failed while trying to delete %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
-def create_dirkey(module, s3, bucket, obj):
+def create_dirkey(module, s3, bucket, obj, encrypt):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
-        bucket = s3.Bucket(bucket)
-        key = bucket.new_key(obj)
-        key.set_contents_from_string('')
+        params = {'Bucket': bucket, 'Key': obj, 'Body': b''}
+        if encrypt:
+            params['ServerSideEncryption'] = 'AES256'
+
+        s3.put_object(**params)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
+        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed while creating object %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
@@ -554,15 +559,19 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url):
         rgw = urlparse(s3_url)
         params = dict(module=module, conn_type='client', resource='s3', use_ssl=rgw.scheme == 'https', region=location, endpoint=s3_url, **aws_connect_kwargs)
     elif is_fakes3(s3_url):
-        for kw in ['is_secure', 'host', 'port'] and list(aws_connect_kwargs.keys()):
-            del aws_connect_kwargs[kw]
         fakes3 = urlparse(s3_url)
+        port = fakes3.port
         if fakes3.scheme == 'fakes3s':
             protocol = "https"
+            if port is None:
+                port = 443
         else:
             protocol = "http"
-        params = dict(service_name='s3', endpoint_url="%s://%s:%s" % (protocol, fakes3.hostname, to_text(fakes3.port)),
-                      use_ssl=fakes3.scheme == 'fakes3s', region_name=None, **aws_connect_kwargs)
+            if port is None:
+                port = 80
+        params = dict(module=module, conn_type='client', resource='s3', region=location,
+                      endpoint="%s://%s:%s" % (protocol, fakes3.hostname, to_text(port)),
+                      use_ssl=fakes3.scheme == 'fakes3s', **aws_connect_kwargs)
     elif is_walrus(s3_url):
         walrus = urlparse(s3_url).hostname
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
@@ -670,10 +679,7 @@ def main():
     if s3_url:
         for key in ['validate_certs', 'security_token', 'profile_name']:
             aws_connect_kwargs.pop(key, None)
-    try:
-        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=to_native(e))
+    s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url)
 
     validate = not ignore_nonexistent_bucket
 
@@ -824,14 +830,14 @@ def main():
                 else:
                     # setting valid object acls for the create_dirkey function
                     module.params['permission'] = object_acl
-                    create_dirkey(module, s3, bucket, dirobj)
+                    create_dirkey(module, s3, bucket, dirobj, encrypt)
             else:
                 # only use valid bucket acls for the create_bucket function
                 module.params['permission'] = bucket_acl
                 created = create_bucket(module, s3, bucket, location)
                 # only use valid object acls for the create_dirkey function
                 module.params['permission'] = object_acl
-                create_dirkey(module, s3, bucket, dirobj)
+                create_dirkey(module, s3, bucket, dirobj, encrypt)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
     if mode == 'geturl':

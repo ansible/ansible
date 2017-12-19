@@ -18,15 +18,15 @@ DOCUMENTATION = """
 ---
 module: lineinfile
 author:
-    - "Daniel Hokka Zakrissoni (@dhozac)"
-    - "Ahti Kitsik (@ahtik)"
+    - Daniel Hokka Zakrissoni (@dhozac)
+    - Ahti Kitsik (@ahtik)
 extends_documentation_fragment:
     - files
     - validate
-short_description: Ensure a particular line is in a file, or replace an
-                   existing line using a back-referenced regular expression.
+short_description: Manage lines in text files
 description:
-  - This module will search a file for a line, and ensure that it is present or absent.
+  - This module ensures a particular line is in a file, or replace an
+    existing line using a back-referenced regular expression.
   - This is primarily useful when you want to change a single line in
     a file only. See the M(replace) module if you want to change
     multiple, similar lines or check M(blockinfile) if you want to insert/update/remove a block of lines in a file.
@@ -34,38 +34,30 @@ description:
 version_added: "0.7"
 options:
   path:
-    required: true
-    aliases: [ 'dest', 'destfile', 'name' ]
     description:
       - The file to modify.
       - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    aliases: [ dest, destfile, name ]
+    required: true
   regexp:
-    required: false
-    version_added: 1.7
     description:
       - The regular expression to look for in every line of the file. For
         C(state=present), the pattern to replace if found; only the last line
         found will be replaced. For C(state=absent), the pattern of the line(s)
         to remove.  Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
+    version_added: '1.7'
   state:
-    required: false
-    choices: [ present, absent ]
-    default: "present"
-    aliases: []
     description:
       - Whether the line should be there or not.
+    choices: [ absent, present ]
+    default: present
   line:
-    required: false
     description:
       - Required for C(state=present). The line to insert/replace into the
         file. If C(backrefs) is set, may contain backreferences that will get
         expanded with the C(regexp) capture groups if the regexp matches.
   backrefs:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.1"
     description:
       - Used with C(state=present). If set, line can contain backreferences
         (both positional and named) that will get populated if the C(regexp)
@@ -74,45 +66,54 @@ options:
         doesn't match anywhere in the file, the file will be left unchanged.
         If the C(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
+    type: bool
+    default: 'no'
+    version_added: "1.1"
   insertafter:
-    required: false
-    default: EOF
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        after the last match of specified regular expression. A special value is
-        available; C(EOF) for inserting the line at the end of the file.
+        after the last match of specified regular expression.
+        If the first match is required, use(firstmatch=yes).
+        A special value is available; C(EOF) for inserting the line at the
+        end of the file.
         If specified regular expression has no matches, EOF will be used instead.
         May not be used with C(backrefs).
-    choices: [ 'EOF', '*regex*' ]
+    choices: [ EOF, '*regex*' ]
+    default: EOF
   insertbefore:
-    required: false
-    version_added: "1.1"
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        before the last match of specified regular expression. A value is
-        available; C(BOF) for inserting the line at the beginning of the file.
+        before the last match of specified regular expression.
+        If the first match is required, use(firstmatch=yes).
+        A value is available; C(BOF) for inserting the line at
+        the beginning of the file.
         If specified regular expression has no matches, the line will be
         inserted at the end of the file.  May not be used with C(backrefs).
-    choices: [ 'BOF', '*regex*' ]
+    choices: [ BOF, '*regex*' ]
+    version_added: "1.1"
   create:
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
     description:
       - Used with C(state=present). If specified, the file will be created
         if it does not already exist. By default it will fail if the file
         is missing.
+    type: bool
+    default: 'no'
   backup:
-     required: false
-     default: "no"
-     choices: [ "yes", "no" ]
      description:
        - Create a backup file including the timestamp information so you can
          get the original file back if you somehow clobbered it incorrectly.
+     type: bool
+     default: 'no'
+  firstmatch:
+    description:
+      - Used with C(insertafter) or C(insertbefore). If set, C(insertafter) and C(inserbefore) find
+        a first line has regular expression matches.
+    type: bool
+    default: 'no'
+    version_added: "2.5"
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
-     required: false
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
@@ -177,8 +178,8 @@ EXAMPLES = r"""
     validate: '/usr/sbin/visudo -cf %s'
 """
 
-import re
 import os
+import re
 import tempfile
 
 # import module snippets
@@ -224,7 +225,7 @@ def check_file_attrs(module, changed, message, diff):
 
 
 def present(module, dest, regexp, line, insertafter, insertbefore, create,
-            backup, backrefs):
+            backup, backrefs, firstmatch):
 
     diff = {'before': '',
             'after': '',
@@ -274,9 +275,13 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             if insertafter:
                 # + 1 for the next line
                 index[1] = lineno + 1
+                if firstmatch:
+                    break
             if insertbefore:
                 # + 1 for the previous line
                 index[1] = lineno
+                if firstmatch:
+                    break
 
     msg = ''
     changed = False
@@ -311,7 +316,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     elif insertafter == 'EOF' or index[1] == -1:
 
         # If the file is not empty then ensure there's a newline before the added line
-        if len(b_lines) > 0 and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+        if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
             b_lines.append(b_linesep)
 
         b_lines.append(b_line + b_linesep)
@@ -408,20 +413,21 @@ def absent(module, dest, regexp, line, backup):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
-            state=dict(default='present', choices=['absent', 'present']),
-            regexp=dict(default=None),
-            line=dict(aliases=['value']),
-            insertafter=dict(default=None),
-            insertbefore=dict(default=None),
-            backrefs=dict(default=False, type='bool'),
-            create=dict(default=False, type='bool'),
-            backup=dict(default=False, type='bool'),
-            validate=dict(default=None, type='str'),
+            path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            regexp=dict(type='str'),
+            line=dict(type='str', aliases=['value']),
+            insertafter=dict(type='str'),
+            insertbefore=dict(type='str'),
+            backrefs=dict(type='bool', default=False),
+            create=dict(type='bool', default=False),
+            backup=dict(type='bool', default=False),
+            firstmatch=dict(default=False, type='bool'),
+            validate=dict(type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     params = module.params
@@ -429,6 +435,7 @@ def main():
     backup = params['backup']
     backrefs = params['backrefs']
     path = params['path']
+    firstmatch = params['firstmatch']
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
@@ -450,7 +457,7 @@ def main():
         line = params['line']
 
         present(module, path, params['regexp'], line,
-                ins_aft, ins_bef, create, backup, backrefs)
+                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if params['regexp'] is None and params.get('line', None) is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')

@@ -198,7 +198,7 @@ To make roles run more than once, there are two options:
 1. Pass different parameters in each role definition.
 2. Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role.
 
-Example 1 - passing different paramters::
+Example 1 - passing different parameters::
 
     ---
     - hosts: webservers

@@ -69,6 +69,7 @@ Errors
   106       Import found before documentation variables. All imports must appear below
             ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   107       Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
+  108       GPLv3 license header should be the :ref:`short form <copyright>` for new modules
   ..
 ---------   -------------------
   **2xx**   **Imports**
@@ -104,6 +105,7 @@ Errors
             Arguments with a default should not be marked as required
   318       Module deprecated, but DOCUMENTATION.deprecated is missing
   319       ``RETURN`` fragments missing  or invalid
+  320       ``DOCUMENTATION.options`` must be a dictionary/hash when used
   ..
 ---------   -------------------
   **4xx**   **Syntax**

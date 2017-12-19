@@ -4,8 +4,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
-#Requires -Module Ansible.ModuleUtils.CommandUtil.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # TODO: add check mode support
 
@@ -27,11 +28,11 @@ $result = @{
     cmd = $raw_command_line
 }
 
-If($creates -and $(Test-Path -Path $creates)) {
+if ($creates -and $(Test-FilePath -path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-If($removes -and -not $(Test-Path -Path $removes)) {
+if ($removes -and -not $(Test-FilePath -path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 

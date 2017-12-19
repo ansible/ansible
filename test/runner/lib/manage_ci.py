@@ -14,6 +14,7 @@ from lib.util import (
     SubprocessError,
     ApplicationError,
     run_command,
+    intercept_command,
 )
 
 from lib.core_ci import (
@@ -51,7 +52,7 @@ class ManageWindowsCI(object):
 
         for _ in range(1, 120):
             try:
-                run_command(self.core_ci.args, cmd, env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
                 sleep(10)
@@ -71,11 +72,17 @@ class ManageNetworkCI(object):
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
+        if self.core_ci.platform in ('vyos',):
+            connection_type = 'network_cli'
+        else:
+            connection_type = 'local'
+
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
             'ansible_port=%s' % self.core_ci.connection.port,
-            'ansible_connection=local',
+            'ansible_connection=%s' % connection_type,
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+            'ansible_network_os=%s' % self.core_ci.platform,
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
@@ -93,7 +100,7 @@ class ManageNetworkCI(object):
 
         for _ in range(1, 90):
             try:
-                run_command(self.core_ci.args, cmd, env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
                 sleep(10)
@@ -124,7 +131,12 @@ class ManagePosixCI(object):
             self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
         if self.core_ci.platform == 'freebsd':
-            self.become = ['su', '-l', 'root', '-c']
+            if self.core_ci.provider == 'aws':
+                self.become = ['su', '-l', 'root', '-c']
+            elif self.core_ci.provider == 'azure':
+                self.become = ['sudo', '-in', 'sh', '-c']
+            else:
+                raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel':
@@ -161,7 +173,7 @@ class ManagePosixCI(object):
             remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
             if not self.core_ci.args.explain:
-                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.ignore)
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.DefaultTarFilter())
 
             self.upload(local_source_fd.name, remote_source_dir)
             self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)

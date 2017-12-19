@@ -1,0 +1,33 @@
+- name: Cloudscale floating IP tests
+  block:
+    - name: Create a server
+      cloudscale_server:
+        name: '{{ resource_prefix }}-test01'
+        flavor: '{{ cloudscale_test_flavor }}'
+        image: '{{ cloudscale_test_image }}'
+        ssh_keys: '{{ cloudscale_test_ssh_key }}'
+      register: test01
+
+    - name: Create a second server
+      cloudscale_server:
+        name: '{{ resource_prefix }}-test02'
+        flavor: '{{ cloudscale_test_flavor }}'
+        image: '{{ cloudscale_test_image }}'
+        ssh_keys: '{{ cloudscale_test_ssh_key }}'
+      register: test02
+
+    - include_tasks: floating_ip.yml
+      with_items:
+        - { 'ip_version': 4, 'reverse_ptr': 'my-floating-ipv4.example.com' }
+        - { 'ip_version': 6 }
+        - { 'ip_version': 6, 'prefix_length': 56 }
+
+  always:
+    - name: Delete servers
+      cloudscale_server:
+        uuid: '{{ item.uuid }}'
+        state: 'absent'
+      ignore_errors: True
+      with_items:
+        - '{{ test01 }}'
+        - '{{ test02 }}'

@@ -4,7 +4,8 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 $ErrorActionPreference = "Stop"
 
@@ -118,7 +119,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-Path -Path $path) {
+            if (Test-FilePath -path $path) {
                 if ($search_regex -eq $null) {
                     $complete = $true
                     break
@@ -149,7 +150,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-Path -Path $path) {
+            if (Test-FilePath -path $path) {
                 if ($search_regex -ne $null) {
                     $file_contents = Get-Content -Path $path -Raw
                     if ($file_contents -notmatch $search_regex) {

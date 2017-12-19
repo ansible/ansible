@@ -102,32 +102,32 @@ from ansible.module_utils._text import to_text
 
 class DefineOid(object):
 
-    def __init__(self,dotprefix=False):
+    def __init__(self, dotprefix=False):
         if dotprefix:
             dp = "."
         else:
             dp = ""
 
         # From SNMPv2-MIB
-        self.sysDescr    = dp + "1.3.6.1.2.1.1.1.0"
+        self.sysDescr = dp + "1.3.6.1.2.1.1.1.0"
         self.sysObjectId = dp + "1.3.6.1.2.1.1.2.0"
-        self.sysUpTime   = dp + "1.3.6.1.2.1.1.3.0"
-        self.sysContact  = dp + "1.3.6.1.2.1.1.4.0"
-        self.sysName     = dp + "1.3.6.1.2.1.1.5.0"
+        self.sysUpTime = dp + "1.3.6.1.2.1.1.3.0"
+        self.sysContact = dp + "1.3.6.1.2.1.1.4.0"
+        self.sysName = dp + "1.3.6.1.2.1.1.5.0"
         self.sysLocation = dp + "1.3.6.1.2.1.1.6.0"
 
         # From IF-MIB
-        self.ifIndex       = dp + "1.3.6.1.2.1.2.2.1.1"
-        self.ifDescr       = dp + "1.3.6.1.2.1.2.2.1.2"
-        self.ifMtu         = dp + "1.3.6.1.2.1.2.2.1.4"
-        self.ifSpeed       = dp + "1.3.6.1.2.1.2.2.1.5"
+        self.ifIndex = dp + "1.3.6.1.2.1.2.2.1.1"
+        self.ifDescr = dp + "1.3.6.1.2.1.2.2.1.2"
+        self.ifMtu = dp + "1.3.6.1.2.1.2.2.1.4"
+        self.ifSpeed = dp + "1.3.6.1.2.1.2.2.1.5"
         self.ifPhysAddress = dp + "1.3.6.1.2.1.2.2.1.6"
         self.ifAdminStatus = dp + "1.3.6.1.2.1.2.2.1.7"
-        self.ifOperStatus  = dp + "1.3.6.1.2.1.2.2.1.8"
-        self.ifAlias       = dp + "1.3.6.1.2.1.31.1.1.1.18"
+        self.ifOperStatus = dp + "1.3.6.1.2.1.2.2.1.8"
+        self.ifAlias = dp + "1.3.6.1.2.1.31.1.1.1.18"
 
         # From IP-MIB
-        self.ipAdEntAddr    = dp + "1.3.6.1.2.1.4.20.1.1"
+        self.ipAdEntAddr = dp + "1.3.6.1.2.1.4.20.1.1"
         self.ipAdEntIfIndex = dp + "1.3.6.1.2.1.4.20.1.2"
         self.ipAdEntNetMask = dp + "1.3.6.1.2.1.4.20.1.3"
 
@@ -141,6 +141,7 @@ def decode_hex(hexstring):
     else:
         return hexstring
 
+
 def decode_mac(hexstring):
 
     if len(hexstring) != 14:
@@ -150,16 +151,18 @@ def decode_mac(hexstring):
     else:
         return hexstring
 
+
 def lookup_adminstatus(int_adminstatus):
     adminstatus_options = {
         1: 'up',
         2: 'down',
         3: 'testing'
-        }
+    }
     if int_adminstatus in adminstatus_options:
         return adminstatus_options[int_adminstatus]
     else:
         return ""
+
 
 def lookup_operstatus(int_operstatus):
     operstatus_options = {
@@ -170,11 +173,12 @@ def lookup_operstatus(int_operstatus):
         5: 'dormant',
         6: 'notPresent',
         7: 'lowerLayerDown'
-        }
+    }
     if int_operstatus in operstatus_options:
         return operstatus_options[int_operstatus]
     else:
         return ""
+
 
 def main():
     module = AnsibleModule(
@@ -189,7 +193,7 @@ def main():
             authkey=dict(required=False),
             privkey=dict(required=False),
             removeplaceholder=dict(required=False)),
-        required_together = ( ['username','level','integrity','authkey'],['privacy','privkey'],),
+        required_together=(['username', 'level', 'integrity', 'authkey'], ['privacy', 'privkey'],),
         supports_check_mode=False)
 
     m_args = module.params
@@ -210,7 +214,6 @@ def main():
 
         if m_args['level'] == "authPriv" and m_args['privacy'] is None:
             module.fail_json(msg='Privacy algorithm not set when using authPriv')
-
 
         if m_args['integrity'] == "sha":
             integrity_proto = cmdgen.usmHMACSHAAuthProtocol
@@ -240,7 +243,8 @@ def main():
     # Use v without a prefix to use with return values
     v = DefineOid(dotprefix=False)
 
-    Tree = lambda: defaultdict(Tree)
+    def Tree():
+        return defaultdict(Tree)
 
     results = Tree()
 
@@ -255,7 +259,6 @@ def main():
         cmdgen.MibVariable(p.sysLocation,),
         lookupMib=False
     )
-
 
     if errorIndication:
         module.fail_json(msg=str(errorIndication))
@@ -293,7 +296,6 @@ def main():
         cmdgen.MibVariable(p.ifAlias,),
         lookupMib=False
     )
-
 
     if errorIndication:
         module.fail_json(msg=str(errorIndication))
@@ -351,10 +353,10 @@ def main():
     for ipv4_network in ipv4_networks:
         current_interface = ipv4_networks[ipv4_network]['interface']
         current_network = {
-            'address':  ipv4_networks[ipv4_network]['address'],
-            'netmask':  ipv4_networks[ipv4_network]['netmask']
-            }
-        if not current_interface in interface_to_ipv4:
+            'address': ipv4_networks[ipv4_network]['address'],
+            'netmask': ipv4_networks[ipv4_network]['netmask']
+        }
+        if current_interface not in interface_to_ipv4:
             interface_to_ipv4[current_interface] = []
             interface_to_ipv4[current_interface].append(current_network)
         else:

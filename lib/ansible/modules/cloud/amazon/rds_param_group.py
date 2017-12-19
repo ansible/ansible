@@ -26,6 +26,7 @@ version_added: "1.5"
 short_description: manage RDS parameter groups
 description:
      - Creates, modifies, and deletes RDS parameter groups. This module has a dependency on python-boto >= 2.5.
+requirements: [ boto3 ]
 options:
   state:
     description:

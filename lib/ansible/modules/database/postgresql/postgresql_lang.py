@@ -161,17 +161,20 @@ def lang_exists(cursor, lang):
     cursor.execute(query)
     return cursor.rowcount > 0
 
+
 def lang_istrusted(cursor, lang):
     """Checks if language is trusted for db"""
     query = "SELECT lanpltrusted FROM pg_language WHERE lanname='%s'" % lang
     cursor.execute(query)
     return cursor.fetchone()[0]
 
+
 def lang_altertrust(cursor, lang, trust):
     """Changes if language is trusted for db"""
     query = "UPDATE pg_language SET lanpltrusted = %s WHERE lanname=%s"
     cursor.execute(query, (trust, lang))
     return True
+
 
 def lang_add(cursor, lang, trust):
     """Adds language for db"""
@@ -181,6 +184,7 @@ def lang_add(cursor, lang, trust):
         query = 'CREATE LANGUAGE "%s"' % lang
     cursor.execute(query)
     return True
+
 
 def lang_drop(cursor, lang, cascade):
     """Drops language for db"""
@@ -197,6 +201,7 @@ def lang_drop(cursor, lang, cascade):
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_lang_drop")
     return True
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -212,7 +217,7 @@ def main():
             cascade=dict(type='bool', default='no'),
             fail_on_drop=dict(type='bool', default='yes'),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     db = module.params["db"]
@@ -227,14 +232,14 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port",
-        "db":"database"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "db": "database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != "" )
+    kw = dict((params_map[k], v) for (k, v) in module.params.items()
+              if k in params_map and v != "")
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()

@@ -37,6 +37,11 @@ options:
     description:
       - The name of the role to create.
     required: true
+  description:
+    description:
+      - Provide a description of the new role
+    required: false
+    version_added: "2.5"
   assume_role_policy_document:
     description:
       - "The trust relationship policy document that grants an entity permission to assume the role.  This parameter is required when state: present."
@@ -52,6 +57,12 @@ options:
       - Create or remove the IAM role
     required: true
     choices: [ 'present', 'absent' ]
+  create_instance_profile:
+    description:
+      - Creates an IAM instance profile along with the role
+    type: bool
+    default: true
+    version_added: 2.5
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -60,10 +71,11 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create a role
+# Create a role with description
 - iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+    description: This is My New Role
     state: present
 
 # Create a role and attach a managed policy called "PowerUserAccess"
@@ -208,7 +220,10 @@ def create_or_update_role(connection, module):
     params['Path'] = module.params.get('path')
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
+    if module.params.get('description') is not None:
+        params['Description'] = module.params.get('description')
     managed_policies = module.params.get('managed_policy')
+    create_instance_profile = module.params.get('create_instance_profile')
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
     changed = False
@@ -267,28 +282,29 @@ def create_or_update_role(connection, module):
                 changed = True
 
     # Instance profile
-    try:
-        instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
-        # Make sure an instance profile is attached
+    if create_instance_profile:
         try:
-            connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
-            changed = True
+            instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
         except ClientError as e:
-            # If the profile already exists, no problem, move on
-            if e.response['Error']['Code'] == 'EntityAlreadyExists':
-                pass
-            else:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-        connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
+            # Make sure an instance profile is attached
+            try:
+                connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
+                changed = True
+            except ClientError as e:
+                # If the profile already exists, no problem, move on
+                if e.response['Error']['Code'] == 'EntityAlreadyExists':
+                    pass
+                else:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Get the role again
     role = get_role(connection, module, params['RoleName'])
 
     role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
-    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role))
+    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
 
 
 def destroy_role(connection, module):
@@ -360,7 +376,9 @@ def main():
             path=dict(default="/", type='str'),
             assume_role_policy_document=dict(type='json'),
             managed_policy=dict(type='list', aliases=['managed_policies']),
-            state=dict(choices=['present', 'absent'], required=True)
+            state=dict(choices=['present', 'absent'], required=True),
+            description=dict(required=False, type='str'),
+            create_instance_profile=dict(type='bool', default=True)
         )
     )
 

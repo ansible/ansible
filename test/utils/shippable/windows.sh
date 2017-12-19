@@ -7,6 +7,9 @@ IFS='/:' read -ra args <<< "$1"
 
 target="windows/ci/group${args[1]}/"
 
+stage="${S:-prod}"
+provider="${P:-default}"
+
 # python versions to test in order
 # python 2.7 runs full tests while other versions run minimal tests
 python_versions=(
@@ -40,12 +43,7 @@ else
     )
 fi
 
-retry.py pip install tox --disable-pip-version-check
-
 for version in "${python_versions[@]}"; do
-    # clean up between test runs until we switch from --tox to --docker
-    rm -rf ~/.ansible/{cp,pc,tmp}/
-
     changed_all_target="all"
 
     if [ "${version}" == "2.7" ]; then
@@ -72,7 +70,15 @@ for version in "${python_versions[@]}"; do
         ci="windows/ci/minimal/"
     fi
 
+    # terminate remote instances on the final python version tested
+    if [ "${version}" = "${python_versions[-1]}" ]; then
+        terminate="always"
+    else
+        terminate="never"
+    fi
+
     # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${ci}" --tox --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-        "${platforms[@]}" --changed-all-target "${changed_all_target}"
+    ansible-test windows-integration --color -v --retry-on-error "${ci}" --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+        "${platforms[@]}" --changed-all-target "${changed_all_target}" \
+        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done

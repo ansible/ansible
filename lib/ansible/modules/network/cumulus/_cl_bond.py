@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: cl_bond
 version_added: "2.1"
@@ -287,6 +287,7 @@ def conv_array_to_str(_value):
     if isinstance(_value, list):
         return ' '.join(_value)
     return _value
+
 
 def build_generic_attr(module, _attr):
     _value = module.params.get(_attr)

@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_ip_interface
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosIPInterfaceModule(TestNxosModule):
     module = nxos_ip_interface
 
     def setUp(self):
+        super(TestNxosIPInterfaceModule, self).setUp()
+
         self.mock_get_interface_mode = patch(
             'ansible.modules.network.nxos.nxos_ip_interface.get_interface_mode')
         self.get_interface_mode = self.mock_get_interface_mode.start()
@@ -42,10 +42,16 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_ip_interface.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_ip_interface.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
+        super(TestNxosIPInterfaceModule, self).tearDown()
         self.mock_get_interface_mode.stop()
         self.mock_send_show_command.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, device=''):
         self.get_interface_mode.return_value = 'layer3'

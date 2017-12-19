@@ -6,8 +6,9 @@ versions:
 - "2.4":
     code_name: "Dancing Days"
     releases:
+    - "2": "11-29-2017"
+    - "1": "10-25-2017"
     - "0": "09-19-2017"
-    - "1": "TBD"
 - "2.3":
     code_name: "Ramble On"
     releases:

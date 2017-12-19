@@ -94,7 +94,7 @@
       - "result.changed == false"
 
 - name: delete motd banner
-  junos_banner:
+  net_banner:
     banner: motd
     state: absent
     provider: "{{ netconf }}"

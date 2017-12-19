@@ -86,7 +86,7 @@ def command_sanity(args):
             versions = (None,)
 
         for version in versions:
-            if args.python and version and version != args.python:
+            if args.python and version and version != args.python_version:
                 continue
 
             display.info('Sanity check using %s%s' % (test.name, ' with Python %s' % version if version else ''))

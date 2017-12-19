@@ -1,0 +1,49 @@
+---
+- name: Enable Netconf service
+  iosxr_netconf:
+    netconf_port: 830
+    netconf_vrf: 'default'
+    state: present
+  register: result
+
+- name: setup - remove login
+  iosxr_banner:
+    banner: login
+    provider: "{{ netconf }}"
+    state: absent
+
+- name: Set login
+  iosxr_banner:
+    banner: login
+    text: |
+      this is my login banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my login banner' in result.commands"
+      - "'that has a multiline' in result.commands"
+
+- name: Set login again (idempotent)
+  iosxr_banner:
+    banner: login
+    text: |
+      this is my login banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"

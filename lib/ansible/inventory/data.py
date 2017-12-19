@@ -62,11 +62,21 @@ class InventoryData(object):
         self.add_child('all', 'ungrouped')
 
     def serialize(self):
-        data = dict()
+        self._groups_dict_cache = None
+        data = {
+            'groups': self.groups,
+            'hosts': self.hosts,
+            'local': self.localhost,
+            'source': self.current_source,
+        }
         return data
 
     def deserialize(self, data):
-        pass
+        self._groups_dict_cache = {}
+        self.hosts = data.get('hosts')
+        self.groups = data.get('groups')
+        self.localhost = data.get('local')
+        self.current_source = data.get('source')
 
     def _create_implicit_localhost(self, pattern):
 
@@ -115,10 +125,6 @@ class InventoryData(object):
 
             mygroups = host.get_groups()
 
-            # ensure hosts are always in 'all'
-            if 'all' not in mygroups and not host.implicit:
-                self.add_child('all', host.name)
-
             if self.groups['ungrouped'] in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
                 if set(mygroups).difference(set([self.groups['all'], self.groups['ungrouped']])):
@@ -127,7 +133,7 @@ class InventoryData(object):
             elif not host.implicit:
                 # add ungrouped hosts to ungrouped, except implicit
                 length = len(mygroups)
-                if length == 0 or (length == 1 and all in mygroups):
+                if length == 0 or (length == 1 and self.groups['all'] in mygroups):
                     self.add_child('ungrouped', host.name)
 
             # special case for implicit hosts
@@ -162,6 +168,17 @@ class InventoryData(object):
             display.debug("Added group %s to inventory" % group)
         else:
             display.debug("group %s already in inventory" % group)
+
+    def remove_group(self, group):
+
+        if group in self.groups:
+            del self.groups[group]
+            display.debug("Removed group %s from inventory" % group)
+            self._groups_dict_cache = {}
+
+        for host in self.hosts:
+            h = self.hosts[host]
+            h.remove_group(group)
 
     def add_host(self, host, group=None, port=None):
         ''' adds a host to inventory and possibly a group if not there already '''
@@ -198,6 +215,15 @@ class InventoryData(object):
             g.add_host(h)
             self._groups_dict_cache = {}
             display.debug("Added host %s to group %s" % (host, group))
+
+    def remove_host(self, host):
+
+        if host in self.hosts:
+            del self.hosts[host]
+
+        for group in self.groups:
+            g = self.groups[group]
+            g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
         ''' sets a varible for an inventory object '''

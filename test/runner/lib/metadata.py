@@ -20,6 +20,7 @@ class Metadata(object):
         """Initialize metadata."""
         self.changes = {}  # type: dict [str, tuple[tuple[int, int]]
         self.cloud_config = None  # type: dict [str, str]
+        self.instance_config = None  # type: list[dict[str, str]]
 
         if is_shippable():
             self.ci_provider = 'shippable'
@@ -54,6 +55,7 @@ class Metadata(object):
         return dict(
             changes=self.changes,
             cloud_config=self.cloud_config,
+            instance_config=self.instance_config,
             ci_provider=self.ci_provider,
         )
 
@@ -88,6 +90,7 @@ class Metadata(object):
         metadata = Metadata()
         metadata.changes = data['changes']
         metadata.cloud_config = data['cloud_config']
+        metadata.instance_config = data['instance_config']
         metadata.ci_provider = data['ci_provider']
 
         return metadata

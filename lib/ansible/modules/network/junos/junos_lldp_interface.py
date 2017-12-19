@@ -93,9 +93,9 @@ diff.prepared:
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -120,8 +120,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:

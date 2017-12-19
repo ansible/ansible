@@ -17,42 +17,20 @@ DOCUMENTATION = '''
 module: influxdb_database
 short_description: Manage InfluxDB databases
 description:
-    - Manage InfluxDB databases
+    - Manage InfluxDB databases.
 version_added: 2.1
 author: "Kamil Szczygiel (@kamsz)"
 requirements:
     - "python >= 2.6"
     - "influxdb >= 0.9"
+    - requests
 options:
-    hostname:
-        description:
-            - The hostname or IP address on which InfluxDB server is listening
-        required: true
-    username:
-        description:
-            - Username that will be used to authenticate against InfluxDB server
-        default: root
-        required: false
-    password:
-        description:
-            - Password that will be used to authenticate against InfluxDB server
-        default: root
-        required: false
-    port:
-        description:
-            - The port on which InfluxDB server is listening
-        default: 8086
-        required: false
-    database_name:
-        description:
-            - Name of the database that will be created/destroyed
-        required: true
     state:
         description:
-            - Determines if the database should be created or destroyed
-        choices: ['present', 'absent']
+            - Determines if the database should be created or destroyed.
+        choices: [ present, absent ]
         default: present
-        required: false
+extends_documentation_fragment: influxdb
 '''
 
 EXAMPLES = '''
@@ -61,7 +39,6 @@ EXAMPLES = '''
   influxdb_database:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
-      state: present
 
 - name: Destroy database
   influxdb_database:
@@ -75,49 +52,22 @@ EXAMPLES = '''
       username: "{{influxdb_username}}"
       password: "{{influxdb_password}}"
       database_name: "{{influxdb_database_name}}"
-      state: present
+      ssl: yes
+      validate_certs: yes
 '''
 
 RETURN = '''
-#only defaults
+# only defaults
 '''
 
 try:
     import requests.exceptions
-    from influxdb import InfluxDBClient
     from influxdb import exceptions
-    HAS_INFLUXDB = True
 except ImportError:
-    HAS_INFLUXDB = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-
-
-def influxdb_argument_spec():
-    return dict(
-        hostname=dict(required=True, type='str'),
-        port=dict(default=8086, type='int'),
-        username=dict(default='root', type='str'),
-        password=dict(default='root', type='str', no_log=True),
-        database_name=dict(required=True, type='str')
-    )
-
-
-def connect_to_influxdb(module):
-    hostname = module.params['hostname']
-    port = module.params['port']
-    username = module.params['username']
-    password = module.params['password']
-    database_name = module.params['database_name']
-
-    client = InfluxDBClient(
-        host=hostname,
-        port=port,
-        username=username,
-        password=password,
-        database=database_name
-    )
-    return client
+from ansible.module_utils.influxdb import InfluxDb
 
 
 def find_database(module, client, database_name):
@@ -155,7 +105,7 @@ def drop_database(module, client, database_name):
 
 
 def main():
-    argument_spec = influxdb_argument_spec()
+    argument_spec = InfluxDb.influxdb_argument_spec()
     argument_spec.update(
         state=dict(default='present', type='str', choices=['present', 'absent'])
     )
@@ -164,13 +114,11 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_INFLUXDB:
-        module.fail_json(msg='influxdb python package is required for this module')
-
     state = module.params['state']
-    database_name = module.params['database_name']
 
-    client = connect_to_influxdb(module)
+    influxdb = InfluxDb(module)
+    client = influxdb.connect_to_influxdb()
+    database_name = influxdb.database_name
     database = find_database(module, client, database_name)
 
     if state == 'present':

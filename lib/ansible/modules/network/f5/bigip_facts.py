@@ -5,11 +5,15 @@
 # Copyright (c) 2013 Matt Hite <mhite@hotmail.com>
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_facts
 short_description: Collect facts from F5 BIG-IP devices
@@ -73,26 +77,28 @@ options:
 extends_documentation_fragment: f5
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Collect BIG-IP facts
   bigip_facts:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      include: "interface,vlan"
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    include: interface,vlan
   delegate_to: localhost
 '''
-
-try:
-    from suds import MethodNotFound, WebFault
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
 
 import fnmatch
 import re
 import traceback
+
+try:
+    from suds import MethodNotFound, WebFault
+except ImportError:
+    pass  # Handle via f5_utils.bigsuds_found
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.f5_utils import bigip_api, bigsuds_found, f5_argument_spec
+from ansible.module_utils.six.moves import map, zip
 
 
 class F5(object):
@@ -467,6 +473,9 @@ class VirtualServers(object):
     def get_list(self):
         return self.virtual_servers
 
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.virtual_servers]
+
     def get_actual_hardware_acceleration(self):
         return self.api.LocalLB.VirtualServer.get_actual_hardware_acceleration(self.virtual_servers)
 
@@ -617,6 +626,9 @@ class Pools(object):
     def get_list(self):
         return self.pool_names
 
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.pool_names]
+
     def get_action_on_service_down(self):
         return self.api.LocalLB.Pool.get_action_on_service_down(self.pool_names)
 
@@ -648,7 +660,32 @@ class Pools(object):
         return self.api.LocalLB.Pool.get_ignore_persisted_weight_state(self.pool_names)
 
     def get_lb_method(self):
-        return self.api.LocalLB.Pool.get_lb_method(self.pool_names)
+        result = []
+        lb_choice = dict(
+            LB_METHOD_DYNAMIC_RATIO_MEMBER='dynamic-ratio-member',
+            LB_METHOD_DYNAMIC_RATIO='dynamic-ratio-node',
+            LB_METHOD_FASTEST_APP_RESPONSE='fastest-app-response',
+            LB_METHOD_FASTEST_NODE_ADDRESS='fastest-node',
+            LB_METHOD_LEAST_CONNECTION_MEMBER='least-connections-member',
+            LB_METHOD_LEAST_CONNECTION_NODE_ADDRESS='least-connections-node',
+            LB_METHOD_LEAST_SESSIONS='least-sessions',
+            LB_METHOD_OBSERVED_MEMBER='observed-member',
+            LB_METHOD_OBSERVED_NODE_ADDRESS='observed-node',
+            LB_METHOD_PREDICTIVE_MEMBER='predictive-member',
+            LB_METHOD_PREDICTIVE_NODE_ADDRESS='predictive-node',
+            LB_METHOD_RATIO_LEAST_CONNECTION_MEMBER='ratio-least-connections-member',
+            LB_METHOD_RATIO_LEAST_CONNECTION_NODE_ADDRESS='ratio-least-connections-node',
+            LB_METHOD_RATIO_MEMBER='ratio-member',
+            LB_METHOD_RATIO_NODE_ADDRESS='ratio-node',
+            LB_METHOD_RATIO_SESSION='ratio-session',
+            LB_METHOD_ROUND_ROBIN='round-robin',
+            LB_METHOD_WEIGHTED_LEAST_CONNECTION_MEMBER='weighted-least-connections-member',
+            LB_METHOD_WEIGHTED_LEAST_CONNECTION_NODE_ADDRESS='weighted-least-connections-node'
+        )
+        methods = self.api.LocalLB.Pool.get_lb_method(self.pool_names)
+        for method in methods:
+            result.append(lb_choice.get(method, method))
+        return result
 
     def get_member(self):
         return self.api.LocalLB.Pool.get_member_v2(self.pool_names)
@@ -958,6 +995,9 @@ class Nodes(object):
 
     def get_address(self):
         return self.api.LocalLB.NodeAddressV2.get_address(nodes=self.nodes)
+
+    def get_name(self):
+        return [x[x.rfind('/') + 1:] for x in self.nodes]
 
     def get_connection_limit(self):
         return self.api.LocalLB.NodeAddressV2.get_connection_limit(nodes=self.nodes)
@@ -1457,7 +1497,8 @@ def generate_vs_dict(f5, regex):
               'source_address_translation_snat_pool',
               'source_address_translation_type', 'source_port_behavior',
               'staged_firewall_policy', 'translate_address_state',
-              'translate_port_state', 'type', 'vlan', 'wildmask']
+              'translate_port_state', 'type', 'vlan', 'wildmask',
+              'name']
     return generate_dict(virtual_servers, fields)
 
 
@@ -1474,7 +1515,7 @@ def generate_pool_dict(f5, regex):
               'profile', 'queue_depth_limit',
               'queue_on_connection_limit_state', 'queue_time_limit',
               'reselect_tries', 'server_ip_tos', 'server_link_qos',
-              'simple_timeout', 'slow_ramp_time']
+              'simple_timeout', 'slow_ramp_time', 'name']
     return generate_dict(pools, fields)
 
 
@@ -1518,7 +1559,7 @@ def generate_rule_dict(f5, regex):
 
 def generate_node_dict(f5, regex):
     nodes = Nodes(f5.get_api(), regex)
-    fields = ['address', 'connection_limit', 'description', 'dynamic_ratio',
+    fields = ['name', 'address', 'connection_limit', 'description', 'dynamic_ratio',
               'monitor_instance', 'monitor_rule', 'monitor_status',
               'object_status', 'rate_limit', 'ratio', 'session_status']
     return generate_dict(nodes, fields)
@@ -1640,7 +1681,7 @@ def main():
                       'pool', 'provision', 'rule', 'self_ip', 'software',
                       'system_info', 'traffic_group', 'trunk',
                       'virtual_address', 'virtual_server', 'vlan')
-    include_test = map(lambda x: x in valid_includes, include)
+    include_test = (x in valid_includes for x in include)
     if not all(include_test):
         module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
 
@@ -1702,16 +1743,16 @@ def main():
                saved_recursive_query_state != "STATE_ENABLED":
                 f5.set_recursive_query_state(saved_recursive_query_state)
 
-        result = {'ansible_facts': facts}
+        result = dict(
+            ansible_facts=facts,
+        )
+        result.update(**facts)
 
     except Exception as e:
         module.fail_json(msg="received exception: %s\ntraceback: %s" % (e, traceback.format_exc()))
 
     module.exit_json(**result)
 
-# include magic from lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

@@ -39,7 +39,6 @@ class Block(Base, Become, Conditional, Taggable):
     # other fields
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
-    _name = FieldAttribute(isa='string', default='')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -235,7 +234,6 @@ class Block(Base, Become, Conditional, Taggable):
         '''
 
         # import is here to avoid import loops
-        from ansible.playbook.task import Task
         from ansible.playbook.task_include import TaskInclude
         from ansible.playbook.handler_task_include import HandlerTaskInclude
 

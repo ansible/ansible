@@ -1,89 +1,51 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import json
-import sys
 
-from ansible.compat.tests import unittest
-from units.mock.procenv import swap_stdin_and_argv, swap_stdout
-
-import ansible.module_utils.basic
+import pytest
 
 
-class TestAnsibleModuleWarnDeprecate(unittest.TestCase):
-    """Test the AnsibleModule Warn Method"""
+@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+def test_warn(am, capfd):
 
-    def test_warn(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        with swap_stdin_and_argv(stdin_data=args):
-            with swap_stdout():
+    am.warn('warning1')
 
-                ansible.module_utils.basic._ANSIBLE_ARGS = None
-                am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec=dict(),
-                )
-                am._name = 'unittest'
+    with pytest.raises(SystemExit):
+        am.exit_json(warnings=['warning2'])
+    out, err = capfd.readouterr()
+    assert json.loads(out)['warnings'] == ['warning1', 'warning2']
 
-                am.warn('warning1')
 
-                with self.assertRaises(SystemExit):
-                    am.exit_json(warnings=['warning2'])
-                self.assertEquals(json.loads(sys.stdout.getvalue())['warnings'], ['warning1', 'warning2'])
+@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+def test_deprecate(am, capfd):
+    am.deprecate('deprecation1')
+    am.deprecate('deprecation2', '2.3')
 
-    def test_deprecate(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        with swap_stdin_and_argv(stdin_data=args):
-            with swap_stdout():
+    with pytest.raises(SystemExit):
+        am.exit_json(deprecations=['deprecation3', ('deprecation4', '2.4')])
 
-                ansible.module_utils.basic._ANSIBLE_ARGS = None
-                am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec=dict(),
-                )
-                am._name = 'unittest'
+    out, err = capfd.readouterr()
+    output = json.loads(out)
+    assert ('warnings' not in output or output['warnings'] == [])
+    assert output['deprecations'] == [
+        {u'msg': u'deprecation1', u'version': None},
+        {u'msg': u'deprecation2', u'version': '2.3'},
+        {u'msg': u'deprecation3', u'version': None},
+        {u'msg': u'deprecation4', u'version': '2.4'},
+    ]
 
-                am.deprecate('deprecation1')
-                am.deprecate('deprecation2', '2.3')
 
-                with self.assertRaises(SystemExit):
-                    am.exit_json(deprecations=['deprecation3', ('deprecation4', '2.4')])
-                output = json.loads(sys.stdout.getvalue())
-                self.assertTrue('warnings' not in output or output['warnings'] == [])
-                self.assertEquals(output['deprecations'], [
-                    {u'msg': u'deprecation1', u'version': None},
-                    {u'msg': u'deprecation2', u'version': '2.3'},
-                    {u'msg': u'deprecation3', u'version': None},
-                    {u'msg': u'deprecation4', u'version': '2.4'},
-                ])
+@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+def test_deprecate_without_list(am, capfd):
+    with pytest.raises(SystemExit):
+        am.exit_json(deprecations='Simple deprecation warning')
 
-    def test_deprecate_without_list(self):
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
-        with swap_stdin_and_argv(stdin_data=args):
-            with swap_stdout():
-
-                ansible.module_utils.basic._ANSIBLE_ARGS = None
-                am = ansible.module_utils.basic.AnsibleModule(
-                    argument_spec=dict(),
-                )
-                am._name = 'unittest'
-
-                with self.assertRaises(SystemExit):
-                    am.exit_json(deprecations='Simple deprecation warning')
-                output = json.loads(sys.stdout.getvalue())
-                self.assertTrue('warnings' not in output or output['warnings'] == [])
-                self.assertEquals(output['deprecations'], [
-                    {u'msg': u'Simple deprecation warning', u'version': None},
-                ])
+    out, err = capfd.readouterr()
+    output = json.loads(out)
+    assert ('warnings' not in output or output['warnings'] == [])
+    assert output['deprecations'] == [
+        {u'msg': u'Simple deprecation warning', u'version': None},
+    ]

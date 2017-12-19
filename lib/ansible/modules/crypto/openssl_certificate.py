@@ -109,11 +109,13 @@ options:
 
     issuer:
         description:
-            - Key/value pairs that must be present in the issuer name field of the certificate
+            - Key/value pairs that must be present in the issuer name field of the certificate.
+              If you need to specify more than one value with the same key, use a list as value.
 
     subject:
         description:
-            - Key/value pairs that must be present in the subject name field of the certificate
+            - Key/value pairs that must be present in the subject name field of the certificate.
+              If you need to specify more than one value with the same key, use a list as value.
 
     has_expired:
         default: False
@@ -183,7 +185,7 @@ options:
         description:
             - If set to True, the I(subject_alt_name) extension field must contain only these values.
         aliases: [ subjectAltName_strict ]
-
+extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
       Date specified should be UTC. Minutes and seconds are mandatory.
@@ -376,7 +378,6 @@ class SelfSignedCertificate(Certificate):
 
     def __init__(self, module):
         super(SelfSignedCertificate, self).__init__(module)
-        self.serial_number = randint(1000, 99999)
         self.notBefore = module.params['selfsigned_notBefore']
         self.notAfter = module.params['selfsigned_notAfter']
         self.digest = module.params['selfsigned_digest']
@@ -385,7 +386,6 @@ class SelfSignedCertificate(Certificate):
         self.privatekey = crypto_utils.load_privatekey(
             self.privatekey_path, self.privatekey_passphrase
         )
-        self.cert = None
 
     def generate(self, module):
 
@@ -401,7 +401,7 @@ class SelfSignedCertificate(Certificate):
 
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
-            cert.set_serial_number(self.serial_number)
+            cert.set_serial_number(randint(1000, 99999))
             if self.notBefore:
                 cert.set_notBefore(self.notBefore)
             else:
@@ -418,11 +418,11 @@ class SelfSignedCertificate(Certificate):
             cert.add_extensions(self.csr.get_extensions())
 
             cert.sign(self.privatekey, self.digest)
-            self.certificate = cert
+            self.cert = cert
 
             try:
                 with open(self.path, 'wb') as cert_file:
-                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.certificate))
+                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
             except EnvironmentError as exc:
                 raise CertificateError(exc)
 
@@ -439,9 +439,9 @@ class SelfSignedCertificate(Certificate):
             'filename': self.path,
             'privatekey': self.privatekey_path,
             'csr': self.csr_path,
-            'notBefore': self.notBefore,
-            'notAfter': self.notAfter,
-            'serial_number': self.serial_number,
+            'notBefore': self.cert.get_notBefore(),
+            'notAfter': self.cert.get_notAfter(),
+            'serial_number': self.cert.get_serial_number(),
         }
 
         return result
@@ -453,8 +453,16 @@ class AssertOnlyCertificate(Certificate):
     def __init__(self, module):
         super(AssertOnlyCertificate, self).__init__(module)
         self.signature_algorithms = module.params['signature_algorithms']
-        self.subject = module.params['subject']
-        self.issuer = module.params['issuer']
+        if module.params['subject']:
+            self.subject = crypto_utils.parse_name_field(module.params['subject'])
+        else:
+            self.subject = []
+        self.subject_strict = False
+        if module.params['issuer']:
+            self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
+        else:
+            self.issuer = []
+        self.issuer_strict = False
         self.has_expired = module.params['has_expired']
         self.version = module.params['version']
         self.keyUsage = module.params['keyUsage']
@@ -479,8 +487,11 @@ class AssertOnlyCertificate(Certificate):
                       'notAfter', 'valid_at', 'invalid_at']:
 
             attr = getattr(self, param)
-            if isinstance(attr, list):
-                setattr(self, param, [to_bytes(item) for item in attr])
+            if isinstance(attr, list) and attr:
+                if isinstance(attr[0], str):
+                    setattr(self, param, [to_bytes(item) for item in attr])
+                elif isinstance(attr[0], tuple):
+                    setattr(self, param, [(to_bytes(item[0]), to_bytes(item[1])) for item in attr])
             elif isinstance(attr, tuple):
                 setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
             elif isinstance(attr, dict):
@@ -501,20 +512,26 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_subject():
             if self.subject:
+                expected_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
                 cert_subject = self.cert.get_subject().get_components()
-                diff = [item for item in self.subject.items() if item not in cert_subject]
-                if diff:
+                current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in cert_subject]
+                if (not self.subject_strict and not all(x in current_subject for x in expected_subject)) or \
+                   (self.subject_strict and not set(expected_subject) == set(current_subject)):
+                    diff = [item for item in self.subject if item not in current_subject]
                     self.message.append(
-                        'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject, self.subject.items())
+                        'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject, self.subject)
                     )
 
         def _validate_issuer():
             if self.issuer:
+                expected_issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in self.issuer]
                 cert_issuer = self.cert.get_issuer().get_components()
-                diff = [item for item in self.issuer.items() if item not in cert_issuer]
-                if diff:
+                current_issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in cert_issuer]
+                if (not self.issuer_strict and not all(x in current_issuer for x in expected_issuer)) or \
+                   (self.issuer_strict and not set(expected_issuer) == set(current_issuer)):
+                    diff = [item for item in self.issuer if item not in current_issuer]
                     self.message.append(
-                        'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer.items())
+                        'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer)
                     )
 
         def _validate_has_expired():

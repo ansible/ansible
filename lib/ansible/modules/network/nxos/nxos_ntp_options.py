@@ -86,8 +86,8 @@ updates:
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -95,9 +95,9 @@ def get_current(module):
     cmd = ('show running-config', 'show ntp logging')
 
     output = run_commands(module, ({'command': cmd[0], 'output': 'text'},
-                                  {'command': cmd[1], 'output': 'text'}))
+                                   {'command': cmd[1], 'output': 'text'}))
 
-    match = re.search("^ntp master(?: (\d+))", output[0], re.M)
+    match = re.search(r"^ntp master(?: (\d+))", output[0], re.M)
     if match:
         master = True
         stratum = match.group(1)
@@ -166,7 +166,6 @@ def main():
                 commands.append('ntp logging')
             else:
                 commands.append('no ntp logging')
-
 
     result['commands'] = commands
     result['updates'] = commands

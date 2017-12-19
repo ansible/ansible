@@ -105,8 +105,8 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -274,7 +274,7 @@ def main():
     if state == 'present':
         delta = dict(
             set(proposed.items()).difference(existing.items())
-            )
+        )
         if delta:
             command = config_igmp_snooping(delta, existing)
             if command:
@@ -283,7 +283,7 @@ def main():
         proposed = get_igmp_snooping_defaults()
         delta = dict(
             set(proposed.items()).difference(existing.items())
-            )
+        )
         if delta:
             command = config_igmp_snooping(delta, existing, default=True)
             if command:

@@ -62,7 +62,7 @@ def main(args):
     output_name = os.path.join(output_dir, template_file.replace('.j2', ''))
     temp_vars = {'config_options': config_options}
 
-    with open(output_name, 'w') as f:
+    with open(output_name, 'wb') as f:
         f.write(template.render(temp_vars).encode('utf-8'))
 
     return 0

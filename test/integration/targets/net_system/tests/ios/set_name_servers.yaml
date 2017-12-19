@@ -7,7 +7,7 @@
       - no ip name-server
     match: none
     authorize: yes
-    provider: "{{ cli }}"
+
 
 - name: configure name_servers
   net_system:
@@ -16,7 +16,6 @@
       - 2.2.2.2
       - 3.3.3.3
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -34,7 +33,6 @@
       - 2.2.2.2
       - 3.3.3.3
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -47,7 +45,6 @@
       - 1.1.1.1
       - 2.2.2.2
     authorize: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -62,6 +59,5 @@
       - no ip domain lookup source-interface
     match: none
     authorize: yes
-    provider: "{{ cli }}"
 
 - debug: msg="END ios/set_name_servers.yaml"

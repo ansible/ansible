@@ -58,13 +58,14 @@ options:
   state:
     description:
       - If C(mounted), the device will be actively mounted and appropriately
-        configured in I(fstab).
-      - If C(unmounted), the device will be unmounted without changing I(fstab).
-      - C(absent) and C(present) only deal with I(fstab) but will not affect
-        current mounting.
-      - If specifying C(mounted) and the mount point is not present, the mount
+        configured in I(fstab). If the mount point is not present, the mount
         point will be created.
-      - Similarly, specifying C(absent) will remove the mount point directory.
+      - If C(unmounted), the device will be unmounted without changing I(fstab).
+      - C(present) only specifies that the device is to be configured in
+        I(fstab) and does not trigger or require a mount.
+      - C(absent) specifies that the device mount's entry will be removed from
+        I(fstab) and will also unmount the device and remove the mount
+        point.
     required: true
     choices: [ absent, mounted, present, unmounted ]
   fstab:
@@ -83,6 +84,14 @@ options:
     type: bool
     default: 'yes'
     version_added: '2.2'
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: '2.5'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
@@ -95,7 +104,7 @@ EXAMPLES = '''
     path: /mnt/dvd
     src: /dev/sr0
     fstype: iso9660
-    opts: ro
+    opts: ro,noauto
     state: present
 
 - name: Mount up device by label
@@ -124,7 +133,10 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 
-def write_fstab(lines, path):
+def write_fstab(module, lines, path):
+    if module.params['backup']:
+        module.backup_local(path)
+
     fs_w = open(path, 'w')
 
     for l in lines:
@@ -235,7 +247,7 @@ def set_mount(module, args):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(to_write, args['fstab'])
+        write_fstab(module, to_write, args['fstab'])
 
     return (args['name'], changed)
 
@@ -297,7 +309,7 @@ def unset_mount(module, args):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(to_write, args['fstab'])
+        write_fstab(module, to_write, args['fstab'])
 
     return (args['name'], changed)
 
@@ -547,6 +559,7 @@ def main():
             opts=dict(type='str'),
             passno=dict(type='str'),
             src=dict(type='path'),
+            backup=dict(default=False, type='bool'),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
         ),
         supports_check_mode=True,

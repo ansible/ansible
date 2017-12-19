@@ -137,7 +137,7 @@ def admin_set(xapi, module, admin_username, admin_password, role):
                              element='<%s>%s</%s>' % (role, rbval, role))
 
         if admin_password is not None:
-            xapi.edit(xpath=_ADMIN_XPATH % admin_username+'/phash',
+            xapi.edit(xpath=_ADMIN_XPATH % admin_username + '/phash',
                       element='<phash>%s</phash>' % phash)
             changed = True
 

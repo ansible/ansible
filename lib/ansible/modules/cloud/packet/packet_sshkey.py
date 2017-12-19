@@ -113,7 +113,7 @@ PACKET_API_TOKEN_ENV_VAR = "PACKET_API_TOKEN"
 
 def serialize_sshkey(sshkey):
     sshkey_data = {}
-    copy_keys = ['id', 'key', 'label','fingerprint']
+    copy_keys = ['id', 'key', 'label', 'fingerprint']
     for name in copy_keys:
         sshkey_data[name] = getattr(sshkey, name)
     return sshkey_data
@@ -132,7 +132,7 @@ def load_key_string(key_str):
     key_str = key_str.strip()
     ret_dict['key'] = key_str
     cut_key = key_str.split()
-    if len(cut_key) in [2,3]:
+    if len(cut_key) in [2, 3]:
         if len(cut_key) == 3:
             ret_dict['label'] = cut_key[2]
     else:
@@ -165,7 +165,7 @@ def get_sshkey_selector(module):
             return k.key == select_dict['key']
         else:
             # if key string not specified, all the fields must match
-            return all([select_dict[f] == getattr(k,f) for f in select_dict])
+            return all([select_dict[f] == getattr(k, f) for f in select_dict])
     return selector
 
 
@@ -188,10 +188,10 @@ def act_on_sshkeys(target_state, module, packet_conn):
                 newkey['label'] = module.params.get('label')
             for param in ('label', 'key'):
                 if param not in newkey:
-                    _msg=("If you want to ensure a key is present, you must "
-                          "supply both a label and a key string, either in "
-                          "module params, or in a key file. %s is missing"
-                          % param)
+                    _msg = ("If you want to ensure a key is present, you must "
+                            "supply both a label and a key string, either in "
+                            "module params, or in a key file. %s is missing"
+                            % param)
                     raise Exception(_msg)
             matching_sshkeys = []
             new_key_response = packet_conn.create_ssh_key(
@@ -208,7 +208,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
             except Exception as e:
                 _msg = ("while trying to remove sshkey %s, id %s %s, "
                         "got error: %s" %
-                       (k.label, k.id, target_state, e))
+                        (k.label, k.id, target_state, e))
                 raise Exception(_msg)
 
     return {
@@ -220,7 +220,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state = dict(choices=['present', 'absent'], default='present'),
+            state=dict(choices=['present', 'absent'], default='present'),
             auth_token=dict(default=os.environ.get(PACKET_API_TOKEN_ENV_VAR),
                             no_log=True),
             label=dict(type='str', aliases=['name'], default=None),
@@ -236,16 +236,16 @@ def main():
             ('key', 'fingerprint'),
             ('key', 'id'),
             ('key_file', 'key'),
-            ]
+        ]
     )
 
     if not HAS_PACKET_SDK:
         module.fail_json(msg='packet required for this module')
 
     if not module.params.get('auth_token'):
-        _fail_msg = ( "if Packet API token is not in environment variable %s, "
-                      "the auth_token parameter is required" %
-                       PACKET_API_TOKEN_ENV_VAR)
+        _fail_msg = ("if Packet API token is not in environment variable %s, "
+                     "the auth_token parameter is required" %
+                     PACKET_API_TOKEN_ENV_VAR)
         module.fail_json(msg=_fail_msg)
 
     auth_token = module.params.get('auth_token')
@@ -254,7 +254,7 @@ def main():
 
     state = module.params.get('state')
 
-    if state in ['present','absent']:
+    if state in ['present', 'absent']:
         try:
             module.exit_json(**act_on_sshkeys(state, module, packet_conn))
         except Exception as e:

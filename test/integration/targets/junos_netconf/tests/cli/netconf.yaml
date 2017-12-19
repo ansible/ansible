@@ -18,6 +18,10 @@
 
 ###################################
 
+- name: wait for netconf server to come up
+  pause:
+    seconds: 10
+
 - name: Ensure we can communicate over netconf
   junos_command:
     rpcs: get-software-information
@@ -57,7 +61,6 @@
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to open shell' in result.msg"
 
 - name: re-enable netconf
   junos_netconf:

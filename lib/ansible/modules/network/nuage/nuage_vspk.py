@@ -185,7 +185,7 @@ EXAMPLES = '''
     state: present
     properties:
       name: "{{ enterprise_new_name }}-basic"
-  when: nuage_check_enterprise | failed
+  when: nuage_check_enterprise is failed
 
 # Creating a User in an Enterprise
 - name: Create admin user

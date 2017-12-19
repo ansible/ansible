@@ -4,13 +4,16 @@ Also test if the latest release, and master branch are affected too.
 -->
 
 ##### ISSUE TYPE
-<!--- Pick one below and delete the rest: -->
+<!--- Pick one below and delete the rest -->
  - Bug Report
  - Feature Idea
  - Documentation Report
 
 ##### COMPONENT NAME
-<!--- Name of the module/plugin/task/feature -->
+<!---
+Name of the module, plugin, task or feature
+Do not include extra details here, e.g. "vyos_command" not "the network module vyos_command" or the full path
+-->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from "ansible --version" between quotes below -->
@@ -21,10 +24,8 @@ Also test if the latest release, and master branch are affected too.
 ##### CONFIGURATION
 <!---
 If using Ansible 2.4 or above, paste the results of "ansible-config dump --only-changed"
-
 Otherwise, mention any settings you have changed/added/removed in ansible.cfg
 (or using the ANSIBLE_* environment variables).
-
 -->
 
 ##### OS / ENVIRONMENT

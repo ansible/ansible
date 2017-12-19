@@ -285,7 +285,8 @@ def check_dp_status(client, dp_id, status):
     :returns: True or False
 
     """
-    assert isinstance(status, list)
+    if not isinstance(status, list):
+        raise AssertionError()
     if pipeline_field(client, dp_id, field="@pipelineState") in status:
         return True
     else:
@@ -331,7 +332,7 @@ def activate_pipeline(client, module):
                 pass
             else:
                 module.fail_json(msg=('Data Pipeline {0} failed to activate '
-                                 'within timeout {1} seconds').format(dp_name, timeout))
+                                      'within timeout {1} seconds').format(dp_name, timeout))
         changed = True
 
     data_pipeline = get_result(client, dp_id)
@@ -476,7 +477,7 @@ def diff_pipeline(client, module, objects, unique_id, dp_name):
             result = {'data_pipeline': data_pipeline,
                       'msg': msg}
     except DataPipelineNotFound:
-            create_dp = True
+        create_dp = True
 
     return create_dp, changed, result
 
@@ -569,7 +570,8 @@ def main():
             timeout=dict(required=False, type='int', default=300),
             state=dict(default='present', choices=['present', 'absent',
                                                    'active', 'inactive']),
-            tags=dict(required=False, type='dict')
+            tags=dict(required=False, type='dict', default={}),
+            values=dict(required=False, type='list', default=[])
         )
     )
     module = AnsibleModule(argument_spec, supports_check_mode=False)

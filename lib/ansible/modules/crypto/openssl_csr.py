@@ -22,9 +22,7 @@ short_description: Generate OpenSSL Certificate Signing Request (CSR)
 description:
     - "This module allows one to (re)generate OpenSSL certificate signing requests.
        It uses the pyOpenSSL python library to interact with openssl. This module supports
-       the subjectAltName as well as the keyUsage and extendedKeyUsage extensions.
-       Note: At least one of common_name or subject_alt_name must be specified.
-       This module uses file common arguments to specify generated file permissions."
+       the subjectAltName as well as the keyUsage and extendedKeyUsage extensions."
 requirements:
     - "python-pyOpenSSL >= 0.15"
 options:
@@ -62,6 +60,12 @@ options:
         required: true
         description:
             - Name of the folder in which the generated OpenSSL certificate signing request will be written
+    subject:
+        required: false
+        description:
+            - Key/value pairs that will be present in the subject name field of the certificate signing request.
+            - If you need to specify more than one value with the same key, use a list as value.
+        version_added: '2.5'
     country_name:
         required: false
         aliases: [ 'C', 'countryName' ]
@@ -132,6 +136,19 @@ options:
         aliases: [ 'extKeyUsage_critical', 'extendedKeyUsage_critical' ]
         description:
             - Should the extkeyUsage extension be considered as critical
+    basic_constraints:
+        required: false
+        aliases: ['basicConstraints']
+        description:
+            - Indicates basic constraints, such as if the certificate is a CA.
+        version_added: 2.5
+    basic_constraints_critical:
+        required: false
+        aliases: [ 'basicConstraints_critical' ]
+        description:
+            - Should the basicConstraints extension be considered as critical
+        version_added: 2.5
+extends_documentation_fragment: files
 
 notes:
     - "If the certificate signing request already exists it will be checked whether subjectAltName,
@@ -183,7 +200,7 @@ EXAMPLES = '''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     common_name: www.ansible.com
     key_usage:
-      - digitlaSignature
+      - digitalSignature
       - keyAgreement
     extended_key_usage:
       - clientAuth
@@ -202,10 +219,10 @@ filename:
     type: string
     sample: /etc/ssl/csr/www.ansible.com.csr
 subject:
-    description: A dictionnary of the subject attached to the CSR
+    description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
-    sample: {'CN': 'www.ansible.com', 'O': 'Ansible'}
+    sample: "[('CN', 'www.ansible.com'), ('O', 'Ansible')]"
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
@@ -221,6 +238,11 @@ extendedKeyUsage:
     returned: changed or success
     type: list
     sample: [ 'clientAuth' ]
+basicConstraints:
+    description: Indicates if the certificate belongs to a CA
+    returned: changed or success
+    type: list
+    sample: ['CA:TRUE', 'pathLenConstraint:0']
 '''
 
 import os
@@ -261,23 +283,30 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.keyUsage_critical = module.params['keyUsage_critical']
         self.extendedKeyUsage = module.params['extendedKeyUsage']
         self.extendedKeyUsage_critical = module.params['extendedKeyUsage_critical']
+        self.basicConstraints = module.params['basicConstraints']
+        self.basicConstraints_critical = module.params['basicConstraints_critical']
         self.request = None
         self.privatekey = None
 
-        self.subject = {
-            'C': module.params['countryName'],
-            'ST': module.params['stateOrProvinceName'],
-            'L': module.params['localityName'],
-            'O': module.params['organizationName'],
-            'OU': module.params['organizationalUnitName'],
-            'CN': module.params['commonName'],
-            'emailAddress': module.params['emailAddress'],
-        }
+        self.subject = [
+            ('C', module.params['countryName']),
+            ('ST', module.params['stateOrProvinceName']),
+            ('L', module.params['localityName']),
+            ('O', module.params['organizationName']),
+            ('OU', module.params['organizationalUnitName']),
+            ('CN', module.params['commonName']),
+            ('emailAddress', module.params['emailAddress']),
+        ]
+
+        if module.params['subject']:
+            self.subject = self.subject + crypto_utils.parse_name_field(module.params['subject'])
+        self.subject = [(entry[0], entry[1]) for entry in self.subject if entry[1]]
 
         if not self.subjectAltName:
-            self.subjectAltName = ['DNS:%s' % self.subject['CN']]
-
-        self.subject = dict((k, v) for k, v in self.subject.items() if v)
+            for sub in self.subject:
+                if OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])) == 13:  # 13 is the NID for "commonName"
+                    self.subjectAltName = ['DNS:%s' % sub[1]]
+                    break
 
     def generate(self, module):
         '''Generate the certificate signing request.'''
@@ -286,12 +315,16 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             req = crypto.X509Req()
             req.set_version(self.version - 1)
             subject = req.get_subject()
-            for (key, value) in self.subject.items():
-                if value is not None:
-                    setattr(subject, key, value)
+            for entry in self.subject:
+                if entry[1] is not None:
+                    # Workaround for https://github.com/pyca/pyopenssl/issues/165
+                    nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(entry[0]))
+                    OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, to_bytes(entry[1]), -1, -1, 0)
 
-            altnames = ', '.join(self.subjectAltName)
-            extensions = [crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii'))]
+            extensions = []
+            if self.subjectAltName:
+                altnames = ', '.join(self.subjectAltName)
+                extensions.append(crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii')))
 
             if self.keyUsage:
                 usages = ', '.join(self.keyUsage)
@@ -301,7 +334,12 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
                 usages = ', '.join(self.extendedKeyUsage)
                 extensions.append(crypto.X509Extension(b"extendedKeyUsage", self.extendedKeyUsage_critical, usages.encode('ascii')))
 
-            req.add_extensions(extensions)
+            if self.basicConstraints:
+                usages = ', '.join(self.basicConstraints)
+                extensions.append(crypto.X509Extension(b"basicConstraints", self.basicConstraints_critical, usages.encode('ascii')))
+
+            if extensions:
+                req.add_extensions(extensions)
 
             req.set_pubkey(self.privatekey)
             req.sign(self.privatekey, self.digest)
@@ -327,10 +365,10 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
 
         def _check_subject(csr):
-            subject = csr.get_subject()
-            for (key, value) in self.subject.items():
-                if getattr(subject, key, None) != value:
-                    return False
+            subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in self.subject]
+            current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in csr.get_subject().get_components()]
+            if not set(subject) == set(current_subject):
+                return False
 
             return True
 
@@ -366,9 +404,13 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         def _check_extenededKeyUsage(extensions):
             return _check_keyUsage_(extensions, b'extendedKeyUsage', self.extendedKeyUsage, self.extendedKeyUsage_critical)
 
+        def _check_basicConstraints(extensions):
+            return _check_keyUsage_(extensions, b'basicConstraints', self.basicConstraints, self.basicConstraints_critical)
+
         def _check_extensions(csr):
             extensions = csr.get_extensions()
-            return _check_subjectAltName(extensions) and _check_keyUsage(extensions) and _check_extenededKeyUsage(extensions)
+            return (_check_subjectAltName(extensions) and _check_keyUsage(extensions) and
+                    _check_extenededKeyUsage(extensions) and _check_basicConstraints(extensions))
 
         def _check_signature(csr):
             try:
@@ -393,6 +435,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             'subjectAltName': self.subjectAltName,
             'keyUsage': self.keyUsage,
             'extendedKeyUsage': self.extendedKeyUsage,
+            'basicConstraints': self.basicConstraints,
             'changed': self.changed
         }
 
@@ -409,6 +452,7 @@ def main():
             version=dict(default='1', type='int'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
+            subject=dict(type='dict'),
             countryName=dict(aliases=['C', 'country_name'], type='str'),
             stateOrProvinceName=dict(aliases=['ST', 'state_or_province_name'], type='str'),
             localityName=dict(aliases=['L', 'locality_name'], type='str'),
@@ -422,10 +466,11 @@ def main():
             keyUsage_critical=dict(aliases=['key_usage_critical'], default=False, type='bool'),
             extendedKeyUsage=dict(aliases=['extKeyUsage', 'extended_key_usage'], type='list'),
             extendedKeyUsage_critical=dict(aliases=['extKeyUsage_critical', 'extended_key_usage_critical'], default=False, type='bool'),
+            basicConstraints=dict(aliases=['basic_constraints'], type='list'),
+            basicConstraints_critical=dict(aliases=['basic_constraints_critical'], default=False, type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
-        required_one_of=[['commonName', 'subjectAltName']],
     )
 
     if not pyopenssl_found:

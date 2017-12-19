@@ -5,16 +5,17 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-from nose.plugins.skip import SkipTest
 import json
-import pytest
 from copy import deepcopy
+
+import pytest
+
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
 from ansible.module_utils.ec2 import HAS_BOTO3
 
 if not HAS_BOTO3:
-    raise SkipTest("test_elb_application_lb.py requires the `boto3` and `botocore` modules")
+    pytestmark = pytest.mark.skip("test_elb_application_lb.py requires the `boto3` and `botocore` modules")
 
 import ansible.modules.cloud.amazon.elb_application_lb as elb_module
 

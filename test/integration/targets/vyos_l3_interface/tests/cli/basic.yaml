@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Remove IP address
   vyos_l3_interface:
     name: eth1

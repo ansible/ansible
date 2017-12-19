@@ -28,6 +28,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.plugins.loader import get_all_plugin_loaders
 
@@ -60,6 +61,7 @@ class AdHocCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            basedir_opts=True,
             desc="Define and run a single task 'playbook' against a set of hosts",
             epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
         )
@@ -110,19 +112,13 @@ class AdHocCLI(CLI):
 
         loader, inventory, variable_manager = self._play_prereqs(self.options)
 
-        no_hosts = False
-        if len(inventory.list_hosts()) == 0:
-            # Empty inventory
-            display.warning("provided hosts list is empty, only localhost is available")
-            no_hosts = True
-
-        inventory.subset(self.options.subset)
-        hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0:
-            if no_hosts is False and self.options.subset:
-                # Invalid limit
-                raise AnsibleError("Specified --limit does not match any hosts")
+        try:
+            hosts = CLI.get_host_list(inventory, self.options.subset, pattern)
+        except AnsibleError:
+            if self.options.subset:
+                raise
             else:
+                hosts = []
                 display.warning("No hosts matched, nothing to do")
 
         if self.options.listhosts:
@@ -143,6 +139,11 @@ class AdHocCLI(CLI):
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
+
+        # used in start callback
+        playbook = Playbook(loader)
+        playbook._entries.append(play)
+        playbook._file_name = '__adhoc_playbook__'
 
         if self.callback:
             cb = self.callback
@@ -174,7 +175,11 @@ class AdHocCLI(CLI):
                 run_tree=run_tree,
             )
 
+            self._tqm.send_callback('v2_playbook_on_start', playbook)
+
             result = self._tqm.run(play)
+
+            self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
         finally:
             if self._tqm:
                 self._tqm.cleanup()

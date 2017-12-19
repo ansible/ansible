@@ -25,7 +25,7 @@
 - name: Assert NXAPI is disabled
   assert:
     that:
-      result.stdout[0] | search('disabled')
+      result.stdout[0]  is search('disabled')
 
 - name: Disable NXAPI again
   nxos_nxapi:

@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.compat.tests import unittest
-from ansible.module_utils.ec2 import _camel_to_snake
+from ansible.module_utils.ec2 import _camel_to_snake, _snake_to_camel
 
 EXPECTED_SNAKIFICATION = {
     'alllower': 'alllower',
@@ -29,9 +29,35 @@ EXPECTED_SNAKIFICATION = {
     'PLURALs': 'plurals'
 }
 
+EXPECTED_REVERSIBLE = {
+    'TwoWords': 'two_words',
+    'AllUpperAtEND': 'all_upper_at_e_n_d',
+    'AllUpperButPLURALs': 'all_upper_but_p_l_u_r_a_ls',
+    'TargetGroupARNs': 'target_group_a_r_ns',
+    'HTTPEndpoints': 'h_t_t_p_endpoints',
+    'PLURALs': 'p_l_u_r_a_ls'
+}
+
 
 class CamelToSnakeTestCase(unittest.TestCase):
 
     def test_camel_to_snake(self):
         for (k, v) in EXPECTED_SNAKIFICATION.items():
             self.assertEqual(_camel_to_snake(k), v)
+
+    def test_reversible_camel_to_snake(self):
+        for (k, v) in EXPECTED_REVERSIBLE.items():
+            self.assertEqual(_camel_to_snake(k, reversible=True), v)
+
+
+class SnakeToCamelTestCase(unittest.TestCase):
+
+    def test_snake_to_camel_reversed(self):
+        for (k, v) in EXPECTED_REVERSIBLE.items():
+            self.assertEqual(_snake_to_camel(v, capitalize_first=True), k)
+
+
+class CamelToSnakeAndBackTestCase(unittest.TestCase):
+    def test_camel_to_snake_and_back(self):
+        for (k, v) in EXPECTED_REVERSIBLE.items():
+            self.assertEqual(_snake_to_camel(_camel_to_snake(k, reversible=True), capitalize_first=True), k)

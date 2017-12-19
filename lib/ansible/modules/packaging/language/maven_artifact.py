@@ -28,7 +28,6 @@ description:
       version if one is not available.
 author: "Chris Schmidt (@chrisisbeef)"
 requirements:
-    - "python >= 2.6"
     - lxml
     - boto if using a S3 repository (s3://...)
 options:
@@ -155,7 +154,11 @@ import os
 import posixpath
 import sys
 
-from lxml import etree
+try:
+    from lxml import etree
+    HAS_LXML_ETREE = True
+except ImportError:
+    HAS_LXML_ETREE = False
 
 try:
     import boto3
@@ -315,12 +318,12 @@ class MavenDownloader:
     def _request(self, url, failmsg, f):
         url_to_use = url
         parsed_url = urlparse(url)
-        if parsed_url.scheme=='s3':
+        if parsed_url.scheme == 's3':
             parsed_url = urlparse(url)
             bucket_name = parsed_url.netloc
             key_name = parsed_url.path[1:]
-            client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
-            url_to_use = client.generate_presigned_url('get_object',Params={'Bucket':bucket_name,'Key':key_name},ExpiresIn=10)
+            client = boto3.client('s3', aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
+            url_to_use = client.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': key_name}, ExpiresIn=10)
 
         req_timeout = self.module.params.get('timeout')
 
@@ -334,7 +337,6 @@ class MavenDownloader:
             raise ValueError(failmsg + " because of " + info['msg'] + "for URL " + url_to_use)
         else:
             return f(response)
-
 
     def download(self, artifact, filename=None):
         filename = artifact.get_filename(filename)
@@ -402,23 +404,26 @@ class MavenDownloader:
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            group_id = dict(default=None),
-            artifact_id = dict(default=None),
-            version = dict(default="latest"),
-            classifier = dict(default=''),
-            extension = dict(default='jar'),
-            repository_url = dict(default=None),
-            username = dict(default=None,aliases=['aws_secret_key']),
-            password = dict(default=None, no_log=True,aliases=['aws_secret_access_key']),
-            state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
-            timeout = dict(default=10, type='int'),
-            dest = dict(type="path", default=None),
-            validate_certs = dict(required=False, default=True, type='bool'),
-            keep_name = dict(required=False, default=False, type='bool'),
+        argument_spec=dict(
+            group_id=dict(default=None),
+            artifact_id=dict(default=None),
+            version=dict(default="latest"),
+            classifier=dict(default=''),
+            extension=dict(default='jar'),
+            repository_url=dict(default=None),
+            username=dict(default=None, aliases=['aws_secret_key']),
+            password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
+            state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
+            timeout=dict(default=10, type='int'),
+            dest=dict(type="path", default=None),
+            validate_certs=dict(required=False, default=True, type='bool'),
+            keep_name=dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True
     )
+
+    if not HAS_LXML_ETREE:
+        module.fail_json(msg='module requires the lxml python library installed on the managed machine')
 
     repository_url = module.params["repository_url"]
     if not repository_url:
@@ -429,7 +434,7 @@ def main():
     except AttributeError as e:
         module.fail_json(msg='url parsing went wrong %s' % e)
 
-    if parsed_url.scheme=='s3' and not HAS_BOTO:
+    if parsed_url.scheme == 's3' and not HAS_BOTO:
         module.fail_json(msg='boto3 required for this module, when using s3:// repository URLs')
 
     group_id = module.params["group_id"]
@@ -442,7 +447,7 @@ def main():
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     keep_name = module.params["keep_name"]
 
-    #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
+    # downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
 
     try:

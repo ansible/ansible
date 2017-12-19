@@ -33,6 +33,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
 from ansible.template import Templar
+from ansible.vars.clean import clean_facts
 
 from units.mock.loader import DictDataLoader
 
@@ -74,12 +75,12 @@ class TestActionBase(unittest.TestCase):
 
         play_context = PlayContext()
 
-        mock_task.async = None
+        mock_task.async_val = None
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
         self.assertEqual(results, dict())
 
-        mock_task.async = 0
+        mock_task.async_val = 0
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
         self.assertEqual(results, {})
@@ -91,7 +92,7 @@ class TestActionBase(unittest.TestCase):
         # create our fake task
         mock_task = MagicMock()
         mock_task.action = "copy"
-        mock_task.async = 0
+        mock_task.async_val = 0
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
@@ -404,6 +405,7 @@ class TestActionBase(unittest.TestCase):
 
         mock_connection = MagicMock()
         mock_connection.build_module_command.side_effect = build_module_command
+        mock_connection.socket_path = None
         mock_connection._shell.get_remote_filename.return_value = 'copy.py'
         mock_connection._shell.join_path.side_effect = os.path.join
 
@@ -550,7 +552,7 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
                 'ansible_ssh_some_var': 'whatever',
                 'ansible_ssh_host_key_somehost': 'some key here',
                 'some_other_var': 'foo bar'}
-        action_base._clean_returned_data(data)
+        data = clean_facts(data)
         self.assertNotIn('ansible_playbook_python', data)
         self.assertNotIn('ansible_python_interpreter', data)
         self.assertIn('ansible_ssh_host_key_somehost', data)

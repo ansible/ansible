@@ -321,13 +321,9 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        if not region:
-            module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-        ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=str(e))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    ecs = boto3_conn(module, conn_type='client', resource='ecs',
+                     region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     ecs_td = ecs.describe_task_definition(taskDefinition=module.params['task_definition'])['taskDefinition']
     ecs_td_snake = {}
