@@ -7,13 +7,14 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: kubernetes
 version_added: "2.1"
+deprecated: In 2.5 use M(k8s_raw) instead.
 short_description: Manage Kubernetes resources
 description:
     - This module can manage Kubernetes resources on an existing cluster using

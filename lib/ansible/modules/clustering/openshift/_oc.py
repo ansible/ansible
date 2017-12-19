@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
-    'status': ['preview'],
+    'status': ['deprecated'],
     'supported_by': 'community'
 }
 
@@ -17,6 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 author:
   - "Kenneth D. Evensen (@kevensen)"
+deprecated: In 2.5 use M(openshift_raw) instead.
 description:
   - This module allows management of resources in an OpenShift cluster. The
     inventory host can be any host with network connectivity to the OpenShift
@@ -245,7 +246,7 @@ class OC(object):
         return response, changed
 
     def exists(self, named_resource):
-        _, code = self.connect(named_resource.url(), 'get')
+        x, code = self.connect(named_resource.url(), 'get')
         if code == 200:
             return True
         return False
@@ -285,7 +286,7 @@ class OC(object):
     def replace(self, named_resource, check_mode):
         changed = False
 
-        existing_definition, _ = self.get(named_resource)
+        existing_definition, x = self.get(named_resource)
 
         new_definition, changed = self.merge(named_resource.definition,
                                              existing_definition,
@@ -344,7 +345,7 @@ class OC(object):
                 except AttributeError:
                     node = {}
                 finally:
-                    _, changed = self.merge(value, node, changed)
+                    x, changed = self.merge(value, node, changed)
 
             elif isinstance(value, list) and key in destination.keys():
                 if destination[key] != source[key]:

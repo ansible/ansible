@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: k8s
+module: k8s_raw
 
 short_description: Manage Kubernetes (K8s) objects
 
@@ -38,14 +38,14 @@ requirements:
 
 EXAMPLES = '''
 - name: Create a k8s namespace
-  k8s:
+  k8s_raw:
     name: testing
     api_version: v1
     kind: Namespace
     state: present
 
 - name: Create a Service object from an inline definition
-  k8s:
+  k8s_raw:
     state: present
     definition:
       apiVersion: v1
@@ -67,12 +67,12 @@ EXAMPLES = '''
           port: 8000
 
 - name: Create a Service object by reading the definition from a file
-  k8s:
+  k8s_raw:
     state: present
     src: /testing/service.yml
 
 - name: Get an existing Service object
-  k8s:
+  k8s_raw:
     api_version: v1
     kind: Service
     name: web
@@ -80,14 +80,14 @@ EXAMPLES = '''
   register: web_service
 
 - name: Get a list of all service objects
-  k8s:
+  k8s_raw:
     api_version: v1
     kind: ServiceList
     namespace: testing
   register: service_list
 
 - name: Remove an existing Service object
-  k8s:
+  k8s_raw:
     state: absent
     api_version: v1
     kind: Service
