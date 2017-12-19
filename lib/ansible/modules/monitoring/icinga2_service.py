@@ -241,7 +241,7 @@ class icinga2_api:
 
     def diff(self, service, data):
         ret = self.call_url(
-            path="v1/objects/services/"+ service,
+            path="v1/objects/services/" + service,
             method="GET"
         )
         changed = False
