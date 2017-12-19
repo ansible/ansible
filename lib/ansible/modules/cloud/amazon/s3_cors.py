@@ -1,19 +1,8 @@
 #!/usr/bin/python
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -23,7 +12,7 @@ module: s3_cors
 short_description: Manage CORS for S3 buckets in AWS
 description:
     - Manage CORS for S3 buckets in AWS
-version_added: "2.4"
+version_added: "2.5"
 author: "Oyvind Saltvik (@fivethreeo)"
 options:
   name:
@@ -51,6 +40,7 @@ EXAMPLES = '''
 # Create a simple cors for s3 bucket
 - s3_cors:
     name: mys3bucket
+    state: present
     rules:
       - allowed_origins:
           - http://www.example.com/
@@ -102,40 +92,17 @@ rules:
 '''
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, BotoCoreError
 except:
     # handled by HAS_BOTO3 check in main
     pass
 
 import traceback
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info,
-                                      camel_dict_to_snake_dict)
-
-
-def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
-
-    def camelize(complex_type):
-        if complex_type is None:
-            return
-        new_type = type(complex_type)()
-        if isinstance(complex_type, dict):
-            for key in complex_type:
-                new_type[camel(key)] = camelize(complex_type[key])
-        elif isinstance(complex_type, list):
-            for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i]))
-        else:
-            return complex_type
-        return new_type
-
-    def camel(words):
-        words_split = words.split('_')
-        first_word = capitalize_first and words_split[0].capitalize() or words_split[0]
-        return first_word + ''.join(x.capitalize() or '_' for x in words_split[1:])
-
-    return camelize(snake_dict)
+                                      camel_dict_to_snake_dict, snake_dict_to_camel_dict, compare_policies)
 
 
 def create_or_update_bucket_cors(connection, module):
@@ -150,36 +117,23 @@ def create_or_update_bucket_cors(connection, module):
         current_camel_rules = []
 
     new_camel_rules = snake_dict_to_camel_dict(rules, capitalize_first=True)
-
-    if not (len(new_camel_rules) == len(current_camel_rules)):
+    # compare_policies() takes two dicts and makes them hashable for comparison
+    if compare_policies(new_camel_rules, current_camel_rules):
         changed = True
-
-    if not changed:
-        for rule_index, new_camel_rule in enumerate(new_camel_rules):
-            if not changed:
-                if not (new_camel_rule.keys() == current_camel_rules[rule_index].keys()):
-                    changed = True
-                    break
-                for rule_key in new_camel_rule.keys():
-                    if rule_key == 'MaxAgeSeconds':
-                        if not (new_camel_rule[rule_key] == current_camel_rules[rule_index].get(rule_key, None)):
-                            changed = True
-                            break
-                    else:
-                        if not (set(new_camel_rule[rule_key]) == set(current_camel_rules[rule_index].get(rule_key, []))):
-                            changed = True
-                            break
-            else:
-                break
 
     if changed:
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
         except ClientError as e:
             module.fail_json(
-                msg=e.message,
+                msg="Unable to update CORS for bucket {0}: {1}".format(name, to_native(e)),
                 exception=traceback.format_exc(),
                 **camel_dict_to_snake_dict(e.response)
+            )
+        except BotoCoreError as e:
+            module.fail_json(
+                msg=to_native(e),
+                exception=traceback.format_exc()
             )
 
     module.exit_json(changed=changed, name=name, rules=rules)
@@ -195,9 +149,14 @@ def destroy_bucket_cors(connection, module):
         changed = True
     except ClientError as e:
         module.fail_json(
-            msg=e.message,
+            msg="Unable to delete CORS for bucket {0}: {1}".format(name, to_native(e)),
             exception=traceback.format_exc(),
             **camel_dict_to_snake_dict(e.response)
+        )
+    except BotoCoreError as e:
+        module.fail_json(
+            msg=to_native(e),
+            exception=traceback.format_exc()
         )
 
     module.exit_json(changed=changed)
@@ -219,23 +178,9 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = (
-            get_aws_connection_info(module, boto3=True)
-        )
-        client = (
-            boto3_conn(
-                module, conn_type='client', resource='s3',
-                region=region, endpoint=ec2_url, **aws_connect_kwargs
-            )
-        )
-
-    except ClientError as e:
-        module.fail_json(
-            msg=e.message,
-            exception=traceback.format_exc(),
-            **camel_dict_to_snake_dict(e.response)
-        )
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    client = boto3_conn(module, conn_type='client', resource='s3',
+                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     state = module.params.get("state")
 
