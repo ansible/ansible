@@ -105,7 +105,10 @@ class AnsibleJ2Vars(Mapping):
             try:
                 value = self._templar.template(variable)
             except Exception as e:
-                raise type(e)(to_native(variable) + ': ' + e.message)
+                try:
+                    raise type(e)(to_native(variable) + ': ' + e.message)
+                except AttributeError:
+                    raise type(e)(to_native(variable) + ': ' + to_native(e))
             return value
 
     def add_locals(self, locals):
