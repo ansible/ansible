@@ -320,7 +320,9 @@ files:
   $modules/clustering/consul_acl.py: sgargan
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
+  $modules/clustering/k8s.py: chouseknecht sdoran maxamillion fabianvf flaper87
   $modules/clustering/kubernetes.py: erjohnso supertom
+  $modules/clustering/openshift.py: chouseknecht sdoran maxamillion fabianvf flaper87
   $modules/clustering/pacemaker_cluster.py:
   $modules/clustering/znode.py: treyperry
   $modules/commands/command.py: $team_ansible
@@ -907,6 +909,9 @@ files:
   $module_utils/junos.py:
     maintainers: $team_networking
     labels: networking
+  $module_utils/k8s_common.py:
+    maintainers: chouseknecht sdoran maxamillion fabianvf flaper87
+    labels: clustering
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/netcfg.py:
