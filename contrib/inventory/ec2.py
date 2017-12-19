@@ -930,7 +930,7 @@ class Ec2Inventory(object):
         # If we have a hostname, sanitize it. If we can't
         # get a nice hostname, use the destination address
         if hostname:
-            hostname = re.sub('[^a-z0-9\-\.]+', '', hostname.lower())
+            hostname = re.sub(r'[^a-z0-9\-\.]+', '', hostname.lower())
         else:
             hostname = dest
 
