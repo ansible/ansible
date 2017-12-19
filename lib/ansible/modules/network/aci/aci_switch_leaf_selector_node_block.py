@@ -65,8 +65,8 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     leaf: leaf_selector_name
     leaf_node_blk: node_blk_name
-    from_: 1011
-    to_: 1011
+    from: 1011
+    to: 1011
     state: present
 '''
 
@@ -78,29 +78,30 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     argument_spec = aci_argument_spec
-    argument_spec.update(
-        leaf_profile=dict(type='str', aliases=['leaf_profile_name']),
-        leaf=dict(type='str', aliases=['leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
-        leaf_node_blk=dict(type='str', aliases=['name', 'leaf_node_blk_name', 'node_blk_name']),
-        from_=dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
-        to_=dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
-    )
+    argument_spec.update({
+        'leaf_profile': dict(type='str', aliases=['leaf_profile_name']),
+        'leaf': dict(type='str', aliases=['leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
+        'leaf_node_blk': dict(type='str', aliases=['name', 'leaf_node_blk_name', 'node_blk_name']),
+        # NOTE: using old dictionnary syntax because of from parameter necessity
+        'from': dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
+        'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
+        'state': dict(type='str', default='present', choices=['absent', 'present', 'query'])
+    })
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['leaf_profile', 'leaf', 'leaf_node_blk']],
-            ['state', 'present', ['leaf_profile', 'leaf', 'leaf_node_blk', 'from_', 'to_']]
+            ['state', 'present', ['leaf_profile', 'leaf', 'leaf_node_blk', 'from', 'to']]
         ]
     )
 
     leaf_profile = module.params['leaf_profile']
     leaf = module.params['leaf']
     leaf_node_blk = module.params['leaf_node_blk']
-    to_ = module.params['to_']
-    from_ = module.params['from_']
+    to_ = module.params['to']
+    from_ = module.params['from']
     state = module.params['state']
 
     aci = ACIModule(module)
