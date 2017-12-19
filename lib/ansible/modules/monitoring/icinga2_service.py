@@ -109,6 +109,11 @@ options:
     description:
       - The IP address of the host.
     required: true
+  force_check:
+    description:
+      - Force a (re)check when a service is created or modified
+    required: false
+    default: Yes
   variables:
     description:
       - List of variables.
@@ -221,6 +226,19 @@ class icinga2_api:
         )
         return ret
 
+    def check(self, service):
+        data={
+            "type": "Service",
+            "filter": "service.__name==\"" + service + "\"",
+            "force_check": True,
+        };
+        ret = self.call_url(
+            path="v1/actions/reschedule-check",
+            data=self.module.jsonify(data),
+            method="POST"
+        )
+        return ret
+
     def diff(self, service, data):
         ret = self.call_url(
             path="v1/objects/services/"+ service,
@@ -255,6 +273,7 @@ def main():
         check_command=dict(default="hostalive"),
         display_name=dict(default=None),
         command_endpoint=dict(default=""),
+        force_check=dict(default=True, type='bool'),
         variables=dict(type='dict', default=None),
     )
 
@@ -282,6 +301,7 @@ def main():
     check_command = module.params["check_command"]
     command_endpoint = module.params["command_endpoint"]
     display_name = module.params["display_name"]
+    force_check = module.params["force_check"]
     if not display_name:
         display_name = name
     variables = module.params["variables"]
@@ -332,6 +352,10 @@ def main():
             ret = icinga.create(name, data)
             if ret['code'] == 200:
                 changed = True
+                if force_check:
+                    ret = icinga.check(name)
+                    if ret['code'] != 200:
+                        module.fail_json(msg="bad return code checking service: %s" % (ret['data']))
             else:
                 module.fail_json(msg="bad return code modifying service: %s" % (ret['data']))        
 
@@ -344,6 +368,10 @@ def main():
                     ret = icinga.create(name, data)
                     if ret['code'] == 200:
                         changed = True
+                        if force_check:
+                            ret = icinga.check(name)
+                            if ret['code'] != 200:
+                                module.fail_json(msg="bad return code checking service: %s" % (ret['data']))
                     else:
                         module.fail_json(msg="bad return code creating service: %s" % (ret['data']))
                 except Exception as e:
