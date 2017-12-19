@@ -122,7 +122,7 @@ options:
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in a future release.
+        will be removed in Ansible 2.7.
     required: false
     default: false
     type: bool
@@ -165,7 +165,8 @@ options:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-      - This option is deprecated as of Ansible 2.4, use C(save_when)
+      - This option is deprecated as of Ansible 2.4 and will be removed
+        in Ansible 2.8, use C(save_when) instead.
     required: false
     default: false
     type: bool
@@ -406,10 +407,10 @@ def main():
         diff_ignore_lines=dict(type='list'),
 
         # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.4'),
+        save=dict(default=False, type='bool', removed_in_version='2.8'),
 
         # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.2')
+        force=dict(default=False, type='bool', removed_in_version='2.7')
     )
 
     argument_spec.update(ios_argument_spec)
