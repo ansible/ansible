@@ -281,7 +281,6 @@ def create_peer_connection(client, module):
         params['PeerRegion'] = module.params.get('peer_region')
     if module.params.get('peer_owner_id'):
         params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
-    params['DryRun'] = module.check_mode
     peering_conns = describe_peering_connections(params, client)
     for peering_conn in peering_conns['VpcPeeringConnections']:
         pcx_id = peering_conn['VpcPeeringConnectionId']
@@ -311,7 +310,6 @@ def remove_peer_connection(client, module):
         params['PeerRegion'] = module.params.get('peer_region')
         if module.params.get('peer_owner_id'):
             params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
-        params['DryRun'] = module.check_mode
         peering_conns = describe_peering_connections(params, client)
         if not peering_conns:
             module.exit_json(changed=False)
@@ -338,7 +336,6 @@ def accept_reject(state, client, module):
     changed = False
     params = dict()
     params['VpcPeeringConnectionId'] = module.params.get('peering_id')
-    params['DryRun'] = module.check_mode
     if peer_status(client, module) != 'active':
         try:
             if state == 'accept':
