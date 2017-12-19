@@ -217,6 +217,8 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+import distutils.version
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, HAS_BOTO3
 
@@ -273,7 +275,12 @@ def create_peer_connection(client, module):
     params = dict()
     params['VpcId'] = module.params.get('vpc_id')
     params['PeerVpcId'] = module.params.get('peer_vpc_id')
-    params['PeerRegion'] = module.params.get('peer_region')
+    if module.params.get('peer_region'):
+        if distutils.version.StrictVersion(botocore.__version__) < distutils.version.StrictVersion('1.8.6'):
+            module.fail_json(msg="specifying peer_region parameter requires botocore >= 1.8.6")
+        params['PeerRegion'] = module.params.get('peer_region')
+
+
     if module.params.get('peer_owner_id'):
         params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
     params['DryRun'] = module.check_mode
