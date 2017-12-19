@@ -40,11 +40,16 @@ class TestNxosPortchannelModule(TestNxosModule):
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_portchannel.get_config')
         self.get_config = self.mock_get_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_portchannel.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
         super(TestNxosPortchannelModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None
