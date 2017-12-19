@@ -133,9 +133,13 @@ def check_command(module, commandline):
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
-        module.warn("Consider using file module with %s rather than running %s" % (arguments[command], command))
+        module.warn("Consider using the file module with %s rather than running %s.  If you need to"
+                    " use command because file is insufficient you can set warn=False to get rid of"
+                    " this message." % (arguments[command], command))
     if command in commands:
-        module.warn("Consider using %s module rather than running %s" % (commands[command], command))
+        module.warn("Consider using the %s module rather than running %s.  If you need to use"
+                    " command because %s is insufficient you can set warn=False to get rid of"
+                    " this message." % (commands[command], command, commands[command]))
     if command in become:
         module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
