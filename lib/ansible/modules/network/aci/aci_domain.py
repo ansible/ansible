@@ -31,9 +31,9 @@ options:
     description:
     - The type of domain profile.
     - 'C(fc): The FC domain profile is a policy pertaining to single FC Management domain'
-    - 'C(l2ext): The external bridged domain profile is a policy for managing the physical infrastructure, such as ports/VLANS, that can be used by an L2 network bridged outside the fabric.'
-    - 'C(l3ext): The external routed domain profile is a policy for managing the physical infrastructure, such as ports/VLANS, that can be used by an L3 routed outside network.'
-    - 'C(phys): The physical domain profile stores the physical resources (ports and port-channels) and encap resources (VLAN/VXLAN) that should be used for endpoint groups associated with this domain.'
+    - 'C(l2ext): The external bridged domain profile is a policy for managing L2 bridged infrastructure bridged outside the fabric.'
+    - 'C(l3ext): The external routed domain profile is a policy for managing L3 routed infrastructure outside the fabric.'
+    - 'C(phys): The physical domain profile stores the physical resources and encap resources that should be used for EPGs associated with this domain.'
     - 'C(vmm): The VMM domain profile is a policy for grouping VM controllers with similar networking policy requirements.'
     choices: [ fc, l2ext, l3ext, phys, vmm ]
     aliases: [ type ]
