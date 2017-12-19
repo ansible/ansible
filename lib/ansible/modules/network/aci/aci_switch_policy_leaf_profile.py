@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_switch_leaf_policy_profile
+module: aci_switch_policy_leaf_profile
 short_description: Create switch policy leaf profiles on Cisco ACI fabrics (infra:NodeP)
 description:
 - Create switch policy leaf profiles on Cisco ACI fabrics.
@@ -42,7 +42,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: creating a leaf Leaf Profile
-  aci_switch_leaf_policy_profile:
+  aci_switch_policy_leaf_profile:
     hostname: apic
     username: someusername
     password: somepassword
