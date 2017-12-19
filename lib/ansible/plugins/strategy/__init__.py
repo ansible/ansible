@@ -125,20 +125,19 @@ def debug_closure(func):
 
             while result.needs_debugger() or (self.debugger_active and (result.is_failed() or result.is_unreachable())):
                 next_action = NextAction()
-                dbg = Debugger(task, host, task_vars, play_context, results, next_action)
+                dbg = Debugger(task, host, task_vars, play_context, result, next_action)
                 dbg.cmdloop()
 
                 if next_action.result == NextAction.REDO:
                     # rollback host state
                     self._tqm.clear_failed_hosts()
-                    for result in results:
-                        iterator._host_states[host.name] = prev_host_state
-                        if result.is_failed():
-                            self._tqm._stats.failures[host.name] -= 1
-                        elif result.is_unreachable():
-                            self._tqm._stats.dark[host.name] -= 1
-                        # redo
-                        self._queue_task(host, task, task_vars, play_context)
+                    iterator._host_states[host.name] = prev_host_state
+                    if result.is_failed():
+                        self._tqm._stats.failures[host.name] -= 1
+                    elif result.is_unreachable():
+                        self._tqm._stats.dark[host.name] -= 1
+                    # redo
+                    self._queue_task(host, task, task_vars, play_context)
 
                     _processed_results.extend(debug_closure(func)(self, iterator, one_pass))
                 elif next_action.result == NextAction.CONTINUE:
@@ -1032,7 +1031,7 @@ class Debugger(cmd.Cmd):
     prompt = '(debug) '  # debugger
     prompt_continuous = '> '  # multiple lines
 
-    def __init__(self, task, host, task_vars, play_context, results, next_action):
+    def __init__(self, task, host, task_vars, play_context, result, next_action):
         # cmd.Cmd is old-style class
         cmd.Cmd.__init__(self)
 
@@ -1042,8 +1041,7 @@ class Debugger(cmd.Cmd):
         self.scope['vars'] = task_vars
         self.scope['host'] = host
         self.scope['play_context'] = play_context
-        self.scope['result'] = results[0]._result
-        self.scope['results'] = results  # for debug of this debugger
+        self.scope['result'] = result
         self.next_action = next_action
 
     def cmdloop(self):
