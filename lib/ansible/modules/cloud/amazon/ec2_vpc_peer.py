@@ -279,8 +279,6 @@ def create_peer_connection(client, module):
         if distutils.version.StrictVersion(botocore.__version__) < distutils.version.StrictVersion('1.8.6'):
             module.fail_json(msg="specifying peer_region parameter requires botocore >= 1.8.6")
         params['PeerRegion'] = module.params.get('peer_region')
-
-
     if module.params.get('peer_owner_id'):
         params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
     params['DryRun'] = module.check_mode
