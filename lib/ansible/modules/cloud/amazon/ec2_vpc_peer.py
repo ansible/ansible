@@ -27,6 +27,11 @@ options:
     description:
       - Peering connection id.
     required: false
+  peer_region:
+    description:
+      - Region of the accepting VPC.
+    required: false
+    version_added: '2.5'
   peer_vpc_id:
     description:
       - VPC id of the accepting VPC.
@@ -113,6 +118,27 @@ EXAMPLES = '''
     state: accept
   register: vpc_peer
 
+# Complete example to create and accept an intra-region peering connection.
+- name: Create intra-region VPC peering Connection
+  ec2_vpc_peer:
+    region: us-east-1
+    vpc_id: vpc-12345678
+    peer_vpc_id: vpc-87654321
+    peer_vpc_region: us-west-2
+    state: present
+    tags:
+      Name: Peering connection for us-east-1 VPC to us-west-2 VPC
+      CostCode: CC1234
+      Project: phoenix
+  register: vpc_peer
+
+- name: Accept peering connection from peer region
+  ec2_vpc_peer:
+    region: us-west-2
+    peering_id: "{{ vpc_peer.peering_id }}"
+    state: accept
+  register: vpc_peer
+
 # Complete example to create and reject a local peering connection.
 - name: Create local account VPC peering Connection
   ec2_vpc_peer:
@@ -191,6 +217,8 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+import distutils.version
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, HAS_BOTO3
 
@@ -247,6 +275,10 @@ def create_peer_connection(client, module):
     params = dict()
     params['VpcId'] = module.params.get('vpc_id')
     params['PeerVpcId'] = module.params.get('peer_vpc_id')
+    if module.params.get('peer_region'):
+        if distutils.version.StrictVersion(botocore.__version__) < distutils.version.StrictVersion('1.8.6'):
+            module.fail_json(msg="specifying peer_region parameter requires botocore >= 1.8.6")
+        params['PeerRegion'] = module.params.get('peer_region')
     if module.params.get('peer_owner_id'):
         params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
     params['DryRun'] = module.check_mode
@@ -272,10 +304,11 @@ def create_peer_connection(client, module):
 
 def remove_peer_connection(client, module):
     pcx_id = module.params.get('peering_id')
-    params = dict()
     if not pcx_id:
+        params = dict()
         params['VpcId'] = module.params.get('vpc_id')
         params['PeerVpcId'] = module.params.get('peer_vpc_id')
+        params['PeerRegion'] = module.params.get('peer_region')
         if module.params.get('peer_owner_id'):
             params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
         params['DryRun'] = module.check_mode
@@ -284,7 +317,9 @@ def remove_peer_connection(client, module):
             module.exit_json(changed=False)
         else:
             pcx_id = peering_conns['VpcPeeringConnections'][0]['VpcPeeringConnectionId']
+
     try:
+        params = dict()
         params['VpcPeeringConnectionId'] = pcx_id
         client.delete_vpc_peering_connection(**params)
         module.exit_json(changed=True)
@@ -356,6 +391,7 @@ def main():
         dict(
             vpc_id=dict(),
             peer_vpc_id=dict(),
+            peer_region=dict(),
             peering_id=dict(),
             peer_owner_id=dict(),
             tags=dict(required=False, type='dict'),
