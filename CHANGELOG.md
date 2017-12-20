@@ -113,6 +113,11 @@ Ansible Changes By Release
   * vmware_datastore_facts
   * vmware_guest_powerstate
   * vmware_host_facts
+- vultr
+  * vr_firewall_group
+  * vr_firewall_rule
+  * vr_server
+  * vr_ssh_key
 
 #### Clustering
   * k8s
