@@ -12,7 +12,7 @@
 
   - name: Ensure a range of VLANs are present on the switch
     nxos_vlan: &conf_vlan
-      vlan_range: "2-10,20,55-60,100-150"
+      vlan_range: "2-10,20,50,55-60,100-150"
       provider: "{{ connection }}"
     register: result
 
@@ -89,7 +89,7 @@
   always:
     - name: remove vlans
       nxos_vlan:
-        vlan_range: "2-10,20,55-60,100-150"
+        vlan_range: "2-10,20,50,55-60,100-150"
         state: absent
         provider: "{{ connection }}"
       ignore_errors: yes
