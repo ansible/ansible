@@ -808,7 +808,7 @@ def create_autoscaling_group(connection):
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
     try:
-        as_groups = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])
+        as_groups = describe_autoscaling_groups(connection, group_name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json(msg="Failed to describe auto scaling groups.",
                          exception=traceback.format_exc())
@@ -833,7 +833,7 @@ def create_autoscaling_group(connection):
                                      PropagateAtLaunch=bool(tag.get('propagate_at_launch', True)),
                                      ResourceType='auto-scaling-group',
                                      ResourceId=group_name))
-    if not as_groups.get('AutoScalingGroups'):
+    if not as_groups:
         if not vpc_zone_identifier and not availability_zones:
             availability_zones = module.params['availability_zones'] = [zone['ZoneName'] for
                                                                         zone in ec2_connection.describe_availability_zones()['AvailabilityZones']]
@@ -897,7 +897,7 @@ def create_autoscaling_group(connection):
             module.fail_json(msg="Failed to create Autoscaling Group.",
                              exception=traceback.format_exc())
     else:
-        as_group = as_groups['AutoScalingGroups'][0]
+        as_group = as_groups[0]
         initial_asg_properties = get_properties(as_group)
         changed = False
 
