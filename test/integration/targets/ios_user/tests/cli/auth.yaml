@@ -8,6 +8,7 @@
       state: present
       authorize: yes
       configured_password: pass123
+    become: yes
 
   - name: test login
     expect:
@@ -34,6 +35,7 @@
       name: auth_user
       state: absent
       authorize: yes
+    become: yes
     register: result
 
   - name: reset connection

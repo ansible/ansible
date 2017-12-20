@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/contains.yaml"
+- debug: msg="START cli/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator
   ios_command:
@@ -10,6 +10,7 @@
     wait_for:
       - "result[0] contains Cisco"
       - "result[1] contains Loopback888"
+  become: yes
   register: result
 
 - assert:
@@ -17,4 +18,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/contains.yaml"
+- debug: msg="END cli/contains.yaml on connection={{ ansible_connection }}"

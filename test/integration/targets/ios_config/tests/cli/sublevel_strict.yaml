@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/sublevel_strict.yaml"
+- debug: msg="START cli/sublevel_strict.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -13,6 +13,7 @@
     before: no ip access-list extended test
     match: none
     authorize: yes
+  become: yes
 
 - name: configure sub level command using strict match
   ios_config:
@@ -24,6 +25,7 @@
     parents: ip access-list extended test
     match: strict
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -40,6 +42,7 @@
     after: exit
     match: strict
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -57,5 +60,6 @@
     lines: no ip access-list extended test
     match: none
     authorize: yes
+  become: yes
 
-- debug: msg="END cli/sublevel_strict.yaml"
+- debug: msg="END cli/sublevel_strict.yaml on connection={{ ansible_connection }}"
