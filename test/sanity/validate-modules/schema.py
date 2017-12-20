@@ -82,6 +82,7 @@ def return_schema(data):
         extra=PREVENT_EXTRA
     )
 
+
 def deprecation_schema():
 
     deprecation_schema_dict = {
@@ -89,7 +90,7 @@ def deprecation_schema():
         #   * old versions should be removed from the beginning of this list
         #   * git rm old modules
         #   * Update CHANGELOG & porting_guide
-        Required('version'): Any("2.2", "2.3", "2.4", "2.5"),
+        Required('version'): Any("2.0", "2.2", "2.3", "2.4", "2.5"),
         'why': Any(*string_types),
         'alternative': Any(*string_types),
     }
@@ -97,6 +98,7 @@ def deprecation_schema():
         deprecation_schema_dict,
         extra=PREVENT_EXTRA
     )
+
 
 def doc_schema(module_name):
     deprecated_module = False
