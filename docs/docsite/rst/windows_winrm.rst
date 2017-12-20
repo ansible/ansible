@@ -25,7 +25,7 @@ with the Ansible package, but can be installed by running the following::
 Authentication Options
 ``````````````````````
 When connecting to a Windows host, there are several different options that can be used
-when authentication with an account. The authentication type may be set on inventory
+when authenticating with an account. The authentication type may be set on inventory
 hosts or groups with the ``ansible_winrm_transport`` variable.
 
 The following matrix is a high level overview of the options:
@@ -658,13 +658,13 @@ for each authentication option. See the section on authentication above for more
 
 IPv6 Addresses
 ``````````````
-IPv6 addresses can be used instead of IPv4 addresses or hostnames and is set
-normally in an inventory. Ansible will attempt to parse the address using the
-`ipaddress <https://docs.python.org/3/library/ipaddress.html>`_ package and
-pass to pywinrm correctly.
+IPv6 addresses can be used instead of IPv4 addresses or hostnames. This option
+is normally set in an inventory. Ansible will attempt to parse the address
+using the `ipaddress <https://docs.python.org/3/library/ipaddress.html>`_
+package and pass to pywinrm correctly.
 
-When defining a host using an IPv6 address, just put the address like you would
-with an IPv4 address or hostname::
+When defining a host using an IPv6 address, just add the IPv6 address as you
+would an IPv4 address or hostname::
 
     [windows-server]
     2001:db8::1
@@ -675,7 +675,7 @@ with an IPv4 address or hostname::
     ansible_connection=winrm
 
 
-.. Note:: The ipaddress library is only included by default in Python 3.x, to
+.. Note:: The ipaddress library is only included by default in Python 3.x. To
     use IPv6 addresses in Python 2.6 and 2.7, make sure to run
     ``pip install ipaddress`` which installs a backported package.
 
