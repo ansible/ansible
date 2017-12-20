@@ -128,13 +128,13 @@ def check_command(module, commandline):
     commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
+                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'lineinfile, replace or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
 
     disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
-                     " warn=False  to this command task or set command_warnings=False in" \
+                     " warn=False to this command task or set command_warnings=False in" \
                      " ansible.cfg to get rid of this message."
     substitutions = {'mod': None, 'cmd': command}
 
