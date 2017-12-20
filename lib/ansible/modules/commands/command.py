@@ -128,7 +128,7 @@ def check_command(module, commandline):
     commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'lineinfile, replace or template',
+                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
