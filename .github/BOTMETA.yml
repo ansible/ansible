@@ -326,6 +326,7 @@ files:
   $modules/cloud/vmware/vmware_vswitch.py: akasurde jcpowermac
   $modules/cloud/vmware/vsphere_copy.py: dagwieers
   $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop dagwieers
+  $modules/cloud/vultr/: resmo
   $modules/cloud/webfaction/: quentinsf
   $modules/clustering/consul.py: sgargan
   $modules/clustering/consul_acl.py: sgargan
