@@ -297,7 +297,11 @@ class Connection(ConnectionBase):
         '''
         display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" %
                     (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
-        netloc = '%s:%d' % (self._winrm_host, self._winrm_port)
+        try:
+            socket.inet_aton(self._winrm_host)
+            netloc = '%s:%d' % (self._winrm_host, self._winrm_port)
+        except:
+            netloc = '[%s]:%d' % (self._winrm_host, self._winrm_port)
         endpoint = urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
         errors = []
         for transport in self._winrm_transport:
