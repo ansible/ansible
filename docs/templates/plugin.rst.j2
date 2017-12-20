@@ -166,7 +166,7 @@ Options
                             <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
                         {% else %}
                             {% for desc in value.description %}
-                                <p>@{ desc | replace('\n', '\n    ') | html_ify }@</p>
+                                <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
                             {% endfor %}
                         {% endif %}
                         {% if 'aliases' in value and value.aliases %}
