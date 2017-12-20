@@ -9,7 +9,7 @@
     - name: assert ansible_foobar is correct value when read from cache
       assert:
         that:
-          - ansible_foobar == 'blippy'
+          - ansible_foobar == 'foobar_from_set_fact_cacheable'
 
     - name: show ansible_foobar_not_cached fact
       debug:
