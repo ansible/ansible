@@ -10,14 +10,12 @@
       - interface Loopback999
     match: none
     authorize: yes
-  become: yes
 
 
 - name: save config
   ios_config:
     save: true
     authorize: yes
-  become: yes
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
@@ -32,7 +30,6 @@
   ios_config:
     save: true
     authorize: yes
-  become: yes
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
@@ -44,7 +41,6 @@
       - "no ip http server"
     save_when: modified
     authorize: yes
-  become: yes
   register: result
 
 - name: save should always run
@@ -54,7 +50,6 @@
       - "ip http server"
     save_when: modified
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -66,7 +61,6 @@
     lines:
       - "no ip http server"
     authorize: yes
-  become: yes
   register: result
 
 - debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

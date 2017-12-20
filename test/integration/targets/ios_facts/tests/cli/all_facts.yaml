@@ -7,7 +7,6 @@
     gather_subset:
       - all
     authorize: yes
-  become: yes
   register: result
 
 

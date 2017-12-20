@@ -10,13 +10,11 @@
       - interface Loopback999
     match: none
     authorize: yes
-  become: yes
 
 - name: configure device with config
   ios_config:
     src: basic/config.j2
     authorize: yes
-  become: yes
   register: result
 
 - name: debug, remove me
@@ -33,7 +31,6 @@
   ios_config:
     src: basic/config.j2
     authorize: yes
-  become: yes
   register: result
 
 - assert:

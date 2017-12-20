@@ -6,13 +6,11 @@
     lines: no ip domain-name
     match: none
     authorize: yes
-  become: yes
 
 - name: configure domain_name
   ios_system:
     domain_name: eng.ansible.com
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -23,7 +21,6 @@
   ios_system:
     domain_name: eng.ansible.com
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -35,6 +32,5 @@
     lines: no ip domain-name
     match: none
     authorize: yes
-  become: yes
 
 - debug: msg="END cli/set_domain_name.yaml on connection={{ ansible_connection }}"

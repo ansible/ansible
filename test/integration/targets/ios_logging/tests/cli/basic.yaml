@@ -6,7 +6,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-  become: yes
 
 - name: Remove console
   ios_logging:
@@ -14,7 +13,6 @@
     level: warnings
     state: absent
     authorize: yes
-  become: yes
 
 - name: Remove buffer
   ios_logging:
@@ -22,7 +20,6 @@
     size: 8000
     authorize: yes
     state: absent
-  become: yes
 
 # start tests
 - name: Set up host logging
@@ -32,7 +29,6 @@
     facility: local7
     state: present
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -47,7 +43,6 @@
     name: 172.16.0.1
     state: present
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -60,7 +55,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -74,7 +68,6 @@
     name: 172.16.0.1
     state: absent
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -87,7 +80,6 @@
     level: warnings
     state: present
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -100,7 +92,6 @@
     dest: buffered
     size: 8000
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -114,7 +105,6 @@
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -130,7 +120,6 @@
       - { dest: buffered, size: 9000 }
     state: absent
     authorize: yes
-  become: yes
   register: result
 
 - assert:
