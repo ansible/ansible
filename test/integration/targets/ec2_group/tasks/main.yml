@@ -436,6 +436,112 @@
           - 'result.group_id.startswith("sg-")'
 
     # ============================================================
+
+    - name: test adding a rule with a IPv4 CIDR with host bits set (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8195
+          cidr_ip: 10.0.0.1/8
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+
+    - name: test adding the same rule with a IPv4 CIDR with host bits set (expected changed=false and a warning)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8195
+          cidr_ip: 10.0.0.1/8
+      register: result
+
+    - name: assert state=present (expected changed=false and a warning)
+      assert:
+        that:
+          # No way to assert for warnings?
+          - 'not result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+
+    - name: test adding a rule with a IPv6 CIDR with host bits set (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8196
+          cidr_ipv6: '2001:db00::1/24'
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+
+    - name: test adding a rule again with a IPv6 CIDR with host bits set (expected changed=false and a warning)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8196
+          cidr_ipv6: '2001:db00::1/24'
+      register: result
+
+    - name: assert state=present (expected changed=false and a warning)
+      assert:
+        that:
+          # No way to assert for warnings?
+          - 'not result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
     - name: test state=absent (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
