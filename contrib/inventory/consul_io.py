@@ -225,21 +225,39 @@ class ConsulInventory(object):
         self.config = config
 
         self.consul_api = config.get_consul_api()
-
-        if config.has_config('datacenter'):
-            if config.has_config('host'):
-                self.load_data_for_node(config.host, config.datacenter)
+        index, inventory_json = self.consul_api.kv.get(key=self.config.kv_cache)
+        if not inventory_json:
+            if config.has_config('datacenter'):
+                if config.has_config('host'):
+                    self.load_data_for_node(config.host, config.datacenter)
+                else:
+                    self.load_data_for_datacenter(config.datacenter)
             else:
-                self.load_data_for_datacenter(config.datacenter)
-        else:
-            self.load_all_data_consul()
+                self.load_all_data_consul()
 
-        self.combine_all_results()
-        print(json.dumps(self.inventory, sort_keys=True, indent=2))
+            self.combine_all_results()
+            inventory_json = {'Value': json.dumps(self.inventory,
+                                                  sort_keys=True,
+                                                  indent=2)}
+            if self.config.cache == 'true':
+                self.init_cache(inventory_json)
+        print(inventory_json.get('Value', None))
+
+    def init_cache(self, inventory_json):
+        session = self.consul_api.session.create(name='inventory_cache',
+                                                 behavior='delete',
+                                                 ttl=int(self.config.cache_ttl))
+        self.consul_api.kv.put(key=self.config.kv_cache,
+                               value=inventory_json['Value'],
+                               acquire=session)
 
     def bulk_load(self, datacenter):
-        index, groups_list = self.consul_api.kv.get(self.config.kv_groups, recurse=True, dc=datacenter)
-        index, metadata_list = self.consul_api.kv.get(self.config.kv_metadata, recurse=True, dc=datacenter)
+        index, groups_list = self.consul_api.kv.get(self.config.kv_groups,
+                                                    recurse=True,
+                                                    dc=datacenter)
+        index, metadata_list = self.consul_api.kv.get(self.config.kv_metadata,
+                                                      recurse=True,
+                                                      dc=datacenter)
         index, nodes = self.consul_api.catalog.nodes(dc=datacenter)
         self.inmemory_kv += groups_list
         self.inmemory_kv += metadata_list
@@ -258,20 +276,18 @@ class ConsulInventory(object):
         '''check the health of each service on a node and add add the node to either
         an 'available' or 'unavailable' grouping. The suffix for each group can be
         controlled from the config'''
+        stat_dist = {"passing": ["available_suffix", "_available"],
+                     "warning": ["unavailable_suffix", "_unavailable"],
+                     "critical": ["unavailable_suffix", "_unavailable"]}
         if self.config.has_config('availability'):
             for service_name, service in iteritems(node['Services']):
                 for node in self.consul_api.health.service(service_name)[1]:
                     for check in node['Checks']:
                         if check['ServiceName'] == service_name:
-                            ok = 'passing' == check['Status']
-                            if ok:
-                                suffix = self.config.get_availability_suffix(
-                                    'available_suffix', '_available')
-                            else:
-                                suffix = self.config.get_availability_suffix(
-                                    'unavailable_suffix', '_unavailable')
+                            suffix = self.config.get_availability_suffix(
+                                    *stat_dist[check['Status']])
                             self.add_node_to_map(self.nodes_by_availability,
-                                                 service_name + suffix, node['Node'])
+                                                 "".join([service_name, suffix]), node['Node'])
 
     def consul_get_kv_inmemory(self, key):
         result = filter(lambda x: x['Key'] == key, self.inmemory_kv)
@@ -310,7 +326,7 @@ class ConsulInventory(object):
         if self.config.suffixes == 'true':
             self.load_availability_groups(node_data, datacenter)
             for name, service in node_data['Services'].items():
-                self.load_data_from_service(name, service, node_data)
+               self.load_data_from_service(name, service, node_data)
 
     def load_node_metadata_from_kv(self, node_data):
         ''' load the json dict at the metadata path defined by the kv_metadata value
@@ -401,13 +417,10 @@ class ConsulInventory(object):
 
     def get_inventory_name(self, node_data):
         '''return the ip or a node name that can be looked up in consul's dns'''
-        domain = self.config.domain
-        if domain:
-            node_name = node_data['Node']
-            if self.current_dc:
-                return '%s.node.%s.%s' % (node_name, self.current_dc, domain)
-            else:
-                return '%s.node.%s' % (node_name, domain)
+        if self.config.domain:
+            inv_name = [node_data['Node'], 'node', self.current_dc,
+                        self.config.domain]
+            return '.'.join(filter(lambda x: x, inv_name))
         else:
             return node_data['Address']
 
@@ -466,7 +479,8 @@ class ConsulConfig(dict):
         config_options = ['host', 'token', 'datacenter', 'servers_suffix',
                           'tags', 'kv_metadata', 'kv_groups', 'availability',
                           'unavailable_suffix', 'available_suffix', 'url',
-                          'domain', 'suffixes', 'bulk_load']
+                          'domain', 'suffixes', 'bulk_load', 'cache',
+                          'cache_ttl', 'kv_cache']
         for option in config_options:
             value = None
             if config.has_option('consul', option):
