@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/defaults.yaml"
+- debug: msg="START cli/defaults.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -10,12 +10,14 @@
       - interface Loopback999
     match: none
     authorize: yes
+  become: yes
 
 - name: configure device with defaults included
   ios_config:
     src: defaults/config.j2
     defaults: yes
     authorize: yes
+  become: yes
   register: result
 
 - debug: var=result
@@ -31,6 +33,7 @@
     src: defaults/config.j2
     defaults: yes
     authorize: yes
+  become: yes
   register: result
 
 - debug: var=result
@@ -45,6 +48,7 @@
     lines:
         - mac-address-table notification mac-move
     authorize: yes
+  become: yes
   ignore_errors: yes
 
 - name: show interfaces brief to ensure deivce goes to valid prompt
@@ -52,6 +56,7 @@
     commands:
       - show interfaces
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -59,4 +64,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/defaults.yaml"
+- debug: msg="END cli/defaults.yaml on connection={{ ansible_connection }}"

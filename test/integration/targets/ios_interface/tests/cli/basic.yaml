@@ -1,10 +1,11 @@
 ---
-- debug: msg="START ios_interface cli/basic.yaml"
+- debug: msg="START ios_interface cli/basic.yaml on connection={{ ansible_connection }}"
 
 - name: Run show version
   ios_command:
     commands: show version
     authorize: yes
+  become: yes
   register: show_version_result
 
 - block:
@@ -23,6 +24,7 @@
           - no negotiation auto
         parents: int GigabitEthernet2
         authorize: yes
+      become: yes
 
     - name: Set test interface 2 to GigabitEthernet3 as we are on Cisco IOS-XE
       set_fact: test_interface2=GigabitEthernet3
@@ -32,6 +34,7 @@
           - no negotiation auto
         parents: int GigabitEthernet3
         authorize: yes
+      become: yes
   when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
 
 - name: Configure interface (setup)
@@ -42,6 +45,7 @@
     mtu: 1800
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - name: Configure interface
@@ -50,6 +54,7 @@
     description: test-interface-initial
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -64,6 +69,7 @@
     description: test-interface-initial
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -77,6 +83,7 @@
     mtu: 2000
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -93,6 +100,7 @@
     mtu: 1800
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -107,6 +115,7 @@
     name: "{{ test_interface }}"
     enabled: False
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -120,6 +129,7 @@
     name: "{{ test_interface }}"
     enabled: True
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -136,6 +146,7 @@
     mtu: 1800
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - name: Add interface aggregate
@@ -146,6 +157,7 @@
     speed: 1000
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -165,6 +177,7 @@
     speed: 1000
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -179,6 +192,7 @@
     enabled: False
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -197,6 +211,7 @@
     enabled: True
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -214,6 +229,7 @@
     - name: Loopback10
     state: absent
     authorize: yes
+  become: yes
 
 - name: Create loopback interface aggregate
   ios_interface:
@@ -222,6 +238,7 @@
     - name: Loopback10
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -237,6 +254,7 @@
     - name: Loopback10
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -252,10 +270,11 @@
     - name: Loopback10
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - assert:
     that:
       - 'result.changed == false'
 
-- debug: msg="END ios_interface cli/basic.yaml"
+- debug: msg="END ios_interface cli/basic.yaml on connection={{ ansible_connection }}"

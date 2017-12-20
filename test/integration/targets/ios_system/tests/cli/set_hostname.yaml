@@ -1,16 +1,18 @@
 ---
-- debug: msg="START cli/set_hostname.yaml"
+- debug: msg="START cli/set_hostname.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
     lines: hostname switch
     match: none
     authorize: yes
+  become: yes
 
 - name: configure hostname
   ios_system:
     hostname: foo
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -21,6 +23,7 @@
   ios_system:
     hostname: foo
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -32,5 +35,6 @@
     lines: "hostname {{ inventory_hostname }}"
     match: none
     authorize: yes
+  become: yes
 
-- debug: msg="END cli/set_hostname.yaml"
+- debug: msg="END cli/set_hostname.yaml on connection={{ ansible_connection }}"
