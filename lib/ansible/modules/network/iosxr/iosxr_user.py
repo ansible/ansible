@@ -328,7 +328,7 @@ def convert_key_to_base64(module):
     splitfile = key.split()[1]
 
     base64key = b64decode(splitfile)
-    base64file = open('/tmp/publickey_%s.b64' % (name), 'w')
+    base64file = open('/tmp/publickey_%s.b64' % (name), 'bw')
     base64file.write(base64key)
     base64file.close()
 

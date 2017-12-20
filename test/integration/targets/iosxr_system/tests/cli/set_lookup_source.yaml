@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_lookup_source.yaml"
+- debug: msg="START cli/set_lookup_source.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -63,4 +63,4 @@
     match: none
     provider: "{{ cli }}"
 
-- debug: msg="END cli/set_lookup_source.yaml"
+- debug: msg="END cli/set_lookup_source.yaml on connection={{ ansible_connection }}"
