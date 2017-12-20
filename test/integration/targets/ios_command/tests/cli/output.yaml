@@ -6,7 +6,6 @@
     commands:
       - show version
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -20,7 +19,6 @@
       - show version
       - show interfaces
     authorize: yes
-  become: yes
   register: result
 
 - assert:

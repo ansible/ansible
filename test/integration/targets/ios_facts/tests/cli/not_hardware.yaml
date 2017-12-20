@@ -7,7 +7,6 @@
     gather_subset:
       - "!hardware"
     authorize: yes
-  become: yes
   register: result
 
 - assert:

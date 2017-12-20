@@ -8,14 +8,12 @@
       - "hostname {{ shorter_hostname }}"
     match: none
     authorize: yes
-  become: yes
 
 - name: configure top level command with before
   ios_config:
     lines: ['hostname foo']
     after: ['snmp-server contact bar']
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -29,7 +27,6 @@
     lines: ['hostname foo']
     after: ['snmp-server contact foo']
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -43,6 +40,5 @@
       - "hostname {{ shorter_hostname }}"
     match: none
     authorize: yes
-  become: yes
 
 - debug: msg="END cli/toplevel_after.yaml on connection={{ ansible_connection }}"
