@@ -58,7 +58,7 @@ class TestIosUserModule(TestIosModule):
         set_module_args(dict(name='ansible', state='absent'))
         result = self.execute_module(changed=True)
         cmd = json.loads(
-            '{"answer": "y", ' +
+            '{"answer": "y", "newline": false, ' +
             '"prompt": "This operation will remove all username related ' +
             'configurations with same name", "command": "no username ansible"}'
         )
@@ -87,7 +87,7 @@ class TestIosUserModule(TestIosModule):
         set_module_args(dict(purge=True))
         result = self.execute_module(changed=True)
         cmd = json.loads(
-            '{"answer": "y", ' +
+            '{"answer": "y", "newline": false, ' +
             '"prompt": "This operation will remove all username related ' +
             'configurations with same name", "command": "no username ansible"}'
         )

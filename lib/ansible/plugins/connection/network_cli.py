@@ -121,8 +121,10 @@ class Connection(ConnectionBase):
             try:
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-                for key in ('prompt', 'answer', 'sendonly'):
-                    if cmd.get(key) is not None:
+                for key in ('prompt', 'answer', 'sendonly', 'newline'):
+                    if cmd.get(key) is True or cmd.get(key) is False:
+                        kwargs[key] = cmd[key]
+                    elif cmd.get(key) is not None:
                         kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
                 return self.send(**kwargs)
             except ValueError:
@@ -257,7 +259,7 @@ class Connection(ConnectionBase):
             self._connected = False
             display.debug("ssh connection has been closed successfully")
 
-    def receive(self, command=None, prompts=None, answer=None):
+    def receive(self, command=None, prompts=None, answer=None, newline=True):
         '''
         Handles receiving of output from command
         '''
@@ -279,14 +281,14 @@ class Connection(ConnectionBase):
 
             window = self._strip(recv.read())
             if prompts and not handled:
-                handled = self._handle_prompt(window, prompts, answer)
+                handled = self._handle_prompt(window, prompts, answer, newline)
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompt=None, answer=None, sendonly=False):
+    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False):
         '''
         Sends the command to the device in the opened shell
         '''
@@ -295,7 +297,7 @@ class Connection(ConnectionBase):
             self._ssh_shell.sendall(b'%s\r' % command)
             if sendonly:
                 return
-            response = self.receive(command, prompt, answer)
+            response = self.receive(command, prompt, answer, newline)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
@@ -309,7 +311,7 @@ class Connection(ConnectionBase):
             data = regex.sub(b'', data)
         return data
 
-    def _handle_prompt(self, resp, prompts, answer):
+    def _handle_prompt(self, resp, prompts, answer, newline):
         '''
         Matches the command prompt and responds
 
@@ -325,7 +327,9 @@ class Connection(ConnectionBase):
         for regex in prompts:
             match = regex.search(resp)
             if match:
-                self._ssh_shell.sendall(b'%s\r' % answer)
+                self._ssh_shell.sendall(b'%s' % answer)
+                if newline:
+                    self._ssh_shell.sendall(b'\r')
                 return True
         return False
 

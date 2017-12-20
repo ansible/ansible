@@ -7,12 +7,14 @@
       over multiple lines
     state: present
     authorize: yes
+  become: yes
 
 - name: remove login
   ios_banner:
     banner: login
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - debug:
@@ -28,6 +30,7 @@
     banner: login
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - assert:
