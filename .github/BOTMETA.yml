@@ -259,7 +259,6 @@ files:
   $modules/cloud/misc/virt.py: $team_ansible
   $modules/cloud/misc/virt_net.py: drybjed
   $modules/cloud/misc/virt_pool.py: drybjed
-  $modules/cloud/misc/xenserver_facts.py: andyhky
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
   $modules/cloud/openstack/os_project.py: $team_openstack agireud
@@ -443,7 +442,6 @@ files:
   $modules/net_tools/ipify_facts.py: resmo
   $modules/net_tools/ipinfoio_facts.py: akostyuk
   $modules/net_tools/ldap/: jtyr
-  $modules/net_tools/lldp.py: andyhky
   $modules/net_tools/nmcli.py: alcamie101
   $modules/net_tools/nsupdate.py: nerzhul
   $modules/net_tools/omapi_host.py: nerzhul
