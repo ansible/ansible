@@ -284,10 +284,8 @@ class ConsulInventory(object):
                 for node in self.consul_api.health.service(service_name)[1]:
                     for check in node['Checks']:
                         if check['ServiceName'] == service_name:
-                            suffix = self.config.get_availability_suffix(
-                                    *stat_dist[check['Status']])
-                            self.add_node_to_map(self.nodes_by_availability,
-                                                 "".join([service_name, suffix]), node['Node'])
+                            suffix = self.config.get_availability_suffix(*stat_dist[check['Status']])
+                            self.add_node_to_map(self.nodes_by_availability, "".join([service_name, suffix]), node['Node'])
 
     def consul_get_kv_inmemory(self, key):
         result = filter(lambda x: x['Key'] == key, self.inmemory_kv)
@@ -326,7 +324,7 @@ class ConsulInventory(object):
         if self.config.suffixes == 'true':
             self.load_availability_groups(node_data, datacenter)
             for name, service in node_data['Services'].items():
-               self.load_data_from_service(name, service, node_data)
+                self.load_data_from_service(name, service, node_data)
 
     def load_node_metadata_from_kv(self, node_data):
         ''' load the json dict at the metadata path defined by the kv_metadata value
