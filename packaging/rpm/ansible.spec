@@ -135,6 +135,9 @@ rm -rf %{buildroot}
 
 %changelog
 
+* Wed Dec 20 2017 Ansible, Inc. <info@ansible.com> - 2.3.3.0-1
+- Release 2.3.3.0-1
+
 * Fri Aug 04 2017 Ansible, Inc. <info@ansible.com> - 2.3.2.0-1
 - Release 2.3.2.0-1
 
