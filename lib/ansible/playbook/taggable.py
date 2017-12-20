@@ -59,8 +59,6 @@ class Taggable:
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''
 
-        should_run = True
-
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
             tags = templar.template(self.tags)
@@ -76,12 +74,16 @@ class Taggable:
             # this makes isdisjoint work for untagged
             tags = self.untagged
 
-        if only_tags:
+        should_run = True  # default, tasks to run
 
-            if ('all' in only_tags and 'never' not in tags) or \
-               'always' in tags  or \
-               not tags.isdisjoint(only_tags) or \
-               ('tagged' in only_tags and tags != self.untagged):
+        if only_tags:
+            if 'always' in tags:
+                should_run = True
+            elif ('all' in only_tags and 'never' not in tags):
+                should_run = True
+            elif not tags.isdisjoint(only_tags):
+                should_run = True
+            elif 'tagged' in only_tags and tags != self.untagged and 'never' not in tags:
                 should_run = True
             else:
                 should_run = False
