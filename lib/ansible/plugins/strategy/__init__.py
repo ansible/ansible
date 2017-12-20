@@ -145,7 +145,8 @@ def debug_closure(func):
                     _processed_results.append(result)
                     break
                 elif next_action.result == NextAction.EXIT:
-                    sys.exit(1)
+                    # Matches KeyboardInterrupt from bin/ansible
+                    sys.exit(99)
             else:
                 _processed_results.append(result)
 
@@ -1038,7 +1039,7 @@ class Debugger(cmd.Cmd):
         # cmd.Cmd is old-style class
         cmd.Cmd.__init__(self)
 
-        self.intro = "Debugger invoked"
+        self.intro = None
         self.scope = {}
         self.scope['task'] = task
         self.scope['vars'] = task_vars
@@ -1059,7 +1060,7 @@ class Debugger(cmd.Cmd):
 
     def do_quit(self, args):
         """Quit"""
-        display.display('aborted')
+        display.display('User interrupted execution')
         self.next_action.result = NextAction.EXIT
         return True
 
