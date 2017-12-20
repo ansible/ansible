@@ -1039,13 +1039,13 @@ class NextAction(object):
 
 
 class Debugger(cmd.Cmd):
-    prompt = '(debug) '  # debugger
     prompt_continuous = '> '  # multiple lines
 
     def __init__(self, task, host, task_vars, play_context, result, next_action):
         # cmd.Cmd is old-style class
         cmd.Cmd.__init__(self)
 
+        self.prompt = '[%s] %s (debug)> ' % (host, task)
         self.intro = None
         self.scope = {}
         self.scope['task'] = task
