@@ -54,6 +54,29 @@ Function Get-MachineSid {
     return $machine_sid
 }
 
+Function Get-ProductKey {
+    $data = Get-ItemPropertyValue -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion" -Name DigitalProductId
+    $hexdata = $data[52..66]
+
+    $chardata = "B","C","D","F","G","H","J","K","M","P","Q","R","T","V","W","X","Y","2","3","4","6","7","8","9"
+
+    # Decode base24 binary data
+    $product_key = $null
+    For ($i = 24; $i -ge 0; $i--) {
+        $k = 0
+        For ($j = 14; $j -ge 0; $j--) {
+            $k = $k * 256 -bxor $hexdata[$j]
+            $hexdata[$j] = [math]::truncate($k / 24)
+            $k = $k % 24
+        }
+        $product_key = $chardata[$k] + $product_key
+        If (($i % 5 -eq 0) -and ($i -ne 0)) {
+            $product_key = "-" + $product_key
+        }
+    }
+    return $product_key
+}
+
 $result = @{
     ansible_facts = @{ }
     changed = $false
@@ -169,6 +192,8 @@ $ansible_facts = @{
     ansible_nodename = ($ip_props.HostName + "." + $ip_props.DomainName)
     ansible_os_family = "Windows"
     ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
+    ansible_os_product_id = $win32_os.SerialNumber
+    ansible_os_product_key = Get-ProductKey
     ansible_owner_contact = ([string] $win32_cs.PrimaryOwnerContact)
     ansible_owner_name = ([string] $win32_cs.PrimaryOwnerName)
     ansible_powershell_version = ($PSVersionTable.PSVersion.Major)
