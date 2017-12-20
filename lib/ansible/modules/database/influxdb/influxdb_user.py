@@ -27,13 +27,14 @@ options:
     hostname:
         description:
             - The hostname or IP address on which InfluxDB server is listening
+        default: localhost
         required: false
-    username:
+    user_name:
         description:
             - User that we want to create
         default: None
         required: True
-    password:
+    user_password:
         description:
             - Password that we want to set for user
         default: None
@@ -55,12 +56,12 @@ options:
         choices: ['present', 'absent']
         default: present
         required: false
-    login_username:
+    username:
         description:
             - user to auth wirh influxdb
         default: root
         required: false
-    login_password:
+    password:
         description:
             - user to auth wirh influxdb
         default: root
@@ -69,26 +70,27 @@ options:
 '''
 
 EXAMPLES = '''
-# Example influxdb_database command from Ansible Playbooks
+# Example influxdb_user command from Ansible Playbooks
 - name: Create User
   influxdb_user:
-      username: "{{influxdb_user_name}}"
-      password: "{{influxdb_user_password}}"
+      user_name: "{{influxdb_user_name}}"
+      user_password: "{{influxdb_user_password}}"
       state: present
 
 - name: Destroy User
-  influxdb_database:
-      username: "{{influxdb_user_name}}"
+  influxdb_user:
+      user_name: "{{influxdb_user_name}}"
+      username: "{{influxdb_password}}"
       password: "{{influxdb_user_password}}"
       state: absent
 
 - name: Create user on dest host
-  influxdb_database:
+  influxdb_user:
       hostname: "{{influxdb_ip_address}}"
-      login_username: "{{influxdb_username}}"
-      login_password: "{{influxdb_password}}"
-      username: "{{influxdb_user_name}}"
-      password: "{{influxdb_user_password}}"
+      username: "{{influxdb_username}}"
+      password: "{{influxdb_password}}"
+      user_name: "{{influxdb_user_name}}"
+      user_password: "{{influxdb_user_password}}"
       admin: true
       state: present
 '''
@@ -113,19 +115,16 @@ def influxdb_argument_spec():
     return dict(
         hostname=dict(default='localhost', type='str'),
         port=dict(default=8086, type='int'),
-        login_username=dict(default='root', type='str'),
-        login_password=dict(default='root', type='str', no_log=True),
-        username=dict(required=True, type='str'),
-        password=dict(required=False, type='str', no_log=True),
-        admin=dict(default='False', type='str')
+        username=dict(default='root', type='str'),
+        password=dict(default='root', type='str', no_log=True),
     )
 
 
 def connect_to_influxdb(module):
     hostname = module.params['hostname']
     port = module.params['port']
-    username = module.params['login_username']
-    password = module.params['login_password']
+    username = module.params['username']
+    password = module.params['password']
     client = InfluxDBClient(
         host=hostname,
         port=port,
@@ -135,13 +134,13 @@ def connect_to_influxdb(module):
     return client
 
 
-def find_user(module, client, username):
+def find_user(module, client, user_name):
     name = None
 
     try:
         names = client.get_list_users()
         for u_name in names:
-            if u_name['user'] == username:
+            if u_name['user'] == user_name:
                 name = u_name
                 break
     except ansible.module_utils.urls.ConnectionError as e:
@@ -149,20 +148,20 @@ def find_user(module, client, username):
     return name
 
 
-def create_user(module, client, username, password, admin):
+def create_user(module, client, user_name, user_password, admin):
     if not module.check_mode:
         try:
-            client.create_user(username, password, admin)
+            client.create_user(user_name, user_password, admin)
         except ansible.module_utils.urls.ConnectionError as e:
             module.fail_json(msg=str(e))
 
     module.exit_json(changed=True)
 
 
-def drop_user(module, client, username):
+def drop_user(module, client, user_name):
     if not module.check_mode:
         try:
-            client.drop_user(username)
+            client.drop_user(user_name)
         except exceptions.InfluxDBClientError as e:
             module.fail_json(msg=e.content)
 
@@ -183,21 +182,21 @@ def main():
         module.fail_json(msg='influxdb python package is required for this module')
 
     state = module.params['state']
-    username = module.params['username']
-    password = module.params['password']
+    user_name = module.params['user_name']
+    user_password = module.params['user_password']
     admin = module.params['admin']
     client = connect_to_influxdb(module)
-    user = find_user(module, client, username)
+    user = find_user(module, client, user_name)
 
     if state == 'present':
         if user:
             module.exit_json(changed=False)
         else:
-            create_user(module, client, username, password, admin)
+            create_user(module, client, user_name, user_password, admin)
 
     if state == 'absent':
         if user:
-            drop_user(module, client, username)
+            drop_user(module, client, user_name)
         else:
             module.exit_json(changed=False)
 
