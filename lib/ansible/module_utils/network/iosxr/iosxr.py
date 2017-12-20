@@ -62,7 +62,9 @@ NS_DICT = {
     'M:TYPE_NSMAP': {"idx": "urn:ietf:params:xml:ns:yang:iana-if-type"},
     'ETHERNET_NSMAP': {None: "http://openconfig.net/yang/interfaces/ethernet"},
     'CETHERNET_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-drivers-media-eth-cfg"},
-    'INTERFACE-CONFIGURATIONS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"}
+    'INTERFACE-CONFIGURATIONS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"},
+    'INFRA-STATISTICS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-statsd-oper"},
+    'INTERFACE-PROPERTIES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-oper"},
 }
 
 iosxr_provider_spec = {
@@ -253,7 +255,11 @@ def build_xml(container, xmap=None, params=None, opcode=None):
 
 
 def etree_find(root, node):
-    element = etree.fromstring(root).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+    try:
+        element = etree.fromstring(root).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+    except Exception:
+        element = etree.fromstring(etree.tostring(root)).find('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+
     if element is not None:
         return element
 
@@ -261,7 +267,11 @@ def etree_find(root, node):
 
 
 def etree_findall(root, node):
-    element = etree.fromstring(root).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+    try:
+        element = etree.fromstring(root).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+    except Exception:
+        element = etree.fromstring(etree.tostring(root)).findall('.//' + to_bytes(node, errors='surrogate_then_replace').strip())
+
     if element is not None:
         return element
 
@@ -336,6 +346,17 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, p
     return reply
 
 
+def get_oper(module, filter=None):
+    global _DEVICE_CONFIGS
+
+    conn = get_connection(module)
+
+    if filter is not None:
+        response = conn.get(filter)
+
+    return to_bytes(etree.tostring(response), errors='surrogate_then_replace').strip()
+
+
 def get_config(module, config_filter=None, source='running'):
     global _DEVICE_CONFIGS
 
@@ -370,7 +391,8 @@ def load_config(module, command_filter, commit=False, replace=False,
         # conn.discard_changes()
 
         try:
-            conn.edit_config(command_filter)
+            for filter in to_list(command_filter):
+                conn.edit_config(filter)
 
             candidate = get_config(module, source='candidate', config_filter=nc_get_filter)
             diff = get_config_diff(module, running, candidate)
