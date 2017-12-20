@@ -706,7 +706,7 @@ EXAMPLES = '''
   ovirt_vms:
     state: absent
     name: myvm
-    
+
 # Defining a specific quota for a VM:
 # Since Ansible 2.5
 - ovirt_quotas_facts:
@@ -835,18 +835,18 @@ class VmsModule(BaseModule):
             stateless=self.param('stateless') or self.param('use_latest_template_version'),
             delete_protected=self.param('delete_protected'),
             bios=(
-                  otypes.Bios(boot_menu=otypes.BootMenu(enabled=True)) if self.param('boot_menu') is True else otypes.Bios(boot_menu=otypes.BootMenu(enabled=False))
-                  ) if self.param('boot_menu') is not None else None,
+                otypes.Bios(boot_menu=otypes.BootMenu(enabled=True)) if self.param('boot_menu') is True else otypes.Bios(boot_menu=otypes.BootMenu(enabled=False))
+            ) if self.param('boot_menu') is not None else None,
             console=(
-                 otypes.Console(enabled=True) if self.param('serial_console') is True else otypes.Console(enabled=False)
-                 ) if self.param('serial_console') is not None else None,
+                otypes.Console(enabled=True) if self.param('serial_console') is True else otypes.Console(enabled=False)
+            ) if self.param('serial_console') is not None else None,
             usb=(
-                 otypes.Usb(enabled=True) if self.param('usb_support') is True else otypes.Usb(enabled=False)
-                 ) if self.param('usb_support') is not None else None,
+                otypes.Usb(enabled=True) if self.param('usb_support') is True else otypes.Usb(enabled=False)
+            ) if self.param('usb_support') is not None else None,
             sso=(
-                 otypes.Sso() if self.param('sso') is True else otypes.Sso(methods=[])
-                 ) if self.param('sso') is not None else None,
-            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,            
+                otypes.Sso() if self.param('sso') is True else otypes.Sso(methods=[])
+            ) if self.param('sso') is not None else None,
+            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,
             high_availability=otypes.HighAvailability(
                 enabled=self.param('high_availability')
             ) if self.param('high_availability') is not None else None,
