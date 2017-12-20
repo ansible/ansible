@@ -77,7 +77,11 @@ class NetconfConnection(Connection):
 
             warnings = []
             for error in error_list:
-                message = error.find('./nc:error-message', NS_MAP).text
+                try:
+                    message = error.find('./nc:error-message', NS_MAP).text
+                except Exception:
+                    message = error.find('./nc:error-info', NS_MAP).text
+
                 severity = error.find('./nc:error-severity', NS_MAP).text
 
                 if severity == 'warning' and self.ignore_warning:
