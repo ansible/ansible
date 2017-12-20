@@ -937,7 +937,9 @@ ENABLE_TASK_DEBUGGER:
   default: False
   description:
     - Whether or not to enable the task debugger, this previously was done as a strategy plugin.
-    - Now all strategy plugins can inherit this behavior
+    - Now all strategy plugins can inherit this behavior. The debugger defaults to activating when
+    - a task is failed on unreachable. Use the debugger keyword for more flexibility.
+  type: boolean
   env: [{name: ANSIBLE_ENABLE_TASK_DEBUGGER}]
   ini:
     - {key: enable_task_debugger, section: defaults}
