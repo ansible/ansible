@@ -80,6 +80,7 @@ Ansible Changes By Release
 #### Cloud
 - amazon
   * aws_acm_facts
+  * aws_direct_connect_gateway
   * aws_kms_facts
   * aws_s3_cors
   * aws_ssm_parameter_store
