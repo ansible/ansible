@@ -753,6 +753,12 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
+    if apt_cmd is None:
+        if use_apt_get:
+            apt_cmd = APT_GET_CMD
+        else:
+            m.fail_json(msg="Unable to find APTITUDE in path. Please make sure "
+                            "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
