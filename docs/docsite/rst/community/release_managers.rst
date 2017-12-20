@@ -75,5 +75,6 @@ Release Process
 ===============
 
 The release process is kept in a `separate document
-<https://github.com/ansible/ansible/blob/devel/release-procedure.rst>`_ so that it can be easily
-updated during a release.
+<https://docs.google.com/document/d/10EWLkMesi9s_CK_GmbZlE_ZLhuQr6TBrdMLKo5dnMAI/edit#heading=h.ooo3izcel3cz>`_
+so that it can be easily updated during a release.  If you need access to edit this, please ask one
+of the current release managers to add you.
