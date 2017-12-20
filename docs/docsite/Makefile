@@ -45,6 +45,7 @@ webdocs: docs
 #TODO: leaving htmlout removal for those having older versions, should eventually be removed also
 clean:
 	-rm -rf htmlout
+	-rm -rf module_docs
 	-rm -rf _build
 	-rm -f .buildinfo
 	-rm -f objects.inv
