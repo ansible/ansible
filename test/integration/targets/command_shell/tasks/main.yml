@@ -43,7 +43,7 @@
   assert:
     that:
       - "tar.warnings | length() == 1"
-      - "'Consider using unarchive module rather than running tar' in tar.warnings[0]"
+      - "'Consider using the unarchive module rather than running tar' in tar.warnings[0]"
 
 - name: use command to execute chown
   command: chown -h
@@ -54,7 +54,7 @@
   assert:
     that:
       - "chown.warnings | length() == 1"
-      - "'Consider using file module with owner rather than running chown' in chown.warnings[0]"
+      - "'Consider using the file module with owner rather than running chown' in chown.warnings[0]"
 
 - name: use command with unsupported executable arg
   command: ls /dev/null executable=/bogus
