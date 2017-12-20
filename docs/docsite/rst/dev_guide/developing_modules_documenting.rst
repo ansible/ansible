@@ -201,9 +201,11 @@ The following fields can be used and are all required unless specified otherwise
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
 :deprecated:
-  If this module is deprecated, detail when that happened, and what to use instead, e.g.
-  `Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.`
-  Ensure `CHANGELOG.md` is updated to reflect this.
+  In addition to updating the ``CHANGELOG`` and ``porting_guide.X.y.rst`` the module should be renamed to start with an ``_`` and the following values should be set:
+
+  :version: A `string` which represents the current version of Ansible, i.e. ``version: "2.5"``. Not the version this will be removed in.
+  :why: Optional string that used to detail why this has been removed.
+  :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 :options:
   One per module argument:
 

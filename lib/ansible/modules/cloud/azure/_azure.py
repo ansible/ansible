@@ -19,7 +19,9 @@ short_description: create or terminate a virtual machine in azure
 description:
      - Creates or terminates azure instances. When created optionally waits for it to be 'running'.
 version_added: "1.7"
-deprecated: "Use M(azure_rm_virtualmachine) instead."
+deprecated:
+  version: "2.4"
+  alternative: M(azure_rm_virtualmachine)
 options:
   name:
     description:

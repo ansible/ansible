@@ -16,7 +16,9 @@ DOCUMENTATION = r'''
 module: ec2_ami_find
 version_added: '2.0'
 short_description: Searches for AMIs to obtain the AMI ID and other information
-deprecated: Deprecated in 2.5. Use M(ec2_ami_facts) instead.
+deprecated:
+  version: "2.5"
+  alternative: Use M(ec2_ami_facts) instead.
 description:
   - Returns list of matching AMIs with AMI ID, along with other useful information
   - Can search AMIs with different owners

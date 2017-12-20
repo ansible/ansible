@@ -18,8 +18,9 @@ DOCUMENTATION = '''
 module: cl_license
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
-short_description: Install licenses fo Cumulus Linux
-deprecated: Deprecated in 2.3.
+short_description: Install licenses for Cumulus Linux
+deprecated:
+  version: "2.3"
 description:
     - Installs a Cumulus Linux license. The module reports no change of status
       when a license is installed.

@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 module: accelerate
 removed: True
 short_description: Enable accelerated mode on remote node
-deprecated: "Use SSH with ControlPersist instead."
+deprecated:
+  alternative: Use SSH with ControlPersist instead.
 description:
      - This module has been removed, this file is kept for historicaly documentation purposes
      - This modules launches an ephemeral I(accelerate) daemon on the remote node which

@@ -14,7 +14,9 @@ DOCUMENTATION = '''
 ---
 module: kubernetes
 version_added: "2.1"
-deprecated: In 2.5 use M(k8s_raw) instead.
+deprecated:
+  version: "2.5"
+  alternative: Use M(k8s_raw) instead.
 short_description: Manage Kubernetes resources
 description:
     - This module can manage Kubernetes resources on an existing cluster using

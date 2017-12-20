@@ -18,10 +18,9 @@ short_description: configure AWS virtual private clouds
 description:
     - Create or terminates AWS virtual private clouds.  This module has a dependency on python-boto.
 version_added: "1.4"
-deprecated: >-
-  Deprecated in 2.3. Use M(ec2_vpc_net) along with supporting modules including
-  M(ec2_vpc_igw), M(ec2_vpc_route_table), M(ec2_vpc_subnet), M(ec2_vpc_dhcp_options),
-  M(ec2_vpc_nat_gateway), M(ec2_vpc_nacl).
+deprecated:
+  version: "2.3"
+  alternative: Use M(ec2_vpc_net) along with supporting modules including M(ec2_vpc_igw), M(ec2_vpc_route_table), M(ec2_vpc_subnet), M(ec2_vpc_dhcp_options), M(ec2_vpc_nat_gateway), M(ec2_vpc_nacl).
 options:
   cidr_block:
     description:

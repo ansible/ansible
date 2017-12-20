@@ -19,7 +19,9 @@ module: cl_ports
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configure Cumulus Switch port attributes (ports.conf)
-deprecated: Deprecated in 2.3. Use M(nclu) instead.
+deprecated:
+  version: "2.3"
+  alternative: Use M(nclu) instead.
 description:
     - Set the initial port attribute defined in the Cumulus Linux ports.conf,
       file. This module does not do any error checking at the moment. Be careful

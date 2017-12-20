@@ -20,7 +20,9 @@ version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configures a front panel port, loopback or
                   management port on Cumulus Linux.
-deprecated: Deprecated in 2.3. Use M(nclu) instead.
+deprecated:
+  version: "2.3"
+  alternative: Use M(nclu) instead.
 description:
     - Configures a front panel, sub-interface, SVI, management or loopback port
       on a Cumulus Linux switch. For bridge ports use the cl_bridge module. For

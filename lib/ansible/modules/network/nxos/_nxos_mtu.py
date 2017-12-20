@@ -25,7 +25,9 @@ DOCUMENTATION = '''
 module: nxos_mtu
 extends_documentation_fragment: nxos
 version_added: "2.2"
-deprecated: Deprecated in 2.3 use M(nxos_system)'s C(mtu) option.
+deprecated:
+  version: "2.3"
+  alternative: Use M(nxos_system)'s C(mtu) option.
 short_description: Manages MTU settings on Nexus switch.
 description:
     - Manages MTU settings on Nexus switch.

@@ -29,7 +29,9 @@ DOCUMENTATION = r'''
 ---
 module: win_msi
 version_added: '1.7'
-deprecated: In 2.4 and will be removed in 2.8, use M(win_package) instead.
+deprecated:
+  version: "2.4"
+  alternative: Use M(win_package) instead.
 short_description: Installs and uninstalls Windows MSI files
 description:
     - Installs or uninstalls a Windows MSI file that is already located on the

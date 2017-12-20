@@ -16,7 +16,9 @@ DOCUMENTATION = '''
 ---
 module: ec2_ami_search
 short_description: Retrieve AWS AMI information for a given operating system.
-deprecated: "Use M(ec2_ami_find) instead."
+deprecated:
+  version: "2.4"
+  alternative: Use M(ec2_ami_find) instead.
 version_added: "1.6"
 description:
   - Look up the most recent AMI on AWS for a given operating system.

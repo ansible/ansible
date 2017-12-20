@@ -82,6 +82,21 @@ def return_schema(data):
         extra=PREVENT_EXTRA
     )
 
+def deprecation_schema():
+
+    deprecation_schema_dict = {
+        # Every time we branch:
+        #   * old versions should be removed from the beginning of this list
+        #   * git rm old modules
+        #   * Update CHANGELOG & porting_guide
+        Required('version'): Any("2.2", "2.3", "2.4", "2.5"),
+        'why': Any(*string_types),
+        'alternative': Any(*string_types),
+    }
+    return Schema(
+        deprecation_schema_dict,
+        extra=PREVENT_EXTRA
+    )
 
 def doc_schema(module_name):
     if module_name.startswith('_'):
@@ -89,7 +104,7 @@ def doc_schema(module_name):
     return Schema(
         {
             Required('module'): module_name,
-            'deprecated': Any(*string_types),
+            'deprecated': Any(deprecation_schema()),
             Required('short_description'): Any(*string_types),
             Required('description'): Any(list_string_types, *string_types),
             Required('version_added'): Any(float, *string_types),

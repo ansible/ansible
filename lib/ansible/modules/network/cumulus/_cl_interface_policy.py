@@ -19,7 +19,9 @@ module: cl_interface_policy
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configure interface enforcement policy on Cumulus Linux
-deprecated: Deprecated in 2.3. Use M(nclu) instead.
+deprecated:
+  version: "2.3"
+  alternative: Use M(nclu) instead.
 description:
     - This module affects the configuration files located in the interfaces
       folder defined by ifupdown2. Interfaces port and port ranges listed in the

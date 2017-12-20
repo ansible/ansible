@@ -19,7 +19,9 @@ module: cl_bond
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configures a bond port on Cumulus Linux
-deprecated: Deprecated in 2.3. Use M(nclu) instead.
+deprecated:
+  version: "2.3"
+  alternative: Use M(nclu) instead.
 description:
     - Configures a bond interface on Cumulus Linux To configure a bridge port
       use the cl_bridge module. To configure any other type of interface use the

@@ -18,7 +18,9 @@ DOCUMENTATION = '''
 module: docker
 version_added: "1.4"
 short_description: manage docker containers
-deprecated: In 2.2 use M(docker_container) and M(docker_image) instead.
+deprecated:
+  version: "2.2"
+  alternative: Use M(docker_container) and M(docker_image) instead.
 description:
   - This is the original Ansible module for managing the Docker container life cycle.
   - NOTE - Additional and newer modules are available. For the latest on orchestrating containers with Ansible
