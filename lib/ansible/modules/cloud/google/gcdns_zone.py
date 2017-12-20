@@ -26,7 +26,6 @@ description:
 version_added: "2.2"
 author: "William Albert (@walbert947)"
 requirements:
-    - "python >= 2.6"
     - "apache-libcloud >= 0.19.0"
 options:
     state:
