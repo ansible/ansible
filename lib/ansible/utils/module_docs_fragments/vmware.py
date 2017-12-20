@@ -41,4 +41,10 @@ options:
         required: False
         default: 'True'
         choices: ['True', 'False']
+    port:
+        description:
+            - The port number of the vSphere vCenter or ESXi server.
+        required: False
+        default: 443
+        version_added: 2.5
 '''
