@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/sublevel_block.yaml"
+- debug: msg="START cli/sublevel_block.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -9,7 +9,6 @@
       - 30 permit ipv4 host 3.3.3.3 any log
     parents: ['ipv4 access-list test']
     before: ['no ipv4 access-list test']
-    after: ['exit']
     match: none
 
 - name: configure sub level command using block resplace
@@ -21,7 +20,6 @@
       - 40 permit ipv4 host 4.4.4.4 any log
     parents: ['ipv4 access-list test']
     replace: block
-    after: ['exit']
   register: result
 
 - assert:
@@ -42,7 +40,6 @@
       - 40 permit ipv4 host 4.4.4.4 any log
     parents: ['ipv4 access-list test']
     replace: block
-    after: ['exit']
   register: result
 
 - assert:
@@ -54,4 +51,4 @@
     commands: ['no ipv4 access-list test']
     match: none
 
-- debug: msg="END cli/sublevel_block.yaml"
+- debug: msg="END cli/sublevel_block.yaml on connection={{ ansible_connection }}"

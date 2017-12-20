@@ -80,7 +80,7 @@ class ActionModule(_ActionModule):
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
-        if pc.connection == 'network_cli':
+        if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
             if socket_path is None:
                 socket_path = self._connection.socket_path
 

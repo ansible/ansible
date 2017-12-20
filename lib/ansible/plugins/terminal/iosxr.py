@@ -37,6 +37,7 @@ class TerminalModule(TerminalBase):
     terminal_stderr_re = [
         re.compile(br"% ?Error"),
         re.compile(br"% ?Bad secret"),
+        re.compile(br"% ?This command is not authorized"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START iosxr_netconf cli/basic.yaml"
+- debug: msg="START iosxr_netconf cli/basic.yaml on connection={{ ansible_connection }}"
 
 - name: Disable NetConf service
   iosxr_netconf: &disable_netconf
@@ -66,4 +66,4 @@
   - name: Disable Netconf service
     iosxr_netconf: *disable_netconf
 
-- debug: msg="END iosxr_netconf cli/basic.yaml"
+- debug: msg="END iosxr_netconf cli/basic.yaml on connection={{ ansible_connection }}"
