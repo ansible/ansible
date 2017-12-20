@@ -125,7 +125,7 @@ def debug_closure(func):
             play_context = _queue_task_args['play_context']
             # Try to grab the previous host state, if it doesn't exist use get_host_state to generate an empty state
             try:
-                prev_host_state = prev_host_states[host]
+                prev_host_state = prev_host_states[host.name]
             except KeyError:
                 prev_host_state = iterator.get_host_state(host)
 

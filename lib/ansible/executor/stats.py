@@ -47,7 +47,10 @@ class AggregateStats:
         getattr(self, what)[host] = prev + 1
 
     def decrement(self, what, host):
-        getattr(self, what)[host] -= 1
+        try:
+            getattr(self, what)[host] -= 1
+        except KeyError:
+            getattr(self, what)[host] = 0
 
     def summarize(self, host):
         ''' return information about a particular host '''
