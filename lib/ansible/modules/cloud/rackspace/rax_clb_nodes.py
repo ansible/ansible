@@ -124,7 +124,6 @@ from ansible.module_utils.rax import rax_argument_spec, rax_clb_node_to_dict, ra
 
 
 def _activate_virtualenv(path):
-    path = os.path.expanduser(path)
     activate_this = os.path.join(path, 'bin', 'activate_this.py')
     with open(activate_this) as f:
         code = compile(f.read(), activate_this, 'exec')
@@ -159,7 +158,7 @@ def main():
             port=dict(type='int'),
             state=dict(default='present', choices=['present', 'absent']),
             type=dict(choices=['primary', 'secondary']),
-            virtualenv=dict(),
+            virtualenv=dict(type='path'),
             wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=30, type='int'),
             weight=dict(type='int'),

@@ -1,30 +1,5 @@
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2014, and others
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
@@ -102,7 +77,7 @@ Function Fail-Json($obj, $message = $null)
 
 # Helper function to add warnings, even if the warnings attribute was
 # not already set up. This is a convenience for the module developer
-# so he does not have to check for the attribute prior to adding.
+# so they do not have to check for the attribute prior to adding.
 Function Add-Warning($obj, $message)
 {
     if (-not $obj.ContainsKey("warnings")) {
@@ -116,7 +91,7 @@ Function Add-Warning($obj, $message)
 
 # Helper function to add deprecations, even if the deprecations attribute was
 # not already set up. This is a convenience for the module developer
-# so he does not have to check for the attribute prior to adding.
+# so they do not have to check for the attribute prior to adding.
 Function Add-DeprecationWarning($obj, $message, $version = $null)
 {
     if (-not $obj.ContainsKey("deprecations")) {
@@ -201,13 +176,25 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 
     # If $value -eq $null, the parameter was unspecified by the user (deliberately or not)
     # Please leave $null-values intact, modules need to know if a parameter was specified
-    if ($value -ne $null) {
+    # When $value is already an array, we cannot rely on the null check, as an empty list
+    # is seen as null in the check below
+    if ($value -ne $null -or $value -is [array]) {
         if ($type -eq "path") {
             # Expand environment variables on path-type
             $value = Expand-Environment($value)
             # Test if a valid path is provided
             if (-not (Test-Path -IsValid $value)) {
-                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
+                $path_invalid = $true
+                # could still be a valid-shaped path with a nonexistent drive letter
+                if ($value -match "^\w:") {
+                    # rewrite path with a valid drive letter and recheck the shape- this might still fail, eg, a nonexistent non-filesystem PS path
+                    if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $value.Substring(1))) {
+                        $path_invalid = $false
+                    }
+                }
+                if ($path_invalid) {
+                    Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
+                }
             }
         } elseif ($type -eq "str") {
             # Convert str types to real Powershell strings
@@ -230,6 +217,8 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             } else {
                 Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
             }
+            # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
+            return ,$value
         }
     }
 

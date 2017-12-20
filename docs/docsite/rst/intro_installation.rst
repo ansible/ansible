@@ -46,7 +46,7 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 
 .. note::
 
-    As of version 2.0, Ansible uses a few more file handles to manage its forks. Mac OS X by default is configured for a small amount of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
+    Mac OS X by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
 
 .. warning::
@@ -101,13 +101,25 @@ Installing the Control Machine
 ``````````````````````````````
 .. _from_yum:
 
-Latest Release Via Yum
-++++++++++++++++++++++
+Latest Release via DNF or Yum
++++++++++++++++++++++++++++++
 
-.. note:: We’ve changed how the Ansible community packages are distributed. 
+On Fedora:
+
+.. code-block:: bash
+
+    $ sudo dnf install ansible
+
+On RHEL and CentOS:
+
+.. code-block:: bash
+
+    $ sudo yum install ansible
+
+.. note:: We've changed how the Ansible community packages are distributed.
   For users of RHEL/CentOS/Scientific Linux version 7, the Ansible community RPM
   package will transition from the EPEL repository to the Extras channel.  There will be no
-  change for version 6 of RHEL/CentOS/Scientific Linux since Extras is not a part of version 6.   
+  change for version 6 of RHEL/CentOS/Scientific Linux since Extras is not a part of version 6.
 
 RPMs for RHEL7 are available from `the Extras channel <https://access.redhat.com/solutions/912213>`_.
 
@@ -115,16 +127,16 @@ RPMs for RHEL6 are available from yum for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
 Fedora distributions.
 
-Ansible will also have RPMs/YUM-repo available at `<https://releases.ansible.com/ansible/rpms/`.
+Ansible will also have RPMs/YUM-repo available `here <https://releases.ansible.com/ansible/rpm>`_.
 
 Ansible version 2.4 can manage earlier operating
 systems that contain Python 2.6 or higher.
 
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. 
+You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install.
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git 
+    $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
@@ -263,7 +275,7 @@ Then install Ansible with [1]_::
 
 Or if you are looking for the latest development version::
 
-    pip install git+git://github.com/ansible/ansible.git@devel
+    pip install git+https://github.com/ansible/ansible.git@devel
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
@@ -305,7 +317,7 @@ To install from source, clone the Ansible git repository:
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git --recursive
+    $ git clone https://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
 
 Once git has cloned the Ansible repository, setup the Ansible environment:

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, 2016 Ritesh Khadgaray <khadgaray () gmail.com>
+# Copyright: (c) 2015-16, Ritesh Khadgaray <khadgaray () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,11 +16,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: vmware_vm_shell
-short_description: Execute a process in VM
+short_description: Run commands in a VMware guest operating system
 description:
-    - Start a program in a VM without the need for network connection
-version_added: 2.1
-author: "Ritesh Khadgaray (@ritzk)"
+    - Module allows user to run common system administration commands in the guest operating system.
+version_added: "2.1"
+author:
+  - Ritesh Khadgaray (@ritzk)
+  - Abhijeet Kasurde (@akasurde)
 notes:
     - Tested on vSphere 5.5
     - Only the first match against vm_id is used, even if there are multiple matches
@@ -30,16 +32,12 @@ requirements:
 options:
     datacenter:
         description:
-            - The datacenter hosting the VM
-            - Will help speed up search
-        required: False
-        default: None
+            - The datacenter hosting the virtual machine.
+            - If set, it will help to speed up virtual machine search.
     cluster:
         description:
-            - The cluster hosting the VM
-            - Will help speed up search
-        required: False
-        default: None
+            - The cluster hosting the virtual machine.
+            - If set, it will help to speed up virtual machine search.
     folder:
         description:
             - Destination folder, absolute or relative path to find an existing guest or create the new guest.
@@ -60,54 +58,45 @@ options:
         version_added: "2.4"
     vm_id:
         description:
-            - The identification for the VM
+            - Name of the virtual machine to work with.
         required: True
     vm_id_type:
         description:
-            - The identification tag for the VM
+            - The VMware identification method by which the virtual machine will be identified.
         default: vm_name
         choices:
             - 'uuid'
             - 'dns_name'
             - 'inventory_path'
             - 'vm_name'
-        required: False
     vm_username:
         description:
-            - The user to connect to the VM.
-        required: False
-        default: None
+            - The user to login-in to the virtual machine.
+        required: True
     vm_password:
         description:
-            - The password used to login to the VM.
-        required: False
-        default: None
+            - The password used to login-in to the virtual machine.
+        required: True
     vm_shell:
         description:
-            - The absolute path to the program to start. On Linux this is executed via bash.
+            - The absolute path to the program to start.
+            - On Linux, shell is executed via bash.
         required: True
     vm_shell_args:
         description:
             - The argument to the program.
-        required: False
-        default: None
     vm_shell_env:
         description:
-            - Comma separated list of envirnoment variable, specified in the guest OS notation
-        required: False
-        default: None
+            - Comma separated list of environment variable, specified in the guest OS notation.
     vm_shell_cwd:
         description:
-            - The current working directory of the application from which it will be run
-        required: False
-        default: None
+            - The current working directory of the application from which it will be run.
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: shell execution
-  local_action:
-    module: vmware_vm_shell
+- name: Run command inside a vm
+  vmware_vm_shell:
     hostname: myVSphere
     username: myUsername
     password: mySecret
@@ -122,22 +111,28 @@ EXAMPLES = '''
       - "PATH=/bin"
       - "VAR=test"
     vm_shell_cwd: "/tmp"
-
+  delegate_to: localhost
+  register: shell_command_output
 '''
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, find_datacenter_by_name,
-                                         find_vm_by_id, vmware_argument_spec)
+                                         find_vm_by_id, HAS_PYVMOMI, vmware_argument_spec)
 
 
 # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/execute_program_in_vm.py
-def execute_command(content, vm, vm_username, vm_password, program_path, args="", env=None, cwd=None):
+def execute_command(content, vm, params):
+    vm_username = params['vm_username']
+    vm_password = params['vm_password']
+    program_path = params['vm_shell']
+    args = params['vm_shell_args']
+    env = params['vm_shell_env']
+    cwd = params['vm_shell_cwd']
 
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     cmdspec = vim.vm.guest.ProcessManager.ProgramSpec(arguments=args, envVariables=env, programPath=program_path, workingDirectory=cwd)
@@ -148,17 +143,17 @@ def execute_command(content, vm, vm_username, vm_password, program_path, args=""
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(datacenter=dict(default=None, type='str'),
-                              cluster=dict(default=None, type='str'),
+    argument_spec.update(dict(datacenter=dict(type='str'),
+                              cluster=dict(type='str'),
                               folder=dict(type='str', default='/vm'),
-                              vm_id=dict(required=True, type='str'),
+                              vm_id=dict(type='str', required=True),
                               vm_id_type=dict(default='vm_name', type='str', choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
-                              vm_username=dict(required=False, type='str'),
-                              vm_password=dict(required=False, type='str', no_log=True),
-                              vm_shell=dict(required=True, type='str'),
+                              vm_username=dict(type='str', required=True),
+                              vm_password=dict(type='str', no_log=True, required=True),
+                              vm_shell=dict(type='str', required=True),
                               vm_shell_args=dict(default=" ", type='str'),
-                              vm_shell_env=dict(default=None, type='list'),
-                              vm_shell_cwd=dict(default=None, type='str')))
+                              vm_shell_env=dict(type='list'),
+                              vm_shell_cwd=dict(type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
@@ -168,36 +163,33 @@ def main():
     if not HAS_PYVMOMI:
         module.fail_json(changed=False, msg='pyvmomi is required for this module')
 
+    datacenter_name = module.params['datacenter']
+    cluster_name = module.params['cluster']
+    folder = module.params['folder']
+    content = connect_to_api(module)
+
+    datacenter = None
+    if datacenter_name:
+        datacenter = find_datacenter_by_name(content, datacenter_name)
+        if not datacenter:
+            module.fail_json(changed=False, msg="Unable to find %(datacenter)s datacenter" % module.params)
+
+    cluster = None
+    if cluster_name:
+        cluster = find_cluster_by_name(content, cluster_name, datacenter)
+        if not cluster:
+            module.fail_json(changed=False, msg="Unable to find %(cluster)s cluster" % module.params)
+
+    if module.params['vm_id_type'] == 'inventory_path':
+        vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type="inventory_path", folder=folder)
+    else:
+        vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type=module.params['vm_id_type'], datacenter=datacenter, cluster=cluster)
+
+    if not vm:
+        module.fail_json(msg='Unable to find virtual machine.')
+
     try:
-        p = module.params
-        datacenter_name = p['datacenter']
-        cluster_name = p['cluster']
-        folder = p['folder']
-        content = connect_to_api(module)
-
-        datacenter = None
-        if datacenter_name:
-            datacenter = find_datacenter_by_name(content, datacenter_name)
-            if not datacenter:
-                module.fail_json(changed=False, msg="datacenter not found")
-
-        cluster = None
-        if cluster_name:
-            cluster = find_cluster_by_name(content, cluster_name, datacenter)
-            if not cluster:
-                module.fail_json(changed=False, msg="cluster not found")
-
-        if p['vm_id_type'] == 'inventory_path':
-            vm = find_vm_by_id(content, vm_id=p['vm_id'], vm_id_type="inventory_path", folder=folder)
-        else:
-            vm = find_vm_by_id(content, vm_id=p['vm_id'], vm_id_type=p['vm_id_type'], datacenter=datacenter, cluster=cluster)
-
-        if not vm:
-            module.fail_json(msg='VM not found')
-
-        msg = execute_command(content, vm, p['vm_username'], p['vm_password'],
-                              p['vm_shell'], p['vm_shell_args'], p['vm_shell_env'], p['vm_shell_cwd'])
-
+        msg = execute_command(content, vm, module.params)
         module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
     except vmodl.RuntimeFault as runtime_fault:
         module.fail_json(changed=False, msg=runtime_fault.msg)

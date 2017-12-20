@@ -235,7 +235,7 @@ class NetAppESeriesVolume(object):
 
         volumes.extend(thinvols)
 
-        self.debug("searching for volume '%s'" % volume_name)
+        self.debug("searching for volume '%s'", volume_name)
         volume_detail = next(ifilter(lambda a: a['name'] == volume_name, volumes), None)
 
         if volume_detail:
@@ -257,7 +257,7 @@ class NetAppESeriesVolume(object):
             self.module.fail_json(
                 msg="Failed to obtain list of storage pools.  Array Id [%s]. Error[%s]." % (self.ssid, str(err)))
 
-        self.debug("searching for storage pool '%s'" % storage_pool_name)
+        self.debug("searching for storage pool '%s'", storage_pool_name)
         pool_detail = next(ifilter(lambda a: a['name'] == storage_pool_name, resp), None)
 
         if pool_detail:
@@ -277,7 +277,7 @@ class NetAppESeriesVolume(object):
             dataAssuranceEnabled=data_assurance_enabled,
         )
 
-        self.debug("creating volume '%s'" % name)
+        self.debug("creating volume '%s'", name)
         try:
             (rc, resp) = request(self.api_url + "/storage-systems/%s/volumes" % (self.ssid),
                                  data=json.dumps(volume_add_req), headers=HEADERS, method='POST',
@@ -302,7 +302,7 @@ class NetAppESeriesVolume(object):
             dataAssuranceEnabled=data_assurance_enabled,
         )
 
-        self.debug("creating thin-volume '%s'" % name)
+        self.debug("creating thin-volume '%s'", name)
         try:
             (rc, resp) = request(self.api_url + "/storage-systems/%s/thin-volumes" % (self.ssid),
                                  data=json.dumps(thin_volume_add_req), headers=HEADERS, method='POST',
@@ -318,7 +318,7 @@ class NetAppESeriesVolume(object):
 
     def delete_volume(self):
         # delete the volume
-        self.debug("deleting volume '%s'" % self.volume_detail['name'])
+        self.debug("deleting volume '%s'", self.volume_detail['name'])
         try:
             (rc, resp) = request(
                 self.api_url + "/storage-systems/%s/%s/%s" % (self.ssid, self.volume_resource_name,
@@ -445,7 +445,7 @@ class NetAppESeriesVolume(object):
                 action = resp['action']
                 percent_complete = resp['percentComplete']
 
-                self.debug('expand action %s, %s complete...' % (action, percent_complete))
+                self.debug('expand action %s, %s complete...', action, percent_complete)
 
                 if action == 'none':
                     self.debug('expand complete')
@@ -469,11 +469,8 @@ class NetAppESeriesVolume(object):
             elif self.state == 'present':
                 # check requested volume size, see if expansion is necessary
                 if self.volume_needs_expansion:
-                    self.debug(
-                        "CHANGED: requested volume size %s%s is larger than current size %sb" % (self.size,
-                                                                                                 self.size_unit,
-                                                                                                 self.volume_detail[
-                                                                                                     'capacity']))
+                    self.debug("CHANGED: requested volume size %s%s is larger than current size %sb",
+                               self.size, self.size_unit, self.volume_detail['capacity'])
                     changed = True
 
                 if self.volume_properties_changed:
@@ -543,7 +540,7 @@ def main():
         v.apply()
     except Exception:
         e = get_exception()
-        v.debug("Exception in apply(): \n%s" % format_exc(e))
+        v.debug("Exception in apply(): \n%s", format_exc(e))
         v.module.fail_json(msg="Module failed. Error [%s]." % (str(e)))
 
 

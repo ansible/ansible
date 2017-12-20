@@ -75,8 +75,8 @@ commands:
     sample: ["interface port-channel100", "vpc 10"]
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -131,7 +131,7 @@ def get_existing_portchannel_to_vpc_mappings(module):
 
 def peer_link_exists(module):
     found = False
-    run = get_config(module, flags=['section vpc'])
+    run = get_config(module, flags=['vpc'])
 
     vpc_list = run.split('\n')
     for each in vpc_list:
@@ -262,9 +262,10 @@ def main():
     active_peer_link = None
 
     if portchannel not in get_portchannel_list(module):
-        module.fail_json(msg="The portchannel you are trying to make a"
-                             " VPC or PL is not created yet. "
-                             "Create it first!")
+        if not portchannel.isdigit() or int(portchannel) not in get_portchannel_list(module):
+            module.fail_json(msg="The portchannel you are trying to make a"
+                                 " VPC or PL is not created yet. "
+                                 "Create it first!")
     if vpc:
         mapping = get_existing_portchannel_to_vpc_mappings(module)
 

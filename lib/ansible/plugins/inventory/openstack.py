@@ -2,26 +2,18 @@
 # Copyright (c) 2013, Jesse Keating <jesse.keating@rackspace.com>
 # Copyright (c) 2015, Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2016, Rackspace Australia
-# Copyright (c) 2017, Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
+    authors:
+      - Marco Vito Moscaritolo <marco@agavee.com>
+      - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
     description:
         - Get inventory hosts from OpenStack clouds
@@ -97,7 +89,9 @@ DOCUMENTATION:
             description: Add hosts to group based on Jinja2 conditionals.
             type: dictionary
             default: {}
-EXAMPLES:
+'''
+
+EXAMPLES = '''
 # file must be named openstack.yaml or openstack.yml
 # Make the plugin behave like the default behavior of the old script
 simple_config_file:
@@ -106,13 +100,11 @@ simple_config_file:
     expand_hostvars: true
     fail_on_errors: true
 '''
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import collections
 
 from ansible.errors import AnsibleParserError
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
     import os_client_config
@@ -123,7 +115,7 @@ except ImportError:
     HAS_SHADE = False
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory provider for ansible using OpenStack clouds. '''
 
     NAME = 'openstack'
@@ -132,29 +124,23 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        cache_key = self.get_cache_prefix(path)
+        cache_key = self._get_cache_prefix(path)
 
         # file is config file
-        try:
-            self._config_data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError(e)
+        self._config_data = self._read_config_data(path)
 
+        msg = ''
         if not self._config_data:
-            # empty. this is not my config file
-            return False
-        if 'plugin' in self._config_data and self._config_data['plugin'] != self.NAME:
-            # plugin config file, but not for us
-            return False
+            msg = 'File empty. this is not my config file'
+        elif 'plugin' in self._config_data and self._config_data['plugin'] != self.NAME:
+            msg = 'plugin config file, but not for us: %s' % self._config_data['plugin']
         elif 'plugin' not in self._config_data and 'clouds' not in self._config_data:
-            # it's not a clouds.yaml file either
-            return False
+            msg = "it's not a plugin configuration nor a clouds.yaml file"
+        elif not HAS_SHADE:
+            msg = "shade is required for the OpenStack inventory plugin. OpenStack inventory sources will be skipped."
 
-        if not HAS_SHADE:
-            self.display.warning(
-                'shade is required for the OpenStack inventory plugin.'
-                ' OpenStack inventory sources will be skipped.')
-            return False
+        if msg:
+            raise AnsibleParserError(msg)
 
         # The user has pointed us at a clouds.yaml file. Use defaults for
         # everything.
@@ -162,9 +148,9 @@ class InventoryModule(BaseInventoryPlugin):
             self._config_data = {}
 
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache and cache_key in self._cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self._cache[cache_key]
             except KeyError:
                 pass
 
@@ -200,7 +186,7 @@ class InventoryModule(BaseInventoryPlugin):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            inventory.cache[cache_key] = source_data
+            self._cache[cache_key] = source_data
 
         self._populate_from_source(source_data)
 

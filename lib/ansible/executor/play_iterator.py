@@ -203,7 +203,9 @@ class PlayIterator:
 
         self._host_states = {}
         start_at_matched = False
-        for host in inventory.get_hosts(self._play.hosts):
+        batch = inventory.get_hosts(self._play.hosts)
+        self.batch_size = len(batch)
+        for host in batch:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
@@ -370,6 +372,9 @@ class PlayIterator:
             elif state.run_state == self.ITERATING_RESCUE:
                 # The process here is identical to ITERATING_TASKS, except instead
                 # we move into the always portion of the block.
+                if host.name in self._play._removed_hosts:
+                    self._play._removed_hosts.remove(host.name)
+
                 if state.rescue_child_state:
                     (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.rescue_child_state):
@@ -426,7 +431,7 @@ class PlayIterator:
 
                             # we're advancing blocks, so if this was an end-of-role block we
                             # mark the current role complete
-                            if block._eor and host.name in block._role._had_task_run and not in_child:
+                            if block._eor and host.name in block._role._had_task_run and not in_child and not peek:
                                 block._role._completed[host.name] = True
                     else:
                         task = block.always[state.cur_always_task]

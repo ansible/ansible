@@ -1,4 +1,7 @@
 ---
+- debug:
+    msg: "cli/basic-no-login.yaml on connection={{ ansible_connection }}"
+
 - name: Setup
   vyos_banner:
     banner: pre-login
@@ -6,13 +9,11 @@
       Junk pre-login banner
       over multiple lines
     state: present
-    provider: "{{ cli }}"
 
 - name: remove pre-login
   vyos_banner:
     banner: pre-login
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - debug:
@@ -27,7 +28,6 @@
   vyos_banner:
     banner: pre-login
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:

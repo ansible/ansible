@@ -80,7 +80,7 @@ options:
     version_added: "2.1"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
-author: "Franck Cuny (@franckcuny)"
+author: "Franck Cuny (@fcuny)"
 '''
 
 EXAMPLES = '''
@@ -139,10 +139,8 @@ def _is_package_installed(module, name, locallib, cpanm, version):
     else:
         cmd = "%s;'" % cmd
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if res == 0:
-        return True
-    else:
-        return False
+    return res == 0
+
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
@@ -175,9 +173,10 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, inst
 
 def _get_cpanm_path(module):
     if module.params['executable']:
-        return module.params['executable']
+        result = module.params['executable']
     else:
-        return module.get_bin_path('cpanm', True)
+        result = module.get_bin_path('cpanm', True)
+    return result
 
 
 def main():
@@ -199,23 +198,23 @@ def main():
         required_one_of=[['name', 'from_path']],
     )
 
-    cpanm       = _get_cpanm_path(module)
-    name        = module.params['name']
-    from_path   = module.params['from_path']
-    notest      = module.boolean(module.params.get('notest', False))
-    locallib    = module.params['locallib']
-    mirror      = module.params['mirror']
+    cpanm = _get_cpanm_path(module)
+    name = module.params['name']
+    from_path = module.params['from_path']
+    notest = module.boolean(module.params.get('notest', False))
+    locallib = module.params['locallib']
+    mirror = module.params['mirror']
     mirror_only = module.params['mirror_only']
     installdeps = module.params['installdeps']
-    use_sudo    = module.params['system_lib']
-    version     = module.params['version']
+    use_sudo = module.params['system_lib']
+    version = module.params['version']
 
-    changed   = False
+    changed = False
 
     installed = _is_package_installed(module, name, locallib, cpanm, version)
 
     if not installed:
-        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
+        cmd = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 

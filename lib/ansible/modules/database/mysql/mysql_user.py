@@ -478,7 +478,7 @@ def privileges_unpack(priv, mode):
     output = {}
     privs = []
     for item in priv.strip().split('/'):
-        pieces = item.strip().split(':')
+        pieces = item.strip().rsplit(':', 1)
         dbpriv = pieces[0].rsplit(".", 1)
         # Do not escape if privilege is for database or table, i.e.
         # neither quote *. nor .*

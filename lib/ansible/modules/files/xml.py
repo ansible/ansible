@@ -274,7 +274,7 @@ from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_bytes, to_native
 
-_IDENT = "[a-zA-Z-][a-zA-Z0-9_\-\.]*"
+_IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
 _NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT
 # Note: we can't reasonably support the 'if you need to put both ' and " in a string, concatenate
 # strings wrapped by the other delimiter' XPath trick, especially as simple XPath.
@@ -456,9 +456,9 @@ def nsnameToClark(name, namespaces):
         (nsname, rawname) = name.split(":")
         # return "{{%s}}%s" % (namespaces[nsname], rawname)
         return "{{{0}}}{1}".format(namespaces[nsname], rawname)
-    else:
-        # no namespace name here
-        return name
+
+    # no namespace name here
+    return name
 
 
 def check_or_make_target(module, tree, xpath, namespaces):
@@ -545,8 +545,13 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
         if not is_node(tree, xpath, namespaces):
             changed = check_or_make_target(module, tree, xpath, namespaces)
     except Exception as e:
-        module.fail_json(msg="Xpath %s causes a failure: %s\n  -- tree is %s" %
-                             (xpath, e, etree.tostring(tree, pretty_print=True)), exception=traceback.format_exc(e))
+        missing_namespace = ""
+        # NOTE: This checks only the namespaces defined in root element!
+        # TODO: Implement a more robust check to check for child namespaces' existance
+        if tree.getroot().nsmap and ":" not in xpath:
+            missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
+        module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %
+                             (missing_namespace, xpath, e, etree.tostring(tree, pretty_print=True)), exception=traceback.format_exc())
 
     if not is_node(tree, xpath, namespaces):
         module.fail_json(msg="Xpath %s does not reference a node! tree is %s" %
@@ -639,8 +644,10 @@ def child_to_element(module, child, in_type):
         module.fail_json(msg="Invalid child input type: %s. Type must be either xml or yaml." % in_type)
 
 
-def children_to_nodes(module=None, children=[], type='yaml'):
+def children_to_nodes(module=None, children=None, type='yaml'):
     """turn a str/hash/list of str&hash into a list of elements"""
+    children = [] if children is None else children
+
     return [child_to_element(module, child, type) for child in children]
 
 

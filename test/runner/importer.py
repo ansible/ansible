@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function
 
 import imp
 import os
+import re
 import sys
 import traceback
 
@@ -50,6 +51,7 @@ def main():
                     # Hack to remove the filename and line number from the message, if present.
                     message = message.replace(' (%s, line %d)' % (os.path.basename(path), line), '')
 
+            message = re.sub(r'\n *', ': ', message)
             error = '%s:%d:%d: %s: %s' % (source, line, offset, exc_type.__name__, message)
 
             if error not in messages:

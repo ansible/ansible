@@ -49,7 +49,7 @@ options:
         required: false
 
     qos:
-        description: Initial quality of service settings for this volume.
+        description: Initial quality of service settings for this volume. Configure as dict in playbooks.
         required: false
         default: None
 
@@ -102,6 +102,7 @@ EXAMPLES = """
        password: "{{ solidfire_password }}"
        state: present
        name: AnsibleVol
+       qos: {minIOPS: 1000, maxIOPS: 20000, burstIOPS: 50000}
        account_id: 3
        enable512e: False
        size: 1
@@ -156,7 +157,7 @@ class SolidFireVolume(object):
             account_id=dict(required=True, type='int'),
 
             enable512e=dict(type='bool', aliases=['512emulation']),
-            qos=dict(required=False, type='str', default=None),
+            qos=dict(required=False, type='dict', default=None),
             attributes=dict(required=False, type='dict', default=None),
 
             volume_id=dict(type='int', default=None),
@@ -288,7 +289,7 @@ class SolidFireVolume(object):
                 elif volume_detail.total_size is not None and volume_detail.total_size != self.size:
                     size_difference = abs(float(volume_detail.total_size - self.size))
                     # Change size only if difference is bigger than 0.001
-                    if size_difference/self.size > 0.001:
+                    if size_difference / self.size > 0.001:
                         update_volume = True
                         changed = True
 
@@ -305,15 +306,14 @@ class SolidFireVolume(object):
         if changed:
             if self.module.check_mode:
                 result_message = "Check mode, skipping changes"
-                pass
             else:
                 if self.state == 'present':
                     if not volume_exists:
                         self.create_volume()
                         result_message = "Volume created"
                     elif update_volume:
-                            self.update_volume()
-                            result_message = "Volume updated"
+                        self.update_volume()
+                        result_message = "Volume updated"
 
                 elif self.state == 'absent':
                     self.delete_volume()
@@ -328,4 +328,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

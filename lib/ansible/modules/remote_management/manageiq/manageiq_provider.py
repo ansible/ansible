@@ -27,7 +27,7 @@ description:
 options:
   state:
     description:
-      - absent - provider should not exist, present - provider should be, valid - provider authentication should be valid.
+      - absent - provider should not exist, present - provider should be present.
     required: False
     choices: ['absent', 'present']
     default: 'present'
@@ -37,7 +37,7 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon']
+    choices: ['Openshift', 'Amazon', 'oVirt']
   zone:
     description: The ManageIQ zone name that will manage the provider.
     required: false
@@ -47,186 +47,285 @@ options:
     required: false
     default: null
 
-  endpoints:
-    description: The provider's endpoints in manageiq.
+  provider:
     required: false
+    description: Default endpoint connection information, required if state is true.
     default: null
     suboptions:
-      default:
-        required: true
-        description: Default endpoint connection information.
-      default['hostname']:
+      hostname:
         description: The provider's api hostname.
         required: true
-      default['port']:
+      port:
         description: The provider's api port.
         required: false
-      default['userid']:
+      userid:
         required: false
         default: null
         description: Provider's api endpoint authentication userid. defaults to None.
-      default['password']:
+      password:
         required: false
         default: null
         description: Provider's api endpoint authentication password. defaults to None.
-      default['auth_key']:
+      auth_key:
         required: false
         default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      default['verify_ssl']:
+      verify_ssl:
         required: false
         default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      default['security_protocol']:
+      security_protocol:
         required: false
         default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
-      default['certificate_authority']:
+      certificate_authority:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
-      metrics:
-        required: false
-        default: null
-        description: Metrics endpoint connection information.
-      metrics['hostname']:
+  metrics:
+    required: false
+    description: Metrics endpoint connection information.
+    default: null
+    suboptions:
+      hostname:
         description: The provider's api hostname.
         required: true
-      metrics['port']:
+      port:
         description: The provider's api port.
         required: false
-      metrics['userid']:
+      userid:
         required: false
         default: null
         description: Provider's api endpoint authentication userid. defaults to None.
-      metrics['password']:
+      password:
         required: false
         default: null
         description: Provider's api endpoint authentication password. defaults to None.
-      metrics['auth_key']:
+      auth_key:
         required: false
         default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      metrics['verify_ssl']:
+      verify_ssl:
         required: false
         default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      metrics['security_protocol']:
+      security_protocol:
         required: false
         default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
-      metrics['certificate_authority']:
+      certificate_authority:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
-      alerts:
-        required: False
-        default: null
-        description: Alerts endpoint connection information.
-      alerts['hostname']:
+  alerts:
+    required: false
+    description: Alerts endpoint connection information.
+    default: null
+    suboptions:
+      hostname:
         description: The provider's api hostname.
         required: true
-      alerts['port']:
+      port:
         description: The provider's api port.
         required: false
-      alerts['userid']:
+      userid:
         required: false
         default: null
         description: Provider's api endpoint authentication userid. defaults to None.
-      alerts['password']:
+      password:
         required: false
         default: null
         description: Provider's api endpoint authentication password. defaults to None.
-      alerts['auth_key']:
+      auth_key:
         required: false
         default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      alerts['verify_ssl']:
+      verify_ssl:
         required: false
         default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
-      alerts['security_protocol']:
+      security_protocol:
         required: false
         default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
-      alerts['certificate_authority']:
+      certificate_authority:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
 '''
 
 EXAMPLES = '''
-  - name: Create a new provider in ManageIQ ('Hawkular' metrics)
-    manageiq_provider:
-      name: 'EngLab'
-      type: 'OpenShift'
-      endpoints:
-        default:
-          auth_key: 'topSecret'
-          hostname: 'example.com'
-          port: 8443
-          verify_ssl: False
-        metrics:
-          role: 'hawkular'
-          hostname: 'example.com'
-          port: 443
-          verify_ssl: False
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        username: 'admin'
-        password: 'smartvm'
-        verify_ssl: False
+- name: Create a new provider in ManageIQ ('Hawkular' metrics)
+  manageiq_provider:
+    name: 'EngLab'
+    type: 'OpenShift'
+    state: 'present'
+    provider:
+      auth_key: 'topSecret'
+      hostname: 'example.com'
+      port: 8443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    metrics:
+      auth_key: 'topSecret'
+      role: 'hawkular'
+      hostname: 'example.com'
+      port: 443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    manageiq_connection:
+      url: 'https://127.0.0.1:80'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
 
-  - name: Update an existing provider named 'EngLab' (defaults to 'Prometheus' metrics)
-    manageiq_provider:
-      name: 'EngLab'
-      type: 'Openshift'
-      endpoints:
-        default:
-          auth_key: 'verySecret'
-          hostname: 'next.example.com'
-          port: 8443
-          verify_ssl: False
-        metrics:
-          hostname: 'next.example.com'
-          port: 443
-          verify_ssl: False
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        username: 'admin'
-        password: 'smartvm'
-        verify_ssl: False
 
-  - name: Delete a provider in ManageIQ
-    manageiq_provider:
-      state: 'absent'
-      name: 'EngLab'
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        username: 'admin'
-        password: 'smartvm'
-        verify_ssl: False
+- name: Update an existing provider named 'EngLab' (defaults to 'Prometheus' metrics)
+  manageiq_provider:
+    name: 'EngLab'
+    type: 'Openshift'
+    state: 'present'
+    provider:
+      auth_key: 'topSecret'
+      hostname: 'next.example.com'
+      port: 8443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    metrics:
+      auth_key: 'topSecret'
+      hostname: 'next.example.com'
+      port: 443
+      verify_ssl: true
+      security_protocol: 'ssl-with-validation-custom-ca'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
 
-  - name: Create a new Amazon provider in ManageIQ using token authentication
-    manageiq_provider:
-      name: 'EngAmazon'
-      type: 'Amazon'
-      provider_region: 'us-east-1'
-      endpoints:
-        default:
-          hostname: 'amazon.example.com'
-          userid: 'hello'
-          password: 'world'
-      manageiq_connection:
-        url: 'http://127.0.0.1:3000'
-        token: 'VeryLongToken'
-        verify_ssl: False
 
+- name: Delete a provider in ManageIQ
+  manageiq_provider:
+    name: 'EngLab'
+    type: 'Openshift'
+    state: 'absent'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
+
+
+- name: Create a new Amazon provider in ManageIQ using token authentication
+  manageiq_provider:
+    name: 'EngAmazon'
+    type: 'Amazon'
+    state: 'present'
+    provider:
+      hostname: 'amazon.example.com'
+      userid: 'hello'
+      password: 'world'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      token: 'VeryLongToken'
+      verify_ssl: true
+
+
+- name: Create a new oVirt provider in ManageIQ
+  manageiq_provider:
+    name: 'RHEV'
+    type: 'oVirt'
+    state: 'present'
+    provider:
+      hostname: 'rhev01.example.com'
+      userid: 'admin@internal'
+      password: 'password'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: true
 '''
 
 RETURN = '''
@@ -243,17 +342,20 @@ def supported_providers():
             authtype='bearer',
             default_role='default',
             metrics_role='prometheus',
+            alerts_role='prometheus_alerts',
         ),
         Amazon=dict(
             class_name='ManageIQ::Providers::Amazon::CloudManager',
+        ),
+        oVirt=dict(
+            class_name='ManageIQ::Providers::Redhat::InfraManager',
         ),
     )
 
 
 def endpoint_list_spec():
     return dict(
-        default=dict(required=True,
-                     type='dict', options=endpoint_argument_spec()),
+        provider=dict(type='dict', options=endpoint_argument_spec()),
         metrics=dict(type='dict', options=endpoint_argument_spec()),
         alerts=dict(type='dict', options=endpoint_argument_spec()),
     )
@@ -350,7 +452,7 @@ class ManageIQProvider(object):
         provider_defaults = supported_providers().get(provider_type, {})
 
         # get endpoint defaults
-        endpoint = endpoints.get('default')
+        endpoint = endpoints.get('provider')
         default_auth_key = endpoint.get('auth_key')
 
         # build a connection_configuration object for each endpoint
@@ -360,7 +462,7 @@ class ManageIQProvider(object):
                 # get role and authtype
                 role = endpoint.get('role') or provider_defaults.get(endpoint_key + '_role', 'default')
                 if role == 'default':
-                    authtype = provider_defaults.get('authtype', role)
+                    authtype = provider_defaults.get('authtype') or role
                 else:
                     authtype = role
 
@@ -378,7 +480,7 @@ class ManageIQProvider(object):
                         'authtype': authtype,
                         'userid': endpoint.get('userid'),
                         'password': endpoint.get('password'),
-                        'auth_key': endpoint.get('auth_key', default_auth_key),
+                        'auth_key': endpoint.get('auth_key') or default_auth_key,
                     }
                 })
 
@@ -464,26 +566,28 @@ class ManageIQProvider(object):
 def main():
     zone_id = None
     endpoints = []
+    argument_spec = dict(
+        state=dict(choices=['absent', 'present'], default='present'),
+        name=dict(required=True),
+        zone=dict(default='default'),
+        provider_region=dict(),
+        type=dict(choices=supported_providers().keys()),
+    )
+    # add the manageiq connection arguments to the arguments
+    argument_spec.update(manageiq_argument_spec())
+    # add the endpoint arguments to the arguments
+    argument_spec.update(endpoint_list_spec())
 
     module = AnsibleModule(
-        argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict',
-                                     options=manageiq_argument_spec()),
-            state=dict(choices=['absent', 'present'], default='present'),
-            name=dict(required=True),
-            zone=dict(default='default'),
-            provider_region=dict(),
-            type=dict(choices=supported_providers().keys()),
-            endpoints=dict(type='dict', options=endpoint_list_spec()),
-        ),
+        argument_spec=argument_spec,
         required_if=[
-            ('state', 'present', ['endpoints'])],
+            ('state', 'present', ['provider'])],
     )
 
     name = module.params['name']
     zone_name = module.params['zone']
     provider_type = module.params['type']
-    raw_endpoints = module.params['endpoints']
+    raw_endpoints = module.params
     provider_region = module.params['provider_region']
     state = module.params['state']
 
@@ -524,7 +628,8 @@ def main():
                 msg="provider_type %s is not supported" % (provider_type))
 
         # build "connection_configurations" objects from user requsted endpoints
-        if raw_endpoints:
+        # "provider" is a required endpoint, if we have it, we have endpoints
+        if raw_endpoints.get("provider"):
             endpoints = manageiq_provider.build_connection_configurations(provider_type, raw_endpoints)
 
         # if we have a provider, edit it

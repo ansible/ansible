@@ -72,7 +72,7 @@ from ansible.module_utils.rax import (rax_argument_spec,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
 
 
 def rax_dns(module, comment, email, name, state, ttl):
@@ -122,7 +122,6 @@ def rax_dns(module, comment, email, name, state, ttl):
             domain = dns.find(name=name)
         except pyrax.exceptions.NotFound:
             domain = {}
-            pass
         except Exception as e:
             module.fail_json(msg='%s' % e.message)
 

@@ -69,6 +69,7 @@ options:
       - Time in seconds to wait before checking for the operational state on remote
         device.
     version_added: "2.4"
+    default: 10
   purge:
     description:
       - Instructs the module to consider the
@@ -139,9 +140,9 @@ from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.ios import load_config, get_config
-from ansible.module_utils.ios import ios_argument_spec, check_args
-from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.network.ios.ios import load_config, get_config
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.six import iteritems
 
 
@@ -174,9 +175,10 @@ def add_command_to_vrf(name, cmd, commands):
         ])
     commands.append(cmd)
 
+
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state'] # FIXME NOT USED
+    state = module.params['state']  # FIXME NOT USED
 
     for update in updates:
         want, have = update
@@ -225,6 +227,7 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def parse_description(configobj, name):
     cfg = configobj['vrf definition %s' % name]
     cfg = '\n'.join(cfg.children)
@@ -232,12 +235,14 @@ def parse_description(configobj, name):
     if match:
         return match.group(1)
 
+
 def parse_rd(configobj, name):
     cfg = configobj['vrf definition %s' % name]
     cfg = '\n'.join(cfg.children)
     match = re.search(r'rd (.+)$', cfg, re.M)
     if match:
         return match.group(1)
+
 
 def parse_interfaces(configobj, name):
     vrf_cfg = 'vrf forwarding %s' % name
@@ -247,6 +252,7 @@ def parse_interfaces(configobj, name):
         if vrf_cfg in '\n'.join(configobj[intf].children):
             interfaces.append(intf.split(' ')[1])
     return interfaces
+
 
 def map_config_to_obj(module):
     config = get_config(module)
@@ -289,6 +295,7 @@ def get_param_value(key, item, module):
 
     return value
 
+
 def map_params_to_obj(module):
     vrfs = module.params.get('vrfs')
     if not vrfs:
@@ -318,6 +325,7 @@ def map_params_to_obj(module):
         objects.append(item)
 
     return objects
+
 
 def update_objects(want, have):
     updates = list()

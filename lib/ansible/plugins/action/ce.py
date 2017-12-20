@@ -23,10 +23,12 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.ce import ce_argument_spec
-from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.network.cloudengine.ce import ce_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
+
 
 try:
     from __main__ import display
@@ -45,7 +47,7 @@ class ActionModule(_ActionModule):
                     'got %s' % self._play_context.connection
             )
 
-        provider = self.load_provider()
+        provider = load_provider(ce_provider_spec, self._task.args)
         transport = provider['transport'] or 'cli'
 
         display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
@@ -63,8 +65,7 @@ class ActionModule(_ActionModule):
                 host=pc.remote_addr,
                 port=pc.port,
                 username=pc.remote_user,
-                password=pc.password,
-                ssh_keyfile=pc.private_key_file
+                password=pc.password
             )
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
@@ -78,43 +79,18 @@ class ActionModule(_ActionModule):
 
             # make sure we are in the right cli context which should be
             # enable mode and not config module
-            rc, out, err = connection.exec_command('prompt()')
-            while str(out).strip().endswith(']'):
+            conn = Connection(socket_path)
+            out = conn.get_prompt()
+            while to_text(out, errors='surrogate_then_replace').strip().endswith(']'):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                connection.exec_command('return')
-                rc, out, err = connection.exec_command('prompt()')
+                conn.send_command('exit')
+                out = conn.get_prompt()
 
             task_vars['ansible_socket'] = socket_path
 
         # make sure a transport value is set in args
         self._task.args['transport'] = transport
+        self._task.args['provider'] = provider
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(ce_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
-
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
-            else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass

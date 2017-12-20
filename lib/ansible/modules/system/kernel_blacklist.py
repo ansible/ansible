@@ -1,49 +1,44 @@
 #!/usr/bin/python
 # encoding: utf-8 -*-
 
-# (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
+# Copyright: (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: kernel_blacklist
-author: "Matthias Vogelgesang (@matze)"
-version_added: 1.4
+author:
+- Matthias Vogelgesang (@matze)
+version_added: '1.4'
 short_description: Blacklist kernel modules
 description:
     - Add or remove kernel modules from blacklist.
 options:
     name:
-        required: true
         description:
             - Name of kernel module to black- or whitelist.
+        required: true
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
         description:
             - Whether the module should be present in the blacklist or absent.
+        choices: [ absent, present ]
+        default: present
     blacklist_file:
-        required: false
         description:
             - If specified, use this blacklist file instead of
               C(/etc/modprobe.d/blacklist-ansible.conf).
-        default: null
-requirements: []
 '''
 
 EXAMPLES = '''
-# Blacklist the nouveau driver module
-- kernel_blacklist:
+- name: Blacklist the nouveau driver module
+  kernel_blacklist:
     name: nouveau
     state: present
 '''
@@ -71,7 +66,7 @@ class Blacklist(object):
             return False
 
     def get_pattern(self):
-        return '^blacklist\s*' + self.module + '$'
+        return r'^blacklist\s*' + self.module + '$'
 
     def readlines(self):
         f = open(self.filename, 'r')
@@ -118,13 +113,13 @@ class Blacklist(object):
 
         f.close()
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(required=False, choices=['present', 'absent'],
-                       default='present'),
-            blacklist_file=dict(required=False, default=None)
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            blacklist_file=dict(type='str')
         ),
         supports_check_mode=True,
     )

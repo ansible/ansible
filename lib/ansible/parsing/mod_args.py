@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
@@ -95,9 +95,11 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    # FIXME: mutable default arg
-    def __init__(self, task_ds=dict()):
-        assert isinstance(task_ds, dict), "the type of 'task_ds' should be a dict, but is a %s" % type(task_ds)
+    def __init__(self, task_ds=None):
+        task_ds = {} if task_ds is None else task_ds
+
+        if not isinstance(task_ds, dict):
+            raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
 
     def _split_module_string(self, module_string):
@@ -129,10 +131,12 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def _normalize_parameters(self, thing, action=None, additional_args=dict()):
+    def _normalize_parameters(self, thing, action=None, additional_args=None):
         '''
         arguments can be fuzzy.  Deal with all the forms.
         '''
+
+        additional_args = {} if additional_args is None else additional_args
 
         # final args are the ones we'll eventually return, so first update
         # them with any additional args specified, which have lower priority

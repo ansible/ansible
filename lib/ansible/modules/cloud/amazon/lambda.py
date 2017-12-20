@@ -165,30 +165,42 @@ tasks:
 '''
 
 RETURN = '''
-output:
-  description: the data returned by get_function in boto3
-  returned: success
-  type: dict
-  sample:
-    'code':
+code:
+    description: the lambda function location returned by get_function in boto3
+    returned: success
+    type: dict
+    sample:
       {
-        'location': 'an S3 URL',
+        'location': 'a presigned S3 URL',
         'repository_type': 'S3',
       }
-    'configuration':
+configuration:
+    description: the lambda function metadata returned by get_function in boto3
+    returned: success
+    type: dict
+    sample:
       {
-        'function_name': 'string',
-        'function_arn': 'string',
-        'runtime': 'nodejs',
-        'role': 'string',
-        'handler': 'string',
+        'code_sha256': 'SHA256 hash',
         'code_size': 123,
-        'description': 'string',
-        'timeout': 123,
-        'memory_size': 123,
-        'last_modified': 'string',
-        'code_sha256': 'string',
-        'version': 'string',
+        'description': 'My function',
+        'environment': {
+          'variables': {
+            'key': 'value'
+          }
+        },
+        'function_arn': 'arn:aws:lambda:us-east-1:123456789012:function:myFunction:1',
+        'function_name': 'myFunction',
+        'handler': 'index.handler',
+        'last_modified': '2017-08-01T00:00:00.000+0000',
+        'memory_size': 128,
+        'role': 'arn:aws:iam::123456789012:role/lambda_basic_execution',
+        'runtime': 'nodejs6.10',
+        'timeout': 3,
+        'version': '1',
+        'vpc_config': {
+          'security_group_ids': [],
+          'subnet_ids': []
+        }
       }
 '''
 
@@ -213,6 +225,7 @@ def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
     several different ways.  Giving either IAM or STS privilages to
     the account should be enough to permit this.
     """
+    account_id = None
     try:
         sts_client = boto3_conn(module, conn_type='client', resource='sts',
                                 region=region, endpoint=endpoint, **aws_connect_kwargs)
@@ -225,7 +238,7 @@ def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
         except ClientError as e:
             if (e.response['Error']['Code'] == 'AccessDenied'):
                 except_msg = to_native(e.message)
-                account_id = except_msg.search("arn:aws:iam::([0-9]{12,32}):\w+/").group(1)
+                account_id = except_msg.search(r"arn:aws:iam::([0-9]{12,32}):\w+/").group(1)
             if account_id is None:
                 module.fail_json_aws(e, msg="getting account information")
         except Exception as e:
@@ -238,8 +251,13 @@ def get_current_function(connection, function_name, qualifier=None):
         if qualifier is not None:
             return connection.get_function(FunctionName=function_name, Qualifier=qualifier)
         return connection.get_function(FunctionName=function_name)
-    except ClientError:
-        return None
+    except ClientError as e:
+        try:
+            if e.response['Error']['Code'] == 'ResourceNotFoundException':
+                return None
+        except (KeyError, AttributeError):
+            pass
+        raise e
 
 
 def sha256sum(filename):

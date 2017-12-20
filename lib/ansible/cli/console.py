@@ -88,6 +88,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            basedir_opts=True,
             desc="REPL console for executing Ansible tasks.",
             epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
@@ -126,9 +127,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def list_modules(self):
         modules = set()
-        if self.options.module_path is not None:
-            for i in self.options.module_path.split(os.pathsep):
-                module_loader.add_directory(i)
+        if self.options.module_path:
+            for path in self.options.module_path:
+                if path:
+                    module_loader.add_directory(path)
 
         module_paths = module_loader._get_paths()
         for path in module_paths:
@@ -424,16 +426,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                                                  ask_vault_pass=self.options.ask_vault_pass)
         self.loader.set_vault_secrets(vault_secrets)
 
-        no_hosts = False
-        if len(self.inventory.list_hosts()) == 0:
-            # Empty inventory
-            no_hosts = True
-            display.warning("provided hosts list is empty, only localhost is available")
-
-        self.inventory.subset(self.options.subset)
-        hosts = self.inventory.list_hosts(self.pattern)
-        if len(hosts) == 0 and not no_hosts:
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+        hosts = CLI.get_host_list(self.inventory, self.options.subset, self.pattern)
 
         self.groups = self.inventory.list_groups()
         self.hosts = [x.name for x in hosts]

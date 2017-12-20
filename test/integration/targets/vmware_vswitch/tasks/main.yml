@@ -1,5 +1,4 @@
-# Test code for the vmware_vswitch
-
+# Test code for the vmware_vswitch module.
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -7,6 +6,7 @@
   pip:
     name: pyvmomi
     state: latest
+  when: "{{ ansible_user_id == 'root' }}"
 
 - name: store the vcenter container ip
   set_fact:
@@ -126,3 +126,31 @@
 #- assert:
 #    that:
 #    - remove_nic_again_run.changed == false
+
+
+- name: get a list of Host Systems from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=H' }}"
+  register: host_systems
+
+- name: get a host system
+  set_fact: hs1="{{ host_systems['json'][0] | basename }}"
+
+- debug: var=hs1
+
+- name: Add vswitch to a specific host system
+  vmware_vswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch: vmswitch_0002
+    nics: vnic_1
+    esxi_hostname: hs1
+  register: add_vswitch_with_host_system
+
+- debug: var=add_vswitch_with_host_system
+
+- assert:
+    that:
+    - add_vswitch_with_host_system.changed == true

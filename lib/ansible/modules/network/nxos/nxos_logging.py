@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: nxos_logging
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
@@ -104,8 +104,8 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -146,7 +146,7 @@ def map_obj_to_commands(updates, module):
                         pass
 
             if w['facility'] is not None:
-                    commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
+                commands.append('logging level {} {}'.format(w['facility'], w['facility_level']))
 
     return commands
 

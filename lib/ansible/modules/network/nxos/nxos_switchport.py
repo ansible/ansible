@@ -126,8 +126,8 @@ commands:
     sample: ["interface eth1/5", "switchport access vlan 20"]
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -434,11 +434,14 @@ def apply_value_map(value_map, resource):
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -478,7 +481,6 @@ def main():
     warnings = list()
     commands = []
     results = {'changed': False}
-    check_args(module, warnings)
 
     interface = module.params['interface']
     mode = module.params['mode']

@@ -96,8 +96,8 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -161,8 +161,8 @@ def get_ntp_trusted_key(module):
 def get_ntp_auth_key(key_id, module):
     authentication_key = {}
     command = 'show run | inc ntp.authentication-key.{0}'.format(key_id)
-    auth_regex = (".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
-                  "md5\s(?P<md5string>\S+).*")
+    auth_regex = (r".*ntp\sauthentication-key\s(?P<key_id>\d+)\s"
+                  r"md5\s(?P<md5string>\S+).*")
 
     body = execute_show_command(command, module)[0]
 
@@ -198,7 +198,7 @@ def get_ntp_auth_info(key_id, module):
 
 
 def auth_type_to_num(auth_type):
-    if auth_type == 'encrypt' :
+    if auth_type == 'encrypt':
         return '7'
     else:
         return '0'
@@ -258,11 +258,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     key_id = module.params['key_id']
     md5string = module.params['md5string']
@@ -325,4 +324,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

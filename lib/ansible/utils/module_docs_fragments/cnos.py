@@ -85,4 +85,6 @@ options:
         choices: [g8272_cnos,g8296_cnos,g8332_cnos,NE1072T,NE1032,
          NE1032T,NE10032,NE2572]
         version_added: 2.3
+notes:
+  - For more information on using Ansible to manage Lenovo Network devices see U(https://www.ansible.com/ansible-lenovo).
 '''

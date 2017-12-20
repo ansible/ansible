@@ -83,7 +83,7 @@ Create a file ``secrets.py`` looking like following, and put it in some folder w
 .. code-block:: python
 
     GCE_PARAMS = ('i...@project.googleusercontent.com', '/path/to/project.json')
-    GCE_KEYWORD_PARAMS = {'project': 'project_id'}
+    GCE_KEYWORD_PARAMS = {'project': 'project_id', 'datacenter': 'gce_zone'}
 
 Ensure to enter the email address from the created services account and not the one from your main account.
 
@@ -168,7 +168,7 @@ For the following use case, let's use this small shell script as a wrapper.
     exit 1
   fi
 
-  export SSL_CERT_FILE=$(pwd)/cacert.cer
+  export SSL_CERT_FILE=$(pwd)/cacert.pem
   export ANSIBLE_HOST_KEY_CHECKING=False
 
   if [[ ! -f "$SSL_CERT_FILE" ]]; then
@@ -213,11 +213,11 @@ A playbook would looks like this:
 
        - name: Wait for SSH to come up
          wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=60
-         with_items: "{{ gce.instance_data }}"
+         loop: "{{ gce.instance_data }}"
 
        - name: Add host to groupname
          add_host: hostname={{ item.public_ip }} groupname=new_instances
-         with_items: "{{ gce.instance_data }}"
+         loop: "{{ gce.instance_data }}"
 
    - name: Manage new instances
      hosts: new_instances

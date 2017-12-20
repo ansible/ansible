@@ -264,6 +264,12 @@ options:
       - none
     default: null
     required: false
+  userns_mode:
+     description:
+       - User namespace to use
+     default: null
+     required: false
+     version_added: "2.5"
   networks:
      description:
        - List of networks the container belongs to.
@@ -751,6 +757,7 @@ class TaskParameters(DockerBaseClass):
         self.memory_swappiness = None
         self.name = None
         self.network_mode = None
+        self.userns_mode = None
         self.networks = None
         self.oom_killer = None
         self.oom_score_adj = None
@@ -853,9 +860,9 @@ class TaskParameters(DockerBaseClass):
             cpu_shares='cpu_shares',
             cpuset_cpus='cpuset_cpus',
             mem_limit='memory',
-            mem_reservation='mem_reservation',
+            mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
-            kernel_memory='kernel_memory'
+            kernel_memory='kernel_memory',
         )
         result = dict()
         for key, value in update_parameters.items():
@@ -944,7 +951,7 @@ class TaskParameters(DockerBaseClass):
         Returns parameters used to create a HostConfig object
         '''
 
-        host_config_params=dict(
+        host_config_params = dict(
             port_bindings='published_ports',
             publish_all_ports='publish_all_ports',
             links='links',
@@ -954,6 +961,7 @@ class TaskParameters(DockerBaseClass):
             binds='volume_binds',
             volumes_from='volumes_from',
             network_mode='network_mode',
+            userns_mode='userns_mode',
             cap_add='capabilities',
             extra_hosts='etc_hosts',
             read_only='read_only',
@@ -966,6 +974,7 @@ class TaskParameters(DockerBaseClass):
             memswap_limit='memory_swap',
             mem_swappiness='memory_swappiness',
             oom_score_adj='oom_score_adj',
+            oom_kill_disable='oom_killer',
             shm_size='shm_size',
             group_add='groups',
             devices='devices',
@@ -1154,7 +1163,7 @@ class TaskParameters(DockerBaseClass):
 
         options = dict(
             Type=self.log_driver,
-            Config = dict()
+            Config=dict()
         )
 
         if self.log_options is not None:
@@ -1206,7 +1215,6 @@ class TaskParameters(DockerBaseClass):
         except Exception as exc:
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
-
 
 
 class Container(DockerBaseClass):
@@ -1311,6 +1319,7 @@ class Container(DockerBaseClass):
             mac_address=network.get('MacAddress'),
             memory_swappiness=host_config.get('MemorySwappiness'),
             network_mode=host_config.get('NetworkMode'),
+            userns_mode=host_config.get('UsernsMode'),
             oom_killer=host_config.get('OomKillDisable'),
             oom_score_adj=host_config.get('OomScoreAdj'),
             pid_mode=host_config.get('PidMode'),
@@ -1437,6 +1446,7 @@ class Container(DockerBaseClass):
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
             oom_score_adj=host_config.get('OomScoreAdj'),
+            oom_killer=host_config.get('OomKillDisable'),
         )
 
         differences = []
@@ -1559,7 +1569,7 @@ class Container(DockerBaseClass):
                         CgroupPermissions=parts[2],
                         PathInContainer=parts[1],
                         PathOnHost=parts[0]
-                        ))
+                    ))
         return expected_devices
 
     def _get_expected_entrypoint(self):
@@ -1955,7 +1965,14 @@ class ContainerManager(DockerBaseClass):
 
             if not self.parameters.detach:
                 status = self.client.wait(container_id)
-                output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                config = self.client.inspect_container(container_id)
+                logging_driver = config['HostConfig']['LogConfig']['Type']
+
+                if logging_driver == 'json-file' or logging_driver == 'journald':
+                    output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                else:
+                    output = "Result logged using `%s` driver" % logging_driver
+
                 if status != 0:
                     self.fail(output, status=status)
                 if self.parameters.cleanup:
@@ -2071,6 +2088,7 @@ def main():
         memory_swappiness=dict(type='int'),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
+        userns_mode=dict(type='str'),
         networks=dict(type='list'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),

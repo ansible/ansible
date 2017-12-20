@@ -23,10 +23,11 @@ import sys
 import copy
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.aruba import aruba_argument_spec
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.aruba.aruba import aruba_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
 
 try:
     from __main__ import display
@@ -46,7 +47,7 @@ class ActionModule(_ActionModule):
                     'got %s' % self._play_context.connection
             )
 
-        provider = self.load_provider()
+        provider = load_provider(aruba_provider_spec, self._task.args)
 
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
@@ -70,10 +71,11 @@ class ActionModule(_ActionModule):
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
-        rc, out, err = connection.exec_command('prompt()')
-        if str(out).strip().endswith(')#'):
+        conn = Connection(socket_path)
+        out = conn.get_prompt()
+        if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
             display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            connection.exec_command('exit')
+            conn.send_command('exit')
 
         task_vars['ansible_socket'] = socket_path
 
@@ -83,30 +85,3 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
-    def load_provider(self):
-        provider = self._task.args.get('provider', {})
-        for key, value in iteritems(aruba_argument_spec):
-            if key != 'provider' and key not in provider:
-                if key in self._task.args:
-                    provider[key] = self._task.args[key]
-                elif 'fallback' in value:
-                    provider[key] = self._fallback(value['fallback'])
-                elif key not in provider:
-                    provider[key] = None
-        return provider
-
-    def _fallback(self, fallback):
-        strategy = fallback[0]
-        args = []
-        kwargs = {}
-
-        for item in fallback[1:]:
-            if isinstance(item, dict):
-                kwargs = item
-            else:
-                args = item
-        try:
-            return strategy(*args, **kwargs)
-        except AnsibleFallbackNotFound:
-            pass

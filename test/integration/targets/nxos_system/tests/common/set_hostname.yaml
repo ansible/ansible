@@ -29,7 +29,7 @@
 
 - name: teardown
   nxos_config:
-    lines: "hostname {{ inventory_hostname }}"
+    lines: hostname switch
     match: none
     provider: "{{ connection }}"
 

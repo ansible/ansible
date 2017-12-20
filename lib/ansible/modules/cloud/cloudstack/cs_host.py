@@ -464,7 +464,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
 
         # Set host allocationstate to be disabled/enabled
         elif host['resourcestate'].lower() in list(self.allocation_states_for_update.keys()):
-                host['allocationstate'] = self.allocation_states_for_update[host['resourcestate'].lower()]
+            host['allocationstate'] = self.allocation_states_for_update[host['resourcestate'].lower()]
 
         else:
             host['allocationstate'] = host['resourcestate']
@@ -577,7 +577,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
                 return None
             elif host['resourcestate'] != 'PrepareForMaintenance':
                 return host
-        self.fail_json("Polling for maintenance timed out")
+        self.fail_json(msg="Polling for maintenance timed out")
 
     def get_result(self, host):
         super(AnsibleCloudStackHost, self).get_result(host)

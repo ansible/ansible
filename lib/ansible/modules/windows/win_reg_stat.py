@@ -73,10 +73,10 @@ exists:
   type: boolean
   sample: True
 properties:
-  description: A list of all the properties and their values in the key.
+  description: A dictionary containing all the properties and their values in the registry key.
   returned: success, path exists and property not specified
-  type: list
-  sample: [
+  type: dict
+  sample: {
     "binary_property" : {
       "raw_value": ["0x01", "0x16"],
       "type": "REG_BINARY",
@@ -87,7 +87,7 @@ properties:
       "type": "REG_MULTI_SZ",
       "value": ["a", "b"]
     }
-    ]
+    }
 sub_keys:
   description: A list of all the sub keys of the key specified.
   returned: success, path exists and property not specified

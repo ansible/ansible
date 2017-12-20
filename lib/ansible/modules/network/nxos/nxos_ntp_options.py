@@ -86,8 +86,8 @@ updates:
 '''
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -95,9 +95,9 @@ def get_current(module):
     cmd = ('show running-config', 'show ntp logging')
 
     output = run_commands(module, ({'command': cmd[0], 'output': 'text'},
-                                  {'command': cmd[1], 'output': 'text'}))
+                                   {'command': cmd[1], 'output': 'text'}))
 
-    match = re.search("^ntp master(?: (\d+))", output[0], re.M)
+    match = re.search(r"^ntp master(?: (\d+))", output[0], re.M)
     if match:
         master = True
         stratum = match.group(1)
@@ -105,7 +105,7 @@ def get_current(module):
         master = False
         stratum = None
 
-    logging = 'Enabled' in output[1]
+    logging = 'enabled' in output[1].lower()
 
     return {'master': master, 'stratum': stratum, 'logging': logging}
 
@@ -113,17 +113,14 @@ def get_current(module):
 def main():
     argument_spec = dict(
         master=dict(required=False, type='bool'),
-        stratum=dict(type='str'),
+        stratum=dict(required=False, type='str', default='8'),
         logging=dict(required=False, type='bool'),
         state=dict(choices=['absent', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    required_together = [('master', 'stratum')]
-
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_together=required_together,
                            supports_check_mode=True)
 
     warnings = list()
@@ -169,7 +166,6 @@ def main():
                 commands.append('ntp logging')
             else:
                 commands.append('no ntp logging')
-
 
     result['commands'] = commands
     result['updates'] = commands

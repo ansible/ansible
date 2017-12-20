@@ -1,22 +1,43 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    lookup: file
+    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    version_added: "0.9"
+    short_description: read lines from command
+    description:
+      - Run a commandi or more and split the output into lines returning them as a list
+    options:
+      _terms:
+        description: command(s) to run
+        required: True
+    notes:
+      - Like all lookups this runs on the Ansible controller and is unaffected by other keywords, such as become,
+        so if you need to different permissions you must change the command or run Ansible as another user.
+      - Alternatively you can use a shell/command task that runs against localhost and registers the result.
+"""
+
+EXAMPLES = """
+- name: we could use file direclty, but this shows output from command
+  debug: msg="{{ item }} is a line running cat on /etc/motd"
+  with_lines: cat /etc/motd
+
+- name: More useful example of looping over a command result
+  shell: "/usr/bin/frobnicate {{ item }}"
+  with_lines:
+    - "/usr/bin/frobnications_per_host --param {{ inventory_hostname }}"
+"""
+
+RETURN = """
+  _list:
+    description:
+      - lines of stdout from command
+"""
 
 import subprocess
 from ansible.errors import AnsibleError

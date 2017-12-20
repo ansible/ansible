@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
-# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
+# Copyright: (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -57,7 +57,8 @@ options:
     default: null
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
-       The C(command) module is much more secure as it's not affected by the user's environment.
+       Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
+       use the C(command) module when possible.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
@@ -87,6 +88,31 @@ EXAMPLES = '''
   register: myoutput
 '''
 
+RETURN = '''
+cmd:
+  description: the cmd that was run on the remote machine
+  returned: always
+  type: list
+  sample:
+  - echo
+  - hello
+delta:
+  description: cmd end time - cmd start time
+  returned: always
+  type: string
+  sample: 0:00:00.001529
+end:
+  description: cmd end time
+  returned: always
+  type: string
+  sample: '2017-09-29 22:03:48.084657'
+start:
+  description: cmd start time
+  returned: always
+  type: string
+  sample: '2017-09-29 22:03:48.083128'
+'''
+
 import datetime
 import glob
 import os
@@ -99,17 +125,30 @@ def check_command(module, commandline):
     arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
                  'ln': 'state=link', 'mkdir': 'state=directory',
                  'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
-    commands = {'hg': 'hg', 'curl': 'get_url or uri', 'wget': 'get_url or uri',
+    commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
+                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
+
+    disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
+                     " warn=False to this command task or set command_warnings=False in" \
+                     " ansible.cfg to get rid of this message."
+    substitutions = {'mod': None, 'cmd': command}
+
     if command in arguments:
-        module.warn("Consider using file module with %s rather than running %s" % (arguments[command], command))
+        msg = "Consider using the {mod} module with {subcmd} rather than running {cmd}.  " + disable_suffix
+        substitutions['mod'] = 'file'
+        substitutions['subcmd'] = arguments[command]
+        module.warn(msg.format(**substitutions))
+
     if command in commands:
-        module.warn("Consider using %s module rather than running %s" % (commands[command], command))
+        msg = "Consider using the {mod} module rather than running {cmd}.  " + disable_suffix
+        substitutions['mod'] = commands[command]
+        module.warn(msg.format(**substitutions))
+
     if command in become:
         module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
@@ -144,7 +183,7 @@ def main():
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
 
-    if args.strip() == '':
+    if not args or args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
@@ -186,11 +225,6 @@ def main():
 
     endd = datetime.datetime.now()
     delta = endd - startd
-
-    if out is None:
-        out = b''
-    if err is None:
-        err = b''
 
     result = dict(
         cmd=args,

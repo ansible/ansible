@@ -94,17 +94,23 @@ EXAMPLES = '''
 import os
 import os.path
 import tempfile
-
 from ansible.module_utils.basic import AnsibleModule
 
 
-def _is_package_installed(module, name, easy_install, executable_arguments):
-    executable_arguments = executable_arguments + ['--dry-run']
+def install_package(module, name, easy_install, executable_arguments):
     cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
-    rc, status_stdout, status_stderr = module.run_command(cmd)
+    rc, out, err = module.run_command(cmd)
+    return rc, out, err
+
+
+def _is_package_installed(module, name, easy_install, executable_arguments):
+    # Copy and add to the arguments
+    executable_arguments = executable_arguments[:]
+    executable_arguments.append('--dry-run')
+    rc, out, err = install_package(module, name, easy_install, executable_arguments)
     if rc:
-        module.fail_json(msg=status_stderr)
-    return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
+        module.fail_json(msg=err)
+    return 'Downloading' not in out
 
 
 def _get_easy_install(module, env=None, executable=None):
@@ -138,7 +144,7 @@ def main():
         name=dict(required=True),
         state=dict(required=False,
                    default='present',
-                   choices=['present','latest'],
+                   choices=['present', 'latest'],
                    type='str'),
         virtualenv=dict(default=None, required=False),
         virtualenv_site_packages=dict(default='no', type='bool'),
@@ -186,8 +192,7 @@ def main():
     if not installed:
         if module.check_mode:
             module.exit_json(changed=True)
-        cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
-        rc_easy_inst, out_easy_inst, err_easy_inst = module.run_command(cmd)
+        rc_easy_inst, out_easy_inst, err_easy_inst = install_package(module, name, easy_install, executable_arguments)
 
         rc += rc_easy_inst
         out += out_easy_inst

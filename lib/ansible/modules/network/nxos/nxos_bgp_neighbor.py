@@ -212,10 +212,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -225,7 +225,7 @@ BOOL_PARAMS = [
     'dynamic_capability',
     'low_memory_exempt',
     'suppress_4_byte_as',
-    'transport_passive_only'
+    'transport_passive_only',
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -261,8 +261,8 @@ PARAM_TO_DEFAULT_KEYMAP = {
 
 def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP[arg]
-    has_command = re.search(r'\s+{0}\s*$'.format(command), config, re.M)
-    has_command_value = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+    has_command = re.search(r'^\s+{0}$'.format(command), config, re.M)
+    has_command_val = re.search(r'(?:\s+{0}\s*)(?P<value>.*)$'.format(command), config, re.M)
 
     if arg == 'dynamic_capability':
         has_no_command = re.search(r'\s+no\s{0}\s*$'.format(command), config, re.M)
@@ -276,23 +276,21 @@ def get_value(arg, config):
     elif arg == 'log_neighbor_changes':
         value = ''
         if has_command:
-            if has_command_value:
-                value = 'disable'
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = 'disable'
 
     elif arg == 'remove_private_as':
         value = 'disable'
         if has_command:
-            if has_command_value:
-                value = has_command_value.group('value')
-            else:
-                value = 'enable'
+            value = 'enable'
+        elif has_command_val:
+            value = has_command_val.group('value')
     else:
         value = ''
 
-        if has_command_value:
-            value = has_command_value.group('value')
+        if has_command_val:
+            value = has_command_val.group('value')
 
             if command in ['timers', 'password']:
                 split_value = value.split()
@@ -310,7 +308,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:

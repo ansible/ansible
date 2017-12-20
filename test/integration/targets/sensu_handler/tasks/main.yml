@@ -36,10 +36,10 @@
 - name: Assert that handler data was set successfully and properly
   assert:
     that:
-      - "handler | success"
-      - "handler | changed"
-      - "handler_twice | success"
-      - "not handler_twice | changed"
+      - "handler is successful"
+      - "handler is changed"
+      - "handler_twice is successful"
+      - "handler_twice is not changed"
       - "handler_stat.stat.exists == true"
       - "handler['name'] == 'handler'"
       - "handler['file'] == '/etc/sensu/conf.d/handlers/handler.json'"
@@ -81,10 +81,10 @@
 - name: Assert that handler deletion was successful
   assert:
     that:
-      - "handler_delete | success"
-      - "handler_delete | changed"
-      - "handler_delete_twice | success"
-      - "not handler_delete_twice | changed"
+      - "handler_delete is successful"
+      - "handler_delete is changed"
+      - "handler_delete_twice is successful"
+      - "handler_delete_twice is not changed"
       - "handler_stat.stat.exists == false"
 
 - name: Configuring a handler without a name should fail
@@ -97,7 +97,7 @@
 - name: Assert that configuring a handler without a name fails
   assert:
     that:
-      - failure | failed
+      - failure is failed
       - "'required arguments: name' in failure['msg']"
 
 - name: Configuring a handler without a type should fail
@@ -110,7 +110,7 @@
 - name: Assert that configuring a handler without a type fails
   assert:
     that:
-      - failure | failed
+      - failure is failed
       - "'the following are missing: type' in failure['msg']"
 
 - include: pipe.yml

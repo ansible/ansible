@@ -39,6 +39,11 @@ options:
         description:
             - Apply DNS modification on this server.
         required: true
+    port:
+        description:
+            - Use this TCP port when connecting to C(server).
+        default: 53
+        version_added: 2.5
     key_name:
         description:
             - Use TSIG key name to authenticate against DNS C(server)
@@ -84,6 +89,15 @@ EXAMPLES = '''
     record: "ansible"
     value: "192.168.1.1"
 
+- name: Add or modify ansible.example.org A to 192.168.1.1, 192.168.1.2 and 192.168.1.3"
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    zone: "example.org"
+    record: "ansible"
+    value: ["192.168.1.1", "192.168.1.2", "192.168.1.3"]
+
 - name: Remove puppet.example.org CNAME
   nsupdate:
     key_name: "nsupdate"
@@ -116,9 +130,9 @@ type:
     type: string
     sample: 'CNAME'
 value:
-    description: DNS record value
+    description: DNS record value(s)
     returned: success
-    type: string
+    type: list
     sample: '192.168.1.1'
 zone:
     description: DNS record zone
@@ -186,7 +200,7 @@ class RecordManager(object):
     def __do_update(self, update):
         response = None
         try:
-            response = dns.query.tcp(update, self.module.params['server'], timeout=10)
+            response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
             self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
         except (socket_error, dns.exception.Timeout) as e:
@@ -223,27 +237,35 @@ class RecordManager(object):
 
     def create_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        try:
-            update.add(self.module.params['record'],
-                       self.module.params['ttl'],
-                       self.module.params['type'],
-                       self.module.params['value'])
-        except AttributeError:
-            self.module.fail_json(msg='value needed when state=present')
-        except dns.exception.SyntaxError:
-            self.module.fail_json(msg='Invalid/malformed value')
+        for entry in self.module.params['value']:
+            try:
+                update.add(self.module.params['record'],
+                           self.module.params['ttl'],
+                           self.module.params['type'],
+                           entry)
+            except AttributeError:
+                self.module.fail_json(msg='value needed when state=present')
+            except dns.exception.SyntaxError:
+                self.module.fail_json(msg='Invalid/malformed value')
 
         response = self.__do_update(update)
         return dns.message.Message.rcode(response)
 
     def modify_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        update.replace(self.module.params['record'],
-                       self.module.params['ttl'],
-                       self.module.params['type'],
-                       self.module.params['value'])
-
+        update.delete(self.module.params['record'], self.module.params['type'])
+        for entry in self.module.params['value']:
+            try:
+                update.add(self.module.params['record'],
+                           self.module.params['ttl'],
+                           self.module.params['type'],
+                           entry)
+            except AttributeError:
+                self.module.fail_json(msg='value needed when state=present')
+            except dns.exception.SyntaxError:
+                self.module.fail_json(msg='Invalid/malformed value')
         response = self.__do_update(update)
+
         return dns.message.Message.rcode(response)
 
     def remove_record(self):
@@ -282,12 +304,13 @@ class RecordManager(object):
         if self.dns_rc == 0:
             if self.module.params['state'] == 'absent':
                 return 1
-            try:
-                update.present(self.module.params['record'], self.module.params['type'], self.module.params['value'])
-            except AttributeError:
-                self.module.fail_json(msg='value needed when state=present')
-            except dns.exception.SyntaxError:
-                self.module.fail_json(msg='Invalid/malformed value')
+            for entry in self.module.params['value']:
+                try:
+                    update.present(self.module.params['record'], self.module.params['type'], entry)
+                except AttributeError:
+                    self.module.fail_json(msg='value needed when state=present')
+                except dns.exception.SyntaxError:
+                    self.module.fail_json(msg='Invalid/malformed value')
             response = self.__do_update(update)
             self.dns_rc = dns.message.Message.rcode(response)
             if self.dns_rc == 0:
@@ -306,6 +329,7 @@ def main():
         argument_spec=dict(
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             server=dict(required=True, type='str'),
+            port=dict(required=False, default=53, type='int'),
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
             key_algorithm=dict(required=False, default='hmac-md5', choices=tsig_algs, type='str'),
@@ -313,7 +337,7 @@ def main():
             record=dict(required=True, type='str'),
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False, default=None, type='str')
+            value=dict(required=False, default=None, type='list')
         ),
         supports_check_mode=True
     )

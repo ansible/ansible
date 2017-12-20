@@ -261,7 +261,7 @@
   assert: 
     that: 
       - "not templated.stat.exists"
-      - "template_result|changed"
+      - "template_result is changed"
 
 - name: fill in a basic template
   template: src=short.j2 dest={{output_dir}}/short.templated
@@ -274,7 +274,7 @@
 - name: verify that the file was marked as not changes in check mode
   assert: 
     that: 
-      - "not template_result|changed"
+      - "template_result is not changed"
       - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser}}/short.templated')"
 
 - name: change var for the template
@@ -290,7 +290,7 @@
   assert: 
     that: 
       - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser }}/short.templated')"
-      - "template_result|changed"
+      - "template_result is changed"
 
 # Create a template using a child template, to ensure that variables
 # are passed properly from the parent to subtemplate context (issue #20063)
@@ -304,7 +304,7 @@
 - name: verify that the parent and subtemplate creation worked
   assert:
     that:
-    - "template_result|changed"
+    - "template_result is changed"
 
 #
 # template module can overwrite a file that's been hard linked
@@ -368,7 +368,7 @@
 - name: verify that the file was marked as changed (Unix)
   assert:
     that:
-      - 'template_result|changed'
+      - 'template_result is changed'
 
 - name: fill in a basic template again (Unix)
   template:
@@ -379,7 +379,7 @@
 - name: verify that the template was not changed (Unix)
   assert:
     that:
-      - 'not template_result2|changed'
+      - 'template_result2 is not changed'
 
 # VERIFY UNIX CONTENTS
 - name: copy known good into place (Unix)
@@ -414,7 +414,7 @@
 - name: verify that the file was marked as changed (DOS)
   assert:
     that:
-      - 'template_result|changed'
+      - 'template_result is changed'
 
 - name: fill in a basic template again (DOS)
   template:
@@ -426,7 +426,7 @@
 - name: verify that the template was not changed (DOS)
   assert:
     that:
-      - 'not template_result2|changed'
+      - 'template_result2 is not changed'
 
 # VERIFY DOS CONTENTS
 - name: copy known good into place (DOS)

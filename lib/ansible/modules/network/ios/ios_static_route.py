@@ -50,7 +50,7 @@ options:
       - Admin distance of the static route.
     default: 1
   aggregate:
-    description: List of static route definitions
+    description: List of static route definitions.
   state:
     description:
       - State of the static route configuration.
@@ -99,9 +99,9 @@ from copy import deepcopy
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ios import load_config, run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ipaddress import ip_network
 import re
 
@@ -136,6 +136,11 @@ def map_config_to_obj(module):
     if match and match.group(1):
         for r in match.group(1).splitlines():
             splitted_line = r.split()
+
+            code = splitted_line[0]
+
+            if code != 'M':
+                continue
 
             cidr = ip_network(to_text(splitted_line[1]))
             prefix = str(cidr.network_address)

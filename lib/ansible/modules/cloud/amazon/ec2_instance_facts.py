@@ -20,6 +20,7 @@ version_added: "2.4"
 author:
   - Michael Schuett, @michaeljs1990
   - Rob White, @wimnat
+requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:
     description:
@@ -500,8 +501,7 @@ def list_ec2_instances(connection, module):
 
     # Turn the boto3 result in to ansible friendly tag dictionary
     for instance in snaked_instances:
-        if 'tags' in instance:
-            instance['tags'] = boto3_tag_list_to_ansible_dict(instance['tags'])
+        instance['tags'] = boto3_tag_list_to_ansible_dict(instance.get('tags', []), 'key', 'value')
 
     module.exit_json(instances=snaked_instances)
 

@@ -73,6 +73,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (connect_to_api, find_hostsystem_by_name, find_vm_by_name,
                                          vmware_argument_spec, wait_for_task)
 
+
 def migrate_vm(vm_object, host_object):
     """
     Migrate virtual machine and return the task.
@@ -80,6 +81,7 @@ def migrate_vm(vm_object, host_object):
     relocate_spec = vim.vm.RelocateSpec(host=host_object)
     task_object = vm_object.Relocate(relocate_spec)
     return task_object
+
 
 def main():
 

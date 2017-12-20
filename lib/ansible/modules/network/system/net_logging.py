@@ -41,7 +41,7 @@ options:
     description: List of logging definitions.
   purge:
     description:
-      - Purge logging not defined in the aggregates parameter.
+      - Purge logging not defined in the I(aggregate) parameter.
     default: no
   state:
     description:

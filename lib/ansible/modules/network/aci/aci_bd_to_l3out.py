@@ -55,7 +55,7 @@ RETURN = ''' # '''
 SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
 
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -64,7 +64,7 @@ def main():
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
         l3out=dict(type='str'),
-        state=dict(type='str', choices=['absent', 'present', 'query']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6')  # Deprecated starting from v2.6
     )
@@ -79,14 +79,33 @@ def main():
         ],
     )
 
+    bd = module.params['bd']
     l3out = module.params['l3out']
     state = module.params['state']
-
-    # Add bd_l3out key to module.params for building the URL
-    module.params['bd_l3out'] = l3out
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='bd', subclass_2='bd_l3out')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvBD',
+            aci_rn='BD-{}'.format(bd),
+            filter_target='eq(fvBD.name, "{}")'.format(bd),
+            module_object=bd,
+        ),
+        subclass_2=dict(
+            aci_class='fvRsBDToOut',
+            aci_rn='rsBDToOut-{}'.format(l3out),
+            filter_target='eq(fvRsBDToOut.tnL3extOutName, "{}")'.format(l3out),
+            module_object=l3out,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -104,9 +123,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove bd_l3out key used for URL building from module.params
-    module.params.pop('bd_l3out')
 
     module.exit_json(**aci.result)
 

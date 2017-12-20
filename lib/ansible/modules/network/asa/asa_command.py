@@ -126,9 +126,9 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import run_commands
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import run_commands
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
 
@@ -187,7 +187,6 @@ def main():
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-
     result.update({
         'changed': False,
         'stdout': responses,
@@ -199,4 +198,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

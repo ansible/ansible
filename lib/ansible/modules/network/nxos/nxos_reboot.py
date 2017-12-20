@@ -60,14 +60,14 @@ rebooted:
     sample: true
 '''
 
-from ansible.module_utils.nxos import run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
 def reboot(module):
     cmds = [
-        {'command': 'terminal-dont-ask'},
+        {'command': 'terminal dont-ask', 'output': 'text'},
         {'command': 'reload', 'output': 'text'}
     ]
     run_commands(module, cmds)

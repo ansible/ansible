@@ -164,15 +164,19 @@ changed:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         body = run_commands(module, cmds)
 
     return body
@@ -259,39 +263,37 @@ def main():
     argument_spec = dict(
         system_mode_maintenance=dict(required=False, type='bool'),
         system_mode_maintenance_dont_generate_profile=dict(required=False,
-                                                               type='bool'),
+                                                           type='bool'),
         system_mode_maintenance_timeout=dict(required=False, type='str'),
         system_mode_maintenance_shutdown=dict(required=False, type='bool'),
         system_mode_maintenance_on_reload_reset_reason=dict(required=False,
-                choices=['hw_error','svc_failure','kern_failure',
-                         'wdog_timeout','fatal_error','lc_failure',
-                         'match_any','manual_reload']),
+                                                            choices=['hw_error', 'svc_failure', 'kern_failure',
+                                                                     'wdog_timeout', 'fatal_error', 'lc_failure',
+                                                                     'match_any', 'manual_reload']),
         state=dict(choices=['absent', 'present', 'default'],
-                       default='present', required=False)
+                   default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=[[
-                                    'system_mode_maintenance',
-                                    'system_mode_maintenance_dont_generate_profile',
-                                    'system_mode_maintenance_timeout',
-                                    'system_mode_maintenance_shutdown',
-                                    'system_mode_maintenance_on_reload_reset_reason'
-                                ]],
-                                required_one_of=[[
-                                    'system_mode_maintenance',
-                                    'system_mode_maintenance_dont_generate_profile',
-                                    'system_mode_maintenance_timeout',
-                                    'system_mode_maintenance_shutdown',
-                                    'system_mode_maintenance_on_reload_reset_reason'
-                                ]],
-                                supports_check_mode=True)
+                           mutually_exclusive=[[
+                               'system_mode_maintenance',
+                               'system_mode_maintenance_dont_generate_profile',
+                               'system_mode_maintenance_timeout',
+                               'system_mode_maintenance_shutdown',
+                               'system_mode_maintenance_on_reload_reset_reason'
+                           ]],
+                           required_one_of=[[
+                               'system_mode_maintenance',
+                               'system_mode_maintenance_dont_generate_profile',
+                               'system_mode_maintenance_timeout',
+                               'system_mode_maintenance_shutdown',
+                               'system_mode_maintenance_on_reload_reset_reason'
+                           ]],
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     state = module.params['state']
     mode = get_system_mode(module)
@@ -318,4 +320,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

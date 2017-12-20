@@ -299,6 +299,7 @@ EXAMPLES = '''
 import os
 import re
 import ssl
+import socket
 import traceback
 
 HAS_PYSPHERE = False
@@ -524,17 +525,14 @@ def find_datastore(module, s, datastore, config_target):
     ds = None
     if config_target:
         for d in config_target.Datastore:
-            if (d.Datastore.Accessible and
-                (datastore and d.Datastore.Name == datastore)
-                    or (not datastore)):
+            if d.Datastore.Accessible and (datastore and d.Datastore.Name == datastore) or (not datastore):
                 ds = d.Datastore.Datastore
                 datastore = d.Datastore.Name
                 break
     else:
         for ds_mor, ds_name in s.get_datastores().items():
             ds_props = VIProperty(s, ds_mor)
-            if (ds_props.summary.accessible and (datastore and ds_name == datastore)
-                    or (not datastore)):
+            if ds_props.summary.accessible and (datastore and ds_name == datastore) or (not datastore):
                 ds = ds_mor
                 datastore = ds_name
     if not ds:
@@ -626,6 +624,7 @@ def spec_singleton(spec, request, vm):
         spec = request.new_spec()
     return spec
 
+
 def get_cdrom_params(module, s, vm_cdrom):
     cdrom_type = None
     cdrom_iso_path = None
@@ -647,6 +646,7 @@ def get_cdrom_params(module, s, vm_cdrom):
 
     return cdrom_type, cdrom_iso_path
 
+
 def vmdisk_id(vm, current_datastore_name):
     id_list = []
     for vm_disk in vm._disks:
@@ -665,9 +665,9 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
 
         # Datacenter managed object reference
         dclist = [k for k,
-                 v in vsphere_client.get_datacenters().items() if v == datacenter]
+                  v in vsphere_client.get_datacenters().items() if v == datacenter]
         if dclist:
-            dcmor=dclist[0]
+            dcmor = dclist[0]
         else:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
@@ -743,7 +743,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
             cloneArgs = dict(resourcepool=rpmor, power_on=False)
 
             if snapshot_to_clone is not None:
-                #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
+                # check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
                 cloneArgs["linked"] = True
                 cloneArgs["snapshot"] = snapshot_to_clone
 
@@ -777,6 +777,8 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
 
 # example from https://github.com/kalazzerx/pysphere/blob/master/examples/pysphere_create_disk_and_add_to_vm.py
 # was used.
+
+
 def update_disks(vsphere_client, vm, module, vm_disk, changes):
     request = VI.ReconfigVM_TaskRequestMsg()
     changed = False
@@ -867,7 +869,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     if vm_extra_config:
         spec = spec_singleton(spec, request, vm)
         extra_config = []
-        for k,v in vm_extra_config.items():
+        for k, v in vm_extra_config.items():
             ec = spec.new_extraConfig()
             ec.set_element_key(str(k))
             ec.set_element_value(str(v))
@@ -987,7 +989,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
         spec = spec_singleton(spec, request, vm)
 
         # Get a list of the VM's hard drives
-        dev_list = [d for d in vm.properties.config.hardware.device if d._type=='VirtualDisk']
+        dev_list = [d for d in vm.properties.config.hardware.device if d._type == 'VirtualDisk']
         if len(vm_disk) > len(dev_list):
             vsphere_client.disconnect()
             module.fail_json(msg="Error in vm_disk definition. Too many disks defined in comparison to the VM's disk profile.")
@@ -1071,102 +1073,102 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
 
 
 def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_nic, cluster_name=None):
-        s = vsphere_client
-        nics = {}
-        request = VI.ReconfigVM_TaskRequestMsg()
-        _this = request.new__this(vm._mor)
-        _this.set_attribute_type(vm._mor.get_attribute_type())
-        request.set_element__this(_this)
-        nic_changes = []
-        datacenter = esxi['datacenter']
-        # Datacenter managed object reference
-        dclist = [k for k,
-             v in vsphere_client.get_datacenters().items() if v == datacenter]
-        if dclist:
-            dcmor=dclist[0]
-        else:
-            vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
-        dcprops = VIProperty(vsphere_client, dcmor)
-        nfmor = dcprops.networkFolder._obj
-        for k,v in vm_nic.items():
-            nicNum = k[len(k) -1]
-            if vm_nic[k]['network_type'] == 'dvs':
-                portgroupKey = find_portgroup_key(module, s, nfmor, vm_nic[k]['network'])
-                todvs = True
-            elif vm_nic[k]['network_type'] == 'standard':
-                todvs = False
-            # Detect cards that need to be changed and network type (and act accordingly)
-            for dev in vm.properties.config.hardware.device:
-                if dev._type in ["VirtualE1000", "VirtualE1000e",
-                                 "VirtualPCNet32", "VirtualVmxnet",
-                                 "VirtualNmxnet2", "VirtualVmxnet3"]:
-                    devNum = dev.deviceInfo.label[len(dev.deviceInfo.label) - 1]
-                    if devNum == nicNum:
-                        fromdvs = dev.deviceInfo.summary.split(':')[0] == 'DVSwitch'
-                        if todvs and fromdvs:
-                            if dev.backing.port._obj.get_element_portgroupKey() != portgroupKey:
-                                nics[k] = (dev, portgroupKey, 1)
-                        elif fromdvs and not todvs:
+    s = vsphere_client
+    nics = {}
+    request = VI.ReconfigVM_TaskRequestMsg()
+    _this = request.new__this(vm._mor)
+    _this.set_attribute_type(vm._mor.get_attribute_type())
+    request.set_element__this(_this)
+    nic_changes = []
+    datacenter = esxi['datacenter']
+    # Datacenter managed object reference
+    dclist = [k for k,
+              v in vsphere_client.get_datacenters().items() if v == datacenter]
+    if dclist:
+        dcmor = dclist[0]
+    else:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
+    dcprops = VIProperty(vsphere_client, dcmor)
+    nfmor = dcprops.networkFolder._obj
+    for k, v in vm_nic.items():
+        nicNum = k[len(k) - 1]
+        if vm_nic[k]['network_type'] == 'dvs':
+            portgroupKey = find_portgroup_key(module, s, nfmor, vm_nic[k]['network'])
+            todvs = True
+        elif vm_nic[k]['network_type'] == 'standard':
+            todvs = False
+        # Detect cards that need to be changed and network type (and act accordingly)
+        for dev in vm.properties.config.hardware.device:
+            if dev._type in ["VirtualE1000", "VirtualE1000e",
+                             "VirtualPCNet32", "VirtualVmxnet",
+                             "VirtualNmxnet2", "VirtualVmxnet3"]:
+                devNum = dev.deviceInfo.label[len(dev.deviceInfo.label) - 1]
+                if devNum == nicNum:
+                    fromdvs = dev.deviceInfo.summary.split(':')[0] == 'DVSwitch'
+                    if todvs and fromdvs:
+                        if dev.backing.port._obj.get_element_portgroupKey() != portgroupKey:
+                            nics[k] = (dev, portgroupKey, 1)
+                    elif fromdvs and not todvs:
+                        nics[k] = (dev, '', 2)
+                    elif not fromdvs and todvs:
+                        nics[k] = (dev, portgroupKey, 3)
+                    elif not fromdvs and not todvs:
+                        if dev.backing._obj.get_element_deviceName() != vm_nic[k]['network']:
                             nics[k] = (dev, '', 2)
-                        elif not fromdvs and todvs:
-                            nics[k] = (dev, portgroupKey, 3)
-                        elif not fromdvs and not todvs:
-                            if dev.backing._obj.get_element_deviceName() != vm_nic[k]['network']:
-                                nics[k] = (dev, '', 2)
-                            else:
-                                pass
                         else:
-                            module.exit_json()
+                            pass
+                    else:
+                        module.exit_json()
 
-        if len(nics) > 0:
-            for nic, obj in nics.items():
-                """
-                1,2 and 3 are used to mark which action should be taken
-                1 = from a distributed switch to a distributed switch
-                2 = to a standard switch
-                3 = to a distributed switch
-                """
-                dev = obj[0]
-                pgKey = obj[1]
-                dvsKey = obj[2]
-                if dvsKey == 1:
-                    dev.backing.port._obj.set_element_portgroupKey(pgKey)
-                    dev.backing.port._obj.set_element_portKey('')
-                if dvsKey == 3:
-                    dvswitch_uuid = find_dvswitch_uuid(module, s, nfmor, pgKey)
-                    nic_backing_port = VI.ns0.DistributedVirtualSwitchPortConnection_Def(
-                        "nic_backing_port").pyclass()
-                    nic_backing_port.set_element_switchUuid(dvswitch_uuid)
-                    nic_backing_port.set_element_portgroupKey(pgKey)
-                    nic_backing_port.set_element_portKey('')
-                    nic_backing = VI.ns0.VirtualEthernetCardDistributedVirtualPortBackingInfo_Def(
-                        "nic_backing").pyclass()
-                    nic_backing.set_element_port(nic_backing_port)
-                    dev._obj.set_element_backing(nic_backing)
-                if dvsKey == 2:
-                    nic_backing = VI.ns0.VirtualEthernetCardNetworkBackingInfo_Def(
-                        "nic_backing").pyclass()
-                    nic_backing.set_element_deviceName(vm_nic[nic]['network'])
-                    dev._obj.set_element_backing(nic_backing)
-            for nic, obj in nics.items():
-                dev = obj[0]
-                spec = request.new_spec()
-                nic_change = spec.new_deviceChange()
-                nic_change.set_element_device(dev._obj)
-                nic_change.set_element_operation("edit")
-                nic_changes.append(nic_change)
-            spec.set_element_deviceChange(nic_changes)
-            request.set_element_spec(spec)
-            ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
-            task = VITask(ret, vsphere_client)
-            status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
-            if status == task.STATE_SUCCESS:
-                return(True)
-            elif status == task.STATE_ERROR:
-                module.fail_json(msg="Could not change network %s" % task.get_error_message())
-        elif len(nics) == 0:
-            return(False)
+    if len(nics) > 0:
+        for nic, obj in nics.items():
+            """
+            1,2 and 3 are used to mark which action should be taken
+            1 = from a distributed switch to a distributed switch
+            2 = to a standard switch
+            3 = to a distributed switch
+            """
+            dev = obj[0]
+            pgKey = obj[1]
+            dvsKey = obj[2]
+            if dvsKey == 1:
+                dev.backing.port._obj.set_element_portgroupKey(pgKey)
+                dev.backing.port._obj.set_element_portKey('')
+            if dvsKey == 3:
+                dvswitch_uuid = find_dvswitch_uuid(module, s, nfmor, pgKey)
+                nic_backing_port = VI.ns0.DistributedVirtualSwitchPortConnection_Def(
+                    "nic_backing_port").pyclass()
+                nic_backing_port.set_element_switchUuid(dvswitch_uuid)
+                nic_backing_port.set_element_portgroupKey(pgKey)
+                nic_backing_port.set_element_portKey('')
+                nic_backing = VI.ns0.VirtualEthernetCardDistributedVirtualPortBackingInfo_Def(
+                    "nic_backing").pyclass()
+                nic_backing.set_element_port(nic_backing_port)
+                dev._obj.set_element_backing(nic_backing)
+            if dvsKey == 2:
+                nic_backing = VI.ns0.VirtualEthernetCardNetworkBackingInfo_Def(
+                    "nic_backing").pyclass()
+                nic_backing.set_element_deviceName(vm_nic[nic]['network'])
+                dev._obj.set_element_backing(nic_backing)
+        for nic, obj in nics.items():
+            dev = obj[0]
+            spec = request.new_spec()
+            nic_change = spec.new_deviceChange()
+            nic_change.set_element_device(dev._obj)
+            nic_change.set_element_operation("edit")
+            nic_changes.append(nic_change)
+        spec.set_element_deviceChange(nic_changes)
+        request.set_element_spec(spec)
+        ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
+        task = VITask(ret, vsphere_client)
+        status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
+        if status == task.STATE_SUCCESS:
+            return(True)
+        elif status == task.STATE_ERROR:
+            module.fail_json(msg="Could not change network %s" % task.get_error_message())
+    elif len(nics) == 0:
+        return(False)
 
 
 def _build_folder_tree(nodes, parent):
@@ -1217,9 +1219,9 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     esxi_hostname = esxi['hostname']
     # Datacenter managed object reference
     dclist = [k for k,
-             v in vsphere_client.get_datacenters().items() if v == datacenter]
+              v in vsphere_client.get_datacenters().items() if v == datacenter]
     if dclist:
-        dcmor=dclist[0]
+        dcmor = dclist[0]
     else:
         vsphere_client.disconnect()
         module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
@@ -1418,7 +1420,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                     " to be specified." % vm_hardware['vm_floppy'])
         # Add a floppy to the VM.
         add_floppy(module, vsphere_client, config_target, config, devices,
-                  default_devs, floppy_type, floppy_image_path)
+                   default_devs, floppy_type, floppy_image_path)
     if vm_nic:
         for nic in sorted(vm_nic):
             try:
@@ -1478,7 +1480,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         # Power on the VM if it was requested
         power_state(vm, state, True)
 
-        vmfacts=gather_facts(vm)
+        vmfacts = gather_facts(vm)
         vsphere_client.disconnect()
         module.exit_json(
             ansible_facts=vmfacts,
@@ -1578,13 +1580,13 @@ def gather_facts(vm):
         'module_hw': True,
         'hw_name': vm.properties.name,
         'hw_power_status': vm.get_status(),
-        'hw_guest_full_name':  vm.properties.config.guestFullName,
+        'hw_guest_full_name': vm.properties.config.guestFullName,
         'hw_guest_id': vm.properties.config.guestId,
         'hw_product_uuid': vm.properties.config.uuid,
         'hw_instance_uuid': vm.properties.config.instanceUuid,
         'hw_processor_count': vm.properties.config.hardware.numCPU,
         'hw_memtotal_mb': vm.properties.config.hardware.memoryMB,
-        'hw_interfaces':[],
+        'hw_interfaces': [],
     }
     netInfo = vm.get_property('net')
     netDict = {}
@@ -1607,7 +1609,7 @@ def gather_facts(vm):
             'macaddress_dash': entry.macAddress.replace(':', '-'),
             'summary': entry.deviceInfo.summary,
         }
-        facts['hw_interfaces'].append('eth'+str(ifidx))
+        facts['hw_interfaces'].append('eth' + str(ifidx))
 
         ifidx += 1
 
@@ -1752,7 +1754,7 @@ def main():
 
         ),
         supports_check_mode=False,
-        mutually_exclusive=[['state', 'vmware_guest_facts'],['state', 'from_template']],
+        mutually_exclusive=[['state', 'vmware_guest_facts'], ['state', 'from_template']],
         required_together=[
             ['state', 'force'],
             [
@@ -1790,28 +1792,23 @@ def main():
     power_on_after_clone = module.params['power_on_after_clone']
     validate_certs = module.params['validate_certs']
 
-
     # CONNECT TO THE SERVER
     viserver = VIServer()
     if validate_certs and not hasattr(ssl, 'SSLContext') and not vcenter_hostname.startswith('http://'):
         module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set '
                              'validate_certs=False on the task')
 
+    if not validate_certs:
+        ssl._create_default_https_context = ssl._create_unverified_context
+
     try:
         viserver.connect(vcenter_hostname, username, password)
     except ssl.SSLError as sslerr:
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror:
-            if not validate_certs:
-                ssl._create_default_https_context
-                ssl._create_default_https_context = ssl._create_unverified_context
-                viserver.connect(vcenter_hostname, username, password)
-            else:
-                module.fail_json(msg='Unable to validate the certificate of the vcenter host %s' % vcenter_hostname)
-        else:
-            raise
-    except VIApiException as err:
-        module.fail_json(msg="Cannot connect to %s: %s" %
-                         (vcenter_hostname, to_native(err)),
+        module.fail_json(msg='Unable to validate the certificate of the vcenter hostname %s. Due to %s' % (vcenter_hostname, sslerr))
+    except socket.gaierror as err:
+        module.fail_json(msg="Unable to resolve name for vcenter hostname: %s. Due to %s" % (vcenter_hostname, to_native(err)))
+    except (TypeError, VIApiException) as err:
+        module.fail_json(msg="Cannot connect to %s: %s" % (vcenter_hostname, to_native(err)),
                          exception=traceback.format_exc())
 
     # Check if the VM exists before continuing
@@ -1899,9 +1896,8 @@ def main():
 
         # check if user is trying to perform state operation on a vm which doesn't exists
         elif state in ['present', 'powered_off', 'powered_on'] and not all((vm_extra_config,
-                                                       vm_hardware, vm_disk, vm_nic, esxi)):
+                                                                            vm_hardware, vm_disk, vm_nic, esxi)):
             module.exit_json(changed=False, msg="vm %s not present" % guest)
-
 
         # Create the VM
         elif state in ['present', 'powered_off', 'powered_on']:

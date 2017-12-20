@@ -188,26 +188,26 @@ def main():
             state=dict(required=False, choices=['present', 'absent']),
             solo=dict(required=False, type='bool'),
         ),
-        required_together = (
+        required_together=(
             ['record', 'value']
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     if not HAS_DNSIMPLE:
         module.fail_json(msg="dnsimple required for this module")
 
-    account_email     = module.params.get('account_email')
+    account_email = module.params.get('account_email')
     account_api_token = module.params.get('account_api_token')
-    domain            = module.params.get('domain')
-    record            = module.params.get('record')
-    record_ids        = module.params.get('record_ids')
-    record_type       = module.params.get('type')
-    ttl               = module.params.get('ttl')
-    value             = module.params.get('value')
-    priority          = module.params.get('priority')
-    state             = module.params.get('state')
-    is_solo           = module.params.get('solo')
+    domain = module.params.get('domain')
+    record = module.params.get('record')
+    record_ids = module.params.get('record_ids')
+    record_type = module.params.get('type')
+    ttl = module.params.get('ttl')
+    value = module.params.get('value')
+    priority = module.params.get('priority')
+    state = module.params.get('state')
+    is_solo = module.params.get('solo')
 
     if account_email and account_api_token:
         client = DNSimple(email=account_email, api_token=account_api_token)
@@ -278,7 +278,7 @@ def main():
                     if rr['ttl'] != ttl or rr['prio'] != priority:
                         data = {}
                         if ttl:
-                            data['ttl']  = ttl
+                            data['ttl'] = ttl
                         if priority:
                             data['prio'] = priority
                         if module.check_mode:
@@ -290,12 +290,12 @@ def main():
                 else:
                     # create it
                     data = {
-                        'name':        record,
+                        'name': record,
                         'record_type': record_type,
-                        'content':     value,
+                        'content': value,
                     }
                     if ttl:
-                        data['ttl']  = ttl
+                        data['ttl'] = ttl
                     if priority:
                         data['prio'] = priority
                     if module.check_mode:
@@ -315,7 +315,7 @@ def main():
         # Make sure these record_ids either all exist or none
         if domain and record_ids:
             current_records = [str(r['record']['id']) for r in client.records(str(domain))]
-            wanted_records  = [str(r) for r in record_ids]
+            wanted_records = [str(r) for r in record_ids]
             if state == 'present':
                 difference = list(set(wanted_records) - set(current_records))
                 if difference:

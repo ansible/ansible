@@ -133,7 +133,7 @@ EXAMPLES = r'''
     attributes:
       managedPipelineMode: Classic
       processModel.identityType: SpecificUser
-      processModel.username: '{{ansible_user}}'
+      processModel.userName: '{{ansible_user}}'
       processModel.password: '{{ansible_password}}'
       processModel.loadUserProfile: True
 
@@ -144,6 +144,7 @@ EXAMPLES = r'''
     attributes:
       # Timespan with full string "day:hour:minute:second.millisecond"
       recycling.periodicRestart.time: "00:00:05:00.000000"
+      recycling.periodicRestart.schedule: ["00:10:00", "05:30:00"]
       # Shortened timespan "hour:minute:second"
       processModel.pingResponseTime: "00:03:00"
 '''

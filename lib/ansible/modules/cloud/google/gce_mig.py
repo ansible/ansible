@@ -339,7 +339,7 @@ def _validate_autoscaling_params(params):
         {'name': 'name', 'required': True, 'type': str},
         {'name': 'enabled', 'required': True, 'type': bool},
         {'name': 'policy', 'required': True, 'type': dict}
-    ] # yapf: disable
+    ]  # yapf: disable
 
     (as_req_valid, as_req_msg) = _check_params(params['autoscaling'],
                                                as_req_fields)
@@ -351,7 +351,7 @@ def _validate_autoscaling_params(params):
         {'name': 'max_instances', 'required': True, 'type': int},
         {'name': 'min_instances', 'required': False, 'type': int},
         {'name': 'cool_down_period', 'required': False, 'type': int}
-    ] # yapf: disable
+    ]  # yapf: disable
 
     (as_policy_valid, as_policy_msg) = _check_params(
         params['autoscaling']['policy'], as_policy_fields)
@@ -385,7 +385,7 @@ def _validate_named_port_params(params):
     req_fields = [
         {'name': 'name', 'required': True, 'type': str},
         {'name': 'port', 'required': True, 'type': int}
-    ] # yapf: disable
+    ]  # yapf: disable
 
     for np in params['named_ports']:
         (valid_named_ports, np_msg) = _check_params(np, req_fields)
@@ -395,7 +395,7 @@ def _validate_named_port_params(params):
     return (True, '')
 
 
-def _get_instance_list(mig, field='name', filter_list=['NONE']):
+def _get_instance_list(mig, field='name', filter_list=None):
     """
     Helper to grab field from instances response.
 
@@ -414,6 +414,8 @@ def _get_instance_list(mig, field='name', filter_list=['NONE']):
     :return: List of strings from list_managed_instances response.
     :rtype: ``list``
     """
+    filter_list = ['NONE'] if filter_list is None else filter_list
+
     return [x[field] for x in mig.list_managed_instances()
             if x['currentAction'] in filter_list]
 
@@ -770,7 +772,7 @@ def main():
             req_create_fields = [
                 {'name': 'template', 'required': True, 'type': str},
                 {'name': 'size', 'required': True, 'type': int}
-            ] # yapf: disable
+            ]  # yapf: disable
 
             (valid_create_fields, valid_create_msg) = _check_params(
                 params, req_create_fields)

@@ -18,10 +18,11 @@ description:
      - Executes a low-down and dirty telnet command, not going through the module subsystem.
      - This is mostly to be used for enabling ssh on devices that only have telnet enabled by default.
 options:
-  commands:
+  command:
     description:
       - List of commands to be executed in the telnet session.
     required: True
+    aliases: ['commands']
   host:
     description:
         - The host/target on which to execute the command
@@ -67,7 +68,7 @@ EXAMPLES = '''
     login_prompt: "Username: "
     prompts:
       - "[>|#]"
-    commands:
+    command:
       - terminal length 0
       - configure terminal
       - hostname ios01
@@ -79,8 +80,9 @@ EXAMPLES = '''
     login_prompt: "Username: "
     prompts:
       - "[>|#]"
-    commands:
+    command:
       - terminal length 0
+      - show version
 '''
 
 RETURN = '''

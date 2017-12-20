@@ -12,8 +12,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-'''
-DOCUMENTATION:
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+DOCUMENTATION = '''
     strategy: debug
     short_description: Executes tasks in interactive debug session.
     description:
@@ -21,9 +23,6 @@ DOCUMENTATION:
     version_added: "2.1"
     author: Kishin Yagami
 '''
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import cmd
 import pprint

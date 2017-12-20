@@ -43,104 +43,75 @@ options:
   account:
     description:
       - Account the volume is related to.
-    required: false
-    default: null
   custom_id:
     description:
       - Custom id to the resource.
       - Allowed to Root Admins only.
-    required: false
-    default: null
   disk_offering:
     description:
       - Name of the disk offering to be used.
       - Required one of C(disk_offering), C(snapshot) if volume is not already C(state=present).
-    required: false
-    default: null
   display_volume:
     description:
       - Whether to display the volume to the end user or not.
       - Allowed to Root Admins only.
-    required: false
     default: true
   domain:
     description:
       - Name of the domain the volume to be deployed in.
-    required: false
-    default: null
   max_iops:
     description:
       - Max iops
-    required: false
-    default: null
   min_iops:
     description:
       - Min iops
-    required: false
-    default: null
   project:
     description:
       - Name of the project the volume to be deployed in.
-    required: false
-    default: null
   size:
     description:
       - Size of disk in GB
-    required: false
-    default: null
   snapshot:
     description:
       - The snapshot name for the disk volume.
       - Required one of C(disk_offering), C(snapshot) if volume is not already C(state=present).
-    required: false
-    default: null
   force:
     description:
       - Force removal of volume even it is attached to a VM.
       - Considered on C(state=absnet) only.
-    required: false
     default: false
   shrink_ok:
     description:
       - Whether to allow to shrink the volume.
-    required: false
     default: false
   vm:
     description:
       - Name of the virtual machine to attach the volume to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the volume should be deployed.
       - If not set, default zone is used.
-    required: false
-    default: null
   state:
     description:
       - State of the volume.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent', 'attached', 'detached' ]
+    default: present
+    choices: [ present, absent, attached, detached ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
     default: true
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "To delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
     aliases: [ 'tag' ]
     version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create volume within project, zone with specified storage options
-- local_action:
+- name: create volume within project and zone with specified storage options
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     project: Integration
@@ -148,8 +119,8 @@ EXAMPLES = '''
     disk_offering: PerfPlus Storage
     size: 20
 
-# Create/attach volume to instance
-- local_action:
+- name: create/attach volume to instance
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     disk_offering: PerfPlus Storage
@@ -157,14 +128,14 @@ EXAMPLES = '''
     vm: web-vm-1
     state: attached
 
-# Detach volume
-- local_action:
+- name: detach volume
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     state: detached
 
-# Remove volume
-- local_action:
+- name: remove volume
+  local_action:
     module: cs_volume
     name: web-vm-1-volume
     state: absent
@@ -243,8 +214,12 @@ device_id:
   sample: 1
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    cs_required_together,
+    cs_argument_spec
+)
 
 
 class AnsibleCloudStackVolume(AnsibleCloudStack):
@@ -252,41 +227,26 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackVolume, self).__init__(module)
         self.returns = {
-            'group':            'group',
-            'attached':         'attached',
-            'vmname':           'vm',
-            'deviceid':         'device_id',
-            'type':             'type',
-            'size':             'size',
+            'group': 'group',
+            'attached': 'attached',
+            'vmname': 'vm',
+            'deviceid': 'device_id',
+            'type': 'type',
+            'size': 'size',
         }
         self.volume = None
 
-    #TODO implement in cloudstack utils
-    def get_disk_offering(self, key=None):
-        disk_offering = self.module.params.get('disk_offering')
-        if not disk_offering:
-            return None
-
-        # Do not add domain filter for disk offering listing.
-        disk_offerings = self.cs.listDiskOfferings()
-        if disk_offerings:
-            for d in disk_offerings['diskoffering']:
-                if disk_offering in [d['displaytext'], d['name'], d['id']]:
-                    return self._get_by_key(key, d)
-        self.module.fail_json(msg="Disk offering '%s' not found" % disk_offering)
-
-
     def get_volume(self):
         if not self.volume:
-            args = {}
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
-            args['projectid'] = self.get_project(key='id')
-            args['zoneid'] = self.get_zone(key='id')
-            args['displayvolume'] = self.module.params.get('display_volume')
-            args['type'] = 'DATADISK'
-
-            volumes = self.cs.listVolumes(**args)
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+                'zoneid': self.get_zone(key='id'),
+                'displayvolume': self.module.params.get('display_volume'),
+                'type': 'DATADISK',
+            }
+            volumes = self.query_api('listVolumes', **args)
             if volumes:
                 volume_name = self.module.params.get('name')
                 for v in volumes['volume']:
@@ -295,23 +255,21 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
                         break
         return self.volume
 
-
     def get_snapshot(self, key=None):
         snapshot = self.module.params.get('snapshot')
         if not snapshot:
             return None
 
-        args = {}
-        args['name'] = snapshot
-        args['account'] = self.get_account('name')
-        args['domainid'] = self.get_domain('id')
-        args['projectid'] = self.get_project('id')
-
-        snapshots = self.cs.listSnapshots(**args)
+        args = {
+            'name': snapshot,
+            'account': self.get_account('name'),
+            'domainid': self.get_domain('id'),
+            'projectid': self.get_project('id'),
+        }
+        snapshots = self.query_api('listSnapshots', **args)
         if snapshots:
             return self._get_by_key(key, snapshots['snapshot'][0])
         self.module.fail_json(msg="Snapshot with name %s not found" % snapshot)
-
 
     def present_volume(self):
         volume = self.get_volume()
@@ -326,21 +284,21 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
 
             self.result['changed'] = True
 
-            args = {}
-            args['name'] = self.module.params.get('name')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
-            args['diskofferingid'] = disk_offering_id
-            args['displayvolume'] = self.module.params.get('display_volume')
-            args['maxiops'] = self.module.params.get('max_iops')
-            args['miniops'] = self.module.params.get('min_iops')
-            args['projectid'] = self.get_project(key='id')
-            args['size'] = self.module.params.get('size')
-            args['snapshotid'] = snapshot_id
-            args['zoneid'] = self.get_zone(key='id')
-
+            args = {
+                'name': self.module.params.get('name'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'diskofferingid': disk_offering_id,
+                'displayvolume': self.module.params.get('display_volume'),
+                'maxiops': self.module.params.get('max_iops'),
+                'miniops': self.module.params.get('min_iops'),
+                'projectid': self.get_project(key='id'),
+                'size': self.module.params.get('size'),
+                'snapshotid': snapshot_id,
+                'zoneid': self.get_zone(key='id')
+            }
             if not self.module.check_mode:
-                res = self.cs.createVolume(**args)
+                res = self.query_api('createVolume', **args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 poll_async = self.module.params.get('poll_async')
@@ -348,10 +306,9 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
                     volume = self.poll_job(res, 'volume')
         if volume:
             volume = self.ensure_tags(resource=volume, resource_type='Volume')
-            self.volume=volume
+            self.volume = volume
 
         return volume
-
 
     def attached_volume(self):
         volume = self.present_volume()
@@ -366,20 +323,17 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             if 'attached' not in volume:
                 self.result['changed'] = True
 
-                args = {}
-                args['id'] = volume['id']
-                args['virtualmachineid'] = self.get_vm(key='id')
-                args['deviceid'] = self.module.params.get('device_id')
-
+                args = {
+                    'id': volume['id'],
+                    'virtualmachineid': self.get_vm(key='id'),
+                    'deviceid': self.module.params.get('device_id'),
+                }
                 if not self.module.check_mode:
-                    res = self.cs.attachVolume(**args)
-                    if 'errortext' in res:
-                        self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                    res = self.query_api('attachVolume', **args)
                     poll_async = self.module.params.get('poll_async')
                     if poll_async:
                         volume = self.poll_job(res, 'volume')
         return volume
-
 
     def detached_volume(self):
         volume = self.present_volume()
@@ -391,14 +345,11 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.detachVolume(id=volume['id'])
-                if 'errortext' in volume:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('detachVolume', id=volume['id'])
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     volume = self.poll_job(res, 'volume')
         return volume
-
 
     def absent_volume(self):
         volume = self.get_volume()
@@ -410,25 +361,21 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             self.result['changed'] = True
             if not self.module.check_mode:
                 volume = self.detached_volume()
-
-                res = self.cs.deleteVolume(id=volume['id'])
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteVolume', id=volume['id'])
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    res = self.poll_job(res, 'volume')
+                    self.poll_job(res, 'volume')
 
         return volume
 
-
     def update_volume(self, volume):
-        args_resize = {}
-        args_resize['id'] = volume['id']
-        args_resize['diskofferingid'] = self.get_disk_offering(key='id')
-        args_resize['maxiops'] = self.module.params.get('max_iops')
-        args_resize['miniops'] = self.module.params.get('min_iops')
-        args_resize['size'] = self.module.params.get('size')
-
+        args_resize = {
+            'id': volume['id'],
+            'diskofferingid': self.get_disk_offering(key='id'),
+            'maxiops': self.module.params.get('max_iops'),
+            'miniops': self.module.params.get('min_iops'),
+            'size': self.module.params.get('size')
+        }
         # change unit from bytes to giga bytes to compare with args
         volume_copy = volume.copy()
         volume_copy['size'] = volume_copy['size'] / (2**30)
@@ -438,9 +385,7 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             self.result['changed'] = True
             if not self.module.check_mode:
                 args_resize['shrinkok'] = self.module.params.get('shrink_ok')
-                res = self.cs.resizeVolume(**args_resize)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('resizeVolume', **args_resize)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     volume = self.poll_job(res, 'volume')
@@ -452,59 +397,53 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        disk_offering = dict(default=None),
-        display_volume = dict(type='bool', default=None),
-        max_iops = dict(type='int', default=None),
-        min_iops = dict(type='int', default=None),
-        size = dict(type='int', default=None),
-        snapshot = dict(default=None),
-        vm = dict(default=None),
-        device_id = dict(type='int', default=None),
-        custom_id = dict(default=None),
-        force = dict(type='bool', default=False),
-        shrink_ok = dict(type='bool', default=False),
-        state = dict(choices=['present', 'absent', 'attached', 'detached'], default='present'),
-        zone = dict(default=None),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        poll_async = dict(type='bool', default=True),
-        tags=dict(type='list', aliases=['tag'], default=None),
+        name=dict(required=True),
+        disk_offering=dict(),
+        display_volume=dict(type='bool'),
+        max_iops=dict(type='int'),
+        min_iops=dict(type='int'),
+        size=dict(type='int'),
+        snapshot=dict(),
+        vm=dict(),
+        device_id=dict(type='int'),
+        custom_id=dict(),
+        force=dict(type='bool', default=False),
+        shrink_ok=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent', 'attached', 'detached'], default='present'),
+        zone=dict(),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag']),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
-        mutually_exclusive = (
+        mutually_exclusive=(
             ['snapshot', 'disk_offering'],
         ),
         supports_check_mode=True
     )
 
-    try:
-        acs_vol = AnsibleCloudStackVolume(module)
+    acs_vol = AnsibleCloudStackVolume(module)
 
-        state = module.params.get('state')
+    state = module.params.get('state')
 
-        if state in ['absent']:
-            volume = acs_vol.absent_volume()
-        elif state in ['attached']:
-            volume = acs_vol.attached_volume()
-        elif state in ['detached']:
-            volume = acs_vol.detached_volume()
-        else:
-            volume = acs_vol.present_volume()
+    if state in ['absent']:
+        volume = acs_vol.absent_volume()
+    elif state in ['attached']:
+        volume = acs_vol.attached_volume()
+    elif state in ['detached']:
+        volume = acs_vol.detached_volume()
+    else:
+        volume = acs_vol.present_volume()
 
-        result = acs_vol.get_result(volume)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_vol.get_result(volume)
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

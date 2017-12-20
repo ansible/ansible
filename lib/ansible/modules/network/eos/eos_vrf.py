@@ -51,8 +51,13 @@ options:
     description: List of VRFs definitions
   purge:
     description:
-      - Purge VRFs not defined in the aggregates parameter.
+      - Purge VRFs not defined in the I(aggregate) parameter.
     default: no
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state arguments.
+    default: 10
   state:
     description:
       - State of the VRF configuration.
@@ -109,9 +114,9 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 def search_obj_in_list(name, lst):
@@ -232,8 +237,10 @@ def check_declarative_intent_params(want, module):
             for i in w['interfaces']:
                 obj_in_have = search_obj_in_list(w['name'], have)
 
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
-                    module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
+                if obj_in_have:
+                    interfaces = obj_in_have.get('interfaces')
+                    if interfaces is not None and i not in interfaces:
+                        module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
 def main():

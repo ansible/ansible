@@ -110,23 +110,23 @@ changed:
     sample: true
 '''
 
+import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
-
-
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -154,7 +154,6 @@ def apply_key_map(key_map, table):
             else:
                 new_dict[new_key] = value
     return new_dict
-
 
 
 def get_commands_config_udld_global(delta, reset):
@@ -223,12 +222,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_one_of=[['aggressive', 'msg_time', 'reset']],
-                                supports_check_mode=True)
+                           required_one_of=[['aggressive', 'msg_time', 'reset']],
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     aggressive = module.params['aggressive']
     msg_time = module.params['msg_time']
@@ -295,4 +292,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

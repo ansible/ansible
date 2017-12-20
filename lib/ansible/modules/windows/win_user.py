@@ -154,3 +154,66 @@ EXAMPLES = r'''
     name: bob
     state: absent
 '''
+
+RETURN = r'''
+account_disabled:
+  description: Whether the user is disabled.
+  returned: user exists
+  type: bool
+  sample: false
+account_locked:
+  description: Whether the user is locked.
+  returned: user exists
+  type: bool
+  sample: false
+description:
+  description: The description set for the user.
+  returned: user exists
+  type: str
+  sample: Username for test
+fullname:
+  description: The full name set for the user.
+  returned: user exists
+  type: str
+  sample: Test Username
+groups:
+  description: A list of groups and their ADSI path the user is a member of.
+  returned: user exists
+  type: list
+  sample: [
+    {
+      "name": "Administrators",
+      "path": "WinNT://WORKGROUP/USER-PC/Administrators"
+    }
+  ]
+name:
+  description: The name of the user
+  returned: always
+  type: str
+  sample: username
+password_expired:
+  description: Whether the password is expired.
+  returned: user exists
+  type: bool
+  sample: false
+password_never_expires:
+  description: Whether the password is set to never expire.
+  returned: user exists
+  type: bool
+  sample: true
+path:
+  description: The ADSI path for the user.
+  returned: user exists
+  type: str
+  sample: "WinNT://WORKGROUP/USER-PC/username"
+sid:
+  description: The SID for the user.
+  returned: user exists
+  type: str
+  sample: S-1-5-21-3322259488-2828151810-3939402796-1001
+user_cannot_change_password:
+  description: Whether the user can change their own password.
+  returned: user exists
+  type: bool
+  sample: false
+'''

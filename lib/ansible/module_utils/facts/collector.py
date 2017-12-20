@@ -1,17 +1,30 @@
-# This file is part of Ansible
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# (c) 2017 Red Hat Inc.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -203,6 +216,28 @@ def build_fact_id_to_collector_map(collectors_for_platform):
     return fact_id_to_collector_map, aliases_map
 
 
+def select_collector_classes(collector_names, all_fact_subsets, all_collector_classes):
+    # TODO: can be a set()
+    seen_collector_classes = []
+
+    selected_collector_classes = []
+
+    for candidate_collector_class in all_collector_classes:
+        candidate_collector_name = candidate_collector_class.name
+
+        if candidate_collector_name not in collector_names:
+            continue
+
+        collector_classes = all_fact_subsets.get(candidate_collector_name, [])
+
+        for collector_class in collector_classes:
+            if collector_class not in seen_collector_classes:
+                selected_collector_classes.append(collector_class)
+                seen_collector_classes.append(collector_class)
+
+    return selected_collector_classes
+
+
 def collector_classes_from_gather_subset(all_collector_classes=None,
                                          valid_subsets=None,
                                          minimal_gather_subset=None,
@@ -248,19 +283,8 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
                                           aliases_map=aliases_map,
                                           platform_info=platform_info)
 
-    # TODO: can be a set()
-    seen_collector_classes = []
-
-    selected_collector_classes = []
-
-    for collector_name in collector_names:
-        collector_classes = all_fact_subsets.get(collector_name, [])
-
-        # TODO? log/warn if we dont find an implementation of a fact_id?
-
-        for collector_class in collector_classes:
-            if collector_class not in seen_collector_classes:
-                selected_collector_classes.append(collector_class)
-                seen_collector_classes.append(collector_class)
+    selected_collector_classes = select_collector_classes(collector_names,
+                                                          all_fact_subsets,
+                                                          all_collector_classes)
 
     return selected_collector_classes

@@ -147,7 +147,7 @@ from ansible.module_utils._text import to_native
 
 
 uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
@@ -170,7 +170,7 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
 
 
 def _create_volume(module, profitbricks, datacenter, name):
@@ -194,7 +194,7 @@ def _create_volume(module, profitbricks, datacenter, name):
             ssh_keys=ssh_keys,
             disk_type=disk_type,
             licence_type=licence_type
-            )
+        )
 
         volume_response = profitbricks.create_volume(datacenter, v)
 

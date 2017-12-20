@@ -1,23 +1,10 @@
 #!powershell
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 #
-# (c) 2017, Dag Wieers <dag@wieers.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 
@@ -82,7 +69,7 @@ $arguments = ""
 
 if ($include_volumes) {
     foreach ($volume in $include_volumes) {
-        if ($volume.Length == 1) {
+        if ($volume.Length -eq 1) {
             $arguments += " $($volume):"
         } else {
             $arguments += " $volume"
@@ -95,7 +82,7 @@ if ($include_volumes) {
 if ($exclude_volumes) {
     $arguments += " /E"
     foreach ($volume in $exclude_volumes) {
-        if ($volume.Length == 1) {
+        if ($volume.Length -eq 1) {
             $arguments += " $($volume):"
         } else {
             $arguments += " $volume"

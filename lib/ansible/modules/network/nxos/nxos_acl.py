@@ -220,8 +220,8 @@ commands:
     type: list
     sample: ["ip access-list ANSIBLE", "10 permit tcp 1.1.1.1/24 any"]
 '''
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -239,11 +239,20 @@ def get_acl(module, acl_name, seq_number):
     acl_body = {}
 
     body = execute_show_command(command, module)[0]
-    all_acl_body = body['TABLE_ip_ipv6_mac']['ROW_ip_ipv6_mac']
+    if body:
+        all_acl_body = body['TABLE_ip_ipv6_mac']['ROW_ip_ipv6_mac']
+    else:
+        # no access-lists configured on the device
+        return {}, []
 
-    for acl in all_acl_body:
-        if acl.get('acl_name') == acl_name:
-            acl_body = acl
+    if isinstance(all_acl_body, dict):
+        # Only 1 ACL configured.
+        if all_acl_body.get('acl_name') == acl_name:
+            acl_body = all_acl_body
+    else:
+        for acl in all_acl_body:
+            if acl.get('acl_name') == acl_name:
+                acl_body = acl
 
     try:
         acl_entries = acl_body['TABLE_seqno']['ROW_seqno']

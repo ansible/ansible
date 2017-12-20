@@ -12,10 +12,16 @@ fi
 
 target="network/ci/"
 
+stage="${S:-prod}"
+provider="${P:-default}"
+
 # python versions to test in order
 # all versions run full tests
 python_versions=(
+    2.6
     2.7
+    3.5
+    3.6
 )
 
 if [ -s /tmp/network.txt ]; then
@@ -25,7 +31,7 @@ if [ -s /tmp/network.txt ]; then
     echo "Running network integration tests for multiple platforms concurrently."
 
     platforms=(
-        --platform vyos/1.1.0
+        --platform vyos/1.1.8
         --platform ios/csr1000v
     )
 else
@@ -33,17 +39,20 @@ else
     echo "Running network integration tests for a single platform only."
 
     platforms=(
-        --platform vyos/1.1.0
+        --platform vyos/1.1.8
     )
 fi
 
-retry.py pip install tox --disable-pip-version-check
-
 for version in "${python_versions[@]}"; do
-    # clean up between test runs until we switch from --tox to --docker
-    rm -rf ~/.ansible/{cp,pc,tmp}/
+    # terminate remote instances on the final python version tested
+    if [ "${version}" = "${python_versions[-1]}" ]; then
+        terminate="always"
+    else
+        terminate="never"
+    fi
 
     # shellcheck disable=SC2086
-    ansible-test network-integration --color -v --retry-on-error "${target}" --tox --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-        "${platforms[@]}"
+    ansible-test network-integration --color -v --retry-on-error "${target}" --docker default --python "${version}" \
+        ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} "${platforms[@]}" \
+        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done

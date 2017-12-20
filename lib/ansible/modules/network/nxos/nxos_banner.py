@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: nxos_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on Cisco NXOS devices
 description:
   - This will configure both exec and motd banners on remote devices
@@ -88,16 +88,19 @@ commands:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+import re
 
 
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
+    platform_regex = 'Nexus.*Switch'
 
-    if state == 'absent' and have.get('text'):
-        commands.append('no banner %s' % module.params['banner'])
+    if state == 'absent':
+        if (have.get('text') and not ((have.get('text') == 'User Access Verification') or re.match(platform_regex, have.get('text')))):
+            commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present' and want.get('text') != have.get('text'):
         banner_cmd = 'banner %s @\n%s\n@' % (module.params['banner'], want['text'].strip())
@@ -107,7 +110,11 @@ def map_obj_to_commands(want, have, module):
 
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show banner %s' % module.params['banner']])[0]
+    output = run_commands(module, ['show banner %s' % module.params['banner']], False)[0]
+
+    if "Invalid command" in output:
+        module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
+
     if isinstance(output, dict):
         output = list(output.values())[0]
 
@@ -148,6 +155,7 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
+
     check_args(module, warnings)
 
     result = {'changed': False}
@@ -155,7 +163,6 @@ def main():
         result['warnings'] = warnings
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-
     commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 

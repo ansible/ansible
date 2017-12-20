@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/save.yaml"
+- debug: msg="START cli/save.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -10,12 +10,14 @@
       - interface Ethernet2
     match: none
     provider: "{{ cli }}"
+  become: yes
 
 
 - name: save config always
   eos_config:
     save_when: always
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -26,10 +28,11 @@
   eos_config:
     save_when: always
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
     that:
       - "result.changed == true"
 
-- debug: msg="END cli/save.yaml"
+- debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

@@ -75,15 +75,15 @@ def main():
     def monit_version():
         rc, out, err = module.run_command('%s -V' % MONIT, check_rc=True)
         version_line = out.split('\n')[0]
-        version = re.search("[0-9]+\.[0-9]+", version_line).group().split('.')
+        version = re.search(r"[0-9]+\.[0-9]+", version_line).group().split('.')
         # Use only major and minor even if there are more these should be enough
         return int(version[0]), int(version[1])
 
-    def is_version_higher_than_18():
-        return MONIT_MAJOR_VERSION > 3 or MONIT_MAJOR_VERSION == 3 and MONIT_MINOR_VERSION > 18
+    def is_version_higher_than_5_18():
+        return (MONIT_MAJOR_VERSION, MONIT_MINOR_VERSION) > (5, 18)
 
     def parse(parts):
-        if is_version_higher_than_18():
+        if is_version_higher_than_5_18():
             return parse_current(parts)
         else:
             return parse_older_versions(parts)
@@ -100,7 +100,7 @@ def main():
         else:
             return ''
 
-    def status():
+    def get_status():
         """Return the status of the process in monit, or the empty string if not present."""
         rc, out, err = module.run_command('%s %s' % (MONIT, SUMMARY_COMMAND), check_rc=True)
         for line in out.split('\n'):
@@ -111,20 +111,19 @@ def main():
             if parts != '':
                 return parts
 
-        else:
-            return ''
+        return ''
 
     def run_command(command):
         """Runs a monit command, and returns the new status."""
         module.run_command('%s %s %s' % (MONIT, command, name), check_rc=True)
-        return status()
+        return get_status()
 
     def wait_for_monit_to_stop_pending():
         """Fails this run if there is no status or it's pending/initializing for timeout"""
         timeout_time = time.time() + timeout
         sleep_time = 5
 
-        running_status = status()
+        running_status = get_status()
         while running_status == '' or 'pending' in running_status or 'initializing' in running_status:
             if time.time() >= timeout_time:
                 module.fail_json(
@@ -135,11 +134,11 @@ def main():
                 )
 
             time.sleep(sleep_time)
-            running_status = status()
+            running_status = get_status()
 
     MONIT_MAJOR_VERSION, MONIT_MINOR_VERSION = monit_version()
 
-    SUMMARY_COMMAND = ('summary', 'summary -B')[is_version_higher_than_18()]
+    SUMMARY_COMMAND = ('summary', 'summary -B')[is_version_higher_than_5_18()]
 
     if state == 'reloaded':
         if module.check_mode:
@@ -150,7 +149,7 @@ def main():
         wait_for_monit_to_stop_pending()
         module.exit_json(changed=True, name=name, state=state)
 
-    present = status() != ''
+    present = get_status() != ''
 
     if not present and not state == 'present':
         module.fail_json(msg='%s process not presently configured with monit' % name, name=name, state=state)
@@ -166,7 +165,7 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     wait_for_monit_to_stop_pending()
-    running = 'running' in status()
+    running = 'running' in get_status()
 
     if running and state in ['started', 'monitored']:
         module.exit_json(changed=False, name=name, state=state)

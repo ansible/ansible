@@ -95,6 +95,10 @@ options:
     description:
     - Name of an existing tenant.
     aliases: [ tenant_name ]
+  vm_provider:
+    description:
+    - The VM platform for VMM Domains.
+    choices: [ microsoft, openstack, vmware ]
 extends_documentation_fragment: aci
 '''
 
@@ -102,10 +106,10 @@ EXAMPLES = r''' # '''
 
 RETURN = r''' # '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-VM_PROVIDER_MAPPING = dict(vmware="uni/vmmp-VMware/dom-")
+VM_PROVIDER_MAPPING = dict(microsoft="uni/vmmp-Microsoft/dom-", openstack="uni/vmmp-OpenStack/dom-", vmware="uni/vmmp-VMware/dom-")
 
 
 def main():
@@ -121,10 +125,10 @@ def main():
         epg=dict(type='str', aliases=['name', 'epg_name']),
         netflow=dict(type='str', choices=['disabled', 'enabled']),
         primary_encap=dict(type='int'),
-        resolution_immediacy=dict(type='str', choices=['immdediate', 'lazy', 'pre-provision']),
+        resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        vm_provider=dict(type='str', choices=['vmware']),  # TODO: Find out OVS and Hyper-V options
+        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'vmware']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
@@ -139,6 +143,7 @@ def main():
     )
 
     allow_useg = module.params['allow_useg']
+    ap = module.params['ap']
     deploy_immediacy = module.params['deploy_immediacy']
     domain = module.params['domain']
     domain_type = module.params['domain_type']
@@ -150,6 +155,7 @@ def main():
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
     encap_mode = module.params['encap_mode']
+    epg = module.params['epg']
     netflow = module.params['netflow']
     primary_encap = module.params['primary_encap']
     if primary_encap is not None:
@@ -159,18 +165,47 @@ def main():
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
     resolution_immediacy = module.params['resolution_immediacy']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     if domain_type == 'phys' and vm_provider is not None:
         module.fail_json(msg="Domain type 'phys' cannot have a 'vm_provider'")
 
-    # Compile the full domain and add it to module.params for URL building
+    # Compile the full domain for URL building
     if domain_type == 'vmm':
-        module.params["epg_domain"] = VM_PROVIDER_MAPPING[vm_provider] + domain
+        epg_domain = '{}{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     elif domain_type is not None:
-        module.params["epg_domain"] = 'uni/phys-' + domain
+        epg_domain = 'uni/phys-{}'.format(domain)
+    else:
+        epg_domain = None
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant", subclass_1="ap", subclass_2="epg", subclass_3="epg_domain")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{}'.format(ap),
+            filter_target='eq(fvAp.name, "{}")'.format(ap),
+            module_object=ap,
+        ),
+        subclass_2=dict(
+            aci_class='fvAEPg',
+            aci_rn='epg-{}'.format(epg),
+            filter_target='eq(fvTenant.name, "{}")'.format(epg),
+            module_object=epg,
+        ),
+        subclass_3=dict(
+            aci_class='fvRsDomAtt',
+            aci_rn='rsdomAtt-[{}]'.format(epg_domain),
+            filter_target='eq(fvRsDomAtt.tDn, "{}")'.format(epg_domain),
+            module_object=epg_domain,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -196,9 +231,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Pop the epg_domain key that was added for URL building
-    module.params.pop("epg_domain")
 
     module.exit_json(**aci.result)
 

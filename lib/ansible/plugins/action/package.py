@@ -43,9 +43,9 @@ class ActionModule(ActionBase):
         if module == 'auto':
             try:
                 if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['ansible_pkg_mgr']}}" % self._task.delegate_to)
+                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
                 else:
-                    module = self._templar.template('{{ansible_facts["ansible_pkg_mgr"]}}')
+                    module = self._templar.template('{{ansible_facts.pkg_mgr}}')
             except:
                 pass  # could not get it from template!
 
@@ -66,7 +66,7 @@ class ActionModule(ActionBase):
                     del new_module_args['use']
 
                 display.vvvv("Running %s" % module)
-                result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async))
+                result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
         else:
             result['failed'] = True
             result['msg'] = 'Could not detect which package manager to use. Try gathering facts or setting the "use" option.'

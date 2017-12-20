@@ -1,8 +1,8 @@
 # Guidelines for AWS modules
 
 The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
-further information see 
-[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).  
+further information see
+[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
 If you are planning to contribute AWS modules to Ansible then getting in touch with the the working
 group will be a good way to start, especially because a similar module may already be under
 development.
@@ -57,12 +57,14 @@ else:
 
 The `ansible.module_utils.ec2` module and `ansible.module_utils.core.aws` modules will both
 automatically import boto3 and botocore.  If boto3 is missing from the system then the variable
-HAS_BOTO3 will be set to false.  Normally, this means that modules don't need to import either
-botocore or boto3 directly.
+`HAS_BOTO3` will be set to false.  Normally, this means that modules don't need to import either
+botocore or boto3 directly. There is no need to check `HAS_BOTO3` when using AnsibleAWSModule
+as the module does that check.
 
 If you want to import the modules anyway (for example `from botocore.exception import
-ClientError`) Wrap import statements in a try block and fail the module later using HAS_BOTO3 if
-the import fails.
+ClientError`) Wrap import statements in a try block and fail the module later using `HAS_BOTO3` if
+the import fails. See below as well (`Exception Handling for boto3 and botocore`) for more detail
+on how to safely import botocore exceptions.
 
 #### boto
 
@@ -83,7 +85,15 @@ def main():
 #### boto3
 
 ```python
-from ansible.module_utils.aws.core import HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
+```
+
+or
+
+```python
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO3
+
 
 def main():
 
@@ -94,7 +104,7 @@ def main():
 #### boto and boto3 combined
 
 Ensure that you clearly document if a new parameter requires requires a specific version. Import
-boto3 at the top of the module as normal and then use the HAS_BOTO3 bool when necessary, before the
+boto3 at the top of the module as normal and then use the `HAS_BOTO3` bool when necessary, before the
 new feature.
 
 ```python
@@ -120,12 +130,13 @@ To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn
 These functions handle some of the more esoteric connection options, such as security tokens and
 boto profiles.
 
-Some boto services require that the region is specified. You should check for the region parameter
-if required.
 
 #### boto
 
 An example of connecting to ec2:
+
+Some boto services require that the region is specified. You should check for the region parameter
+if required.
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module)
@@ -142,14 +153,14 @@ else:
 
 An example of connecting to ec2 is shown below.  Note that there is no `NoAuthHandlerFound`
 exception handling like in boto.  Instead, an `AuthFailure` exception will be thrown when you use
-'connection'. See exception handling.
+'connection'. To ensure that authorization, parameter validation and permissions errors are all
+caught, you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
+See exception handling. module_utils.ec2 checks for missing profiles or a region not set when it needs to be,
+so you don't have to.
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-if region:
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-else:
-    module.fail_json(msg="region must be specified")
+connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 ```
 
 ### Exception Handling for boto
@@ -198,12 +209,12 @@ _fail_json_aws() is a new method and may be subject to change.  You can use it i
 being contributed back to Ansible, however if you are publishing your module separately please
 don't use it before the start of 2018 / Ansible 2.4_
 
-In the AnsibleAWSModule there is a special method, `module.fail_json.aws()` for nice reporting of
+In the AnsibleAWSModule there is a special method, `module.fail_json_aws()` for nice reporting of
 exceptions.  Call this on your exception and it will report the error together with a traceback for
 use in Ansible verbose mode.
 
 ```python
-from ansible.module_utils.aws.core import HAS_BOTO3, AnsibleAWSModule
+from ansible.module_utils.aws.core AnsibleAWSModule
 
 # Set up module parameters
 ...
@@ -212,10 +223,11 @@ from ansible.module_utils.aws.core import HAS_BOTO3, AnsibleAWSModule
 ...
 
 # Make a call to AWS
+name = module.params.get['name']
 try:
-    result = connection.aws_call()
-except Exception as e:
-    module.fail_json_aws(e, msg="trying to do aws_call")
+    result = connection.describe_frooble(FroobleName=name)
+except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+    module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
 ```
 
 Note that it should normally be acceptable to catch all normal exceptions here, however if you
@@ -225,13 +237,16 @@ If you need to perform an action based on the error boto3 returned, use the erro
 
 ```python
 # Make a call to AWS
+name = module.params.get['name']
 try:
-    result = connection.aws_call()
-except ClientError, e:
-    if e.response['Error']['Code'] == 'NoSuchEntity':
+    result = connection.describe_frooble(FroobleName=name)
+except botocore.exceptions.ClientError as e:
+    if e.response['Error']['Code'] == 'FroobleNotFound':
         return None
     else:
-        module.fail_json_aws(e, msg="trying to do aws_call")
+        module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
+except botocore.exceptions.BotoCoreError as e:
+    module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
 ```
 
 #### using fail_json() and avoiding ansible.module_utils.aws.core
@@ -240,36 +255,112 @@ Boto3 provides lots of useful information when an exception is thrown so pass th
 along with the message.
 
 ```python
-# Import ClientError from botocore
+from ansible.module_utils.ec2 import HAS_BOTO3
+
 try:
-    from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
+    import botocore
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by imported HAS_BOTO3
 
 # Connect to AWS
 ...
 
 # Make a call to AWS
+name = module.params.get['name']
 try:
-    result = connection.aws_call()
-except ClientError as e:
-    module.fail_json(msg=e.message, exception=traceback.format_exc(),
+    result = connection.describe_frooble(FroobleName=name)
+except botocore.exceptions.ClientError as e:
+    module.fail_json(msg="Couldn't obtain frooble %s: %s" % (name, str(e)),
+                     exception=traceback.format_exc(),
                      **camel_dict_to_snake_dict(e.response))
 ```
+
+Note: we use `str(e)` rather than `e.message` as the latter doesn't
+work with python3
 
 If you need to perform an action based on the error boto3 returned, use the error code.
 
 ```python
 # Make a call to AWS
+name = module.params.get['name']
 try:
-    result = connection.aws_call()
-except ClientError as e:
-    if e.response['Error']['Code'] == 'NoSuchEntity':
+    result = connection.describe_frooble(FroobleName=name)
+except botocore.exceptions.ClientError as e:
+    if e.response['Error']['Code'] == 'FroobleNotFound':
         return None
     else:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
+        module.fail_json(msg="Couldn't obtain frooble %s: %s" % (name, str(e)),
+                         exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
+except botocore.exceptions.BotoCoreError as e:
+    module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
+```
+
+### API throttling and pagination
+
+For methods that return a lot of results, boto3 often provides
+[paginators](http://boto3.readthedocs.io/en/latest/guide/paginators.html). If the method
+you're calling has `NextToken` or `Marker` parameters, you should probably
+check whether a paginator exists (the top of each boto3 service reference page has a link
+to Paginators, if the service has any). To use paginators, obtain a paginator object,
+call `paginator.paginate` with the appropriate arguments and then call `build_full_result`.
+
+Any time that you are calling the AWS API a lot, you may experience API throttling,
+and there is an `AWSRetry` decorator that can be used to ensure backoff. Because
+exception handling could interfere with the retry working properly (as AWSRetry needs to
+catch throttling exceptions to work correctly), you'd need to provide a backoff function
+and then put exception handling around the backoff function.
+
+You can use `exponential_backoff` or `jittered_backoff` strategies - see
+the [cloud module_utils](/tree/devel/lib/ansible/module_utils/cloud.py)
+and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
+for more details.
+
+The combination of these two approaches is then
+
+```
+@AWSRetry.exponential_backoff(retries=5, delay=5)
+def describe_some_resource_with_backoff(client, **kwargs):
+     paginator = client.get_paginator('describe_some_resource')
+     return paginator.paginate(**kwargs).build_full_result()['SomeResource']
+
+
+def describe_some_resource(client, module):
+    filters = ansible_dict_to_boto3_filter_list(module.params['filters'])
+    try:
+        return describe_some_resource_with_backoff(client, Filters=filters)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e, msg="Could not describe some resource")
+```
+
+If the underlying `describe_some_resources` API call throws a `ResourceNotFound`
+exception, `AWSRetry` takes this as a cue to retry until it's not thrown (this
+is so that when creating a resource, we can just retry until it exists).
+
+To handle authorization failures or parameter validation errors in
+`describe_some_resource_with_backoff`, where we just want to return `None` if
+the resource doesn't exist and not retry, we need:
+
+```
+@AWSRetry.exponential_backoff(retries=5, delay=5)
+def describe_some_resource_with_backoff(client, **kwargs):
+     try:
+         return client.describe_some_resource(ResourceName=kwargs['name'])['Resources']
+     except botocore.exceptions.ClientError as e:
+         if e.response['Error']['Code'] == 'ResourceNotFound':
+             return None
+         else:
+             raise
+     except BotoCoreError as e:
+         raise
+
+
+def describe_some_resource(client, module):
+    name = module.params.get['name']
+    try:
+        return describe_some_resource_with_backoff(client, name=name)
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Could not describe resource %s" % name)
 ```
 
 ### Returning Values
@@ -283,7 +374,7 @@ snake_case. There is a helper function in module_utils/ec2.py called `camel_dict
 that allows you to easily convert the boto3 response to snake_case.
 
 You should use this helper function and avoid changing the names of values returned by Boto3.
-E.g. if boto3 returns a value called 'SecretAccessKey' do not change it to 'AccessKey'.  
+E.g. if boto3 returns a value called 'SecretAccessKey' do not change it to 'AccessKey'.
 
 ```python
 # Make a call to AWS

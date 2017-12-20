@@ -184,8 +184,8 @@ options:
     version_added: "2.4"
   diff_against:
     description:
-      - When using the C(ansible-playbook --diff) command line argument the i
-        module can generate diffs against different sources.
+      - When using the C(ansible-playbook --diff) command line argument
+        the module can generate diffs against different sources.
       - When this option is configure as I(startup), the module will return
         the diff of the running-config against the startup-config.
       - When this option is configured as I(intended), the module will
@@ -270,11 +270,11 @@ backup_path:
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.eos import get_config, load_config
-from ansible.module_utils.eos import run_commands
-from ansible.module_utils.eos import eos_argument_spec
-from ansible.module_utils.eos import check_args
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.eos.eos import get_config, load_config
+from ansible.module_utils.network.eos.eos import run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec
+from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
@@ -402,7 +402,6 @@ def main():
                 result['session'] = response['session']
 
             result['changed'] = True
-
 
     running_config = None
     startup_config = None

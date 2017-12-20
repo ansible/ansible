@@ -114,18 +114,26 @@ the web servers, and then the database servers. For example::
 
       tasks:
       - name: ensure apache is at the latest version
-        yum: name=httpd state=latest
+        yum:
+          name: httpd
+          state: latest
       - name: write the apache config file
-        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+        template:
+          src: /srv/httpd.j2
+          dest: /etc/httpd.conf
 
     - hosts: databases
       remote_user: root
 
       tasks:
       - name: ensure postgresql is at the latest version
-        yum: name=postgresql state=latest
+        yum:
+          name: postgresql
+          state: latest
       - name: ensure that postgresql is started
-        service: name=postgresql state=started
+        service:
+          name: postgresql
+          state: started
 
 You can use this method to switch between the host group you're targeting,
 the username logging into the remote servers, whether to sudo or not, and so
@@ -169,11 +177,6 @@ Remote users can also be defined per task::
           ping:
           remote_user: yourname
 
-.. note::
-
-    The ``remote_user`` parameter for tasks was added in 1.4.
-
-
 Support for running things as another user is also available (see :doc:`become`)::
 
     ---
@@ -187,13 +190,12 @@ You can also use become on a particular task instead of the whole play::
     - hosts: webservers
       remote_user: yourname
       tasks:
-        - service: name=nginx state=started
+        - service: 
+            name: nginx
+            state: started
           become: yes
           become_method: sudo
 
-.. note::
-
-    The become syntax deprecates the old sudo/su specific syntax beginning in 1.9.
 
 You can also login as you, and then become a user different than root::
 
@@ -302,7 +304,9 @@ the service module takes ``key=value`` arguments::
 
    tasks:
      - name: make sure apache is running
-       service: name=httpd state=started
+       service:
+         name: httpd
+         state: started
 
 The **command** and **shell** modules are the only modules that just take a list
 of arguments and don't use the ``key=value`` form.  This makes
@@ -340,12 +344,14 @@ a variable called ``vhost`` in the ``vars`` section, you could do this::
 
    tasks:
      - name: create a virtual host file for {{ vhost }}
-       template: src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}
+       template:
+         src: somefile.j2
+         dest: /etc/httpd/conf.d/{{ vhost }}
 
 Those same variables are usable in templates, which we'll get to later.
 
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
-make more sense to break up tasks using the ``include:`` directive.  We'll show that a bit later.
+make more sense to break up tasks as described in :doc:`playbooks_reuse`.
 
 .. _action_shorthand:
 
@@ -354,15 +360,16 @@ Action Shorthand
 
 .. versionadded:: 0.8
 
-Ansible prefers listing modules like this in 0.8 and later::
+Ansible prefers listing modules like this::
 
-    template: src=templates/foo.j2 dest=/etc/foo.conf
+    template:
+        src: templates/foo.j2
+        dest: /etc/foo.conf
 
-You will notice in earlier versions, this was only available as::
+Early versions of Ansible used the following format, which still works::
 
     action: template src=templates/foo.j2 dest=/etc/foo.conf
 
-The old form continues to work in newer versions without any plan of deprecation.
 
 .. _handlers:
 
@@ -384,7 +391,9 @@ Here's an example of restarting two services when the contents of a file
 change, but only if the file changes::
 
    - name: template configuration file
-     template: src=template.j2 dest=/etc/foo.conf
+     template:
+       src: template.j2
+       dest: /etc/foo.conf
      notify:
         - restart memcached
         - restart apache
@@ -402,18 +411,26 @@ Here's an example handlers section::
 
     handlers:
         - name: restart memcached
-          service: name=memcached state=restarted
+          service:
+            name: memcached
+            state: restarted
         - name: restart apache
-          service: name=apache state=restarted
+          service:
+            name: apache
+            state: restarted
 
 As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
         - name: restart memcached
-          service: name=memcached state=restarted
+          service:
+            name: memcached
+            state: restarted
           listen: "restart web services"
         - name: restart apache
-          service: name=apache state=restarted
+          service:
+            name: apache
+            state:restarted
           listen: "restart web services"
 
     tasks:
@@ -437,7 +454,7 @@ Roles are described later on, but it's worthwhile to point out that:
 * handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified;
 * handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
 
-If you ever want to flush all the handler commands immediately though, in 1.2 and later, you can::
+If you ever want to flush all the handler commands immediately you can do this::
 
     tasks:
        - shell: some tasks go here
@@ -458,7 +475,7 @@ Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
 
-.. _ansible-pull:
+.. _playbook_ansible-pull:
 
 Ansible-Pull
 ````````````
@@ -490,8 +507,6 @@ kept separate in the counts.
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
 use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
 
-Ansible playbook output is vastly upgraded if the cowsay
-package is installed.  Try it!
 
 To see what hosts would be affected by a playbook before you run it, you
 can do this::

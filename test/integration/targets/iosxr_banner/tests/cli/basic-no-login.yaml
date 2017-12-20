@@ -5,8 +5,8 @@
     text: |
       Junk login banner
       over multiple lines
-    state: present
     provider: "{{ cli }}"
+    state: present
 
 - name: remove login
   iosxr_banner:

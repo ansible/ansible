@@ -50,7 +50,7 @@ options:
   worker:
     choices: ['sync', 'eventlet', 'gevent', 'tornado ', 'gthread', 'gaiohttp']
     description:
-      - 'The type of workers to use. The default class (sync) should handle most “normal” types of workloads.'
+      - 'The type of workers to use. The default class (sync) should handle most "normal" types of workloads.'
   user:
     description:
       -  'Switch worker processes to run as this user.'

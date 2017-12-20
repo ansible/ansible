@@ -99,6 +99,14 @@ options:
             - Original routing key will be used if unset
         required: false
         default: None
+    max_priority:
+        description:
+            - Maximum number of priority levels for the queue to support.
+            - If not set, the queue will not support message priorities.
+            - Larger numbers indicate higher priority.
+        required: false
+        default: None
+        version_added: "2.4"
     arguments:
         description:
             - extra arguments for queue. If defined this argument is a key/value dictionary
@@ -148,7 +156,8 @@ def main():
             max_length=dict(default=None, type='int'),
             dead_letter_exchange=dict(default=None, type='str'),
             dead_letter_routing_key=dict(default=None, type='str'),
-            arguments=dict(default=dict(), type='dict')
+            arguments=dict(default=dict(), type='dict'),
+            max_priority=dict(default=None, type='int')
         ),
         supports_check_mode=True
     )
@@ -211,6 +220,11 @@ def main():
                 ('x-dead-letter-routing-key' in response['arguments'] and
                  response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key']) or
                 ('x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None)
+            ) and
+            (
+                ('x-max-priority' in response['arguments'] and
+                 response['arguments']['x-max-priority'] == module.params['max_priority']) or
+                ('x-max-priority' not in response['arguments'] and module.params['max_priority'] is None)
             )
         ):
             module.fail_json(
@@ -223,7 +237,8 @@ def main():
         'auto_expires': 'x-expires',
         'max_length': 'x-max-length',
         'dead_letter_exchange': 'x-dead-letter-exchange',
-        'dead_letter_routing_key': 'x-dead-letter-routing-key'
+        'dead_letter_routing_key': 'x-dead-letter-routing-key',
+        'max_priority': 'x-max-priority'
     }.items():
         if module.params[k] is not None:
             module.params['arguments'][v] = module.params[k]

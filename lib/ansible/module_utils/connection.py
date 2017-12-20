@@ -27,14 +27,15 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import json
 import socket
 import struct
 import traceback
 import uuid
 
 from functools import partial
-
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import iteritems
 
 
 def send_data(s, data):
@@ -61,40 +62,41 @@ def recv_data(s):
 
 
 def exec_command(module, command):
+    connection = Connection(module._socket_path)
     try:
-        sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sf.connect(module._socket_path)
-
-        data = "EXEC: %s" % command
-        send_data(sf, to_bytes(data.strip()))
-
-        rc = int(recv_data(sf), 10)
-        stdout = recv_data(sf)
-        stderr = recv_data(sf)
-    except socket.error as e:
-        sf.close()
-        module.fail_json(msg='unable to connect to socket', err=to_native(e), exception=traceback.format_exc())
-
-    sf.close()
-
-    return rc, to_native(stdout, errors='surrogate_or_strict'), to_native(stderr, errors='surrogate_or_strict')
+        out = connection.exec_command(command)
+    except ConnectionError as exc:
+        code = getattr(exc, 'code', 1)
+        message = getattr(exc, 'err', exc)
+        return code, '', to_text(message, errors='surrogate_then_replace')
+    return 0, out, ''
 
 
 def request_builder(method, *args, **kwargs):
     reqid = str(uuid.uuid4())
     req = {'jsonrpc': '2.0', 'method': method, 'id': reqid}
 
-    params = list(args) or kwargs or None
+    params = args or kwargs or None
     if params:
         req['params'] = params
 
     return req
 
 
-class Connection:
+class ConnectionError(Exception):
 
-    def __init__(self, module):
-        self._module = module
+    def __init__(self, message, *args, **kwargs):
+        super(ConnectionError, self).__init__(message)
+        for k, v in iteritems(kwargs):
+            setattr(self, k, v)
+
+
+class Connection(object):
+
+    def __init__(self, socket_path):
+        if socket_path is None:
+            raise AssertionError('socket_path must be a value')
+        self.socket_path = socket_path
 
     def __getattr__(self, name):
         try:
@@ -103,6 +105,27 @@ class Connection:
             if name.startswith('_'):
                 raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
             return partial(self.__rpc__, name)
+
+    def _exec_jsonrpc(self, name, *args, **kwargs):
+
+        req = request_builder(name, *args, **kwargs)
+        reqid = req['id']
+
+        if not os.path.exists(self.socket_path):
+            raise ConnectionError('socket_path does not exist or cannot be found')
+
+        try:
+            data = json.dumps(req)
+            out = self.send(data)
+            response = json.loads(out)
+
+        except socket.error as e:
+            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+
+        if response['id'] != reqid:
+            raise ConnectionError('invalid json-rpc id received')
+
+        return response
 
     def __rpc__(self, name, *args, **kwargs):
         """Executes the json-rpc and returns the output received
@@ -113,33 +136,29 @@ class Connection:
 
            For usage refer the respective connection plugin docs.
         """
-        req = request_builder(name, *args, **kwargs)
-        reqid = req['id']
 
-        if not self._module._socket_path:
-            self._module.fail_json(msg='provider support not available for this host')
-
-        if not os.path.exists(self._module._socket_path):
-            self._module.fail_json(msg='provider socket does not exist, is the provider running?')
-
-        try:
-            data = self._module.jsonify(req)
-            rc, out, err = exec_command(self._module, data)
-
-        except socket.error as e:
-            self._module.fail_json(msg='unable to connect to socket', err=to_native(e),
-                                   exception=traceback.format_exc())
-
-        try:
-            response = self._module.from_json(to_text(out, errors='surrogate_then_replace'))
-        except ValueError as exc:
-            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
-
-        if response['id'] != reqid:
-            self._module.fail_json(msg='invalid id received')
+        response = self._exec_jsonrpc(name, *args, **kwargs)
 
         if 'error' in response:
-            msg = response['error'].get('data') or response['error']['message']
-            self._module.fail_json(msg=to_text(msg, errors='surrogate_then_replace'))
+            err = response.get('error')
+            msg = err.get('data') or err['message']
+            code = err['code']
+            raise ConnectionError(to_text(msg, errors='surrogate_then_replace'), code=code)
 
         return response['result']
+
+    def send(self, data):
+        try:
+            sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sf.connect(self.socket_path)
+
+            send_data(sf, to_bytes(data))
+            response = recv_data(sf)
+
+        except socket.error as e:
+            sf.close()
+            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+
+        sf.close()
+
+        return to_text(response, errors='surrogate_or_strict')

@@ -36,7 +36,7 @@ author:
     - "Stephane Maarek (@simplesteph)"
     - "Zac Blazic (@zacblazic)"
 
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     state:
         description:
@@ -267,14 +267,7 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 
 
 try:
-    import boto
     import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-try:
-    import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -289,13 +282,8 @@ class EcsServiceManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
         for c in array_of_services:
@@ -308,13 +296,13 @@ class EcsServiceManager:
             cluster=cluster_name,
             services=[service_name])
         msg = ''
-        if len(response['failures'])>0:
+        if len(response['failures']) > 0:
             c = self.find_in_array(response['failures'], service_name, 'arn')
             msg += ", failure reason is " + c['reason']
-            if c and c['reason']=='MISSING':
+            if c and c['reason'] == 'MISSING':
                 return None
             # fall thru and look through found ones
-        if len(response['services'])>0:
+        if len(response['services']) > 0:
             c = self.find_in_array(response['services'], service_name)
             if c:
                 return c
@@ -403,9 +391,6 @@ def main():
                            required_together=[['load_balancers', 'role']]
                            )
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
-
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
@@ -426,7 +411,7 @@ def main():
 
         matching = False
         update = False
-        if existing and 'status' in existing and existing['status']=="ACTIVE":
+        if existing and 'status' in existing and existing['status'] == "ACTIVE":
             if service_mgr.is_matching_service(module.params, existing):
                 matching = True
                 results['service'] = service_mgr.jsonize(existing)
@@ -446,25 +431,25 @@ def main():
                 if update:
                     # update required
                     response = service_mgr.update_service(module.params['name'],
-                        module.params['cluster'],
-                        module.params['task_definition'],
-                        loadBalancers,
-                        module.params['desired_count'],
-                        clientToken,
-                        role,
-                        deploymentConfiguration)
+                                                          module.params['cluster'],
+                                                          module.params['task_definition'],
+                                                          loadBalancers,
+                                                          module.params['desired_count'],
+                                                          clientToken,
+                                                          role,
+                                                          deploymentConfiguration)
                 else:
                     # doesn't exist. create it.
                     response = service_mgr.create_service(module.params['name'],
-                        module.params['cluster'],
-                        module.params['task_definition'],
-                        loadBalancers,
-                        module.params['desired_count'],
-                        clientToken,
-                        role,
-                        deploymentConfiguration,
-                        module.params['placement_constraints'],
-                        module.params['placement_strategy'])
+                                                          module.params['cluster'],
+                                                          module.params['task_definition'],
+                                                          loadBalancers,
+                                                          module.params['desired_count'],
+                                                          clientToken,
+                                                          role,
+                                                          deploymentConfiguration,
+                                                          module.params['placement_constraints'],
+                                                          module.params['placement_strategy'])
 
                 results['service'] = response
 
@@ -479,7 +464,7 @@ def main():
             del existing['deployments']
             del existing['events']
             results['ansible_facts'] = existing
-            if 'status' in existing and existing['status']=="INACTIVE":
+            if 'status' in existing and existing['status'] == "INACTIVE":
                 results['changed'] = False
             else:
                 if not module.check_mode:

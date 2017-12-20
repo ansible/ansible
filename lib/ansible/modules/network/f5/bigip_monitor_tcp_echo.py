@@ -1,32 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_monitor_tcp_echo
-short_description: Manages F5 BIG-IP LTM tcp monitors.
-description: Manages F5 BIG-IP LTM tcp monitors via iControl SOAP API.
+short_description: Manages F5 BIG-IP LTM tcp echo monitors
+description: Manages F5 BIG-IP LTM tcp echo monitors.
 version_added: "2.4"
 options:
   name:
@@ -38,9 +28,9 @@ options:
   parent:
     description:
       - The parent template of this monitor template. Once this value has
-        been set, it cannot be changed. By default, this value is the C(tcp)
+        been set, it cannot be changed. By default, this value is the C(tcp_echo)
         parent on the C(Common) partition.
-    default: "/Common/tcp"
+    default: /Common/tcp_echo
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
@@ -70,6 +60,11 @@ options:
         node to be marked up immediately after a valid response is received
         from the node. If this parameter is not provided when creating
         a new monitor, then the default value will be 0.
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.5
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -81,53 +76,53 @@ author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create TCP Echo Monitor
   bigip_monitor_tcp_echo:
-      state: "present"
-      server: "lb.mydomain.com"
-      user: "admin"
-      ip: 10.10.10.10
-      password: "secret"
-      name: "my_tcp_monitor"
+    state: present
+    server: lb.mydomain.com
+    user: admin
+    ip: 10.10.10.10
+    password: secret
+    name: my_tcp_monitor
   delegate_to: localhost
 
 - name: Remove TCP Echo Monitor
   bigip_monitor_tcp_echo:
-      state: "absent"
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      name: "my_tcp_monitor"
+    state: absent
+    server: lb.mydomain.com
+    user: admin
+    password: secret
+    name: my_tcp_monitor
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 parent:
-    description: New parent template of the monitor.
-    returned: changed
-    type: string
-    sample: "tcp"
+  description: New parent template of the monitor.
+  returned: changed
+  type: string
+  sample: tcp
 ip:
-    description: The new IP of IP/port definition.
-    returned: changed
-    type: string
-    sample: "10.12.13.14"
+  description: The new IP of IP/port definition.
+  returned: changed
+  type: string
+  sample: 10.12.13.14
 interval:
-    description: The new interval in which to run the monitor check.
-    returned: changed
-    type: int
-    sample: 2
+  description: The new interval in which to run the monitor check.
+  returned: changed
+  type: int
+  sample: 2
 timeout:
-    description: The new timeout in which the remote system must respond to the monitor.
-    returned: changed
-    type: int
-    sample: 10
+  description: The new timeout in which the remote system must respond to the monitor.
+  returned: changed
+  type: int
+  sample: 10
 time_until_up:
-    description: The new time in which to mark a system as up after first successful response.
-    returned: changed
-    type: int
-    sample: 2
+  description: The new time in which to mark a system as up after first successful response.
+  returned: changed
+  type: int
+  sample: 2
 '''
 
 import os
@@ -142,8 +137,8 @@ from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.f5_utils import iteritems
-from ansible.module_utils.f5_utils import defaultdict
+from ansible.module_utils.six import iteritems
+from collections import defaultdict
 
 try:
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
@@ -491,7 +486,7 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         self.argument_spec = dict(
             name=dict(required=True),
-            parent=dict(),
+            parent=dict(default='tcp_echo'),
             ip=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
@@ -500,16 +495,26 @@ class ArgumentSpec(object):
         self.f5_product_name = 'bigip'
 
 
-def main():
+def cleanup_tokens(client):
     try:
-        spec = ArgumentSpec()
-
-        client = AnsibleF5Client(
-            argument_spec=spec.argument_spec,
-            supports_check_mode=spec.supports_check_mode,
-            f5_product_name=spec.f5_product_name
+        resource = client.api.shared.authz.tokens_s.token.load(
+            name=client.api.icrs.token
         )
+        resource.delete()
+    except Exception:
+        pass
 
+
+def main():
+    spec = ArgumentSpec()
+
+    client = AnsibleF5Client(
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode,
+        f5_product_name=spec.f5_product_name
+    )
+
+    try:
         if not HAS_F5SDK:
             raise F5ModuleError("The python f5-sdk module is required")
 
@@ -518,8 +523,10 @@ def main():
 
         mm = ModuleManager(client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         client.module.exit_json(**results)
     except F5ModuleError as e:
+        cleanup_tokens(client)
         client.module.fail_json(msg=str(e))
 
 

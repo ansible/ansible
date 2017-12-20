@@ -146,8 +146,8 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.ios import run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
@@ -162,12 +162,12 @@ class FactsBase(object):
         self.facts = dict()
         self.responses = None
 
-
     def populate(self):
         self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
         return run_commands(self.module, cmd, check_rc=False)
+
 
 class Default(FactsBase):
 
@@ -184,7 +184,7 @@ class Default(FactsBase):
             self.facts['hostname'] = self.parse_hostname(data)
 
     def parse_version(self, data):
-        match = re.search(r'Version (\S+),', data)
+        match = re.search(r'Version (\S+?)(?:,\s|\s)', data)
         if match:
             return match.group(1)
 
@@ -194,9 +194,13 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_model(self, data):
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
+        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
         if match:
-            return match.group(1)
+            return match
+        else:
+            match = re.search(r'^[Cc]isco (\S+).+bytes of memory', data, re.M)
+            if match:
+                return [match.group(1)]
 
     def parse_image(self, data):
         match = re.search(r'image file is "(.+)"', data)
@@ -204,9 +208,13 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_serialnum(self, data):
-        match = re.search(r'board ID (\S+)', data)
+        match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
         if match:
-            return match.group(1)
+            return match
+        else:
+            match = re.search(r'board ID (\S+)', data)
+            if match:
+                return [match.group(1)]
 
 
 class Hardware(FactsBase):
@@ -439,6 +447,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     """main entry point for module execution

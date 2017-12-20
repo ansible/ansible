@@ -1,6 +1,4 @@
----
-
-- name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
+- name: MISSING-HOSTKEY | checkout ssh://git@github.com repo without accept_hostkey (expected fail)
   git:
     repo: '{{ repo_format2 }}'
     dest: '{{ checkout_dir }}'
@@ -10,9 +8,9 @@
 
 - assert:
     that:
-      - 'git_result.failed'
+      - git_result is failed
 
-- name: checkout git@github.com repo with accept_hostkey (expected pass)
+- name: MISSING-HOSTKEY | checkout git@github.com repo with accept_hostkey (expected pass)
   git:
     repo: '{{ repo_format2 }}'
     dest: '{{ checkout_dir }}'
@@ -24,16 +22,16 @@
 
 - assert:
     that:
-      - 'git_result.changed'
+      - git_result is changed
   when: github_ssh_private_key is defined
 
-- name: clear checkout_dir
+- name: MISSING-HOSTKEY | clear checkout_dir
   file:
     state: absent
     path: '{{ checkout_dir }}'
   when: github_ssh_private_key is defined
 
-- name: checkout ssh://git@github.com repo with accept_hostkey (expected pass)
+- name: MISSING-HOSTKEY | checkout ssh://git@github.com repo with accept_hostkey (expected pass)
   git:
     repo: '{{ repo_format3 }}'
     dest: '{{ checkout_dir }}'
@@ -46,5 +44,5 @@
 
 - assert:
     that:
-      - 'git_result.changed'
+      - git_result is changed
   when: github_ssh_private_key is defined

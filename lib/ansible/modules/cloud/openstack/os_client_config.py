@@ -46,14 +46,14 @@ EXAMPLES = '''
       - mordred
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-
 try:
     import os_client_config
     from os_client_config import exceptions
     HAS_OS_CLIENT_CONFIG = True
 except ImportError:
     HAS_OS_CLIENT_CONFIG = False
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():

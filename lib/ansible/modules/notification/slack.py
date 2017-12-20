@@ -114,7 +114,8 @@ options:
       - 'danger'
   attachments:
     description:
-      - Define a list of attachments. This list mirrors the Slack JSON API. For more information, see https://api.slack.com/docs/attachments
+      - Define a list of attachments. This list mirrors the Slack JSON API.
+      - For more information, see also in the (U(https://api.slack.com/docs/attachments)).
     required: false
     default: None
 """
@@ -188,7 +189,7 @@ escape_table = {
 
 def escape_quotes(text):
     '''Backslash any quotes within text.'''
-    return "".join(escape_table.get(c,c) for c in text)
+    return "".join(escape_table.get(c, c) for c in text)
 
 
 def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
@@ -202,7 +203,7 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
         if (channel[0] == '#') or (channel[0] == '@'):
             payload['channel'] = channel
         else:
-            payload['channel'] = '#'+channel
+            payload['channel'] = '#' + channel
     if username is not None:
         payload['username'] = username
     if icon_emoji is not None:
@@ -236,8 +237,9 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
 
             payload['attachments'].append(attachment)
 
-    payload=module.jsonify(payload)
+    payload = module.jsonify(payload)
     return payload
+
 
 def do_notify_slack(module, domain, token, payload):
     if token.count('/') >= 2:
@@ -258,21 +260,22 @@ def do_notify_slack(module, domain, token, payload):
         obscured_incoming_webhook = SLACK_INCOMING_WEBHOOK % ('[obscured]')
         module.fail_json(msg=" failed to send %s to %s: %s" % (payload, obscured_incoming_webhook, info['msg']))
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            domain      = dict(type='str', required=False, default=None),
-            token       = dict(type='str', required=True, no_log=True),
-            msg         = dict(type='str', required=False, default=None),
-            channel     = dict(type='str', default=None),
-            username    = dict(type='str', default='Ansible'),
-            icon_url    = dict(type='str', default='https://www.ansible.com/favicon.ico'),
-            icon_emoji  = dict(type='str', default=None),
-            link_names  = dict(type='int', default=1, choices=[0,1]),
-            parse       = dict(type='str', default=None, choices=['none', 'full']),
-            validate_certs = dict(default='yes', type='bool'),
-            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
-            attachments = dict(type='list', required=False, default=None)
+        argument_spec=dict(
+            domain=dict(type='str', required=False, default=None),
+            token=dict(type='str', required=True, no_log=True),
+            msg=dict(type='str', required=False, default=None),
+            channel=dict(type='str', default=None),
+            username=dict(type='str', default='Ansible'),
+            icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
+            icon_emoji=dict(type='str', default=None),
+            link_names=dict(type='int', default=1, choices=[0, 1]),
+            parse=dict(type='str', default=None, choices=['none', 'full']),
+            validate_certs=dict(default='yes', type='bool'),
+            color=dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            attachments=dict(type='list', required=False, default=None)
         )
     )
 

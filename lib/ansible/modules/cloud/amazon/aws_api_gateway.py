@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: aws_api_gateway
 short_description: Manage AWS API Gateway APIs
 description:
-     - Allows for the management of API Gatway APIs
+     - Allows for the management of API Gateway APIs
      - Normally you should give the api_id since there is no other
        stable guaranteed unique identifier for the API.  If you do
        not give api_id then a new API will be create each time

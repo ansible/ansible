@@ -31,6 +31,8 @@ class TestNxosVlanModule(TestNxosModule):
     module = nxos_vlan
 
     def setUp(self):
+        super(TestNxosVlanModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_vlan.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -41,6 +43,7 @@ class TestNxosVlanModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosVlanModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 

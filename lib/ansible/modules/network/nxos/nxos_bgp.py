@@ -310,10 +310,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -412,7 +412,6 @@ def get_value(arg, config):
     command = PARAM_TO_COMMAND_KEYMAP.get(arg)
 
     if command.split()[0] == 'event-history':
-        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
         has_size = re.search(r'^\s+{0} size\s(?P<value>.*)$'.format(command), config, re.M)
 
         if command == 'event-history detail':
@@ -420,11 +419,8 @@ def get_value(arg, config):
         else:
             value = 'size_small'
 
-        if command_re.search(config):
-            if has_size:
-                value = 'size_%s' % has_size.group('value')
-            else:
-                value = True
+        if has_size:
+            value = 'size_%s' % has_size.group('value')
 
     elif arg in ['enforce_first_as', 'fast_external_fallover']:
         no_command_re = re.compile(r'no\s+{0}\s*'.format(command), re.M)
@@ -465,7 +461,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=['bgp all']))
 
-    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_re = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     asn_match = asn_re.match(str(netcfg))
 
     if asn_match:
@@ -619,7 +615,7 @@ def main():
         enforce_first_as=dict(required=False, type='bool'),
         event_history_cli=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_detail=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-        event_history_events=dict(required=False, choices=['true', 'false', 'default' 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        event_history_events=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         event_history_periodic=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
         fast_external_fallover=dict(required=False, type='bool'),
         flush_routes=dict(required=False, type='bool'),

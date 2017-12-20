@@ -1,15 +1,13 @@
 ---
-- debug: msg="START cli/config_check.yaml"
+- debug: msg="START cli/config_check.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   vyos_config:
     lines: set interfaces loopback lo description test
-    provider: "{{ cli }}"
 
 - name: configure config_check config command
   vyos_config:
     lines: delete interfaces loopback lo
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -19,11 +17,10 @@
 - name: check config_check config command idempontent
   vyos_config:
     lines: delete interfaces loopback lo
-    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- debug: msg="END cli/config_check.yaml"
+- debug: msg="END cli/config_check.yaml on connection={{ ansible_connection }}"

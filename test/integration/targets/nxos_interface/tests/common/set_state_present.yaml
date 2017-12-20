@@ -12,6 +12,7 @@
   nxos_interface:
     interface: Loopback1
     state: present
+    description: 'Configured by Ansible - Layer3'
     provider: "{{ connection }}"
   register: result
 
@@ -23,6 +24,7 @@
   nxos_interface:
     interface: Loopback1
     state: present
+    description: 'Configured by Ansible - Layer3'
     provider: "{{ connection }}"
   register: result
 

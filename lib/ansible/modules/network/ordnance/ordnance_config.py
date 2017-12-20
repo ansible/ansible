@@ -188,10 +188,10 @@ import re
 import time
 import traceback
 
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.netcli import Command
-from ansible.module_utils.ordnance import get_config
+from ansible.module_utils.network.common.network import NetworkModule, NetworkError
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.common.parsing import Command
+from ansible.module_utils.network.ordnance.ordnance import get_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -205,6 +205,7 @@ def check_args(module, warnings):
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
+
 
 def extract_banners(config):
     banners = {}
@@ -225,12 +226,14 @@ def extract_banners(config):
     config = re.sub(r'banner \w+ \^C\^C', '!! banner removed', config)
     return (config, banners)
 
+
 def diff_banners(want, have):
     candidate = {}
     for key, value in iteritems(want):
         if value != have.get(key):
             candidate[key] = value
     return candidate
+
 
 def load_banners(module, banners):
     delimiter = module.params['multiline_delimiter']
@@ -242,6 +245,7 @@ def load_banners(module, banners):
         time.sleep(1)
         module.connection.shell.receive()
 
+
 def get_config(module, result):
     contents = module.params['config']
     if not contents:
@@ -250,6 +254,7 @@ def get_config(module, result):
 
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -265,6 +270,7 @@ def get_candidate(module):
 
     return candidate, banners
 
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -275,7 +281,7 @@ def run(module, result):
     if match != 'none':
         config, have_banners = get_config(module, result)
         path = module.params['parents']
-        configobjs = candidate.difference(config, path=path,match=match,
+        configobjs = candidate.difference(config, path=path, match=match,
                                           replace=replace)
     else:
         configobjs = candidate.items
@@ -310,6 +316,7 @@ def run(module, result):
         if not module.check_mode:
             module.config.save_config()
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution

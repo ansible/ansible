@@ -155,19 +155,22 @@ changed:
 '''
 import re
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
+    elif network_api == 'nxapi':
+        cmds = {'command': command, 'output': 'text'}
         body = run_commands(module, cmds)
 
     return body
@@ -208,18 +211,17 @@ def get_aaa_host_info(module, server_type, address):
 
     body = execute_show_command(command, module, command_type='cli_show_ascii')
 
-    if body:
+    if body[0]:
         try:
-            pattern = ('(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
-                       '(key 7 "\w+")|( port \d+)')
+            pattern = (r'(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
+                       r'(key 7 "\w+")|( port \d+)')
             raw_match = re.findall(pattern, body[0])
             aaa_host_info = _match_dict(raw_match, {'acct-port': 'acct_port',
                                                     'auth-port': 'auth_port',
                                                     'port': 'tacacs_port',
                                                     'timeout': 'host_timeout'})
-            if aaa_host_info:
-                aaa_host_info['server_type'] = server_type
-                aaa_host_info['address'] = address
+            aaa_host_info['server_type'] = server_type
+            aaa_host_info['address'] = address
         except TypeError:
             return {}
     else:
@@ -276,11 +278,9 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     server_type = module.params['server_type']
     address = module.params['address']
@@ -310,7 +310,6 @@ def main():
     if (auth_port or acct_port) and server_type != 'radius':
         module.fail_json(msg='auth_port and acct_port can only be used'
                              'when server_type=radius')
-
 
     existing = get_aaa_host_info(module, server_type, address)
     end_state = existing
@@ -365,4 +364,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -21,7 +21,6 @@ future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
 # Eventually we want metaclass3 and future3 to get down to 0
 metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
-        -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -path ./lib/ansible/modules/network/aos -prune \
@@ -40,7 +39,6 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
 
 future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
-        -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -path ./lib/ansible/modules/network/aos -prune \
@@ -64,7 +62,7 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
 
 ### TODO:
 ### - module_utils  <=== these are important but not well organized so we'd
-###                      have to construct the teset file by file
+###                      have to construct the test file by file
 ### - contrib/  <=== Not a priority as these will move to inventory plugins over time
 
 

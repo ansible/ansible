@@ -110,22 +110,21 @@ changed:
 '''
 
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
-
-
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -167,50 +166,16 @@ def get_udld_interface(module, interface):
     return interface_udld
 
 
-def is_interface_copper(module, interface):
-    command = 'show interface status'
-    copper = []
-    try:
-        body = execute_show_command(command, module)[0]
-        table = body['TABLE_interface']['ROW_interface']
-        for each in table:
-            itype = each.get('type', 'DNE')
-            if 'CU' in itype or '1000' in itype or '10GBaseT' in itype:
-                copper.append(str(each['interface'].lower()))
-    except (KeyError, AttributeError):
-        pass
-
-    if interface in copper:
-        found = True
-    else:
-        found = False
-
-    return found
-
-
-def get_commands_config_udld_interface(delta, interface, module, existing):
+def get_commands_config_udld_interface1(delta, interface, module, existing):
     commands = []
-    copper = is_interface_copper(module, interface)
     if delta:
         mode = delta['mode']
         if mode == 'aggressive':
             command = 'udld aggressive'
-        elif copper:
-            if mode == 'enabled':
-                if existing['mode'] == 'aggressive':
-                    command = 'no udld aggressive ; udld enable'
-                else:
-                    command = 'udld enable'
-            elif mode == 'disabled':
-                command = 'no udld enable'
-        elif not copper:
-            if mode == 'enabled':
-                if existing['mode'] == 'aggressive':
-                    command = 'no udld aggressive ; no udld disable'
-                else:
-                    command = 'no udld disable'
-            elif mode == 'disabled':
-                command = 'udld disable'
+        if mode == 'enabled':
+            command = 'no udld aggressive ; udld enable'
+        elif mode == 'disabled':
+            command = 'no udld aggressive ; no udld enable'
     if command:
         commands.append(command)
         commands.insert(0, 'interface {0}'.format(interface))
@@ -218,24 +183,52 @@ def get_commands_config_udld_interface(delta, interface, module, existing):
     return commands
 
 
-def get_commands_remove_udld_interface(delta, interface, module, existing):
+def get_commands_config_udld_interface2(delta, interface, module, existing):
     commands = []
-    copper = is_interface_copper(module, interface)
+    if delta:
+        mode = delta['mode']
+        if mode == 'aggressive':
+            command = 'udld aggressive'
+        if mode == 'enabled':
+            command = 'no udld aggressive ; no udld disable'
+        elif mode == 'disabled':
+            command = 'no udld aggressive ; udld disable'
+    if command:
+        commands.append(command)
+        commands.insert(0, 'interface {0}'.format(interface))
+
+    return commands
+
+
+def get_commands_remove_udld_interface1(delta, interface, module, existing):
+    commands = []
 
     if delta:
         mode = delta['mode']
         if mode == 'aggressive':
             command = 'no udld aggressive'
-        elif copper:
-            if mode == 'enabled':
-                command = 'no udld enable'
-            elif mode == 'disabled':
-                command = 'udld enable'
-        elif not copper:
-            if mode == 'enabled':
-                command = 'udld disable'
-            elif mode == 'disabled':
-                command = 'no udld disable'
+        if mode == 'enabled':
+            command = 'no udld enable'
+        elif mode == 'disabled':
+            command = 'udld enable'
+    if command:
+        commands.append(command)
+        commands.insert(0, 'interface {0}'.format(interface))
+
+    return commands
+
+
+def get_commands_remove_udld_interface2(delta, interface, module, existing):
+    commands = []
+
+    if delta:
+        mode = delta['mode']
+        if mode == 'aggressive':
+            command = 'no udld aggressive'
+        if mode == 'enabled':
+            command = 'udld disable'
+        elif mode == 'disabled':
+            command = 'no udld disable'
     if command:
         commands.append(command)
         commands.insert(0, 'interface {0}'.format(interface))
@@ -246,7 +239,7 @@ def get_commands_remove_udld_interface(delta, interface, module, existing):
 def main():
     argument_spec = dict(
         mode=dict(choices=['enabled', 'disabled', 'aggressive'],
-                      required=True),
+                  required=True),
         interface=dict(type='str', required=True),
         state=dict(choices=['absent', 'present'], default='present'),
     )
@@ -254,11 +247,9 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     interface = module.params['interface'].lower()
     mode = module.params['mode']
@@ -274,15 +265,15 @@ def main():
     commands = []
     if state == 'present':
         if delta:
-            command = get_commands_config_udld_interface(delta, interface,
-                                                         module, existing)
+            command = get_commands_config_udld_interface1(delta, interface,
+                                                          module, existing)
             commands.append(command)
     elif state == 'absent':
         common = set(proposed.items()).intersection(existing.items())
         if common:
-            command = get_commands_remove_udld_interface(
+            command = get_commands_remove_udld_interface1(
                 dict(common), interface, module, existing
-                )
+            )
             commands.append(command)
 
     cmds = flatten_list(commands)
@@ -291,7 +282,32 @@ def main():
             module.exit_json(changed=True, commands=cmds)
         else:
             changed = True
-            load_config(module, cmds)
+            # set the return_error to True for load_config
+            msgs = load_config(module, cmds, True)
+            # since there are multiple commands sent simultaneously
+            # the output will have one error code for each command.
+            # For commands which are successful, it is empty
+            for item in msgs:
+                if item:
+                    err_str = ''
+                    if isinstance(item, list) and item['msg']:
+                        err_str = item['msg']
+                    elif isinstance(item, str):
+                        err_str = item
+                    if 'rejecting a config that is valid only for' in err_str:
+                        commands = []
+                        if state == 'present':
+                            command = get_commands_config_udld_interface2(delta, interface,
+                                                                          module, existing)
+                        elif state == 'absent':
+                            command = get_commands_remove_udld_interface2(
+                                dict(common), interface, module, existing
+                            )
+                        commands.append(command)
+
+                        cmds = flatten_list(commands)
+                        load_config(module, cmds)
+
             end_state = get_udld_interface(module, interface)
             if 'configure' in cmds:
                 cmds.pop(0)
@@ -306,6 +322,6 @@ def main():
 
     module.exit_json(**results)
 
+
 if __name__ == '__main__':
     main()
-

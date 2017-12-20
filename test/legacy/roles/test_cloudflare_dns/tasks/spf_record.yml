@@ -1,0 +1,184 @@
+---
+######## SPF record tests #################
+
+- set_fact:
+    # values breaking the api: ,<>:
+    txt_teststring: 'v=spf1 abc123 !@#$%^&*()_+=-;./{}?\|'
+
+- name: "Test: SPF record creation"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: "{{ txt_teststring }}"
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: SPF record creation"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "{{ txt_teststring }}"
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'SPF'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: SPF record idempotency"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: "{{ txt_teststring }}"
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: SPF record idempotency"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: SPF record update"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: "{{ txt_teststring }}"
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: SPF record update"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.ttl == 300
+
+- name: "Test: SPF record duplicate (create new record)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: 'v=spf1 teststring'
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: SPF record duplicate (create new record)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == 'v=spf1 teststring'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'SPF'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: SPF record duplicate (old record present)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: "{{ txt_teststring }}"
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: SPF record duplicate (old record present)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+      - cloudflare_dns.result.record.content == "{{ txt_teststring }}"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == 'SPF'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: SPF record duplicate (make new record solo)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: 'v=spf1 teststring'
+    ttl: 150
+    solo: true
+  register: cloudflare_dns
+
+- name: "Validate: SPF record duplicate (make new record solo)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == 'v=spf1 teststring'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'SPF'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: SPF record duplicate (old record absent)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: "{{ txt_teststring }}"
+    ttl: 300
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: SPF record duplicate (old record absent)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: SPF record deletion"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: 'v=spf1 teststring'
+    ttl: 150
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: SPF record deletion"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+
+- name: "Test: SPF record deletion succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SPF
+    value: 'v=spf1 teststring'
+    ttl: 150
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: SPF record deletion succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

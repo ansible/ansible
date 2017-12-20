@@ -1,0 +1,381 @@
+---
+# tasks file for ecs_cluster
+
+- block:
+    # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+
+    - name: ensure IAM instance role exists
+      iam_role:
+        name: ecsInstanceRole
+        assume_role_policy_document: "{{ lookup('file','ec2-trust-policy.json') }}"
+        state: present
+        create_instance_profile: no
+        managed_policy:
+        - AmazonEC2ContainerServiceforEC2Role
+        <<: *aws_connection_info
+
+    - name: ensure IAM service role exists
+      iam_role:
+        name: ecsServiceRole
+        assume_role_policy_document: "{{ lookup('file','ecs-trust-policy.json') }}"
+        state: present
+        create_instance_profile: no
+        managed_policy:
+        - AmazonEC2ContainerServiceRole
+        <<: *aws_connection_info
+
+    - name: create an ECS cluster
+      ecs_cluster:
+        name: "{{ ecs_cluster_name }}"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_cluster
+
+    - name: check that ecs_cluster changed
+      assert:
+        that:
+          - ecs_cluster.changed
+
+    - name: create same ECS cluster (should do nothing)
+      ecs_cluster:
+        name: "{{ ecs_cluster_name }}"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_cluster_again
+
+    - name: check that ecs_cluster did not change
+      assert:
+        that:
+          - not ecs_cluster_again.changed
+
+    - name: create a VPC to work in
+      ec2_vpc_net:
+        cidr_block: 10.0.0.0/16
+        state: present
+        name: '{{ resource_prefix }}_ecs_cluster'
+        resource_tags:
+          Name: '{{ resource_prefix }}_ecs_cluster'
+        <<: *aws_connection_info
+      register: setup_vpc
+
+    - name: create a key pair to use for creating an ec2 instance
+      ec2_key:
+        name: '{{ resource_prefix }}_ecs_cluster'
+        state: present
+        <<: *aws_connection_info
+      when: ec2_keypair is not defined  # allow override in cloud-config-aws.yml
+      register: setup_key
+
+    - name: create subnets
+      ec2_vpc_subnet:
+        az: '{{ ec2_region }}{{ item.zone }}'
+        tags:
+          Name: '{{ resource_prefix }}_ecs_cluster-subnet-{{ item.zone }}'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        cidr: "{{ item.cidr }}"
+        state: present
+        <<: *aws_connection_info
+      register: setup_subnet
+      with_items:
+        - zone: a
+          cidr: 10.0.1.0/24
+        - zone: b
+          cidr: 10.0.2.0/24
+
+    - name: create an internet gateway so that ECS agents can talk to ECS
+      ec2_vpc_igw:
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        state: present
+        <<: *aws_connection_info
+      register: igw
+
+    - name: create a security group to use for creating an ec2 instance
+      ec2_group:
+        name: '{{ resource_prefix }}_ecs_cluster-sg'
+        description: 'created by Ansible integration tests'
+        state: present
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        rules: # allow all ssh traffic but nothing else
+        - ports: 22
+          cidr: 0.0.0.0/0
+        <<: *aws_connection_info
+      register: setup_sg
+
+    - name: provision ec2 instance to create an image
+      ec2:
+        key_name: '{{ ec2_keypair|default(setup_key.key.name) }}'
+        instance_type: t2.micro
+        state: present
+        image: '{{ ecs_agent_images[aws_region] }}'
+        wait: yes
+        user_data: "{{ user_data }}"
+        instance_profile_name: ecsInstanceRole
+        instance_tags:
+          Name: '{{ resource_prefix }}_ecs_agent'
+        group_id: '{{ setup_sg.group_id }}'
+        vpc_subnet_id: '{{ setup_subnet.results[0].subnet.id }}'
+        assign_public_ip: yes  # public IP address assigned to avoid need for NAT GW.
+        <<: *aws_connection_info
+      register: setup_instance
+
+    - name: create target group
+      elb_target_group:
+        name: "{{ ecs_target_group_name }}"
+        state: present
+        protocol: HTTP
+        port: 8080
+        modify_targets: no
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      register: elb_target_group
+
+    - name: create load balancer
+      elb_application_lb:
+        name: "{{ ecs_load_balancer_name }}"
+        state: present
+        scheme: internal
+        security_groups: '{{ setup_sg.group_id }}'
+        subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+        listeners:
+          - Protocol: HTTP
+            Port: 80
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ ecs_target_group_name }}"
+        <<: *aws_connection_info
+
+    - name: create task definition
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_task_definition
+
+    - name: recreate task definition
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}"
+        state: present
+        <<: *aws_connection_info
+      register: ecs_task_definition_again
+
+    - name: check that task definition does not change
+      assert:
+        that:
+          - not ecs_task_definition_again.changed
+      # FIXME: task definition should not change, will need #26752 or equivalent
+      ignore_errors: yes
+
+    - name: obtain ECS task definition facts
+      ecs_taskdefinition_facts:
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        <<: *aws_connection_info
+
+    - name: create ECS service definition
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        role: "ecsServiceRole"
+        <<: *aws_connection_info
+      register: ecs_service
+
+    - name: check that ECS service creation changed
+      assert:
+        that:
+          - ecs_service.changed
+
+    - name: create same ECS service definition (should not change)
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        role: "ecsServiceRole"
+        <<: *aws_connection_info
+      register: ecs_service_again
+
+    - name: check that ECS service recreation changed nothing
+      assert:
+        that:
+          - not ecs_service_again.changed
+      # FIXME: service should not change, needs fixing
+      ignore_errors: yes
+
+    # FIXME: attempt to update service load balancer
+    - name: update ECS service definition (expected to fail)
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port|int + 1 }}"
+        role: "ecsServiceRole"
+        <<: *aws_connection_info
+      register: update_ecs_service
+      ignore_errors: yes
+
+    - name: assert that updating ECS load balancer failed with helpful message
+      assert:
+        that:
+          - update_ecs_service.failed
+          - "'msg' in update_ecs_service"
+
+    - name: obtain ECS service facts
+      ecs_service_facts:
+        service: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        <<: *aws_connection_info
+
+  always:
+
+    # TEAR DOWN: snapshot, ec2 instance, ec2 key pair, security group, vpc
+    - name: Announce teardown start
+      debug:
+        msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
+
+    - name: scale down ECS service
+      ecs_service:
+        state: present
+        name: "{{ ecs_service_name }}"
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 0
+        deployment_configuration: "{{ ecs_service_deployment_configuration }}"
+        placement_strategy: "{{ ecs_service_placement_strategy }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        role: "ecsServiceRole"
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: pause to allow service to scale down
+      pause:
+        seconds: 60
+
+    - name: remove ecs service
+      ecs_service:
+        state: absent
+        cluster: "{{ ecs_cluster_name }}"
+        name: "{{ ecs_service_name }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove ecs task definition
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}"
+        revision: "{{ ecs_task_definition.taskdefinition.revision }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove load balancer
+      elb_application_lb:
+        name: "{{ ecs_load_balancer_name }}"
+        state: absent
+        wait: yes
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: pause to allow target group to be disassociated
+      pause:
+        seconds: 30
+
+    - name: remove target group
+      elb_target_group:
+        name: "{{ ecs_target_group_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup ec2 instance
+      ec2:
+        instance_ids: '{{ setup_instance.instance_ids }}'
+        state: absent
+        wait: yes
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup keypair
+      ec2_key:
+        name: '{{ resource_prefix }}_ecs_cluster'
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup security group
+      ec2_group:
+        name: '{{ resource_prefix }}_ecs_cluster-sg'
+        description: 'created by Ansible integration tests'
+        state: absent
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove IGW
+      ec2_vpc_igw:
+        state: absent
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup subnet
+      ec2_vpc_subnet:
+        az: '{{ aws_region }}{{ item.zone }}'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        cidr: "{{ item.cidr}}"
+        state: absent
+        <<: *aws_connection_info
+      with_items:
+        - zone: a
+          cidr: 10.0.1.0/24
+        - zone: b
+          cidr: 10.0.2.0/24
+      ignore_errors: yes
+
+    - name: remove setup VPC
+      ec2_vpc_net:
+        cidr_block: 10.0.0.0/16
+        state: absent
+        name: '{{ resource_prefix }}_ecs_cluster'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove ECS cluster
+      ecs_cluster:
+        name: "{{ ecs_cluster_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes

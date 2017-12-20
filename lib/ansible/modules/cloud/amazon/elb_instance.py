@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
+                    'status': ['preview'],
                     'supported_by': 'certified'}
 
 
@@ -77,19 +77,19 @@ pre_tasks:
   - name: Gathering ec2 facts
     action: ec2_facts
   - name: Instance De-register
-    local_action:
-      module: ec2_elb
+    elb_instance:
       instance_id: "{{ ansible_ec2_instance_id }}"
       state: absent
+    delegate_to: localhost
 roles:
   - myrole
 post_tasks:
   - name: Instance Register
-    local_action:
-      module: ec2_elb
+    elb_instance:
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
       state: present
+    delegate_to: localhost
     with_items: "{{ ec2_elbs }}"
 """
 
@@ -167,7 +167,7 @@ class ElbManager:
         found = False
         for lb in self.lbs:
             if lb.name == lbtest:
-                found=True
+                found = True
                 break
         return found
 
@@ -326,7 +326,7 @@ def main():
     argument_spec.update(dict(
         state={'required': True},
         instance_id={'required': True},
-        ec2_elbs={'default': None, 'required': False, 'type':'list'},
+        ec2_elbs={'default': None, 'required': False, 'type': 'list'},
         enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
         wait={'required': False, 'default': True, 'type': 'bool'},
         wait_timeout={'required': False, 'default': 0, 'type': 'int'}
@@ -359,7 +359,7 @@ def main():
     if ec2_elbs is not None:
         for elb in ec2_elbs:
             if not elb_man.exists(elb):
-                msg="ELB %s does not exist" % elb
+                msg = "ELB %s does not exist" % elb
                 module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':

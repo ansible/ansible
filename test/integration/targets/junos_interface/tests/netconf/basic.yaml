@@ -118,7 +118,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *disable")
+      - result.diff.prepared is search("\+ *disable")
 
 - name: Enable interface
   junos_interface:
@@ -131,7 +131,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *disable")
+      - result.diff.prepared is search("\- *disable")
 
 - name: Delete interface
   junos_interface:
@@ -178,15 +178,15 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\+ *ge-0/0/1")
-      - result.diff.prepared | search("\+ *description test-interface-1")
-      - result.diff.prepared | search("\+ *speed 1g")
-      - result.diff.prepared | search("\+ *mtu 512")
-      - result.diff.prepared | search("\+ *link-mode full-duplex")
-      - result.diff.prepared | search("\+ *description test-interface-2")
-      - result.diff.prepared | search("\+ *speed 10m")
-      - result.diff.prepared | search("\+ * mtu 256")
-      - result.diff.prepared | search("\+ *link-mode full-duplex")
+      - result.diff.prepared is search("\+ *ge-0/0/1")
+      - result.diff.prepared is search("\+ *description test-interface-1")
+      - result.diff.prepared is search("\+ *speed 1g")
+      - result.diff.prepared is search("\+ *mtu 512")
+      - result.diff.prepared is search("\+ *link-mode full-duplex")
+      - result.diff.prepared is search("\+ *description test-interface-2")
+      - result.diff.prepared is search("\+ *speed 10m")
+      - result.diff.prepared is search("\+ * mtu 256")
+      - result.diff.prepared is search("\+ *link-mode full-duplex")
 
 - name: Set interface on aggregate (idempotent)
   junos_interface:
@@ -213,7 +213,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\+ *disable")
+      - result.diff.prepared is search("\+ *disable")
 
 - name: Enable interface on aggregate
   junos_interface:
@@ -227,7 +227,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\- *disable")
+      - result.diff.prepared is search("\- *disable")
 
 - name: Deactivate interface configuration on aggregate
   junos_interface:
@@ -242,8 +242,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *inactive[:] ge-0/0/1")
-      - result.diff.prepared | search("! *inactive[:] ge-0/0/2")
+      - result.diff.prepared is search("! *inactive[:] ge-0/0/1")
+      - result.diff.prepared is search("! *inactive[:] ge-0/0/2")
 
 - name: Activate interface configuration on aggregate
   junos_interface:
@@ -258,8 +258,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *active[:] ge-0/0/1")
-      - result.diff.prepared | search("! *active[:] ge-0/0/2")
+      - result.diff.prepared is search("! *active[:] ge-0/0/1")
+      - result.diff.prepared is search("! *active[:] ge-0/0/2")
 
 - name: Delete interface on aggregate
   junos_interface:
@@ -273,15 +273,15 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\- *ge-0/0/1")
-      - result.diff.prepared | search("\- *description test-interface-1")
-      - result.diff.prepared | search("\- *speed 1g")
-      - result.diff.prepared | search("\- *mtu 512")
-      - result.diff.prepared | search("\- *link-mode full-duplex")
-      - result.diff.prepared | search("\- *description test-interface-2")
-      - result.diff.prepared | search("\- *speed 10m")
-      - result.diff.prepared | search("\- * mtu 256")
-      - result.diff.prepared | search("\- *link-mode full-duplex")
+      - result.diff.prepared is search("\- *ge-0/0/1")
+      - result.diff.prepared is search("\- *description test-interface-1")
+      - result.diff.prepared is search("\- *speed 1g")
+      - result.diff.prepared is search("\- *mtu 512")
+      - result.diff.prepared is search("\- *link-mode full-duplex")
+      - result.diff.prepared is search("\- *description test-interface-2")
+      - result.diff.prepared is search("\- *speed 10m")
+      - result.diff.prepared is search("\- * mtu 256")
+      - result.diff.prepared is search("\- *link-mode full-duplex")
 
 - name: Delete interface on aggregate (idempotent)
   junos_interface:

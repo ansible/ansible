@@ -27,6 +27,7 @@ import pwd
 import re
 import time
 
+from functools import wraps
 from io import StringIO
 from numbers import Number
 
@@ -42,7 +43,7 @@ from jinja2.runtime import Context, StrictUndefined
 from jinja2.utils import concat as j2_concat
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
@@ -157,6 +158,26 @@ def _count_newlines_from_end(in_str):
         return i
 
 
+def tests_as_filters_warning(name, func):
+    '''
+    Closure to enable displaying a deprecation warning when tests are used as a filter
+
+    This closure is only used when registering ansible provided tests as filters
+
+    This function should be removed in 2.9 along with registering ansible provided tests as filters
+    in Templar._get_filters
+    '''
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        display.deprecated(
+            'Using tests as filters is deprecated. Instead of using `result|%(name)s` instead use '
+            '`result is %(name)s`' % dict(name=name),
+            version='2.9'
+        )
+        return func(*args, **kwargs)
+    return wrapper
+
+
 class AnsibleContext(Context):
     '''
     A custom context, which intercepts resolve() calls and sets a flag
@@ -220,7 +241,9 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, shared_loader_obj=None, variables=dict()):
+    def __init__(self, loader, shared_loader_obj=None, variables=None):
+        variables = {} if variables is None else variables
+
         self._loader = loader
         self._filters = None
         self._tests = None
@@ -281,7 +304,10 @@ class Templar:
         self._filters = dict()
         for fp in plugins:
             self._filters.update(fp.filters())
-        self._filters.update(self._get_tests())
+
+        # TODO: Remove registering tests as filters in 2.9
+        for name, func in self._get_tests().items():
+            self._filters[name] = tests_as_filters_warning(name, func)
 
         return self._filters.copy()
 
@@ -385,17 +411,19 @@ class Templar:
         are being changed.
         '''
 
-        assert isinstance(variables, dict), "the type of 'variables' should be a dict but was a %s" % (type(variables))
+        if not isinstance(variables, dict):
+            raise AnsibleAssertionError("the type of 'variables' should be a dict but was a %s" % (type(variables)))
         self._available_variables = variables
         self._cached_result = {}
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
-                 convert_data=True, static_vars=[''], cache=True, bare_deprecated=True, disable_lookups=False):
+                 convert_data=True, static_vars=None, cache=True, bare_deprecated=True, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
+        static_vars = [''] if static_vars is None else static_vars
 
         # Don't template unsafe variables, just return them.
         if hasattr(variable, '__UNSAFE__'):
@@ -575,6 +603,11 @@ class Templar:
     def _fail_lookup(self, name, *args, **kwargs):
         raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
 
+    def _query_lookup(self, name, *args, **kwargs):
+        ''' wrapper for lookup, force wantlist true'''
+        kwargs['wantlist'] = True
+        return self._lookup(name, *args, **kwargs)
+
     def _lookup(self, name, *args, **kwargs):
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
@@ -657,9 +690,10 @@ class Templar:
                     return data
 
             if disable_lookups:
-                t.globals['lookup'] = self._fail_lookup
+                t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
             else:
                 t.globals['lookup'] = self._lookup
+                t.globals['query'] = t.globals['q'] = self._query_lookup
 
             t.globals['finalize'] = self._finalize
 
@@ -702,7 +736,7 @@ class Templar:
             if fail_on_undefined:
                 raise AnsibleUndefinedVariable(e)
             else:
-                # TODO: return warning about undefined var
+                display.debug("Ignoring undefined failure: %s" % to_text(e))
                 return data
 
     # for backwards compatibility in case anyone is using old private method directly

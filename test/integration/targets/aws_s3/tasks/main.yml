@@ -1,14 +1,9 @@
 ---
 # tasks file for test_s3
 # ============================================================
-- name: generate random name for the bucket name
-  command: bash -c 'echo ansible_test_$RANDOM'
-  register: bucket
-# ============================================================
-# ============================================================
 - name: test create bucket
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: create
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
@@ -20,8 +15,8 @@
       - result.changed == True
 # ============================================================
 - name: trying to create a bucket name that already exists
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: create
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
@@ -50,8 +45,8 @@
   register: file1stat
 # ============================================================
 - name: test putting an object in the bucket
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: put
     src: "{{ tmp1.path }}"
     object: delete.txt
@@ -67,16 +62,12 @@
       - result.changed == True
       - result.msg == "PUT operation complete"
 # ============================================================
-- name: wait a few seconds before continuing
-  pause:
-    seconds: 3
-# ============================================================
 - name: create a second temp file to download the object from the bucket
   tempfile:
   register: tmp2
 - name: test get object
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: get
     dest: "{{ tmp2.path }}"
     object: delete.txt
@@ -86,6 +77,7 @@
   retries: 3
   delay: 3
   register: result
+  until: "result.msg == 'GET operation complete'"
 - name: get the stat of the file so we can compare the checksums
   stat:
     path: "{{ tmp2.path }}"
@@ -96,13 +88,9 @@
     that:
       - file1stat.stat.checksum == file2stat.stat.checksum
 # ============================================================
-- name: wait a few seconds before continuing
-  pause:
-      seconds: 3
-# ============================================================
 - name: test geturl of the object
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: geturl
     object: delete.txt
     security_token: "{{security_token}}"
@@ -111,6 +99,7 @@
   retries: 3
   delay: 3
   register: result
+  until: result.changed
 - name: assert we have the object's url
   assert:
     that:
@@ -118,8 +107,8 @@
       - result.changed == True
 # ============================================================
 - name: test getstr of the object
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: getstr
     object: delete.txt
     security_token: "{{security_token}}"
@@ -135,8 +124,8 @@
       - result.contents == content
 # ============================================================
 - name: test list to get all objects in the bucket
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: list
     security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
@@ -151,8 +140,8 @@
       - result.msg == "LIST operation complete"
 # ============================================================
 - name: test delobj to just delete an object in the bucket
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: delobj
     object: delete.txt
     security_token: "{{security_token}}"
@@ -166,15 +155,50 @@
     that:
       - "'Object deleted from bucket' in result.msg"
       - result.changed == True
+- name: assert that delete.txt is no longer an object in the bucket deleteme
+  assert:
+    that:
+      - "'Object deleted from bucket' in result.msg"
+      - result.changed == True
+# ============================================================
+- name: test creation of empty path
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: create
+    object: foo/bar/baz/
+    security_token: "{{ security_token }}"
+    aws_access_key: "{{ ec2_access_key }}"
+    aws_secret_key: "{{ ec2_secret_key }}"
+  retries: 3
+  delay: 3
+  register: result
+- name: assert that empty path is created
+  assert:
+    that:
+      - "'Virtual directory foo/bar/baz/ created' in result.msg"
+      - result.changed == True
+- name: test deletion of empty path
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: delobj
+    object: foo/bar/baz/
+    security_token: "{{ security_token }}"
+    aws_access_key: "{{ ec2_access_key }}"
+    aws_secret_key: "{{ ec2_secret_key }}"
+  retries: 3
+  delay: 3
 # ============================================================
 - name: test delete bucket
-  s3:
-    bucket: "{{ bucket.stdout }}"
+  aws_s3:
+    bucket: "{{ bucket_name }}"
     mode: delete
     security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
   register: result
+  retries: 3
+  delay: 3
+  until: result.changed
 - name: assert that changed is True
   assert:
     that:
@@ -190,8 +214,8 @@
     path: "{{ tmp2.path }}"
 # ============================================================
 - name: test create a bucket with a dot in the name
-  s3:
-    bucket: "{{ bucket.stdout + '.bucket' }}"
+  aws_s3:
+    bucket: "{{ bucket_name + '.bucket' }}"
     mode: create
     security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
@@ -203,8 +227,8 @@
       - result.changed == True
 # ============================================================
 - name: test delete a bucket with a dot in the name
-  s3:
-    bucket: "{{ bucket.stdout + '.bucket' }}"
+  aws_s3:
+    bucket: "{{ bucket_name + '.bucket' }}"
     mode: delete
     security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"
@@ -216,8 +240,8 @@
       - result.changed == True
 # ============================================================
 - name: test delete a nonexistent bucket
-  s3:
-    bucket: "{{ bucket.stdout + '.bucket' }}"
+  aws_s3:
+    bucket: "{{ bucket_name + '.bucket' }}"
     mode: delete
     security_token: "{{security_token}}"
     aws_access_key: "{{ ec2_access_key }}"

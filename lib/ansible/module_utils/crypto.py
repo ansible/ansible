@@ -96,26 +96,17 @@ def load_certificate_request(path):
         raise OpenSSLObjectError(exc)
 
 
-keyUsageLong = {
-    "digitalSignature": "Digital Signature",
-    "nonRepudiation": "Non Repudiation",
-    "keyEncipherment": "Key Encipherment",
-    "dataEncipherment": "Data Encipherment",
-    "keyAgreement": "Key Agreement",
-    "keyCertSign": "Certificate Sign",
-    "cRLSign": "CRL Sign",
-    "encipherOnly": "Encipher Only",
-    "decipherOnly": "Decipher Only",
-}
+def parse_name_field(input_dict):
+    """Take a dict with key: value or key: list_of_values mappings and return a list of tuples"""
 
-extendedKeyUsageLong = {
-    "serverAuth": "TLS Web Server Authentication",
-    "clientAuth": "TLS Web Client Authentication",
-    "codeSigning": "Code Signing",
-    "emailProtection": "E-mail Protection",
-    "timeStamping": "Time Stamping",
-    "OCSPSigning": "OCSP Signing",
-}
+    result = []
+    for key in input_dict:
+        if isinstance(input_dict[key], list):
+            for entry in input_dict[key]:
+                result.append((key, entry))
+        else:
+            result.append((key, input_dict[key]))
+    return result
 
 
 @six.add_metaclass(abc.ABCMeta)
