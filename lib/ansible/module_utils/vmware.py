@@ -437,6 +437,7 @@ def vmware_argument_spec():
         hostname=dict(type='str', required=True),
         username=dict(type='str', aliases=['user', 'admin'], required=True),
         password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
+        port=dict(type='int', default=443),
         validate_certs=dict(type='bool', required=False, default=True),
     )
 
@@ -445,6 +446,7 @@ def connect_to_api(module, disconnect_atexit=True):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
+    port = module.params['port'] or 443
     validate_certs = module.params['validate_certs']
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
@@ -458,23 +460,23 @@ def connect_to_api(module, disconnect_atexit=True):
 
     service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context)
+        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
     except vim.fault.InvalidLogin as e:
-        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s as %s: %s" % (hostname, username, e.msg))
+        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, e.msg))
     except vim.fault.NoPermission as e:
         module.fail_json(msg="User %s does not have required permission"
-                             " to log on to vCenter or ESXi API at %s: %s" % (username, hostname, e.msg))
+                             " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, e.msg))
     except (requests.ConnectionError, ssl.SSLError) as e:
-        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/443: %s" % (hostname, e))
+        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, e))
     except vmodl.fault.InvalidRequest as e:
         # Request is malformed
-        module.fail_json(msg="Failed to get a response from server %s as "
-                             "request is malformed: %s" % (hostname, e.msg))
+        module.fail_json(msg="Failed to get a response from server %s:%s as "
+                             "request is malformed: %s" % (hostname, port, e.msg))
     except Exception as e:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s: %s" % (hostname, e))
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, e))
 
     if service_instance is None:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s" % hostname)
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port))
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
