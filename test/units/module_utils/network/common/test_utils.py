@@ -40,12 +40,14 @@ def test_to_list():
     test_list = [1, 2, 3]
     assert id(test_list) != id(to_list(test_list))
 
+
 def test_sort():
     data = [3, 1, 2]
     assert [1, 2, 3] == sort_list(data)
 
     string_data = '123'
     assert string_data == sort_list(string_data)
+
 
 def test_dict_diff():
     base = dict(obj2=dict(), b1=True, b2=False, b3=False,
@@ -88,6 +90,7 @@ def test_dict_diff():
     assert result['b3']
     assert result['b4']
 
+
 def test_dict_merge():
     base = dict(obj2=dict(), b1=True, b2=False, b3=False,
                 one=1, two=2, three=3, obj1=dict(key1=1, key2=2),
@@ -129,6 +132,7 @@ def test_dict_merge():
     assert result['b3']
     assert result['b4']
 
+
 def test_conditional():
     assert conditional(10, 10)
     assert conditional('10', '10')
@@ -146,24 +150,30 @@ def test_conditional():
     assert conditional("max(1)", 1)
     assert conditional("exactly(1)", 1)
 
+
 def test_template():
     tmpl = Template()
     assert 'foo' == tmpl('{{ test }}', {'test': 'foo'})
 
+
 def test_to_masklen():
     assert 24 == to_masklen('255.255.255.0')
 
+
 def test_to_masklen_invalid():
     with pytest.raises(ValueError):
-       to_masklen('255')
+        to_masklen('255')
+
 
 def test_to_netmask():
     assert '255.0.0.0' == to_netmask(8)
     assert '255.0.0.0' == to_netmask('8')
 
+
 def test_to_netmask_invalid():
     with pytest.raises(ValueError):
         to_netmask(128)
+
 
 def test_to_subnet():
     result = to_subnet('192.168.1.1', 24)
@@ -172,19 +182,23 @@ def test_to_subnet():
     result = to_subnet('192.168.1.1', 24, dotted_notation=True)
     assert '192.168.1.0 255.255.255.0' == result
 
+
 def test_to_subnet_invalid():
     with pytest.raises(ValueError):
         to_subnet('foo', 'bar')
+
 
 def test_is_masklen():
     assert is_masklen(32)
     assert not is_masklen(33)
     assert not is_masklen('foo')
 
+
 def test_is_netmask():
     assert is_netmask('255.255.255.255')
     assert not is_netmask(24)
     assert not is_netmask('foo')
+
 
 def test_to_ipv6_network():
     assert '2001:db8::' == to_ipv6_network('2001:db8::')
