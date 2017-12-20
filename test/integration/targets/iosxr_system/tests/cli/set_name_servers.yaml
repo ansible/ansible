@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_name_servers.yaml"
+- debug: msg="START cli/set_name_servers.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -83,4 +83,4 @@
 
 # FIXME: No teardown
 #
-- debug: msg="END cli/set_name_servers.yaml"
+- debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"
