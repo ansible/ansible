@@ -146,6 +146,8 @@ def debug_closure(func):
                     break
                 elif next_action.result == NextAction.EXIT:
                     sys.exit(1)
+            else:
+                _processed_results.append(result)
 
         return _processed_results
     return inner
