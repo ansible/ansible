@@ -214,6 +214,7 @@ Ansible Changes By Release
   * win_audit_rule
   * win_scheduled_task_stat
   * win_whoami
+  * win_disk_facts
 
 <a id="2.4.1"></a>
 
