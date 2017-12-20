@@ -62,10 +62,10 @@ ansible_facts:
                     type: int
                     sample: 0
                 size:
-                    description: Size in gb of the particular disk.
+                    description: Size in Gibibyte of the particular disk.
                     returned: always
                     type: string
-                    sample: "100gb"
+                    sample: "100GiB"
                 bus_type:
                     description: Bus type of the particular disk.
                     returned: always
@@ -168,11 +168,11 @@ ansible_facts:
                             sample: 1
                         size:
                             description:
-                              - Size in gb of the particular partition.
+                              - Size in Gibibyte of the particular partition.
                               - Accurate to three decimal places.
                             returned: always
                             type: string
-                            sample: "0.031gb"
+                            sample: "0.031GiB"
                         type:
                             description: Type of the particular partition.
                             returned: always
@@ -240,18 +240,18 @@ ansible_facts:
                             contains:
                                 size:
                                     description:
-                                      - Size in gb of the particular volume.
+                                      - Size in Gibibyte of the particular volume.
                                       - Accurate to three decimal places.
                                     returned: always
                                     type: string
-                                    sample: "0,342gb"
+                                    sample: "0,342GiB"
                                 size_remaining:
                                     description:
-                                      - Remaining size in gb of the particular volume.
+                                      - Remaining size in Gibibyte of the particular volume.
                                       - Accurate to three decimal places.
                                     returned: always
                                     type: string
-                                    sample: "0,146gb"
+                                    sample: "0,146GiB"
                                 type:
                                     description: File system type of the particular volume.
                                     returned: always
@@ -273,10 +273,10 @@ ansible_facts:
                                     type: string
                                     sample: "Fixed"
                                 allocation_unit_size:
-                                    description: Allocation unit size in kb of the particular volume.
+                                    description: Allocation unit size in Kibibyte of the particular volume.
                                     returned: always
                                     type: string
-                                    sample: "64kb"
+                                    sample: "64KiB"
                                 object_id:
                                     description: Object ID of the particular volume.
                                     returned: always
@@ -299,18 +299,18 @@ ansible_facts:
                             sample: "UnSpecified"
                         size:
                             description:
-                              - Size in gb of the particular physical disk.
+                              - Size in Gibibyte of the particular physical disk.
                               - Accurate to three decimal places.
                             returned: always
                             type: string
-                            sample: "200gb"
+                            sample: "200GiB"
                         allocated_size:
                             description:
-                              - Allocated size in gb of the particular physical disk.
+                              - Allocated size in Gibibyte of the particular physical disk.
                               - Accurate to three decimal places.
                             returned: always
                             type: string
-                            sample: "100gb"
+                            sample: "100GiB"
                         device_id:
                             description: Device ID of the particular physical disk.
                             returned: always
@@ -418,25 +418,25 @@ ansible_facts:
                     contains:
                         size:
                             description:
-                              - Size in gb of the particular virtual disk.
+                              - Size in Gibibyte of the particular virtual disk.
                               - Accurate to three decimal places.
                             returned: always
                             type: string
-                            sample: "300gb"
+                            sample: "300GiB"
                         allocated_size:
                             description:
-                              - Allocated size in gb of the particular virtual disk.
+                              - Allocated size in Gibibyte of the particular virtual disk.
                               - Accurate to three decimal places.
                             returned: always
                             type: string
-                            sample: "100gb"
+                            sample: "100GiB"
                         footprint_on_pool:
                             description:
-                              - Footprint on pool in gb of the particular virtual disk.
+                              - Footprint on pool in Gibibyte of the particular virtual disk.
                               - Accurate to three decimal places.
                             returned: always
                             type: string
-                            sample: "100gb"
+                            sample: "100GiB"
                         name:
                             description: Name of the particular virtual disk.
                             returned: always
@@ -463,10 +463,10 @@ ansible_facts:
                             type: string
                             sample: "Thin"
                         allocation_unit_size:
-                            description: Allocation unit size in kb of the particular virtual disk.
+                            description: Allocation unit size in Kibibyte of the particular virtual disk.
                             returned: always
                             type: string
-                            sample: "4kb"
+                            sample: "4KiB"
                         media_type:
                             description: Media type of the particular virtual disk.
                             returned: always
@@ -499,11 +499,11 @@ ansible_facts:
                             sample: "PhysicalDisk"
                         inter_leave:
                             description:
-                              - Inter leave in kb of the particular virtual disk.
+                              - Inter leave in Kibibyte of the particular virtual disk.
                               - Accurate to three decimal places.
                             returned: always
                             type: string
-                            sample: "100kb"
+                            sample: "100KiB"
                         deduplication_enabled:
                             description: Information whether deduplication is enabled for the particular virtual disk.
                             returned: always
@@ -530,10 +530,10 @@ ansible_facts:
                             type: string
                             sample: "True"
                         physical_sector_size:
-                            description: Physical sector size in kb of the particular virtual disk.
+                            description: Physical sector size in Kibibyte of the particular virtual disk.
                             returned: always
                             type: string
-                            sample: "4kb"
+                            sample: "4KiB"
                         logical_sector_size:
                             description: Logical sector size in byte of the particular virtual disk.
                             returned: always
