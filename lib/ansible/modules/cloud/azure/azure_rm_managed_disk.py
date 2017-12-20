@@ -75,7 +75,7 @@ options:
     managed_by:
         description:
             - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
-            - C(None) for detaching the disk from a vm.
+            - To detach a disk from a vm, keep undefined.
         version_added: 2.5
     tags:
         description:
