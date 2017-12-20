@@ -123,7 +123,7 @@ def debug_closure(func):
             except KeyError:
                 prev_host_state = iterator.get_host_state(host)
 
-            while result.needs_debugger() or (self.debugger_active and (result.is_failed() or result.is_unreachable())):
+            while result.needs_debugger(globally_enabled=self.debugger_active):
                 next_action = NextAction()
                 dbg = Debugger(task, host, task_vars, play_context, result, next_action)
                 dbg.cmdloop()
