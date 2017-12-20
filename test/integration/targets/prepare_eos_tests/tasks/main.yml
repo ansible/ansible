@@ -4,8 +4,7 @@
       - no shutdown
       - no switchport
     parents: int Ethernet1
-  become: yes
-  connection: network_cli
+    provider: "{{ cli }}"
 
 - name: Enable Ethernet2 interface and disable switchport
   eos_config:
@@ -13,8 +12,7 @@
       - no shutdown
       - no switchport
     parents: int Ethernet2
-  become: yes
-  connection: network_cli
+    provider: "{{ cli }}"
 
 - name: enable eapi
   eos_eapi:
@@ -22,6 +20,5 @@
     https: yes
     local_http: no
     enable_socket: yes
-  become: yes
-  connection: network_cli
+    provider: "{{ cli }}"
   tags: eapi
