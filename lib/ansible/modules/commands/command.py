@@ -132,10 +132,23 @@ def check_command(module, commandline):
                 'dnf': 'dnf', 'zypper': 'zypper'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
+
+    disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
+                     " warn=False  to this command task or set command_warnings=False in" \
+                     " ansible.cfg to get rid of this message."
+    substitutions = {'mod': None, 'cmd': command}
+
     if command in arguments:
-        module.warn("Consider using file module with %s rather than running %s" % (arguments[command], command))
+        msg = "Consider using the {mod} module with {subcmd} rather than running {cmd}.  " + disable_suffix
+        substitutions['mod'] = 'file'
+        substitutions['subcmd'] = arguments[command]
+        module.warn(msg.format(**substitutions))
+
     if command in commands:
-        module.warn("Consider using %s module rather than running %s" % (commands[command], command))
+        msg = "Consider using the {mod} module rather than running {cmd}.  " + disable_suffix
+        substitutions['mod'] = commands[command]
+        module.warn(msg.format(**substitutions))
+
     if command in become:
         module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
