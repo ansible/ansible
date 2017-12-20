@@ -112,6 +112,14 @@
             failed_modules: "{{ failed_modules }} + [ 'eos_static_route' ]"
             test_failed: true
 
+    - block:
+      - include_role:
+          name: eos_linkagg
+        when: "limit_to in ['*', 'eos_linkagg']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_linkagg' ]"
+            test_failed: true
 
 
 ###########
