@@ -1,0 +1,94 @@
+configmap:
+  cdx:
+# Enable 'name:' variable if it's "service-registration" microservice
+#    name: 
+    eventhub:
+      namespace: 
+      shared_access:
+        keyname: 
+        password_kvkey: 
+#########Enable below variables based on microservice########
+# Enable below variable if it's "service-create" microservice
+#      ingestion_path_create: 
+# Enable below variable if it's "service-update" microservice
+#      ingestion_path_update: 
+# Enable below variable if it's "service-registration" microservice
+#      ingestion_path_registration: 
+      path_dlq: 
+    azure:
+      tenant_id: 
+      keyvault:
+        host: 
+        url: 
+      encryptaes_secret_kvkey: 
+      encryptiv_salt_kvkey: 
+      payload:
+        encryptaes_secret_kvkey: 
+        encryptiv_salt_kvkey: 
+    java_options: 
+    app_log_level: trace
+    app_stdout_color: false
+
+deployment:
+  spec:
+    replicas: 1
+    minreadyseconds: 35
+    strategy:
+      type: RollingUpdate
+      maxunavailable: 1
+      maxsurge: 2
+# Enable 'app:' variable if it's "service-registration" microservice
+#  app: 
+  container:
+    image: image
+    resources:
+      memory:
+        limits: 1Gi
+        requests: 1Gi
+      cpu:
+        limits: "1"
+        requests: "0.1"
+    port:
+      cdx: 7013
+      healthz: 7030
+    livenessprobe:
+      httpget:
+        path: /health
+        port: healthz
+      initialdelayseconds: 60
+      periodseconds: 30
+      timeoutseconds: 10
+    readinessprobe:
+      httpget:
+        path: /health
+        port: healthz
+      initialdelayseconds: 60
+      periodseconds: 30
+      timeoutseconds: 10
+#Enable 'envform:' variables (from line 69-86) if it's "service-registration or service-update" microservices
+#  envform:
+#    name: 
+#  envs:
+#    env1:
+#      name: 
+#      fieldref:
+#        apiversion: v1
+#        fieldpath: spec.nodeName
+#    env2:
+#      name: 
+#      secretkeyref:
+#        name: 
+#        key: 
+#    env3:
+#      name: 
+#      secretkeyref:
+#        name: 
+#        key: 
+  imagepullsecrets:
+    name: 
+
+autoscale:
+  spec:
+    minreplicas: 1
+    maxreplicas: 1
+    targetcpuutil: 50

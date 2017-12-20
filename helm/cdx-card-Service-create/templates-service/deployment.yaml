@@ -1,0 +1,73 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata: 
+  name: {{ .Chart.Name }}
+spec: 
+  replicas: {{ .Values.deployment.spec.replicas }}
+  selector: 
+    matchLabels: 
+      app: {{ .Chart.Name }}
+  minReadySeconds: {{ .Values.deployment.spec.minreadyseconds }}
+  strategy: 
+    type: {{ .Values.deployment.spec.strategy.type }}
+    rollingUpdate: 
+      maxUnavailable: {{ .Values.deployment.spec.strategy.maxunavailable }}
+      maxSurge: {{ .Values.deployment.spec.strategy.maxsurge }}
+  template: # create pods using pod definition in this template
+    metadata: 
+      labels: 
+        app: {{ .Chart.Name }}
+    spec: 
+      containers: 
+      - name: {{ .Chart.Name }}
+        #image: docker.io/sclemens/cdx-poc-build:latest
+        image: {{ .Values.deployment.container.image }}
+        resources: 
+          limits: 
+            memory: {{ .Values.deployment.container.resources.memory.limits | quote}}
+            cpu: {{ .Values.deployment.container.resources.cpu.limits | quote}}
+          requests: 
+            memory: {{ .Values.deployment.container.resources.memory.requests | quote}}
+            cpu: {{ .Values.deployment.container.resources.cpu.requests | quote}}
+        ports: 
+        - containerPort: {{ .Values.deployment.container.port }}
+        livenessProbe: 
+          httpGet: 
+            path: {{ .Values.deployment.container.livenessprobe.httpget.path }}
+            port: {{ .Values.deployment.container.livenessprobe.httpget.port }}
+          initialDelaySeconds: {{ .Values.deployment.container.livenessprobe.initialdelayseconds }}
+          periodSeconds: {{ .Values.deployment.container.livenessprobe.periodseconds }}
+          timeoutSeconds: {{ .Values.deployment.container.livenessprobe.timeoutseconds }}
+        readinessProbe: 
+          httpGet: 
+            path: {{ .Values.deployment.container.readinessprobe.httpget.path }}
+            port: {{ .Values.deployment.container.readinessprobe.httpget.port }}
+          initialDelaySeconds: {{ .Values.deployment.container.readinessprobe.initialdelayseconds }}
+          periodSeconds: {{ .Values.deployment.container.readinessprobe.periodseconds }}
+          timeoutSeconds: {{ .Values.deployment.container.readinessprobe.timeoutseconds }}
+        envFrom: 
+        - configMapRef: 
+            name: {{ .Values.deployment.envform.name }}
+        env: 
+        - name: {{ .Values.deployment.envs.env1.name }}
+          valueFrom: 
+            fieldRef: 
+              apiVersion: {{ .Values.deployment.envs.env1.fieldref.apiversion }}
+              fieldPath: {{ .Values.deployment.envs.env1.fieldref.fieldpath }}
+        - name: {{ .Values.deployment.envs.env2.name }}
+          valueFrom: 
+            secretKeyRef: 
+              name: {{ .Values.deployment.envs.env2.secretkeyref.name }}
+              key: {{ .Values.deployment.envs.env2.secretkeyref.key }}
+        - name: {{ .Values.deployment.envs.env3.name }}
+          valueFrom: 
+            secretKeyRef: 
+              name: {{ .Values.deployment.envs.env3.secretkeyref.name }}
+              key: {{ .Values.deployment.envs.env3.secretkeyref.key }}
+        - name: {{ .Values.deployment.envs.env4.name }}
+          valueFrom: 
+            secretKeyRef: 
+              name: {{ .Values.deployment.envs.env4.secretkeyref.name }}
+              key: {{ .Values.deployment.envs.env4.secretkeyref.key }}
+      imagePullSecrets: 
+      - name: {{ .Values.deployment.imagepullsecrets.name }}

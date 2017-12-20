@@ -1,0 +1,121 @@
+configmap:
+  cdx:
+#Enable "name" variable if it's "registration" microservice
+#    name: 
+    cassandra:
+      hosts: 
+      keyspace: 
+      username: 
+      password_kvkey: 
+      ssl_enabled: true
+      truststore:
+        path: /tmp/cassandra.truststore
+        password_kvkey: 
+    eventhub:
+      namespace: 
+      syndication_path: 
+      shared_access:
+        keyname: 
+        password_kvkey: 
+#Below variables needs to update based on Microservice (create, update and registration)
+#If it's 'create' microservice update only 'x_x_create' variables
+#If it's 'update' microservice update only 'x_x_update' variables and comment "create and registration" variables.
+#If it's 'registration' microservice update only 'x_x_registration' variables and comment "create and update" variables.
+      consumer_group_create: 
+      ingestion_path_create: 
+#      consumer_group_update: 
+#      ingestion_path_update: 
+#      consumer_group_registration: 
+#      ingestion_path_registration: 
+      storage:
+        container_name: 
+        name: 
+        kvkey: 
+# Enable "consumer_group_stage" variable if it's "registration" microservice       
+#      consumer_group_stage: 
+    azure:
+      tenant_id: 
+      keyvault:
+        host: 
+        url: 
+      encryptaes_secret_kvkey: 
+      encryptiv_salt_kvkey: 
+      payload:
+        encryptaes_secret_kvkey: 
+        encryptiv_salt_kvkey: 
+    java_options: 
+    eh_consumer:
+      max_throttle_limit: 100
+      time_out_in_minutes: 2
+    akka_stream:
+      parallelism: 1
+      batch_size: 10
+      batch_time_window_in_seconds: 1
+    app_log_level: trace
+    app_stdout_color: false
+
+deployment:
+  spec:
+    replicas: 1
+    minreadyseconds: 35
+    strategy:
+      type: RollingUpdate
+      maxunavailable: 1
+      maxsurge: 2
+#Enable "app" variable only if it's "registration" microservice.      
+#  app: 
+  container:
+    image: image
+    resources:
+      memory:
+        limits: 1Gi
+        requests: 1Gi
+      cpu:
+        limits: "1"
+        requests: "0.1"
+    port: 7030
+    livenessprobe:
+      httpget:
+        path: /health
+        port: 7030
+      initialdelayseconds: 60
+      periodseconds: 30
+      timeoutseconds: 10
+    readinessprobe:
+      httpget:
+        path: /health
+        port: 7030
+      initialdelayseconds: 60
+      periodseconds: 30
+      timeoutseconds: 10
+  envform:
+    name: 
+  envs:
+    env1:
+      name: 
+      fieldref:
+        apiversion: v1
+        fieldpath: metadata.name
+    env2:
+      name: 
+      secretkeyref:
+        name: 
+        key: 
+    env3:
+      name: 
+      secretkeyref:
+        name: 
+        key: 
+    env4:
+      name: 
+      secretkeyref:
+        name: 
+        key: 
+  imagepullsecrets:
+    name: 
+
+autoscale:
+  spec:
+    minreplicas: 1
+    maxreplicas: 1
+    targetcpuutil: 50

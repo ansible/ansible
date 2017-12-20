@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: {{ .Values.configmap.cdx.name }}
+data: 
+  CDX_CASSANDRA_HOSTS: {{ .Values.configmap.cdx.cassandra.hosts | quote }}
+  CDX_CASSANDRA_KEYSPACE: {{ .Values.configmap.cdx.cassandra.keyspace | quote }}
+  CDX_CASSANDRA_USERNAME: {{ .Values.configmap.cdx.cassandra.username | quote }}
+  CDX_CASSANDRA_PASSWORD_KVKEY: {{ .Values.configmap.cdx.cassandra.password_kvkey | quote }}
+  CDX_CASSANDRA_SSL_ENABLED: {{ .Values.configmap.cdx.cassandra.ssl_enabled | quote }}
+  CDX_CASSANDRA_TRUSTSTORE_PATH: {{ .Values.configmap.cdx.cassandra.truststore.path | quote }}
+  CDX_CASSANDRA_TRUSTSTORE_PASSWORD_KVKEY: {{ .Values.configmap.cdx.cassandra.truststore.password_kvkey | quote }}
+  CDX_EVENTHUB_NAMESPACE: {{ .Values.configmap.cdx.eventhub.namespace | quote }}
+  CDX_EVENTHUB_SYNDICATION_PATH: {{ .Values.configmap.cdx.eventhub.syndication_path | quote }}
+  CDX_EVENTHUB_SHARED_ACCESS_KEYNAME: {{ .Values.configmap.cdx.eventhub.shared_access.keyname | quote }}
+  CDX_EVENTHUB_SHARED_ACCESS_PASSWORD_KVKEY: {{ .Values.configmap.cdx.eventhub.shared_access.password_kvkey | quote }}
+  CDX_EVENTHUB_CONSUMER_GROUP_CREATE: {{ .Values.configmap.cdx.eventhub.consumer_group_create | quote }}
+  CDX_EVENTHUB_INGESTION_PATH_CREATE: {{ .Values.configmap.cdx.eventhub.ingestion_path_create | quote }}
+#  CDX_EVENTHUB_CONSUMER_GROUP_UPDATE: {{ .Values.configmap.cdx.eventhub.consumer_group_update | quote }}
+#  CDX_EVENTHUB_INGESTION_PATH_UPDATE: {{ .Values.configmap.cdx.eventhub.ingestion_path_update | quote }}
+#  CDX_EVENTHUB_CONSUMER_GROUP_REGISTRATION: {{ .Values.configmap.cdx.eventhub.consumer_group_registration | quote }}
+#  CDX_EVENTHUB_INGESTION_PATH_REGISTRATION: {{ .Values.configmap.cdx.eventhub.ingestion_path_registration | quote }}
+  CDX_EVENTHUB_STORAGECONTAINER_NAME: {{ .Values.configmap.cdx.eventhub.storage.container_name | quote }}
+  CDX_EVENTHUB_STORAGE_NAME: {{ .Values.configmap.cdx.eventhub.storage.name | quote }}
+  CDX_EVENTHUB_STORAGE_KVKEY: {{ .Values.configmap.cdx.eventhub.storage.kvkey | quote }}
+#  CDX_EVENTHUB_CONSUMER_GROUP_STAGE: {{ .Values.configmap.cdx.eventhub.consumer_group_stage | quote }}
+  CDX_AZURE_TENANT_ID: {{ .Values.configmap.cdx.azure.tenant_id | quote }}
+  CDX_AZURE_KEYVAULT_HOST: {{ .Values.configmap.cdx.azure.keyvault.host | quote }}
+  CDX_AZURE_KEYVAULT_URL: {{ .Values.configmap.cdx.azure.keyvault.url | quote }}
+  CDX_AZURE_ENCRYPTAES_SECRET_KVKEY: {{ .Values.configmap.cdx.azure.encryptaes_secret_kvkey | quote }}
+  CDX_AZURE_ENCRYPTIV_SALT_KVKEY: {{ .Values.configmap.cdx.azure.encryptiv_salt_kvkey | quote }}
+  CDX_AZURE_PAYLOAD_ENCRYPTAES_SECRET_KVKEY: {{ .Values.configmap.cdx.azure.payload.encryptaes_secret_kvkey | quote }}
+  CDX_AZURE_PAYLOAD_ENCRYPTIV_SALT_KVKEY: {{ .Values.configmap.cdx.azure.payload.encryptiv_salt_kvkey | quote }}
+  CDX_JAVA_OPTIONS: {{ .Values.configmap.cdx.java_options | quote }}
+  CDX_EH_CONSUMER_MAX_THROTTLE_LIMIT: {{ .Values.configmap.cdx.eh_consumer.max_throttle_limit | quote }}
+  CDX_EH_CONSUMER_TIME_OUT_IN_MINUTES: {{ .Values.configmap.cdx.eh_consumer.time_out_in_minutes | quote }}
+  CDX_AKKA_STREAM_PARALLELISM: {{ .Values.configmap.cdx.akka_stream.parallelism | quote }}
+  CDX_AKKA_STREAM_BATCH_SIZE: {{ .Values.configmap.cdx.akka_stream.batch_size | quote }}
+  CDX_AKKA_STREAM_BATCH_TIME_WINDOW_IN_SECONDS: {{ .Values.configmap.cdx.akka_stream.batch_time_window_in_seconds | quote }}
+  CDX_APP_LOG_LEVEL: {{ .Values.configmap.cdx.app_log_level | quote }}
+  CDX_APP_STDOUT_COLOR: {{ .Values.configmap.cdx.app_stdout_color | quote }}
