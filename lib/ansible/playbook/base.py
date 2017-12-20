@@ -161,6 +161,9 @@ class Base(with_metaclass(BaseMeta, object)):
     _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool')
 
+    # explicitly invoke a debugger on tasks
+    _debugger = FieldAttribute(isa='bool')
+
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
         'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
