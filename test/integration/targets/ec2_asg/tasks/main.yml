@@ -78,10 +78,10 @@
 
     - name: Create VPC for use in testing
       ec2_vpc_net:
-        name: ansible_test
+        name: "{{ resource_prefix }}-vpc"
         cidr_block: 10.55.77.0/24
         tags:
-          Name: ansible_test
+          Name: Ansible Testing VPC
         tenancy: default
       register: testing_vpc
 
@@ -444,11 +444,11 @@
 
     - name: remove the VPC
       ec2_vpc_net:
-        name: ansible_test
+        name: "{{ resource_prefix }}-vpc"
         cidr_block: 10.55.77.0/24
         state: absent
         tags:
-          Name: ansible_test
+          Name: Ansible Testing VPC
         tenancy: default
       register: removed
       until: removed | success
