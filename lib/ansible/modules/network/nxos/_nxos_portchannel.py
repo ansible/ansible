@@ -17,7 +17,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = '''
@@ -25,6 +25,7 @@ DOCUMENTATION = '''
 module: nxos_portchannel
 extends_documentation_fragment: nxos
 version_added: "2.2"
+deprecated: Deprecated in 2.5. Use M(nxos_linkagg) instead.
 short_description: Manages port-channel interfaces.
 description:
   - Manages port-channel specific configuration parameters.
