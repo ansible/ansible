@@ -62,17 +62,20 @@
 
 - name: Run ec2_asg integration tests.
 
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-    AWS_SECRET_KEY: "{{ aws_secret_key }}"
-    AWS_SESSION_TOKEN: "{{ security_token }}"
-    AWS_REGION: "{{ aws_region }}"
-
   block:
 
     # ============================================================
 
     # Set up the testing dependencies: VPC, subnet, security group, and two launch configurations
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
 
     - name: Create VPC for use in testing
       ec2_vpc_net:
@@ -81,12 +84,14 @@
         tags:
           Name: Ansible Testing VPC
         tenancy: default
+        <<: *aws_connection_info
       register: testing_vpc
 
     - name: Create internet gateway for use in testing
       ec2_vpc_igw:
         vpc_id: "{{ testing_vpc.vpc.id }}"
         state: present
+        <<: *aws_connection_info
       register: igw
 
     - name: Create subnet for use in testing
@@ -98,6 +103,7 @@
         az: "{{ aws_region }}a"
         resource_tags:
           Name: Ansible Testing Subnet
+        <<: *aws_connection_info
       register: testing_subnet
 
     - name: create routing rules
@@ -110,6 +116,7 @@
             gateway_id: "{{ igw.gateway_id }}"
         subnets:
           - "{{ testing_subnet.subnet.id }}"
+        <<: *aws_connection_info
 
     - name: create a security group with the vpc created in the ec2_setup
       ec2_group:
@@ -125,6 +132,7 @@
             from_port: 80
             to_port: 80
             cidr_ip: 0.0.0.0/0
+        <<: *aws_connection_info
       register: sg
 
     - name: ensure launch configs exist
@@ -142,6 +150,7 @@
             - "service httpd start"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
+        <<: *aws_connection_info
       with_items:
         - "{{ resource_prefix }}-lc"
         - "{{ resource_prefix }}-lc-2"
@@ -158,6 +167,7 @@
         vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
         state: present
         wait_for_instances: yes
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -171,6 +181,7 @@
         name: "{{ resource_prefix }}-asg"
         state: absent
         wait_timeout: 700
+        <<: *aws_connection_info
       async: 300
 
     # ============================================================
@@ -185,6 +196,7 @@
         vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
         wait_for_instances: no
         state: present
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -195,6 +207,7 @@
       ec2_asg:
         name: "{{ resource_prefix }}-asg"
         state: absent
+        <<: *aws_connection_info
       async: 300
 
     # ============================================================
@@ -226,6 +239,7 @@
             interval: 10
             unhealthy_threshold: 4
             healthy_threshold: 2
+        <<: *aws_connection_info
       register: load_balancer
 
     - name: launch asg and wait for instances to be deemed healthy (ELB)
@@ -242,6 +256,7 @@
         wait_for_instances: yes
         wait_timeout: 900
         state: present
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -266,6 +281,7 @@
         wait_for_instances: yes
         wait_timeout: 1200
         state: present
+        <<: *aws_connection_info
       register: output
 
     - assert:
@@ -291,6 +307,7 @@
         replace_all_instances: yes
         wait_timeout: 1800
         state: present
+        <<: *aws_connection_info
       register: output
 
     # ensure that all instances have new launch config
@@ -323,6 +340,7 @@
         replace_all_instances: yes
         wait_timeout: 1800
         state: present
+        <<: *aws_connection_info
       register: output
 
     # ensure that all instances have new launch config
@@ -345,6 +363,7 @@
       ec2_asg:
         name: "{{ resource_prefix }}-asg"
         state: absent
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
@@ -373,6 +392,7 @@
             interval: 10
             unhealthy_threshold: 4
             healthy_threshold: 2
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
@@ -382,6 +402,7 @@
       ec2_lc:
         name: "{{ resource_prefix }}-lc"
         state: absent
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
@@ -396,6 +417,7 @@
         description: a security group for ansible tests
         vpc_id: "{{ testing_vpc.vpc.id }}"
         state: absent
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
@@ -412,6 +434,7 @@
             gateway_id: "{{ igw.gateway_id }}"
         subnets:
           - "{{ testing_subnet.subnet.id }}"
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
@@ -421,6 +444,7 @@
       ec2_vpc_igw:
         vpc_id: "{{ testing_vpc.vpc.id }}"
         state: absent
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
@@ -435,6 +459,7 @@
         az: "{{ aws_region }}a"
         resource_tags:
           Name: Ansible Testing Subnet
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
@@ -448,6 +473,7 @@
         tags:
           Name: Ansible Testing VPC
         tenancy: default
+        <<: *aws_connection_info
       register: removed
       until: removed | success
       ignore_errors: yes
