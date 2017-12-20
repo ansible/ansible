@@ -104,6 +104,12 @@ def debug_closure(func):
     """Closure to wrap ``StrategyBase._process_pending_results`` and invoke the task debugger"""
     @functools.wraps(func)
     def inner(self, iterator, one_pass=False, max_passes=None):
+        status_to_stats_map = (
+            ('is_failed', 'failures'),
+            ('is_unreachable', 'dark'),
+            ('is_changed', 'changed'),
+            ('is_skipped', 'skipped'),
+        )
 
         # We don't know the host yet, copy the previous states, for lookup after we process new results
         prev_host_states = iterator._host_states.copy()
@@ -132,10 +138,11 @@ def debug_closure(func):
                     # rollback host state
                     self._tqm.clear_failed_hosts()
                     iterator._host_states[host.name] = prev_host_state
-                    if result.is_failed():
-                        self._tqm._stats.failures[host.name] -= 1
-                    elif result.is_unreachable():
-                        self._tqm._stats.dark[host.name] -= 1
+                    for method, what in status_to_stats_map:
+                        if getattr(result, method)():
+                            self._tqm._stats.decrement(what, host.name)
+                    self._tqm._stats.decrement('ok', host.name)
+
                     # redo
                     self._queue_task(host, task, task_vars, play_context)
 

@@ -46,6 +46,9 @@ class AggregateStats:
         prev = (getattr(self, what)).get(host, 0)
         getattr(self, what)[host] = prev + 1
 
+    def decrement(self, what, host):
+        getattr(self, what)[host] -= 1
+
     def summarize(self, host):
         ''' return information about a particular host '''
 
