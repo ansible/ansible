@@ -941,6 +941,11 @@ def main():
             interface=dict(required=False, default=None),
             masquerade=dict(required=False, default=None),
             offline=dict(type='bool', required=False, default=None),
+            chain=dict(required=False, default=None),
+            table=dict(required=False, default=None),
+            direct_rule=dict(required=False, default=None),
+            fw_family=dict(required=False, default=None),
+            rule_priority=dict(type='int', required=False, default=0)
         ),
         supports_check_mode=True
     )
@@ -973,6 +978,11 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    chain = module.params['chain']
+    direct_rule = module.params['direct_rule']
+    fw_family = module.params['fw_family']
+    rule_priority = module.params['rule_priority']
+    table = module.params['table']
 
     # If neither permanent or immediate is provided, assume immediate (as
     # written in the module's docs)
@@ -1016,6 +1026,9 @@ def main():
         modification_count += 1
     if masquerade is not None:
         modification_count += 1
+    if chain is not None or direct_rule is not None:
+        modification_count += 1
+
 
     if modification_count > 1:
         module.fail_json(
