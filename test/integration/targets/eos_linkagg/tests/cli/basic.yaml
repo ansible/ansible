@@ -8,6 +8,7 @@
       - no interface port-channel 100
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: setup - remove config used in test(part2)
   eos_config:
@@ -16,9 +17,10 @@
     authorize: yes
     provider: "{{ cli }}"
     parents: "{{ item }}"
-  with_items:
+  loop:
     - interface Ethernet1
     - interface Ethernet2
+  become: yes
 
 - name: create linkagg
   eos_linkagg: &create
@@ -26,6 +28,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -35,6 +38,7 @@
 
 - name: create linkagg(Idempotence)
   eos_linkagg: *create
+  become: yes
   register: result
 
 - assert:
@@ -50,6 +54,7 @@
       - Ethernet2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -62,6 +67,7 @@
 
 - name: set link aggregation group to members(Idempotence)
   eos_linkagg: *configure_member
+  become: yes
   register: result
 
 - assert:
@@ -76,6 +82,7 @@
       - Ethernet2
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -86,6 +93,7 @@
 
 - name: remove link aggregation group from member(Idempotence)
   eos_linkagg: *remove_member
+  become: yes
   register: result
 
 - assert:
@@ -96,8 +104,9 @@
   eos_linkagg: &remove
     group: 20
     state: absent
-    authorise: yes
+    authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -107,6 +116,7 @@
 
 - name: remove linkagg(Idempotence)
   eos_linkagg: *remove
+  become: yes
   register: result
 
 - assert:
@@ -120,6 +130,7 @@
       - { group: 100, min_links: 4 }
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -132,6 +143,7 @@
 
 - name: create aggregate of linkagg definitions(Idempotence)
   eos_linkagg: *create_agg
+  become: yes
   register: result
 
 - assert:
@@ -146,6 +158,7 @@
     authorize: yes
     provider: "{{ cli }}"
     state: absent
+  become: yes
   register: result
 
 - assert:
@@ -156,6 +169,7 @@
 
 - name: remove aggregate of linkagg definitions(Idempotence)
   eos_linkagg: *remove_agg
+  become: yes
   register: result
 
 - assert:
@@ -169,6 +183,7 @@
       - no interface port-channel 100
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: teardown(part2)
   eos_config:
@@ -177,7 +192,8 @@
     authorize: yes
     provider: "{{ cli }}"
     parents: "{{ item }}"
-  with_items:
+  become: yes
+  loop:
     - interface Ethernet1
     - interface Ethernet2
 

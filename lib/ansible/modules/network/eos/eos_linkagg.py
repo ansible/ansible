@@ -107,9 +107,9 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import get_config, load_config
-from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import get_config, load_config
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def search_obj_in_list(group, lst):
@@ -228,7 +228,7 @@ def parse_members(group, config):
     members = []
 
     for line in config.strip().split('!'):
-        match_group = re.findall(r'channel-group {} mode\\b'.format(group), line, re.M)
+        match_group = re.findall(r'channel-group {} mode'.format(group), line, re.M)
         if match_group:
             match = re.search(r'interface (\S+)', line, re.M)
             if match:
