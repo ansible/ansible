@@ -76,19 +76,138 @@ Ansible Changes By Release
 ### New Modules
 
 #### Cloud
+- amazon
+  * aws_acm_facts
+  * aws_kms_facts
+  * aws_s3_cors
+  * aws_ssm_parameter_store
+  * ec2_ami_facts
+  * ec2_placement_group
+  * ec2_placement_group_facts
+  * ecs_taskdefinition_facts
+  * elasticache_facts
+  * iam_role_facts
+- azure
+  * azure_rm_containerregistry
+  * azure_rm_sqlserver
+- cloudscale
+  * cloudscale_floating_ip
+- cloudstack
+  * cs_serviceoffer
+- digital_ocean
+  * digital_ocean_certificate
+  * digital_ocean_sshkey_facts
+- oneandone
+  * oneandone_server
+- openstack
+  * os_keystone_endpoint
+- ovirt
+  * ovirt_api_facts
+  * ovirt_disk_facts
+- spotinst
+  * spotinst_aws_elastigroup
+- vmware
+  * vmware_cfg_backup
+  * vmware_datastore_facts
+  * vmware_guest_powerstate
+  * vmware_host_facts
 
-* aws_acm_facts
-* aws_kms_facts
-* aws_ssm_parameter_store
-* digital_ocean_sshkey_facts
-* ec2_ami_facts
-* ec2_placement_group
-* ecs_taskdefinition_facts
-* elasticache_facts
-* iam_role_facts
+#### Clustering
+  * k8s
+  * openshift
+
+#### Identity
+- ipa
+  * ipa_dnszone
+  * ipa_subca
+- keycloak
+  * keycloak_client
+
+#### Monitoring
+  * icinga2_host
+- zabbix
+  * zabbix_proxy
+  * zabbix_template
+
+#### Network
+- aci
+  * aci_encap_pool
+  * aci_encap_pool_range
+- enos
+  * enos_command
+  * enos_config
+  * enos_facts
+- eos
+  * eos_static_route
+- f5
+  * bigip_asm_policy
+  * bigip_configsync_action
+  * bigip_device_connectivity
+  * bigip_device_httpd
+  * bigip_device_trust
+  * bigip_iapplx_package
+  * bigip_monitor_https
+  * bigip_monitor_snmp_dca
+  * bigip_monitor_udp
+  * bigip_partition
+  * bigip_policy
+  * bigip_policy_rule
+  * bigip_profile_client_ssl
+  * bigip_remote_syslog
+  * bigip_security_port_list
+  * bigip_ssl_key
+  * bigip_vcmp_guest
+  * bigip_wait
+- ios
+  * ios_vlan
+- iosxr
+  * iosxr_netconf
+- ironware
+  * ironware_command
+  * ironware_config
+  * ironware_facts
+- mlnxos
+  * mlnxos_command
+  * mlnxos_config
+  * mlnxos_interface
+- netscaler
+  * netscaler_nitro_request
+- nso
+  * nso_action
+  * nso_config
+  * nso_verify
+- radware
+  * vdirect_commit
+  * vdirect_runnable
+- vyos
+  * vyos_vlan
+
+#### Notification
+  * say
+  * snow_record
+
+#### Packaging
+- os
+  * package_facts
+
+#### Remote Management
+- manageiq
+  * manageiq_policies
+  * manageiq_tags
+- oneview
+  * oneview_datacenter_facts
+  * oneview_enclosure_facts
+  * oneview_logical_interconnect_group
+  * oneview_logical_interconnect_group_facts
+  * oneview_san_manager_facts
+- ucs
+  * ucs_macpool
+
+#### System
+  * mksysb
+  * nosh
 
 #### Windows
-
   * win_audit_policy_system
   * win_audit_rule
   * win_scheduled_task_stat
