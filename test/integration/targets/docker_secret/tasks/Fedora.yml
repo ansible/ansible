@@ -2,7 +2,7 @@
   dnf:
     name: "{{ item }}"
     state: present
-  items:
+  loop:
     - dnf-plugins-core 
 
 - name: Add repository
