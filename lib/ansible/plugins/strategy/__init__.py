@@ -1049,7 +1049,7 @@ class Debugger(cmd.Cmd):
         self.intro = None
         self.scope = {}
         self.scope['task'] = task
-        self.scope['vars'] = task_vars
+        self.scope['task_vars'] = task_vars
         self.scope['host'] = host
         self.scope['play_context'] = play_context
         self.scope['result'] = result
@@ -1060,6 +1060,8 @@ class Debugger(cmd.Cmd):
             cmd.Cmd.cmdloop(self)
         except KeyboardInterrupt:
             pass
+
+    do_h = cmd.Cmd.do_help
 
     def do_EOF(self, args):
         """Quit"""
@@ -1090,7 +1092,7 @@ class Debugger(cmd.Cmd):
     def evaluate(self, args):
         try:
             return eval(args, globals(), self.scope)
-        except:
+        except Exception:
             t, v = sys.exc_info()[:2]
             if isinstance(t, str):
                 exc_type_name = t
@@ -1099,19 +1101,21 @@ class Debugger(cmd.Cmd):
             display.display('***%s:%s' % (exc_type_name, repr(v)))
             raise
 
-    def do_p(self, args):
-        """Print result"""
+    def do_pprint(self, args):
+        """Pretty Print"""
         try:
             result = self.evaluate(args)
             display.display(pprint.pformat(result))
-        except:
+        except Exception:
             pass
+
+    do_p = do_pprint
 
     def execute(self, args):
         try:
             code = compile(args + '\n', '<stdin>', 'single')
             exec(code, globals(), self.scope)
-        except:
+        except Exception:
             t, v = sys.exc_info()[:2]
             if isinstance(t, str):
                 exc_type_name = t
@@ -1123,5 +1127,5 @@ class Debugger(cmd.Cmd):
     def default(self, line):
         try:
             self.execute(line)
-        except:
+        except Exception:
             pass
