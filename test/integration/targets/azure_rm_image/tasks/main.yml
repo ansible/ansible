@@ -1,0 +1,154 @@
+- name: Create storage account name
+  set_fact:
+      storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
+- name: Create storage account
+  azure_rm_storageaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ storage_account }}"
+      account_type: Standard_LRS
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group }}"
+      name: testvm001
+      address_prefixes: "10.10.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      name: testvm001
+      address_prefix: "10.10.0.0/24"
+      virtual_network: testvm001
+
+- name: Create public ip
+  azure_rm_publicipaddress:
+      resource_group: "{{ resource_group }}"
+      allocation_method: Static
+      name: testvm001
+
+- name: Create security group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: testvm001
+
+- name: Create NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testvm001
+      virtual_network: testvm001
+      subnet: testvm001
+      public_ip_name: testvm001
+      security_group: testvm001
+
+- name: Create virtual machine
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      vm_size: Standard_A0
+      storage_account: "{{ storage_account }}"
+      storage_container: testvm001
+      storage_blob: testvm001.vhd
+      admin_username: adminuser
+      admin_password: Password123!
+      os_type: Linux
+      network_interfaces: testvm001
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+
+- name: Deallocate the virtual machine
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      allocated: no 
+      vm_size: Standard_A0
+  register: output
+
+- name: Start the virtual machine
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      vm_size: Standard_A0
+
+- name: Create an image from VM (check mode)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      name: testimage001
+      os_type: Linux
+  check_mode: yes
+  register: output
+
+- assert:
+      that: output.changed
+
+- name: Create an image from VM
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      name: testimage001
+      os_type: Linux
+  register: output
+
+- assert:
+      that:
+          - output.changed
+          - output.id
+
+- name: Create an image from VM (idempotent)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "https://{{ storage_account }}.blob.core.windows.net/testvm001/testvm001.vhd"
+      name: testimage001
+      os_type: Linux
+  register: output
+
+- assert:
+      that:
+          - not output.changed
+          - output.id
+
+- name: Delete image (check mode)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage001
+      state: absent
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete image
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage001
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete image (idempotent)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage001
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      state: absent
+      vm_size: Standard_A0
+  register: output
