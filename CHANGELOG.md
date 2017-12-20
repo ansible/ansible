@@ -32,6 +32,7 @@ Ansible Changes By Release
   This behaviour is the current and future default so most custom modules can
   simply remove check_invalid_arguments if they set it to the default of True.
   check_invalid_arguments will be removed in Ansible-2.9.
+* nxos_ip_interface module is deprecated in Ansible 2.5. Use nxos_l3_interface module instead.
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:

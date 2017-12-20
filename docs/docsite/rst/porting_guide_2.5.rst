@@ -79,6 +79,7 @@ Deprecation notices
 The following modules will be removed in Ansible 2.9. Please update update your playbooks accordingly.
 
 * :ref:`fixme <fixme>`
+* :ref:`nxos_ip_interface <nxos_ip_interface>` use :ref:`nxos_l3_interface <nxos_l3_interface>` instead.
 
 Noteworthy module changes
 -------------------------

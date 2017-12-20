@@ -17,13 +17,14 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
 module: nxos_ip_interface
 version_added: "2.1"
+deprecated: Deprecated in 2.5. Use M(nxos_l3_interface) instead.
 short_description: Manages L3 attributes for IPv4 and IPv6 interfaces.
 description:
     - Manages Layer 3 attributes for IPv4 and IPv6 interfaces.
