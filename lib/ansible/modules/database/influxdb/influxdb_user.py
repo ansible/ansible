@@ -117,9 +117,6 @@ def influxdb_argument_spec():
         port=dict(default=8086, type='int'),
         username=dict(default='root', type='str'),
         password=dict(default='root', type='str', no_log=True),
-        user_name=dict(required=True, type='str'),
-        user_password=dict(required=False, type='str', no_log=True),
-        admin=dict(default='False', type='bool')
     )
 
 
@@ -174,7 +171,10 @@ def drop_user(module, client, user_name):
 def main():
     argument_spec = influxdb_argument_spec()
     argument_spec.update(
-        state=dict(default='present', type='str', choices=['present', 'absent'])
+        state=dict(default='present', type='str', choices=['present', 'absent']),
+        user_name=dict(required=True, type='str'),
+        user_password=dict(required=False, type='str', no_log=True),
+        admin=dict(default='False', type='bool')
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
