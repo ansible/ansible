@@ -66,7 +66,7 @@ options:
     description:
     - >
       Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
-      For example C({".txt": "application/text", ".yml": "appication/text"})
+      For example C({".txt": "application/text", ".yml": "application/text"})
     required: false
   include:
     description:
