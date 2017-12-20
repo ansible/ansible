@@ -1,87 +1,19 @@
 ---
+- name: test ec2_snapshot incomplete parameters
 
-- block:
+  block:
 
-    # ============================================================
-
-        # Set up VPC, subnet, security group, instance
-
-    - name: Announce setup start
-      debug:
-        msg: "***** SETTING UP TESTING DEPENDENCIES *****"
-
-    - name: create a VPC to test in
-      ec2_vpc_net:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
-        cidr_block: 10.0.0.0/24
-        state: present
-        name: '{{ test_id }}_setup'
-        resource_tags:
-          Name: '{{ test_id }}_setup'
-      register: setup_vpc
-
-    - name: create a key pair to use for creating an ec2 instance
-      ec2_key:
-        name: '{{ test_id }}_setup'
-        state: present
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
-      register: setup_key
-
-    - name: create a subnet to use for creating an ec2 instance
-      ec2_vpc_subnet:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
-        az: '{{ ec2_region }}a'
-        tags: '{{ test_id }}_setup'
-        vpc_id: '{{ setup_vpc.vpc.id }}'
-        cidr: 10.0.0.0/24
-        state: present
-        resource_tags:
-          Name: '{{ test_id }}_setup'
-      register: setup_subnet
-
-    - name: create a security group to use for creating an ec2 instance
-      ec2_group:
-        name: '{{ test_id }}_setup'
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
-        description: 'created by Ansible integration tests'
-        state: present
-        vpc_id: '{{ setup_vpc.vpc.id }}'
-      register: setup_sg
-
-    - name: provision ec2 instance to create an image
-      ec2:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
-        key_name: '{{ setup_key.key.name }}'
-        instance_type: t2.micro
-        state: present
-        image: '{{ ec2_ami_image[ec2_region] }}'
-        wait: yes
-        instance_tags:
-          '{{ test_id }}_instance_setup': 'integration_tests'
-        group_id: '{{ setup_sg.group_id }}'
-        vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
-      register: setup_instance
-
-    - name: Announce testing start
-      debug:
-        msg: "***** SETTING UP TESTING DEPENDENCIES COMPLETE. RUNNING TESTS. *****"
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
 
     # ============================================================
+
     - name: test failure with no parameters
       ec2_snapshot:
       register: result
@@ -94,9 +26,15 @@
            - result.msg == "Either region or ec2_url must be specified"
 
     # ============================================================
+
     - name: test failure with no credentials
       ec2_snapshot:
-        ec2_region: '{{ ec2_region }}'
+        snapshot_id: snap-12345678912345678
+        state: present
+        snapshot_tags:
+          Another: Tag
+          Ansible: IntegrationTests
+        region: "{{ ec2_region }}"
       register: result
       ignore_errors: true
 
@@ -108,17 +46,134 @@
 
     # ============================================================
 
+    - name: test failure with invalid profile
+      ec2_snapshot:
+        profile: doesnotexist
+        region: "{{ ec2_region }}"
+        state: present
+        snapshot_id: snap-12345678912345678
+      register: result
+      ignore_errors: true
+
+    - name: debug result
+      debug: var=result
+
+    - name: assert a helpful error is provided
+      assert:
+        that:
+          - result.msg == 'Profile given for AWS was not found.  Please fix and retry.'
+
+    # ============================================================
+
+    - name: test deleting a snapshot without providing a unique identifier
+      ec2_snapshot:
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: true
+      register: result
+
+    - name: assert failure
+      assert:
+        that:
+          - result.failed
+          - result.msg == "One and only one of volume_id or instance_id or snapshot_id must be specified"
+
+    # ============================================================
+
+    - name: test deleting a snapshot providing only the volume id
+      ec2_snapshot:
+        state: absent
+        volume_id: vol-12345678912345678
+        <<: *aws_connection_info
+      ignore_errors: true
+      register: result
+
+    - name: assert failure
+      assert:
+        that:
+          - result.failed
+          - result.msg == "snapshot_id must be set when state is absent"
+
+    # ============================================================
+
+- name: run ec2_snapshot functional tests
+
+  block:
+
+    # ============================================================
+
+        # Set up VPC, subnet, security group, instance
+
+    - name: Announce setup start
+      debug:
+        msg: "***** SETTING UP TESTING DEPENDENCIES *****"
+
+    - name: create a VPC to test in
+      ec2_vpc_net:
+        cidr_block: 10.0.0.0/24
+        state: present
+        name: '{{ test_id }}_setup'
+        resource_tags:
+          Name: '{{ test_id }}_setup'
+        <<: *aws_connection_info
+      register: setup_vpc
+
+    - name: create a key pair to use for creating an ec2 instance
+      ec2_key:
+        name: '{{ test_id }}_setup'
+        state: present
+        <<: *aws_connection_info
+      register: setup_key
+
+    - name: create a subnet to use for creating an ec2 instance
+      ec2_vpc_subnet:
+        az: '{{ ec2_region }}a'
+        tags: '{{ test_id }}_setup'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        cidr: 10.0.0.0/24
+        state: present
+        resource_tags:
+          Name: '{{ test_id }}_setup'
+        <<: *aws_connection_info
+      register: setup_subnet
+
+    - name: create a security group to use for creating an ec2 instance
+      ec2_group:
+        name: '{{ test_id }}_setup'
+        description: 'created by Ansible integration tests'
+        state: present
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      register: setup_sg
+
+    - name: provision ec2 instance to create an image
+      ec2:
+        key_name: '{{ setup_key.key.name }}'
+        instance_type: t2.micro
+        state: present
+        image: '{{ ec2_ami_image[ec2_region] }}'
+        wait: yes
+        instance_tags:
+          '{{ test_id }}_instance_setup': 'integration_tests'
+        group_id: '{{ setup_sg.group_id }}'
+        vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
+        <<: *aws_connection_info
+      register: setup_instance
+
+    - name: Announce testing start
+      debug:
+        msg: "***** SETTING UP TESTING DEPENDENCIES COMPLETE. RUNNING TESTS. *****"
+
+    # ============================================================
+
     - name: create a snapshot of the instance
       ec2_snapshot:
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         instance_id: '{{ setup_instance.instance_ids[0] }}'
         device_name: /dev/xvda
         state: present
         snapshot_tags:
           Ansible: IntegrationTests
+        <<: *aws_connection_info
       register: snapshot_1
 
     - name: assert that a snapshot was created
@@ -167,15 +222,12 @@
 
     - name: create a snapshot from the volume id
       ec2_snapshot:
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         volume_id: '{{ snapshot_1.volume_id }}'
         state: present
         snapshot_tags:
           Another: Tag
           Ansible: IntegrationTests
+        <<: *aws_connection_info
       register: snapshot_2
 
     - name: assert a new snapshot has been created
@@ -194,70 +246,31 @@
 
     # ============================================================
 
-    - name: test deleting a snapshot without providing a unique identifier
-      ec2_snapshot:
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        state: absent
-      ignore_errors: true
-      register: result
-
-    - name: assert failure
-      assert:
-        that:
-          - result.failed
-          - result.msg == "One and only one of volume_id or instance_id or snapshot_id must be specified"
-
-    # ============================================================
-
-    - name: test deleting a snapshot providing only the volume id
-      ec2_snapshot:
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        state: absent
-        volume_id: '{{ snapshot_2.volume_id }}'
-      ignore_errors: true
-      register: result
-
-    - name: assert failure
-      assert:
-        that:
-          - result.failed
-          - result.msg == "snapshot_id must be set when state is absent"
-
-    # ============================================================
-
     - name: test deleting a snapshot providing snapshot_id
       ec2_snapshot:
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         state: absent
         snapshot_id: '{{ snapshot_1.snapshot_id }}'
+        <<: *aws_connection_info
       ignore_errors: true
       register: result
 
-    - name: assert the snapshot was deleted
+    - name: assert the module shows the snapshot was deleted
       assert:
         that:
           - result.changed
 
-# FIXME: ec2_snapshot_facts fails with ClientError if given a snapshot_id that has been deleted
-#    - name: verify the snapshot was deleted
-#      ec2_snapshot_facts:
-#        ec2_region: '{{ec2_region}}'
-#        ec2_access_key: '{{ec2_access_key}}'
-#        ec2_secret_key: '{{ec2_secret_key}}'
-#        security_token: '{{security_token}}'
-#        snapshot_ids:
-#          - '{{ snapshot_1.snapshot_id }}'
-#      ignore_errors: true
-#      register: result
+    - name: verify the snapshot was deleted
+      ec2_snapshot_facts:
+        snapshot_ids:
+          - '{{ snapshot_1.snapshot_id }}'
+        <<: *aws_connection_info
+      ignore_errors: true
+      register: result
+
+    - name: assert no snapshot with that id exists
+      assert:
+        that:
+          - not result.snapshots
 
     # ============================================================
 
@@ -273,12 +286,9 @@
 
     - name: remove snapshots
       ec2_snapshot:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         state: absent
         snapshot_id: '{{ item }}'
+        <<: *aws_connection_info
       with_items:
         - "{{ snapshot_1.snapshot_id }}"
         - "{{ snapshot_2.snapshot_id }}"
@@ -286,10 +296,6 @@
 
     - name: remove setup ec2 instance
       ec2:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         instance_type: t2.micro
         instance_ids: '{{ setup_instance.instance_ids }}'
         state: absent
@@ -298,40 +304,27 @@
           '{{ test_id }}_instance_setup': 'integration_tests'
         group_id: '{{ setup_sg.group_id }}'
         vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: remove setup keypair
       ec2_key:
         name: '{{ test_id }}_setup'
         state: absent
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       ignore_errors: yes
-
-    - name: debug vpc
-      debug:
-        var: "{{ setup_vpc }}"
 
     - name: remove setup security group
       ec2_group:
         name: '{{ test_id }}_setup'
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         description: 'created by Ansible integration tests'
         state: absent
         vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: remove setup subnet
       ec2_vpc_subnet:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         az: '{{ ec2_region }}a'
         tags: '{{ test_id }}_setup'
         vpc_id: '{{ setup_vpc.vpc.id }}'
@@ -339,17 +332,15 @@
         state: absent
         resource_tags:
           Name: '{{ test_id }}_setup'
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: remove setup VPC
       ec2_vpc_net:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         cidr_block: 10.0.0.0/24
         state: absent
         name: '{{ test_id }}_setup'
         resource_tags:
           Name: '{{ test_id }}_setup'
+        <<: *aws_connection_info
       ignore_errors: yes
