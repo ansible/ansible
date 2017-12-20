@@ -32,3 +32,12 @@
 - name: assert user has giving privileges
   assert: { that: "'GRANT {{priv}} ON *.*' in result.stdout" }
   when: priv is defined
+
+- name: run command to query for mysql user with require ssl
+  command: mysql "-e SELECT User FROM mysql.user where user='{{ user_name }}' and ssl_type='ANY';"
+  register: result
+  when: require_ssl is defined
+
+- name: assert mysql user with require ssl is present
+  assert: { that: "'{{ user_name }}' in result.stdout" }
+  when: require_ssl is defined

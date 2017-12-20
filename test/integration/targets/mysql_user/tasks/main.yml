@@ -28,6 +28,15 @@
 - include: assert_no_user.yml user_name={{user_name_1}}
 
 # ============================================================
+# create mysql user which requires ssl to login
+#
+- include: create_user_with_ssl.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+- include: assert_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }} require_ssl=true
+
+- include: remove_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
+# ============================================================
 # Create mysql user that already exist on mysql database
 #
 - include: create_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
