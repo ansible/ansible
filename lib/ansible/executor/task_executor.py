@@ -507,6 +507,8 @@ class TaskExecutor:
         elif self._task.action == 'include_role':
             include_variables = self._task.args.copy()
             return dict(include_variables=include_variables)
+        elif self._task.action == 'meta':
+            return dict(meta=True, play_context_attrs=self._play_context.dump_attrs())
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)

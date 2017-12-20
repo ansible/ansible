@@ -261,54 +261,47 @@ class StrategyModule(StrategyBase):
                             display.debug("'%s' skipped because role has already run" % task)
                             continue
 
-                    if task.action == 'meta':
-                        # for the linear strategy, we run meta tasks just once and for
-                        # all hosts currently being iterated over rather than one host
-                        results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection'):
-                            run_once = True
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
-                            any_errors_fatal = True
-                    else:
-                        # handle step if needed, skip meta actions as they are used internally
-                        if self._step and choose_step:
-                            if self._take_step(task):
-                                choose_step = False
-                            else:
-                                skip_rest = True
-                                break
+                    if self._step and choose_step:
+                        if self._take_step(task):
+                            choose_step = False
+                        else:
+                            skip_rest = True
+                            break
 
-                        display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
-                        templar = Templar(loader=self._loader, variables=task_vars)
-                        display.debug("done getting variables")
+                    display.debug("getting variables")
+                    task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
+                    self.add_tqm_variables(task_vars, play=iterator._play)
+                    templar = Templar(loader=self._loader, variables=task_vars)
+                    display.debug("done getting variables")
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                    if (templar.template(task.run_once) or
+                            (action and getattr(action, 'BYPASS_HOST_LOOP', False)) or
+                            (task.action == 'meta' and task.args.get('_raw_params', None) not in ('noop', 'reset_connection'))):
+                        run_once = True
 
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
-                            any_errors_fatal = True
+                    if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        any_errors_fatal = True
 
-                        if not callback_sent:
-                            display.debug("sending task start callback, copying the task so we can template it temporarily")
-                            saved_name = task.name
-                            display.debug("done copying, going to template now")
-                            try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                                display.debug("done templating")
-                            except:
-                                # just ignore any errors during task name templating,
-                                # we don't care if it just shows the raw name
-                                display.debug("templating failed for some reason")
-                            display.debug("here goes the callback...")
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                            task.name = saved_name
-                            callback_sent = True
-                            display.debug("sending task start callback")
+                    if not callback_sent and not task.action == 'meta':
+                        display.debug("sending task start callback, copying the task so we can template it temporarily")
+                        saved_name = task.name
+                        display.debug("done copying, going to template now")
+                        try:
+                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                            display.debug("done templating")
+                        except:
+                            # just ignore any errors during task name templating,
+                            # we don't care if it just shows the raw name
+                            display.debug("templating failed for some reason")
+                        display.debug("here goes the callback...")
+                        self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                        task.name = saved_name
+                        callback_sent = True
+                        display.debug("sending task start callback")
 
-                        self._blocked_hosts[host.get_name()] = True
-                        self._queue_task(host, task, task_vars, play_context)
-                        del task_vars
+                    self._blocked_hosts[host.get_name()] = True
+                    self._queue_task(host, task, task_vars, play_context)
+                    del task_vars
 
                     # if we're bypassing the host loop, break out now
                     if run_once:

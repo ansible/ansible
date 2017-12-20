@@ -43,6 +43,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
@@ -623,17 +624,23 @@ class StrategyBase:
                                 else:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
+                    if 'meta' in result_item:
+                        play_context = PlayContext()
+                        play_context.from_attrs(task_result._result['play_context_attrs'])
+                        task_result = self._execute_meta(original_task, play_context, iterator, original_host)
+
                 if 'diff' in task_result._result:
                     if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                if not isinstance(original_task, TaskInclude):
+                if not isinstance(original_task, TaskInclude) and not task_result._task.action == 'meta':
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
 
                 # finally, send the ok for this task
-                self._tqm.send_callback('v2_runner_on_ok', task_result)
+                if not task_result._task.action == 'meta':
+                    self._tqm.send_callback('v2_runner_on_ok', task_result)
 
             self._pending_results -= 1
             if original_host.name in self._blocked_hosts:
@@ -947,12 +954,6 @@ class StrategyBase:
         # since they do not use k=v pairs, so get that
         meta_action = task.args.get('_raw_params')
 
-        def _evaluate_conditional(h):
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
-            templar = Templar(loader=self._loader, variables=all_vars)
-            return task.evaluate_conditional(templar, all_vars)
-
-        skipped = False
         msg = ''
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
@@ -970,28 +971,21 @@ class StrategyBase:
             self._inventory.refresh_inventory()
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
-            if _evaluate_conditional(target_host):
-                for host in self._inventory.get_hosts(iterator._play.hosts):
-                    hostname = host.get_name()
-                    self._variable_manager.clear_facts(hostname)
-                msg = "facts cleared"
-            else:
-                skipped = True
+            for host in self._inventory.get_hosts(iterator._play.hosts):
+                hostname = host.get_name()
+                self._variable_manager.clear_facts(hostname)
+            msg = "facts cleared"
         elif meta_action == 'clear_host_errors':
-            if _evaluate_conditional(target_host):
-                for host in self._inventory.get_hosts(iterator._play.hosts):
-                    self._tqm._failed_hosts.pop(host.name, False)
-                    self._tqm._unreachable_hosts.pop(host.name, False)
-                    iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
-                msg = "cleared host errors"
-            else:
-                skipped = True
+            for host in self._inventory.get_hosts(iterator._play.hosts):
+                self._tqm._failed_hosts.pop(host.name, False)
+                self._tqm._unreachable_hosts.pop(host.name, False)
+                iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
+            msg = "cleared host errors"
         elif meta_action == 'end_play':
-            if _evaluate_conditional(target_host):
-                for host in self._inventory.get_hosts(iterator._play.hosts):
-                    if host.name not in self._tqm._unreachable_hosts:
-                        iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
-                msg = "ending play"
+            for host in self._inventory.get_hosts(iterator._play.hosts):
+                if host.name not in self._tqm._unreachable_hosts:
+                    iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
+            msg = "ending play"
         elif meta_action == 'reset_connection':
             if task.when:
                 self._cond_not_supported_warn(meta_action)
@@ -1014,15 +1008,11 @@ class StrategyBase:
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
-        result = {'msg': msg}
-        if skipped:
-            result['skipped'] = True
-        else:
-            result['changed'] = False
+        result = {'msg': msg, 'changed': False}
 
         display.vv("META: %s" % msg)
 
-        return [TaskResult(target_host, task, result)]
+        return TaskResult(target_host, task, result)
 
     def get_hosts_left(self, iterator):
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
