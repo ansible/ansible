@@ -99,22 +99,32 @@ def deprecation_schema():
     )
 
 def doc_schema(module_name):
+    deprecated_module = False
+
     if module_name.startswith('_'):
         module_name = module_name[1:]
+        deprecated_module = True
+    doc_schema_dict = {
+        Required('module'): module_name,
+        Required('short_description'): Any(*string_types),
+        Required('description'): Any(list_string_types, *string_types),
+        Required('version_added'): Any(float, *string_types),
+        Required('author'): Any(None, list_string_types, *string_types),
+        'notes': Any(None, list_string_types),
+        'requirements': list_string_types,
+        'todo': Any(None, list_string_types, *string_types),
+        'options': Any(None, *list_dict_option_schema),
+        'extends_documentation_fragment': Any(list_string_types, *string_types)
+    }
+
+    if deprecated_module:
+        deprecation_required_scheme = {
+            Required('deprecated'): Any(deprecation_schema()),
+        }
+
+        doc_schema_dict.update(deprecation_required_scheme)
     return Schema(
-        {
-            Required('module'): module_name,
-            'deprecated': Any(deprecation_schema()),
-            Required('short_description'): Any(*string_types),
-            Required('description'): Any(list_string_types, *string_types),
-            Required('version_added'): Any(float, *string_types),
-            Required('author'): Any(None, list_string_types, *string_types),
-            'notes': Any(None, list_string_types),
-            'requirements': list_string_types,
-            'todo': Any(None, list_string_types, *string_types),
-            'options': Any(None, *list_dict_option_schema),
-            'extends_documentation_fragment': Any(list_string_types, *string_types)
-        },
+        doc_schema_dict,
         extra=PREVENT_EXTRA
     )
 
