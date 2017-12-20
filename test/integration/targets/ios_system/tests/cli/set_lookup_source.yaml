@@ -8,13 +8,11 @@
       - vrf definition ansible
     match: none
     authorize: yes
-  become: yes
 
 - name: configure lookup_source
   ios_system:
     lookup_source: Loopback888
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -26,7 +24,6 @@
   ios_system:
     lookup_source: Loopback888
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -37,7 +34,6 @@
   ios_system:
     lookup_enabled: False
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -49,7 +45,6 @@
   ios_system:
     lookup_enabled: True
     authorize: yes
-  become: yes
   register: result
 
 - assert:
@@ -64,7 +59,6 @@
 #        vrf: ansible
 #    authorize: yes
 #    provider: "{{ cli }}"
-#  become: yes
 #  register: result
 #
 #- assert:
@@ -81,7 +75,6 @@
 #        vrf: ansible
 #    authorize: yes
 #    provider: "{{ cli }}"
-#  become: yes
 #  register: result
 #
 #- assert:
@@ -95,7 +88,6 @@
       - no vrf definition ansible
     match: none
     authorize: yes
-  become: yes
   ignore_errors: yes
 # FIXME: Not sure why this is failing with msg": "no vrf definition ansible\r\n% IPv4 and IPv6 addresses from all interfaces in VRF ansible have been removed\r\nfoo(config)#", rc:1
 
