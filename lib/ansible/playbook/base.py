@@ -278,7 +278,7 @@ class Base(with_metaclass(BaseMeta, object)):
 
     def _validate_debugger(self, attr, name, value):
         valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
-        if value and value not in valid_values:
+        if value and isinstance(value, string_types) and value not in valid_values:
             raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
         return value
 
