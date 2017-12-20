@@ -254,10 +254,10 @@ class TaskExecutor:
         label = None
         loop_pause = 0
         if self._task.loop_control:
-            # the value may be 'None', so we still need to default it back to 'item'
-            loop_var = self._task.loop_control.loop_var or 'item'
+            loop_var = self._task.loop_control.loop_var
+            loop_pause = self._task.loop_control.pause
+            # the these may be 'None', so we still need to default to something useful
             label = self._task.loop_control.label or ('{{' + loop_var + '}}')
-            loop_pause = self._task.loop_control.pause or 0
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
