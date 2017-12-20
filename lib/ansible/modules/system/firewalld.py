@@ -1029,7 +1029,6 @@ def main():
     if chain is not None or direct_rule is not None:
         modification_count += 1
 
-
     if modification_count > 1:
         module.fail_json(
             msg='can only operate on port, service, rich_rule, or interface at once'
