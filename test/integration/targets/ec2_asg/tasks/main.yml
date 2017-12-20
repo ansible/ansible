@@ -18,7 +18,6 @@
     - name:
       assert:
         that:
-          - result.msg.startswith("Can't authorize connection. Check your credentials and profile")
           - "'The config profile (notavalidprofile) could not be found' in result.msg"
 
     - name: test partial credentials
@@ -32,7 +31,6 @@
     - name:
       assert:
         that:
-          - result.msg.startswith("Can't authorize connection. Check your credentials and profile")
           - "'Partial credentials found in explicit, missing: aws_secret_access_key' in result.msg"
 
     - name: test without specifying region
@@ -47,7 +45,7 @@
     - name:
       assert:
         that:
-          - result.msg == 'Region must be provided'
+          - result.msg == 'The ec2_asg module requires a region and none was found in configuration, environment variables or module parameters'
 
     - name: test without specifying required module options
       ec2_asg:
