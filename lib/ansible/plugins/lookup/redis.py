@@ -27,7 +27,6 @@ DOCUMENTATION = """
           - section: lookup_redis
             key: host
       port:
-      port:
         description: port on which Redis is listening on
         default: 6379A
         type: int
