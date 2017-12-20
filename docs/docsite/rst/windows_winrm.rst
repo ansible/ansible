@@ -581,7 +581,6 @@ When setting up the inventory, the following variables are required::
 
     # it is suggested that these be encrypted with ansible-vault:
     # ansible-vault edit group_vars/windows.yml
-
     ansible_connection: winrm
 
     # may also be passed on the command-line via --user
@@ -674,6 +673,7 @@ with an IPv4 address or hostname::
     ansible_user=username
     ansible_password=password
     ansible_connection=winrm
+
 
 .. Note:: The ipaddress library is only included by default in Python 3.x, to
     use IPv6 addresses in Python 2.6 and 2.7, make sure to run
