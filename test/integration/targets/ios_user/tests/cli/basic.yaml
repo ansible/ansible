@@ -7,7 +7,7 @@
       - name: ansibletest3
     state: absent
     authorize: yes
-  register: result
+  become: yes
 
 - name: Create user (SetUp)
   ios_user:
@@ -16,6 +16,7 @@
     role: network-operator
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -31,6 +32,7 @@
     authorize: yes
     state: present
     view: network-admin
+  become: yes
   register: result
 
 - assert:
@@ -45,6 +47,7 @@
     role: network-operator
     state: present
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -60,6 +63,7 @@
     authorize: yes
     state: present
     view: network-admin
+  become: yes
   register: result
 
 - assert:
@@ -75,6 +79,7 @@
       - name: ansibletest3
     state: absent
     authorize: yes
+  become: yes
   register: result
 
 - assert:

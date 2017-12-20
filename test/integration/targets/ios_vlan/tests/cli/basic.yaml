@@ -6,6 +6,7 @@
 #      - no vlan 200
 #      - no vlan 300
 #    authorize: yes
+#  become: yes
 
 #- name: setup - remove switchport settings on interfaces used in test
 #  ios_config:
@@ -14,6 +15,7 @@
 #      - no switchport access vlan 100
 #    authorize: yes
 #    parents: "{{ item }}"
+#  become: yes
 #  with_items:
 #    - interface GigabitEthernet0/1
 #    - interface GigabitEthernet0/2
@@ -23,6 +25,7 @@
 #    vlan_id: 100
 #    name: test-vlan
 #    authorize: yes
+#  become: yes
 #  register: result
 
 #- assert:
@@ -33,6 +36,7 @@
 
 #- name: create vlan(idempotence)
 #  ios_vlan: *create
+#  become: yes
 #  register: result
 
 #- assert:
@@ -46,6 +50,7 @@
 #      - GigabitEthernet0/1
 #      - GigabitEthernet0/2
 #    authorize: yes
+#  become: yes
 #  register: result
 
 #- assert:
@@ -60,6 +65,7 @@
 
 #- name: Add interfaces to vlan(idempotence)
 #  ios_vlan: *interfaces
+#  become: yes
 #  register: result
 
 #- assert:
@@ -72,7 +78,8 @@
 #    interfaces:
 #      - GigabitEthernet0/1
 #    authorize: yes
-#    register: result
+#  become: yes
+#  register: result
 
 #- assert:
 #    that:
@@ -84,6 +91,7 @@
 
 #- name: Remove interface from vlan(idempotence)
 #  ios_vlan: *single_int
+#  become: yes
 #  register: result
 
 #- assert:
@@ -95,6 +103,7 @@
 #    vlan_id: 100
 #    state: suspend
 #    authorize: yes
+#  become: yes
 #  register: result
 
 #- assert:
@@ -108,6 +117,7 @@
 #    vlan_id: 100
 #    state: active
 #    authorize: yes
+#  become: yes
 #  register: result
 
 #- assert:
@@ -121,6 +131,7 @@
 #    vlan_id: 100
 #    authorize: yes
 #    state: absent
+#  become: yes
 #  register: result
 
 #- assert:
@@ -130,6 +141,7 @@
 
 #- name: delete vlan(idempotence)
 #  ios_vlan: *delete
+#  become: yes
 #  register: result
 
 #- assert:
@@ -142,6 +154,7 @@
 #      - { vlan_id: 200, name: vlan-200 }
 #      - { vlan_id: 300, name: vlan-300 }
 #    authorize: yes
+#  become: yes
 #  register: result
 
 #- assert:
@@ -154,6 +167,7 @@
 
 #- name: create vlans using aggregate(idempotence)
 #  ios_vlan: *create_aggregate
+#  become: yes
 #  register: result
 
 #- assert:
@@ -167,6 +181,7 @@
 #      - { vlan_id: 300, name: vlan-300 }
 #    state: absent
 #    authorize: yes
+#  become: yes
 #  register: result
 
 #- assert:
@@ -177,6 +192,7 @@
 
 #- name: delete vlans using aggregate(idempotence)
 #  ios_vlan: *delete_aggregate
+#  become: yes
 #  register: result
 
 #- assert:
@@ -190,6 +206,7 @@
 #      - no vlan 200
 #      - no vlan 300
 #    authorize: yes
+#  become: yes
 
 #- name: teardown(part2)
 #  ios_config:
@@ -198,6 +215,7 @@
 #      - no switchport access vlan 100
 #    authorize: yes
 #    parents: "{{ item }}"
+#  become: yes
 #  with_items:
 #    - interface GigabitEthernet0/1
 #    - interface GigabitEthernet0/2

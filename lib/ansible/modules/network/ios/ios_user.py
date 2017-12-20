@@ -181,7 +181,8 @@ def user_del_cmd(username):
     return json.dumps({
         'command': 'no username %s' % username,
         'prompt': 'This operation will remove all username related configurations with same name',
-        'answer': 'y'
+        'answer': 'y',
+        'newline': False,
     })
 
 

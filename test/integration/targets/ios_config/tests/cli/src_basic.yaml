@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/src_basic.yaml"
+- debug: msg="START cli/src_basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -10,11 +10,13 @@
       - interface Loopback999
     match: none
     authorize: yes
+  become: yes
 
 - name: configure device with config
   ios_config:
     src: basic/config.j2
     authorize: yes
+  become: yes
   register: result
 
 - name: debug, remove me
@@ -31,6 +33,7 @@
   ios_config:
     src: basic/config.j2
     authorize: yes
+  become: yes
   register: result
 
 - assert:
@@ -40,4 +43,4 @@
 # FIXME Bug https://github.com/ansible/ansible/issues/19382
 #      - "result.updates is not defined"
 
-- debug: msg="END cli/src_basic.yaml"
+- debug: msg="END cli/src_basic.yaml on connection={{ ansible_connection }}"
