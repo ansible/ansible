@@ -83,7 +83,8 @@ options:
     description:
     - Manage some VM hardware attributes.
     - 'Valid attributes are:'
-    - ' - C(hotadd_cpu) (boolean): Allow cpus to be added while the VM is running.'
+    - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the VM is running.'
+    - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the VM is running. version_added: 2.5'
     - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
@@ -232,6 +233,9 @@ EXAMPLES = r'''
       memory_reservation: 512
       memory_reservation_lock: True
       max_connections: 5
+      hotadd_cpu: True
+      hotremove_cpu: True
+      hotadd_memory: False
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -668,6 +672,11 @@ class PyVmomiHelper(PyVmomi):
             if 'hotadd_cpu' in self.params['hardware']:
                 self.configspec.cpuHotAddEnabled = bool(self.params['hardware']['hotadd_cpu'])
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
+                    self.change_detected = True
+
+            if 'hotremove_cpu' in self.params['hardware']:
+                self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
+                if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
                     self.change_detected = True
 
             if 'memory_reservation' in self.params['hardware']:
