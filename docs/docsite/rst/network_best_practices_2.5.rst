@@ -64,7 +64,7 @@ In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos``
 Connection & Credentials (group_vars)
 -------------------------------------
 
-As Ansible is a flexible tool there are a number of ways of specifying connection information & credentials. We believe however that the best was is to use ``group_vars``.
+Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using ``group_vars``.
 
 **group_vars/eos.yml**
 
@@ -118,13 +118,13 @@ As Ansible is a flexible tool there are a number of ways of specifying connectio
 
 .. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
-.. warning:: Never store passwords in plain text
+.. warning:: Never store passwords in plain text.
 
-The "Vault" feature of Ansible allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
+The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
 
 :ansible_connection:
 
-  The ansible-connection setting tells Ansible how it should connect to a remote device. When working with Ansible Networking, setting this to ``ansible_connection: network_cli`` informs Ansible that the remote node is a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
+  Ansible uses the ansible-connection setting to determine how to connect to a remote device. When working with Ansible Networking, set this to ``network_cli`` so Ansible treats the remote node as a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
 :ansible_network_os:
   Informs Ansible which Network platform this hosts corresponds to. This is required when using ``network_cli`` or ``netconf``.
 :ansible_user: The user to connect to the remote device (switch) as. Without this the user that is running ``ansible-playbook`` would be used.
@@ -352,14 +352,14 @@ Get running configuration
 
 The :ref:`eos_config <eos_config>` and :ref:`vyos_config <vyos_config>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
 
-To demonstrate how we can move the backup file to a different location we ``register`` the result and use the ``backup_path`` return value as source location to move the file into ``/tmp/backups/`` directory which we have created.
+To demonstrate how we can move the backup file to a different location, we register the result and move the file to the path stored in ``backup_path``.
 
 Note that when using variables from tasks in this way we use double quotes (``"``) and double curly-brackets (``{{...}}`` to tell Ansible that this is a variable.
 
 Troubleshooting
 ===============
 
-If you receive an connection error please double check the inventory and Playbook for typos or missing lines, if the issue still occurs follow the debug steps in :doc:`network_debug_troubleshooting`.
+If you receive an connection error please double check the inventory and Playbook for typos or missing lines. If the issue still occurs follow the debug steps in :doc:`network_debug_troubleshooting`.
 
 .. seealso::
 
