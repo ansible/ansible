@@ -120,6 +120,10 @@ options:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
+      path:
+        required: false
+        default: ovirt_engine_history
+        description: Database name for oVirt metrics. Defaults to ovirt_engine_history.
 
   alerts:
     required: false
@@ -321,6 +325,51 @@ EXAMPLES = '''
       hostname: 'rhev01.example.com'
       userid: 'admin@internal'
       password: 'password'
+      verify_ssl: true
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    metrics:
+      hostname: 'metrics.example.com'
+      path: 'ovirt_engine_history'
+      userid: 'user_id_metrics'
+      password: 'password_metrics'
+      verify_ssl: true
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
     manageiq_connection:
       url: 'https://127.0.0.1'
       username: 'admin'
@@ -349,6 +398,8 @@ def supported_providers():
         ),
         oVirt=dict(
             class_name='ManageIQ::Providers::Redhat::InfraManager',
+            default_role='default',
+            metrics_role='metrics',
         ),
     )
 
@@ -378,6 +429,7 @@ def endpoint_argument_spec():
         userid=dict(),
         password=dict(no_log=True),
         auth_key=dict(no_log=True),
+        path=dict(),
     )
 
 
@@ -475,6 +527,7 @@ class ManageIQProvider(object):
                         'verify_ssl': [0, 1][endpoint.get('verify_ssl', True)],
                         'security_protocol': endpoint.get('security_protocol'),
                         'certificate_authority': endpoint.get('certificate_authority'),
+                        'path': endpoint.get('path'),
                     },
                     'authentication': {
                         'authtype': authtype,
