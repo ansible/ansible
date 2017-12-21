@@ -612,9 +612,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
-        # let command know it should avoid specific warnings
-        module_args['_ansible_command_warnings'] = C.COMMAND_WARNINGS
-
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
         update = {}
