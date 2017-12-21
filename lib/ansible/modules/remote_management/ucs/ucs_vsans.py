@@ -28,15 +28,17 @@ options:
   name:
     description:
     - Name of the VSAN
-    - If specifying a single VSAN, name is required
+    required: yes
   vsan_id:
     description:
     - VSAN ID
-    - If specifying a single VSAN, vsan_id is required
+    - Optional for state absent
+    required: yes
   vlan_id:
     description:
     - VLAN ID (for FCoE traffic)
-    - If specifying a single VSAN, vlan_id is required
+    - Optional for state absent
+    required: yes
   fc_zoning:
     description:
     - Enable/Disable FC Zoning
@@ -48,17 +50,6 @@ options:
     - Which fabric
     choices: [common, A, B]
     default: common
-  vsan_list:
-    description:
-    - List of VSANs
-    - vsan_list allows multiple resource updates with a single UCSM connection
-    - Each list item contains the following properties
-    - name (Name of the VSAN pool (required))
-    - vsan_id (VSAN ID (required))
-    - vlan_id (VLAN ID (required))
-    - fc_zoning (disabled (default) or enabled)
-    - fabric (common (default), A, or B)
-    - Either vsan_list or name/vsan_id/vlan_id is required
 requirements:
 - ucsmsdk
 author:
@@ -68,33 +59,21 @@ version_added: '2.5'
 '''
 
 EXAMPLES = r'''
-- name: Configure multiple VSANs
+- name: Configure VSAN
   ucs_vsans:
     hostname: 172.16.143.150
     username: admin
     password: password
-    vsan_list:
-      - name: vsan110
-        vsan_id: '110'
-        vlan_id: '110'
-      - name: vsan-A-111
-        vsan_id: '111'
-        vlan_id: '111'
-        fabric: A
-      - name: vsan-B-112
-        vsan_id: '112'
-        vlan_id: '112'
-        fabric: B
-        fc_zoning: enabled
+    name: vsan110
+    vsan_id: '110'
+    vlan_id: '110'
 
-- name: Configure single VSAN
+- name: Remove VSAN
   ucs_vsans:
     hostname: 172.16.143.150
     username: admin
     password: password
-    name: vsan120
-    vsan_id: '120'
-    vlan_id: '120'
+    name: vsan110
 '''
 
 RETURN = r'''
@@ -107,24 +86,30 @@ from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_s
 
 def main():
     argument_spec = ucs_argument_spec
-    argument_spec.update(vsan_list=dict(type='list'),
-                         name=dict(type='str'),
-                         vsan_id=dict(type='str'),
-                         vlan_id=dict(type='str'),
-                         fc_zoning=dict(type='str', default='disabled', choices=['disabled', 'enabled']),
-                         fabric=dict(type='str', default='common', choices=['common', 'A', 'B']),
-                         state=dict(type='str', default='present', choices=['present', 'absent']))
-    module = AnsibleModule(argument_spec,
-                           supports_check_mode=True,
-                           required_one_of=[
-                               ['vsan_list', 'name']
-                           ],
-                           mutually_exclusive=[
-                               ['vsan_list', 'name']
-                           ],
-                           required_together=[
-                               ['name', 'vsan_id', 'vlan_id']
-                           ])
+    argument_spec.update(
+        name=dict(type='str'),
+        vsan_id=dict(type='str'),
+        vlan_id=dict(type='str'),
+        fc_zoning=dict(type='str', default='disabled', choices=['disabled', 'enabled']),
+        fabric=dict(type='str', default='common', choices=['common', 'A', 'B']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        vsan_list=dict(type='list'),
+    )
+
+    # Note that use of vsan_list is an experimental feature which allows multiple resource updates with a single UCSM connection.
+    # Support for vsan_list may change or be removed once persistent UCS connections are supported.
+    # Either vsan_list or name/vsan_id/vlan_id is required (user can specify either a list or single resource).
+
+    module = AnsibleModule(
+        argument_spec,
+        supports_check_mode=True,
+        required_one_of=[
+            ['vsan_list', 'name']
+        ],
+        mutually_exclusive=[
+            ['vsan_list', 'name']
+        ],
+    )
     ucs = UCSModule(module)
 
     err = False
@@ -133,6 +118,9 @@ def main():
 
     changed = False
     try:
+        # Only documented use is a single resource, but to also support experimental
+        # feature allowing multiple updates all params are converted to a vsan_list below.
+
         if module.params['vsan_list']:
             # directly use the list (single resource and list are mutually exclusive
             vsan_list = module.params['vsan_list']
@@ -140,7 +128,8 @@ def main():
             # single resource specified, create list from the current params
             vsan_list = [module.params]
         for vsan in vsan_list:
-            exists = False
+            mo_exists = False
+            props_match = False
             # set default params.  Done here to set values for lists which can't be done in the argument_spec
             if not vsan.get('fc_zoning'):
                 vsan['fc_zoning'] = 'disabled'
@@ -154,29 +143,35 @@ def main():
 
             mo = ucs.login_handle.query_dn(dn)
             if mo:
-                # check top-level mo props
-                kwargs = {}
-                kwargs['id'] = vsan['vsan_id']
-                kwargs['fcoe_vlan'] = vsan['vlan_id']
-                kwargs['zoning_state'] = vsan['fc_zoning']
-                if (mo.check_prop_match(**kwargs)):
-                    exists = True
+                mo_exists = True
 
             if module.params['state'] == 'absent':
-                if exists:
+                # mo must exist but all properties do not have to match
+                if mo_exists:
                     if not module.check_mode:
                         ucs.login_handle.remove_mo(mo)
                         ucs.login_handle.commit()
                     changed = True
             else:
-                if not exists:
+                if mo_exists:
+                    # check top-level mo props
+                    kwargs = {}
+                    kwargs['id'] = vsan['vsan_id']
+                    kwargs['fcoe_vlan'] = vsan['vlan_id']
+                    kwargs['zoning_state'] = vsan['fc_zoning']
+                    if (mo.check_prop_match(**kwargs)):
+                        props_match = True
+
+                if not props_match:
                     if not module.check_mode:
                         # create if mo does not already exist
-                        mo = FabricVsan(parent_mo_or_dn=dn_base,
-                                        name=vsan['name'],
-                                        id=vsan['vsan_id'],
-                                        fcoe_vlan=vsan['vlan_id'],
-                                        zoning_state=vsan['fc_zoning'])
+                        mo = FabricVsan(
+                            parent_mo_or_dn=dn_base,
+                            name=vsan['name'],
+                            id=vsan['vsan_id'],
+                            fcoe_vlan=vsan['vlan_id'],
+                            zoning_state=vsan['fc_zoning'],
+                        )
 
                         ucs.login_handle.add_mo(mo, True)
                         ucs.login_handle.commit()
