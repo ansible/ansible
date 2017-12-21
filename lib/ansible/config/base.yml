@@ -288,6 +288,17 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+ACTION_WARNINGS:
+  name: Toggle action warnings
+  default: True
+  description:
+    - By default Ansible will issue a warning when recieved from a task action (module or action plugin)
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_ACTION_WARNINGS}]
+  ini:
+  - {key: action_warnings, section: defaults}
+  type: boolean
+  version_added: "2.5"
 COMMAND_WARNINGS:
   name: Command module warnings
   default: True

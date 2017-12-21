@@ -165,7 +165,7 @@ def main():
             executable=dict(),
             creates=dict(type='path'),
             removes=dict(type='path'),
-            warn=dict(type='bool', default=True),
+            warn=dict(type='bool'),
             stdin=dict(required=False),
         )
     )
@@ -178,6 +178,9 @@ def main():
     removes = module.params['removes']
     warn = module.params['warn']
     stdin = module.params['stdin']
+
+    if warn is None:
+        warn = module._command_warn
 
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)

@@ -812,11 +812,12 @@ class AnsibleModule(object):
         self._warnings = []
         self._deprecations = []
         self._clean = {}
+        self._command_warn = True
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
                               '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
-                              '_ansible_socket', '_ansible_shell_executable']
+                              '_ansible_socket', '_ansible_shell_executable', '_ansible_command_warnings']
         self._options_context = list()
 
         if add_file_common_args:
@@ -1628,6 +1629,9 @@ class AnsibleModule(object):
 
             elif k == '_ansible_shell_executable' and v:
                 self._shell = v
+
+            elif k == '_ansible_command_warnings' and v:
+                self._command_warn = v
 
             elif check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
