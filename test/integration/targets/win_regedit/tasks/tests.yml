@@ -311,7 +311,7 @@
   win_regedit:
     path: '{{test_win_regedit_local_key}}\{{item}}'
     state: present
-  items:
+  loop:
   - nest1
   - nest2
   - nest1\nested
