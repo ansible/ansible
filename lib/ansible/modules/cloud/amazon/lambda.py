@@ -295,7 +295,8 @@ def main():
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
         module.fail_json(msg=str(e))
 
-    if role.startswith('arn:aws:iam'):
+    partition_match_pattern = 'arn:(aws[a-zA-Z-]*)?:iam'
+    if re.match(partition_match_pattern, role):
         role_arn = role
     else:
         # get account ID and assemble ARN
