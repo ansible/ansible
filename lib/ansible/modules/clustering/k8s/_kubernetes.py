@@ -58,10 +58,12 @@ options:
     description:
       - Client certificate filename in standard PEM format to be used for authentication.
     required: false
+    version_added: "2.5"
   client_key:
     description:
       - Client private key filename in standard PEM format to be used for authentication.
     required: false
+    version_added: "2.5"
   state:
     description:
       - The desired action to take on the Kubernetes data.
