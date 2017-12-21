@@ -46,12 +46,16 @@ options:
     - "Provide a path to a file containing a valid YAML definition of an object to be created or updated. Mutually
       exclusive with I(resource_definition). NOTE: I(kind), I(api_version), I(name), and I(namespace) will be
       overwritten by corresponding values found in the configuration read in from the I(src) file."
+    - Reads from the local file system. To read from the Ansible controller's file system, use the file lookup
+      plugin or template lookup plugin, combined with the from_yaml filter, and pass the result to
+      I(resource_definition). See Examples below.
   api_version:
     description:
     - Use to specify the API version. Use to create, delete, or discover an object without providing a full
       resource definition. Use in conjunction with I(kind), I(name), and I(namespace) to identify a
       specific object. If I(resource definition) is provided, the I(apiVersion) from the I(resource_definition)
       will override this option.
+    default: v1
     aliases:
     - api
     - version
@@ -73,14 +77,6 @@ options:
       providing a full resource definition. Use in conjunction with I(api_version), I(kind), and I(name)
       to identify a specfic object. If I(resource definition) is provided, the I(metadata.namespace) value
       from the I(resource_definition) will override this option.
-  description:
-    description:
-    - Used only when creating an OpenShift project, otherwise ignored. Adds a description to the project meta
-      data.
-  display_name:
-    description:
-    - Use only when creating an OpenShift project, otherwise ignored. Adds a display name to the project meta
-      data.
   host:
     description:
     - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
@@ -123,6 +119,7 @@ options:
     type: bool
 
 notes:
-  - "To learn more about the OpenShift Python client and available object models, visit:
-    https://github.com/openshift/openshift-restclient-python"
+  - "The OpenShift Python client wraps the K8s Python client, providing full access to
+    all of the APIS and models available on both platforms. For API version details and
+    additional information visit https://github.com/openshift/openshift-restclient-python"
 '''
