@@ -787,7 +787,6 @@ def suspend_processes(ec2_connection, as_group):
     return True
 
 
-@AWSRetry.backoff(tries=3, delay=0.1)
 def create_autoscaling_group(connection):
     group_name = module.params.get('name')
     load_balancers = module.params['load_balancers']
@@ -804,11 +803,15 @@ def create_autoscaling_group(connection):
     health_check_type = module.params.get('health_check_type')
     default_cooldown = module.params.get('default_cooldown')
     wait_for_instances = module.params.get('wait_for_instances')
-    as_groups = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])
     wait_timeout = module.params.get('wait_timeout')
     termination_policies = module.params.get('termination_policies')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
+    try:
+        as_groups = describe_autoscaling_groups(connection, group_name)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json(msg="Failed to describe auto scaling groups.",
+                         exception=traceback.format_exc())
 
     if not vpc_zone_identifier and not availability_zones:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -830,12 +833,16 @@ def create_autoscaling_group(connection):
                                      PropagateAtLaunch=bool(tag.get('propagate_at_launch', True)),
                                      ResourceType='auto-scaling-group',
                                      ResourceId=group_name))
-    if not as_groups.get('AutoScalingGroups'):
+    if not as_groups:
         if not vpc_zone_identifier and not availability_zones:
             availability_zones = module.params['availability_zones'] = [zone['ZoneName'] for
                                                                         zone in ec2_connection.describe_availability_zones()['AvailabilityZones']]
         enforce_required_arguments()
-        launch_configs = describe_launch_configurations(connection, launch_config_name)
+        try:
+            launch_configs = describe_launch_configurations(connection, launch_config_name)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json(msg="Failed to describe launch configurations",
+                             exception=traceback.format_exc())
         if len(launch_configs['LaunchConfigurations']) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         if desired_capacity is None:
@@ -890,7 +897,7 @@ def create_autoscaling_group(connection):
             module.fail_json(msg="Failed to create Autoscaling Group.",
                              exception=traceback.format_exc())
     else:
-        as_group = as_groups['AutoScalingGroups'][0]
+        as_group = as_groups[0]
         initial_asg_properties = get_properties(as_group)
         changed = False
 
@@ -946,13 +953,21 @@ def create_autoscaling_group(connection):
                 elbs_to_detach = has_elbs.difference(wanted_elbs)
                 if elbs_to_detach:
                     changed = True
-                    detach_load_balancers(connection, group_name, list(elbs_to_detach))
+                    try:
+                        detach_load_balancers(connection, group_name, list(elbs_to_detach))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json(msg="Failed to detach load balancers %s: %s." % (elbs_to_detach, to_native(e)),
+                                         exception=traceback.format_exc())
             if wanted_elbs - has_elbs:
                 # if has contains less than wanted, then we need to add some
                 elbs_to_attach = wanted_elbs.difference(has_elbs)
                 if elbs_to_attach:
                     changed = True
-                    attach_load_balancers(connection, group_name, list(elbs_to_attach))
+                    try:
+                        attach_load_balancers(connection, group_name, list(elbs_to_attach))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json(msg="Failed to attach load balancers %s: %s." % (elbs_to_attach, to_native(e)),
+                                         exception=traceback.format_exc())
 
         # Handle target group attachments/detachments
         # Attach target groups if they are specified but none currently exist
@@ -977,13 +992,21 @@ def create_autoscaling_group(connection):
                 tgs_to_detach = has_tgs.difference(wanted_tgs)
                 if tgs_to_detach:
                     changed = True
-                    detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
+                    try:
+                        detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json(msg="Failed to detach load balancer target groups %s: %s" % (tgs_to_detach, to_native(e)),
+                                         exception=traceback.format_exc())
             if wanted_tgs.issuperset(has_tgs):
                 # if has contains less than wanted, then we need to add some
                 tgs_to_attach = wanted_tgs.difference(has_tgs)
                 if tgs_to_attach:
                     changed = True
-                    attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
+                    try:
+                        attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json(msg="Failed to attach load balancer target groups %s: %s" % (tgs_to_attach, to_native(e)),
+                                         exception=traceback.format_exc())
 
         # check for attributes that aren't required for updating an existing ASG
         # check if min_size/max_size/desired capacity have been specified and if not use ASG values
@@ -995,7 +1018,11 @@ def create_autoscaling_group(connection):
             desired_capacity = as_group['DesiredCapacity']
         launch_config_name = launch_config_name or as_group['LaunchConfigurationName']
 
-        launch_configs = describe_launch_configurations(connection, launch_config_name)
+        try:
+            launch_configs = describe_launch_configurations(connection, launch_config_name)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json(msg="Failed to describe launch configurations",
+                             exception=traceback.format_exc())
         if len(launch_configs['LaunchConfigurations']) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         ag = dict(
@@ -1012,8 +1039,11 @@ def create_autoscaling_group(connection):
             ag['AvailabilityZones'] = availability_zones
         if vpc_zone_identifier:
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
-        update_asg(connection, **ag)
-
+        try:
+            update_asg(connection, **ag)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json(msg="Failed to update autoscaling group: %s" % to_native(e),
+                             exception=traceback.format_exc())
         if notification_topic:
             try:
                 put_notification_config(connection, group_name, notification_topic, notification_types)
