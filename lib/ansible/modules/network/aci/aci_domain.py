@@ -31,11 +31,11 @@ options:
     description:
     - The type of domain profile.
     - 'C(fc): The FC domain profile is a policy pertaining to single FC Management domain'
-    - 'C(l2ext): The external bridged domain profile is a policy for managing L2 bridged infrastructure bridged outside the fabric.'
-    - 'C(l3ext): The external routed domain profile is a policy for managing L3 routed infrastructure outside the fabric.'
+    - 'C(l2dom): The external bridged domain profile is a policy for managing L2 bridged infrastructure bridged outside the fabric.'
+    - 'C(l3dom): The external routed domain profile is a policy for managing L3 routed infrastructure outside the fabric.'
     - 'C(phys): The physical domain profile stores the physical resources and encap resources that should be used for EPGs associated with this domain.'
     - 'C(vmm): The VMM domain profile is a policy for grouping VM controllers with similar networking policy requirements.'
-    choices: [ fc, l2ext, l3ext, phys, vmm ]
+    choices: [ fc, l2dom, l3dom, phys, vmm ]
     aliases: [ type ]
   state:
     description:
@@ -69,7 +69,7 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),
-        domain_type=dict(type='str', choices=['fc', 'l2ext', 'l3ext', 'phys', 'vmm'], aliases=['type']),
+        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'redhat', 'vmware']),
     )
@@ -94,33 +94,33 @@ def main():
 
     # Compile the full domain for URL building
     if domain_type == 'fc':
-        aci_class = 'fcDomP'
-        aci_dn = 'uni/fc-{}'.format(domain)
-        aci_rn = 'fc-{}'.format(domain)
-    elif domain_type == 'l2ext':
-        aci_class = 'l2extDomP'
-        aci_dn = 'uni/l2dom-{}'.format(domain)
-        aci_rn = 'l2dom-{}'.format(domain)
-    elif domain_type == 'l3ext':
-        aci_class = 'l3extDomP'
-        aci_dn = 'uni/l3dom-{}'.format(domain)
-        aci_rn = 'l3dom-{}'.format(domain)
+        domain_class = 'fcDomP'
+        domain_mo = 'uni/fc-{}'.format(domain)
+        domain_rn = 'fc-{}'.format(domain)
+    elif domain_type == 'l2dom':
+        domain_class = 'l2extDomP'
+        domain_mo = 'uni/l2dom-{}'.format(domain)
+        domain_rn = 'l2dom-{}'.format(domain)
+    elif domain_type == 'l3dom':
+        domain_class = 'l3extDomP'
+        domain_mo = 'uni/l3dom-{}'.format(domain)
+        domain_rn = 'l3dom-{}'.format(domain)
     elif domain_type == 'phys':
-        aci_class = 'physDomP'
-        aci_dn = 'uni/phys-{}'.format(domain)
-        aci_rn = 'phys-{}'.format(domain)
+        domain_class = 'physDomP'
+        domain_mo = 'uni/phys-{}'.format(domain)
+        domain_rn = 'phys-{}'.format(domain)
     elif domain_type == 'vmm':
-        aci_class = 'vmmDomP'
-        aci_dn = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-        aci_rn = 'dom-{}'.format(domain)
+        domain_class = 'vmmDomP'
+        domain_mo = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        domain_rn = 'dom-{}'.format(domain)
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
-            aci_class=aci_class,
-            aci_rn=aci_rn,
-            filter_target='eq({}.name, "{}")'.format(aci_class, domain),
-            module_object=aci_dn,
+            aci_class=domain_class,
+            aci_rn=domain_rn,
+            filter_target='eq({}.name, "{}")'.format(domain_class, domain),
+            module_object=domain_mo,
         ),
     )
 
@@ -129,14 +129,14 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(
-            aci_class=aci_class,
+            aci_class=domain_class,
             class_config=dict(
                 name=domain,
             ),
         )
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class=aci_class)
+        aci.get_diff(aci_class=domain_class)
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
