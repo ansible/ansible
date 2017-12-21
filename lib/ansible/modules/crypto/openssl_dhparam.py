@@ -144,23 +144,36 @@ class DHParameter(object):
 
     def generate(self, module):
         """Generate a keypair."""
-        # openssl dhparam -out <path> <bits>
-        if not self.force and self.check(module):
-            return
-        try:
-            subprocess.check_call(
-                ["openssl", "dhparam", "-out", self.path, str(self.size)])
-        except CalledProcessError as exc:
-            os.remove(self.path)
-            raise DHParameterError(str(exc))
-        file_args = module.load_file_common_arguments(module.params)
-        module.set_fs_attributes_if_different(file_args, False)
-        self.changed = True
+        changed = False
+
+        # ony generate when necessary
+        if self.force or not self._check_params_valid(module):
+            try:
+                # openssl dhparam -out <path> <bits>
+                subprocess.check_call(
+                    ["openssl", "dhparam", "-out", self.path, str(self.size)])
+            except CalledProcessError as exc:
+                os.remove(self.path)
+                raise DHParameterError(str(exc))
+            finally:
+                changed = True
+
+        # fix permissions (checking force not necessary as done above)
+        if not self._check_fs_attributes(module):
+            # Fix done implicitly by
+            # AnsibleModule.set_fs_attributes_if_different
+            changed = True
+
+        self.changed = changed
 
     def check(self, module):
         """Ensure the resource is in its desired state."""
         if self.force:
             return False
+        return self._check_params_valid(module) and self._check_fs_attributes(module)
+
+    def _check_params_valid(self, module):
+        """Check if the params are in the correct state"""
         try:
             result = to_native(check_output(
                 ["openssl", "dhparam", "-check", "-text", "-noout", "-in", self.path],
@@ -181,10 +194,14 @@ class DHParameter(object):
         if "WARNING" in result:
             return False
 
+        return bits == self.size
+
+    def _check_fs_attributes(self, module):
+        """Checks (and changes if not in check mode!) fs attributes"""
         file_args = module.load_file_common_arguments(module.params)
         attrs_changed = module.set_fs_attributes_if_different(file_args, False)
 
-        return bits == self.size and not attrs_changed
+        return not attrs_changed
 
     def dump(self):
         """Serialize the object into a dictionary."""
