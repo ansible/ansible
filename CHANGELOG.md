@@ -92,6 +92,7 @@ Ansible Changes By Release
   * iam_role_facts
 - azure
   * azure_rm_containerregistry
+  * azure_rm_image
   * azure_rm_sqlserver
 - cloudscale
   * cloudscale_floating_ip
