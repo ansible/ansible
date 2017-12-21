@@ -50,35 +50,41 @@ TEST_MAP = {
 
 FILTER_RE = re.compile(r'((.+?)\s*([\w \.\'"]+)(\s*)\|(\s*)(\w+))')
 
-all_matches = defaultdict(list)
 
-for root, dirs, filenames in os.walk('.'):
-    for name in filenames:
-        if os.path.splitext(name)[1] not in ('.yml', '.yaml'):
-            continue
-        path = os.path.join(root, name)
+def main():
+    all_matches = defaultdict(list)
 
-        with open(path) as f:
-            text = f.read()
-
-        for match in FILTER_RE.findall(text):
-            filter_name = match[5]
-
-            try:
-                test_name = TEST_MAP[filter_name]
-            except KeyError:
-                test_name = filter_name
-
-            if test_name not in TESTS:
+    for root, dirs, filenames in os.walk('.'):
+        for name in filenames:
+            if os.path.splitext(name)[1] not in ('.yml', '.yaml'):
                 continue
+            path = os.path.join(root, name)
 
-            all_matches[path].append(match[0])
+            with open(path) as f:
+                text = f.read()
 
-if all_matches:
-    print('Use of Ansible provided Jinja tests as filters is deprecated.')
-    print('Please update to use `is` syntax such as `result is failed`')
+            for match in FILTER_RE.findall(text):
+                filter_name = match[5]
 
-    for path, matches in all_matches.items():
-        for match in matches:
-            print('%s: %s' % (path, match,))
-    sys.exit(1)
+                try:
+                    test_name = TEST_MAP[filter_name]
+                except KeyError:
+                    test_name = filter_name
+
+                if test_name not in TESTS:
+                    continue
+
+                all_matches[path].append(match[0])
+
+    if all_matches:
+        print('Use of Ansible provided Jinja2 tests as filters is deprecated.')
+        print('Please update to use `is` syntax such as `result is failed`.')
+
+        for path, matches in all_matches.items():
+            for match in matches:
+                print('%s: %s' % (path, match,))
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
