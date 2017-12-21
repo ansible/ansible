@@ -28,6 +28,21 @@
 #
 # Use option -SubjectName to specify the CN name of the certificate. This
 # defaults to the system's hostname and generally should not be specified.
+#
+# Option EnableCredSSP is deprecated, you can use AuthTypes with 'CredSSP' to
+# enable CredSSP optionally.
+#
+# Use option -AuthTypes to specify a list of authentication types to enable. By
+# default, Basic is enabled. Acceptable values are 'Basic', 'CredSSP', and 'Kerberos'. If
+# the legacy option EnableCredSSP is enabled, CredSSP will be added to the AuthTypes
+# array. Note that enabling CredSSP, Basic, or Kerberos over HTTP is not recommended
+# for production scenarios. Use the `-EnsureSslOnly` switch to make sure you only run
+# these auth types over SSL. Additionally, only Kerberos is the most secure authentication
+# method. See: https://msdn.microsoft.com/en-us/powershell/scripting/setup/ps-remoting-second-hop
+#
+# Use option -EnsureSslOnly switch to ensure that only the HTTPS listener is
+# enabled. This will disable any HTTP listeners and remove any firewall rules
+# that allow WinRM HTTP traffic through.
 
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
@@ -36,6 +51,7 @@
 # Updated by Nicolas Simond <contact@nicolas-simond.com>
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
+# Updated by Kamran Ayub <kamran.ayub@gmail.com>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
@@ -54,8 +70,20 @@ Param (
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
-    [switch]$EnableCredSSP
+    [switch]$EnableCredSSP,
+    [ValidateSet('Basic', 'CredSSP', 'Kerberos')]
+    [string[]]$AuthTypes = @('Basic'),
+    [switch]$EnsureSslOnly
 )
+
+# WinRM Default Ports
+Set-Variable WinRmHttpPort -Option Constant -Value 5985
+Set-Variable WinRmHttpsPort -Option Constant -Value 5986
+
+# WinRM Authentication Types
+Set-Variable AuthBasic -Option Constant -Value "Basic"
+Set-Variable AuthCredSSP -Option Constant -Value "CredSSP"
+Set-Variable AuthKerberos -Option Constant -Value "Kerberos"
 
 Function Write-Log
 {
@@ -133,7 +161,7 @@ $ErrorActionPreference = "Stop"
 
 # Get the ID and security principal of the current user account
 $myWindowsID=[System.Security.Principal.WindowsIdentity]::GetCurrent()
-$myWindowsPrincipal=new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
+$myWindowsPrincipal = new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
 
 # Get the security principal for the Administrator role
 $adminRole=[System.Security.Principal.WindowsBuiltInRole]::Administrator
@@ -253,54 +281,86 @@ Else
     }
 }
 
-# Check for basic authentication.
-$basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "Basic"}
-If (($basicAuthSetting.Value) -eq $false)
-{
-    Write-Verbose "Enabling basic auth support."
-    Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
-    Write-Log "Enabled basic auth support."
-}
-Else
-{
-    Write-Verbose "Basic auth is already enabled."
-}
+# If SSL only, remove existing HTTP listener
+if ($EnsureSslOnly -and ($listeners | Where {$_.Keys -like "TRANSPORT=HTTP"})) {
+    
+    # Delete the listener for HTTP
+    $selectorset = @{
+        Address = "*"
+        Transport = "HTTP"
+    }
+    Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
+    Write-HostLog "Removed WinRM HTTP listener"
 
-# If EnableCredSSP if set to true
-If ($EnableCredSSP)
-{
-    # Check for CredSSP authentication
-    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "CredSSP"}
-    If (($credsspAuthSetting.Value) -eq $false)
-    {
-        Write-Verbose "Enabling CredSSP auth support."
-        Enable-WSManCredSSP -role server -Force
-        Write-Log "Enabled CredSSP auth support."
+    $httpfirewallrule = (netsh advfirewall firewall show rule name=all) `
+        | Where { $_ -match "LocalPort:\s+$($WinRmHttpPort)$" }
+
+    # Remove firewall rule if it exists
+    if ($httpfirewallrule.Count -gt 0) {
+        # Remove firewall rule
+        netsh advfirewall firewall delete rule name=all localport=$WinRmHttpPort protocol=TCP      
+        Write-HostLog "Removed WinRM HTTP firewall rule"
     }
 }
 
+# Support backwards-compatible switch
+If ($EnableCredSSP -and $AuthTypes -notcontains $AuthCredSSP) {
+    $AuthTypes = @($AuthTypes) + $AuthCredSSP
+}
+
+# Enable requested auth types
+foreach ($authType in $AuthTypes) {
+  $authSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where { $_.Name -eq $authType }
+
+  if ($authSetting.Value -eq $false) {
+    Write-Verbose "Enabling authentication [$authType] support."
+
+    if ($authType -ne $AuthCredSSP) {
+      Set-Item -Path "WSMan:\localhost\Service\Auth\$authType" -Value $true
+    } else {
+      Enable-WSManCredSSP -Role Server -Force
+    }
+
+    Write-Log "Enabled authentication [$authType] support."
+  } else {
+    Write-Verbose "[$authType] authentication is already enabled."
+  }
+}
+
 # Configure firewall to allow WinRM HTTPS connections.
-$fwtest1 = netsh advfirewall firewall show rule name="Allow WinRM HTTPS"
-$fwtest2 = netsh advfirewall firewall show rule name="Allow WinRM HTTPS" profile=any
-If ($fwtest1.count -lt 5)
+$httpsfirewallrule = (netsh advfirewall firewall show rule name=all) `
+    | Where { $_ -match "LocalPort:\s+$WinRmHttpsPort$" }
+$httpsfirewallanyprofilerule = (netsh advfirewall firewall show rule name=all profile=any) `
+    | Where { $_ -match "LocalPort:\s+$WinRmHttpsPort$" }
+
+If (!$httpsfirewallrule)
 {
     Write-Verbose "Adding firewall rule to allow WinRM HTTPS."
-    netsh advfirewall firewall add rule profile=any name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
+    netsh advfirewall firewall add rule profile=any name="Allow WinRM HTTPS" dir=in localport=$WinRmHttpsPort protocol=TCP action=allow  
     Write-Log "Added firewall rule to allow WinRM HTTPS."
 }
-ElseIf (($fwtest1.count -ge 5) -and ($fwtest2.count -lt 5))
+ElseIf (!$httpsfirewallanyprofilerule)
 {
-    Write-Verbose "Updating firewall rule to allow WinRM HTTPS for any profile."
-    netsh advfirewall firewall set rule name="Allow WinRM HTTPS" new profile=any
-    Write-Log "Updated firewall rule to allow WinRM HTTPS for any profile."
+    Write-Verbose "Updating firewall rule(s) to allow WinRM HTTPS for any profile."    
+    netsh advfirewall firewall set rule name=all localport=$WinRmHttpsPort protocol=TCP new profile=any
+    Write-Log "Updated firewall rule(s) to allow WinRM HTTPS for any profile."
 }
 Else
 {
     Write-Verbose "Firewall rule already exists to allow WinRM HTTPS."
 }
 
+# Warn when AllowUnencrypted is set to True
+$allowUnencrypted = (Get-Item WSMan:\localhost\Service\AllowUnencrypted).Value -eq $true
+
+if ($allowUnencrypted) {
+    Write-Warning "AllowUnencrypted is set to True which is EXTREMELY insecure and not recommended for production environments"
+}
+
 # Test a remoting connection to localhost, which should work.
-$httpResult = Invoke-Command -ComputerName "localhost" -ScriptBlock {$env:COMPUTERNAME} -ErrorVariable httpError -ErrorAction SilentlyContinue
+if (!$EnsureSslOnly) {
+    $httpResult = Invoke-Command -ComputerName "localhost" -ScriptBlock {$env:COMPUTERNAME} -ErrorVariable httpError -ErrorAction SilentlyContinue
+}
 $httpsOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
 
 $httpsResult = New-PSSession -UseSSL -ComputerName "localhost" -SessionOption $httpsOptions -ErrorVariable httpsError -ErrorAction SilentlyContinue
