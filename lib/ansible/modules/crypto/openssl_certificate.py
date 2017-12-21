@@ -218,6 +218,28 @@ EXAMPLES = '''
     force: True
 
 # Examples for some checks one could use the assertonly provider for:
+
+# How to use the assertonly provider to implement and trigger your own custom certificate generation workflow:
+- name: Check if a certificate is currently still valid, ignoring failures
+  openssl_certificate:
+    path: /etc/ssl/crt/example.com.crt
+    provider: assertonly
+    has_expired: False
+  ignore_errors: True
+  register: validity_check
+
+- name: Run custom task(s) to get a new, valid certificate in case the initial check failed
+  command: superspecialSSL recreate /etc/ssl/crt/example.com.crt
+  when: validity_check.failed
+
+- name: Check the new certificate again for validity with the same parameters, this time failing the play if it is still invalid
+  openssl_certificate:
+    path: /etc/ssl/crt/example.com.crt
+    provider: assertonly
+    has_expired: False
+  when: validity_check.failed
+
+# Some other checks that assertonly could be used for:
 - name: Verify that an existing certificate was issued by the Let's Encrypt CA and is currently still valid
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
