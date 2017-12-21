@@ -35,6 +35,8 @@ description:
     IP routes on Cisco IOS network devices.
 notes:
   - Tested against IOS 15.6
+requirements:
+  - Python >= 3.3 or C(ipaddress) python package
 options:
   prefix:
     description:
