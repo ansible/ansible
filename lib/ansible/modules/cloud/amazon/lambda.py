@@ -299,13 +299,15 @@ def main():
     if re.match(partition_match_pattern, role):
         role_arn = role
     else:
-        # get account ID and assemble ARN
+        # get account ID, AWS Partition and assemble ARN
         try:
             iam_client = boto3_conn(module, conn_type='client', resource='iam',
                                 region=region, endpoint=ec2_url, **aws_connect_kwargs)
             account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
-            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
-        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
+            current_identity_arn = iam_client.get_user()['User']['Arn']
+            current_partition = re.match(partition_match_pattern, current_identity_arn).group(1)
+            role_arn = 'arn:{0}:iam::{1}:role/{2}'.format(current_partition, account_id, role)
+        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError, AttributeError) as e:
             module.fail_json(msg=str(e))
 
     # Get function configuration if present, False otherwise
