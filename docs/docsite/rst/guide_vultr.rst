@@ -5,7 +5,7 @@ Vultr Cloud Guide
 
 Introduction
 ````````````
-The purpose of this chaptter is to explain how to get started with Ansible in a Vultr context. You will find usage examples in the example section in of each module's doc.
+The purpose of this chapter is to explain how to get started with Ansible in a Vultr context. You will find usage examples in the example section in of each module's doc.
 
 The Vultr modules don't have any dependency other than Ansible itself.
 
@@ -47,7 +47,7 @@ Within the credentials file, the format has to be as the following:
     [default]
     key = GBDSS7CHXCQPPOAS21YH2HUKQSEQQ2TYPIGQ
 
-The credentials file has multi key support, identified by a section name. The credentials file may or may not have a default section to be used as the default key.
+The credentials file has multi key support, identified by a section name. It may or may not contain a default section to be used as the default key.
 
 .. code-block:: ini
 
