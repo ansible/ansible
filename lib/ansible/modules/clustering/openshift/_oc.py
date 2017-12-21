@@ -63,6 +63,16 @@ options:
       - "If the state is present, and the resource doesn't exist, it shall be created using the inline definition. If the state is present and the
         resource exists, the definition will be updated, again using an inline definition. If the state is absent, the resource will be deleted if it exists."
     required: true
+  client_cert:
+    description:
+      - Client certificate filename in standard PEM format to be used for authentication.
+    required: false
+    version_added: "2.5"
+  client_key:
+    description:
+      - Client private key filename in standard PEM format to be used for authentication.
+    required: false
+    version_added: "2.5"
 short_description: Manage OpenShift Resources
 version_added: 2.4
 
@@ -370,6 +380,8 @@ def main():
             kind=dict(type='str'),
             name=dict(type='str'),
             namespace=dict(type='str'),
+            client_cert=dict(required=False),
+            client_key=dict(required=False),
             token=dict(required=True, type='str', no_log=True),
             state=dict(required=True,
                        choices=['present', 'absent']),
