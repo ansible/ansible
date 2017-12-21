@@ -100,7 +100,6 @@ RETURN = '''
 #only defaults
 '''
 
-
 import ansible.module_utils.urls
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.influxdb import InfluxDb
@@ -134,7 +133,7 @@ def drop_user(module, client, user_name):
     if not module.check_mode:
         try:
             client.drop_user(user_name)
-        except exceptions.InfluxDBClientError as e:
+        except client.InfluxDBClientError as e:
             module.fail_json(msg=e.content)
 
     module.exit_json(changed=True)
@@ -146,19 +145,12 @@ def main():
         state=dict(default='present', type='str', choices=['present', 'absent']),
         user_name=dict(required=True, type='str'),
         user_password=dict(required=False, type='str', no_log=True),
-        admin=dict(default='False', type='bool'),
-        ### This is hack - need to change
-        # https://github.com/ansible/ansible/blob/60f3649ebd72fe4dcd424e251afbc478351c0610/lib/ansible/module_utils/influxdb.py#L31
-        # and https://github.com/ansible/ansible/blob/60f3649ebd72fe4dcd424e251afbc478351c0610/lib/ansible/module_utils/influxdb.py#L62
-        #as in https://github.com/influxdata/influxdb-python/blob/35732cd7dfe5a585564999c9f881bd88e7c1531d/influxdb/client.py#L69
-        #database set by default to None
-        database_name=dict(default='None', type='str')
+        admin=dict(default='False', type='bool')
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-
 
     state = module.params['state']
     user_name = module.params['user_name']
