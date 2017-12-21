@@ -123,13 +123,17 @@ class Cli:
         """
         flags = [] if flags is None else flags
 
-        if self._device_configs != {}:
-            return self._device_configs
-        else:
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        try:
+            return self._device_configs[cmd]
+        except KeyError:
             connection = self._get_connection()
             out = connection.get_config(flags=flags)
             cfg = to_text(out, errors='surrogate_then_replace').strip()
-            self._device_configs = cfg
+            self._device_configs[cmd] = cfg
             return cfg
 
     def run_commands(self, commands, check_rc=True):
