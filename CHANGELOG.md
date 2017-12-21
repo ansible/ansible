@@ -93,6 +93,7 @@ Ansible Changes By Release
 - azure
   * azure_rm_containerregistry
   * azure_rm_sqlserver
+  * azure_rm_image
 - cloudscale
   * cloudscale_floating_ip
 - cloudstack
