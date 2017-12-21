@@ -63,7 +63,7 @@ options:
         required: false
     password:
         description:
-            - password to auth username with influxdb 
+            - password to auth username with influxdb
         default: root
         required: false
 '''
