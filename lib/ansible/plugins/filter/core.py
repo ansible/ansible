@@ -52,27 +52,13 @@ from ansible.module_utils.six import iteritems, string_types, integer_types
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.parsing.json.encoder import AnsibleJSONEncoder
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
-from ansible.vars.hostvars import HostVars, HostVarsVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
-
-
-class AnsibleJSONEncoder(json.JSONEncoder):
-    '''
-    Simple encoder class to deal with JSON encoding of internal
-    types like HostVars
-    '''
-    def default(self, o):
-        if isinstance(o, (HostVars, HostVarsVars)):
-            return dict(o)
-        elif isinstance(o, (datetime.date, datetime.datetime)):
-            return o.isoformat()
-        else:
-            return super(AnsibleJSONEncoder, self).default(o)
 
 
 def to_yaml(a, *args, **kw):
