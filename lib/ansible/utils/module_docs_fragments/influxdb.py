@@ -10,7 +10,8 @@ options:
   hostname:
     description:
     - The hostname or IP address on which InfluxDB server is listening
-    required: true
+    - Since version 2.5, defaulted to localhost.
+    default: localhost
   username:
     description:
     - Username that will be used to authenticate against InfluxDB server
