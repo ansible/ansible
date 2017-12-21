@@ -37,7 +37,7 @@ options:
   domain_type:
     description:
     - Determines if the Domain is physical (phys) or virtual (vmm).
-    choices: [ phys, vmm ]
+    choices: [ fc, l2dom, l3dom, phys, vmm ]
     aliases: [ type ]
   state:
     description:
@@ -71,7 +71,7 @@ def main():
     argument_spec.update(
         aep=dict(type='str', aliases=['aep_name']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),
+        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'redhat', 'vmware']),
     )
@@ -98,17 +98,17 @@ def main():
 
     # Compile the full domain for URL building
     if domain_type == 'fc':
-        aep_domain = 'uni/fc-{}'.format(domain)
-    elif domain_type == 'l2ext':
-        aep_domain = 'uni/l2dom-{}'.format(domain)
-    elif domain_type == 'l3ext':
-        aep_domain = 'uni/l3dom-{}'.format(domain)
+        domain_mo = 'uni/fc-{}'.format(domain)
+    elif domain_type == 'l2dom':
+        domain_mo = 'uni/l2dom-{}'.format(domain)
+    elif domain_type == 'l3dom':
+        domain_mo = 'uni/l3dom-{}'.format(domain)
     elif domain_type == 'phys':
-        aep_domain = 'uni/phys-{}'.format(domain)
+        domain_mo = 'uni/phys-{}'.format(domain)
     elif domain_type == 'vmm':
-        aep_domain = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        domain_mo = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     else:
-        aep_domain = None
+        aci_domain = None
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -120,9 +120,9 @@ def main():
         ),
         subclass_1=dict(
             aci_class='infraRsDomP',
-            aci_rn='rsdomP-[{}]'.format(aep_domain),
-            filter_target='eq(infraRsDomP.tDn, "{}")'.format(aep_domain),
-            module_object=aep_domain,
+            aci_rn='rsdomP-[{}]'.format(domain_mo),
+            filter_target='eq(infraRsDomP.tDn, "{}")'.format(domain_mo),
+            module_object=domain_mo,
         ),
     )
 
@@ -132,7 +132,7 @@ def main():
         # Filter out module params with null values
         aci.payload(
             aci_class='infraRsDomP',
-            class_config=dict(tDn=aep_domain),
+            class_config=dict(tDn=domain_mo),
         )
 
         # Generate config diff which will be used as POST request body
