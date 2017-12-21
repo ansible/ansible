@@ -125,7 +125,7 @@ class CallbackBase(AnsiblePlugin):
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
-        if C.COMMAND_WARNINGS:
+        if C.ACTION_WARNINGS:
             if 'warnings' in res and res['warnings']:
                 for warning in res['warnings']:
                     self._display.warning(warning)

@@ -36,7 +36,6 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.connection import Connection
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.unsafe_proxy import wrap_var
@@ -612,6 +611,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
+
+        # let command know it should avoid specific warnings
+        module_args['_ansible_command_warnings'] = C.COMMAND_WARNINGS
 
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
