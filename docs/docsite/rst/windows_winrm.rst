@@ -17,7 +17,7 @@ Ansible uses the `pywinrm <https://github.com/diyan/pywinrm>`_ package to
 communicate with Windows servers over WinRM. It is not installed by default
 with the Ansible package, but can be installed by running the following::
 
-   pip install "pywinrm>=0.2.2"
+   pip install "pywinrm>=0.3.0"
 
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x,
     where x matches the python minor version Ansible is running under.
@@ -279,7 +279,7 @@ There are some extra host variables that can be set::
 
     ansible_winrm_kinit_mode: managed/manual (manual means Ansible will not obtain a ticket)
     ansible_winrm_kinit_cmd: the kinit binary to use to obtain a Kerberos ticket (default to kinit)
-    ansible_winrm_keytab: the path to the keytab file
+    ansible_winrm_service: overrides the SPN prefix that is used, the default is ``HTTP`` and should rarely ever need changing
     ansible_winrm_kerberos_delegation: allows the credentials to traverse multiple hops
     ansible_winrm_kerberos_hostname_override: the hostname to be used for the kerberos exchange
 
@@ -639,6 +639,15 @@ for additional configuration of WinRM connections:
   message encryption. ``always`` means message encryption will always be used
   and ``never`` means message encryption will never be used
 
+* ``ansible_winrm_ca_trust_path``: Used to specify a different cacert container
+  than the one used in the ``certifi`` module. See the HTTPS Certificate
+  Validation section for more details.
+
+* ``ansible_winrm_send_cbt``: When using ``ntlm`` or ``kerberos`` over HTTPS,
+  the authentication library will try to send channel binding tokens to
+  mitigate against man in the middle attacks. This flag controls whether these
+  bindings will be sent or not (default: ``True``).
+
 * ``ansible_winrm_*``: Any additional keyword arguments supported by
   ``winrm.Protocol`` may be provided in place of ``*``
 
@@ -678,6 +687,34 @@ would an IPv4 address or hostname::
 .. Note:: The ipaddress library is only included by default in Python 3.x. To
     use IPv6 addresses in Python 2.6 and 2.7, make sure to run
     ``pip install ipaddress`` which installs a backported package.
+
+HTTPS Certificate Validation
+````````````````````````````
+As part of the HTTPS protocol, the certificate is validated to ensure the host
+matches the subject and the client trusts the issuer of the server certificate.
+When using a self-signed certificate or setting
+``ansible_winrm_server_cert_validation: ignore`` these security mechanisms are
+bypassed. While self signed certificates will always need the ``ignore`` flag,
+certificates that have been issued from a certificate authority can still be
+validated.
+
+One of the more common ways of setting up a HTTPS listener in a domain
+environment is to use Active Directory Certificate Service (AD CS). AD CS is
+used by Active Directory to sign certificate requests that are sent to it and
+then issue a certificate from the csr. The issuer certificate of the AD CS
+instance can then be exported as a PEM encoded certificate. This file can then
+be copied locally to the Ansible controller.
+
+This file can either contain the single issuer certificate or multiple
+certificates. To then use this file as part of the valiation process, set
+``ansible_winrm_ca_trust_path`` to the path of the. If this value is not set
+then the certificate chain which is located in the ``cacert.pem`` installed by
+the `certifi <https://github.com/certifi/python-certifi>`_ package is used.
+
+.. Note:: Each HTTP call is done by the Python requests library which does not
+    use the systems built in certificate store as a trust authority.
+    Certificate validation will fail if the server's certificate issuer is
+    only added to the system's truststore.
 
 Limitations
 ```````````
