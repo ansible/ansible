@@ -87,7 +87,7 @@
 
   - assert: *false
 
-  when: not (platform | match('N35')) and not titanium
+  when: not ( platform is match('N35')) and not titanium
 
   rescue:
 
