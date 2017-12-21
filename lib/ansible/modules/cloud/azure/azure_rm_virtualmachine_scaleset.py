@@ -54,17 +54,17 @@ options:
         required: true
     capacity:
         description:
-            - Capacity of VMSS
+            - Capacity of VMSS.
         required: true
     tier:
         description:
-            - SKU Tier
+            - SKU Tier.
         choices:
             - Basic
             - Standard
     upgrade_policy:
         description:
-            - Upgrade policy
+            - Upgrade policy.
         choices:
             - Manual
             - Automatic
@@ -121,7 +121,7 @@ options:
             - Linux
     managed_disk_type:
         description:
-            - Managed disk type
+            - Managed disk type.
         choices:
             - Standard_LRS
             - Premium_LRS
@@ -134,16 +134,16 @@ options:
         suboptions:
             lun:
                 description:
-                    - The logical unit number for data disk
+                    - The logical unit number for data disk.
                 default: 0
                 version_added: "2.4"
             disk_size_gb:
                 description:
-                    - The initial disk size in GB for blank data disks
+                    - The initial disk size in GB for blank data disks.
                 version_added: "2.4"
             managed_disk_type:
                 description:
-                    - Managed data disk type
+                    - Managed data disk type.
                 choices:
                     - Standard_LRS
                     - Premium_LRS
@@ -158,19 +158,23 @@ options:
                 version_added: "2.4"
     virtual_network_name:
         description:
-            - Virtual Network name
+            - Virtual Network name.
         aliases:
             - virtual_network
     subnet_name:
         description:
-            - Subnet name
+            - Subnet name.
         aliases:
             - subnet
+    load_balancer:
+        description:
+            - Load balancer name.
+        version_added: "2.5"
     remove_on_absent:
         description:
-            - When removing a VM using state 'absent', also remove associated resources
-            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
-            - Any other input will be ignored
+            - When removing a VM using state 'absent', also remove associated resources.
+            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']."
+            - Any other input will be ignored.
         default: ['all']
 
 extends_documentation_fragment:
@@ -334,6 +338,7 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import parse_resource_id
     from azure.mgmt.compute.models import VirtualMachineScaleSet, \
         VirtualMachineScaleSetStorageProfile, \
         VirtualMachineScaleSetOSProfile, \
@@ -347,7 +352,7 @@ try:
         VirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings, \
         VirtualMachineScaleSetPublicIPAddressConfiguration, Sku, \
         UpgradePolicy, VirtualMachineScaleSetNetworkConfiguration, \
-        ApiEntityReference, ImageReference
+        ApiEntityReference, ImageReference, SubResource
 
     from azure.mgmt.network.models import PublicIPAddress, \
         NetworkSecurityGroup, NetworkInterface, \
@@ -390,6 +395,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             data_disks=dict(type='list'),
             subnet_name=dict(type='str', aliases=['subnet']),
+            load_balancer=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
         )
@@ -416,6 +422,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.virtual_network_name = None
         self.tags = None
         self.differences = None
+        self.load_balancer = None
 
         self.results = dict(
             changed=False,
@@ -568,12 +575,24 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
 
-                    if self.subnet_name:
-                        subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
-
                     if not self.virtual_network_name:
                         default_vnet = self.create_default_vnet()
                         virtual_network = default_vnet.id
+                        self.virtual_network_name = default_vnet.name
+
+                    if self.subnet_name:
+                        subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
+
+                    load_balancer_backend_address_pools = None
+                    load_balancer_inbound_nat_pools = None
+                    if self.load_balancer:
+                        load_balancer = self.get_load_balancer(self.load_balancer)
+                        load_balancer_backend_address_pools = ([SubResource(resource.id)
+                                                                for resource in load_balancer.backend_address_pools]
+                                                               if load_balancer.backend_address_pools else None)
+                        load_balancer_inbound_nat_pools = ([SubResource(resource.id)
+                                                            for resource in load_balancer.inbound_nat_pools]
+                                                           if load_balancer.inbound_nat_pools else None)
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
@@ -617,7 +636,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 name='default',
                                                 subnet=ApiEntityReference(
                                                     id=subnet.id
-                                                )
+                                                ),
+                                                primary=True,
+                                                load_balancer_backend_address_pools=load_balancer_backend_address_pools,
+                                                load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools
                                             )
                                         ]
                                     )
@@ -712,26 +734,33 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         try:
             vmss = self.compute_client.virtual_machine_scale_sets.get(self.resource_group, self.name)
             return vmss
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error getting virtual machine scale set {0} - {1}".format(self.name, str(exc)))
 
     def get_virtual_network(self, name):
         try:
             vnet = self.network_client.virtual_networks.get(self.resource_group, name)
             return vnet
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error fetching virtual network {0} - {1}".format(name, str(exc)))
 
     def get_subnet(self, vnet_name, subnet_name):
         self.log("Fetching subnet {0} in virtual network {1}".format(subnet_name, vnet_name))
         try:
             subnet = self.network_client.subnets.get(self.resource_group, vnet_name, subnet_name)
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(
                 subnet_name,
                 vnet_name,
                 str(exc)))
         return subnet
+
+    def get_load_balancer(self, id):
+        id_dict = parse_resource_id(id)
+        try:
+            return self.network_client.load_balancers.get(id_dict.get('resource_group', self.resource_group), id_dict.get('name'))
+        except CloudError as exc:
+            self.fail("Error fetching load balancer {0} - {1}".format(id, str(exc)))
 
     def serialize_vmss(self, vmss):
         '''
@@ -757,7 +786,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             poller = self.compute_client.virtual_machine_scale_sets.delete(self.resource_group, self.name)
             # wait for the poller to finish
             self.get_poller_result(poller)
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error deleting virtual machine scale set {0} - {1}".format(self.name, str(exc)))
 
         return True
@@ -768,7 +797,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                                        self.image['publisher'],
                                                                        self.image['offer'],
                                                                        self.image['sku'])
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error fetching image {0} {1} {2} - {3}".format(self.image['publisher'],
                                                                       self.image['offer'],
                                                                       self.image['sku'],
@@ -805,7 +834,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         try:
             poller = self.compute_client.virtual_machine_scale_sets.create_or_update(self.resource_group, self.name, params)
             self.get_poller_result(poller)
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error creating or updating virtual machine {0} - {1}".format(self.name, str(exc)))
 
     def vm_size_is_valid(self):
@@ -816,7 +845,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         '''
         try:
             sizes = self.compute_client.virtual_machine_sizes.list(self.location)
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error retrieving available machine sizes - {0}".format(str(exc)))
         for size in sizes:
             if size.name == self.vm_size:
