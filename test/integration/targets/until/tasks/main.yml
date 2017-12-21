@@ -29,4 +29,16 @@
 - assert:
     that: runcount.stdout | int == 6 # initial + 5 retries
 
-- file: path="{{ until_tempfile_path }}" state=absent
+- file:
+    path: "{{ until_tempfile_path }}"
+    state: absent
+
+# This task shouldn't fail, previously .attempts was not available to changed_when/failed_when
+# and would cause the conditional to fail due to ``'dict object' has no attribute 'attempts'``
+- name: Test access to attempts in changed_when/failed_when
+  shell: 'true'
+  register: changed_when_attempts
+  until: 1 == 0
+  retries: 5
+  delay: 0.5
+  failed_when: changed_when_attempts.attempts > 6
