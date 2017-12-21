@@ -13,21 +13,7 @@
     hostname: "{{ ucs_hostname }}"
     username: "{{ ucs_username }}"
     password: "{{ ucs_password }}"
-    wwn_list:
-      - name: WWNN-Pool
-        purpose: node
-        first_addr: 20:00:00:25:B5:48:00:00
-        last_addr: 20:00:00:25:B5:48:00:0F
-      - name: WWPN-Pool-A
-        purpose: port
-        order: sequential
-        first_addr: 20:00:00:25:B5:48:0A:00
-        last_addr: 20:00:00:25:B5:48:0A:0F
-      - name: WWPN-Pool-B
-        purpose: port
-        order: sequential
-        first_addr: 20:00:00:25:B5:48:0B:00
-        last_addr: 20:00:00:25:B5:48:0B:0F
+    name: WWPN-Pool-A
     state: absent
 
 
@@ -37,8 +23,11 @@
     hostname: "{{ ucs_hostname }}"
     username: "{{ ucs_username }}"
     password: "{{ ucs_password }}"
-    <<: *wwn_pool_absent
-    state: present
+    name: WWPN-Pool-A
+    purpose: port
+    order: sequential
+    first_addr: 20:00:00:25:B5:48:0A:00
+    last_addr: 20:00:00:25:B5:48:0A:0F
   check_mode: yes
   register: cm_wwn_pool_present
 
@@ -74,22 +63,7 @@
 - name: WWNN/WWPN Pools description change (check_mode)
   ucs_wwn_pool: &wwn_pool_change
     <<: *wwn_pool_present
-    wwn_list:
-      - name: WWNN-Pool
-        descr: Testing Ansible
-        purpose: node
-        first_addr: 20:00:00:25:B5:48:00:00
-        last_addr: 20:00:00:25:B5:48:00:0F
-      - name: WWPN-Pool-A
-        purpose: port
-        order: sequential
-        first_addr: 20:00:00:25:B5:48:0A:00
-        last_addr: 20:00:00:25:B5:48:0A:0F
-      - name: WWPN-Pool-B
-        purpose: port
-        order: sequential
-        first_addr: 20:00:00:25:B5:48:0B:00
-        last_addr: 20:00:00:25:B5:48:0B:0F
+    descr: Testing Ansible
   check_mode: yes
   register: cm_wwn_pool_descr_change
 
@@ -123,29 +97,27 @@
 
 # Teardown (clean environment)
 - name: WWNN/WWPN Pools absent (check_mode)
-  ucs_wwn_pool: &wwn_pool_change_absent
-    <<: *wwn_pool_change
-    state: absent
+  ucs_wwn_pool: *wwn_pool_absent
   check_mode: yes
   register: cm_wwn_pool_absent
 
 
 # Absent (normal mode)
 - name: WWNN/WWPN Pools absent (normal mode)
-  ucs_wwn_pool: *wwn_pool_change_absent
+  ucs_wwn_pool: *wwn_pool_absent
   register: nm_wwn_pool_absent
 
 
 # Test absent again (idempotent)
 - name: WWNN/WWPN Pools absent again (check_mode)
-  ucs_wwn_pool: *wwn_pool_change_absent
+  ucs_wwn_pool: *wwn_pool_absent
   check_mode: yes
   register: cm_wwn_pool_absent_again
 
 
 # Absent again (normal mode)
 - name: WWNN/WWPN Pools absent again (normal mode)
-  ucs_wwn_pool: *wwn_pool_change_absent
+  ucs_wwn_pool: *wwn_pool_absent
   register: nm_wwn_pool_absent_again
 
 
