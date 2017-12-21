@@ -58,14 +58,15 @@ options:
         required: false
     username:
         description:
-            - user to auth wirh influxdb
+            - user to auth with influxdb
         default: root
         required: false
     password:
         description:
-            - user to auth wirh influxdb
+            - password to auth username with influxdb 
         default: root
         required: false
+    extends_documentation_fragment: influxdb
 
 '''
 
@@ -99,39 +100,10 @@ RETURN = '''
 #only defaults
 '''
 
-try:
-    import ansible.module_utils.urls
-    from influxdb import InfluxDBClient
-    from influxdb import exceptions
 
-    HAS_INFLUXDB = True
-except ImportError:
-    HAS_INFLUXDB = False
-
+import ansible.module_utils.urls
 from ansible.module_utils.basic import AnsibleModule
-
-
-def influxdb_argument_spec():
-    return dict(
-        hostname=dict(default='localhost', type='str'),
-        port=dict(default=8086, type='int'),
-        username=dict(default='root', type='str'),
-        password=dict(default='root', type='str', no_log=True),
-    )
-
-
-def connect_to_influxdb(module):
-    hostname = module.params['hostname']
-    port = module.params['port']
-    username = module.params['username']
-    password = module.params['password']
-    client = InfluxDBClient(
-        host=hostname,
-        port=port,
-        username=username,
-        password=password
-    )
-    return client
+from ansible.module_utils.influxdb import InfluxDb
 
 
 def find_user(module, client, user_name):
@@ -169,26 +141,31 @@ def drop_user(module, client, user_name):
 
 
 def main():
-    argument_spec = influxdb_argument_spec()
+    argument_spec = InfluxDb.influxdb_argument_spec()
     argument_spec.update(
         state=dict(default='present', type='str', choices=['present', 'absent']),
         user_name=dict(required=True, type='str'),
         user_password=dict(required=False, type='str', no_log=True),
-        admin=dict(default='False', type='bool')
+        admin=dict(default='False', type='bool'),
+        ### This is hack - need to change
+        # https://github.com/ansible/ansible/blob/60f3649ebd72fe4dcd424e251afbc478351c0610/lib/ansible/module_utils/influxdb.py#L31
+        # and https://github.com/ansible/ansible/blob/60f3649ebd72fe4dcd424e251afbc478351c0610/lib/ansible/module_utils/influxdb.py#L62
+        #as in https://github.com/influxdata/influxdb-python/blob/35732cd7dfe5a585564999c9f881bd88e7c1531d/influxdb/client.py#L69
+        #database set by default to None
+        database_name=dict(default='None', type='str')
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    if not HAS_INFLUXDB:
-        module.fail_json(msg='influxdb python package is required for this module')
 
     state = module.params['state']
     user_name = module.params['user_name']
     user_password = module.params['user_password']
     admin = module.params['admin']
-    client = connect_to_influxdb(module)
+    influxdb = InfluxDb(module)
+    client = influxdb.connect_to_influxdb()
     user = find_user(module, client, user_name)
 
     if state == 'present':
