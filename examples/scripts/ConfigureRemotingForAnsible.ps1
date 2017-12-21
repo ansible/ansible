@@ -74,7 +74,7 @@ Function Write-VerboseLog
 Function Write-HostLog
 {
     $Message = $args[0]
-    Write-Host $Message
+    Write-Output $Message
     Write-Log $Message
 }
 
@@ -196,8 +196,8 @@ $adminRole=[System.Security.Principal.WindowsBuiltInRole]::Administrator
 # Check to see if we are currently running "as Administrator"
 if (-Not $myWindowsPrincipal.IsInRole($adminRole))
 {
-    Write-Host "ERROR: You need elevated Administrator privileges in order to run this script."
-    Write-Host "       Start Windows PowerShell by using the Run as Administrator option."
+    Write-Output "ERROR: You need elevated Administrator privileges in order to run this script."
+    Write-Output "       Start Windows PowerShell by using the Run as Administrator option."
     Exit 2
 }
 
