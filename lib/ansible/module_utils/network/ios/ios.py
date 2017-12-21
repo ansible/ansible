@@ -63,6 +63,7 @@ ios_argument_spec.update(ios_top_spec)
 def get_provider_argspec():
     return ios_provider_spec
 
+
 def get_connection(module):
     if hasattr(module, '_ios_connection'):
         return module._ios_connection
@@ -76,6 +77,7 @@ def get_connection(module):
 
     return module._ios_connection
 
+
 def get_capabilities(module):
     if hasattr(module, '_ios_capabilities'):
         return module._ios_capabilities
@@ -83,6 +85,7 @@ def get_capabilities(module):
     capabilities = Connection(module._socket_path).get_capabilities()
     module._ios_capabilities = json.loads(capabilities)
     return module._ios_capabilities
+
 
 def check_args(module, warnings):
     pass
