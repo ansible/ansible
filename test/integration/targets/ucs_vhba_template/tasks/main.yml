@@ -13,9 +13,7 @@
     hostname: "{{ ucs_hostname }}"
     username: "{{ ucs_username }}"
     password: "{{ ucs_password }}"
-    vhba_template_list:
-      - name: vHBA-A
-      - name: vHBA-B
+    name: vHBA-A
     state: absent
 
 
@@ -25,15 +23,10 @@
     hostname: "{{ ucs_hostname }}"
     username: "{{ ucs_username }}"
     password: "{{ ucs_password }}"
-    vhba_template_list:
-      - name: vHBA-A
-        fabric: A
-        vsan: VSAN-A
-        wwpn_pool: WWPN-Pool-A
-      - name: vHBA-B
-        fabric: B
-        vsan: VSAN-B
-        wwpn_pool: WWPN-Pool-B
+    name: vHBA-A
+    fabric: A
+    vsan: VSAN-A
+    wwpn_pool: WWPN-Pool-A
   check_mode: yes
   register: cm_vhba_templates_present
 
@@ -69,16 +62,7 @@
 - name: vHBA templates description change (check_mode)
   ucs_vhba_template: &vhba_templates_change
     <<: *vhba_templates_present
-    vhba_template_list:
-      - name: vHBA-A
-        descr: Testing Ansible
-        fabric: A
-        vsan: VSAN-A
-        wwpn_pool: WWPN-Pool-A
-      - name: vHBA-B
-        fabric: B
-        vsan: VSAN-B
-        wwpn_pool: WWPN-Pool-B
+    descr: Testing Ansible
   check_mode: yes
   register: cm_vhba_templates_descr_change
 
@@ -112,29 +96,27 @@
 
 # Teardown (clean environment)
 - name: vHBA templates absent (check_mode)
-  ucs_vhba_template: &vhba_templates_change_absent
-    <<: *vhba_templates_change
-    state: absent
+  ucs_vhba_template: *vhba_templates_absent
   check_mode: yes
   register: cm_vhba_templates_absent
 
 
 # Absent (normal mode)
 - name: vHBA templates absent (normal mode)
-  ucs_vhba_template: *vhba_templates_change_absent
+  ucs_vhba_template: *vhba_templates_absent
   register: nm_vhba_templates_absent
 
 
 # Test absent again (idempotent)
 - name: vHBA templates absent again (check_mode)
-  ucs_vhba_template: *vhba_templates_change_absent
+  ucs_vhba_template: *vhba_templates_absent
   check_mode: yes
   register: cm_vhba_templates_absent_again
 
 
 # Absent again (normal mode)
 - name: vHBA templates absent again (normal mode)
-  ucs_vhba_template: *vhba_templates_change_absent
+  ucs_vhba_template: *vhba_templates_absent
   register: nm_vhba_templates_absent_again
 
 

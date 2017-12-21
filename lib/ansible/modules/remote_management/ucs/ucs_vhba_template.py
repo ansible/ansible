@@ -25,18 +25,14 @@ options:
     - If C(absent), will verify vHBA templates are absent and will delete if needed.
     choices: [present, absent]
     default: present
-  vhba_template_list:
-    description:
-    - List of vHBA templates.  Allows multiple resource updates with a single UCSM connection.
-    - Either vhba_template_list or name is required (user can specify either a list of single resource)
-    - See descriptions for name and other options for information on specifying each list element
   name:
     description:
     - Name of the vHBA template
-    - If specifying a single vHBA template, name is required
-  descr:
+    required: yes
+  description:
     description:
     - Description for the vHBA template
+    aliases: [ descr ]
   fabric:
     description:
     - Fabric ID
@@ -87,30 +83,23 @@ version_added: '2.5'
 '''
 
 EXAMPLES = r'''
-- name: Configure multiple vHBA templates
+- name: Configure vHBA template
   ucs_vhba_template:
     hostname: 172.16.143.150
     username: admin
     password: password
-    vhba_template_list:
-    - name: vHBA-A
-      fabric: A
-      vsan: VSAN-A
-      wwpn_pool: WWPN-Pool-A
-    - name: vHBA-B
-      fabric: B
-      vsan: VSAN-B
-      wwpn_pool: WWPN-Pool-B
-
-- name: Configure single vHBA template
-  ucs_vhba_template:
-    hostname: 172.16.143.150
-    username: admin
-    password: password
-    name: vHBA-A1
+    name: vHBA-A
     fabric: A
     vsan: VSAN-A
     wwpn_pool: WWPN-Pool-A
+
+- name: Remote vHBA template
+  ucs_vhba_template:
+    hostname: 172.16.143.150
+    username: admin
+    password: password
+    name: vHBA-A
+    state: absent
 '''
 
 RETURN = r'''
@@ -123,28 +112,37 @@ from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_s
 
 def main():
     argument_spec = ucs_argument_spec
-    argument_spec.update(vhba_template_list=dict(type='list'),
-                         org_dn=dict(type='str', default='org-root'),
-                         name=dict(type='str'),
-                         descr=dict(type='str'),
-                         fabric=dict(type='str', default='A', choices=['A', 'B']),
-                         redundancy_type=dict(type='str', default='none', choices=['none', 'primary', 'secondary']),
-                         vsan=dict(type='str', default='default'),
-                         template_type=dict(type='str', default='initial-template', choices=['initial-template', 'updating-template']),
-                         max_data=dict(type='str', default='2048'),
-                         wwpn_pool=dict(type='str', default='default'),
-                         qos_policy=dict(type='str'),
-                         pin_group=dict(type='str'),
-                         stats_policy=dict(type='str', default='default'),
-                         state=dict(type='str', default='present', choices=['present', 'absent']))
-    module = AnsibleModule(argument_spec,
-                           supports_check_mode=True,
-                           required_one_of=[
-                               ['vhba_template_list', 'name']
-                           ],
-                           mutually_exclusive=[
-                               ['vhba_template_list', 'name']
-                           ])
+    argument_spec.update(
+        org_dn=dict(type='str', default='org-root'),
+        name=dict(type='str'),
+        descr=dict(type='str'),
+        fabric=dict(type='str', default='A', choices=['A', 'B']),
+        redundancy_type=dict(type='str', default='none', choices=['none', 'primary', 'secondary']),
+        vsan=dict(type='str', default='default'),
+        template_type=dict(type='str', default='initial-template', choices=['initial-template', 'updating-template']),
+        max_data=dict(type='str', default='2048'),
+        wwpn_pool=dict(type='str', default='default'),
+        qos_policy=dict(type='str'),
+        pin_group=dict(type='str'),
+        stats_policy=dict(type='str', default='default'),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        vhba_template_list=dict(type='list'),
+    )
+
+    # Note that use of vhba_template_list is an experimental feature which allows multiple resource updates with a single UCSM connection.
+    # Support for vhba_template_list may change or be removed once persistent UCS connections are supported.
+    # Either vhba_template_list or name is required (user can specify either a list of single resource).
+
+    module = AnsibleModule(
+        argument_spec,
+        supports_check_mode=True,
+        required_one_of=[
+            ['vhba_template_list', 'name']
+        ],
+        mutually_exclusive=[
+            ['vhba_template_list', 'name']
+        ],
+    )
     ucs = UCSModule(module)
 
     err = False
@@ -154,6 +152,9 @@ def main():
 
     changed = False
     try:
+        # Only documented use is a single resource, but to also support experimental
+        # feature allowing multiple updates all params are converted to a vhba_template_list below.
+
         if module.params['vhba_template_list']:
             # directly use the list (single resource and list are mutually exclusive
             vhba_template_list = module.params['vhba_template_list']
@@ -161,7 +162,8 @@ def main():
             # single resource specified, create list from the current params
             vhba_template_list = [module.params]
         for vhba_template in vhba_template_list:
-            exists = False
+            mo_exists = False
+            props_match = False
             # set default params.  Done here to set values for lists which can't be done in the argument_spec
             if not vhba_template.get('descr'):
                 vhba_template['descr'] = ''
@@ -188,6 +190,7 @@ def main():
 
             mo = ucs.login_handle.query_dn(dn)
             if mo:
+                mo_exists = True
                 # check top-level mo props
                 kwargs = {}
                 kwargs['descr'] = vhba_template['descr']
@@ -207,31 +210,37 @@ def main():
                         kwargs = {}
                         kwargs['name'] = vhba_template['vsan']
                         if (mo_1.check_prop_match(**kwargs)):
-                            exists = True
+                            props_match = True
 
             if module.params['state'] == 'absent':
-                if exists:
+                # mo must exist but all properties do not have to match
+                if mo_exists:
                     if not module.check_mode:
                         ucs.login_handle.remove_mo(mo)
                         ucs.login_handle.commit()
                     changed = True
             else:
-                if not exists:
+                if not props_match:
                     if not module.check_mode:
                         # create if mo does not already exist
-                        mo = VnicSanConnTempl(parent_mo_or_dn=module.params['org_dn'],
-                                              name=vhba_template['name'],
-                                              descr=vhba_template['descr'],
-                                              switch_id=vhba_template['fabric'],
-                                              redundancy_pair_type=vhba_template['redundancy_type'],
-                                              templ_type=vhba_template['template_type'],
-                                              max_data_field_size=vhba_template['max_data'],
-                                              ident_pool_name=vhba_template['wwpn_pool'],
-                                              qos_policy_name=vhba_template['qos_policy'],
-                                              pin_to_group_name=vhba_template['pin_group'],
-                                              stats_policy_name=vhba_template['stats_policy'])
+                        mo = VnicSanConnTempl(
+                            parent_mo_or_dn=module.params['org_dn'],
+                            name=vhba_template['name'],
+                            descr=vhba_template['descr'],
+                            switch_id=vhba_template['fabric'],
+                            redundancy_pair_type=vhba_template['redundancy_type'],
+                            templ_type=vhba_template['template_type'],
+                            max_data_field_size=vhba_template['max_data'],
+                            ident_pool_name=vhba_template['wwpn_pool'],
+                            qos_policy_name=vhba_template['qos_policy'],
+                            pin_to_group_name=vhba_template['pin_group'],
+                            stats_policy_name=vhba_template['stats_policy'],
+                        )
 
-                        mo_1 = VnicFcIf(parent_mo_or_dn=mo, name=vhba_template['vsan'])
+                        mo_1 = VnicFcIf(
+                            parent_mo_or_dn=mo,
+                            name=vhba_template['vsan'],
+                        )
 
                         ucs.login_handle.add_mo(mo, True)
                         ucs.login_handle.commit()
