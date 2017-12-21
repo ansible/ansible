@@ -8,8 +8,8 @@
 - name: Verify request floating IP
   assert:
     that:
-      - floating_ip | success
-      - floating_ip | changed
+      - floating_ip is successful
+      - floating_ip is changed
       - (item.ip_version == 4 and floating_ip.ip | ipv4) or (item.ip_version == 6 and floating_ip.ip | ipv6)
       - floating_ip.server == test01.uuid
 
@@ -21,8 +21,8 @@
 - name: Verify floating IP indempotence
   assert:
     that:
-      - floating_ip_indempotence | success
-      - not floating_ip_indempotence | changed
+      - floating_ip_indempotence is successful
+      - floating_ip_indempotence is not changed
       - floating_ip_indempotence.server == test01.uuid
 
 - name: Check network parameter alias
@@ -33,7 +33,7 @@
 - name: Verify network parameter alias
   assert:
     that:
-      - floating_ip_network | success
+      - floating_ip_network is successful
 
 - name: Move floating IP to second server
   cloudscale_floating_ip:
@@ -43,8 +43,8 @@
 - name: Verify move floating IPv4 to second server
   assert:
     that:
-      - move_ip | success
-      - move_ip | changed
+      - move_ip is successful
+      - move_ip is changed
       - move_ip.server == test02.uuid
 
 - name: Fail if server is missing on update
@@ -55,7 +55,7 @@
 - name: Verify fail if server is missing on update
   assert:
     that:
-      - update_failed | failed
+      - update_failed is failed
       - "'Missing required parameter' in update_failed.msg"
 
 - name: Release floating IP
@@ -66,8 +66,8 @@
 - name: Verify release floating IPs
   assert:
     that:
-      - release_ip | success
-      - release_ip | changed
+      - release_ip is successful
+      - release_ip is changed
       - release_ip.state == 'absent'
 
 - name: Release floating IP indempotence
@@ -78,8 +78,8 @@
 - name: Verify release floating IPs indempotence
   assert:
     that:
-      - release_ip | success
-      - not release_ip | changed
+      - release_ip is successful
+      - release_ip is not changed
       - release_ip.state == 'absent'
 
 - name: Fail if server is missing on request
@@ -90,5 +90,5 @@
 - name: Verify fail if server is missing on request
   assert:
     that:
-      - request_failed | failed
+      - request_failed is failed
       - "'Missing required parameter' in request_failed.msg"

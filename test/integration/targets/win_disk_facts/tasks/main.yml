@@ -6,7 +6,7 @@
   ignore_errors: true
 
 - name: Only run tests when Windows is capable
-  when: (win_feature_has_storage_module|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 3)
+  when: ( win_feature_has_storage_module is successful) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 3)
   block:
 
   - name: Test in normal mode
