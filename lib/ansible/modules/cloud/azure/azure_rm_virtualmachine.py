@@ -644,7 +644,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
-            custom_data = dict(type='str'),
+            custom_data=dict(type='str'),
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
@@ -1128,7 +1128,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if vm_dict['properties']['osProfile'].get('customData'):
                         custom_data = vm_dict['properties']['osProfile']['customData']
                         vm_resource.os_profile.custom_data = str(base64.b64encode(custom_data.encode()).decode('utf-8'))
-
 
                     # Add admin password, if one provided
                     if vm_dict['properties']['osProfile'].get('adminPassword'):
@@ -1695,6 +1694,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
 def main():
     AzureRMVirtualMachine()
+
 
 if __name__ == '__main__':
     main()
