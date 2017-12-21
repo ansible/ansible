@@ -690,7 +690,7 @@ would an IPv4 address or hostname::
 
 HTTPS Certificate Validation
 ````````````````````````````
-As part of the HTTPS protocol, the certificate is validated to ensure the host
+As part of the TLS protocol, the certificate is validated to ensure the host
 matches the subject and the client trusts the issuer of the server certificate.
 When using a self-signed certificate or setting
 ``ansible_winrm_server_cert_validation: ignore`` these security mechanisms are
@@ -700,19 +700,25 @@ validated.
 
 One of the more common ways of setting up a HTTPS listener in a domain
 environment is to use Active Directory Certificate Service (AD CS). AD CS is
-used by Active Directory to sign certificate requests that are sent to it and
-then issue a certificate from the csr. The issuer certificate of the AD CS
-instance can then be exported as a PEM encoded certificate. This file can then
-be copied locally to the Ansible controller.
+used to generate signed certificates from a Certificate Signing Request (CSR).
+If the WinRM HTTPS listener is using a certificate that has been signed by
+another authority, like AD CS, then Ansible can be set up to trust that
+issuer as part of the TLS handshake.
 
-This file can either contain the single issuer certificate or multiple
-certificates. To then use this file as part of the valiation process, set
-``ansible_winrm_ca_trust_path`` to the path of the. If this value is not set
-then the certificate chain which is located in the ``cacert.pem`` installed by
-the `certifi <https://github.com/certifi/python-certifi>`_ package is used.
+To get Ansible to trust a Certificate Authority (CA) like AD CS, the issuer
+certificate of the CA can be exported as a PEM encoded certificate. This
+certificate can then be copied locally to the Ansible controller and used as a
+source of certificate validation, otherwise known as a CA chain.
+
+The CA chain can contain a single or multiple issuer certificates and each
+entry is contained on a new line. To then use the custom CA chain as part of
+the validation process, set ``ansible_winrm_ca_trust_path`` to the path of the
+file. If this variable is not set, the default CA chain is used instead which
+is located in the install path of the Python package
+`certifi <https://github.com/certifi/python-certifi>`_.
 
 .. Note:: Each HTTP call is done by the Python requests library which does not
-    use the systems built in certificate store as a trust authority.
+    use the systems built-in certificate store as a trust authority.
     Certificate validation will fail if the server's certificate issuer is
     only added to the system's truststore.
 
