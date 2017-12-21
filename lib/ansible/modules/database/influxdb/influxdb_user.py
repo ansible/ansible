@@ -66,8 +66,6 @@ options:
             - password to auth username with influxdb 
         default: root
         required: false
-    extends_documentation_fragment: influxdb
-
 '''
 
 EXAMPLES = '''
