@@ -116,21 +116,6 @@ class ModuleArgsParser:
         else:
             return (tokens[0], "")
 
-    def _handle_shell_weirdness(self, action, args):
-        '''
-        given an action name and an args dictionary, return the
-        proper action name and args dictionary.  This mostly is due
-        to shell/command being treated special and nothing else
-        '''
-
-        # the shell module really is the command module with an additional
-        # parameter
-        if action == 'shell':
-            action = 'command'
-            args['_uses_shell'] = True
-
-        return (action, args)
-
     def _normalize_parameters(self, thing, action=None, additional_args=None):
         '''
         arguments can be fuzzy.  Deal with all the forms.
@@ -318,8 +303,5 @@ class ModuleArgsParser:
                 raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
                                                                                                                                   ", ".join(RAW_PARAM_MODULES)),
                                          obj=self._task_ds)
-
-        # shell modules require special handling
-        (action, args) = self._handle_shell_weirdness(action, args)
 
         return (action, args, delegate_to)
