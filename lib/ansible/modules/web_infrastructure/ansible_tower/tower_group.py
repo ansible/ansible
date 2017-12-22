@@ -92,7 +92,7 @@ options:
         - Refresh inventory data from its source each time a job is run.
       required: False
       default: False
-    update_cache_timeout
+    update_cache_timeout:
       description:
         - Time in seconds to consider an inventory sync to be current when update_on_launch is True.
       required: False
