@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.ec2 import HAS_BOTO3
@@ -58,6 +59,7 @@ EXAMPLES = '''
   #=> ['MyGroupA']
 '''
 
+
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
@@ -83,20 +85,24 @@ class LookupModule(LookupBase):
 
         for group_list in terms:
             if boolean(kwargs.get('id_to_name')):
-                #sg-... => MyName
+                # sg-... => MyName
                 names = get_ec2_names_from_security_group_ids(group_list, ec2, vpc_id=kwargs.get('vpc_id'))
                 results.append(names)
             else:
-                #MyName => sg-...
+                # MyName => sg-...
                 ids = get_ec2_security_group_ids_from_names(group_list, ec2, vpc_id=kwargs.get('vpc_id'))
                 results.append(ids)
 
         return results
 
-    #This is not a module, so construct something that has the same interfaceish
+
+    # This is not a module, so construct something that has the same interfaceish
     class ModuleFacade(object):
+
+
         def __init__(self, kwargs):
             self.params = self.ParamMock(kwargs)
+
 
         class ParamMock(object):
             def __init__(self, incoming_dict):
@@ -105,5 +111,5 @@ class LookupModule(LookupBase):
             def get(self, key):
                 if key in self.my_dict:
                     return self.my_dict[key]
-                else:
-                    return None
+
+                return None

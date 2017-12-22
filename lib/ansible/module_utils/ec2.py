@@ -537,6 +537,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value
 
     return tags_list
 
+
 def get_sg_name(sg, boto3):
     '''Takes a security group object and returns the name (MySecurityGroup)'''
 
@@ -544,6 +545,7 @@ def get_sg_name(sg, boto3):
         return sg['GroupName']
     else:
         return sg.name
+
 
 def get_sg_id(sg, boto3):
     '''Takes a security group object and returns the id (sg-...)'''
@@ -553,13 +555,17 @@ def get_sg_id(sg, boto3):
     else:
         return sg.id
 
-def get_all_security_groups(ec2_connection, filters={}, vpc_id=None, boto3=True):
+
+def get_all_security_groups(ec2_connection, filters=None, vpc_id=None, boto3=True):
     '''
     Return a list of all security groups from a particular ec2 connection.
 
     :params filters: dict of {"filter-name": "Values"}
     :see http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-security-groups.html#options
     '''
+
+    if not filters:
+        filters = {}
 
     if vpc_id:
         if boto3:
@@ -587,14 +593,14 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
     if isinstance(sec_group_list, string_types):
         sec_group_list = [sec_group_list]
 
-    #Use boto3's filtering to get output
+    # Use boto3's filtering to get output
     if boto3 and HAS_BOTO3:
         my_filter = {
             'group-name': sec_group_list
         }
         select_groups = get_all_security_groups(ec2_connection, filters=my_filter, vpc_id=vpc_id)
 
-        #Check to see if we looked up something funky
+        # Check to see if we looked up something funky
         group_names = set(str(get_sg_name(sg, boto3)) for sg in select_groups)
         group_ids = set(str(get_sg_id(sg, boto3)) for sg in select_groups)
         unmatched = set(sec_group_list).difference(group_names)
@@ -605,13 +611,13 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
 
         return list(group_ids)
 
-    #else: Fallback to old method
+    # else: Fallback to old method
 
     sec_group_id_list = []
 
 
     # Get all security groups
-    all_sec_groups = ec2_connection.get_all_security_groups(filters=filters)
+    all_sec_groups = ec2_connection.get_all_security_groups(vpc_id=vpc_id)
     unmatched = set(sec_group_list).difference(str(get_sg_name(all_sg, boto3)) for all_sg in all_sec_groups)
     sec_group_name_list = list(set(sec_group_list) - set(unmatched))
 
@@ -627,6 +633,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
 
     return sec_group_id_list
 
+
 def get_ec2_names_from_security_group_ids(sec_group_id_list, ec2_connection, vpc_id=None, boto3=True):
 
     """
@@ -635,18 +642,18 @@ def get_ec2_names_from_security_group_ids(sec_group_id_list, ec2_connection, vpc
     """
 
     # Enclose ordinary strings in a list so that we're not querying for letters
-    if isinstance(sec_group_list, string_types):
-        sec_group_list = [sec_group_list]
+    if isinstance(sec_group_id_list, string_types):
+        sec_group_id_list = [sec_group_id_list]
 
-    #Use boto3's filtering to get output
+    # Use boto3's filtering to get output
     if boto3 and HAS_BOTO3:
 
         my_filter = {
-            'group-id': sec_group_list
+            'group-id': sec_group_id_list
         }
         select_groups = get_all_security_groups(ec2_connection, filters=my_filter, vpc_id=vpc_id)
 
-        #Check to see if we looked up something funky
+        # Check to see if we looked up something funky
         group_names = set(str(get_sg_name(sg, boto3)) for sg in select_groups)
         group_ids = set(str(get_sg_id(sg, boto3)) for sg in select_groups)
         unmatched = set(sec_group_id_list).difference(group_ids)
@@ -658,7 +665,7 @@ def get_ec2_names_from_security_group_ids(sec_group_id_list, ec2_connection, vpc
         return list(group_names)
 
     else:
-        raise AnsibleError('get_ec2_names_from_security_group_ids cannot be used without boto3')
+        raise ValueError('get_ec2_names_from_security_group_ids cannot be used without boto3')
 
 
 def _hashable_policy(policy, policy_list):
