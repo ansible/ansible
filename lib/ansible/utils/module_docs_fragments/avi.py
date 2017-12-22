@@ -51,7 +51,7 @@ options:
         version_added: "2.5"
     api_context:
         description:
-            - Avi API context that includes current session ID and CSRF Token. 
+            - Avi API context that includes current session ID and CSRF Token.
             - This allows user to perform single login and re-use the session.
         version_added: "2.5"
 notes:
