@@ -25,9 +25,23 @@ author: "Chris Houseknecht (@chouseknecht)"
 
 description:
   - Use the OpenShift Python client to perform CRUD operations on OpenShift objects.
-  - Supports authentication using either a config file, certificates, password or token.
+  - Pass the object definition from a source file or inline. See examples for reading
+    files and using Jinja templates.
+  - Access to the full range of K8s and OpenShift APIs.
+  - Authenticate using either a config file, certificates, password or token.
+  - Supports check mode, and the diff option.
 
 extends_documentation_fragment: kubernetes
+
+options:
+  description:
+    description:
+    - Use only when creating a project, otherwise ignored. Adds a description to the project
+      metadata.
+  display_name:
+    description:
+    - Use only when creating a project, otherwise ignored. Adds a display name to the project
+      metadata.
 
 requirements:
     - "python >= 2.7"
@@ -95,18 +109,6 @@ EXAMPLES = '''
           strategy:
             type: Rolling
 
-- name: Create a Deployment by reading the definition from a file
-  openshift_raw:
-    state: present
-    src: /testing/deployment.yml
-
-- name: Get the list of all Deployments
-  openshift_raw:
-    api_version: v1
-    kind: DeploymentConfigList
-    namespace: testing
-  register: deployment_list
-
 - name: Remove an existing Deployment
   openshift_raw:
     api_version: v1
@@ -117,7 +119,7 @@ EXAMPLES = '''
 
 - name: Create a Secret
   openshift_raw:
-    inline:
+    definition:
       apiVersion: v1
       kind: Secret
       metadata:
@@ -128,13 +130,30 @@ EXAMPLES = '''
         username: "{{ 'admin' | b64encode }}"
         password: "{{ 'foobard' | b64encode }}"
 
-- name: Retrieve the Secret
+- name: Retrieve a Secret
   openshift_raw:
     api: v1
     kind: Secret
     name: mysecret
     namespace: testing
   register: mysecret
+
+# Passing the object definition from a file
+
+- name: Create a Deployment by reading the definition from a local file
+  openshift_raw:
+    state: present
+    src: /testing/deployment.yml
+
+- name: Read definition file from the Ansible controller file system
+  openshift_raw:
+    state: present
+    definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
+
+- name: Read definition file from the Ansible controller file system after Jinja templating
+  openshift_raw:
+    state: present
+    definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
 '''
 
 RETURN = '''

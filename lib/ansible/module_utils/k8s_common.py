@@ -77,7 +77,8 @@ ARG_SPEC = {
     'description': {},
     'display_name': {},
     'api_version': {
-        'aliases': ['api', 'version']
+        'default': 'v1',
+        'aliases': ['api', 'version'],
     },
     'kubeconfig': {
         'type': 'path',
