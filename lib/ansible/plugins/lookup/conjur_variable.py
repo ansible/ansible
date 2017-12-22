@@ -41,6 +41,13 @@ from os import environ
 from time import time
 from urllib import quote_plus
 from urlparse import urlparse
+import yaml
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class Token:
@@ -63,7 +70,7 @@ class Token:
         response = self.http_connection.getresponse()
 
         if response.status != 200:
-            raise Exception('Failed to authenticate as \'{}\''.format(self.id))
+            raise AnsibleError('Failed to authenticate as \'{}\''.format(self.id))
 
         self.token = b64encode(response.read())
         self.refresh_time = time() + 5 * 60
@@ -89,7 +96,7 @@ class LookupModule(LookupBase):
             conjur_https.request('GET', url, headers=headers)
             response = conjur_https.getresponse()
             if response.status != 200:
-                raise Exception('Failed to retrieve variable \'{}\' with response status: {} {}'.format(variable_name,
+                raise AnsibleError('Failed to retrieve variable \'{}\' with response status: {} {}'.format(variable_name,
                                                                                                         response.status,
                                                                                                         response.reason))
 
@@ -101,30 +108,18 @@ class LookupModule(LookupBase):
         # Load Conjur configuration
         conf = self.merge_dictionaries(
             self.load_conf('/etc/conjur.conf'),
-            self.load_conf('~/.conjurrc'),
-            {
-                "account": environ.get('CONJUR_ACCOUNT'),
-                "appliance_url": environ.get("CONJUR_APPLIANCE_URL"),
-                "cert_file": environ.get('CONJUR_CERT_FILE')
-            } if (environ.get('CONJUR_ACCOUNT') is not None and environ.get('CONJUR_APPLIANCE_URL')
-                  is not None and (environ.get('CONJUR_APPLIANCE_URL').startswith('https') is not True or environ.get('CONJUR_CERT_FILE') is not None))
-            else {}
+            self.load_conf('~/.conjurrc')
         )
         if not conf:
-            raise Exception('Conjur configuration should be in environment variables or in one of the following paths: \'~/.conjurrc\', \'/etc/conjur.conf\'')
+            raise AnsibleError('Conjur configuration should be in environment variables or in one of the following paths: \'~/.conjurrc\', \'/etc/conjur.conf\'')
 
         # Load Conjur identity
         identity = self.merge_dictionaries(
             self.load_identity('/etc/conjur.identity', conf['appliance_url']),
-            self.load_identity('~/.netrc', conf['appliance_url']),
-            {
-                "id": environ.get('CONJUR_AUTHN_LOGIN'),
-                "api_key": environ.get('CONJUR_AUTHN_API_KEY')
-            } if (environ.get('CONJUR_AUTHN_LOGIN') is not None and environ.get('CONJUR_AUTHN_API_KEY') is not None)
-            else {}
+            self.load_identity('~/.netrc', conf['appliance_url'])
         )
         if not identity:
-            raise Exception('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
+            raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
 
         if conf['appliance_url'].startswith('https'):
             # Load our certificate for validation
@@ -145,44 +140,33 @@ class LookupModule(LookupBase):
     def load_conf(self, conf_path):
         conf_path = os.path.expanduser(conf_path)
 
-        if not os.path.isfile(conf_path):
-            return {}
-
-        try:
-            config_map = {}
-            lines = open(conf_path).read().splitlines()
-            for line in lines:
-                if line == '---':
-                    continue
-                parts = line.split(': ')
-                config_map[parts[0]] = parts[1]
-            return config_map
-        except:
-            pass
-
+        if conf_path and os.path.exists(conf_path):
+            display.vvvv("Loading configuration from: %s" % conf_path)
+            with open(conf_path) as f:
+                try:
+                    return yaml.safe_load(f.read())
+                except Exception as exception:
+                    self.fail("Error: parsing %s - %s" % (conf_path, str(exception)))
         return {}
-
 
     # if the identity is not in the path specified, or if an exception is thrown while reading the identity file
     # we don't exit as the identity might be in another path
     def load_identity(self, identity_path, appliance_url):
         identity_path = os.path.expanduser(identity_path)
 
-        if not os.path.isfile(identity_path):
-            return {}
+        if identity_path and os.path.exists(identity_path):
+            display.vvvv("Loading identity from: %s" % identity_path)
+            try:
+                identity = netrc(identity_path)
+                id, _, api_key = identity.authenticators('{}/authn'.format(appliance_url))
+                if not id or not api_key:
+                    return {}
 
-        try:
-            identity = netrc(identity_path)
-            id, _, api_key = identity.authenticators('{}/authn'.format(appliance_url))
-            if not id or not api_key:
-                return {}
-
-            return {"id": id, "api_key": api_key}
-        except:
-            pass
+                return {"id": id, "api_key": api_key}
+            except Exception as exception:
+                self.fail("Error: parsing %s - %s" % (conf_path, str(exception)))
 
         return {}
-
 
     def merge_dictionaries(self, *arg):
         ret = {}
