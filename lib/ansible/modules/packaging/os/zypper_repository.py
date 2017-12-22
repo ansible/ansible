@@ -81,6 +81,7 @@ options:
             - Automatically import the gpg signing key of the new or changed repository.
             - Has an effect only if state is I(present). Has no effect on existing (unchanged) repositories or in combination with I(absent).
             - Implies runrefresh.
+            - Only works with C(.repo) files if `name` is given explicitly.
         required: false
         default: "no"
         choices: ["yes", "no"]
