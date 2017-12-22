@@ -12,12 +12,12 @@ from units.modules.utils import set_module_args
 from .mlnxos_module import TestMlnxosModule, load_fixture
 
 
-class TestMlnxosLldpInterfaceModule(TestMlnxosModule):
+class TestMlnxosL3InterfaceModule(TestMlnxosModule):
 
     module = mlnxos_l3_interface
 
     def setUp(self):
-        super(TestMlnxosLldpInterfaceModule, self).setUp()
+        super(TestMlnxosL3InterfaceModule, self).setUp()
         self.mock_get_config = patch.object(
             mlnxos_l3_interface.MlnxosL3InterfaceModule,
             "_get_interfaces_config")
@@ -28,7 +28,7 @@ class TestMlnxosLldpInterfaceModule(TestMlnxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
-        super(TestMlnxosLldpInterfaceModule, self).tearDown()
+        super(TestMlnxosL3InterfaceModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
