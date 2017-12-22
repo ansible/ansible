@@ -217,7 +217,9 @@ class Parameters(AnsibleF5Parameters):
         if self._values['allow'] is None:
             return None
         allow = self._values['allow']
-        return list(set([str(x) for x in allow]))
+        result = list(set([str(x) for x in allow]))
+        result = sorted(result)
+        return result
 
 
 class ModuleManager(object):
@@ -289,37 +291,22 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         self.argument_spec = dict(
             allow=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             banner=dict(
-                required=False,
-                default=None,
                 choices=self.choices
             ),
-            banner_text=dict(
-                required=False,
-                default=None
-            ),
+            banner_text=dict(),
             inactivity_timeout=dict(
-                required=False,
-                default=None,
                 type='int'
             ),
             log_level=dict(
-                required=False,
-                default=None,
                 choices=self.levels
             ),
             login=dict(
-                required=False,
-                default=None,
                 choices=self.choices
             ),
             port=dict(
-                required=False,
-                default=None,
                 type='int'
             ),
             state=dict(
@@ -328,6 +315,16 @@ class ArgumentSpec(object):
             )
         )
         self.f5_product_name = 'bigip'
+
+
+def cleanup_tokens(client):
+    try:
+        resource = client.api.shared.authz.tokens_s.token.load(
+            name=client.api.icrs.token
+        )
+        resource.delete()
+    except Exception:
+        pass
 
 
 def main():
@@ -345,9 +342,12 @@ def main():
     try:
         mm = ModuleManager(client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         client.module.exit_json(**results)
     except F5ModuleError as e:
+        cleanup_tokens(client)
         client.module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()
