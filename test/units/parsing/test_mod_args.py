@@ -125,4 +125,3 @@ class TestModArgsDwim:
         assert err.value.args[0].startswith("conflicting action statements: ")
         conflicts = set(err.value.args[0][len("conflicting action statements: "):].split(', '))
         assert conflicts == set(('ping', 'shell'))
-
