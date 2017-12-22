@@ -36,6 +36,8 @@ short_description: Manage Cisco NSO configuration and service synchronization.
 description:
   - This module provides support for managing configuration in Cisco NSO and
     can also ensure services are in sync.
+requirements:
+  - Cisco NSO version 4.4.3 or higher.
 author: "Claes Nästén (@cnasten)"
 options:
   data:
