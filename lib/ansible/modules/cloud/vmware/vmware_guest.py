@@ -884,12 +884,13 @@ class PyVmomiHelper(PyVmomi):
                                               nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     nic_change_detected = True
 
-                dvs_port_connection = vim.dvs.PortConnection()
-                dvs_port_connection.portgroupKey = pg_obj.key
-                dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                nic.device.backing.port = dvs_port_connection
-                nic_change_detected = True
+                if nic_change_detected:
+                    dvs_port_connection = vim.dvs.PortConnection()
+                    dvs_port_connection.portgroupKey = pg_obj.key
+                    dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
+                    nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                    nic.device.backing.port = dvs_port_connection
+                    nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
