@@ -170,6 +170,17 @@ class JsonRpc(object):
         resp, resp_json = self._read_call(payload)
         return resp_json['result']
 
+    def query(self, xpath, fields):
+        payload = {
+            'method': 'query',
+            'params': {
+                'xpath_expr': xpath,
+                'selection': fields
+            }
+        }
+        resp, resp_json = self._read_call(payload)
+        return resp_json['result']['results']
+
     def run_action(self, th, path, params=None):
         if params is None:
             params = {}
