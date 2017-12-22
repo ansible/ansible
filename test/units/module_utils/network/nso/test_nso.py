@@ -336,3 +336,22 @@ class TestValueBuilder(unittest.TestCase):
         self.assertEquals('nested-value', value.value)
 
         self.assertEqual(0, len(calls))
+
+
+class TestVerifyVersion(unittest.TestCase):
+    def test_valid_versions(self):
+        self.assertTrue(nso.verify_version_str('5.0', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('5.1.1', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('5.1.1.2', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('4.6', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('4.6.2', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('4.6.2.1', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('4.5.1', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('4.5.2', [(4, 6), (4, 5, 1)]))
+        self.assertTrue(nso.verify_version_str('4.5.1.2', [(4, 6), (4, 5, 1)]))
+
+    def test_invalid_versions(self):
+        self.assertFalse(nso.verify_version_str('4.4', [(4, 6), (4, 5, 1)]))
+        self.assertFalse(nso.verify_version_str('4.4.1', [(4, 6), (4, 5, 1)]))
+        self.assertFalse(nso.verify_version_str('4.4.1.2', [(4, 6), (4, 5, 1)]))
+        self.assertFalse(nso.verify_version_str('4.5.0', [(4, 6), (4, 5, 1)]))
