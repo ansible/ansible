@@ -45,7 +45,9 @@ options:
     required: true
   operational:
     description: >
-      Controls wheter or not operational data is included in the result.
+      Controls whether or not operational data is included in the result.
+    type: bool
+    default: false
 version_added: "2.5"
 '''
 
