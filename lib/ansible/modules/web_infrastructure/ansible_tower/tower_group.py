@@ -92,6 +92,11 @@ options:
         - Refresh inventory data from its source each time a job is run.
       required: False
       default: False
+    update_cache_timeout
+      description:
+        - Time in seconds to consider an inventory sync to be current when update_on_launch is True.
+      required: False
+      default: null
     state:
       description:
         - Desired state of the resource.
@@ -144,6 +149,7 @@ def main():
         overwrite=dict(type='bool', default=False),
         overwrite_vars=dict(),
         update_on_launch=dict(type='bool', default=False),
+        update_cache_timeout = dict(type="int"),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
