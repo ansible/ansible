@@ -36,6 +36,8 @@ short_description: Verifies Cisco NSO configuration.
 description:
   - This module provides support for verifying Cisco NSO configuration is in
     compliance with specified values.
+requirements:
+  - Cisco NSO version 4.4.3 or higher.
 author: "Claes Nästén (@cnasten)"
 options:
   data:
