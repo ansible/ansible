@@ -124,7 +124,15 @@ def set_locale(name, enabled=True):
         new_string = r'# %s \g<charset>' % (name)
     try:
         f = open("/etc/locale.gen", "r")
-        lines = [re.sub(search_string, new_string, line) for line in f]
+        lines = f.readlines()
+        if next((line for line in lines if re.match(search_string, line)), None) != None:
+            lines = [re.sub(search_string, new_string, line) for line in lines]
+        else:
+            if os.path.exists('/usr/share/i18n/SUPPORTED'):
+                f_supported = open("/usr/share/i18n/SUPPORTED", "r")
+                line_found = next((line for line in f_supported if re.match(search_string, line)), None)
+                if line_found != None: 
+                    lines.append(line_found)
     finally:
         f.close()
     try:
