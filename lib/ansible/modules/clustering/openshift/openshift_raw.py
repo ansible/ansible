@@ -26,10 +26,10 @@ author: "Chris Houseknecht (@chouseknecht)"
 description:
   - Use the OpenShift Python client to perform CRUD operations on OpenShift objects.
   - Pass the object definition from a source file or inline. See examples for reading
-    files and using Jinja templates.  
-  - Access to the full range of K8s and OpenShift APIs. 
+    files and using Jinja templates.
+  - Access to the full range of K8s and OpenShift APIs.
   - Authenticate using either a config file, certificates, password or token.
-  - Supports check mode, and the diff option. 
+  - Supports check mode, and the diff option.
 
 extends_documentation_fragment: kubernetes
 
@@ -138,7 +138,7 @@ EXAMPLES = '''
     namespace: testing
   register: mysecret
 
-# Passing the object definition from a file 
+# Passing the object definition from a file
 
 - name: Create a Deployment by reading the definition from a local file
   openshift_raw:
