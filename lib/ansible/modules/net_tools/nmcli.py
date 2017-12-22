@@ -689,7 +689,7 @@ class Nmcli(object):
         cmd.append('con')
         cmd.append('up')
         cmd.append(self.conn_name)
-        return self.execute_command(cmd)
+        return cmd
 
     def create_connection_team(self):
         cmd = [self.module.get_bin_path('nmcli', True)]
