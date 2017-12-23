@@ -615,7 +615,6 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
 
     sec_group_id_list = []
 
-
     # Get all security groups
     all_sec_groups = ec2_connection.get_all_security_groups(vpc_id=vpc_id)
     unmatched = set(sec_group_list).difference(str(get_sg_name(all_sg, boto3)) for all_sg in all_sec_groups)

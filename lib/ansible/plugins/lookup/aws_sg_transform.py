@@ -95,14 +95,11 @@ class LookupModule(LookupBase):
 
         return results
 
-
     # This is not a module, so construct something that has the same interfaceish
     class ModuleFacade(object):
 
-
         def __init__(self, kwargs):
             self.params = self.ParamMock(kwargs)
-
 
         class ParamMock(object):
             def __init__(self, incoming_dict):
