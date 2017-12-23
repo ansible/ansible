@@ -289,10 +289,24 @@ class VMwareDeployOvf:
             spec_params
         )
 
-        self.lease = resource_pool.ImportVApp(
-            self.import_spec.importSpec,
-            datacenter.vmFolder
-        )
+        joined_errors = '. '.join(to_native(e.msg) for e in getattr(self.import_spec, 'error', []))
+        if joined_errors:
+            self.module.fail_json(
+                msg='Failure validating import spec: %s' % joined_errors
+            )
+
+        for warning in getattr(self.import_spec, 'warning', []):
+            self.module.warn(to_native(warning.msg))
+
+        try:
+            self.lease = resource_pool.ImportVApp(
+                self.import_spec.importSpec,
+                datacenter.vmFolder
+            )
+        except vmodl.fault.SystemError as e:
+            self.module.fail_json(
+                msg='Failed to start import: %s' % to_native(e.msg)
+            )
 
         while self.lease.state != vim.HttpNfcLease.State.ready:
             time.sleep(0.1)
