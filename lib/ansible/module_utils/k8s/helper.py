@@ -29,7 +29,7 @@ try:
 except ImportError as exc:
     HAS_K8S_MODULE_HELPER = False
 
-#TODO Remove string_utils dependency
+# TODO Remove string_utils dependency
 try:
     import string_utils
     HAS_STRING_UTILS = True

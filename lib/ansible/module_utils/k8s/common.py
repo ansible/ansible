@@ -24,11 +24,13 @@ import copy
 
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.k8s.helper import AnsibleMixin,\
-                                            HAS_STRING_UTILS,\
-                                            COMMON_ARG_SPEC,\
-                                            AUTH_ARG_SPEC,\
-                                            OPENSHIFT_ARG_SPEC
+
+from ansible.module_utils.k8s.helper import\
+    AnsibleMixin,\
+    HAS_STRING_UTILS,\
+    COMMON_ARG_SPEC,\
+    AUTH_ARG_SPEC,\
+    OPENSHIFT_ARG_SPEC
 
 try:
     from openshift.helper.kubernetes import KubernetesObjectHelper
