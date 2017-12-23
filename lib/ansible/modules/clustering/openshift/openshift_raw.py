@@ -176,7 +176,7 @@ diff:
   type: list
 '''
 
-from ansible.module_utils.openshift_common import OpenShiftAnsibleModule
+from ansible.module_utils.k8s.common import OpenShiftAnsibleModule
 
 
 def main():
