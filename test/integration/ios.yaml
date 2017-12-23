@@ -103,6 +103,15 @@
             failed_modules: "{{ failed_modules }} + [ 'ios_ping' ]"
             test_failed: true
 
+    - block:
+      - include_role:
+          name: ios_l3_interface
+        when: "limit_to in ['*', 'ios_l3_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_l3_interface' ]"
+            test_failed: true
+
 #    - block:
 #      - include_role:
 #          name: ios_vlan
