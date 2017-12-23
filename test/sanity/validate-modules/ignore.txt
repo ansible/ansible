@@ -264,7 +264,6 @@ lib/ansible/modules/net_tools/basics/uri.py E323
 lib/ansible/modules/net_tools/cloudflare_dns.py E317
 lib/ansible/modules/net_tools/haproxy.py E317
 lib/ansible/modules/net_tools/ldap/ldap_attr.py E322
-lib/ansible/modules/net_tools/nmcli.py E323
 lib/ansible/modules/net_tools/omapi_host.py E317
 lib/ansible/modules/net_tools/omapi_host.py E322
 lib/ansible/modules/net_tools/snmp_facts.py E322
