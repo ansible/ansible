@@ -63,7 +63,7 @@ EXAMPLES = """
 - name: Set GigabitEthernet0/3 IPv6 address
   ios_l3_interface:
     name: GigabitEthernet0/3
-    ipv6: fd5d:12c9:2201:1::1/64
+    ipv6: "fd5d:12c9:2201:1::1/64"
 
 - name: Set GigabitEthernet0/3 in dhcp
   ios_l3_interface:
@@ -75,13 +75,13 @@ EXAMPLES = """
   ios_l3_interface:
     aggregate:
       - { name: GigabitEthernet0/3, ipv4: 192.168.2.10/24 }
-      - { name: GigabitEthernet0/3, ipv4: 192.168.3.10/24, ipv6: fd5d:12c9:2201:1::1/64 }
+      - { name: GigabitEthernet0/3, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
 
 - name: Remove IP addresses on aggregate
   ios_l3_interface:
     aggregate:
       - { name: GigabitEthernet0/3, ipv4: 192.168.2.10/24 }
-      - { name: GigabitEthernet0/3, ipv4: 192.168.3.10/24, ipv6: fd5d:12c9:2201:1::1/64 }
+      - { name: GigabitEthernet0/3, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
     state: absent
 """
 
