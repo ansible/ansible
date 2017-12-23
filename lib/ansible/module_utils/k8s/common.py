@@ -1,5 +1,5 @@
 #
-#  Copyright 2017 Red Hat | Ansible
+#  Copyright 2018 Red Hat | Ansible
 #
 # This file is part of Ansible
 #
@@ -31,11 +31,16 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     from openshift.helper import PRIMITIVES
     from openshift.helper.kubernetes import KubernetesObjectHelper
+    from openshift.helper.openshift import OpenShiftObjectHelper
     from openshift.helper.exceptions import KubernetesException
     HAS_K8S_MODULE_HELPER = True
 except ImportError as exc:
     class KubernetesObjectHelper(object):
         pass
+
+    class OpenShiftObjectHelper(object):
+        pass
+
     HAS_K8S_MODULE_HELPER = False
 
 try:
@@ -55,7 +60,7 @@ ARG_ATTRIBUTES_BLACKLIST = ('property_path',)
 PYTHON_KEYWORD_MAPPING = dict(zip(['_{0}'.format(item) for item in kwlist], kwlist))
 PYTHON_KEYWORD_MAPPING.update(dict([reversed(item) for item in iteritems(PYTHON_KEYWORD_MAPPING)]))
 
-ARG_SPEC = {
+COMMON_ARG_SPEC = {
     'state': {
         'default': 'present',
         'choices': ['present', 'absent'],
@@ -74,12 +79,13 @@ ARG_SPEC = {
     'kind': {},
     'name': {},
     'namespace': {},
-    'description': {},
-    'display_name': {},
     'api_version': {
         'default': 'v1',
         'aliases': ['api', 'version'],
     },
+}
+
+AUTH_ARG_SPEC = {
     'kubeconfig': {
         'type': 'path',
     },
@@ -106,6 +112,11 @@ ARG_SPEC = {
     },
 }
 
+OPENSHIFT_ARG_SPEC = {
+    'description': {},
+    'display_name': {},
+}
+
 
 class AnsibleMixin(object):
     _argspec_cache = None
@@ -118,8 +129,9 @@ class AnsibleMixin(object):
         """
         if self._argspec_cache:
             return self._argspec_cache
-
-        argument_spec = copy.deepcopy(ARG_SPEC)
+        argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
+        argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
+        argument_spec.update(copy.deepcopy(OPENSHIFT_ARG_SPEC))
         argument_spec.update(self.__transform_properties(self.properties))
         self._argspec_cache = argument_spec
         return self._argspec_cache
@@ -700,9 +712,8 @@ class KubernetesAnsibleModule(AnsibleModule):
 
     @property
     def _argspec(self):
-        argspec = copy.deepcopy(ARG_SPEC)
-        argspec.pop('display_name')
-        argspec.pop('description')
+        argspec = copy.deepcopy(COMMON_ARG_SPEC)
+        argspec.update(copy.deepcopy(AUTH_ARG_SPEC))
         return argspec
 
     def _get_helper(self, api_version, kind):
@@ -910,3 +921,52 @@ class KubernetesAnsibleModule(AnsibleModule):
             r'[A-Z]{2}[a-z]'
         result = re.sub(p, replace, name)
         return result.lower()
+
+
+class OpenShiftAnsibleModuleHelper(AnsibleMixin, OpenShiftObjectHelper):
+    pass
+
+
+class OpenShiftAnsibleModule(KubernetesAnsibleModule):
+    def __init__(self):
+        if not HAS_K8S_MODULE_HELPER:
+            raise Exception(
+                "This module requires the OpenShift Python client. Try `pip install openshift`"
+            )
+        super(OpenShiftAnsibleModule, self).__init__()
+
+    @property
+    def _argspec(self):
+        args = super(OpenShiftAnsibleModule, self)._argspec
+        args.update(copy.deepcopy(OPENSHIFT_ARG_SPEC))
+        return args
+
+    def _get_helper(self, api_version, kind):
+        try:
+            helper = OpenShiftAnsibleModuleHelper(api_version=api_version, kind=kind, debug=False)
+            helper.get_model(api_version, kind)
+            return helper
+        except KubernetesException as exc:
+            self.exit_json(msg="Error initializing module helper {}".format(exc.message))
+
+    def _create(self, namespace):
+        if self.kind.lower() == 'project':
+            return self._create_project()
+        return super(OpenShiftAnsibleModule, self)._create(namespace)
+
+    def _create_project(self):
+        new_obj = None
+        k8s_obj = None
+        try:
+            new_obj = self.helper.object_from_params(self.params)
+        except KubernetesException as exc:
+            self.fail_json(msg="Failed to create object: {}".format(exc.message))
+        try:
+            k8s_obj = self.helper.create_project(metadata=new_obj.metadata,
+                                                 display_name=self.params.get('display_name'),
+                                                 description=self.params.get('description'))
+        except KubernetesException as exc:
+            self.fail_json(msg='Failed to retrieve requested object',
+                           error=exc.value.get('status'))
+        return k8s_obj
+

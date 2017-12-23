@@ -136,7 +136,7 @@ diff:
   type: list
 '''
 
-from ansible.module_utils.k8s_common import KubernetesAnsibleModule
+from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 
 
 def main():
