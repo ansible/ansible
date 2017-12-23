@@ -123,7 +123,7 @@ def run_commands(module, commands, check_rc=True):
 
 
 def load_config(module, commands):
-
+    response = []
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', err=to_text(out, errors='surrogate_then_replace'))
@@ -135,5 +135,8 @@ def load_config(module, commands):
         if rc != 0:
             exec_command(module, 'end')
             module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+        response.append({command: out})
 
     exec_command(module, 'end')
+
+    return response
