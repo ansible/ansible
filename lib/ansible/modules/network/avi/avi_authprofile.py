@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     description:
         description:
             - User defined description for the object.
@@ -57,6 +69,11 @@ options:
         description:
             - Name of the auth profile.
         required: true
+    saml:
+        description:
+            - Saml settings.
+            - Field introduced in 17.2.3.
+        version_added: "2.5"
     tacacs_plus:
         description:
             - Tacacs+ settings.
@@ -66,7 +83,7 @@ options:
     type:
         description:
             - Type of the auth profile.
-            - Enum options - AUTH_PROFILE_LDAP, AUTH_PROFILE_TACACS_PLUS.
+            - Enum options - AUTH_PROFILE_LDAP, AUTH_PROFILE_TACACS_PLUS, AUTH_PROFILE_SAML.
         required: true
     url:
         description:
@@ -78,13 +95,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create user authorization profile based on the LDAP
     avi_authprofile:
-      controller: ''
-      password: ''
-      username: ''
+      controller: '{{ controller }}'
+      password: '{{ password }}'
+      username: '{{ username }}'
       http:
         cache_expiration_time: 5
         group_member_is_full_dn: false
@@ -110,7 +126,8 @@ EXAMPLES = '''
       name: ProdAuth
       tenant_ref: admin
       type: AUTH_PROFILE_LDAP
-'''
+"""
+
 RETURN = '''
 obj:
     description: AuthProfile (api/authprofile) object
@@ -130,10 +147,14 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         description=dict(type='str',),
         http=dict(type='dict',),
         ldap=dict(type='dict',),
         name=dict(type='str', required=True),
+        saml=dict(type='dict',),
         tacacs_plus=dict(type='dict',),
         tenant_ref=dict(type='str',),
         type=dict(type='str', required=True),

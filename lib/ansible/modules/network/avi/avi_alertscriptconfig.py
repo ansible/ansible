@@ -42,7 +42,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     action_script:
         description:
             - User defined alert action script.
@@ -64,17 +76,17 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create Alert Script to perform AWS server autoscaling
     avi_alertscriptconfig:
-      username: ''
-      controller: ''
-      password: ''
+      username: '{{ username }}'
+      controller: '{{ controller }}'
+      password: '{{ password }}'
       action_script: "echo Hello"
       name: AWS-Launch-Script
       tenant_ref: Demo
-'''
+"""
+
 RETURN = '''
 obj:
     description: AlertScriptConfig (api/alertscriptconfig) object
@@ -94,6 +106,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         action_script=dict(type='str',),
         name=dict(type='str', required=True),
         tenant_ref=dict(type='str',),

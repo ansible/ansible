@@ -43,17 +43,31 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     account_lock_timeout:
         description:
             - Lock timeout period (in minutes).
             - Default is 30 minutes.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+            - Units(MIN).
     credentials_timeout_threshold:
         description:
             - The time period after which credentials expire.
             - Default is 180 days.
             - Default value when not specified in API or module is interpreted by Avi Controller as 180.
+            - Units(DAYS).
     max_concurrent_sessions:
         description:
             - Maximum number of concurrent sessions allowed.
@@ -112,6 +126,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         account_lock_timeout=dict(type='int',),
         credentials_timeout_threshold=dict(type='int',),
         max_concurrent_sessions=dict(type='int',),

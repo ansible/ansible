@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for pool.
@@ -84,8 +96,7 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
 - name: Create a HTTP Policy set two switch between testpool1 and testpool2
   avi_httppolicyset:
     controller: 10.10.27.90
@@ -122,7 +133,8 @@ EXAMPLES = '''
           status_code: HTTP_LOCAL_RESPONSE_STATUS_CODE_200
           pool_ref: "/api/pool?name=testpool2"
     is_internal_policy: false
-'''
+"""
+
 RETURN = '''
 obj:
     description: HTTPPolicySet (api/httppolicyset) object
@@ -142,6 +154,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         cloud_config_cksum=dict(type='str',),
         created_by=dict(type='str',),
         description=dict(type='str',),
