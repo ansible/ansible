@@ -31,7 +31,11 @@ description:
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode, and the diff option.
 
-extends_documentation_fragment: kubernetes
+extends_documentation_fragment:
+  - k8s_state_options
+  - k8s_name_options
+  - k8s_resource_options
+  - k8s_auth_options
 
 options:
   description:
