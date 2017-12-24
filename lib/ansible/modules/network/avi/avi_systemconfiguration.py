@@ -43,10 +43,29 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     admin_auth_configuration:
         description:
             - Adminauthconfiguration settings for systemconfiguration.
+    default_license_tier:
+        description:
+            - Specifies the default license tier which would be used by new clouds.
+            - Enum options - ENTERPRISE_16, ENTERPRISE_18.
+            - Field introduced in 17.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as ENTERPRISE_18.
+        version_added: "2.5"
     dns_configuration:
         description:
             - Dnsconfiguration settings for systemconfiguration.
@@ -133,7 +152,11 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         admin_auth_configuration=dict(type='dict',),
+        default_license_tier=dict(type='str',),
         dns_configuration=dict(type='dict',),
         dns_virtualservice_refs=dict(type='list',),
         docker_mode=dict(type='bool',),

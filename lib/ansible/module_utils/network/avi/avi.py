@@ -39,7 +39,7 @@ HAS_AVI = True
 try:
     import avi.sdk
     sdk_version = getattr(avi.sdk, '__version__', None)
-    if ((sdk_version is None) or (sdk_version and (LooseVersion(sdk_version) < LooseVersion('17.1')))):
+    if ((sdk_version is None) or (sdk_version and (LooseVersion(sdk_version) < LooseVersion('17.2.4')))):
         # It allows the __version__ to be '' as that value is used in development builds
         raise ImportError
     from avi.sdk.utils.ansible_utils import avi_ansible_api
@@ -58,25 +58,33 @@ def avi_common_argument_spec():
         password=dict(default=os.environ.get('AVI_PASSWORD', ''), no_log=True),
         tenant=dict(default='admin'),
         tenant_uuid=dict(default=''),
-        api_version=dict(default='16.4'))
+        api_version=dict(default='16.4.4'),
+        avi_credentials=dict(default=None, no_log=True, type='dict'),
+        api_context=dict(type='dict'))
 
 
-def ansible_return(module, rsp, changed, req=None, existing_obj=None):
+def ansible_return(module, rsp, changed, req=None, existing_obj=None,
+                   api_context=None):
     """
     Helper function to return the right ansible return based on the error code and
     changed status.
     :param module: AnsibleModule
-    :param rsp: ApiResponse object returned from ApiSession.
-    :param changed: Whether something changed in this module.
-    :param req: Dict data for Avi API call.
-    :param existing_obj: Dict representing current HTTP resource in Avi Controller.
+    :param rsp: ApiResponse from avi_api
+    :param changed: boolean
+    :param req: Actual req dictionary used in Avi API
+    :param existing_obj: Existing Avi resource. Used for allowing caller to do
+        diff if desired.
+    :param api_context: Avi API context information like CSRF token, session_id
+        used. This can be passed to the next API call to avoid re-login.
 
     Returns: specific ansible module exit function
     """
     if rsp.status_code > 299:
-        return module.fail_json(msg='Error %d Msg %s req: %s' % (
-            rsp.status_code, rsp.text, req))
+        return module.fail_json(msg='Error %d Msg %s req: %s api_context:%s ' % (
+            rsp.status_code, rsp.text, req, api_context))
     if changed and existing_obj:
         return module.exit_json(
-            changed=changed, obj=rsp.json(), old_obj=existing_obj)
-    return module.exit_json(changed=changed, obj=rsp.json())
+            changed=changed, obj=rsp.json(), old_obj=existing_obj,
+            api_context=api_context)
+    return module.exit_json(changed=changed, obj=rsp.json(),
+                            api_context=api_context)

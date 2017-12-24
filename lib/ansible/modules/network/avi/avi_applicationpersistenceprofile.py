@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     app_cookie_persistence_profile:
         description:
             - Specifies the application cookie persistence profile parameters.
@@ -96,13 +108,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create an Application Persistence setting using http cookie.
     avi_applicationpersistenceprofile:
-      controller: ''
-      username: ''
-      password: ''
+      controller: '{{ controller }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
       http_cookie_persistence_profile:
         always_send_cookie: false
         cookie_name: My-HTTP
@@ -118,7 +129,8 @@ EXAMPLES = '''
       persistence_type: PERSISTENCE_TYPE_HTTP_COOKIE
       server_hm_down_recovery: HM_DOWN_PICK_NEW_SERVER
       tenant_ref: Demo
-'''
+"""
+
 RETURN = '''
 obj:
     description: ApplicationPersistenceProfile (api/applicationpersistenceprofile) object
@@ -138,6 +150,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         app_cookie_persistence_profile=dict(type='dict',),
         description=dict(type='str',),
         hdr_persistence_profile=dict(type='dict',),
