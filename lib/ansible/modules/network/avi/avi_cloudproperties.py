@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     cc_props:
         description:
             - Cloudconnector properties.
@@ -51,7 +63,7 @@ options:
         description:
             - Cloud types supported by cloudconnector.
             - Enum options - CLOUD_NONE, CLOUD_VCENTER, CLOUD_OPENSTACK, CLOUD_AWS, CLOUD_VCA, CLOUD_APIC, CLOUD_MESOS, CLOUD_LINUXSERVER, CLOUD_DOCKER_UCP,
-            - CLOUD_RANCHER, CLOUD_OSHIFT_K8S.
+            - CLOUD_RANCHER, CLOUD_OSHIFT_K8S, CLOUD_AZURE.
     hyp_props:
         description:
             - Hypervisor properties.
@@ -97,6 +109,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         cc_props=dict(type='dict',),
         cc_vtypes=dict(type='list',),
         hyp_props=dict(type='list',),
