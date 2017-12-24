@@ -32,7 +32,10 @@ description:
   - Supports check mode, and the diff option.
 
 extends_documentation_fragment:
-  - kubernetes
+  - k8s_state_options
+  - k8s_name_options
+  - k8s_resource_options
+  - k8s_auth_options
 
 requirements:
   - "python >= 2.7"
