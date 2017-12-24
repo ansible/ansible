@@ -36,7 +36,7 @@ extends_documentation_fragment:
   - k8s_name_options
   - k8s_resource_options
   - k8s_auth_options
-  
+
 requirements:
   - "python >= 2.7"
   - "openshift >= 0.3"
