@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     a_pool:
         description:
             - Name of container cloud application that constitutes a pool in a a-b pool configuration, if different from vs app.
@@ -83,6 +95,7 @@ options:
             - Allowed values are 1-5000.
             - Special values are 0 - 'automatic'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Units(MILLISECONDS).
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for pool.
@@ -97,6 +110,7 @@ options:
             - Allowed values are 1-300.
             - Special values are 0 - 'immediate'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(MIN).
     created_by:
         description:
             - Creator name.
@@ -124,7 +138,7 @@ options:
     external_autoscale_groups:
         description:
             - Names of external auto-scale groups for pool servers.
-            - Currently available only for aws.
+            - Currently available only for aws and azure.
             - Field introduced in 17.1.2.
     fail_action:
         description:
@@ -135,13 +149,20 @@ options:
             - Periodicity of feedback for fewest tasks server selection algorithm.
             - Allowed values are 1-300.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(SEC).
     graceful_disable_timeout:
         description:
             - Used to gracefully disable a server.
             - Virtual service waits for the specified time before terminating the existing connections  to the servers that are disabled.
-            - Allowed values are 1-60.
+            - Allowed values are 1-7200.
             - Special values are 0 - 'immediate', -1 - 'infinite'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+            - Units(MIN).
+    gslb_sp_enabled:
+        description:
+            - Indicates if the pool is a site-persistence pool.
+            - Field introduced in 17.2.1.
+        version_added: "2.5"
     health_monitor_refs:
         description:
             - Verify server health by applying one or more health monitors.
@@ -184,8 +205,14 @@ options:
         description:
             - Criteria used as a key for determining the hash between the client and  server.
             - Enum options - LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS, LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS_AND_PORT,
-            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER.
+            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_STRING.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS.
+    lookup_server_by_name:
+        description:
+            - Allow server lookup by name.
+            - Field introduced in 17.1.11,17.2.4.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.5"
     max_concurrent_connections_per_server:
         description:
             - The maximum number of concurrent connections allowed to each server within the pool.
@@ -295,8 +322,7 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
 - name: Create a Pool with two servers and HTTP monitor
   avi_pool:
     controller: 10.10.1.20
@@ -314,7 +340,22 @@ EXAMPLES = '''
         - ip:
             addr: 10.10.2.21
             type: V4
-'''
+
+- name: Patch pool with a single server using patch op and avi_credentials
+  avi_pool:
+    avi_api_update_method: patch
+    avi_api_patch_op: delete
+    avi_credentials: "{{avi_credentials}}"
+    name: test-pool
+    servers:
+      - ip:
+        addr: 10.90.64.13
+        type: 'V4'
+  register: pool
+  when:
+    - state | default("present") == "present"
+"""
+
 RETURN = '''
 obj:
     description: Pool (api/pool) object
@@ -334,6 +375,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         a_pool=dict(type='str',),
         ab_pool=dict(type='dict',),
         ab_priority=dict(type='int',),
@@ -357,6 +401,7 @@ def main():
         fail_action=dict(type='dict',),
         fewest_tasks_feedback_delay=dict(type='int',),
         graceful_disable_timeout=dict(type='int',),
+        gslb_sp_enabled=dict(type='bool',),
         health_monitor_refs=dict(type='list',),
         host_check_enabled=dict(type='bool',),
         inline_health_monitor=dict(type='bool',),
@@ -365,6 +410,7 @@ def main():
         lb_algorithm_consistent_hash_hdr=dict(type='str',),
         lb_algorithm_core_nonaffinity=dict(type='int',),
         lb_algorithm_hash=dict(type='str',),
+        lookup_server_by_name=dict(type='bool',),
         max_concurrent_connections_per_server=dict(type='int',),
         max_conn_rate_per_server=dict(type='dict',),
         name=dict(type='str', required=True),

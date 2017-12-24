@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     accepted_ciphers:
         description:
             - Ciphers suites represented as defined by U(http://www.openssl.org/docs/apps/ciphers.html).
@@ -89,6 +101,7 @@ options:
         description:
             - The amount of time before an ssl session expires.
             - Default value when not specified in API or module is interpreted by Avi Controller as 86400.
+            - Units(SEC).
     tags:
         description:
             - List of tag.
@@ -105,13 +118,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create SSL profile with list of allowed ciphers
     avi_sslprofile:
-      controller: ''
-      username: ''
-      password: ''
+      controller: '{{ controller }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
       accepted_ciphers: >
         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:
         ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:
@@ -149,7 +161,8 @@ EXAMPLES = '''
         performance_rating: SSL_SCORE_EXCELLENT
         security_score: '100.0'
       tenant_ref: Demo
-'''
+"""
+
 RETURN = '''
 obj:
     description: SSLProfile (api/sslprofile) object
@@ -169,6 +182,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         accepted_ciphers=dict(type='str',),
         accepted_versions=dict(type='list',),
         cipher_enums=dict(type='list',),

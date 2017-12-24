@@ -126,9 +126,10 @@ from copy import deepcopy
 
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, ansible_return, HAS_AVI)
+        avi_common_argument_spec, ansible_return, AviCredentials, HAS_AVI)
     from avi.sdk.avi_api import ApiSession
     from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
+
 except ImportError:
     HAS_AVI = False
 
@@ -150,20 +151,24 @@ def main():
         return module.fail_json(msg=(
             'Avi python API SDK (avisdk) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
-    tenant_uuid = module.params.get('tenant_uuid', None)
-    api = ApiSession.get_session(
-        module.params['controller'], module.params['username'],
-        module.params['password'], tenant=module.params['tenant'],
-        tenant_uuid=tenant_uuid)
 
-    tenant = module.params.get('tenant', '')
+    api_creds = AviCredentials()
+    api_creds.update_from_ansible_module(module)
+    api = ApiSession.get_session(
+        api_creds.controller, api_creds.username, password=api_creds.password,
+        timeout=api_creds.timeout, tenant=api_creds.tenant,
+        tenant_uuid=api_creds.tenant_uuid, token=api_creds.token,
+        port=api_creds.port)
+
+    tenant_uuid = api_creds.tenant_uuid
+    tenant = api_creds.tenant
     timeout = int(module.params.get('timeout'))
     # path is a required argument
     path = module.params.get('path', '')
     params = module.params.get('params', None)
     data = module.params.get('data', None)
     # Get the api_version from module.
-    api_version = module.params.get('api_version', '16.4')
+    api_version = api_creds.api_version
     if data is not None:
         data = json.loads(data)
     method = module.params['http_method']
@@ -176,11 +181,16 @@ def main():
     if method == 'post':
         # need to check if object already exists. In that case
         # change the method to be put
-        gparams['name'] = data['name']
-        rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                      params=gparams, api_version=api_version)
         try:
-            existing_obj = rsp.json()['results'][0]
+            using_collection = False
+            if not path.startswith('cluster'):
+                gparams['name'] = data['name']
+                using_collection = True
+            rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
+                          params=gparams, api_version=api_version)
+            existing_obj = rsp.json()
+            if using_collection:
+                existing_obj = existing_obj['results'][0]
         except IndexError:
             # object is not found
             pass
@@ -193,7 +203,8 @@ def main():
         # put can happen with when full path is specified or it is put + post
         if existing_obj is None:
             using_collection = False
-            if (len(path.split('/')) == 1) and ('name' in data):
+            if ((len(path.split('/')) == 1) and ('name' in data) and
+                    (not path.startswith('cluster'))):
                 gparams['name'] = data['name']
                 using_collection = True
             rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
