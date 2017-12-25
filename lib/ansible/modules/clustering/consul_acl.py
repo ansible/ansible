@@ -175,8 +175,13 @@ try:
 except ImportError:
     pyhcl_installed = False
 
+try:
+    from requests.exceptions import ConnectionError
+    has_requests = True
+except ImportError:
+    has_requests = False
+
 from collections import defaultdict
-from requests.exceptions import ConnectionError
 from ansible.module_utils.basic import to_text, AnsibleModule
 
 
@@ -606,6 +611,9 @@ def check_dependencies():
     if not pyhcl_installed:
         raise ImportError("pyhcl required for this module. "
                           "See: https://pypi.python.org/pypi/pyhcl")
+
+    if not has_requests:
+        raise ImportError("requests required for this module. See https://pypi.python.org/pypi/requests")
 
 
 def main():

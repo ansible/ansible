@@ -254,10 +254,10 @@ class TaskExecutor:
         label = None
         loop_pause = 0
         if self._task.loop_control:
-            # the value may be 'None', so we still need to default it back to 'item'
-            loop_var = self._task.loop_control.loop_var or 'item'
+            loop_var = self._task.loop_control.loop_var
+            loop_pause = self._task.loop_control.pause
+            # the these may be 'None', so we still need to default to something useful
             label = self._task.loop_control.label or ('{{' + loop_var + '}}')
-            loop_pause = self._task.loop_control.pause or 0
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
@@ -726,7 +726,7 @@ class TaskExecutor:
 
         conn_type = self._play_context.connection
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin, ansible_playbook_pid=to_text(os.getppid()))
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
@@ -800,7 +800,7 @@ class TaskExecutor:
         Starts the persistent connection
         '''
         master, slave = pty.openpty()
-        p = subprocess.Popen(["ansible-connection"], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(["ansible-connection", to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 

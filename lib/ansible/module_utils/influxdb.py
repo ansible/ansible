@@ -40,11 +40,10 @@ class InfluxDb():
     @staticmethod
     def influxdb_argument_spec():
         return dict(
-            hostname=dict(required=True, type='str'),
+            hostname=dict(default='localhost', type='str'),
             port=dict(default=8086, type='int'),
             username=dict(default='root', type='str'),
             password=dict(default='root', type='str', no_log=True),
-            database_name=dict(required=True, type='str'),
             ssl=dict(default=False, type='bool'),
             validate_certs=dict(default=True, type='bool'),
             timeout=dict(type='int'),

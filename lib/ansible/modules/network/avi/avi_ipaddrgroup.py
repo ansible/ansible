@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     addrs:
         description:
             - Configure ip address(es).
@@ -90,13 +102,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create an IP Address Group configuration
     avi_ipaddrgroup:
-      controller: ''
-      username: ''
-      password: ''
+      controller: '{{ controller }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
       name: Client-Source-Block
       prefixes:
       - ip_addr:
@@ -111,7 +122,8 @@ EXAMPLES = '''
           addr: 192.168.0.0
           type: V4
         mask: 16
-'''
+"""
+
 RETURN = '''
 obj:
     description: IpAddrGroup (api/ipaddrgroup) object
@@ -131,6 +143,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         addrs=dict(type='list',),
         apic_epg_name=dict(type='str',),
         country_codes=dict(type='list',),

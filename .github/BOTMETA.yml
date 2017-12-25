@@ -259,7 +259,8 @@ files:
   $modules/cloud/misc/virt.py: $team_ansible
   $modules/cloud/misc/virt_net.py: drybjed
   $modules/cloud/misc/virt_pool.py: drybjed
-  $modules/cloud/misc/xenserver_facts.py: andyhky
+  $modules/cloud/misc/xenserver_facts.py:
+    ignored: andyhky
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/openstack/os_keystone_service.py: $team_openstack SamYaple
   $modules/cloud/openstack/os_project.py: $team_openstack agireud
@@ -325,12 +326,15 @@ files:
   $modules/cloud/vmware/vmware_vswitch.py: akasurde jcpowermac
   $modules/cloud/vmware/vsphere_copy.py: dagwieers
   $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop dagwieers
+  $modules/cloud/vultr/: resmo
   $modules/cloud/webfaction/: quentinsf
   $modules/clustering/consul.py: sgargan
   $modules/clustering/consul_acl.py: sgargan
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
+  $modules/clustering/k8s: chouseknecht sdoran maxamillion fabianvf flaper87
   $modules/clustering/kubernetes.py: erjohnso supertom
+  $modules/clustering/openshift: chouseknecht sdoran maxamillion fabianvf flaper87
   $modules/clustering/pacemaker_cluster.py:
   $modules/clustering/znode.py: treyperry
   $modules/commands/command.py: $team_ansible
@@ -441,7 +445,8 @@ files:
   $modules/net_tools/ipify_facts.py: resmo
   $modules/net_tools/ipinfoio_facts.py: akostyuk
   $modules/net_tools/ldap/: jtyr
-  $modules/net_tools/lldp.py: andyhky
+  $modules/net_tools/lldp.py:
+    ignored: andyhky
   $modules/net_tools/nmcli.py: alcamie101
   $modules/net_tools/nsupdate.py: nerzhul
   $modules/net_tools/omapi_host.py: nerzhul
@@ -986,6 +991,9 @@ files:
   $module_utils/network/mlnxos:
     maintainers: samerd
     labels: networking
+  $module_utils/k8s_common.py:
+    maintainers: chouseknecht sdoran maxamillion fabianvf flaper87
+    labels: clustering
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/network/netscaler:
@@ -1190,7 +1198,7 @@ files:
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
-  team_aci: dagwieers jmcgill298 schunduri
+  team_aci: brunocalogero dagwieers jmcgill298 schunduri
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone tstringer yuwzho xscript zikalino

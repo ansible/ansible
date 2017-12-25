@@ -238,15 +238,27 @@ def parse_show_install(data):
     if len(data) > 0:
         data = massage_install_data(data)
     ud = {'raw': data}
-    ud['list_data'] = data.split('\n')
     ud['processed'] = []
     ud['disruptive'] = False
     ud['upgrade_needed'] = False
     ud['error'] = False
     ud['install_in_progress'] = False
-    ud['backend_processing_error'] = False
+    ud['server_error'] = False
     ud['upgrade_succeeded'] = False
     ud['use_impact_data'] = False
+
+    # Check for server errors
+    if isinstance(data, int):
+        if data == -1:
+            ud['server_error'] = True
+        elif data >= 500:
+            ud['server_error'] = True
+        elif data == -32603:
+            ud['server_error'] = True
+        return ud
+    else:
+        ud['list_data'] = data.split('\n')
+
     for x in ud['list_data']:
         # Check for errors and exit if found.
         if re.search(r'Pre-upgrade check failed', x):
@@ -264,7 +276,10 @@ def parse_show_install(data):
             ud['install_in_progress'] = True
             break
         if re.search(r'Backend processing error', x):
-            ud['backend_processing_error'] = True
+            ud['server_error'] = True
+            break
+        if re.search(r'^(-1|5\d\d)$', x):
+            ud['server_error'] = True
             break
 
         # Check for messages indicating a successful upgrade.
@@ -465,7 +480,7 @@ def check_install_in_progress(module, commands, opts):
 def check_mode(module, issu, image, kick=None):
     """Check switch upgrade impact using 'show install all impact' command"""
     data = check_mode_nextgen(module, issu, image, kick)
-    if data['backend_processing_error']:
+    if data['server_error']:
         # We encountered an unrecoverable error in the attempt to get upgrade
         # impact data from the 'show install all impact' command.
         # Fallback to legacy method.
@@ -500,11 +515,11 @@ def do_install_all(module, issu, image, kick=None):
         # it's done.
         upgrade = check_install_in_progress(module, commands, opts)
 
-        # Special case:  If we encounter a backend processing error at this
-        # stage it means the command was sent and the upgrade was started but
+        # Special case:  If we encounter a server error at this stage
+        # it means the command was sent and the upgrade was started but
         # we will need to use the impact data instead of the current install
         # data.
-        if upgrade['backend_processing_error']:
+        if upgrade['server_error']:
             upgrade['upgrade_succeeded'] = True
             upgrade['use_impact_data'] = True
 

@@ -61,9 +61,9 @@ class Cliconf(CliconfBase):
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if filter:
-            cmd = to_bytes(b'show {0} {1}'.format(lookup[source], filter), errors='surrogate_or_strict')
+            cmd = to_bytes('show {0} {1}'.format(lookup[source], filter), errors='surrogate_or_strict')
         else:
-            cmd = to_bytes(b'show {0}'.format(lookup[source]), errors='surrogate_or_strict')
+            cmd = to_bytes('show {0}'.format(lookup[source]), errors='surrogate_or_strict')
 
         return self.send_command(cmd)
 
@@ -76,10 +76,10 @@ class Cliconf(CliconfBase):
 
     def commit(self, comment=None):
         if comment:
-            command = b'commit comment {0}'.format(comment)
+            command = 'commit comment {0}'.format(comment)
         else:
-            command = b'commit'
-        self.send_command(command)
+            command = 'commit'
+        self.send_command(to_bytes(command))
 
     def discard_changes(self):
         self.send_command(b'abort')

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START ios_interface cli/intent.yaml"
+- debug: msg="START ios_interface cli/intent.yaml on connection={{ ansible_connection }}"
 
 - name: Run show version
   ios_command:

@@ -56,6 +56,15 @@ ANSIBLE_NOCOWS:
   - {key: nocows, section: defaults}
   type: boolean
   yaml: {key: display.i_am_no_fun}
+ANSIBLE_COWPATH:
+  name: Set path to cowsay command
+  default: null
+  description: Specify a custom cowsay path or swap in your cowsay implementation of choice
+  env: [{name: ANSIBLE_COWPATH}]
+  ini:
+  - {key: cowpath, section: defaults}
+  type: string
+  yaml: {key: display.cowpath}
 ANSIBLE_PIPELINING:
   name: Connection pipelining
   default: False
@@ -279,6 +288,17 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+ACTION_WARNINGS:
+  name: Toggle action warnings
+  default: True
+  description:
+    - By default Ansible will issue a warning when recieved from a task action (module or action plugin)
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_ACTION_WARNINGS}]
+  ini:
+  - {key: action_warnings, section: defaults}
+  type: boolean
+  version_added: "2.5"
 COMMAND_WARNINGS:
   name: Command module warnings
   default: True

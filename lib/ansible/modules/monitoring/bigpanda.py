@@ -135,7 +135,6 @@ def main():
             url=dict(required=False, default='https://api.bigpanda.io'),
         ),
         supports_check_mode=True,
-        check_invalid_arguments=False,
     )
 
     token = module.params['token']

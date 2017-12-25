@@ -168,3 +168,20 @@
     that:
       - _bad_urlsplit_filter is failed
       - "'unknown URL component' in _bad_urlsplit_filter.msg"
+
+- name: Flatten tests
+  block:
+    - name: use flatten
+      set_fact:
+        flat_full: '{{orig_list|flatten}}'
+        flat_one: '{{orig_list|flatten(levels=1)}}'
+        flat_two: '{{orig_list|flatten(levels=2)}}'
+
+    - name: Verify flatten filter works as expected
+      assert:
+        that:
+          - flat_full == [1, 2, 3, 4, 5, 6, 7]
+          - flat_one == [1, 2, 3, [4, [5]], 6, 7]
+          - flat_two == [1, 2, 3, 4, [5], 6, 7]
+  vars:
+    orig_list: [1, 2, [3, [4, [5]], 6], 7]

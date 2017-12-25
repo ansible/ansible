@@ -218,6 +218,28 @@ EXAMPLES = '''
     force: True
 
 # Examples for some checks one could use the assertonly provider for:
+
+# How to use the assertonly provider to implement and trigger your own custom certificate generation workflow:
+- name: Check if a certificate is currently still valid, ignoring failures
+  openssl_certificate:
+    path: /etc/ssl/crt/example.com.crt
+    provider: assertonly
+    has_expired: False
+  ignore_errors: True
+  register: validity_check
+
+- name: Run custom task(s) to get a new, valid certificate in case the initial check failed
+  command: superspecialSSL recreate /etc/ssl/crt/example.com.crt
+  when: validity_check.failed
+
+- name: Check the new certificate again for validity with the same parameters, this time failing the play if it is still invalid
+  openssl_certificate:
+    path: /etc/ssl/crt/example.com.crt
+    provider: assertonly
+    has_expired: False
+  when: validity_check.failed
+
+# Some other checks that assertonly could be used for:
 - name: Verify that an existing certificate was issued by the Let's Encrypt CA and is currently still valid
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
@@ -378,7 +400,6 @@ class SelfSignedCertificate(Certificate):
 
     def __init__(self, module):
         super(SelfSignedCertificate, self).__init__(module)
-        self.serial_number = randint(1000, 99999)
         self.notBefore = module.params['selfsigned_notBefore']
         self.notAfter = module.params['selfsigned_notAfter']
         self.digest = module.params['selfsigned_digest']
@@ -387,7 +408,6 @@ class SelfSignedCertificate(Certificate):
         self.privatekey = crypto_utils.load_privatekey(
             self.privatekey_path, self.privatekey_passphrase
         )
-        self.cert = None
 
     def generate(self, module):
 
@@ -403,7 +423,7 @@ class SelfSignedCertificate(Certificate):
 
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
-            cert.set_serial_number(self.serial_number)
+            cert.set_serial_number(randint(1000, 99999))
             if self.notBefore:
                 cert.set_notBefore(self.notBefore)
             else:
@@ -420,11 +440,11 @@ class SelfSignedCertificate(Certificate):
             cert.add_extensions(self.csr.get_extensions())
 
             cert.sign(self.privatekey, self.digest)
-            self.certificate = cert
+            self.cert = cert
 
             try:
                 with open(self.path, 'wb') as cert_file:
-                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.certificate))
+                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
             except EnvironmentError as exc:
                 raise CertificateError(exc)
 
@@ -441,9 +461,9 @@ class SelfSignedCertificate(Certificate):
             'filename': self.path,
             'privatekey': self.privatekey_path,
             'csr': self.csr_path,
-            'notBefore': self.notBefore,
-            'notAfter': self.notAfter,
-            'serial_number': self.serial_number,
+            'notBefore': self.cert.get_notBefore(),
+            'notAfter': self.cert.get_notAfter(),
+            'serial_number': self.cert.get_serial_number(),
         }
 
         return result

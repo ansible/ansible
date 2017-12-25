@@ -315,11 +315,13 @@ class Connection(ConnectionBase):
         return self
 
     @staticmethod
-    def _create_control_path(host, port, user, connection=None):
+    def _create_control_path(host, port, user, connection=None, pid=None):
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
         if connection:
             pstring += '-%s' % connection
+        if pid:
+            pstring += '-%s' % to_text(pid)
         m = hashlib.sha1()
         m.update(to_bytes(pstring))
         digest = m.hexdigest()

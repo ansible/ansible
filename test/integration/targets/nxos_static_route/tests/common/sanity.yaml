@@ -45,6 +45,47 @@
 
   - assert: *false
 
+  - name: configure static route(aggregate)
+    nxos_static_route: &conf_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: configure static route aggregate(Idempotence)
+    nxos_static_route: *conf_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: remove static route aggregate
+    nxos_static_route: &remove_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: remove static route aggregate(Idempotence)
+    nxos_static_route: *remove_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
   always:
   - name: remove static route
     nxos_static_route:
@@ -54,6 +95,15 @@
       pref: 100
       tag: 5500
       vrf: testing
+      state: absent
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: remove static route aggregate
+    nxos_static_route:
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
       state: absent
       provider: "{{ connection }}"
     ignore_errors: yes

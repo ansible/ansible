@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/greaterthan.yaml"
+- debug: msg="START cli/greaterthan.yaml on connection={{ ansible_connection }}"
 
 - name: test gt operator
   eos_command:
@@ -31,4 +31,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/greaterthan.yaml"
+- debug: msg="END cli/greaterthan.yaml on connection={{ ansible_connection }}"

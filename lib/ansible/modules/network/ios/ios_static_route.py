@@ -35,6 +35,8 @@ description:
     IP routes on Cisco IOS network devices.
 notes:
   - Tested against IOS 15.6
+requirements:
+  - Python >= 3.3 or C(ipaddress) python package
 options:
   prefix:
     description:
@@ -102,8 +104,13 @@ from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.ios.ios import load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
-from ipaddress import ip_network
 import re
+
+try:
+    from ipaddress import ip_network
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False
 
 
 def map_obj_to_commands(updates, module):
@@ -215,6 +222,9 @@ def main():
                            required_together=required_together,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
+
+    if not HAS_IPADDRESS:
+        module.fail_json(msg="ipaddress python package is required")
 
     warnings = list()
     check_args(module, warnings)

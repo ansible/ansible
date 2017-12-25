@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/defaults.yaml"
+- debug: msg="START cli/defaults.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -59,4 +59,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/defaults.yaml"
+- debug: msg="END cli/defaults.yaml on connection={{ ansible_connection }}"

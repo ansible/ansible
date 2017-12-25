@@ -85,7 +85,7 @@ class IncludedFile:
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
                     if original_task.loop_control:
-                        loop_var = original_task.loop_control.loop_var or 'item'
+                        loop_var = original_task.loop_control.loop_var
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
 

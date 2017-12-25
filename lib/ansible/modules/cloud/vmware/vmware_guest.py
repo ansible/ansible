@@ -83,7 +83,8 @@ options:
     description:
     - Manage some VM hardware attributes.
     - 'Valid attributes are:'
-    - ' - C(hotadd_cpu) (boolean): Allow cpus to be added while the VM is running.'
+    - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the VM is running.'
+    - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the VM is running. version_added: 2.5'
     - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
@@ -180,6 +181,9 @@ options:
     - ' - C(gateway) (string): Static gateway.'
     - ' - C(dns_servers) (string): DNS servers for this network interface (Windows).'
     - ' - C(domain) (string): Domain name for this network interface (Windows).'
+    - ' - C(wake_on_lan) (bool): Indicates if wake-on-LAN is enabled on this virtual network adapter. version_added: 2.5'
+    - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on. version_added: 2.5'
+    - ' - C(allow_guest_control) (bool): Enables guest control over whether the connectable device is connected. version_added: 2.5'
     version_added: '2.3'
   customization:
     description:
@@ -229,6 +233,9 @@ EXAMPLES = r'''
       memory_reservation: 512
       memory_reservation_lock: True
       max_connections: 5
+      hotadd_cpu: True
+      hotremove_cpu: True
+      hotadd_memory: False
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -474,13 +481,13 @@ class PyVmomiDeviceHelper(object):
         else:
             self.module.fail_json(msg='Invalid device_type "%s" for network "%s"' % (device_type, device_infos['name']))
 
-        nic.device.wakeOnLanEnabled = True
+        nic.device.wakeOnLanEnabled = bool(device_infos.get('wake_on_lan', True))
         nic.device.deviceInfo = vim.Description()
         nic.device.deviceInfo.label = device_label
         nic.device.deviceInfo.summary = device_infos['name']
         nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-        nic.device.connectable.startConnected = True
-        nic.device.connectable.allowGuestControl = True
+        nic.device.connectable.startConnected = bool(device_infos.get('start_connected', True))
+        nic.device.connectable.allowGuestControl = bool(device_infos.get('allow_guest_control', True))
         nic.device.connectable.connected = True
         if 'mac' in device_infos and self.is_valid_mac_addr(device_infos['mac']):
             nic.device.addressType = 'manual'
@@ -667,6 +674,11 @@ class PyVmomiHelper(PyVmomi):
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
                     self.change_detected = True
 
+            if 'hotremove_cpu' in self.params['hardware']:
+                self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
+                if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
+                    self.change_detected = True
+
             if 'memory_reservation' in self.params['hardware']:
                 memory_reservation_mb = 0
                 try:
@@ -844,6 +856,19 @@ class PyVmomiHelper(PyVmomi):
                                               "The failing new MAC address is %s" % nic.device.macAddress)
 
                 nic.device = current_net_devices[key]
+                if ('wake_on_lan' in network_devices[key] and
+                        nic.device.wakeOnLanEnabled != network_devices[key].get('wake_on_lan')):
+                    nic.device.wakeOnLanEnabled = network_devices[key].get('wake_on_lan')
+                    nic_change_detected = True
+                if ('start_connected' in network_devices[key] and
+                        nic.device.connectable.startConnected != network_devices[key].get('start_connected')):
+                    nic.device.connectable.startConnected = network_devices[key].get('start_connected')
+                    nic_change_detected = True
+                if ('allow_guest_control' in network_devices[key] and
+                        nic.device.connectable.allowGuestControl != network_devices[key].get('allow_guest_control')):
+                    nic.device.connectable.allowGuestControl = network_devices[key].get('allow_guest_control')
+                    nic_change_detected = True
+
                 nic.device.deviceInfo = vim.Description()
             else:
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -1233,6 +1258,11 @@ class PyVmomiHelper(PyVmomi):
             if current_parent.name == parent.name:
                 return True
 
+            # Check if we have reached till root folder
+            moid = current_parent._moId
+            if moid in ['group-d1', 'ha-folder-root']:
+                return False
+
             current_parent = current_parent.parent
             if current_parent is None:
                 return False
@@ -1451,7 +1481,13 @@ class PyVmomiHelper(PyVmomi):
 
                 clonespec.config = self.configspec
                 clone_method = 'Clone'
-                task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
+                try:
+                    task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
+                except vim.fault.NoPermission as e:
+                    self.module.fail_json(msg="Failed to clone virtual machine %s to folder %s "
+                                              "due to permission issue: %s" % (self.params['name'],
+                                                                               destfolder,
+                                                                               to_native(e.msg)))
                 self.change_detected = True
             else:
                 # ConfigSpec require name for VM creation
@@ -1459,7 +1495,7 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.files = vim.vm.FileInfo(logDirectory=None,
                                                         snapshotDirectory=None,
                                                         suspendDirectory=None,
-                                                        vmPathName="[" + datastore_name + "] " + self.params["name"])
+                                                        vmPathName="[" + datastore_name + "]")
 
                 clone_method = 'CreateVM_Task'
                 resource_pool = self.get_resource_pool()

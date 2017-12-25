@@ -72,7 +72,7 @@
 #    interfaces:
 #      - GigabitEthernet0/1
 #    authorize: yes
-#    register: result
+#  register: result
 
 #- assert:
 #    that:

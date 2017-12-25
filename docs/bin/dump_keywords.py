@@ -52,7 +52,7 @@ for aclass in class_list:
 
     # loop is really with_ for users
     if name == 'Task':
-        oblist[name]['with_<lookup_plugin>'] = 'DEPRECATED: use ``loop`` instead, with_ used to be how loops were defined, '
+        oblist[name]['with_<lookup_plugin>'] = 'DEPRECATED: use ``loop`` instead, ``with_`` used to be how loops were defined, '
         'it can use any available lookup plugin to generate the item list'
 
     # local_action is implicit with action

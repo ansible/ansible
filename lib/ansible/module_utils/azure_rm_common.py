@@ -111,6 +111,7 @@ except ImportError as exc:
 try:
     from enum import Enum
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import resource_id, is_valid_resource_id
     from msrestazure import azure_cloud
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, SecurityRule, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
@@ -152,6 +153,13 @@ def azure_id_to_dict(id):
     return result
 
 
+def format_resource_id(val, subscription_id, namespace, types, resource_group):
+    return resource_id(name=val,
+                       resource_group=resource_group,
+                       namespace=namespace,
+                       type=types,
+                       subscription=subscription_id) if not is_valid_resource_id(val) else val
+
 AZURE_PKG_VERSIONS = {
     StorageManagementClient.__name__: {
         'package_name': 'storage',
@@ -191,7 +199,7 @@ AZURE_MIN_RELEASE = '2.0.0'
 
 class AzureRMModuleBase(object):
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
-                 check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
+                 check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
                  required_if=None, supports_tags=True, facts_module=False, skip_exec=False):
 

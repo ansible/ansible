@@ -42,7 +42,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     description:
         description:
             - User defined description for the object.
@@ -92,6 +104,7 @@ options:
         description:
             - Cooldown period during which no new scalein is triggered to allow previous scalein to successfully complete.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+            - Units(SEC).
     scaleout_alertconfig_refs:
         description:
             - Trigger scaleout when alerts due to any of these alert configurations are raised.
@@ -100,6 +113,7 @@ options:
         description:
             - Cooldown period during which no new scaleout is triggered to allow previous scaleout to successfully complete.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+            - Units(SEC).
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -146,6 +160,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         description=dict(type='str',),
         intelligent_autoscale=dict(type='bool',),
         intelligent_scalein_margin=dict(type='int',),

@@ -23,39 +23,37 @@ options:
   password:
     description:
       - The password for the user account used to connect to the BIG-IP.
-        This option can be omitted if the environment variable C(F5_PASSWORD)
+        You can omit this option if the environment variable C(F5_PASSWORD)
         is set.
     required: true
   server:
     description:
-      - The BIG-IP host. This option can be omitted if the environment
+      - The BIG-IP host. You can omit this option if the environment
         variable C(F5_SERVER) is set.
     required: true
   server_port:
     description:
-      - The BIG-IP server port. This option can be omitted if the environment
+      - The BIG-IP server port. You can omit this option if the environment
         variable C(F5_SERVER_PORT) is set.
-    required: false
     default: 443
     version_added: 2.2
   user:
     description:
       - The username to connect to the BIG-IP with. This user must have
-        administrative privileges on the device. This option can be omitted
+        administrative privileges on the device. You can omit this option
         if the environment variable C(F5_USER) is set.
     required: true
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated. This should only be
-        used on personally controlled sites using self-signed certificates.
-        This option can be omitted if the environment variable
+      - If C(no), SSL certificates will not be validated. Use this only
+        on personally controlled sites using self-signed certificates.
+        You can omit this option if the environment variable
         C(F5_VALIDATE_CERTS) is set.
-    required: false
     default: yes
     choices:
       - yes
       - no
     version_added: 2.0
 notes:
-  - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/ansible-f5).
+  - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/integrations/networks/f5).
 '''
