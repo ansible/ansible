@@ -1528,10 +1528,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
             return account
-        sku = self.storage_accounts_models.Sku(self.storage_accounts_models.SkuName.standard_lrs)
-        sku.tier = self.storage_accounts_models.SkuTier.standard
-        kind = self.storage_accounts_models.Kind.storage
-        parameters = self.storage_accounts_models.StorageAccountCreateParameters(sku, kind, self.location)
+        sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
+        sku.tier = self.storage_models.SkuTier.standard
+        kind = self.storage_models.Kind.storage
+        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
