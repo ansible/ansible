@@ -25,30 +25,14 @@ version_added: "2.5"
 author: "Chris Houseknecht (@chouseknecht)"
 
 description:
-  - Similar to the `kubectl scale` command. Use to set the number of replicas for Deployment, ReplicatSet,
-    Replication Controller, and Job objects. 
+  - Similar to the oc scale command. Use to set the number of replicas for a Deployment, ReplicatSet,
+    or Replication Controller, or the parallelism attribute of a Job. Supports check mode.
 
-extends_documentation_fragment: kubernetes
-
-options:
-  replicas:
-    description:
-      - The desired number of replicas.
-  current_replicas:
-    description:
-      - Only attempt to scale, if the number of existing replicas matches.
-  resource_version:
-    description:
-      - Only attempt to scale, if the current object version matches.
-  wait:
-    description:
-      - Wait for the scaling operation to complete.
-    default: true
-  wait_time:
-    description:
-      - Number of seconds to wait for the scaling operation to complete. If the number of available replicas is not
-        reached within the allotted time, an error will result.
-    default: 30
+extends_documentation_fragment:
+  - k8s_name_options
+  - k8s_auth_options
+  - k8s_resource_options
+  - k8s_scale_options
 
 requirements:
     - "python >= 2.7"
@@ -58,7 +42,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Scale deployment config up
-  k8s_scale:
+  openshift_scale:
     api_version: v1
     kind: DeploymentConfig
     name: elastic
@@ -67,7 +51,7 @@ EXAMPLES = '''
     wait_time: 60
 
 - name: Scale deployment config down
-  k8s_scale:
+  openshift_scale:
     api_version: v1
     kind: DeploymentConfig
     name: elastic
@@ -75,7 +59,58 @@ EXAMPLES = '''
     replicas: 2
 
 - name: Scale deployment config from src file without waiting
-  k8s_scale:
+  openshift_scale:
+    src: /myproject/elastic_deployment.yml
+    replicas: 3
+    wait: no
+'''
+
+RETURN = '''
+result:
+  description:
+  - If a change was made, will be set to the patched object. Otherwise, will be set to the existing object.
+  returned: success
+  type: dict
+'''
+
+EXAMPLES = '''
+- name: Scale deployment config up
+  openshift_scale:
+    api_version: v1
+    kind: DeploymentConfig
+    name: elastic
+    namespace: myproject
+    replicas: 3
+
+- name: Scale deployment to 2 when current replicas is 3
+  openshift_scale:
+    api_version: v1
+    kind: DeploymentConfig
+    name: elastic
+    namespace: myproject
+    current_replicas: 3
+    replicas: 2
+
+- name: Scale current replicas when resource version matches
+  openshift_scale:
+    api_version: v1
+    kind: DeploymentConfig
+    name: elastic
+    namespace: myproject
+    resource_version: '31245'
+    replicas: 3
+
+# To use an API with '/' in the name, you will need 
+- name: Increase the parallelism for a job
+  openshift_scale:
+    api_version: batch/v1
+    kind: job
+    name: pi-with-timeout
+    namespace: testing
+    replicas: 2
+
+- name: Scale deployment config from src file without waiting
+  openshift_scale:
     src: /myproject/elastic_deployment.yml
     replicas: 3
     wait: no
@@ -85,14 +120,14 @@ EXAMPLES = '''
 RETURN = '''
 result:
   description:
-  - The patched object.
+  - If a change was made, will return the patched object, otherwise returns the existing object.
   returned: success
   type: dict
 '''
 
 
 def main():
-    OpenShiftAnsibleScaleModule().execute_scale()
+    OpenShiftAnsibleScaleModule().execute_module()
 
 
 if __name__ == '__main__':

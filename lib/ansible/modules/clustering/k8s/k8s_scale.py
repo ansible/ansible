@@ -25,28 +25,14 @@ version_added: "2.5"
 author: "Chris Houseknecht (@chouseknecht)"
 
 description:
-  - Similar to the `kubectl scale` command. Use to set the number of replicas for Deployment, ReplicatSet,
-    Replication Controller, and Job objects. 
+  - Similar to the kubectl scale command. Use to set the number of replicas for a Deployment, ReplicatSet,
+    or Replication Controller, or the parallelism attribute of a Job. Supports check mode.
 
-options:
-  replicas:
-    description:
-      - The desired number of replicas.
-  current_replicas:
-    description:
-      - Only attempt to scale, if the number of existing replicas matches.
-  resource_version:
-    description:
-      - Only attempt to scale, if the current object version matches.
-  wait:
-    description:
-      - Wait for the scaling operation to complete.
-    default: true
-  wait_time:
-    description:
-      - Number of seconds to wait for the scaling operation to complete. If the number of available replicas is not
-        reached within the allotted time, an error will result.
-    default: 30
+extends_documentation_fragment:
+  - k8s_name_options
+  - k8s_auth_options
+  - k8s_resource_options
+  - k8s_scale_options
 
 requirements:
     - "python >= 2.7"
@@ -77,20 +63,19 @@ EXAMPLES = '''
     src: /myproject/elastic_deployment.yml
     replicas: 3
     wait: no
-
 '''
 
 RETURN = '''
 result:
   description:
-  - The patched object.
+  - If a change was made, will return the patched object, otherwise returns the existing object.
   returned: success
   type: dict
 '''
 
 
 def main():
-    KubernetesAnsibleScaleModule().execute_scale()
+    KubernetesAnsibleScaleModule().execute_module()
 
 
 if __name__ == '__main__':

@@ -27,6 +27,7 @@ from ansible.module_utils.k8s.common import KubernetesAnsibleModule, OpenShiftAn
 from ansible.module_utils.k8s.helper import AUTH_ARG_SPEC, COMMON_ARG_SPEC
 
 try:
+    from kubernetes import watch
     from openshift.helper.exceptions import KubernetesException
 except ImportError as exc:
     class KubernetesException(Exception):
@@ -38,13 +39,13 @@ SCALE_ARG_SPEC = {
     'current_replicas': {'type': 'int'},
     'resource_version': {},
     'wait': {'type': 'bool', 'default': True},
-    'wait_time': {'type': 'int', 'default': 30}
+    'wait_timeout': {'type': 'int', 'default': 20}
 }
 
 
 class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
 
-    def execute_scale(self):
+    def execute_module(self):
         if self.resource_definition:
             resource_params = self.resource_to_parameters(self.resource_definition)
             self.params.update(resource_params)
@@ -56,48 +57,43 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
         current_replicas = self.params.get('current_replicas')
         replicas = self.params.get('replicas')
         resource_version = self.params.get('resource_version')
+
         wait = self.params.get('wait')
-        wait_time = self.params.get('wait_time')
-        replica_attribute = None
+        wait_time = self.params.get('wait_timeout')
         existing = None
+        existing_count = None
         return_attributes = dict(changed=False, result=dict())
 
         try:
             existing = self.helper.get_object(name, namespace)
+            return_attributes['result'] = existing.to_dict()
         except KubernetesException as exc:
             self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.message),
                            error=exc.value.get('status'))
 
-        existing_count = None
-        if hasattr(existing.status, 'available_replicas'):
-            replica_attribute = 'available_replicas'
-            existing_count = existing.status.available_replicas
-        elif hasattr(existing.status, 'active'):
-            replica_attribute = 'active'
-            existing_count = existing.status.active
-        elif hasattr(existing.status, 'availableReplicas'):
-            replica_attribute = 'availableReplicas'
-            existing_count = existing.status.availableReplicas
+        if self.kind == 'job':
+            existing_count = existing.spec.parallelism
+        elif hasattr(existing.spec, 'replicas'):
+            existing_count = existing.spec.replicas
 
         if existing_count is None:
             self.fail_json(msg='Failed to retrieve the available count for the requested object.')
 
-        existing_version = None
-        if hasattr(existing.status, 'latest_version'):
-            existing_version = existing.status.latest_version
-        if existing_version is None and resource_version is not None:
-            self.fail_json(
-                msg="Existing {0}, {1}, does not have a 'latest_version' attribute. Cannot honor 'latest_version' "
-                    "option.".format(self.kind, name)
-            )
-        if resource_version and resource_version != existing_version:
+        if resource_version and resource_version != existing.metadata.resource_version:
+            self.exit_json(**return_attributes)
+
+        if current_replicas is not None and existing_count != current_replicas:
             self.exit_json(**return_attributes)
 
         if existing_count != replicas:
-            if (current_replicas is None) or (current_replicas is not None and existing_count == current_replicas):
-                k8s_obj = self._scale(existing, replicas, wait, wait_time, replica_attribute)
+            return_attributes['changed'] = True
+            if not self.check_mode:
+                if self.kind == 'job':
+                    existing.spec.parallelism = replicas
+                    k8s_obj = self.helper.patch_object(name, namespace, existing)
+                else:
+                    k8s_obj = self.scale(existing, replicas, wait, wait_time)
                 return_attributes['result'] = k8s_obj.to_dict()
-                return_attributes['changed'] = True
 
         self.exit_json(**return_attributes)
 
@@ -109,7 +105,7 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
                 continue
             elif key == 'metadata' and isinstance(value, dict):
                 for meta_key, meta_value in iteritems(value):
-                    if meta_key in ('name', 'namespace'):
+                    if meta_key in ('name', 'namespace', 'resourceVersion'):
                         parameters[meta_key] = meta_value
         return parameters
 
@@ -122,7 +118,7 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
         args.update(SCALE_ARG_SPEC)
         return args
 
-    def _scale(self, existing_object, replicas, wait, wait_time, replica_attribute):
+    def scale(self, existing_object, replicas, wait, wait_time):
         name = existing_object.metadata.name
         namespace = existing_object.metadata.namespace
         method_name = 'patch_namespaced_{0}_scale'.format(self.kind)
@@ -133,8 +129,7 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
             method = self.helper.lookup_method(method_name=method_name)
         except KubernetesException:
             self.fail_json(
-                msg="Failed to get method {0}. Is 'scale' a valid operation for {1}?".format(method_name,
-                                                                                             self.kind)
+                msg="Failed to get method {0}. Is 'scale' a valid operation for {1}?".format(method_name, self.kind)
             )
 
         try:
@@ -160,26 +155,82 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
         )()
         scale_obj.spec.replicas = replicas
 
+        return_obj = None
+        stream = None
+
+        if wait:
+            w, stream = self._create_stream(namespace, wait_time)
+
         try:
             method(name, namespace, scale_obj)
         except Exception as exc:
             self.fail_json(
-                msg="Scale request failed: {0}".format(exc)
+                msg="Scale request failed: {0}".format(exc.message)
             )
 
-        return_obj = self.helper._wait_for_response(name, namespace, 'patch')
-        if wait:
-            limit_cnt = math.ceil(wait_time / 2)
-            cnt = 0
-            while getattr(return_obj.status, replica_attribute) != replicas and cnt < limit_cnt:
-                time.sleep(2)
-                cnt += 1
-                return_obj = self.helper._wait_for_response(name, namespace, 'patch')
+        if wait and stream is not None:
+            return_obj = self._read_stream(w, stream, name, replicas)
 
-            if getattr(return_obj.status, replica_attribute) != replicas:
-                self.fail_json(msg="The scaling operation failed to complete within the allotted wait time.")
+        if not return_obj:
+            return_obj = self._wait_for_response(name, namespace)
 
-        return self.helper.fix_serialization(return_obj)
+        return return_obj
+
+    def _create_stream(self, namespace, wait_time):
+        """ Create a stream of events for the object """
+        w = None
+        stream = None
+        try:
+            list_method = self.helper.lookup_method('list', namespace)
+            w = watch.Watch()
+            w._api_client = self.helper.api_client
+            if namespace:
+                stream = w.stream(list_method, namespace, timeout_seconds=wait_time)
+            else:
+                stream = w.stream(list_method, timeout_seconds=wait_time)
+        except KubernetesException:
+            pass
+        except Exception:
+            raise
+        return w, stream
+
+    def _read_stream(self, watcher, stream, name, replicas):
+        """ Wait for ready_replicas to equal the requested number of replicas. """
+        return_obj = None
+        try:
+            for event in stream:
+                if event.get('object'):
+                    obj = event['object']
+                    if obj.metadata.name == name and hasattr(obj, 'status'):
+                        if hasattr(obj.status, 'ready_replicas') and obj.status.ready_replicas == replicas:
+                            return_obj = obj
+                            watcher.stop()
+                            break
+        except Exception as exc:
+            self.fail_json(msg="Exception reading event stream: {0}".format(exc.message))
+
+        if not return_obj:
+            self.fail_json(msg="Error fetching the patched object. Try a higher wait_timeout value.")
+        if return_obj.status.ready_replicas is None:
+            self.fail_json(msg="Failed to fetch the number of ready replicas. Try a higher wait_timeout value.")
+        if return_obj.status.ready_replicas != replicas:
+            self.fail_json(msg="Number of ready replicas is {0}. Failed to reach {1} ready replicas within "
+                               "the wait_timeout period.".format(return_obj.status.ready_replicas, replicas))
+        return return_obj
+
+    def _wait_for_response(self, name, namespace):
+        """ Wait for an API response """
+        tries = 0
+        half = math.ceil(20 / 2)
+        obj = None
+
+        while tries <= half:
+            obj = self.helper.get_object(name, namespace)
+            if obj:
+                break
+            tries += 2
+            time.sleep(2)
+        return obj
 
 
 class OpenShiftAnsibleScaleModule(KubernetesAnsibleScaleModule):
