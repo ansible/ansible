@@ -754,9 +754,9 @@ class AzureRMModuleBase(object):
         return self._storage_client
 
     @property
-    def storage_accounts_models(self):
+    def storage_models(self):
         self.log('Getting storage models...')
-        return self.storage_client.storage_accounts.models
+        return StorageManagementClient.models("2017-10-01")
 
     @property
     def network_client(self):
