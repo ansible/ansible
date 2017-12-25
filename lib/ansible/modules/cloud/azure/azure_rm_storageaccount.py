@@ -351,7 +351,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
             if self.results['changed'] and not self.check_mode:
                 new_domain = self.storage_models.CustomDomain(name=self.custom_domain['name'],
-                                          use_sub_domain=self.custom_domain['use_sub_domain'])
+                                                              use_sub_domain=self.custom_domain['use_sub_domain'])
                 parameters = self.storage_models.StorageAccountUpdateParameters(custom_domain=new_domain)
                 try:
                     self.storage_client.storage_accounts.update(self.resource_group, self.name, parameters)
@@ -410,7 +410,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         sku.tier = self.storage_models.SkuTier.standard if 'Standard' in self.account_type else \
             self.storage_models.SkuTier.premium
         parameters = self.storage_models.StorageAccountCreateParameters(sku, self.kind, self.location,
-                                                                                 tags=self.tags, access_tier=self.access_tier)
+                                                                        tags=self.tags, access_tier=self.access_tier)
         self.log(str(parameters))
         try:
             poller = self.storage_client.storage_accounts.create(self.resource_group, self.name, parameters)
