@@ -606,8 +606,6 @@ try:
         DiskCreateOptionTypes, Plan, SubResource
     from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
         NetworkInterfaceIPConfiguration, Subnet
-    from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
-    from azure.mgmt.storage.models import Kind, SkuTier, SkuName
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -1530,10 +1528,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
             return account
-        sku = Sku(SkuName.standard_lrs)
-        Sku.tier = SkuTier.standard
-        kind = Kind.storage
-        parameters = StorageAccountCreateParameters(sku, kind, self.location)
+        sku = self.storage_accounts_models.Sku(self.storage_accounts_models.SkuName.standard_lrs)
+        sku.tier = self.storage_accounts_models.SkuTier.standard
+        kind = self.storage_accounts_models.Kind.storage
+        parameters = self.storage_accounts_models.StorageAccountCreateParameters(sku, kind, self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
