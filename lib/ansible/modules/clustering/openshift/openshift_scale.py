@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ansible.module_utils.k8s.scale import OpenShiftAnsibleScaleModule
 
 __metaclass__ = type
 
@@ -100,7 +99,7 @@ EXAMPLES = '''
     resource_version: '31245'
     replicas: 3
 
-# To use an API with '/' in the name, you will need 
+# To use an API with '/' in the name, you will need
 - name: Increase the parallelism for a job
   openshift_scale:
     api_version: batch/v1
@@ -124,6 +123,8 @@ result:
   returned: success
   type: dict
 '''
+
+from ansible.module_utils.k8s.scale import OpenShiftAnsibleScaleModule
 
 
 def main():

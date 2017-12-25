@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from ansible.module_utils.k8s.scale import KubernetesAnsibleScaleModule
 
 __metaclass__ = type
 
@@ -72,6 +71,8 @@ result:
   returned: success
   type: dict
 '''
+
+from ansible.module_utils.k8s.scale import KubernetesAnsibleScaleModule
 
 
 def main():
