@@ -134,7 +134,7 @@ class KubernetesAnsibleModule(AnsibleModule):
             helper.get_model(api_version, kind)
             return helper
         except KubernetesException as exc:
-            self.fail_json(msg="Error initializing module helper {0}".format(exc.message))
+            self.fail_json(msg="Error initializing module helper: {0}".format(exc.message))
 
     def execute_module(self):
         if self.resource_definition:
@@ -355,7 +355,7 @@ class OpenShiftAnsibleModule(KubernetesAnsibleModule):
             helper.get_model(api_version, kind)
             return helper
         except KubernetesException as exc:
-            self.exit_json(msg="Error initializing module helper {}".format(exc.message))
+            self.fail_json(msg="Error initializing module helper: {0}".format(exc.message))
 
     def _create(self, namespace):
         if self.kind.lower() == 'project':
