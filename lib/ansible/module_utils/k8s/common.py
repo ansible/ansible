@@ -21,6 +21,9 @@ from __future__ import absolute_import, division, print_function
 import os
 import re
 import copy
+import json
+
+from datetime import datetime
 
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
@@ -51,6 +54,14 @@ try:
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    # When using json.dumps() with K8s object, pass cls=DateTimeEncoder to handle any datetime objects
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return json.JSONEncoder.default(self, o)
 
 
 class KubernetesAnsibleModuleHelper(AnsibleMixin, KubernetesObjectHelper):
@@ -196,7 +207,7 @@ class KubernetesAnsibleModule(AnsibleModule):
                 self.helper.object_from_params(self.params, obj=k8s_obj)
             except KubernetesException as exc:
                 self.fail_json(msg="Failed to patch object: {0}".format(exc.message))
-            match, diff = self.helper.objects_match(existing, k8s_obj)
+            match, diff = self.helper.objects_match(self.helper.fix_serialization(existing), k8s_obj)
             if match:
                 return_attributes['result'] = existing.to_dict()
                 self.exit_json(**return_attributes)
