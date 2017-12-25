@@ -25,7 +25,7 @@ from abc import ABCMeta, abstractmethod
 from functools import wraps
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 
 try:
@@ -45,8 +45,8 @@ except ImportError:
 def enable_mode(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        prompt = self.get_prompt()
-        if not str(prompt).strip().endswith('#'):
+        prompt = self._connection.get_prompt()
+        if not to_text(prompt, errors='surrogate_or_strict').strip().endswith('#'):
             raise AnsibleError('operation requires privilege escalation')
         return func(self, *args, **kwargs)
     return wrapped
