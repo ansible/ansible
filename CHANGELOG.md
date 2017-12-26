@@ -123,8 +123,15 @@ Ansible Changes By Release
   * vr_ssh_key
 
 #### Clustering
-  * k8s
-  * openshift
+- k8s
+  * k8s_raw
+- openshift
+  * openshift_raw
+
+#### Database
+- influxdb
+  * influxdb_query
+  * influxdb_write
 
 #### Identity
 - ipa
@@ -148,6 +155,7 @@ Ansible Changes By Release
   * enos_config
   * enos_facts
 - eos
+  * eos_linkagg
   * eos_static_route
 - f5
   * bigip_asm_policy
@@ -185,7 +193,12 @@ Ansible Changes By Release
 - nso
   * nso_action
   * nso_config
+  * nso_query
+  * nso_show
   * nso_verify
+- nxos
+  * nxos_l3_interface
+  * nxos_linkagg
 - radware
   * vdirect_commit
   * vdirect_runnable
@@ -212,6 +225,10 @@ Ansible Changes By Release
   * oneview_san_manager_facts
 - ucs
   * ucs_macpool
+  * ucs_san_connectivity
+  * ucs_vhba_template
+  * ucs_vsans
+  * ucs_wwn_pool
 
 #### System
   * mksysb
@@ -220,9 +237,9 @@ Ansible Changes By Release
 #### Windows
   * win_audit_policy_system
   * win_audit_rule
+  * win_disk_facts
   * win_scheduled_task_stat
   * win_whoami
-  * win_disk_facts
 
 <a id="2.4.1"></a>
 
