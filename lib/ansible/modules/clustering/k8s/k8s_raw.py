@@ -29,7 +29,7 @@ description:
     files and using Jinja templates.
   - Access to the full range of K8s APIs.
   - Authenticate using either a config file, certificates, password or token.
-  - Supports check mode, and the diff option.
+  - Supports check mode.
 
 extends_documentation_fragment:
   - k8s_state_options
@@ -124,19 +124,32 @@ result:
   description:
   - The created, patched, or otherwise present object. Will be empty in the case of a deletion.
   returned: success
-  type: dict
-request:
-  description:
-  - The object sent to the API. Useful for troubleshooting unexpected differences and 404 errors.
-  returned: when diff is true
-  type: dict
-diff:
-  description:
-  - List of differences found when determining if an existing object will be patched. A copy of the existing object
-    is updated with the requested options, and the updated object is then compared to the original. If there are
-    differences, they will appear here.
-  returned: when diff is true
-  type: list
+  type: complex
+  contains:
+     api_version:
+       description: The versioned schema of this representation of an object.
+       returned: success
+       type: str
+     kind:
+       description: Represents the REST resource this object represents.
+       returned: success
+       type: str
+     metadata:
+       description: Standard object metadata. Includes name, namespace, annotations, labels, etc.
+       returned: success
+       type: complex
+     spec:
+       description: Specific attributes of the object. Will vary based on the I(api_version) and I(kind).
+       returned: success
+       type: complex
+     status:
+       description: Current status details for the object.
+       returned: success
+       type: complex
+     items:
+       description: Returned only when the I(kind) is a List type resource. Contains a set of objects.
+       returned: when resource is a List
+       type: list
 '''
 
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
