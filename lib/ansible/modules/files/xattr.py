@@ -77,7 +77,7 @@ import re
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 def get_xattr_keys(module, path, follow):
@@ -134,9 +134,8 @@ def _run_xattr(module, cmd, check_rc=True):
 
     try:
         (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="%s!" % e.strerror)
+    except Exception as e:
+        module.fail_json(msg="%s!" % to_native(e))
 
     # result = {'raw': out}
     result = {}
@@ -209,6 +208,7 @@ def main():
         msg = "returning %s" % key
 
     module.exit_json(changed=changed, msg=msg, xattr=res)
+
 
 if __name__ == '__main__':
     main()

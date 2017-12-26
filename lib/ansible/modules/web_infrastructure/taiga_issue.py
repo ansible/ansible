@@ -117,7 +117,8 @@ EXAMPLES = '''
 RETURN = '''# '''
 from os import getenv
 from os.path import isfile
-
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 try:
     from taiga import TaigaAPI
     from taiga.exceptions import TaigaException
@@ -235,9 +236,8 @@ def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority
             # More than 1 matching issue
             return (False, changed, "More than one issue with subject %s in project %s" % (issue_subject, project_name), {})
 
-    except TaigaException:
-        exc = get_exception()
-        msg = "An exception happened: %s" % exc
+    except TaigaException as exc:
+        msg = "An exception happened: %s" % to_native(exc)
         return (False, changed, msg, {})
 
 
@@ -306,9 +306,6 @@ def main():
     else:
         module.fail_json(msg=msg)
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

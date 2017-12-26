@@ -81,7 +81,7 @@ import tempfile
 import errno
 import re
 
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -132,8 +132,7 @@ def enforce_state(module, params):
     if replace_or_add or found != (state == "present"):
         try:
             inf = open(path, "r")
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 inf = None
             else:
@@ -150,9 +149,8 @@ def enforce_state(module, params):
                 outf.write(key)
             outf.flush()
             module.atomic_move(outf.name, path)
-        except (IOError, OSError):
-            e = get_exception()
-            module.fail_json(msg="Failed to write to file %s: %s" % (path, str(e)))
+        except (IOError, OSError) as e:
+            module.fail_json(msg="Failed to write to file %s: %s" % (path, to_native(e)))
 
         try:
             outf.close()
@@ -185,10 +183,9 @@ def sanity_check(module, host, key, sshkeygen):
         outf = tempfile.NamedTemporaryFile(mode='w+')
         outf.write(key)
         outf.flush()
-    except IOError:
-        e = get_exception()
+    except IOError as e:
         module.fail_json(msg="Failed to write to temporary file %s: %s" %
-                             (outf.name, str(e)))
+                             (outf.name, to_native(e)))
 
     sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
     rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=True)
@@ -299,8 +296,7 @@ def compute_diff(path, found_line, replace_or_add, state, key):
     }
     try:
         inf = open(path, "r")
-    except IOError:
-        e = get_exception()
+    except IOError as e:
         if e.errno == errno.ENOENT:
             diff['before_header'] = '/dev/null'
     else:
@@ -330,6 +326,7 @@ def main():
 
     results = enforce_state(module, module.params)
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()
