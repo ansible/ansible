@@ -40,19 +40,19 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Scale deployment config up, and extend timeout
+- name: Scale deployment up, and extend timeout
   k8s_scale:
     api_version: v1
-    kind: DeploymentConfig
+    kind: Deployment
     name: elastic
     namespace: myproject
     replicas: 3
     wait_timeout: 60
 
-- name: Scale deployment config down when current replicas match
+- name: Scale deployment down when current replicas match
   k8s_scale:
     api_version: v1
-    kind: DeploymentConfig
+    kind: Deployment
     name: elastic
     namespace: myproject
     current_replicas: 3
