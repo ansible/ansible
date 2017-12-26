@@ -163,7 +163,7 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aos.aos import get_aos_session, find_collection_item, check_aos_version
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import yaml
@@ -238,10 +238,9 @@ def blueprint_param_present(module, aos, blueprint, param, param_value):
         if not module.check_mode:
             try:
                 param.value = param_value
-            except:
-                exc = get_exception()
-                module.fail_json(msg='unable to write to param %s: %r' %
-                                     (margs['name'], exc))
+            except Exception as exc:
+                module.fail_json(msg='unable to write to param %s: %s' %
+                                     (margs['name'], to_native(exc)))
 
         module.exit_json(changed=True,
                          blueprint=blueprint.name,
@@ -265,9 +264,8 @@ def blueprint_param_absent(module, aos, blueprint, param, param_value):
         if not module.check_mode:
             try:
                 param.value = {}
-            except:
-                exc = get_exception()
-                module.fail_json(msg='Unable to write to param %s: %r' % (margs['name'], exc))
+            except Exception as exc:
+                module.fail_json(msg='Unable to write to param %s: %s' % (margs['name'], to_native(exc)))
 
         module.exit_json(changed=True,
                          blueprint=blueprint.name,

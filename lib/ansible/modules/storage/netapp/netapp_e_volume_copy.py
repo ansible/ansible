@@ -98,7 +98,7 @@ msg:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.netapp import request
 
 HEADERS = {
@@ -284,9 +284,8 @@ def main():
     if params['search_volume_id'] is not None:
         try:
             potential_targets, potential_sources = find_valid_copy_pair_targets_and_sources(params)
-        except:
-            e = get_exception()
-            module.fail_json(msg="Failed to find valid copy pair candidates. Error [%s]" % str(e))
+        except Exception as e:
+            module.fail_json(msg="Failed to find valid copy pair candidates. Error [%s]" % to_native(e))
 
         module.exit_json(changed=False,
                          msg=' Valid source devices found: %s Valid target devices found: %s' % (len(potential_sources), len(potential_targets)),

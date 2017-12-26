@@ -101,7 +101,7 @@ from time import sleep
 
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -114,8 +114,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
+    except HTTPError as err:
         r = err.fp
 
     try:
@@ -208,9 +207,8 @@ def main():
         (rc, resp) = request(api_url + "/storage-systems/%s" % ssid, headers=dict(Accept="application/json"),
                              url_username=api_usr, url_password=api_pwd, validate_certs=validate_certs,
                              ignore_errors=True)
-    except:
-        err = get_exception()
-        module.fail_json(msg="Error accessing storage-system with id [%s]. Error [%s]" % (ssid, str(err)))
+    except Exception as err:
+        module.fail_json(msg="Error accessing storage-system with id [%s]. Error [%s]" % (ssid, to_native(err)))
 
     array_exists = True
     array_detail = resp
@@ -260,10 +258,9 @@ def main():
                 try:
                     (rc, resp) = do_post(ssid, api_url, post_headers, api_usr, api_pwd, validate_certs, request_data,
                                          array_status_timeout_sec)
-                except:
-                    err = get_exception()
+                except Exception as err:
                     module.fail_json(msg="Failed to add storage system. Id[%s]. Request body [%s]. Error[%s]." %
-                                         (ssid, request_data, str(err)))
+                                         (ssid, request_data, to_native(err)))
 
             else:  # array exists, modify...
                 post_headers = dict(Accept="application/json")
@@ -278,10 +275,9 @@ def main():
                 try:
                     (rc, resp) = do_post(ssid, api_url, post_headers, api_usr, api_pwd, validate_certs, post_body,
                                          array_status_timeout_sec)
-                except:
-                    err = get_exception()
+                except Exception as err:
                     module.fail_json(msg="Failed to update storage system. Id[%s]. Request body [%s]. Error[%s]." %
-                                         (ssid, post_body, str(err)))
+                                         (ssid, post_body, to_native(err)))
 
         elif state == 'absent':
             # delete the array
@@ -289,9 +285,8 @@ def main():
                 (rc, resp) = request(api_url + "/storage-systems/%s" % ssid, method='DELETE',
                                      url_username=api_usr,
                                      url_password=api_pwd, validate_certs=validate_certs)
-            except:
-                err = get_exception()
-                module.fail_json(msg="Failed to remove storage array. Id[%s]. Error[%s]." % (ssid, str(err)))
+            except Exception as err:
+                module.fail_json(msg="Failed to remove storage array. Id[%s]. Error[%s]." % (ssid, to_native(err)))
 
             if rc == 422:
                 module.exit_json(changed=changed, msg="Storage system was not presnt.")
