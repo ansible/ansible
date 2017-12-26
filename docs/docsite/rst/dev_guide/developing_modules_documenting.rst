@@ -382,8 +382,8 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 
    The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
-Formatting options
-------------------
+Formatting functions
+--------------------
 
 These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values and ``M()`` for module names.
 Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.
