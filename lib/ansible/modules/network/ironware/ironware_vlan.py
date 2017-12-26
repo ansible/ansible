@@ -33,6 +33,11 @@ options:
   interfaces:
     description:
       - List of interfaces that should be associated to the VLAN.
+  vlan_tagging:
+    description:
+      - Specify whether interfaces should be added as tagged or untagged members of VLAN.
+    default: tagged
+    choices: ['tagged', 'untagged']
   delay:
     description:
       - Delay the play should wait to check for declarative intent params values.
@@ -70,6 +75,15 @@ EXAMPLES = """
     aggregate:
       - vlan_id: 4000
       - {vlan_id: 4001, name: vlan-4001}
+
+- name: Create vlans with a mix of tagged and untagged ports
+  ironware_vlan:
+    aggregate:
+      - {vlan_id: 100, vlan_tagging: tagged, interfaces: ['1/1']}
+      - {vlan_id: 100, vlan_tagging: untagged, interfaces: ['2/1', '2/2']}
+      - {vlan_id: 200, vlan_tagging: tagged, interfaces: ['1/1']}
+      - {vlan_id: 200, vlan_tagging: untagged, interfaces: ['2/3', '2/4']}
+
 """
 
 RETURN = """
@@ -87,9 +101,10 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ironware import load_config, run_commands
-from ansible.module_utils.ironware import ironware_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.ironware.ironware import load_config, run_commands
+from ansible.module_utils.network.ironware.ironware import ironware_argument_spec, check_args
+from ansible.module_utils.six import iteritems
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -119,7 +134,7 @@ def map_obj_to_commands(updates, module):
 
                 if w['interfaces']:
                     for i in w['interfaces']:
-                        commands.append('untagged ethe %s' % i)
+                        commands.append('%s ethe %s' % (w['vlan_tagging'], i))
             else:
                 if w['name'] and w['name'] != obj_in_have['name']:
                     commands.append('vlan %s name %s' % (w['vlan_id'], w['name']))
@@ -128,17 +143,18 @@ def map_obj_to_commands(updates, module):
                     if not obj_in_have['interfaces']:
                         for i in w['interfaces']:
                             commands.append('vlan %s' % w['vlan_id'])
-                            commands.append('untagged ethe %s' % i)
+                            commands.append('%s ethe %s' % (w['vlan_tagging'], i))
                     elif set(w['interfaces']) != obj_in_have['interfaces']:
                         missing_interfaces = list(set(w['interfaces']) - set(obj_in_have['interfaces']))
                         for i in missing_interfaces:
                             commands.append('vlan %s' % w['vlan_id'])
-                            commands.append('untagged ethe %s' % i)
+                            commands.append('%s ethe %s' % (w['vlan_tagging'], i))
 
                         superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(w['interfaces']))
                         for i in superfluous_interfaces:
                             commands.append('vlan %s' % w['vlan_id'])
                             commands.append('no untagged ethe %s' % i)
+                            commands.append('no tagged ethe %s' % i)
 
     if purge:
         for h in have:
@@ -164,7 +180,7 @@ def map_config_to_obj(module):
             parsed[key] = line
 
     objs = list()
-    for key, value in parsed.iteritems():
+    for key, value in iteritems(parsed):
         value = value.strip().splitlines()
         obj = dict()
         obj['vlan_id'] = key
@@ -176,9 +192,12 @@ def map_config_to_obj(module):
         obj['state'] = 'active'
 
         obj['interfaces'] = list()
+        obj['vlan_tagging'] = 'untagged'
         for l in value:
             match = re.match(r'^(\d+\/\d+)\s+[A-Z]+\s+(TAGGED|UNTAGGED)\s+', l)
             if match:
+                if match.group(2).lower() == 'tagged':
+                    obj['vlan_tagging'] = 'tagged'
                 obj['interfaces'].append(match.group(1))
 
         objs.append(obj)
@@ -204,7 +223,8 @@ def map_params_to_obj(module):
             'vlan_id': str(module.params['vlan_id']),
             'name': module.params['name'],
             'state': module.params['state'],
-            'interfaces': module.params['interfaces']
+            'interfaces': module.params['interfaces'],
+            'vlan_tagging': module.params['vlan_tagging']
         })
 
     return obj
@@ -218,7 +238,6 @@ def check_declarative_intent_params(want, module):
         for w in want:
             for i in w['interfaces']:
                 obj_in_have = search_obj_in_list(w['vlan_id'], have)
-
                 if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
                     module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
 
@@ -230,6 +249,8 @@ def main():
         vlan_id=dict(type='int'),
         name=dict(),
         interfaces=dict(type='list'),
+        vlan_tagging=dict(default='tagged',
+                          choices=['tagged', 'untagged']),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent'])
@@ -255,8 +276,6 @@ def main():
                            supports_check_mode=True,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive)
-
-    check_args(module)
 
     result = {'changed': False}
 
