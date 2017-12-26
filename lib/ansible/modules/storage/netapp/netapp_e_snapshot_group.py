@@ -136,7 +136,7 @@ import json
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -149,8 +149,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
+    except HTTPError as err:
         r = err.fp
 
     try:
@@ -223,10 +222,9 @@ class SnapshotGroup(object):
         url = self.url + pools
         try:
             (rc, data) = request(url, headers=HEADERS, url_username=self.user, url_password=self.pwd)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Snapshot group module - Failed to fetch storage pools. " +
-                                      "Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                                      "Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
         for pool in data:
             if pool['name'] == self.storage_pool_name:
@@ -242,10 +240,9 @@ class SnapshotGroup(object):
         try:
             rc, data = request(url, headers=HEADERS, url_username=self.user, url_password=self.pwd,
                                validate_certs=self.certs)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Snapshot group module - Failed to fetch volumes. " +
-                                      "Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                                      "Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
         qty = 0
         for volume in data:
             if volume['name'] == self.base_volume_name:
@@ -269,10 +266,9 @@ class SnapshotGroup(object):
         try:
             rc, data = request(url, headers=HEADERS, url_username=self.user, url_password=self.pwd,
                                validate_certs=self.certs)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Failed to fetch snapshot groups. " +
-                                      "Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                                      "Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
         for ssg in data:
             if ssg['name'] == self.name:
                 self.ssg_data = ssg
@@ -305,12 +301,11 @@ class SnapshotGroup(object):
         try:
             rc, self.ssg_data = request(url, data=json.dumps(self.post_data), method='POST', headers=HEADERS,
                                         url_username=self.user, url_password=self.pwd, validate_certs=self.certs)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Failed to create snapshot group. " +
                                       "Snapshot group [%s]. Id [%s]. Error [%s]." % (self.name,
                                                                                      self.ssid,
-                                                                                     str(err)))
+                                                                                     to_native(err)))
 
         if not self.snapshot_group_id:
             self.snapshot_group_id = self.ssg_data['id']
@@ -332,12 +327,11 @@ class SnapshotGroup(object):
         try:
             rc, self.ssg_data = request(url, data=json.dumps(self.post_data), method='POST', headers=HEADERS,
                                         url_username=self.user, url_password=self.pwd, validate_certs=self.certs)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Failed to update snapshot group. " +
                                       "Snapshot group [%s]. Id [%s]. Error [%s]." % (self.name,
                                                                                      self.ssid,
-                                                                                     str(err)))
+                                                                                     to_native(err)))
 
     def apply(self):
         if self.state == 'absent':
@@ -347,12 +341,11 @@ class SnapshotGroup(object):
                         self.url + 'storage-systems/%s/snapshot-groups/%s' % (self.ssid, self.snapshot_group_id),
                         method='DELETE', headers=HEADERS, url_password=self.pwd, url_username=self.user,
                         validate_certs=self.certs)
-                except:
-                    err = get_exception()
+                except Exception as err:
                     self.module.fail_json(msg="Failed to delete snapshot group. " +
                                               "Snapshot group [%s]. Id [%s]. Error [%s]." % (self.name,
                                                                                              self.ssid,
-                                                                                             str(err)))
+                                                                                             to_native(err)))
                 self.module.exit_json(changed=True, msg="Snapshot group removed", **self.ssg_data)
             else:
                 self.module.exit_json(changed=False, msg="Snapshot group absent")

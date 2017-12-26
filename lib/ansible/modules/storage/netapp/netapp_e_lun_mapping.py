@@ -78,7 +78,7 @@ import json
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netapp import request, eseries_host_argument_spec
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -94,9 +94,8 @@ def get_host_and_group_map(module, ssid, api_url, user, pwd, validate_certs):
     try:
         hg_rc, hg_data = request(groups_url, headers=HEADERS, url_username=user, url_password=pwd,
                                  validate_certs=validate_certs)
-    except:
-        err = get_exception()
-        module.fail_json(msg="Failed to get host groups. Id [%s]. Error [%s]" % (ssid, str(err)))
+    except Exception as err:
+        module.fail_json(msg="Failed to get host groups. Id [%s]. Error [%s]" % (ssid, to_native(err)))
 
     for group in hg_data:
         mapping['group'][group['name']] = group['id']
@@ -106,9 +105,8 @@ def get_host_and_group_map(module, ssid, api_url, user, pwd, validate_certs):
     try:
         h_rc, h_data = request(hosts_url, headers=HEADERS, url_username=user, url_password=pwd,
                                validate_certs=validate_certs)
-    except:
-        err = get_exception()
-        module.fail_json(msg="Failed to get hosts. Id [%s]. Error [%s]" % (ssid, str(err)))
+    except Exception as err:
+        module.fail_json(msg="Failed to get hosts. Id [%s]. Error [%s]" % (ssid, to_native(err)))
 
     for host in h_data:
         mapping['host'][host['name']] = host['id']
@@ -150,10 +148,9 @@ def get_volumes(module, ssid, api_url, user, pwd, mappable, validate_certs):
     url = api_url + volumes
     try:
         rc, data = request(url, url_username=user, url_password=pwd, validate_certs=validate_certs)
-    except Exception:
-        err = get_exception()
+    except Exception as err:
         module.fail_json(
-            msg="Failed to mappable objects. Type[%s. Id [%s]. Error [%s]." % (mappable, ssid, str(err)))
+            msg="Failed to mappable objects. Type[%s. Id [%s]. Error [%s]." % (mappable, ssid, to_native(err)))
     return data
 
 

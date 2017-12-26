@@ -91,7 +91,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -196,11 +196,11 @@ def main():
 
         if changed and commit:
             xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     module.exit_json(changed=changed, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

@@ -128,7 +128,6 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.ismount import ismount
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -653,9 +652,8 @@ def main():
             if os.path.exists(name):
                 try:
                     os.rmdir(name)
-                except (OSError, IOError):
-                    e = get_exception()
-                    module.fail_json(msg="Error rmdir %s: %s" % (name, str(e)))
+                except (OSError, IOError) as e:
+                    module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
     elif state == 'unmounted':
         if ismount(name) or is_bind_mounted(module, linux_mounts, name):
             if not module.check_mode:
@@ -670,10 +668,9 @@ def main():
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
-            except (OSError, IOError):
-                e = get_exception()
+            except (OSError, IOError) as e:
                 module.fail_json(
-                    msg="Error making dir %s: %s" % (name, str(e)))
+                    msg="Error making dir %s: %s" % (name, to_native(e)))
 
         name, changed = set_mount(module, args)
         res = 0

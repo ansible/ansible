@@ -150,7 +150,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -345,9 +345,8 @@ def main():
 
         module.exit_json(changed=changed, msg="okey dokey")
 
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':

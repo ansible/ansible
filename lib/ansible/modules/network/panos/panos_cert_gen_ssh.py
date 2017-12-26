@@ -91,7 +91,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 import time
 
 try:
@@ -193,11 +193,11 @@ def main():
                                cert_friendly_name,
                                signed_by,
                                rsa_nbits)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except Exception as exc:
+        module.fail_json(msg=to_native(exc))
 
     module.exit_json(changed=True, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

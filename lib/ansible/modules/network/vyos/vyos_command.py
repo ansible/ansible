@@ -144,7 +144,7 @@ warnings:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import string_types
@@ -200,9 +200,8 @@ def main():
     wait_for = module.params['wait_for'] or list()
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    except AttributeError as exc:
+        module.fail_json(msg=to_native(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']

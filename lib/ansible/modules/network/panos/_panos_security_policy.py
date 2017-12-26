@@ -260,7 +260,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -508,9 +508,8 @@ def main():
         module.fail_json(msg='Rule with the same name but different objects exists.')
     try:
         changed = add_security_rule(device, sec_rule, rule_exist)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     if changed and commit:
         result = _commit(device, devicegroup)
