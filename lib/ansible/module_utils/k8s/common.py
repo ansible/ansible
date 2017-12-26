@@ -56,6 +56,20 @@ except ImportError:
     HAS_YAML = False
 
 
+def remove_secret_data(obj_dict):
+    """ Remove any sensitive data from a K8s dict"""
+    if obj_dict.get('data'):
+        # Secret data
+        obj_dict.pop('data')
+    if obj_dict.get('string_data'):
+        # The API should not return sting_data in Secrets, but just in case
+        obj_dict.pop('string_data')
+    if obj_dict['metadata'].get('annotations'):
+        # Remove things like 'openshift.io/token-secret' from metadata
+        for key in [k for k in obj_dict['metadata']['annotations'] if 'secret' in k]:
+            obj_dict['metadata']['annotations'].pop(key)
+
+
 class DateTimeEncoder(json.JSONEncoder):
     # When using json.dumps() with K8s object, pass cls=DateTimeEncoder to handle any datetime objects
     def default(self, o):
@@ -222,6 +236,17 @@ class KubernetesAnsibleModule(AnsibleModule):
             return_attributes['result'] = k8s_obj.to_dict()
             return_attributes['changed'] = True
             self.exit_json(**return_attributes)
+
+    def exit_json(self, **return_attributes):
+        """ Filter any sensitive data that we don't want logged """
+        if return_attributes.get('result') and \
+           return_attributes['result'].get('kind') in ('Secret', 'SecretList'):
+            if return_attributes['result'].get('data'):
+                remove_secret_data(return_attributes['result'])
+            elif return_attributes['result'].get('items'):
+                for item in return_attributes['result']['items']:
+                    remove_secret_data(item)
+        super(KubernetesAnsibleModule, self).exit_json(**return_attributes)
 
     def _authenticate(self):
         try:
