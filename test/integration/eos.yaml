@@ -121,6 +121,14 @@
             failed_modules: "{{ failed_modules }} + [ 'eos_linkagg' ]"
             test_failed: true
 
+    - block:
+      - include_role:
+          name: eos_l3_interface
+        when: "limit_to in ['*', 'eos_l3_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_l3_interface' ]"
+            test_failed: true
 
 ###########
     - debug: var=failed_modules
