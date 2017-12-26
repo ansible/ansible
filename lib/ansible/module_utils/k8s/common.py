@@ -167,9 +167,6 @@ class KubernetesAnsibleModule(AnsibleModule):
 
         return_attributes = dict(changed=False, result=dict())
 
-        if self._diff:
-            return_attributes['request'] = self.helper.request_body_from_params(self.params)
-
         if self.helper.base_model_name_snake.endswith('list'):
             k8s_obj = self._read(name, namespace)
             return_attributes['result'] = k8s_obj.to_dict()
@@ -225,8 +222,6 @@ class KubernetesAnsibleModule(AnsibleModule):
             if match:
                 return_attributes['result'] = existing.to_dict()
                 self.exit_json(**return_attributes)
-            elif self._diff:
-                return_attributes['differences'] = diff
             # Differences exist between the existing obj and requested params
             if not self.check_mode:
                 try:
