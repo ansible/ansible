@@ -1,0 +1,34 @@
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_interface intent test"
+
+- set_fact: test_interface="{{ nxos_int2 }}"
+
+- name: Check intent arguments
+  nxos_interface:
+    name: "{{ test_interface }}"
+    admin_state: up
+    tx_rate: ge(0)
+    rx_rate: ge(0)
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  nxos_interface:
+    name: "{{ test_interface }}"
+    admin_state: down
+    tx_rate: gt(0)
+    rx_rate: lt(0)
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'tx_rate gt(0)' in result.failed_conditions"
+      - "'rx_rate lt(0)' in result.failed_conditions"
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_interface intent test"

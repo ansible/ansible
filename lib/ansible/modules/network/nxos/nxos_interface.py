@@ -632,11 +632,15 @@ def check_declarative_intent_params(module, want):
         time.sleep(module.params['delay'])
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
-        out = run_commands(module, cmd, check_rc=False)
-
+        output = run_commands(module, cmd, check_rc=False)
+        if output:
+            out = output[0]
+        else:
+            out = ''
         if want_tx_rate:
-            match = re.search(r'%s (\d+)' % 'output rate', out, re.M)
+            match = re.search(r'output rate (\d+)', out, re.M)
             have_tx_rate = None
+
             if match:
                 have_tx_rate = match.group(1)
 
@@ -644,8 +648,9 @@ def check_declarative_intent_params(module, want):
                 failed_conditions.append('tx_rate ' + want_tx_rate)
 
         if want_rx_rate:
-            match = re.search(r'%s (\d+)' % 'input rate', out, re.M)
+            match = re.search(r'input rate (\d+)', out, re.M)
             have_rx_rate = None
+
             if match:
                 have_rx_rate = match.group(1)
 
@@ -657,7 +662,11 @@ def check_declarative_intent_params(module, want):
             have_port = []
             if have_neighbors is None:
                 cmd = [{'command': 'show lldp neighbors interface {0} detail'.format(w['name']), 'output': 'text'}]
-                have_neighbors = run_commands(module, cmd, check_rc=False)
+                output = run_commands(module, cmd, check_rc=False)
+                if output:
+                    have_neighbors = output[0]
+                else:
+                    have_neighbors = ''
                 if have_neighbors and 'Total entries displayed: 0' not in have_neighbors:
                     for line in have_neighbors.strip().split('\n'):
                         if line.startswith('Port Description'):
