@@ -40,26 +40,49 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Scale deployment config up
+- name: Scale deployment config up, and extend timeout
   k8s_scale:
     api_version: v1
     kind: DeploymentConfig
     name: elastic
     namespace: myproject
     replicas: 3
-    wait_time: 60
+    wait_timeout: 60
 
-- name: Scale deployment config down
+- name: Scale deployment config down when current replicas match
   k8s_scale:
     api_version: v1
     kind: DeploymentConfig
     name: elastic
     namespace: myproject
+    current_replicas: 3
     replicas: 2
 
-- name: Scale deployment config from src file without waiting
+- name: Increase job parallelism
+  k8s_scale:
+    api_version: batch/v1
+    kind: job
+    name: pi-with-timeout
+    namespace: testing
+    replicas: 2
+
+# Match object using local file or inline definition
+
+- name: Scale deployment based on a file from the local filesystem
   k8s_scale:
     src: /myproject/elastic_deployment.yml
+    replicas: 3
+    wait: no
+
+- name: Scale deployment based on a template output
+  k8s_scale:
+    resource_definition: "{{ lookup('template', '/myproject/elastic_deployment.yml') | from_yaml }}"
+    replicas: 3
+    wait: no
+
+- name: Scale deployment based on a file from the Ansible controller filesystem
+  k8s_scale:
+    resource_definition: "{{ lookup('file', '/myproject/elastic_deployment.yml') | from_yaml }}"
     replicas: 3
     wait: no
 '''
@@ -69,7 +92,28 @@ result:
   description:
   - If a change was made, will return the patched object, otherwise returns the existing object.
   returned: success
-  type: dict
+  type: complex
+  contains:
+     api_version:
+       description: The versioned schema of this representation of an object.
+       returned: success
+       type: str
+     kind:
+       description: Represents the REST resource this object represents.
+       returned: success
+       type: str
+     metadata:
+       description: Standard object metadata. Includes name, namespace, annotations, labels, etc.
+       returned: success
+       type: complex
+     spec:
+       description: Specific attributes of the object. Will vary based on the I(api_version) and I(kind).
+       returned: success
+       type: complex
+     status:
+       description: Current status details for the object.
+       returned: success
+       type: complex
 '''
 
 from ansible.module_utils.k8s.scale import KubernetesAnsibleScaleModule
