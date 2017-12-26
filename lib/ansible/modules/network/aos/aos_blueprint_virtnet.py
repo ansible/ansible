@@ -84,8 +84,8 @@ EXAMPLES = '''
 
 import json
 
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.aos.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
 
@@ -103,9 +103,8 @@ def ensure_present(module, aos, blueprint, virtnet):
         if not module.check_mode:
             try:
                 virtnet.create(module.params['content'])
-            except:
-                e = get_exception()
-                module.fail_json(msg="unable to create virtual-network : %r" % e)
+            except Exception as e:
+                module.fail_json(msg="unable to create virtual-network : %s" % to_native(e))
 
         module.exit_json(changed=True,
                          blueprint=blueprint.name,
@@ -120,9 +119,8 @@ def ensure_absent(module, aos, blueprint, virtnet):
         if not module.check_mode:
             try:
                 virtnet.delete()
-            except:
-                e = get_exception()
-                module.fail_json(msg="unable to delete virtual-network %s : %r" % (virtnet.name, e))
+            except Exception as e:
+                module.fail_json(msg="unable to delete virtual-network %s : %s" % (virtnet.name, to_native(e)))
 
         module.exit_json(changed=True,
                          blueprint=blueprint.name)
@@ -213,6 +211,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     blueprint_virtnet(module)
+
 
 if __name__ == '__main__':
     main()

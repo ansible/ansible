@@ -134,7 +134,6 @@ build_errors:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aos.aos import get_aos_session, check_aos_version, find_collection_item
-from ansible.module_utils.pycompat24 import get_exception
 
 
 def create_blueprint(module, aos, name):
@@ -149,8 +148,7 @@ def create_blueprint(module, aos, name):
         blueprint = aos.Blueprints[name]
         blueprint.create(template_id, reference_arch=margs['reference_arch'])
 
-    except:
-        exc = get_exception()
+    except Exception as exc:
         msg = "Unable to create blueprint: %s" % exc.message
         if 'UNPROCESSABLE ENTITY' in exc.message:
             msg += ' (likely missing dependencies)'
@@ -170,8 +168,7 @@ def ensure_absent(module, aos, blueprint):
         if not module.check_mode:
             try:
                 blueprint.delete()
-            except:
-                exc = get_exception()
+            except Exception as exc:
                 module.fail_json(msg='Unable to delete blueprint, %s' % exc.message)
 
         module.exit_json(changed=True,
@@ -293,6 +290,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     aos_blueprint(module)
+
 
 if __name__ == '__main__':
     main()

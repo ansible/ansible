@@ -107,7 +107,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 try:
     from pandevice import base
@@ -183,8 +184,7 @@ def add_address_group(device, dev_group, ag_object):
     exc = None
     try:
         ag_object.create()
-    except Exception:
-        exc = get_exception()
+    except Exception as exc:
         return False, exc
 
     return True, exc
@@ -204,8 +204,7 @@ def delete_address_group(device, dev_group, obj_name):
     if static_obj:
         try:
             static_obj.delete()
-        except Exception:
-            exc = get_exception()
+        except Exception as exc:
             return False, exc
         return True, None
     else:
@@ -263,9 +262,8 @@ def main():
         if result and commit:
             try:
                 device.commit(sync=True)
-            except Exception:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except Exception as exc:
+                module.fail_json(msg=to_native(exc))
 
     elif operation == 'delete':
         obj_name = module.params.get('sag_name', None)

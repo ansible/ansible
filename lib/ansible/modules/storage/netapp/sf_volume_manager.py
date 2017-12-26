@@ -138,7 +138,7 @@ msg:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
@@ -230,19 +230,17 @@ class SolidFireVolume(object):
                                    qos=self.qos,
                                    attributes=self.attributes)
 
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Error provisioning volume %s of size %s" % (self.name, self.size),
-                                  exception=str(err))
+                                  exception=to_native(err))
 
     def delete_volume(self):
         try:
             self.sfe.delete_volume(volume_id=self.volume_id)
 
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Error deleting volume %s" % self.volume_id,
-                                  exception=str(err))
+                                  exception=to_native(err))
 
     def update_volume(self):
         try:
@@ -253,10 +251,9 @@ class SolidFireVolume(object):
                                    total_size=self.size,
                                    attributes=self.attributes)
 
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(msg="Error updating volume %s" % self.name,
-                                  exception=str(err))
+                                  exception=to_native(err))
 
     def apply(self):
         changed = False
@@ -325,6 +322,7 @@ class SolidFireVolume(object):
 def main():
     v = SolidFireVolume()
     v.apply()
+
 
 if __name__ == '__main__':
     main()
