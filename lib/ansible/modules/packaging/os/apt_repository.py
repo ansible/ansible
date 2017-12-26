@@ -107,7 +107,11 @@ import os
 import re
 import sys
 import tempfile
-
+import json
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
 try:
     import apt
     import apt_pkg
@@ -292,9 +296,8 @@ class SourcesList(object):
 
                     try:
                         f.write(line)
-                    except IOError:
-                        err = get_exception()
-                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
+                    except IOError as err:
+                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(err)))
                 self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
@@ -510,9 +513,8 @@ def main():
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
-    except InvalidSource:
-        err = get_exception()
-        module.fail_json(msg='Invalid repository string: %s' % unicode(err))
+    except InvalidSource as err:
+        module.fail_json(msg='Invalid repository string: %s' % to_native(err))
 
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
@@ -533,15 +535,11 @@ def main():
             if update_cache:
                 cache = apt.Cache()
                 cache.update()
-        except OSError:
-            err = get_exception()
-            module.fail_json(msg=unicode(err))
+        except OSError as err:
+            module.fail_json(msg=to_native(err))
 
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

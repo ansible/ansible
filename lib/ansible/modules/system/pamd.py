@@ -255,7 +255,7 @@ dest:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import os
 import re
 import time
@@ -360,11 +360,10 @@ class PamdService(object):
                 stringline += '\n'
             self.load_rules_from_string(stringline.replace("\\\n", ""))
 
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.ansible.fail_json(msg='Unable to open/read PAM module \
                                    file %s with error %s.  And line %s' %
-                                   (self.fname, str(e), stringline))
+                                   (self.fname, to_native(e), stringline))
 
     def load_rules_from_string(self, stringvalue):
         for line in stringvalue.splitlines():
@@ -686,6 +685,7 @@ def main():
     module.params['dest'] = pamd.fname
 
     module.exit_json(changed=change, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()

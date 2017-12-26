@@ -117,7 +117,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netapp import request, eseries_host_argument_spec
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -217,21 +217,19 @@ class NetAppESeriesVolume(object):
             (rc, volumes) = request(self.api_url + "/storage-systems/%s/volumes" % (self.ssid),
                                     headers=dict(Accept="application/json"), url_username=self.api_usr,
                                     url_password=self.api_pwd, validate_certs=self.validate_certs)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
                 msg="Failed to obtain list of standard/thick volumes.  Array Id [%s]. Error[%s]." % (self.ssid,
-                                                                                                     str(err)))
+                                                                                                     to_native(err)))
 
         try:
             self.debug('fetching thin-volumes')
             (rc, thinvols) = request(self.api_url + "/storage-systems/%s/thin-volumes" % (self.ssid),
                                      headers=dict(Accept="application/json"), url_username=self.api_usr,
                                      url_password=self.api_pwd, validate_certs=self.validate_certs)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
-                msg="Failed to obtain list of thin volumes.  Array Id [%s]. Error[%s]." % (self.ssid, str(err)))
+                msg="Failed to obtain list of thin volumes.  Array Id [%s]. Error[%s]." % (self.ssid, to_native(err)))
 
         volumes.extend(thinvols)
 
@@ -252,10 +250,9 @@ class NetAppESeriesVolume(object):
             (rc, resp) = request(self.api_url + "/storage-systems/%s/storage-pools" % (self.ssid),
                                  headers=dict(Accept="application/json"), url_username=self.api_usr,
                                  url_password=self.api_pwd, validate_certs=self.validate_certs)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
-                msg="Failed to obtain list of storage pools.  Array Id [%s]. Error[%s]." % (self.ssid, str(err)))
+                msg="Failed to obtain list of storage pools.  Array Id [%s]. Error[%s]." % (self.ssid, to_native(err)))
 
         self.debug("searching for storage pool '%s'", storage_pool_name)
         pool_detail = next(ifilter(lambda a: a['name'] == storage_pool_name, resp), None)
@@ -284,11 +281,10 @@ class NetAppESeriesVolume(object):
                                  url_username=self.api_usr, url_password=self.api_pwd,
                                  validate_certs=self.validate_certs,
                                  timeout=120)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
                 msg="Failed to create volume.  Volume [%s].  Array Id [%s]. Error[%s]." % (self.name, self.ssid,
-                                                                                           str(err)))
+                                                                                           to_native(err)))
 
     def create_thin_volume(self, pool_id, name, size_unit, size, thin_volume_repo_size,
                            thin_volume_max_repo_size, data_assurance_enabled):
@@ -309,12 +305,11 @@ class NetAppESeriesVolume(object):
                                  url_username=self.api_usr, url_password=self.api_pwd,
                                  validate_certs=self.validate_certs,
                                  timeout=120)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
                 msg="Failed to create thin volume.  Volume [%s].  Array Id [%s]. Error[%s]." % (self.name,
                                                                                                 self.ssid,
-                                                                                                str(err)))
+                                                                                                to_native(err)))
 
     def delete_volume(self):
         # delete the volume
@@ -325,11 +320,10 @@ class NetAppESeriesVolume(object):
                                                               self.volume_detail['id']),
                 method='DELETE', url_username=self.api_usr, url_password=self.api_pwd,
                 validate_certs=self.validate_certs, timeout=120)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
                 msg="Failed to delete volume.  Volume [%s].  Array Id [%s]. Error[%s]." % (self.name, self.ssid,
-                                                                                           str(err)))
+                                                                                           to_native(err)))
 
     @property
     def volume_resource_name(self):
@@ -366,12 +360,11 @@ class NetAppESeriesVolume(object):
                 data=json.dumps(update_volume_req), headers=HEADERS, method='POST',
                 url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs,
                 timeout=120)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
                 msg="Failed to update volume properties.  Volume [%s].  Array Id [%s]. Error[%s]." % (self.name,
                                                                                                       self.ssid,
-                                                                                                      str(err)))
+                                                                                                      to_native(err)))
 
     @property
     def volume_needs_expansion(self):
@@ -399,12 +392,11 @@ class NetAppESeriesVolume(object):
                                      data=json.dumps(thin_volume_expand_req), headers=HEADERS, method='POST',
                                      url_username=self.api_usr, url_password=self.api_pwd,
                                      validate_certs=self.validate_certs, timeout=120)
-            except Exception:
-                err = get_exception()
+            except Exception as err:
                 self.module.fail_json(
                     msg="Failed to expand thin volume.  Volume [%s].  Array Id [%s]. Error[%s]." % (self.name,
                                                                                                     self.ssid,
-                                                                                                    str(err)))
+                                                                                                    to_native(err)))
 
                 # TODO: check return code
         else:
@@ -420,12 +412,11 @@ class NetAppESeriesVolume(object):
                     data=json.dumps(volume_expand_req), headers=HEADERS, method='POST',
                     url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs,
                     timeout=120)
-            except Exception:
-                err = get_exception()
+            except Exception as err:
                 self.module.fail_json(
                     msg="Failed to expand volume.  Volume [%s].  Array Id [%s]. Error[%s]." % (self.name,
                                                                                                self.ssid,
-                                                                                               str(err)))
+                                                                                               to_native(err)))
 
             self.debug('polling for completion...')
 
@@ -436,11 +427,10 @@ class NetAppESeriesVolume(object):
                                                                                                        'id']),
                                          method='GET', url_username=self.api_usr, url_password=self.api_pwd,
                                          validate_certs=self.validate_certs)
-                except Exception:
-                    err = get_exception()
+                except Exception as err:
                     self.module.fail_json(
                         msg="Failed to get volume expansion progress.  Volume [%s].  Array Id [%s]. Error[%s]." % (
-                            self.name, self.ssid, str(err)))
+                            self.name, self.ssid, to_native(err)))
 
                 action = resp['action']
                 percent_complete = resp['percentComplete']
@@ -538,10 +528,9 @@ def main():
 
     try:
         v.apply()
-    except Exception:
-        e = get_exception()
-        v.debug("Exception in apply(): \n%s", format_exc(e))
-        v.module.fail_json(msg="Module failed. Error [%s]." % (str(e)))
+    except Exception as e:
+        v.debug("Exception in apply(): \n%s", format_exc())
+        v.module.fail_json(msg="Module failed. Error [%s]." % to_native(e))
 
 
 if __name__ == '__main__':
