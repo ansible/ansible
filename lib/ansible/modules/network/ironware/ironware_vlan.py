@@ -35,7 +35,8 @@ options:
       - List of interfaces that should be associated to the VLAN.
   vlan_tagging:
     description:
-      - Specify whether interfaces should be added as tagged or untagged members of VLAN.
+      - Specify whether interfaces should be added as tagged or untagged members
+        of VLAN. Does not modify tagging of existing interfaces.
     default: tagged
     choices: ['tagged', 'untagged']
   delay:
@@ -75,15 +76,6 @@ EXAMPLES = """
     aggregate:
       - vlan_id: 4000
       - {vlan_id: 4001, name: vlan-4001}
-
-- name: Create vlans with a mix of tagged and untagged ports
-  ironware_vlan:
-    aggregate:
-      - {vlan_id: 100, vlan_tagging: tagged, interfaces: ['1/1']}
-      - {vlan_id: 100, vlan_tagging: untagged, interfaces: ['2/1', '2/2']}
-      - {vlan_id: 200, vlan_tagging: tagged, interfaces: ['1/1']}
-      - {vlan_id: 200, vlan_tagging: untagged, interfaces: ['2/3', '2/4']}
-
 """
 
 RETURN = """
