@@ -154,7 +154,7 @@ def main():
     elif domain_type == 'vmm':
         domain_class = 'vmmDomP'
         domain_mo = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-        domain_rn = 'dom-{}'.format(domain)
+        domain_rn = 'vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
 
     pool_mo = POOL_MAPPING[pool_type]["aci_mo"] + pool_name
 
@@ -175,7 +175,7 @@ def main():
         # Filter out module params with null values
         aci.payload(
             aci_class=domain_class,
-            class_config=dict(name=domain_mo),
+            class_config=dict(name=domain),
             child_configs=[
                 {'infraRsVlanNs': {'attributes': {'tDn': pool_mo}}},
             ]
