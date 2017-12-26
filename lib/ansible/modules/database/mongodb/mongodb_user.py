@@ -9,7 +9,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -270,15 +269,14 @@ def user_find(client, user, db_name):
 
 
 def user_add(module, client, db_name, user, password, roles):
-    # pymongo's user_add is a _create_or_update_user so we won't know if it was changed or updated
-    # without reproducing a lot of the logic in database.py of pymongo
+    #pymongo's user_add is a _create_or_update_user so we won't know if it was changed or updated
+    #without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
 
     if roles is None:
         db.add_user(user, password, False)
     else:
         db.add_user(user, password, None, roles=roles)
-
 
 def user_remove(module, client, db_name, user):
     exists = user_find(client, user, db_name)
@@ -289,7 +287,6 @@ def user_remove(module, client, db_name, user):
         db.remove_user(user)
     else:
         module.exit_json(changed=False, user=user)
-
 
 def load_mongocnf():
     config = configparser.RawConfigParser()
@@ -305,6 +302,7 @@ def load_mongocnf():
         return False
 
     return creds
+
 
 
 def check_if_roles_changed(uinfo, roles, db_name):
@@ -328,7 +326,7 @@ def check_if_roles_changed(uinfo, roles, db_name):
         output = list()
         for role in roles:
             if isinstance(role, (binary_type, text_type)):
-                new_role = {"role": role, "db": db_name}
+                new_role = { "role": role, "db": db_name }
                 output.append(new_role)
             else:
                 output.append(role)
@@ -342,13 +340,14 @@ def check_if_roles_changed(uinfo, roles, db_name):
     return True
 
 
+
 # =========================================
 # Module execution.
 #
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict(
+        argument_spec = dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default='localhost'),
@@ -417,10 +416,21 @@ def main():
         elif LooseVersion(PyMongoVersion) >= LooseVersion('3.0'):
             if db_name != "admin":
                 module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
-            # else: this has to be the first admin user added
+            #else: this has to be the first admin user added
 
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
+ 
+    ## CHANGE
+    uinfo = user_find(client, user, db_name)
+    if uinfo:
+        roles_changed = check_if_roles_changed(uinfo, roles, db_name)
+        new_user = False
+    else:
+        roles_changed = True
+        new_user = True
+    ##
+
 
     if state == 'present':
         if password is None and update_password == 'always':
@@ -428,22 +438,20 @@ def main():
 
         try:
             if update_password != 'always':
-                uinfo = user_find(client, user, db_name)
                 if uinfo:
                     password = None
-                    if not check_if_roles_changed(uinfo, roles, db_name):
-                        module.exit_json(changed=False, user=user)
-
-            if module.check_mode:
-                module.exit_json(changed=True, user=user)
+                    if not roles_changed:
+                        module.exit_json(changed=False, user=user, roles_changed=roles_changed, new_user=new_user)
 
             user_add(module, client, db_name, user, password, roles)
+            module.exit_json(changed=True, user=user, roles_changed=roles_changed, new_user=new_user)
+
         except Exception as e:
             module.fail_json(msg='Unable to add or update user: %s' % to_native(e), exception=traceback.format_exc())
 
             # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
-            # newuinfo = user_find(client, user, db_name)
-            # if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
+            #newuinfo = user_find(client, user, db_name)
+            #if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
             #    module.exit_json(changed=False, user=user)
 
     elif state == 'absent':
@@ -452,7 +460,12 @@ def main():
         except Exception as e:
             module.fail_json(msg='Unable to remove user: %s' % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=True, user=user)
+        ##ADDED
+        module.exit_json(changed=True, user=user, roles_changed=True, new_user=False)
+
+
+
+    #module.exit_json(changed=True, user=user)
 
 
 if __name__ == '__main__':
