@@ -87,6 +87,11 @@ EXAMPLES = '''
       portMappings:
       - containerPort: 80
         hostPort: 80
+      logConfiguration:
+        logDriver: awslogs
+        options:
+          awslogs-group: ecs
+          awslogs-region: us-west-2
     - name: busybox
       command:
         - >
