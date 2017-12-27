@@ -22,26 +22,26 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: k8s
-    
+
     version_added: "2.5"
-    
+
     short_description: Query the K8s API
-    
+
     description:
       - Uses the OpenShift Python client to fetch a specific object by name, all matching objects within a
         namespace, or all matching objects for all namespaces.
       - Provides access the full range of K8s APIs.
       - Enables authentication via config file, certificates, password or token.
-          
+
     options:
       api_version:
         description:
-        - Use to specify the API version. If I(resource definition) is provided, the I(apiVersion) from the 
+        - Use to specify the API version. If I(resource definition) is provided, the I(apiVersion) from the
           I(resource_definition) will override this option.
         default: v1
       kind:
         description:
-        - Use to specify an object model. If I(resource definition) is provided, the I(kind) from a 
+        - Use to specify an object model. If I(resource definition) is provided, the I(kind) from a
           I(resource_definition) will override this option.
         required: true
       name:
@@ -113,6 +113,11 @@ DOCUMENTATION = """
           environment variable.
         type: bool
 
+    requirements:
+      - "python >= 2.7"
+      - "openshift >= 0.3"
+      - "PyYAML >= 3.11"
+
     notes:
       - "The OpenShift Python client wraps the K8s Python client, providing full access to
         all of the APIS and models available on both platforms. For API version details and
@@ -131,7 +136,7 @@ EXAMPLES = """
 - name: Fetch all deployments in a namespace
   set_fact:
     deployments: "{{ lookup('k8s', kind='Deployment', namespace='testing') }}"
-    
+
 - name: Fetch a specific deployment by name
   set_fact:
     deployments: "{{ lookup('k8s', kind='Deployment', namespace='testing', resource_name='elastic') }}"
@@ -149,7 +154,7 @@ EXAMPLES = """
 - name: Using the config (loaded from a file in prior task), fetch the latest version of the object
   set_fact:
     service: "{{ lookup('k8s', resource_definition=config) }}"
-    
+
 - name: Use a config from the local filesystem
   set_fact:
     service: "{{ lookup('k8s', src='service.yml') }}"

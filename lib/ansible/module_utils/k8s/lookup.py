@@ -21,7 +21,7 @@ from __future__ import absolute_import, division, print_function
 import json
 import os
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleLookupError
 from ansible.module_utils.k8s.common import DateTimeEncoder, remove_secret_data, to_snake
 from ansible.module_utils.k8s.helper import AUTH_ARG_SPEC
 
@@ -45,12 +45,12 @@ class KubernetesLookup(object):
     def __init__(self):
 
         if not HAS_K8S_MODULE_HELPER:
-            raise AnsibleError(
+            raise AnsibleLookupError(
                 "Requires the OpenShift Python client. Try `pip install openshift`"
             )
 
         if not HAS_YAML:
-            raise AnsibleError(
+            raise AnsibleLookupError(
                 "Requires PyYAML. Try `pip install PyYAML`"
             )
 
@@ -83,7 +83,7 @@ class KubernetesLookup(object):
             self.params_from_resource_definition(resource_definition)
 
         if not self.kind:
-            raise AnsibleError(
+            raise AnsibleLookupError(
                 "Error: no Kind specified. Use the 'kind' parameter, or provide an object YAML configuration "
                 "using the 'resource_definition' parameter."
             )
@@ -97,7 +97,7 @@ class KubernetesLookup(object):
         try:
             self.helper.set_client_config(**self.connection)
         except Exception as exc:
-            raise AnsibleError(
+            raise AnsibleLookupError(
                 "Client authentication failed: {0}".format(exc.message)
             )
 
@@ -117,17 +117,17 @@ class KubernetesLookup(object):
             helper.get_model(self.api_version, self.kind)
             return helper
         except KubernetesException as exc:
-            raise AnsibleError("Error initializing helper: {0}".format(exc.message))
+            raise AnsibleLookupError("Error initializing helper: {0}".format(exc.message))
 
     def load_resource_definition(self, src):
         """ Load the requested src path """
         path = os.path.normpath(src)
         if not os.path.exists(path):
-            raise AnsibleError("Error accessing {0}. Does the file exist?".format(path))
+            raise AnsibleLookupError("Error accessing {0}. Does the file exist?".format(path))
         try:
             result = yaml.safe_load(open(path, 'r'))
         except (IOError, yaml.YAMLError) as exc:
-            raise AnsibleError("Error loading resource_definition: {0}".format(exc))
+            raise AnsibleLookupError("Error loading resource_definition: {0}".format(exc))
         return result
 
     def params_from_resource_definition(self, defn):
@@ -145,7 +145,7 @@ class KubernetesLookup(object):
         try:
             result = self.helper.get_object(self.name, self.namespace)
         except KubernetesException as exc:
-            raise AnsibleError('Failed to retrieve requested object: {0}'.format(exc.message))
+            raise AnsibleLookupError('Failed to retrieve requested object: {0}'.format(exc.message))
         self.mylog("Got restult")
         response = []
         if result is not None:
@@ -164,7 +164,7 @@ class KubernetesLookup(object):
             try:
                 method = self.helper.lookup_method(method_name=method_name)
             except KubernetesException:
-                raise AnsibleError(
+                raise AnsibleLookupError(
                     "Failed to find method {0} for API {1}".format(method_name, self.api_version)
                 )
         else:
@@ -176,7 +176,7 @@ class KubernetesLookup(object):
                 try:
                     method = self.helper.lookup_method(method_name=method_name)
                 except KubernetesException:
-                    raise AnsibleError(
+                    raise AnsibleLookupError(
                         "Failed to find method for API {0} and Kind {1}".format(self.api_version, self.kind)
                     )
 
@@ -191,12 +191,12 @@ class KubernetesLookup(object):
             try:
                 result = method(self.namespace, **params)
             except KubernetesException as exc:
-                raise AnsibleError(exc.message)
+                raise AnsibleLookupError(exc.message)
         else:
             try:
                 result = method(**params)
             except KubernetesException as exc:
-                raise AnsibleError(exc.message)
+                raise AnsibleLookupError(exc.message)
 
         response = []
         if result is not None:
@@ -217,4 +217,4 @@ class OpenShiftLookup(KubernetesLookup):
             helper.get_model(self.api_version, self.kind)
             return helper
         except KubernetesException as exc:
-            raise AnsibleError("Error initializing helper: {0}".format(exc.message))
+            raise AnsibleLookupError("Error initializing helper: {0}".format(exc.message))

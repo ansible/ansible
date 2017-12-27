@@ -36,12 +36,12 @@ DOCUMENTATION = """
     options:
       api_version:
         description:
-        - Use to specify the API version. If I(resource definition) is provided, the I(apiVersion) from the 
+        - Use to specify the API version. If I(resource definition) is provided, the I(apiVersion) from the
           I(resource_definition) will override this option.
         default: v1
       kind:
         description:
-        - Use to specify an object model. If I(resource definition) is provided, the I(kind) from a 
+        - Use to specify an object model. If I(resource definition) is provided, the I(kind) from a
           I(resource_definition) will override this option.
         required: true
       resource_name:
@@ -61,7 +61,7 @@ DOCUMENTATION = """
       resource_definition:
         description:
         - "Provide a YAML configuration for an object. NOTE: I(kind), I(api_version), I(resource_name), I(namespace),
-          and I(resource_version) will be overwritten by corresponding values found in the provided 
+          and I(resource_version) will be overwritten by corresponding values found in the provided
           I(resource_definition)."
       src:
         description:
@@ -113,6 +113,11 @@ DOCUMENTATION = """
           environment variable.
         type: bool
 
+    requirements:
+      - "python >= 2.7"
+      - "openshift >= 0.3"
+      - "PyYAML >= 3.11"
+
     notes:
       - "The OpenShift Python client wraps the K8s Python client, providing full access to
         all of the APIS and models available on both platforms. For API version details and
@@ -131,7 +136,7 @@ EXAMPLES = """
 - name: Fetch all deployments in a namespace
   set_fact:
     deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing') }}"
-    
+
 - name: Fetch a specific deployment by name
   set_fact:
     deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing', resource_name='elastic') }}"
@@ -149,7 +154,7 @@ EXAMPLES = """
 - name: Using the config (loaded from a file in prior task), fetch the latest version of the object
   set_fact:
     service: "{{ lookup('openshift', resource_definition=config) }}"
-    
+
 - name: Use a config from the local filesystem
   set_fact:
     service: "{{ lookup('openshift', src='service.yml') }}"
