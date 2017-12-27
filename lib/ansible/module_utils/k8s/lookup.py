@@ -131,7 +131,7 @@ class KubernetesLookup(object):
 
     def params_from_resource_definition(self, defn):
         if defn.get('apiVersion'):
-            self.api_version  = defn['apiVersion']
+            self.api_version = defn['apiVersion']
         if defn.get('kind'):
             self.kind = defn['kind']
         if defn.get('metadata', {}).get('name'):
