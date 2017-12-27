@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: apache22_mod_proxy
-author: nikhil zadoo"
+author: "nikhil zadoo"
 version_added: "1.0"
 short_description: Set and/or get members' attributes of an Apache httpd 2.2 mod_proxy balancer pool
 description:
@@ -57,10 +57,10 @@ options:
     default: true
     description:
       - Validate ssl/tls certificates.
-    choices: ["true", "false"]i
+    choices: ["true", "false"]
   url_username:
-     default: None
-     description:
+    default: None
+    description:
       - give the username if the balancer manager page is protected by BASIC AUTH.
   url_password:
     default: None
@@ -250,7 +250,7 @@ class BalancerMember(object):
         self.path = regexp_extraction(management_url, EXPRESSION, 6)
         self.balancer_url = str(balancer_url)
         self.module = module
-	self.soup = soup
+        self.soup = soup	
         BalancerMember.global_module = module
         if self.module.params['member_host'] is None:
             self.attributes = self.get_member_attributes()
@@ -259,7 +259,7 @@ class BalancerMember(object):
         """ Returns a dictionary of a balancer member's attributes."""
 
         balancer_member_page = fetch_url(self.module, self.management_url)
-	BalancerMember.global_bal_page = balancer_member_page
+        BalancerMember.global_bal_page = balancer_member_page
 
         try:
             assert balancer_member_page[1]['status'] == 200
@@ -274,9 +274,9 @@ class BalancerMember(object):
             except TypeError:
                     self.module.fail_json(msg="Cannot parse balancer_member_page HTML! " + str(soup))
             else:
-	        subsoup = soup.findAll('table')[1].findAll('tr')
-	        keys = subsoup[0].findAll('th')
-	        for line in soup.findAll('table'):
+                subsoup = soup.findAll('table')[1].findAll('tr')
+                keys = subsoup[0].findAll('th')
+                for line in soup.findAll('table'):
                     line2 = line.findAll('tr')
                     for line3 in line2:
                         if re.search(pattern=str(self.host), string=str(line3)):
@@ -299,25 +299,25 @@ class BalancerMember(object):
     def set_member_status(self, values):
         """ Sets a balancer member's status attributes amongst pre-mapped values."""
         values_mapping = {'disabled': '&dw'}
-	temp_url = self.management_url	
+        temp_url = self.management_url	
         request_body = regexp_extraction(self.management_url, EXPRESSION, 1)
-	response1 = BalancerMember.global_bal_page
-	soup_response1 = BeautifulSoup(str(response1), "lxml")
-	array_response1 = soup_response1.findAll('input')
-	string_response1 = ""
-	replace_response1 = ""
-	for line_response1 in array_response1[0:4]:
-		if re.search(pattern='^<input name',string=str(line_response1)):
-			regex_response1 = re.search('name\=\"(\w*?)\".*?value\=\"(\w*?)\"', str(line_response1))
-			string_response1 = string_response1 + regex_response1.group(1) + "=" + regex_response1.group(2) + "&"
+        response1 = BalancerMember.global_bal_page
+        soup_response1 = BeautifulSoup(str(response1), "lxml")
+        array_response1 = soup_response1.findAll('input')
+        string_response1 = ""
+        replace_response1 = ""
+        for line_response1 in array_response1[0:4]:
+                if re.search(pattern='^<input name',string=str(line_response1)):
+                    regex_response1 = re.search('name\=\"(\w*?)\".*?value\=\"(\w*?)\"', str(line_response1))
+                    string_response1 = string_response1 + regex_response1.group(1) + "=" + regex_response1.group(2) + "&"
 
         for k in values_mapping.keys():
             if values[str(k)]:
-		replace_response1 = "?" + string_response1 + "dw=Disable&"
-		temp_url = temp_url.replace("?",replace_response1)
+                replace_response1 = "?" + string_response1 + "dw=Disable&"
+                temp_url = temp_url.replace("?",replace_response1)
             else:
-		replace_response1 = "?" + string_response1 + "dw=Enable&"
-		temp_url = temp_url.replace("?",replace_response1)
+                replace_response1 = "?" + string_response1 + "dw=Enable&"
+                temp_url = temp_url.replace("?",replace_response1)
 
         response = fetch_url(self.module, temp_url, method="GET")
         try:
