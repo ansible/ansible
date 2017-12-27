@@ -63,11 +63,6 @@ options:
         required: false
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
-    state:
-        description: Whether the given replicaset should exist or not
-        required: false
-        default: present
-        choices: ["present", "absent"]
     arbiter_at_index:
         description: Identifies the position of the member array that is an arbiter
         required: false
@@ -350,7 +345,6 @@ def main():
             arbiter_at_index=dict(required=False, default=None),
             validate=dict(required=False, default=True),
             ssl=dict(default=False, type='bool'),
-            state=dict(default='present', choices=['absent', 'present']),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
             protocolVersion=dict(required=False, default=1, type='int', choices=[ 0, 1 ]),
             chainingAllowed=dict(required=False, default=True),
@@ -372,7 +366,6 @@ def main():
     arbiter_at_index = int(module.params['arbiter_at_index'])
     validate = module.params['validate']
     ssl = module.params['ssl']
-    state = module.params['state']
     protocolVersion = int(module.params['protocolVersion'])
     chainingAllowed = module.params['chainingAllowed']
     heartbeatTimeoutSecs = int(module.params['heartbeatTimeoutSecs'])
@@ -429,23 +422,23 @@ def main():
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
 
-    if state == 'present':
-        if len(replica_set) == 0:
-            module.fail_json(msg='replica_set parameter must not be an empty string') # TODO better validation, i.e. no special chars etc
+    #if state == 'present':
+    if len(replica_set) == 0:
+        module.fail_json(msg='replica_set parameter must not be an empty string') # TODO better validation, i.e. no special chars etc
 
-        try:
+    try:
 
-            if module.check_mode:
-                module.exit_json(changed=True, replica_set=replica_set)
-            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
-        except Exception as e:
-            module.fail_json(msg='Unable to create replica_set: %s' % to_native(e), exception=traceback.format_exc())
+        if module.check_mode:
+            module.exit_json(changed=True, replica_set=replica_set)
+        replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
+    except Exception as e:
+        module.fail_json(msg='Unable to create replica_set: %s' % to_native(e), exception=traceback.format_exc())
 
-    elif state == 'absent':
-        try:
-            replicaset_remove(module, client, replica_set)
-        except Exception as e:
-            module.fail_json(msg='Unable to remove replica_set: %s' % to_native(replica_set), exception=traceback.format_exc())
+    #elif state == 'absent':
+    #    try:
+    #        replicaset_remove(module, client, replica_set)
+    #    except Exception as e:
+    #        module.fail_json(msg='Unable to remove replica_set: %s' % to_native(replica_set), exception=traceback.format_exc())
 
     module.exit_json(changed=True, replica_set=replica_set)
 
