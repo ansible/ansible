@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: ios_interface
+module: eos_interface
 version_added: "2.5"
 author: "Ganesh Nalawade (@ganeshrn)"
 short_description: Manage Interface on Arista EOS network devices
@@ -370,7 +370,7 @@ def check_declarative_intent_params(module, want, result):
                 lines = have_neighbors[0].strip().split('\n')
                 col = None
                 for index, line in enumerate(lines):
-                    if re.search('^Port\s+Neighbor Device ID\s+Neighbor Port ID\s+TTL', line):
+                    if re.search(r"^Port\s+Neighbor Device ID\s+Neighbor Port ID\s+TTL", line):
                         col = index
                         break
 

@@ -194,7 +194,7 @@
     - name: loopback10
     state: absent
     authorize: yes
-   provider: "{{ eapi }}"
+    provider: "{{ eapi }}"
 
 - name: Create loopback interface aggregate
   eos_interface:
