@@ -180,10 +180,7 @@ def parse_shutdown(configobj, name):
     cfg = configobj['interface %s' % name]
     cfg = '\n'.join(cfg.children)
     match = re.search(r'shutdown', cfg, re.M)
-    if match:
-        return True
-    else:
-        return False
+    return True if match else False
 
 
 def parse_config_argument(configobj, name, arg=None):
@@ -376,7 +373,7 @@ def check_declarative_intent_params(module, want, result):
 
                 if col and col < len(lines) - 1:
                     for items in lines[col + 1:]:
-                        value = re.split('\s+', items)
+                        value = re.split(r'\s+', items)
                         try:
                             have_port.append(value[2])
                             have_host.append(value[1])
