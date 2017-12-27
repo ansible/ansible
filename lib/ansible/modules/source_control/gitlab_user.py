@@ -68,6 +68,11 @@ options:
         description:
             - The email that belongs to the user.
         required: true
+    external:
+        description:
+            - Marks if user is external.
+        required: false        
+        default: false        
     sshkey_name:
         description:
             - The name of the sshkey
@@ -128,6 +133,7 @@ EXAMPLES = '''
     username: myusername
     password: mysecretpassword
     email: me@example.com
+    external: True
     sshkey_name: MySSH
     sshkey_file: ssh-rsa AAAAB3NzaC1yc...
     state: present
@@ -164,11 +170,13 @@ class GitLabUser(object):
             level = 50
         return self._gitlab.addgroupmember(group_id, user_id, level)
 
-    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm):
+    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm, user_external):
         group_id = ''
         arguments = {"name": user_name,
                      "username": user_username,
-                     "email": user_email}
+                     "email": user_email,
+                     "external": user_external
+                     }
 
         if group_name is not None:
             if self.existsGroup(group_name):
@@ -185,7 +193,7 @@ class GitLabUser(object):
         user_changed = False
 
         # Create the user
-        user_username = arguments['username']
+        user_username = arguments['username']        
         if self._gitlab.createuser(password=user_password, confirm=confirm, **arguments):
             user_id = self.getUserId(user_username)
             if self._gitlab.addsshkeyuser(user_id=user_id, title=user_sshkey_name, key=user_sshkey_file):
@@ -274,6 +282,7 @@ def main():
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             email=dict(required=True),
+            external=dict(required=False, default=False, type='bool'),
             sshkey_name=dict(required=False),
             sshkey_file=dict(required=False),
             group=dict(required=False),
@@ -302,6 +311,7 @@ def main():
     access_level = module.params['access_level']
     state = module.params['state']
     confirm = module.params['confirm']
+    external = module.params['external']
 
     if len(user_password) < 8:
         module.fail_json(msg="New user's 'password' should contain more than 8 characters.")
@@ -358,7 +368,7 @@ def main():
         if state == "absent":
             user.deleteUser(user_username)
         else:
-            user.createOrUpdateUser(user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm)
+            user.createOrUpdateUser(user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm,external)
 
 
 if __name__ == '__main__':
