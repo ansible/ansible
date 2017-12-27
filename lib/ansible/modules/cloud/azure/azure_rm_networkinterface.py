@@ -79,11 +79,11 @@ options:
         required: false
     private_ip_address:
         description:
-            - Valid IPv4 address that falls within the specified subnet.
+            - (Deprecate) Valid IPv4 address that falls within the specified subnet.
         required: false
     private_ip_allocation_method:
         description:
-            - "Specify whether or not the assigned IP address is permanent. NOTE: when creating a network interface
+            - "(Deprecate) Specify whether or not the assigned IP address is permanent. NOTE: when creating a network interface
               specifying a value of 'Static' requires that a private_ip_address value be provided. You can update
               the allocation method to 'Static' after a dynamic private ip address has been assigned."
         default: Dynamic
@@ -93,13 +93,13 @@ options:
         required: false
     public_ip:
         description:
-            - When creating a network interface, if no public IP address name is provided a default public IP
+            - (Deprecate) When creating a network interface, if no public IP address name is provided a default public IP
               address will be created. Set to false, if you do not want a public IP address automatically created.
         default: true
         required: false
     public_ip_address_name:
         description:
-            - Name of an existing public IP address object to associate with the security group.
+            - (Deprecate) Name of an existing public IP address object to associate with the security group.
         aliases:
             - public_ip_address
             - public_ip_name
@@ -107,7 +107,7 @@ options:
         default: null
     public_ip_allocation_method:
         description:
-            - If a public_ip_address_name is not provided, a default public IP address will be created. The allocation
+            - (Deprecate) If a public_ip_address_name is not provided, a default public IP address will be created. The allocation
               method determines whether or not the public IP address assigned to the network interface is permanent.
         choices:
             - Dynamic
@@ -253,7 +253,7 @@ def subnet_to_dict(subnet):
     dic = azure_id_to_dict(subnet.id)
     return dict(
         id=subnet.id,
-        virtual_network_name=dic.get('virtual_network_name'),
+        virtual_network_name=dic.get('virtualNetworks'),
         resource_group=dic.get('resourceGroups'),
         name=dic.get('subnets')
     )
@@ -298,14 +298,22 @@ def nic_to_dict(nic):
         etag=nic.etag,
     )
 
+def construct_ip_configuration_set(raw):
+    configurations = [str(dict(
+        private_ip_allocation_method=item.get('private_ip_allocation_method').encode('ascii'),
+        public_ip_address_name=item.get('public_ip_address').get('name').encode('ascii') if item.get('public_ip_address') else item.get('public_ip_address_name'),
+        primary=item.get('primary'),
+        name=item.get('name').encode('ascii')
+    )) for item in raw]
+    return set(configurations)
+
 ip_configuration_spec = dict(
     name=dict(type='str', required=True),
     private_ip_address=dict(type='str'),
     private_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
     public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
-    public_ip=dict(type='bool', default=True),
     public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
-    primary=dict(type='bool', default=None)
+    primary=dict(type='bool', default=False)
 )
 
 
@@ -361,7 +369,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         super(AzureRMNetworkInterface, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                       supports_check_mode=True,
                                                       required_if=required_if)
-
+    
     def exec_module(self, **kwargs):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
@@ -384,12 +392,13 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatiable
+            self.deprecate('Setting ip_configuration flatten is deprecated and will be removed.'
+                           ' Using ip_configurations list to define the ip configuration', version='2.9')
             self.ip_configurations = [
                 dict(
                     private_ip_address=self.private_ip_address,
                     private_ip_allocation_method=self.private_ip_allocation_method,
-                    public_ip_address_name=self.public_ip_address_name,
-                    public_ip=self.public_ip,
+                    public_ip_address_name=self.public_ip_address_name if self.public_ip else None,
                     public_ip_allocation_method=self.public_ip_allocation_method,
                     name='default'
                 )
@@ -433,16 +442,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 # construct two set with the same structure and then compare
                 # the list should contains:
                 # name, private_ip_address, public_ip_address_name, private_ip_allocation_method, subnet_name
-                ip_configuration_result = [dict(
-                    private_ip_address=item.get('private_ip_address'),
-                    private_ip_allocation_method=item.get('private_ip_allocation_method'),
-                    public_ip=bool(item.get('public_ip_address')),
-                    public_ip_address_name=item.get('public_ip_address').get('name') if item.get('public_ip_address') else None,
-                    public_ip_allocation_method=item.get('public_ip_address').get('public_ip_allocation_method') if item.get('public_ip_address') else None,
-                    primary=item.get('primary'),
-                    name=item.get('name')
-                ) for item in results['ip_configurations']]
-                if any(x != y for x, y in zip(ip_configuration_result, self.ip_configurations)):
+                ip_configuration_result = construct_ip_configuration_set(results['ip_configurations'])
+                ip_configuration_request = construct_ip_configuration_set(self.ip_configurations)
+                if ip_configuration_result != ip_configuration_request:
                     self.log("CHANGED: network interface {0} ip configurations".format(self.name))
                     changed = True
 
@@ -496,16 +498,18 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         return self.results
 
     def get_or_create_public_ip_address(self, ip_config):
-        if not ip_config.get('public_ip'):
-            return None
-        pip = None
         name = ip_config.get('public_ip_address_name')
-        if name:
-            pip = self.get_public_ip_address(name)
-        else:
-            self.fail('ip_configuration should have public_ip_address_name parameter if have public_ip')
+        pip = self.get_public_ip_address(name)
         if not pip:
-            pip = self.create_default_pip(self.resource_group, self.location, name, ip_config.get('public_ip_allocation_method'))
+            params = PublicIPAddress(
+                location=self.location,
+                public_ip_allocation_method=ip_config.get('public_ip_allocation_method'),
+            )
+            try:
+                poller = self.network_client.public_ip_addresses.create_or_update(self.resource_group, name, params)
+                pip = self.get_poller_result(poller)
+            except CloudError as exc:
+                self.fail("Error creating {0} - {1}".format(public_ip_name, str(exc)))
         return pip
 
     def create_or_update_nic(self, nic):
