@@ -88,7 +88,7 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = r'''
 - name: Create a vpn customer gateway
   local_action:
-    module: cs_vpn_customer_gateway:
+    module: cs_vpn_customer_gateway
     name: my vpn customer gateway
     cidrs:
     - 192.168.123.0/24
@@ -100,7 +100,7 @@ EXAMPLES = r'''
 
 - name: Remove a vpn customer gateway
   local_action:
-    module: cs_vpn_customer_gateway:
+    module: cs_vpn_customer_gateway
     name: my vpn customer gateway
     state: absent
 '''
