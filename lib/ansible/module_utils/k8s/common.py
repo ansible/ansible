@@ -70,6 +70,20 @@ def remove_secret_data(obj_dict):
             obj_dict['metadata']['annotations'].pop(key)
 
 
+def to_snake(name):
+    """ Convert a string from camel to snake """
+    if not name:
+        return name
+
+    def _replace(m):
+        m = m.group(0)
+        return m[0] + '_' + m[1:]
+
+    p = r'[a-z][A-Z]|' \
+        r'[A-Z]{2}[a-z]'
+    return re.sub(p, _replace, name).lower()
+
+
 class DateTimeEncoder(json.JSONEncoder):
     # When using json.dumps() with K8s object, pass cls=DateTimeEncoder to handle any datetime objects
     def default(self, o):
@@ -122,7 +136,7 @@ class KubernetesAnsibleModule(AnsibleModule):
             self.kind = self.resource_definition.get('kind')
 
         self.api_version = self.api_version.lower()
-        self.kind = self._to_snake(self.kind)
+        self.kind = to_snake(self.kind)
 
         if not self.api_version:
             self.fail_json(
@@ -320,7 +334,7 @@ class KubernetesAnsibleModule(AnsibleModule):
     def _add_parameter(self, request, path, parameters):
         for key, value in iteritems(request):
             if path:
-                param_name = '_'.join(path + [self._to_snake(key)])
+                param_name = '_'.join(path + [to_snake(key)])
             else:
                 param_name = self.helper.attribute_to_snake(key)
             if param_name in self.helper.argspec and value is not None:
@@ -334,25 +348,6 @@ class KubernetesAnsibleModule(AnsibleModule):
                     msg=("Error parsing resource definition. Encountered {0}, which does not map to a parameter "
                          "expected by the OpenShift Python module.".format(param_name))
                 )
-
-    @staticmethod
-    def _to_snake(name):
-        """
-        Convert a string from camel to snake
-        :param name: string to convert
-        :return: string
-        """
-        if not name:
-            return name
-
-        def replace(m):
-            m = m.group(0)
-            return m[0] + '_' + m[1:]
-
-        p = r'[a-z][A-Z]|' \
-            r'[A-Z]{2}[a-z]'
-        result = re.sub(p, replace, name)
-        return result.lower()
 
 
 class OpenShiftAnsibleModuleHelper(AnsibleMixin, OpenShiftObjectHelper):
