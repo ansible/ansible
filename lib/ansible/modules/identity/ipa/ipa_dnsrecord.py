@@ -17,7 +17,7 @@ module: ipa_dnsrecord
 author: Abhijeet Kasurde (@akasurde)
 short_description: Manage FreeIPA DNS records
 description:
-- Add, modify and delete an IPA DNS Record using IPA API
+- Add, modify and delete an IPA DNS Record using IPA API.
 options:
   zone_name:
     description:
@@ -30,17 +30,21 @@ options:
     aliases: ["name"]
   record_type:
     description:
-    - The type of DNS record name
-    - Currently, 'A', 'AAAA', 'PTR' and 'TXT' (added in 2.5) are supported
+    - The type of DNS record name.
+    - Currently, 'A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR' and 'TXT' are supported.
+    - "'A6', 'CNAME', 'DNAME' and 'TXT' are added in version 2.5."
     required: false
     default: 'A'
-    choices: ['A', 'AAAA', 'PTR', 'TXT']
+    choices: ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT']
   record_value:
     description:
     - Manage DNS record name with this value.
     - In the case of 'A' or 'AAAA' record types, this will be the IP address.
+    - In the case of 'A6' record type, this will be the A6 Record data.
+    - In the case of 'CNAME' record type, this will be the hostname.
+    - In the case of 'DNAME' record type, this will be the DNAME target.
     - In the case of 'PTR' record type, this will be the hostname.
-    - In the case of 'TXT' record type, this will be a text
+    - In the case of 'TXT' record type, this will be a text.
     required: true
   state:
     description: State to ensure
@@ -121,6 +125,12 @@ class DNSRecordIPAClient(IPAClient):
             item.update(a_part_ip_address=details['record_value'])
         elif details['record_type'] == 'AAAA':
             item.update(aaaa_part_ip_address=details['record_value'])
+        elif details['record_type'] == 'A6':
+            item.update(a6_part_data=details['record_value'])
+        elif details['record_type'] == 'CNAME':
+            item.update(cname_part_hostname=details['record_value'])
+        elif details['record_type'] == 'DNAME':
+            item.update(dname_part_target=details['record_value'])
         elif details['record_type'] == 'PTR':
             item.update(ptr_part_hostname=details['record_value'])
         elif details['record_type'] == 'TXT':
@@ -145,6 +155,12 @@ def get_dnsrecord_dict(details=None):
         module_dnsrecord.update(arecord=details['record_value'])
     elif details['record_type'] == 'AAAA' and details['record_value']:
         module_dnsrecord.update(aaaarecord=details['record_value'])
+    elif details['record_type'] == 'A6' and details['record_value']:
+        module_dnsrecord.update(a6record=details['record_value'])
+    elif details['record_type'] == 'CNAME' and details['record_value']:
+        module_dnsrecord.update(cnamerecord=details['record_value'])
+    elif details['record_type'] == 'DNAME' and details['record_value']:
+        module_dnsrecord.update(dnamerecord=details['record_value'])
     elif details['record_type'] == 'PTR' and details['record_value']:
         module_dnsrecord.update(ptrrecord=details['record_value'])
     elif details['record_type'] == 'TXT' and details['record_value']:
@@ -194,7 +210,7 @@ def ensure(module, client):
 
 
 def main():
-    record_types = ['A', 'AAAA', 'PTR', 'TXT']
+    record_types = ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT']
     argument_spec = ipa_argument_spec()
     argument_spec.update(zone_name=dict(type='str', required=True),
                          record_name=dict(type='str', aliases=['name'], required=True),
