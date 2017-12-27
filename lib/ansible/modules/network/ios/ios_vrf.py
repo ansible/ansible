@@ -97,9 +97,8 @@ options:
     description:
       - Adds an import list of extended route target communities to the VRF.
     version_added: "2.5"
-    
-"""
 
+"""
 EXAMPLES = """
 - name: configure a vrf named management
   ios_vrf:
@@ -120,7 +119,7 @@ EXAMPLES = """
       - blue
       - green
     purge: yes
-    
+
 - name: Creates a list of import RTs for the VRF with the same parameters
   ios_vrf:
     name: test_import
@@ -128,7 +127,7 @@ EXAMPLES = """
     route_import:
       - 1:100
       - 3:100
-      
+
 - name: Creates a list of export RTs for the VRF with the same parameters
   ios_vrf:
     name: test_export
@@ -136,7 +135,7 @@ EXAMPLES = """
     route_export:
       - 1:100
       - 3:100
-      
+
 - name: Creates a list of import and export route targets for the VRF with the same parameters
   ios_vrf:
     name: test_both
@@ -144,7 +143,6 @@ EXAMPLES = """
     route_both:
       - 1:100
       - 3:100
-  
 """
 
 RETURN = """
@@ -469,8 +467,6 @@ def main():
     argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('name', 'vrfs'), ('route_import', 'route_both'), ('route_export', 'route_both')]
-
-
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
