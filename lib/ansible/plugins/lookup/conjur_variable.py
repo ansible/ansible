@@ -1,4 +1,4 @@
-# (c) 2017, Oren Ben Meir <oren.benmeir@cyberark.com>, Jason Vanderhoof <jason.vanderhoof@cyberark.com>
+# (c) 2017, Jason Vanderhoof <jason.vanderhoof@cyberark.com>, Oren Ben Meir <oren.benmeir@cyberark.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
@@ -43,6 +43,9 @@ from urllib import quote_plus
 from urlparse import urlparse
 import yaml
 
+import requests
+from requests.auth import HTTPBasicAuth
+
 try:
     from __main__ import display
 except ImportError:
@@ -50,61 +53,10 @@ except ImportError:
     display = Display()
 
 
-class Token:
-    def __init__(self, http_connection, id, api_key, account):
-        self.http_connection = http_connection
-        self.id = id
-        self.api_key = api_key
-        self.token = None
-        self.refresh_time = 0
-        self.account = account
-
-    # refresh
-    # Exchanges API key for an auth token, storing it base64 encoded within the
-    # 'token' member variable. If it fails to obtain a token, the process exits.
-    def refresh(self):
-
-        authn_url = '/authn/{}/{}/authenticate'.format(quote_plus(self.account), quote_plus(self.id))
-        self.http_connection.request('POST', authn_url, self.api_key)
-
-        response = self.http_connection.getresponse()
-
-        if response.status != 200:
-            raise AnsibleError('Failed to authenticate as \'{}\''.format(self.id))
-
-        self.token = b64encode(response.read())
-        self.refresh_time = time() + 5 * 60
-
-    # get_header_value
-    # Returns the value for the Authorization header. Refreshes the auth token
-    # before returning if necessary.
-    def get_header_value(self):
-        if time() >= self.refresh_time:
-            self.refresh()
-
-        return 'Token token="{}"'.format(self.token)
-
 class LookupModule(LookupBase):
-    def retrieve_secrets(self, conf, conjur_https, token, terms):
-
-        secrets = []
-        for term in terms:
-            variable_name = term.split()[0]
-            headers = {'Authorization': token.get_header_value()}
-            url = '/secrets/{}/variable/{}'.format(conf['account'], quote_plus(variable_name))
-
-            conjur_https.request('GET', url, headers=headers)
-            response = conjur_https.getresponse()
-            if response.status != 200:
-                raise AnsibleError('Failed to retrieve variable \'{}\' with response status: {} {}'.format(variable_name,
-                                                                                                        response.status,
-                                                                                                        response.reason))
-
-            secrets.append(response.read())
-
-        return secrets
 
     def run(self, terms, variables=None, **kwargs):
+
         # Load Conjur configuration
         conf = self.merge_dictionaries(
             self.load_conf('/etc/conjur.conf'),
@@ -112,6 +64,7 @@ class LookupModule(LookupBase):
         )
         if not conf:
             raise AnsibleError('Conjur configuration should be in environment variables or in one of the following paths: \'~/.conjurrc\', \'/etc/conjur.conf\'')
+        display.vvvv("configuration: {}".format(conf))
 
         # Load Conjur identity
         identity = self.merge_dictionaries(
@@ -120,23 +73,46 @@ class LookupModule(LookupBase):
         )
         if not identity:
             raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
+        display.vvvv("configuration: {}".format(identity))
 
-        if conf['appliance_url'].startswith('https'):
-            # Load our certificate for validation
-            ssl_context = ssl.create_default_context()
-            ssl_context.load_verify_locations(conf['cert_file'])
-            conjur_connection = HTTPSConnection(urlparse(conf['appliance_url']).netloc,
-                                       context = ssl_context)
+
+        # Use credentials to retrieve temporary authorization token
+        conjur_url = "{}/authn/{}/{}/authenticate".format(conf['appliance_url'], conf['account'], identity['id'])
+        display.vvvv("Authentication request to Conjur at: {}, with user: {}".format(conjur_url, identity['id']))
+
+        if 'cert_file' in conf:
+            response = requests.post(conjur_url, data = identity['api_key'], verify = conf['cert_file'])
         else:
-            conjur_connection = HTTPConnection(urlparse(conf['appliance_url']).netloc)
+            response = requests.post(conjur_url, data = identity['api_key'])
+        display.vvvv("response: {}".format(response.text))
 
-        token = Token(conjur_connection, identity['id'], identity['api_key'], conf['account'])
+        if response.status_code != 200:
+            raise AnsibleError('Failed to authenticate as \'{}\''.format(identity['id']))
 
-        # retrieve secrets of the given variables from Conjur
-        return self.retrieve_secrets(conf, conjur_connection, token, terms)
+        # Retrieve Conjur variable using the temporary token
+        token = b64encode(response.text)
+        headers = {'Authorization': "Token token=\"{}\"".format(token)}
+        display.vvvv("Header: {}".format(headers))
 
-    # if the conf is not in the path specified, or if an exception is thrown while reading the conf file
-    # we don't exit as the conf might be in another path
+        url = "{}/secrets/{}/variable/{}".format(conf['appliance_url'], conf['account'], quote_plus(terms[0]))
+        display.vvvv("Conjur Variable URL: {}".format(url))
+
+        if 'cert_file' in conf:
+            response = requests.get(url, headers=headers, verify = conf['cert_file'])
+        else:
+            response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            display.vvvv("Conjur variable {} was successfully retrieved".format(terms[0]))
+            return [response.text]
+        if response.status_code == 401:
+            raise AnsibleError('Conjur request has invalid authorization credentials')
+        if response.status_code == 403:
+            raise AnsibleError('Conjur host does not have authorization to retrieve {}'.format(terms[0]))
+        if response.status_code == 404:
+            raise AnsibleError('The variable {} does not exist'.format(terms[0]))
+
+    # Load configuration and return as dictionary if file is present on file system
     def load_conf(self, conf_path):
         conf_path = os.path.expanduser(conf_path)
 
@@ -146,11 +122,11 @@ class LookupModule(LookupBase):
                 try:
                     return yaml.safe_load(f.read())
                 except Exception as exception:
+                    display.info("Error: parsing %s - %s" % (conf_path, str(exception)))
                     self.fail("Error: parsing %s - %s" % (conf_path, str(exception)))
         return {}
 
-    # if the identity is not in the path specified, or if an exception is thrown while reading the identity file
-    # we don't exit as the identity might be in another path
+    # Load identity and return as dictionary if file is present on file system
     def load_identity(self, identity_path, appliance_url):
         identity_path = os.path.expanduser(identity_path)
 
