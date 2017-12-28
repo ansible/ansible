@@ -937,8 +937,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     plan = None
                     if self.plan:
-                        plan = self.network_models.Plan(name=self.plan.get('name'), product=self.plan.get('product'), publisher=self.plan.get('publisher'),
-                                    promotion_code=self.plan.get('promotion_code'))
+                        plan = self.network_models.Plan(name=self.plan.get('name'), product=self.plan.get('product'),
+                                                        publisher=self.plan.get('publisher'),
+                                                        promotion_code=self.plan.get('promotion_code'))
 
                     vm_resource = self.network_models.VirtualMachine(
                         self.location,
@@ -1645,11 +1646,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         parameters.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
         parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
-                                                                 location=group.location,
-                                                                 resource_guid=group.resource_guid)
+                                                                                     location=group.location,
+                                                                                     resource_guid=group.resource_guid)
         parameters.ip_configurations[0].public_ip_address = self.network_models.PublicIPAddress(id=pip.id,
-                                                                            location=pip.location,
-                                                                            resource_guid=pip.resource_guid)
+                                                                                                location=pip.location,
+                                                                                                resource_guid=pip.resource_guid)
 
         self.log("Creating NIC {0}".format(network_interface_name))
         self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)

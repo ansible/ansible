@@ -455,8 +455,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     nic.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = 'default'
                     nic.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
-                                                                      location=nsg.location,
-                                                                      resource_guid=nsg.resource_guid)
+                                                                                          location=nsg.location,
+                                                                                          resource_guid=nsg.resource_guid)
                     if self.private_ip_address:
                         nic.ip_configurations[0].private_ip_address = self.private_ip_address
 
@@ -498,8 +498,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
                         nic.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
-                                                                          location=nsg.location,
-                                                                          resource_guid=nsg.resource_guid)
+                                                                                              location=nsg.location,
+                                                                                              resource_guid=nsg.resource_guid)
 
                 # See what actually gets sent to the API
                 request = self.serialize_obj(nic, 'NetworkInterface')
