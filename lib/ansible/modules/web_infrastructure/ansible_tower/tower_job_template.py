@@ -172,6 +172,8 @@ def update_fields(p):
     '''
     params = p.copy()
     field_map = {
+        'ask_credential' : 'ask_credential_on_launch',
+        'ask_inventory' : 'ask_inventory_on_launch',
         'ask_extra_vars': 'ask_variables_on_launch',
         'ask_limit': 'ask_limit_on_launch',
         'ask_tags': 'ask_tags_on_launch',
