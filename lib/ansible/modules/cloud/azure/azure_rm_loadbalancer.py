@@ -426,7 +426,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             load_balancer_props['inbound_nat_pools'] = [
                 self.network_models.InboundNatPool(
                     name=inbound_nat_pool_name,
-                    frontend_ip_configuration=Subnet(id=frontend_ip_config_id),
+                    frontend_ip_configuration=self.network_models.Subnet(id=frontend_ip_config_id),
                     protocol=self.natpool_protocol,
                     frontend_port_range_start=self.natpool_frontend_port_start,
                     frontend_port_range_end=self.natpool_frontend_port_end,
