@@ -33,7 +33,7 @@
       interface: "{{ testint }}"
       mode: layer3
       description: 'Configured by Ansible - Layer3'
-      admin_state: 'up'
+      admin_state: up
       state: present
       provider: "{{ connection }}"
     register: result
@@ -55,7 +55,7 @@
       interface: "{{ testint }}"
       mode: layer2
       description: 'Configured by Ansible - Layer2'
-      admin_state: 'down'
+      admin_state: down
       state: present
       provider: "{{ connection }}"
     register: result
