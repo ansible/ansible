@@ -367,6 +367,15 @@ def get_interface_type_removed_cmds(interfaces):
     return commands
 
 
+def get_admin_state(admin_state):
+    command = ''
+    if admin_state == 'up':
+        command = 'no shutdown'
+    elif admin_state == 'down':
+        command = 'shutdown'
+    return command
+
+
 def is_default_interface(name, module):
     """Checks to see if interface exists and if it is a default config
     """
@@ -399,6 +408,7 @@ def add_command_to_interface(interface, cmd, commands):
 
 def map_obj_to_commands(updates, module):
     commands = list()
+    commands2 = list()
     want, have = updates
 
     args = ('speed', 'description', 'duplex', 'mtu')
@@ -416,7 +426,11 @@ def map_obj_to_commands(updates, module):
 
         obj_in_have = search_obj_in_list(name, have)
         is_default = is_default_interface(name, module)
-        interface = 'interface ' + name
+        if name:
+            interface = 'interface ' + name
+
+        if interface_type and state == 'present':
+            module.fail_json(msg='The interface_type param can be used only with state absent.')
 
         if state == 'absent':
             if obj_in_have:
@@ -458,6 +472,15 @@ def map_obj_to_commands(updates, module):
                         obj_in_have.get('fabric_forwarding_anycast_gateway') is False):
                     add_command_to_interface(interface, 'no fabric forwarding mode anycast-gateway', commands)
 
+                if name and get_interface_type(name) == 'ethernet':
+                    if mode != obj_in_have.get('mode'):
+                        admin_state = w.get('admin_state') or obj_in_have.get('admin_state')
+                        if admin_state:
+                            c1 = 'interface {0}'.format(normalize_interface(w['name']))
+                            c2 = get_admin_state(admin_state)
+                            commands2.append(c1)
+                            commands2.append(c2)
+
             else:
                 commands.append(interface)
                 for item in args:
@@ -492,7 +515,7 @@ def map_obj_to_commands(updates, module):
             elif is_default == 'DNE':
                 module.exit_json(msg='interface you are trying to default does not exist')
 
-    return commands
+    return commands, commands2
 
 
 def map_params_to_obj(module):
@@ -505,7 +528,8 @@ def map_params_to_obj(module):
                     item[key] = module.params[key]
 
             d = item.copy()
-            d['name'] = normalize_interface(module.params['name'])
+            name = d['name']
+            d['name'] = normalize_interface(name)
             obj.append(d)
 
     else:
@@ -718,7 +742,8 @@ def main():
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec,
+                       mutually_exclusive=[['name', 'interface_type']])
     )
 
     argument_spec.update(element_spec)
@@ -741,13 +766,22 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(want, module)
 
-    commands = map_obj_to_commands((want, have), module)
-    result['commands'] = commands
+    commands = []
+    commands1, commands2 = map_obj_to_commands((want, have), module)
+    commands.extend(commands1)
 
     if commands:
         if not module.check_mode:
             load_config(module, commands)
-        result['changed'] = True
+            result['changed'] = True
+            # if the mode changes from L2 to L3, the admin state
+            # seems to change after the API call, so adding a second API
+            # call to ensure it's in the desired state.
+            if commands2:
+                load_config(module, commands2)
+                commands.extend(commands2)
+            commands = [cmd for cmd in commands if cmd != 'configure']
+    result['commands'] = commands
 
     if result['changed']:
         failed_conditions = check_declarative_intent_params(module, want)
