@@ -303,7 +303,7 @@ def construct_ip_configuration_set(raw):
     configurations = [str(dict(
         private_ip_allocation_method=item.get('private_ip_allocation_method').encode('ascii'),
         public_ip_address_name=(item.get('public_ip_address').get('name').encode('ascii')
-                                if item.get('public_ip_address') else item.get('public_ip_address_name')),
+                                if item.get('public_ip_address') else item.get('public_ip_address_name').encode('ascii')),
         primary=item.get('primary'),
         name=item.get('name').encode('ascii')
     )) for item in raw]
