@@ -604,8 +604,6 @@ try:
         ImageReference, NetworkProfile, LinuxConfiguration, \
         SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
         DiskCreateOptionTypes, Plan, SubResource
-    from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
-        NetworkInterfaceIPConfiguration, Subnet
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -1643,20 +1641,20 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type,
                                                   self.open_ports)
 
-        parameters = NetworkInterface(
+        parameters = self.network_models.NetworkInterface(
             location=self.location,
             ip_configurations=[
-                NetworkInterfaceIPConfiguration(
+                self.network_models.NetworkInterfaceIPConfiguration(
                     private_ip_allocation_method='Dynamic',
                 )
             ]
         )
-        parameters.ip_configurations[0].subnet = Subnet(id=subnet_id)
+        parameters.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
-        parameters.network_security_group = NetworkSecurityGroup(id=group.id,
+        parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
                                                                  location=group.location,
                                                                  resource_guid=group.resource_guid)
-        parameters.ip_configurations[0].public_ip_address = PublicIPAddress(id=pip.id,
+        parameters.ip_configurations[0].public_ip_address = self.network_models.PublicIPAddress(id=pip.id,
                                                                             location=pip.location,
                                                                             resource_guid=pip.resource_guid)
 
