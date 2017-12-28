@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -65,7 +65,7 @@ options:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
         required: false
-author: "Matt Davis (@mattdavispdx)"
+author: "Matt Davis (@nitzmahone)"
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
@@ -75,19 +75,19 @@ notes:
 '''
 
 EXAMPLES = r'''
-# Install all security, critical, and rollup updates
-- win_updates:
+- name: Install all security, critical, and rollup updates
+  win_updates:
     category_names:
       - SecurityUpdates
       - CriticalUpdates
       - UpdateRollups
 
-# Install only security updates
-- win_updates:
+- name: Install only security updates
+  win_updates:
     category_names: SecurityUpdates
 
-# Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
-- win_updates:
+- name: Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
+  win_updates:
     category_names: SecurityUpdates
     state: searched
     log_path: c:\ansible_wu.txt

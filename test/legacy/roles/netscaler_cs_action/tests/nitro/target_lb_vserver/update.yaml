@@ -1,0 +1,14 @@
+---
+
+- name: Update cs action
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_action:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: action-1
+    targetlbvserver: lb-vserver-1
+    comment: some other comment

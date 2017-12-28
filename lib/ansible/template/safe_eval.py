@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -23,10 +24,10 @@ import sys
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins
-from ansible.plugins import filter_loader, test_loader
+from ansible.plugins.loader import filter_loader, test_loader
 
 
-def safe_eval(expr, locals={}, include_exceptions=False):
+def safe_eval(expr, locals=None, include_exceptions=False):
     '''
     This is intended for allowing things like:
     with_items: a_list_variable
@@ -37,6 +38,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
+    locals = {} if locals is None else locals
 
     # define certain JSON types
     # eg. JSON booleans are unknown to python eval()
@@ -54,7 +56,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         (
             ast.Add,
             ast.BinOp,
-            #ast.Call,
+            # ast.Call,
             ast.Compare,
             ast.Dict,
             ast.Div,

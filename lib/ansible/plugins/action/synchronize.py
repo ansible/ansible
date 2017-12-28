@@ -23,11 +23,9 @@ from collections import MutableSequence
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.plugins import connection_loader
-
-boolean = C.mk_boolean
+from ansible.plugins.loader import connection_loader
 
 
 class ActionModule(ActionBase):
@@ -62,7 +60,7 @@ class ActionModule(ActionBase):
             return path
 
         # If using docker, do not add user information
-        if self._remote_transport not in [ 'docker' ] and user:
+        if self._remote_transport not in ['docker'] and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -224,7 +222,7 @@ class ActionModule(ActionBase):
         localhost_ports = set()
         for host in C.LOCALHOST:
             localhost_vars = task_vars['hostvars'].get(host, {})
-            for port_var in MAGIC_VARIABLE_MAPPING['port']:
+            for port_var in C.MAGIC_VARIABLE_MAPPING['port']:
                 port = localhost_vars.get(port_var, None)
                 if port:
                     break
@@ -272,7 +270,7 @@ class ActionModule(ActionBase):
             localhost_shell = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
-                for shell_var in MAGIC_VARIABLE_MAPPING['shell']:
+                for shell_var in C.MAGIC_VARIABLE_MAPPING['shell']:
                     localhost_shell = localhost_vars.get(shell_var, None)
                     if localhost_shell:
                         break
@@ -286,7 +284,7 @@ class ActionModule(ActionBase):
             localhost_executable = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
-                for executable_var in MAGIC_VARIABLE_MAPPING['executable']:
+                for executable_var in C.MAGIC_VARIABLE_MAPPING['executable']:
                     localhost_executable = localhost_vars.get(executable_var, None)
                     if localhost_executable:
                         break
@@ -308,28 +306,28 @@ class ActionModule(ActionBase):
         src = _tmp_args.get('src', None)
         dest = _tmp_args.get('dest', None)
         if src is None or dest is None:
-            return dict(failed=True,
-                    msg="synchronize requires both src and dest parameters are set")
+            return dict(failed=True, msg="synchronize requires both src and dest parameters are set")
 
+        # Determine if we need a user@
+        user = None
         if not dest_is_local:
-            # Private key handling
-            private_key = self._play_context.private_key_file
-
-            if private_key is not None:
-                private_key = os.path.expanduser(private_key)
-                _tmp_args['private_key'] = private_key
-
             # Src and dest rsync "path" handling
-            # Determine if we need a user@
-            user = None
-            if boolean(_tmp_args.get('set_remote_user', 'yes')):
+            if boolean(_tmp_args.get('set_remote_user', 'yes'), strict=False):
                 if use_delegate:
                     user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
+                    if not user:
+                        user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
                     if not user:
                         user = C.DEFAULT_REMOTE_USER
 
                 else:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
+            # Private key handling
+            private_key = self._play_context.private_key_file
+
+            if private_key is not None:
+                _tmp_args['private_key'] = private_key
 
             # use the mode to define src and dest's url
             if _tmp_args.get('mode', 'push') == 'pull':
@@ -384,7 +382,7 @@ class ActionModule(ActionBase):
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
-        if self._remote_transport in [ 'docker' ]:
+        if self._remote_transport in ['docker']:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])

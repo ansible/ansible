@@ -1,0 +1,16 @@
+---
+
+- include: "{{ role_path }}/tests/eos/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'eos'
+
+- include: "{{ role_path }}/tests/vyos/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'vyos'
+
+- include: "{{ role_path }}/tests/ios/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'ios'
+
+- include: "{{ role_path }}/tests/iosxr/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'iosxr'
+
+- include: "{{ role_path }}/tests/nxos/basic.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'nxos'

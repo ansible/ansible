@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.six import iteritems
 import atexit
+import os
 import ssl
 import time
 
@@ -26,10 +26,14 @@ try:
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
-    from pyVmomi import vim
+    from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six import integer_types, iteritems, string_types
 
 
 class TaskError(Exception):
@@ -52,6 +56,30 @@ def wait_for_task(task):
             time.sleep(15)
 
 
+def find_obj(content, vimtype, name, first=True):
+    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
+    obj_list = container.view
+    container.Destroy()
+
+    # Backward compatible with former get_obj() function
+    if name is None:
+        if obj_list:
+            return obj_list[0]
+        return None
+
+    # Select the first match
+    if first is True:
+        for obj in obj_list:
+            if obj.name == name:
+                return obj
+
+        # If no object found, return None
+        return None
+
+    # Return all matching objects if needed
+    return [obj for obj in obj_list if obj.name == name]
+
+
 def find_dvspg_by_name(dv_switch, portgroup_name):
 
     portgroups = dv_switch.portgroup
@@ -70,7 +98,7 @@ def find_entity_child_by_path(content, entityRootFolder, path):
     paths = path.split("/")
     try:
         for path in paths:
-            entity = searchIndex.FindChild (entity, path)
+            entity = searchIndex.FindChild(entity, path)
 
         if entity.name == paths[-1]:
             return entity
@@ -115,6 +143,22 @@ def find_datacenter_by_name(content, datacenter_name):
 
     return None
 
+
+def get_parent_datacenter(obj):
+    """ Walk the parent tree to find the objects datacenter """
+    if isinstance(obj, vim.Datacenter):
+        return obj
+    datacenter = None
+    while True:
+        if not hasattr(obj, 'parent'):
+            break
+        obj = obj.parent
+        if isinstance(obj, vim.Datacenter):
+            datacenter = obj
+            break
+    return datacenter
+
+
 def find_datastore_by_name(content, datastore_name):
 
     datastores = get_all_objs(content, [vim.Datastore])
@@ -127,7 +171,13 @@ def find_datastore_by_name(content, datastore_name):
 
 def find_dvs_by_name(content, switch_name):
 
-    vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
+    # https://github.com/vmware/govmomi/issues/879
+    # https://github.com/ansible/ansible/pull/31798#issuecomment-336936222
+    try:
+        vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
+    except IndexError:
+        vmware_distributed_switches = get_all_objs(content, [vim.DistributedVirtualSwitch])
+
     for dvs in vmware_distributed_switches:
         if dvs.name == switch_name:
             return dvs
@@ -143,19 +193,16 @@ def find_hostsystem_by_name(content, hostname):
     return None
 
 
-def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None):
+def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
     """ UUID is unique to a VM, every other id returns the first match. """
     si = content.searchIndex
     vm = None
 
     if vm_id_type == 'dns_name':
         vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
-    elif vm_id_type == 'inventory_path':
-        vm = si.FindByInventoryPath(inventoryPath=vm_id)
-        if isinstance(vm, vim.VirtualMachine):
-            vm = None
     elif vm_id_type == 'uuid':
-        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=vm_id, vmSearch=True)
+        # Search By BIOS UUID rather than instance UUID
+        vm = si.FindByUuid(datacenter=datacenter, instanceUuid=False, uuid=vm_id, vmSearch=True)
     elif vm_id_type == 'ip':
         vm = si.FindByIp(datacenter=datacenter, ip=vm_id, vmSearch=True)
     elif vm_id_type == 'vm_name':
@@ -165,7 +212,20 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
         elif datacenter:
             folder = datacenter.hostFolder
         vm = find_vm_by_name(content, vm_id, folder)
-
+    elif vm_id_type == 'inventory_path':
+        searchpath = folder
+        # get all objects for this path
+        f_obj = si.FindByInventoryPath(searchpath)
+        if f_obj:
+            if isinstance(f_obj, vim.Datacenter):
+                f_obj = f_obj.vmFolder
+            for c_obj in f_obj.childEntity:
+                if not isinstance(c_obj, vim.VirtualMachine):
+                    continue
+                if c_obj.name == vm_id:
+                    vm = c_obj
+                    if match_first:
+                        break
     return vm
 
 
@@ -178,12 +238,37 @@ def find_vm_by_name(content, vm_name, folder=None, recurse=True):
     return None
 
 
-def find_host_portgroup_by_name(host, portgroup_name):
+def compile_folder_path_for_object(vobj):
+    """ make a /vm/foo/bar/baz like folder path for an object """
 
-    for portgroup in host.config.network.portgroup:
-        if portgroup.spec.name == portgroup_name:
-            return portgroup
-    return None
+    paths = []
+    if isinstance(vobj, vim.Folder):
+        paths.append(vobj.name)
+
+    thisobj = vobj
+    while hasattr(thisobj, 'parent'):
+        thisobj = thisobj.parent
+        try:
+            moid = thisobj._moId
+        except AttributeError:
+            moid = None
+        if moid in ['group-d1', 'ha-folder-root']:
+            break
+        if isinstance(thisobj, vim.Folder):
+            paths.append(thisobj.name)
+    paths.reverse()
+    return '/' + '/'.join(paths)
+
+
+def _get_vm_prop(vm, attributes):
+    """Safely get a property or return None"""
+    result = vm
+    for attribute in attributes:
+        try:
+            result = getattr(result, attribute)
+        except (AttributeError, IndexError):
+            return None
+    return result
 
 
 def gather_vm_facts(content, vm):
@@ -196,10 +281,19 @@ def gather_vm_facts(content, vm):
         'hw_guest_id': vm.summary.guest.guestId,
         'hw_product_uuid': vm.config.uuid,
         'hw_processor_count': vm.config.hardware.numCPU,
+        'hw_cores_per_socket': vm.config.hardware.numCoresPerSocket,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
-        'guest_tools_status': vm.guest.toolsRunningStatus,
-        'guest_tools_version': vm.guest.toolsVersion,
+        'hw_datastores': [],
+        'hw_files': [],
+        'hw_esxi_host': None,
+        'hw_guest_ha_state': None,
+        'hw_is_template': vm.config.template,
+        'hw_folder': None,
+        'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
+        'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
+        'guest_question': vm.summary.runtime.question,
+        'guest_consolidation_needed': vm.summary.runtime.consolidationNeeded,
         'ipv4': None,
         'ipv6': None,
         'annotation': vm.config.annotation,
@@ -207,6 +301,37 @@ def gather_vm_facts(content, vm):
         'snapshots': [],
         'current_snapshot': None,
     }
+
+    # facts that may or may not exist
+    if vm.summary.runtime.host:
+        host = vm.summary.runtime.host
+        facts['hw_esxi_host'] = host.summary.config.name
+    if vm.summary.runtime.dasVmProtection:
+        facts['hw_guest_ha_state'] = vm.summary.runtime.dasVmProtection.dasProtected
+
+    datastores = vm.datastore
+    for ds in datastores:
+        facts['hw_datastores'].append(ds.info.name)
+
+    try:
+        files = vm.config.files
+        layout = vm.layout
+        if files:
+            facts['hw_files'] = [files.vmPathName]
+            for item in layout.snapshot:
+                for snap in item.snapshotFile:
+                    facts['hw_files'].append(files.snapshotDirectory + snap)
+            for item in layout.configFile:
+                facts['hw_files'].append(os.path.dirname(files.vmPathName) + '/' + item)
+            for item in vm.layout.logFile:
+                facts['hw_files'].append(files.logDirectory + item)
+            for item in vm.layout.disk:
+                for disk in item.diskFile:
+                    facts['hw_files'].append(disk)
+    except:
+        pass
+
+    facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
 
     cfm = content.customFieldsManager
     # Resolve custom values
@@ -222,8 +347,10 @@ def gather_vm_facts(content, vm):
         facts['customvalues'][kn] = value_obj.value
 
     net_dict = {}
-    for device in vm.guest.net:
-        net_dict[device.macAddress] = list(device.ipAddress)
+    vmnet = _get_vm_prop(vm, ('guest', 'net'))
+    if vmnet:
+        for device in vmnet:
+            net_dict[device.macAddress] = list(device.ipAddress)
 
     for k, v in iteritems(net_dict):
         for ipaddress in v:
@@ -290,6 +417,9 @@ def get_current_snap_obj(snapshots, snapob):
 
 def list_snapshots(vm):
     result = {}
+    snapshot = _get_vm_prop(vm, ('snapshot',))
+    if not snapshot:
+        return result
     if vm.snapshot is None:
         return result
 
@@ -307,36 +437,46 @@ def vmware_argument_spec():
         hostname=dict(type='str', required=True),
         username=dict(type='str', aliases=['user', 'admin'], required=True),
         password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
+        port=dict(type='int', default=443),
         validate_certs=dict(type='bool', required=False, default=True),
     )
 
 
 def connect_to_api(module, disconnect_atexit=True):
-
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
+    port = module.params['port'] or 443
     validate_certs = module.params['validate_certs']
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
-                             'python or or use validate_certs=false')
+                             'python or use validate_certs=false.')
 
+    ssl_context = None
+    if not validate_certs and hasattr(ssl, 'SSLContext'):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        ssl_context.verify_mode = ssl.CERT_NONE
+
+    service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
-    except vim.fault.InvalidLogin as invalid_login:
-        module.fail_json(msg=invalid_login.msg, apierror=str(invalid_login))
-    except (requests.ConnectionError, ssl.SSLError) as connection_error:
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and not validate_certs:
-            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            context.verify_mode = ssl.CERT_NONE
-            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
-        else:
-            module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
+        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
+    except vim.fault.InvalidLogin as e:
+        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, e.msg))
+    except vim.fault.NoPermission as e:
+        module.fail_json(msg="User %s does not have required permission"
+                             " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, e.msg))
+    except (requests.ConnectionError, ssl.SSLError) as e:
+        module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, e))
+    except vmodl.fault.InvalidRequest as e:
+        # Request is malformed
+        module.fail_json(msg="Failed to get a response from server %s:%s as "
+                             "request is malformed: %s" % (hostname, port, e.msg))
     except Exception as e:
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        context.verify_mode = ssl.CERT_NONE
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, e))
+
+    if service_instance is None:
+        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port))
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
@@ -357,8 +497,7 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     return obj
 
 
-def fetch_file_from_guest(content, vm, username, password, src, dest):
-
+def fetch_file_from_guest(module, content, vm, username, password, src, dest):
     """ Use VMWare's filemanager api to fetch a file over http """
 
     result = {'failed': False}
@@ -382,7 +521,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     result['url'] = fti.url
 
     # Use module_utils to fetch the remote url returned from the api
-    rsp, info = fetch_url(self.module, fti.url, use_proxy=False,
+    rsp, info = fetch_url(module, fti.url, use_proxy=False,
                           force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -406,8 +545,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
     return result
 
 
-def push_file_to_guest(content, vm, username, password, src, dest, overwrite=True):
-
+def push_file_to_guest(module, content, vm, username, password, src, dest, overwrite=True):
     """ Use VMWare's filemanager api to fetch a file over http """
 
     result = {'failed': False}
@@ -443,7 +581,7 @@ def push_file_to_guest(content, vm, username, password, src, dest, overwrite=Tru
                                     filesize, overwrite)
 
     # PUT the filedata to the url ...
-    rsp, info = fetch_url(self.module, url, method="put", data=fdata,
+    rsp, info = fetch_url(module, url, method="put", data=fdata,
                           use_proxy=False, force=True, last_mod_time=None,
                           timeout=10, headers=None)
 
@@ -462,7 +600,7 @@ def run_command_in_guest(content, vm, username, password, program_path, program_
 
     tools_status = vm.guest.toolsStatus
     if (tools_status == 'toolsNotInstalled' or
-                tools_status == 'toolsNotRunning'):
+            tools_status == 'toolsNotRunning'):
         result['failed'] = True
         result['msg'] = "VMwareTools is not installed or is not running in the guest"
         return result
@@ -508,3 +646,277 @@ def run_command_in_guest(content, vm, username, password, program_path, program_
         result['failed'] = True
 
     return result
+
+
+def serialize_spec(clonespec):
+    """Serialize a clonespec or a relocation spec"""
+    data = {}
+    attrs = dir(clonespec)
+    attrs = [x for x in attrs if not x.startswith('_')]
+    for x in attrs:
+        xo = getattr(clonespec, x)
+        if callable(xo):
+            continue
+        xt = type(xo)
+        if xo is None:
+            data[x] = None
+        elif isinstance(xo, vim.vm.ConfigSpec):
+            data[x] = serialize_spec(xo)
+        elif isinstance(xo, vim.vm.RelocateSpec):
+            data[x] = serialize_spec(xo)
+        elif isinstance(xo, vim.vm.device.VirtualDisk):
+            data[x] = serialize_spec(xo)
+        elif isinstance(xo, vim.vm.device.VirtualDeviceSpec.FileOperation):
+            data[x] = to_text(xo)
+        elif isinstance(xo, vim.Description):
+            data[x] = {
+                'dynamicProperty': serialize_spec(xo.dynamicProperty),
+                'dynamicType': serialize_spec(xo.dynamicType),
+                'label': serialize_spec(xo.label),
+                'summary': serialize_spec(xo.summary),
+            }
+        elif hasattr(xo, 'name'):
+            data[x] = to_text(xo) + ':' + to_text(xo.name)
+        elif isinstance(xo, vim.vm.ProfileSpec):
+            pass
+        elif issubclass(xt, list):
+            data[x] = []
+            for xe in xo:
+                data[x].append(serialize_spec(xe))
+        elif issubclass(xt, string_types + integer_types + (float, bool)):
+            if issubclass(xt, integer_types):
+                data[x] = int(xo)
+            else:
+                data[x] = to_text(xo)
+        elif issubclass(xt, bool):
+            data[x] = xo
+        elif issubclass(xt, dict):
+            data[to_text(x)] = {}
+            for k, v in xo.items():
+                k = to_text(k)
+                data[x][k] = serialize_spec(v)
+        else:
+            data[x] = str(xt)
+
+    return data
+
+
+def find_host_by_cluster_datacenter(module, content, datacenter_name, cluster_name, host_name):
+    dc = find_datacenter_by_name(content, datacenter_name)
+    if dc is None:
+        module.fail_json(msg="Unable to find datacenter with name %s" % datacenter_name)
+    cluster = find_cluster_by_name(content, cluster_name, datacenter=dc)
+    if cluster is None:
+        module.fail_json(msg="Unable to find cluster with name %s" % cluster_name)
+
+    for host in cluster.host:
+        if host.name == host_name:
+            return host, cluster
+
+    return None, cluster
+
+
+def set_vm_power_state(content, vm, state, force):
+    """
+    Set the power status for a VM determined by the current and
+    requested states. force is forceful
+    """
+    facts = gather_vm_facts(content, vm)
+    expected_state = state.replace('_', '').replace('-', '').lower()
+    current_state = facts['hw_power_status'].lower()
+    result = dict(
+        changed=False,
+        failed=False,
+    )
+
+    # Need Force
+    if not force and current_state not in ['poweredon', 'poweredoff']:
+        result['failed'] = True
+        result['msg'] = "Virtual Machine is in %s power state. Force is required!" % current_state
+        return result
+
+    # State is not already true
+    if current_state != expected_state:
+        task = None
+        try:
+            if expected_state == 'poweredoff':
+                task = vm.PowerOff()
+
+            elif expected_state == 'poweredon':
+                task = vm.PowerOn()
+
+            elif expected_state == 'restarted':
+                if current_state in ('poweredon', 'poweringon', 'resetting', 'poweredoff'):
+                    task = vm.Reset()
+                else:
+                    result['failed'] = True
+                    result['msg'] = "Cannot restart virtual machine in the current state %s" % current_state
+
+            elif expected_state == 'suspended':
+                if current_state in ('poweredon', 'poweringon'):
+                    task = vm.Suspend()
+                else:
+                    result['failed'] = True
+                    result['msg'] = 'Cannot suspend virtual machine in the current state %s' % current_state
+
+            elif expected_state in ['shutdownguest', 'rebootguest']:
+                if current_state == 'poweredon':
+                    if vm.guest.toolsRunningStatus == 'guestToolsRunning':
+                        if expected_state == 'shutdownguest':
+                            task = vm.ShutdownGuest()
+                        else:
+                            task = vm.RebootGuest()
+                        # Set result['changed'] immediately because
+                        # shutdown and reboot return None.
+                        result['changed'] = True
+                    else:
+                        result['failed'] = True
+                        result['msg'] = "VMware tools should be installed for guest shutdown/reboot"
+                else:
+                    result['failed'] = True
+                    result['msg'] = "Virtual machine %s must be in poweredon state for guest shutdown/reboot" % vm.name
+
+            else:
+                result['failed'] = True
+                result['msg'] = "Unsupported expected state provided: %s" % expected_state
+
+        except Exception as e:
+            result['failed'] = True
+            result['msg'] = to_text(e)
+
+        if task:
+            wait_for_task(task)
+            if task.info.state == 'error':
+                result['failed'] = True
+                result['msg'] = task.info.error.msg
+            else:
+                result['changed'] = True
+
+    # need to get new metadata if changed
+    if result['changed']:
+        result['instance'] = gather_vm_facts(content, vm)
+
+    return result
+
+
+class PyVmomi(object):
+    def __init__(self, module):
+        if not HAS_PYVMOMI:
+            module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
+
+        self.module = module
+        self.params = module.params
+        self.si = None
+        self.current_vm_obj = None
+        self.content = connect_to_api(self.module)
+
+    def is_vcenter(self):
+        """
+        Check if given hostname is vCenter or ESXi host
+        Returns: True if given connection is with vCenter server
+                 False if given connection is with ESXi server
+
+        """
+        api_type = None
+        try:
+            api_type = self.content.about.apiType
+        except (vmodl.RuntimeFault, vim.fault.VimFault) as exc:
+            self.module.fail_json(msg="Failed to get status of vCenter server : %s" % exc.msg)
+
+        if api_type == 'VirtualCenter':
+            return True
+        elif api_type == 'HostAgent':
+            return False
+
+    # Virtual Machine related functions
+    def get_vm(self):
+        vm = None
+        match_first = (self.params['name_match'] == 'first')
+
+        if self.params['uuid']:
+            vm = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
+        elif self.params['folder'] and self.params['name']:
+            vm = find_vm_by_id(self.content, vm_id=self.params['name'], vm_id_type="inventory_path",
+                               folder=self.params['folder'], match_first=match_first)
+
+        if vm:
+            self.current_vm_obj = vm
+
+        return vm
+
+    def gather_facts(self, vm):
+        return gather_vm_facts(self.content, vm)
+
+    @staticmethod
+    def get_vm_path(content, vm):
+        foldername = None
+        folder = vm.parent
+        if folder:
+            foldername = folder.name
+            fp = folder.parent
+            # climb back up the tree to find our path, stop before the root folder
+            while fp is not None and fp.name is not None and fp != content.rootFolder:
+                foldername = fp.name + '/' + foldername
+                try:
+                    fp = fp.parent
+                except:
+                    break
+            foldername = '/' + foldername
+        return foldername
+
+    # Cluster related functions
+    def find_cluster_by_name(self, cluster_name, datacenter_name=None):
+        """
+        Find Cluster by name in given datacenter
+        Args:
+            cluster_name: Name of cluster name to find
+            datacenter_name: (optional) Name of datacenter
+
+        Returns: True if found
+
+        """
+        return find_cluster_by_name(self.content, cluster_name, datacenter=datacenter_name)
+
+    def get_all_hosts_by_cluster(self, cluster_name):
+        """
+        Get all hosts from cluster by cluster name
+        Args:
+            cluster_name: Name of cluster
+
+        Returns: List of hosts
+
+        """
+        cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
+        if cluster_obj:
+            return [host for host in cluster_obj.host]
+        else:
+            return []
+
+    # Hosts related functions
+    def find_hostsystem_by_name(self, host_name):
+        """
+        Find Host by name
+        Args:
+            host_name: Name of ESXi host
+
+        Returns: True if found
+
+        """
+        return find_hostsystem_by_name(self.content, hostname=host_name)
+
+    # Network related functions
+    @staticmethod
+    def find_host_portgroup_by_name(host, portgroup_name):
+        """
+        Find Portgroup on given host
+        Args:
+            host: Host config object
+            portgroup_name: Name of portgroup
+
+        Returns: True if found else False
+
+        """
+        for portgroup in host.config.network.portgroup:
+            if portgroup.spec.name == portgroup_name:
+                return portgroup
+        return False

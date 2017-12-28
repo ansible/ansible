@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     ca_certs:
         description:
             - List of certificate authorities (root and intermediate) trusted that is used for certificate validation.
@@ -62,6 +74,14 @@ options:
             - When enabled, avi will not trust intermediate and root certs presented by a client.
             - Instead, only the chain certs configured in the certificate authority section will be used to verify trust of the client's cert.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+    is_federated:
+        description:
+            - This field describes the object's replication scope.
+            - If the field is set to false, then the object is visible within the controller-cluster and its associated service-engines.
+            - If the field is set to true, then the object is replicated across the federation.
+            - Field introduced in 17.1.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.4"
     name:
         description:
             - Name of the pki profile.
@@ -103,7 +123,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -113,11 +133,15 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         ca_certs=dict(type='list',),
         created_by=dict(type='str',),
         crl_check=dict(type='bool',),
         crls=dict(type='list',),
         ignore_peer_chain=dict(type='bool',),
+        is_federated=dict(type='bool',),
         name=dict(type='str', required=True),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),

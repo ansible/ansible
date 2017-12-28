@@ -1,57 +1,46 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public licenses
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: atomic_host
 short_description: Manage the atomic host platform
 description:
-    - Manage the atomic host platform
-    - Rebooting of Atomic host platform should be done outside this module
+    - Manage the atomic host platform.
+    - Rebooting of Atomic host platform should be done outside this module.
 version_added: "2.2"
-author: "Saravanan KR @krsacme"
+author:
+- Saravanan KR (@krsacme)
 notes:
-    - Host should be an atomic platform (verified by existence of '/run/ostree-booted' file)
+    - Host should be an atomic platform (verified by existence of '/run/ostree-booted' file).
 requirements:
   - atomic
-  - "python >= 2.6"
+  - python >= 2.6
 options:
     revision:
         description:
           - The version number of the atomic host to be deployed. Providing C(latest) will upgrade to the latest available version.
-        required: false
         default: latest
-        aliases: ["version"]
+        aliases: [ version ]
 '''
 
 EXAMPLES = '''
-
-# Upgrade the atomic host platform to the latest version (atomic host upgrade)
-- atomic_host:
+- name: Upgrade the atomic host platform to the latest version (atomic host upgrade)
+  atomic_host:
     revision: latest
 
-# Deploy a specific revision as the atomic host (atomic host deploy 23.130)
-- atomic_host:
+- name: Deploy a specific revision as the atomic host (atomic host deploy 23.130)
+  atomic_host:
     revision: 23.130
 '''
 
@@ -62,9 +51,11 @@ msg:
     type: string
     sample: 'Already on latest'
 '''
+import os
+import traceback
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule, os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def core(module):
@@ -95,9 +86,9 @@ def core(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            revision=dict(default='latest', required=False, aliases=["version"]),
-            ),
-        )
+            revision=dict(type='str', default='latest', aliases=["version"]),
+        ),
+    )
 
     # Verify that the platform is atomic host
     if not os.path.exists("/run/ostree-booted"):
@@ -106,7 +97,7 @@ def main():
     try:
         core(module)
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

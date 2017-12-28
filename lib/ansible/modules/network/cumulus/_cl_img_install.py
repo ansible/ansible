@@ -2,20 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Cumulus Networks <ce-ceng@cumulusnetworks.com>
-#
-# This file is part of Ansible
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
 
@@ -24,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: cl_img_install
 version_added: "2.1"
-author: "Cumulus Networks (@CumulusLinux)"
+author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Install a different Cumulus Linux version.
 deprecated: Deprecated in 2.3. The image slot system no longer exists in Cumulus Linux.
 description:
@@ -110,6 +103,11 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+import re
+
+from ansible.module_utils.basic import AnsibleModule, platform
+from ansible.module_utils.six.moves.urllib import parse as urlparse
+
 
 def check_url(module, url):
     parsed_url = urlparse(url)
@@ -124,8 +122,7 @@ def check_url(module, url):
 def run_cl_cmd(module, cmd, check_rc=True):
     try:
         (rc, out, err) = module.run_command(cmd, check_rc=check_rc)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg=e.strerror)
     # trim last line as it is always empty
     ret = out.splitlines()
@@ -184,11 +181,10 @@ def check_fw_print_env(module, slot_num):
         cmd = "/usr/bin/grub-editenv list"
         grub_output = run_cl_cmd(module, cmd)
         for _line in grub_output:
-            _regex_str = re.compile('cl.ver' + slot_num + '=([\w.]+)-')
+            _regex_str = re.compile('cl.ver' + slot_num + r'=([\w.]+)-')
             m0 = re.match(_regex_str, _line)
             if m0:
                 return m0.group(1)
-
 
 
 def get_primary_slot_num(module):
@@ -200,7 +196,7 @@ def get_primary_slot_num(module):
         cmd = "/usr/bin/grub-editenv list"
         grub_output = run_cl_cmd(module, cmd)
         for _line in grub_output:
-            _regex_str = re.compile('cl.active=(\d)')
+            _regex_str = re.compile(r'cl.active=(\d)')
             m0 = re.match(_regex_str, _line)
             if m0:
                 return m0.group(1)
@@ -213,7 +209,7 @@ def get_active_slot(module):
         module.fail_json(msg='Failed to open /proc/cmdline. ' +
                          'Unable to determine active slot')
 
-    _match = re.search('active=(\d+)', cmdline)
+    _match = re.search(r'active=(\d+)', cmdline)
     if _match:
         return _match.group(1)
     return None
@@ -250,9 +246,9 @@ def determine_sw_version(module):
         return
     else:
         _filename = module.params.get('src').split('/')[-1]
-        _match = re.search('\d+\W\d+\W\w+', _filename)
+        _match = re.search(r'\d+\W\d+\W\w+', _filename)
         if _match:
-            module.sw_version = re.sub('\W', '.', _match.group())
+            module.sw_version = re.sub(r'\W', '.', _match.group())
             return
     _msg = 'Unable to determine version from file %s' % (_filename)
     module.exit_json(changed=False, msg=_msg)
@@ -267,7 +263,7 @@ def check_sw_version(module):
             if 'active' in slot:
                 _msg = "Version %s is installed in the active slot" \
                     % (_version)
-                module.exit_json(changed=False,  msg=_msg)
+                module.exit_json(changed=False, msg=_msg)
             else:
                 _msg = "Version " + _version + \
                     " is installed in the alternate slot. "
@@ -301,7 +297,7 @@ def main():
         argument_spec=dict(
             src=dict(required=True, type='str'),
             version=dict(type='str'),
-            switch_slot=dict(type='bool', choices=BOOLEANS, default=False),
+            switch_slot=dict(type='bool', default=False),
         ),
     )
 
@@ -314,13 +310,6 @@ def main():
 
     install_img(module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-# incompatible with ansible 1.4.4 - ubuntu 12.04 version
-# from ansible.module_utils.urls import *
-from urlparse import urlparse
-import re
 
 if __name__ == '__main__':
     main()

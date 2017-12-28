@@ -1,0 +1,14 @@
+- include: RedHat.yml
+  when: ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora' and ansible_distribution_major_version != '6'
+
+- include: Fedora.yml 
+  when: ansible_distribution == 'Fedora'
+
+- include: OpenSuse.yml
+  when: ansible_os_family == 'Suse'
+
+- include: Ubuntu.yml
+  when: ansible_os_family == 'Debian'
+
+- include: test_secrets.yml
+  when: ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6'

@@ -25,7 +25,7 @@ import time
 import glob
 
 from ansible.plugins.action.iosxr import ActionModule as _ActionModule
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.vars import merge_hash
 
@@ -40,7 +40,7 @@ class ActionModule(_ActionModule):
             try:
                 self._handle_template()
             except ValueError as exc:
-                return dict(failed=True, msg=exc.message)
+                return dict(failed=True, msg=to_text(exc))
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
@@ -54,7 +54,7 @@ class ActionModule(_ActionModule):
 
         # strip out any keys that have two leading and two trailing
         # underscore characters
-        for key in result.keys():
+        for key in list(result.keys()):
             if PRIVATE_KEYS_RE.match(key):
                 del result[key]
 

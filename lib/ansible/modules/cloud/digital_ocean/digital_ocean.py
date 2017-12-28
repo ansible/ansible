@@ -1,21 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -193,6 +186,7 @@ import traceback
 from distutils.version import LooseVersion
 
 try:
+    # Imported as a dependency for dopy
     import six
     HAS_SIX = True
 except ImportError:
@@ -207,7 +201,7 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 
 class TimeoutError(Exception):
@@ -243,7 +237,8 @@ class Droplet(JsonfyMixIn):
                 self.update_attr(json)
 
     def power_on(self):
-        assert self.status == 'off', 'Can only power on a closed one.'
+        if self.status != 'off':
+            raise AssertionError('Can only power on a closed one.')
         json = self.manager.power_on_droplet(self.id)
         self.update_attr(json)
 
@@ -351,11 +346,7 @@ def core(module):
             module.fail_json(msg='Unable to load %s' % k)
         return v
 
-    try:
-        api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
-    except KeyError as e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
+    api_token = module.params['api_token']
     changed = True
     command = module.params['command']
     state = module.params['state']
@@ -437,7 +428,11 @@ def main():
         argument_spec=dict(
             command=dict(choices=['droplet', 'ssh'], default='droplet'),
             state=dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            api_token=dict(aliases=['API_TOKEN'], no_log=True),
+            api_token=dict(
+                aliases=['API_TOKEN'],
+                no_log=True,
+                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY'])
+            ),
             name=dict(type='str'),
             size_id=dict(),
             image_id=dict(),
@@ -478,6 +473,7 @@ def main():
         module.fail_json(msg=str(e), id=e.id)
     except (DoError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

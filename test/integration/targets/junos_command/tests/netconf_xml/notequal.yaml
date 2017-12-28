@@ -5,10 +5,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: xml
     wait_for:
-      - "result[0].rpc-reply.software-information.host-name neq localhost"
+      - "result[1].rpc-reply.interface-information.physical-interface.name neq em0"
     provider: "{{ netconf }}"
   register: result
 
@@ -22,10 +22,10 @@
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: xml
     wait_for:
-      - "result[0].rpc-reply.software-information.host-name != localhost"
+      - "result[1].rpc-reply.interface-information.physical-interface.name neq em0"
     provider: "{{ netconf }}"
   register: result
 

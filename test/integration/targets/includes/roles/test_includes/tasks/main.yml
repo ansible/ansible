@@ -80,3 +80,27 @@
     # both these via a handler include
     - included_handler
     - verify_handler
+
+- include: branch_toplevel.yml canary=value1 nested_include_static=no
+  static: no
+- assert:
+    that:
+      - 'canary_fact == "value1"'
+
+- include: branch_toplevel.yml canary=value2 nested_include_static=yes
+  static: no
+- assert:
+    that:
+      - 'canary_fact == "value2"'
+
+- include: branch_toplevel.yml canary=value3 nested_include_static=no
+  static: yes
+- assert:
+    that:
+      - 'canary_fact == "value3"'
+
+- include: branch_toplevel.yml canary=value4 nested_include_static=yes
+  static: yes
+- assert:
+    that:
+      - 'canary_fact == "value4"'

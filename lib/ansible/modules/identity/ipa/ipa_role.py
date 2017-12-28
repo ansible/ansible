@@ -1,21 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -37,7 +28,6 @@ options:
   description:
     description:
     - A description of this role-group.
-    required: false
   group:
     description:
     - List of group names assign to this role.
@@ -50,24 +40,28 @@ options:
     - If an empty list is passed all assigned hosts will be unassigned from the role.
     - If option is omitted hosts will not be checked or changed.
     - If option is passed all assigned hosts that are not passed will be unassigned from the role.
-    required: false
   hostgroup:
     description:
     - List of host group names to assign.
     - If an empty list is passed all assigned host groups will be removed from the role.
     - If option is omitted host groups will not be checked or changed.
     - If option is passed all assigned hostgroups that are not passed will be unassigned from the role.
-    required: false
+  privilege:
+    description:
+    - List of privileges granted to the role.
+    - If an empty list is passed all assigned privileges will be removed.
+    - If option is omitted privileges will not be checked or changed.
+    - If option is passed all assigned privileges that are not passed will be removed.
+    default: None
+    version_added: "2.4"
   service:
     description:
     - List of service names to assign.
     - If an empty list is passed all assigned services will be removed from the role.
     - If option is omitted services will not be checked or changed.
     - If option is passed all assigned services that are not passed will be removed from the role.
-    required: false
   state:
     description: State to ensure
-    required: false
     default: "present"
     choices: ["present", "absent"]
   user:
@@ -75,34 +69,7 @@ options:
     - List of user names to assign.
     - If an empty list is passed all assigned users will be removed from the role.
     - If option is omitted users will not be checked or changed.
-    required: false
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: "ipa.example.com"
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: "admin"
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: "https"
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
+extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
@@ -129,6 +96,9 @@ EXAMPLES = '''
     - host01.example.com
     hostgroup:
     - hostgroup01
+    privilege:
+    - Group Administrators
+    - User Administrators
     service:
     - service01
 
@@ -148,9 +118,11 @@ role:
   type: dict
 '''
 
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
+from ansible.module_utils._text import to_native
 
 
 class RoleIPAClient(IPAClient):
@@ -205,6 +177,12 @@ class RoleIPAClient(IPAClient):
     def role_remove_user(self, name, item):
         return self.role_remove_member(name=name, item={'user': item})
 
+    def role_add_privilege(self, name, item):
+        return self._post_json(method='role_add_privilege', name=name, item={'privilege': item})
+
+    def role_remove_privilege(self, name, item):
+        return self._post_json(method='role_remove_privilege', name=name, item={'privilege': item})
+
 
 def get_role_dict(description=None):
     data = {}
@@ -219,10 +197,11 @@ def get_role_diff(client, ipa_role, module_role):
 
 def ensure(module, client):
     state = module.params['state']
-    name = module.params['name']
+    name = module.params['cn']
     group = module.params['group']
     host = module.params['host']
     hostgroup = module.params['hostgroup']
+    privilege = module.params['privilege']
     service = module.params['service']
     user = module.params['user']
 
@@ -249,7 +228,6 @@ def ensure(module, client):
             changed = client.modify_if_diff(name, ipa_role.get('member_group', []), group,
                                             client.role_add_group,
                                             client.role_remove_group) or changed
-
         if host is not None:
             changed = client.modify_if_diff(name, ipa_role.get('member_host', []), host,
                                             client.role_add_host,
@@ -260,6 +238,10 @@ def ensure(module, client):
                                             client.role_add_hostgroup,
                                             client.role_remove_hostgroup) or changed
 
+        if privilege is not None:
+            changed = client.modify_if_diff(name, ipa_role.get('memberof_privilege', []), privilege,
+                                            client.role_add_privilege,
+                                            client.role_remove_privilege) or changed
         if service is not None:
             changed = client.modify_if_diff(name, ipa_role.get('member_service', []), service,
                                             client.role_add_service,
@@ -268,6 +250,7 @@ def ensure(module, client):
             changed = client.modify_if_diff(name, ipa_role.get('member_user', []), user,
                                             client.role_add_user,
                                             client.role_remove_user) or changed
+
     else:
         if ipa_role:
             changed = True
@@ -278,25 +261,19 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            cn=dict(type='str', required=True, aliases=['name']),
-            description=dict(type='str', required=False),
-            group=dict(type='list', required=False),
-            host=dict(type='list', required=False),
-            hostgroup=dict(type='list', required=False),
-            service=dict(type='list', required=False),
-            state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
-            user=dict(type='list', required=False),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        supports_check_mode=True,
-    )
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(cn=dict(type='str', required=True, aliases=['name']),
+                         description=dict(type='str'),
+                         group=dict(type='list'),
+                         host=dict(type='list'),
+                         hostgroup=dict(type='list'),
+                         privilege=dict(type='list'),
+                         service=dict(type='list'),
+                         state=dict(type='str', default='present', choices=['present', 'absent']),
+                         user=dict(type='list'))
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     client = RoleIPAClient(module=module,
                            host=module.params['ipa_host'],
@@ -308,9 +285,8 @@ def main():
                      password=module.params['ipa_pass'])
         changed, role = ensure(module, client)
         module.exit_json(changed=changed, role=role)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

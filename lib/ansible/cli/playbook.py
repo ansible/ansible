@@ -36,18 +36,15 @@ except ImportError:
     display = Display()
 
 
-#---------------------------------------------------------------------------------------------------
-
 class PlaybookCLI(CLI):
     ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
         See the project home page (https://docs.ansible.com) for more information. '''
-
 
     def parse(self):
 
         # create parser for CLI options
         parser = CLI.base_parser(
-            usage = "%prog [options] playbook.yml [playbook2 ...]",
+            usage="%prog [options] playbook.yml [playbook2 ...]",
             connect_opts=True,
             meta_opts=True,
             runas_opts=True,
@@ -63,13 +60,13 @@ class PlaybookCLI(CLI):
 
         # ansible playbook specific opts
         parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-            help="list all tasks that would be executed")
+                          help="list all tasks that would be executed")
         parser.add_option('--list-tags', dest='listtags', action='store_true',
-            help="list all available tags")
+                          help="list all available tags")
         parser.add_option('--step', dest='step', action='store_true',
-            help="one-step-at-a-time: confirm each task before running")
+                          help="one-step-at-a-time: confirm each task before running")
         parser.add_option('--start-at-task', dest='start_at_task',
-            help="start the playbook at the task matching this name")
+                          help="start the playbook at the task matching this name")
 
         self.parser = parser
         super(PlaybookCLI, self).parse()
@@ -86,8 +83,8 @@ class PlaybookCLI(CLI):
 
         # Note: slightly wrong, this is written so that implicit localhost
         # Manage passwords
-        sshpass    = None
-        becomepass    = None
+        sshpass = None
+        becomepass = None
         passwords = {}
 
         # initial error check, to make sure all specified playbooks are accessible
@@ -102,7 +99,7 @@ class PlaybookCLI(CLI):
         if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
             self.normalize_become_options()
             (sshpass, becomepass) = self.ask_passwords()
-            passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+            passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
         loader, inventory, variable_manager = self._play_prereqs(self.options)
 
@@ -112,16 +109,7 @@ class PlaybookCLI(CLI):
         # limit if only implicit localhost was in inventory to start with.
         #
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
-        no_hosts = False
-        if len(inventory.list_hosts()) == 0:
-            # Empty inventory
-            display.warning("provided hosts list is empty, only localhost is available")
-            no_hosts = True
-        inventory.subset(self.options.subset)
-        if len(inventory.list_hosts()) == 0 and no_hosts is False:
-            # Invalid limit
-            raise AnsibleError("Specified --limit does not match any hosts")
-
+        hosts = CLI.get_host_list(inventory, self.options.subset)
 
         # flush fact cache if requested
         if self.options.flush_cache:

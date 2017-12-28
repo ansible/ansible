@@ -1,0 +1,6 @@
+---
+- include: "{{ role_path }}/tests/nxos/userrole.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'nxos'
+
+- include: "{{ role_path }}/tests/eos/userrole.yaml"
+  when: hostvars[inventory_hostname]['ansible_network_os'] == 'eos'

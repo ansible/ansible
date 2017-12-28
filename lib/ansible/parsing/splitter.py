@@ -62,7 +62,7 @@ def parse_kv(args, check_raw=False):
             vargs = split_args(args)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
-                raise AnsibleParserError("error parsing argument string, try quoting the entire line.")
+                raise AnsibleParserError("error parsing argument string, try quoting the entire line.", orig_exc=ve)
             else:
                 raise
 
@@ -261,6 +261,6 @@ def split_args(args):
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise AnsibleParserError("failed at splitting arguments, either an unbalanced jinja2 block or quotes: {}".format(args))
+        raise AnsibleParserError(u"failed at splitting arguments, either an unbalanced jinja2 block or quotes: {0}".format(args))
 
     return params

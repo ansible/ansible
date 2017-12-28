@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, James Martin <jmartin@basho.com>, Drew Kerrigan <dkerrigan@basho.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -97,18 +87,11 @@ EXAMPLES = '''
     wait_for_service: kv
 '''
 
+import json
 import time
-import socket
-import sys
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
 def ring_check(module, riak_admin_bin):
@@ -118,6 +101,7 @@ def ring_check(module, riak_admin_bin):
         return True
     else:
         return False
+
 
 def main():
 
@@ -132,21 +116,17 @@ def main():
             wait_for_ring=dict(default=False, type='int'),
             wait_for_service=dict(
                 required=False, default=None, choices=['kv']),
-            validate_certs = dict(default='yes', type='bool'))
+            validate_certs=dict(default='yes', type='bool'))
     )
 
-
     command = module.params.get('command')
-    config_dir = module.params.get('config_dir')
     http_conn = module.params.get('http_conn')
     target_node = module.params.get('target_node')
     wait_for_handoffs = module.params.get('wait_for_handoffs')
     wait_for_ring = module.params.get('wait_for_ring')
     wait_for_service = module.params.get('wait_for_service')
-    validate_certs =  module.params.get('validate_certs')
 
-
-    #make sure riak commands are on the path
+    # make sure riak commands are on the path
     riak_bin = module.get_bin_path('riak')
     riak_admin_bin = module.get_bin_path('riak-admin')
 
@@ -169,16 +149,16 @@ def main():
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-    rc, out, err = module.run_command([riak_bin, 'version'] )
+    rc, out, err = module.run_command([riak_bin, 'version'])
     version = out.strip()
 
     result = dict(node_name=node_name,
-              nodes=nodes,
-              ring_size=ring_size,
-              version=version)
+                  nodes=nodes,
+                  ring_size=ring_size,
+                  version=version)
 
     if command == 'ping':
-        cmd = '%s ping %s' % ( riak_bin, target_node )
+        cmd = '%s ping %s' % (riak_bin, target_node)
         rc, out, err = module.run_command(cmd)
         if rc == 0:
             result['ping'] = out
@@ -238,7 +218,7 @@ def main():
                 module.fail_json(msg='Timeout waiting for handoffs.')
 
     if wait_for_service:
-        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name ]
+        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name]
         rc, out, err = module.run_command(cmd)
         result['service'] = out
 
@@ -255,8 +235,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

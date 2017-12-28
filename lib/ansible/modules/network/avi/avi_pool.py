@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     a_pool:
         description:
             - Name of container cloud application that constitutes a pool in a a-b pool configuration, if different from vs app.
@@ -83,6 +95,7 @@ options:
             - Allowed values are 1-5000.
             - Special values are 0 - 'automatic'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+            - Units(MILLISECONDS).
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for pool.
@@ -97,6 +110,7 @@ options:
             - Allowed values are 1-300.
             - Special values are 0 - 'immediate'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(MIN).
     created_by:
         description:
             - Creator name.
@@ -121,22 +135,34 @@ options:
             - Enable or disable the pool.
             - Disabling will terminate all open connections and pause health monitors.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+    external_autoscale_groups:
+        description:
+            - Names of external auto-scale groups for pool servers.
+            - Currently available only for aws and azure.
+            - Field introduced in 17.1.2.
     fail_action:
         description:
-            - Enable an action - close connection, http redirect, local http response, or backup pool - when a pool failure happens.
+            - Enable an action - close connection, http redirect or local http response - when a pool failure happens.
             - By default, a connection will be closed, in case the pool experiences a failure.
     fewest_tasks_feedback_delay:
         description:
             - Periodicity of feedback for fewest tasks server selection algorithm.
             - Allowed values are 1-300.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Units(SEC).
     graceful_disable_timeout:
         description:
             - Used to gracefully disable a server.
             - Virtual service waits for the specified time before terminating the existing connections  to the servers that are disabled.
-            - Allowed values are 1-60.
+            - Allowed values are 1-7200.
             - Special values are 0 - 'immediate', -1 - 'infinite'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+            - Units(MIN).
+    gslb_sp_enabled:
+        description:
+            - Indicates if the pool is a site-persistence pool.
+            - Field introduced in 17.2.1.
+        version_added: "2.5"
     health_monitor_refs:
         description:
             - Verify server health by applying one or more health monitors.
@@ -162,22 +188,36 @@ options:
         description:
             - The load balancing algorithm will pick a server within the pool's list of available servers.
             - Enum options - LB_ALGORITHM_LEAST_CONNECTIONS, LB_ALGORITHM_ROUND_ROBIN, LB_ALGORITHM_FASTEST_RESPONSE, LB_ALGORITHM_CONSISTENT_HASH,
-            - LB_ALGORITHM_LEAST_LOAD, LB_ALGORITHM_FEWEST_SERVERS, LB_ALGORITHM_RANDOM, LB_ALGORITHM_FEWEST_TASKS, LB_ALGORITHM_NEAREST_SERVER.
+            - LB_ALGORITHM_LEAST_LOAD, LB_ALGORITHM_FEWEST_SERVERS, LB_ALGORITHM_RANDOM, LB_ALGORITHM_FEWEST_TASKS, LB_ALGORITHM_NEAREST_SERVER,
+            - LB_ALGORITHM_CORE_AFFINITY.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_LEAST_CONNECTIONS.
     lb_algorithm_consistent_hash_hdr:
         description:
             - Http header name to be used for the hash key.
+    lb_algorithm_core_nonaffinity:
+        description:
+            - Degree of non-affinity for core afffinity based server selection.
+            - Allowed values are 1-65535.
+            - Field introduced in 17.1.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+        version_added: "2.4"
     lb_algorithm_hash:
         description:
             - Criteria used as a key for determining the hash between the client and  server.
             - Enum options - LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS, LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS_AND_PORT,
-            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER.
+            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_STRING.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS.
+    lookup_server_by_name:
+        description:
+            - Allow server lookup by name.
+            - Field introduced in 17.1.11,17.2.4.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.5"
     max_concurrent_connections_per_server:
         description:
             - The maximum number of concurrent connections allowed to each server within the pool.
-            - Allowed values are 50-10000.
-            - Special values are 0 - 'infinite'.
+            - Note  applied value will be no less than the number of service engines that the pool is placed on.
+            - If set to 0, no limit is applied.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     max_conn_rate_per_server:
         description:
@@ -195,7 +235,6 @@ options:
         description:
             - A list of nsx service groups where the servers for the pool are created.
             - Field introduced in 17.1.1.
-        version_added: "2.4"
     pki_profile_ref:
         description:
             - Avi will validate the ssl certificate present by a server against the selected pki profile.
@@ -283,8 +322,7 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
 - name: Create a Pool with two servers and HTTP monitor
   avi_pool:
     controller: 10.10.1.20
@@ -302,7 +340,22 @@ EXAMPLES = '''
         - ip:
             addr: 10.10.2.21
             type: V4
-'''
+
+- name: Patch pool with a single server using patch op and avi_credentials
+  avi_pool:
+    avi_api_update_method: patch
+    avi_api_patch_op: delete
+    avi_credentials: "{{avi_credentials}}"
+    name: test-pool
+    servers:
+      - ip:
+        addr: 10.90.64.13
+        type: 'V4'
+  register: pool
+  when:
+    - state | default("present") == "present"
+"""
+
 RETURN = '''
 obj:
     description: Pool (api/pool) object
@@ -312,7 +365,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -322,6 +375,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         a_pool=dict(type='str',),
         ab_pool=dict(type='dict',),
         ab_priority=dict(type='int',),
@@ -341,16 +397,20 @@ def main():
         domain_name=dict(type='list',),
         east_west=dict(type='bool',),
         enabled=dict(type='bool',),
+        external_autoscale_groups=dict(type='list',),
         fail_action=dict(type='dict',),
         fewest_tasks_feedback_delay=dict(type='int',),
         graceful_disable_timeout=dict(type='int',),
+        gslb_sp_enabled=dict(type='bool',),
         health_monitor_refs=dict(type='list',),
         host_check_enabled=dict(type='bool',),
         inline_health_monitor=dict(type='bool',),
         ipaddrgroup_ref=dict(type='str',),
         lb_algorithm=dict(type='str',),
         lb_algorithm_consistent_hash_hdr=dict(type='str',),
+        lb_algorithm_core_nonaffinity=dict(type='int',),
         lb_algorithm_hash=dict(type='str',),
+        lookup_server_by_name=dict(type='bool',),
         max_concurrent_connections_per_server=dict(type='int',),
         max_conn_rate_per_server=dict(type='dict',),
         name=dict(type='str', required=True),

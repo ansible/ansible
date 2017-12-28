@@ -1,24 +1,14 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +23,8 @@ description:
     parameters or remove those parameters from the device active
     configuration.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   hostname:
     description:
@@ -115,19 +107,22 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.iosxr import get_config, load_config
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.network.iosxr.iosxr import get_config, load_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+
 
 def diff_list(want, have):
     adds = set(want).difference(have)
     removes = set(have).difference(want)
     return (adds, removes)
 
+
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
 
-    needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
+    def needs_update(x):
+        return want.get(x) and (want.get(x) != have.get(x))
 
     if state == 'absent':
         if have['hostname'] != 'ios':
@@ -175,30 +170,35 @@ def map_obj_to_commands(want, have, module):
 
     return commands
 
+
 def parse_hostname(config):
-    match = re.search('^hostname (\S+)', config, re.M)
+    match = re.search(r'^hostname (\S+)', config, re.M)
     return match.group(1)
 
+
 def parse_domain_name(config):
-    match = re.search('^domain name (\S+)', config, re.M)
+    match = re.search(r'^domain name (\S+)', config, re.M)
     if match:
         return match.group(1)
 
+
 def parse_lookup_source(config):
-    match = re.search('^domain lookup source-interface (\S+)', config, re.M)
+    match = re.search(r'^domain lookup source-interface (\S+)', config, re.M)
     if match:
         return match.group(1)
+
 
 def map_config_to_obj(module):
     config = get_config(module)
     return {
         'hostname': parse_hostname(config),
         'domain_name': parse_domain_name(config),
-        'domain_search': re.findall('^domain list (\S+)', config, re.M),
+        'domain_search': re.findall(r'^domain list (\S+)', config, re.M),
         'lookup_source': parse_lookup_source(config),
         'lookup_enabled': 'domain lookup disable' not in config,
-        'name_servers': re.findall('^domain name-server (\S+)', config, re.M)
+        'name_servers': re.findall(r'^domain name-server (\S+)', config, re.M)
     }
+
 
 def map_params_to_obj(module):
     return {
@@ -209,6 +209,7 @@ def map_params_to_obj(module):
         'lookup_enabled': module.params['lookup_enabled'],
         'name_servers': module.params['name_servers']
     }
+
 
 def main():
     """ Main entry point for Ansible module execution
@@ -231,7 +232,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
 
@@ -242,11 +242,14 @@ def main():
     result['commands'] = commands
 
     if commands:
-        if not module.check_mode:
-            load_config(module, commands, result['warnings'], commit=True)
+        commit = not module.check_mode
+        diff = load_config(module, commands, commit=commit)
+        if diff:
+            result['diff'] = dict(prepared=diff)
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

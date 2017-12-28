@@ -27,7 +27,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
-from ansible.plugins import cache_loader
+from ansible.plugins.loader import cache_loader
 
 try:
     from __main__ import display
@@ -86,13 +86,13 @@ class BaseFileCacheModule(BaseCacheModule):
             self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION))
 
         if not self._cache_dir:
-            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option"
-                    " to be set (to a writeable directory path)" % self.plugin_name)
+            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option "
+                               "to be set (to a writeable directory path)" % self.plugin_name)
 
         if not os.path.exists(self._cache_dir):
             try:
                 os.makedirs(self._cache_dir)
-            except (OSError,IOError) as e:
+            except (OSError, IOError) as e:
                 raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
@@ -105,29 +105,28 @@ class BaseFileCacheModule(BaseCacheModule):
         and it would be problematic if the key did expire after some long running tasks and
         user gets 'undefined' error in the same play """
 
-        if key in self._cache:
-            return self._cache.get(key)
+        if key not in self._cache:
 
-        if self.has_expired(key) or key == "":
-            raise KeyError
+            if self.has_expired(key) or key == "":
+                raise KeyError
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
-        try:
+            cachefile = "%s/%s" % (self._cache_dir, key)
             try:
                 value = self._load(cachefile)
                 self._cache[key] = value
-                return value
             except ValueError as e:
-                display.warning("error in '%s' cache plugin while trying to read %s : %s."
-                        " Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning("error in '%s' cache plugin while trying to read %s : %s. "
+                                "Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
                 self.delete(key)
-                raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data."
-                        " It has been removed, so you can re-run your command now." % cachefile)
-        except (OSError,IOError) as e:
-            display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-            raise KeyError
-        except Exception as e:
-            raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+                raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
+                                   "It has been removed, so you can re-run your command now." % cachefile)
+            except (OSError, IOError) as e:
+                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                raise KeyError
+            except Exception as e:
+                raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+
+        return self._cache.get(key)
 
     def set(self, key, value):
 
@@ -136,7 +135,7 @@ class BaseFileCacheModule(BaseCacheModule):
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
             self._dump(value, cachefile)
-        except (OSError,IOError) as e:
+        except (OSError, IOError) as e:
             display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
 
     def has_expired(self, key):
@@ -147,7 +146,7 @@ class BaseFileCacheModule(BaseCacheModule):
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
             st = os.stat(cachefile)
-        except (OSError,IOError) as e:
+        except (OSError, IOError) as e:
             if e.errno == errno.ENOENT:
                 return False
             else:
@@ -179,12 +178,11 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             os.stat(cachefile)
             return True
-        except (OSError,IOError) as e:
+        except (OSError, IOError) as e:
             if e.errno == errno.ENOENT:
                 return False
             else:
                 display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                pass
 
     def delete(self, key):
         try:
@@ -194,7 +192,7 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             os.remove("%s/%s" % (self._cache_dir, key))
         except (OSError, IOError):
-            pass #TODO: only pass on non existing?
+            pass  # TODO: only pass on non existing?
 
     def flush(self):
         self._cache = {}
@@ -236,6 +234,7 @@ class BaseFileCacheModule(BaseCacheModule):
         """
         pass
 
+
 class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
@@ -247,6 +246,8 @@ class FactCache(MutableMapping):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        # in memory cache so plugins don't expire keys mid run
+        self._cache = {}
 
     def __getitem__(self, key):
         if not self._plugin.contains(key):

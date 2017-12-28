@@ -126,7 +126,7 @@ class TestGalaxy(unittest.TestCase):
 
     def test_execute_remove(self):
         # installing role
-        gc = GalaxyCLI(args=["install", "--offline", "-p", self.role_path, "-r", self.role_req])
+        gc = GalaxyCLI(args=["install", "--offline", "-p", self.role_path, "-r", self.role_req, '--force'])
         gc.parse()
         gc.run()
 
@@ -134,7 +134,7 @@ class TestGalaxy(unittest.TestCase):
         role_file = os.path.join(self.role_path, self.role_name)
 
         # removing role
-        gc = GalaxyCLI(args=["remove", "-p", role_file, self.role_name])
+        gc = GalaxyCLI(args=["remove", "--init-path", role_file, self.role_name])
         gc.parse()
         gc.run()
 
@@ -292,7 +292,7 @@ class ValidRoleTests(object):
         cls.role_name = role_name
 
         # create role using default skeleton
-        gc = GalaxyCLI(args=['init', '-c', '--offline'] + galaxy_args + ['-p', cls.test_dir, cls.role_name])
+        gc = GalaxyCLI(args=['init', '-c', '--offline'] + galaxy_args + ['--init-path', cls.test_dir, cls.role_name])
         gc.parse()
         gc.run()
         cls.gc = gc
@@ -430,4 +430,4 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
         self.assertTrue(os.path.exists(os.path.join(self.role_dir, 'templates_extra', 'templates.txt')))
 
     def test_skeleton_option(self):
-        self.assertEquals(self.role_skeleton_path, self.gc.get_opt('role_skeleton'), msg='Skeleton path was not parsed properly from the command line')
+        self.assertEquals(self.role_skeleton_path, self.gc.options.role_skeleton, msg='Skeleton path was not parsed properly from the command line')

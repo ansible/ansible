@@ -3,25 +3,15 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -67,7 +57,7 @@ options:
               when creating a network interface.
         aliases:
             - virtual_network
-        required: false
+        required: true
         default: null
     subnet_name:
         description:
@@ -75,7 +65,7 @@ options:
               interface
         aliases:
             - subnet
-        required: false
+        required: true
         default: null
     os_type:
         description:
@@ -226,17 +216,15 @@ state:
     }
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.network.models import NetworkInterface, NetworkInterfaceIPConfiguration, Subnet, \
-                                          PublicIPAddress, NetworkSecurityGroup
+        PublicIPAddress, NetworkSecurityGroup
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
 
 
 def nic_to_dict(nic):
@@ -336,7 +324,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         results = dict()
@@ -454,7 +442,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     if not pip and self.public_ip:
                         # create a default public_ip
                         pip = self.create_default_pip(self.resource_group, self.location, self.name,
-                                                            self.public_ip_allocation_method)
+                                                      self.public_ip_allocation_method)
 
                     nic = NetworkInterface(
                         location=self.location,
@@ -465,7 +453,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             )
                         ]
                     )
-                    #nic.name = self.name
+                    # nic.name = self.name
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = 'default'
                     nic.network_security_group = NetworkSecurityGroup(id=nsg.id,
@@ -487,8 +475,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         tags=results['tags'],
                         ip_configurations=[
                             NetworkInterfaceIPConfiguration(
-                                private_ip_allocation_method=
-                                results['ip_configuration']['private_ip_allocation_method']
+                                private_ip_allocation_method=results['ip_configuration']['private_ip_allocation_method']
                             )
                         ]
                     )
@@ -496,7 +483,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                              results['ip_configuration']['subnet']['name'])
                     nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = results['ip_configuration']['name']
-                    #nic.name = name=results['name'],
+                    # nic.name = name=results['name'],
 
                     if results['ip_configuration'].get('private_ip_address'):
                         nic.ip_configurations[0].private_ip_address = results['ip_configuration']['private_ip_address']
@@ -508,7 +495,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             id=pip.id,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
-                    #name=pip.name,
+                    # name=pip.name,
 
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
@@ -561,8 +548,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             subnet = self.network_client.subnets.get(self.resource_group, vnet_name, subnet_name)
         except Exception as exc:
             self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(subnet_name,
-                                                                                      vnet_name,
-                                                                                      str(exc)))
+                                                                                       vnet_name,
+                                                                                       str(exc)))
         return subnet
 
     def get_security_group(self, name):
@@ -577,6 +564,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 def main():
     AzureRMNetworkInterface()
 
+
 if __name__ == '__main__':
     main()
-

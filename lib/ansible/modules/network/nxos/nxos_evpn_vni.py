@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -34,6 +32,7 @@ description:
     Identifier (VNI) configurations of a Nexus device.
 author: Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - default, where supported, restores params default value.
   - RD override is not permitted. You should set it to the default values
     first and then reconfigure it.
@@ -106,10 +105,10 @@ commands:
 
 import re
 import time
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 PARAM_TO_COMMAND_KEYMAP = {
@@ -297,9 +296,10 @@ def main():
         else:
             candidate = CustomNetworkConfig(indent=3)
             candidate.add(commands, parents=parents)
+            candidate = candidate.items_text()
             load_config(module, candidate)
             results['changed'] = True
-            results['commands'] = candidate.items_text()
+            results['commands'] = candidate
     else:
         results['commands'] = []
     module.exit_json(**results)

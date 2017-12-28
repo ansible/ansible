@@ -1,0 +1,31 @@
+- name: Gather facts
+  setup:
+
+- name: Remove potentially leftover test group
+  win_group: &wg_absent
+    name: WinGroupMembershipTest
+    state: absent
+
+- name: Add new test group
+  win_group:
+    name: WinGroupMembershipTest
+    state: present
+
+- name: Run tests for win_group_membership
+  block:
+
+  - name: Test in normal mode
+    include_tasks: tests.yml
+    vars:
+      win_local_group: WinGroupMembershipTest
+      in_check_mode: no
+
+  - name: Test in check-mode
+    include_tasks: tests.yml
+    vars:
+      win_local_group: WinGroupMembershipTest
+      in_check_mode: yes
+    check_mode: yes
+
+- name: Remove test group
+  win_group: *wg_absent

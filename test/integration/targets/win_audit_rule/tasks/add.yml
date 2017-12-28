@@ -1,0 +1,172 @@
+######################
+### check mode add ###
+######################
+- name: check mode ADD audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: directory
+  check_mode: yes
+
+- name: check mode ADD audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: file
+  check_mode: yes
+
+- name: check mode ADD audit policy registry
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: registry
+  check_mode: yes
+
+- name: check mode ADD get directory results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: directory_results
+
+- name: check mode ADD get file results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: file_results
+
+- name: check mode ADD get REGISTRY results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: registry_results
+
+- name: check mode ADD assert that a change is needed, but no change occurred to the audit rules
+  assert:
+    that:
+    - directory is changed
+    - file is changed
+    - registry is changed
+    - not directory_results.matching_rule_found and directory_results.path_type == 'directory'
+    - not file_results.matching_rule_found and file_results.path_type == 'file'
+    - not registry_results.matching_rule_found and registry_results.path_type == 'registry'
+
+##################
+### add a rule ###
+##################
+- name: ADD audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: directory
+
+- name: ADD audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: file
+
+- name: ADD audit policy registry
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: registry
+
+- name: ADD get directory results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: directory_results
+
+- name: ADD get file results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: file_results
+
+- name: ADD get REGISTRY results
+  test_get_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: registry_results
+
+- name: ADD assert that the rules were added and a change is detected
+  assert:
+    that:
+    - directory is changed
+    - file is changed
+    - registry is changed
+    - directory_results.matching_rule_found and directory_results.path_type == 'directory'
+    - file_results.matching_rule_found and file_results.path_type == 'file'
+    - registry_results.matching_rule_found and registry_results.path_type == 'registry'
+
+#############################
+### idempotent add a rule ###
+#############################
+- name: idempotent ADD audit policy directory
+  win_audit_rule:
+    path: "{{ test_audit_rule_folder }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: directory
+
+- name: idempotent ADD audit policy file
+  win_audit_rule:
+    path: "{{ test_audit_rule_file }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+    inheritance_flags: none
+  register: file
+
+- name: idempotent ADD audit policy registry idempotent
+  win_audit_rule:
+    path: "{{ test_audit_rule_registry }}"
+    user: "{{ test_audit_rule_user }}"
+    rights: "{{ test_audit_rule_rights }}"
+    state: present
+    audit_flags: "{{ test_audit_rule_audit_flags }}"
+  register: registry
+
+- name: idempotent ADD assert that a change did not occur
+  assert:
+    that:
+    - directory is not changed and directory.path_type == 'directory'
+    - file is not changed and file.path_type == 'file'
+    - registry is not changed and registry.path_type == 'registry'

@@ -8,18 +8,21 @@
 - name: include the vars/environments/development/all.yml
   include_vars:
     file: environments/development/all.yml
-    
-- name: verify that the default value is indeed 789
+  register: included_one_file
+
+- name: verify that the correct file has been loaded and default value is indeed 789
   assert:
     that:
       - "testing == 789"
       - "base_dir == 'environments/development'"
+      - "{{ included_one_file.ansible_included_var_files | length }} == 1"
+      - "'vars/environments/development/all.yml' in included_one_file.ansible_included_var_files[0]"
 
 - name: include the vars/environments/development/all.yml and save results in all
   include_vars:
     file: environments/development/all.yml
     name: all
-    
+
 - name: verify that the values are stored in the all variable
   assert:
     that:
@@ -30,7 +33,7 @@
   include_vars:
     dir: all
     depth: 1
-    
+
 - name: verify that the default value is indeed 123
   assert:
     that:
@@ -40,30 +43,40 @@
 - name: include every directory in vars
   include_vars:
     dir: vars
-    
-- name: verify that the variable overwrite based on alphabetical order
+  register: include_every_dir
+
+- name: verify that the correct files have been loaded and overwrite based on alphabetical order
   assert:
     that:
       - "testing == 456"
       - "base_dir == 'services'"
       - "webapp_containers == 10"
+      - "{{ include_every_dir.ansible_included_var_files | length }} == 4"
+      - "'vars/all/all.yml' in include_every_dir.ansible_included_var_files[0]"
+      - "'vars/environments/development/all.yml' in include_every_dir.ansible_included_var_files[1]"
+      - "'vars/environments/development/services/webapp.yml' in include_every_dir.ansible_included_var_files[2]"
+      - "'vars/services/webapp.yml' in include_every_dir.ansible_included_var_files[3]"
 
 - name: include every directory in vars except files matching webapp.yml
   include_vars:
     dir: vars
     ignore_files:
       - webapp.yml
-    
+  register: include_without_webapp
+
 - name: verify that the webapp.yml file was not included
   assert:
     that:
       - "testing == 789"
       - "base_dir == 'environments/development'"
+      - "{{ include_without_webapp.ansible_included_var_files | length }} == 2"
+      - "'webapp.yml' not in '{{ include_without_webapp.ansible_included_var_files | join(' ') }}'"
 
 - name: include only files matching webapp.yml
   include_vars:
     dir: environments
     files_matching: webapp.yml
+  register: include_match_webapp
 
 - name: verify that only files matching webapp.yml and in the environments directory get loaded.
   assert:
@@ -71,6 +84,9 @@
       - "testing == 101112"
       - "base_dir == 'development/services'"
       - "webapp_containers == 20"
+      - "{{ include_match_webapp.ansible_included_var_files | length }} == 1"
+      - "'vars/environments/development/services/webapp.yml' in include_match_webapp.ansible_included_var_files[0]"
+      - "'all.yml' not in '{{ include_match_webapp.ansible_included_var_files | join(' ') }}'"
 
 - name: include only files matching webapp.yml and store results in webapp
   include_vars:

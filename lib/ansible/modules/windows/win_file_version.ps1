@@ -29,11 +29,11 @@ $result = @{
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -resultobj $result
 
 If (-Not (Test-Path -Path $path -PathType Leaf)){
-    Fail-Json $result "Specfied path $path does exist or is not a file."
+    Fail-Json $result "Specified path $path does exist or is not a file."
 }
 $ext = [System.IO.Path]::GetExtension($path)
 If ( $ext -notin '.exe', '.dll'){
-    Fail-Json $result "Specfied path $path is not a vaild file type; must be DLL or EXE."
+    Fail-Json $result "Specified path $path is not a vaild file type; must be DLL or EXE."
 }
 
 Try {

@@ -21,12 +21,13 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
-from ansible.plugins import lookup_loader
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
+from ansible.plugins.loader import lookup_loader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -65,29 +66,30 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
-    _args                 = FieldAttribute(isa='dict', default=dict())
-    _action               = FieldAttribute(isa='string')
+    _args = FieldAttribute(isa='dict', default=dict())
+    _action = FieldAttribute(isa='string')
 
-    _async                = FieldAttribute(isa='int', default=0)
-    _changed_when         = FieldAttribute(isa='list', default=[])
-    _delay                = FieldAttribute(isa='int', default=5)
-    _delegate_to          = FieldAttribute(isa='string')
-    _delegate_facts       = FieldAttribute(isa='bool', default=False)
-    _failed_when          = FieldAttribute(isa='list', default=[])
-    _loop                 = FieldAttribute(isa='string', private=True, inherit=False)
-    _loop_args            = FieldAttribute(isa='list', private=True, inherit=False)
-    _loop_control         = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
-    _name                 = FieldAttribute(isa='string', default='')
-    _notify               = FieldAttribute(isa='list')
-    _poll                 = FieldAttribute(isa='int', default=10)
-    _register             = FieldAttribute(isa='string')
-    _retries              = FieldAttribute(isa='int')
-    _until                = FieldAttribute(isa='list', default=[])
+    _async_val = FieldAttribute(isa='int', default=0, alias='async')
+    _changed_when = FieldAttribute(isa='list', default=[])
+    _delay = FieldAttribute(isa='int', default=5)
+    _delegate_to = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _failed_when = FieldAttribute(isa='list', default=[])
+    _loop = FieldAttribute()
+    _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
+    _notify = FieldAttribute(isa='list')
+    _poll = FieldAttribute(isa='int', default=10)
+    _register = FieldAttribute(isa='string')
+    _retries = FieldAttribute(isa='int', default=3)
+    _until = FieldAttribute(isa='list', default=[])
+
+    # deprecated, used to be loop and loop_args but loop has been repurposed
+    _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
-        self._role   = role
+        self._role = role
         self._parent = None
 
         if task_include:
@@ -103,6 +105,8 @@ class Task(Base, Conditional, Taggable, Become):
         path = ""
         if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        elif hasattr(self._parent._play, '_ds') and hasattr(self._parent._play._ds, '_data_source') and hasattr(self._parent._play._ds, '_line_number'):
+            path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
     def get_name(self):
@@ -125,10 +129,10 @@ class Task(Base, Conditional, Taggable, Become):
             return ds
         elif isinstance(ds, dict):
             buf = ""
-            for (k,v) in iteritems(ds):
+            for (k, v) in iteritems(ds):
                 if k.startswith('_'):
                     continue
-                buf = buf + "%s=%s " % (k,v)
+                buf = buf + "%s=%s " % (k, v)
             buf = buf.strip()
             return buf
 
@@ -144,16 +148,18 @@ class Task(Base, Conditional, Taggable, Become):
         else:
             return "TASK: %s" % self.get_name()
 
-    def _preprocess_loop(self, ds, new_ds, k, v):
+    def _preprocess_with_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
         loop_name = k.replace("with_", "")
-        if new_ds.get('loop') is not None:
+        if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
             raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
         if v is None:
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
-        new_ds['loop'] = loop_name
-        new_ds['loop_args'] = v
+        new_ds['loop_with'] = loop_name
+        new_ds['loop'] = v
+        # FIXME: reenable afte 2.5
+        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.10")
 
     def preprocess_data(self, ds):
         '''
@@ -161,7 +167,8 @@ class Task(Base, Conditional, Taggable, Become):
         keep it short.
         '''
 
-        assert isinstance(ds, dict)
+        if not isinstance(ds, dict):
+            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure suitable for the
@@ -177,7 +184,7 @@ class Task(Base, Conditional, Taggable, Become):
         try:
             (action, args, delegate_to) = args_parser.parse()
         except AnsibleParserError as e:
-            raise AnsibleParserError(to_native(e), obj=ds)
+            raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
@@ -186,11 +193,11 @@ class Task(Base, Conditional, Taggable, Become):
             if 'cmd' in args:
                 if args.get('_raw_params', '') != '':
                     raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
-                            " Please put everything in one or the other place.", obj=ds)
+                                       " Please put everything in one or the other place.", obj=ds)
                 args['_raw_params'] = args.pop('cmd')
 
-        new_ds['action']      = action
-        new_ds['args']        = args
+        new_ds['action'] = action
+        new_ds['args'] = args
         new_ds['delegate_to'] = delegate_to
 
         # we handle any 'vars' specified in the ds here, as we may
@@ -203,25 +210,26 @@ class Task(Base, Conditional, Taggable, Become):
         else:
             new_ds['vars'] = dict()
 
-        for (k,v) in iteritems(ds):
+        for (k, v) in iteritems(ds):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
-                # we don't want to re-assign these values, which were
-                # determined by the ModuleArgsParser() above
+                # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
-            elif k.replace("with_", "") in lookup_loader:
-                self._preprocess_loop(ds, new_ds, k, v)
+            elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
+                # transform into loop property
+                self._preprocess_with_loop(ds, new_ds, k, v)
             else:
-                # pre-2.0 syntax allowed variables for include statements at the
-                # top level of the task, so we move those into the 'vars' dictionary
-                # here, and show a deprecation message as we will remove this at
-                # some point in the future.
-                if action == 'include' and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
+                # pre-2.0 syntax allowed variables for include statements at the top level of the task,
+                # so we move those into the 'vars' dictionary here, and show a deprecation message
+                # as we will remove this at some point in the future.
+                if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                            " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                            " for currently supported syntax regarding included files and variables", version="2.7")
+                                       " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
+                                       " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
-                else:
+                elif k in self._valid_attrs:
                     new_ds[k] = v
+                else:
+                    display.warning("Ignoring invalid attribute: %s" % k)
 
         return super(Task, self).preprocess_data(new_ds)
 
@@ -246,9 +254,9 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).post_validate(templar)
 
-    def _post_validate_loop_args(self, attr, value, templar):
+    def _post_validate_loop(self, attr, value, templar):
         '''
-        Override post validation for the loop args field, which is templated
+        Override post validation for the loop field, which is templated
         specially in the TaskExecutor class when evaluating loops.
         '''
         return value
@@ -331,7 +339,7 @@ class Task(Base, Conditional, Taggable, Become):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action in ('include', 'include_role'):
+        if self.action in ('include', 'include_tasks', 'include_role'):
             all_vars.update(self.vars)
         return all_vars
 
@@ -410,14 +418,28 @@ class Task(Base, Conditional, Taggable, Become):
         try:
             value = self._attributes[attr]
             if self._parent and (value is None or extend):
-                parent_value = getattr(self._parent, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value, prepend)
-                else:
-                    value = parent_value
+                if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
+                    # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
+                    if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
+                        parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
+                    else:
+                        parent_value = getattr(self._parent, attr, None)
+
+                    if extend:
+                        value = self._extend_value(value, parent_value, prepend)
+                    else:
+                        value = parent_value
         except KeyError:
             pass
 
+        return value
+
+    def _get_attr_any_errors_fatal(self):
+        value = self._attributes['any_errors_fatal']
+        if value is None:
+            value = self._get_parent_attribute('any_errors_fatal')
+        if value is None:
+            value = C.ANY_ERRORS_FATAL
         return value
 
     def _get_attr_environment(self):
@@ -455,3 +477,11 @@ class Task(Base, Conditional, Taggable, Become):
         if self._parent:
             return self._parent.all_parents_static()
         return True
+
+    def get_first_parent_include(self):
+        from ansible.playbook.task_include import TaskInclude
+        if self._parent:
+            if isinstance(self._parent, TaskInclude):
+                return self._parent
+            return self._parent.get_first_parent_include()
+        return None

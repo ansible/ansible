@@ -134,7 +134,7 @@ The rax module returns data about the nodes it creates, like IP addresses, hostn
           ansible_host: "{{ item.rax_accessipv4 }}"
           ansible_ssh_pass: "{{ item.rax_adminpass }}"
           groups: raxhosts
-      with_items: "{{ rax.success }}"
+      loop: "{{ rax.success }}"
       when: rax.action == 'create'
 
 With the host group now created, the next play in this playbook could now configure servers belonging to the raxhosts group.
@@ -522,7 +522,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             ansible_ssh_pass: "{{ item.rax_adminpass }}"
             ansible_user: root
             groups: web
-          with_items: "{{ rax.success }}"
+          loop: "{{ rax.success }}"
           when: rax.action == 'create'
     
         - name: Add servers to Load balancer
@@ -536,7 +536,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             type: primary
             wait: yes
             region: IAD
-          with_items: "{{ rax.success }}"
+          loop: "{{ rax.success }}"
           when: rax.action == 'create'
     
     - name: Configure servers
@@ -608,7 +608,7 @@ Using a Control Machine
             ansible_user: root
             rax_id: "{{ item.rax_id }}"
             groups: web,new_web
-          with_items: "{{ rax.success }}"
+          loop: "{{ rax.success }}"
           when: rax.action == 'create'
     
     - name: Wait for rackconnect and managed cloud automation to complete

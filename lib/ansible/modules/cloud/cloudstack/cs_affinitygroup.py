@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -36,11 +36,12 @@ options:
     description:
       - Name of the affinity group.
     required: true
-  affinty_type:
+  affinity_type:
     description:
       - Type of the affinity group. If not specified, first found affinity type is used.
     required: false
     default: null
+    aliases: [ affinty_type ]
   description:
     description:
       - Description of the affinity group.
@@ -80,7 +81,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_affinitygroup
     name: haproxy
-    affinty_type: host anti-affinity
+    affinity_type: host anti-affinity
 
 # Remove a affinity group
 - local_action:
@@ -131,7 +132,6 @@ account:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -155,15 +155,15 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
                 'domainid': self.get_domain(key='id'),
                 'name': self.module.params.get('name'),
             }
-            affinity_groups = self.cs.listAffinityGroups(**args)
+            affinity_groups = self.query_api('listAffinityGroups', **args)
             if affinity_groups:
                 self.affinity_group = affinity_groups['affinitygroup'][0]
         return self.affinity_group
 
     def get_affinity_type(self):
-        affinity_type = self.module.params.get('affinty_type')
+        affinity_type = self.module.params.get('affinity_type') or self.module.params.get('affinty_type')
 
-        affinity_types = self.cs.listAffinityGroupTypes()
+        affinity_types = self.query_api('listAffinityGroupTypes', )
         if affinity_types:
             if not affinity_type:
                 return affinity_types['affinityGroupType'][0]['type']
@@ -187,10 +187,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
                 'domainid': self.get_domain(key='id'),
             }
             if not self.module.check_mode:
-                res = self.cs.createAffinityGroup(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('createAffinityGroup', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
@@ -209,10 +206,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
                 'domainid': self.get_domain(key='id'),
             }
             if not self.module.check_mode:
-                res = self.cs.deleteAffinityGroup(**args)
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteAffinityGroup', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
@@ -224,7 +218,8 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        affinty_type=dict(),
+        affinty_type=dict(removed_in_version='2.9'),
+        affinity_type=dict(),
         description=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         domain=dict(),
@@ -236,22 +231,21 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
+        mutually_exclusive=(
+            ['affinity_type', 'affinty_type'],
+        ),
         supports_check_mode=True
     )
 
-    try:
-        acs_ag = AnsibleCloudStackAffinityGroup(module)
+    acs_ag = AnsibleCloudStackAffinityGroup(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            affinity_group = acs_ag.remove_affinity_group()
-        else:
-            affinity_group = acs_ag.create_affinity_group()
+    state = module.params.get('state')
+    if state in ['absent']:
+        affinity_group = acs_ag.remove_affinity_group()
+    else:
+        affinity_group = acs_ag.create_affinity_group()
 
-        result = acs_ag.get_result(affinity_group)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_ag.get_result(affinity_group)
 
     module.exit_json(**result)
 

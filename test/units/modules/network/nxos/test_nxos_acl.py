@@ -31,6 +31,8 @@ class TestNxosAclModule(TestNxosModule):
     module = nxos_acl
 
     def setUp(self):
+        super(TestNxosAclModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_acl.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -38,10 +40,11 @@ class TestNxosAclModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosAclModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
@@ -52,9 +55,8 @@ class TestNxosAclModule(TestNxosModule):
                     command = obj['command']
                 except ValueError:
                     command = item
-                filename = str(command).split(' | ')[0].replace(' ', '_')
-                filename = 'nxos_acl/%s.txt' % filename
-                output.append(load_fixture(filename))
+                filename = '%s.txt' % str(command).split(' | ')[0].replace(' ', '_')
+                output.append(load_fixture('nxos_acl', filename))
             return output
 
         self.run_commands.side_effect = load_from_file

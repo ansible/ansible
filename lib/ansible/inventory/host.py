@@ -24,10 +24,11 @@ from ansible.utils.vars import combine_vars, get_unique_id
 
 __all__ = ['Host']
 
+
 class Host:
     ''' a single ansible host '''
 
-    #__slots__ = [ 'name', 'vars', 'groups' ]
+    # __slots__ = [ 'name', 'vars', 'groups' ]
 
     def __getstate__(self):
         return self.serialize()
@@ -69,11 +70,11 @@ class Host:
     def deserialize(self, data):
         self.__init__(gen_uuid=False)
 
-        self.name    = data.get('name')
-        self.vars    = data.get('vars', dict())
+        self.name = data.get('name')
+        self.vars = data.get('vars', dict())
         self.address = data.get('address', '')
-        self._uuid   = data.get('uuid', None)
-        self.implicit= data.get('implicit', False)
+        self._uuid = data.get('uuid', None)
+        self.implicit = data.get('implicit', False)
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -99,7 +100,6 @@ class Host:
 
     def get_name(self):
         return self.name
-
 
     def populate_ancestors(self):
         # populate ancestors
@@ -131,9 +131,8 @@ class Host:
                     else:
                         self.remove_group(oldg)
 
-
     def set_variable(self, key, value):
-        self.vars[key]=value
+        self.vars[key] = value
 
     def get_groups(self):
         return self.groups
@@ -142,10 +141,9 @@ class Host:
         results = {}
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([ g.name for g in self.get_groups() if g.name != 'all'])
+        results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
 
-        return combine_vars(self.vars, results)
+        return results
 
     def get_vars(self):
         return combine_vars(self.vars, self.get_magic_vars())
-

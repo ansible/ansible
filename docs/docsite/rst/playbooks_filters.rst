@@ -6,7 +6,7 @@ Filters
 
 Filters in Ansible are from Jinja2, and are used for transforming data inside a template expression.  Jinja2 ships with many filters. See `builtin filters`_ in the official Jinja2 template documentation.
 
-Take into account that templating happens on the the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
+Take into account that templating happens on the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
 In addition the ones provided by Jinja2, Ansible ships with it's own and allows users to add their own custom filters.
 
@@ -63,12 +63,17 @@ The variable value will be used as is, but the template evaluation will raise an
 Defaulting Undefined Variables
 ``````````````````````````````
 
-Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
+Jinja2 provides a useful 'default' filter that is often a better approach to failing if a variable is not defined::
 
     {{ some_variable | default(5) }}
 
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
+
+If the variable evaluates to an empty string, the second parameter of the filter should be set to
+`true`::
+
+    {{ lookup('env', 'MY_USER') | default('admin', true) }}
 
 
 .. _omitting_undefined_variables:
@@ -80,7 +85,7 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 
     - name: touch files with an optional mode
       file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
-      with_items:
+      loop:
         - path: /tmp/foo
         - path: /tmp/bar
         - path: /tmp/baz
@@ -110,6 +115,19 @@ To get the minimum value from list of numbers::
 To get the maximum value from a list of numbers::
 
     {{ [3, 4, 2] | max }}
+
+.. versionadded:: 2.5
+
+Flatten a list (same thing the `flatten` lookup does)::
+
+    {{ [3, [4, 2] ]|flatten }}
+
+Flatten only the first level of a list (akin to the `items` lookup)::
+
+    {{ [3, [4, [2]] ]|flatten(level=1) }}
+
+
+To get the minimum value from list of numbers::
 
 .. _set_theory_filters:
 
@@ -155,26 +173,26 @@ To get a random item from a list::
     "{{ ['a','b','c']|random }}"
     # => 'c'
 
-To get a random number from 0 to supplied end::
+To get a random number between 0 and a specified number::
 
-    "{{ 59 |random}} * * * * root /script/from/cron"
+    "{{ 60 |random}} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
 
 Get a random number from 0 to 100 but in steps of 10::
 
-    {{ 100 |random(step=10) }}
+    {{ 101 |random(step=10) }}
     # => 70
 
 Get a random number from 1 to 100 but in steps of 10::
 
-    {{ 100 |random(1, 10) }}
+    {{ 101 |random(1, 10) }}
     # => 31
-    {{ 100 |random(start=1, step=10) }}
+    {{ 101 |random(start=1, step=10) }}
     # => 51
 
 As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
-    "{{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
+    "{{ 60 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 
 Shuffle Filter
@@ -234,7 +252,7 @@ JSON Query Filter
 
 .. versionadded:: 2.2
 
-Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
+Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a loop structure.
 
 .. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
 
@@ -268,29 +286,38 @@ To extract all clusters from this structure, you can use the following query::
 
     - name: "Display all cluster names"
       debug: var=item
-      with_items: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+      loop: "{{domain_definition|json_query('domain.cluster[*].name')}}"
 
 Same thing for all server names::
 
     - name: "Display all server names"
       debug: var=item
-      with_items: "{{domain_definition|json_query('domain.server[*].name')}}"
+      loop: "{{domain_definition|json_query('domain.server[*].name')}}"
 
 This example shows ports from cluster1::
 
     - name: "Display all server names from cluster1"
       debug: var=item
-      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
 .. note:: You can use a variable to make the query more readable.
 
+Or, alternatively::
+
+    - name: "Display all server names from cluster1"
+      debug:
+        var: item
+      loop: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
+
+.. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
+
 In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
       debug: var=item
-      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
@@ -318,6 +345,191 @@ address. For example, to get the IP address itself from a CIDR, you can use::
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :doc:`playbooks_filters_ipaddr`.
 
+.. _network_filters:
+
+Network CLI filters
+```````````````````
+
+.. versionadded:: 2.4
+
+To convert the output of a network device CLI command into structured JSON
+output, use the ``parse_cli`` filter::
+
+  {{ output | parse_cli('path/to/spec') }}
+
+The ``parse_cli`` filter will load the spec file and pass the command output
+through it, returning JSON output. The YAML spec file defines how to parse the CLI output.
+
+The spec file should be valid formatted YAML.  It defines how to parse the CLI
+output and return JSON data.  Below is an example of a valid spec file that
+will parse the output from the ``show vlan`` command.::
+
+    ---
+    vars:
+      vlan:
+        vlan_id: "{{ item.vlan_id }}"
+        name: "{{ item.name }}"
+        enabled: "{{ item.state != 'act/lshut' }}"
+        state: "{{ item.state }}"
+
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+      state_static:
+        value: present
+
+The spec file above will return a JSON data structure that is a list of hashes
+with the parsed VLAN information.
+
+The same command could be parsed into a hash by using the key and values
+directives.  Here is an example of how to parse the output into a hash
+value using the same ``show vlan`` command.::
+
+    ---
+    vars:
+      vlan:
+        key: "{{ item.vlan_id }}"
+        values:
+          vlan_id: "{{ item.vlan_id }}"
+          name: "{{ item.name }}"
+          enabled: "{{ item.state != 'act/lshut' }}"
+          state: "{{ item.state }}"
+
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
+      state_static:
+        value: present
+
+Another common use case for parsing CLI commands is to break a large command
+into blocks that can be parsed.  This can be done using the ``start_block`` and
+``end_block`` directives to break the command into blocks that can be parsed.::
+
+    ---
+    vars:
+      interface:
+        name: "{{ item[0].match[0] }}"
+        state: "{{ item[1].state }}"
+        mode: "{{ item[2].match[0] }}"
+
+    keys:
+      interfaces:
+        value: "{{ interface }}"
+        start_block: "^Ethernet.*$"
+        end_block: "^$"
+        items:
+          - "^(?P<name>Ethernet\\d\\/\\d*)"
+          - "admin state is (?P<state>.+),"
+          - "Port mode is (.+)"
+
+
+The example above will parse the output of ``show interface`` into a list of
+hashes.
+
+The network filters also support parsing the output of a CLI command using the
+TextFSM library.  To parse the CLI output with TextFSM use the following
+filter::
+
+  {{ output | parse_cli_textfsm('path/to/fsm') }}
+
+Use of the TextFSM filter requires the TextFSM library to be installed.
+
+Network XML filters
+```````````````````
+
+.. versionadded:: 2.5
+
+To convert the XML output of a network device command into structured JSON
+output, use the ``parse_xml`` filter::
+
+  {{ output | parse_xml('path/to/spec') }}
+
+The ``parse_xml`` filter will load the spec file and pass the command output
+through formatted as JSON.
+
+The spec file should be valid formatted YAML. It defines how to parse the XML
+output and return JSON data.  
+
+Below is an example of a valid spec file that
+will parse the output from the ``show vlan | display xml`` command.::
+
+    ---
+    vars:
+      vlan:
+        vlan_id: "{{ item.vlan_id }}"
+        name: "{{ item.name }}"
+        desc: "{{ item.desc }}"
+        enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+        state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
+
+The spec file above will return a JSON data structure that is a list of hashes
+with the parsed VLAN information.
+
+The same command could be parsed into a hash by using the key and values
+directives.  Here is an example of how to parse the output into a hash
+value using the same ``show vlan | display xml`` command.::
+
+    ---
+    vars:
+      vlan:
+        key: "{{ item.vlan_id }}"
+        values:
+            vlan_id: "{{ item.vlan_id }}"
+            name: "{{ item.name }}"
+            desc: "{{ item.desc }}"
+            enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+            state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
+
+
+The value of ``top`` is the XPath relative to the XML root node.
+In the example XML output given below, the value of ``top`` is ``configuration/vlans/vlan``,
+which is an XPath expression relative to the root node (<rpc-reply>). 
+``configuration`` in the value of ``top`` is the outer most container node, and ``vlan``
+is the inner-most container node.
+
+``items`` is a dictionary of key-value pairs that map user-defined names to XPath expressions
+that select elements. The Xpath expression is relative to the value of the XPath value contained in ``top``.
+For example, the ``vlan_id`` in the spec file is a user defined name and its value ``vlan-id`` is the
+relative to the value of XPath in ``top``
+
+Attributes of XML tags can be extracted using XPath expressions. The value of ``state`` in the spec
+is an XPath expression used to get the attributes of the ``vlan`` tag in output XML.::
+
+    <rpc-reply>
+      <configuration>
+        <vlans>
+          <vlan inactive="inactive">
+           <name>vlan-1</name>
+           <vlan-id>200</vlan-id>
+           <description>This is vlan-1</description>
+          </vlan>
+        </vlans>
+      </configuration>
+    </rpc-reply>
+
+.. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
 
 .. _hash_filters:
 
@@ -349,10 +561,13 @@ To get a sha512 password hash (random salt)::
 To get a sha256 password hash with a specific salt::
 
     {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
+    
+An idempotent method to generate unique hashes per system is to use a salt that is consistent between runs::
 
+    {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
 
 Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on crypt.
+'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
 
 .. _combine_filter:
 
@@ -501,6 +716,98 @@ which will produce this output:
 
 .. _other_useful_filters:
 
+URL Split Filter
+`````````````````
+
+.. versionadded:: 2.4
+
+The ``urlsplit`` filter extracts the fragment, hostname, netloc, password, path, port, query, scheme, and username from an URL. With no arguments, returns a dictionary of all the fields::
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('hostname') }}
+    # => 'www.acme.com'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('netloc') }}
+    # => 'user:password@www.acme.com:9000'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('username') }}
+    # => 'user'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('password') }}
+    # => 'password'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('path') }}
+    # => '/dir/index.html'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('port') }}
+    # => '9000'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('scheme') }}
+    # => 'http'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('query') }}
+    # => 'query=term'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit('fragment') }}
+    # => 'fragment'
+
+    {{ "http://user:password@www.acme.com:9000/dir/index.html?query=term#fragment" | urlsplit }}
+    # =>
+    #   {
+    #       "fragment": "fragment",
+    #       "hostname": "www.acme.com",
+    #       "netloc": "user:password@www.acme.com:9000",
+    #       "password": "password",
+    #       "path": "/dir/index.html",
+    #       "port": 9000,
+    #       "query": "query=term",
+    #       "scheme": "http",
+    #       "username": "user"
+    #   }
+
+
+Regular Expression Filters
+``````````````````````````
+
+To search a string with a regex, use the "regex_search" filter::
+
+    # search for "foo" in "foobar"
+    {{ 'foobar' | regex_search('(foo)') }}
+
+    # will return empty if it cannot find a match
+    {{ 'ansible' | regex_search('(foobar)') }}
+
+
+To search for all occurrences of regex matches, use the "regex_findall" filter::
+
+    # Return a list of all IPv4 addresses in the string
+    {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b') }}
+
+
+To replace text in a string with regex, use the "regex_replace" filter::
+
+    # convert "ansible" to "able"
+    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
+
+    # convert "foobar" to "bar"
+    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
+
+    # convert "localhost:80" to "localhost, 80" using named groups
+    {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
+
+    # convert "localhost:80" to "localhost"
+    {{ 'localhost:80' | regex_replace(':80') }}
+
+.. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
+   then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+
+.. versionadded:: 2.0
+
+To escape special characters within a regex, use the "regex_escape" filter::
+
+    # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
+    {{ '^f.*o(.*)$' | regex_escape() }}
+
+
 Other Useful Filters
 ````````````````````
 
@@ -510,11 +817,11 @@ To add quotes for shell usage::
 
 To use one value on true and another on false (new in version 1.9)::
 
-   {{ (name == "John") | ternary('Mr','Ms') }}
+    {{ (name == "John") | ternary('Mr','Ms') }}
 
 To concatenate a list into a string::
 
-   {{ list | join(" ") }}
+    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -550,7 +857,7 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
 To get the real path of a link (new in version 1.8)::
 
-   {{ path | realpath }}
+    {{ path | realpath }}
 
 To get the relative path of a link, from a start point (new in version 1.7)::
 
@@ -578,27 +885,6 @@ doesn't know it is a boolean value::
 
 .. versionadded:: 1.6
 
-To replace text in a string with regex, use the "regex_replace" filter::
-
-    # convert "ansible" to "able"
-    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
-
-    # convert "foobar" to "bar"
-    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
-
-    # convert "localhost:80" to "localhost, 80" using named groups
-    {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
-
-.. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
-   then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
-
-.. versionadded:: 2.0
-
-To escape special characters within a regex, use the "regex_escape" filter::
-
-    # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
-    {{ '^f.*o(.*)$' | regex_escape() }}
-
 To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
@@ -606,8 +892,8 @@ To make use of one attribute from each item in a list of complex variables, use 
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
-    # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
-    {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
+    # get amount of seconds between two dates, default date format is %Y-%m-%d %H:%M:%S but you can pass your own one
+    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).seconds  }}
 
 
 Combination Filters
@@ -621,26 +907,26 @@ To get permutations of a list::
     - name: give me largest permutations (order matters)
       debug: msg="{{ [1,2,3,4,5]|permutations|list }}"
 
-    - name: give me permutations of sets of 3
+    - name: give me permutations of sets of three
       debug: msg="{{ [1,2,3,4,5]|permutations(3)|list }}"
 
 Combinations always require a set size::
 
-    - name: give me combinations for sets of 2
+    - name: give me combinations for sets of two
       debug: msg="{{ [1,2,3,4,5]|combinations(2)|list }}"
 
 
 To get a list combining the elements of other lists use ``zip``::
 
-    - name: give me list combo of 2 lists 
+    - name: give me list combo of two lists
       debug: msg="{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
 
-    - name: give me shortest combo of 2 lists
+    - name: give me shortest combo of two lists
       debug: msg="{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
 
 To always exhaust all list use ``zip_longest``::
 
-    - name: give me longest combo of 3 lists , fill with X
+    - name: give me longest combo of three lists , fill with X
       debug: msg="{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
 
 
@@ -693,7 +979,7 @@ to be added to core so everyone can make use of them.
        All about variables
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

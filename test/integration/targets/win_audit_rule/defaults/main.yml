@@ -1,0 +1,7 @@
+test_audit_rule_folder: c:\windows\temp\{{ 'ansible test win_audit_policy' | to_uuid }}
+test_audit_rule_file: c:\windows\temp\{{ 'ansible test win_audit_policy' | to_uuid }}.txt
+test_audit_rule_registry: HKCU:\{{ 'ansible test win_audit_policy' | to_uuid }}
+test_audit_rule_rights: 'delete'
+test_audit_rule_new_rights: 'delete,changepermissions'
+test_audit_rule_user: 'everyone'
+test_audit_rule_audit_flags: success

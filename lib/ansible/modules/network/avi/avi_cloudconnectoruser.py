@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -43,7 +43,27 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
+    azure_serviceprincipal:
+        description:
+            - Field introduced in 17.2.1.
+        version_added: "2.5"
+    azure_userpass:
+        description:
+            - Field introduced in 17.2.1.
+        version_added: "2.5"
     name:
         description:
             - Name of the object.
@@ -67,20 +87,20 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create a Cloud connector user that is used for integration into cloud platforms
     avi_cloudconnectoruser:
-      controller: ''
+      controller: '{{ controller }}'
       name: root
-      password: ''
+      password: '{{ password }}'
       private_key: |
         -----BEGIN RSA PRIVATE KEY-----
         -----END RSA PRIVATE KEY-----'
       public_key: 'ssh-rsa ...'
       tenant_ref: admin
-      username: ''
-'''
+      username: '{{ username }}'
+"""
+
 RETURN = '''
 obj:
     description: CloudConnectorUser (api/cloudconnectoruser) object
@@ -90,7 +110,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -100,6 +120,11 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
+        azure_serviceprincipal=dict(type='dict',),
+        azure_userpass=dict(type='dict',),
         name=dict(type='str', required=True),
         private_key=dict(type='str', no_log=True,),
         public_key=dict(type='str',),

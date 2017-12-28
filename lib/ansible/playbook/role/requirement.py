@@ -46,6 +46,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class RoleRequirement(RoleDefinition):
 
     """
@@ -193,7 +194,7 @@ class RoleRequirement(RoleDefinition):
                 raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
             rc = popen.wait()
         if rc != 0:
-            raise AnsibleError ("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
+            raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
 
         if scm == 'git' and version:
             checkout_cmd = [scm, 'checkout', version]
@@ -228,4 +229,3 @@ class RoleRequirement(RoleDefinition):
 
         shutil.rmtree(tempdir, ignore_errors=True)
         return temp_file.name
-

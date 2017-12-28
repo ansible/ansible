@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -33,13 +23,16 @@ options:
         version_added: "2.1"
         description:
             - "if supplied, restrict the additional facts collected to the given subset.
-              Possible values: all, hardware, network, virtual, ohai, and
+              Possible values: all, min, hardware, network, virtual, ohai, and
               facter Can specify a list of values to specify a larger subset.
               Values can also be used with an initial C(!) to specify that
               that specific subset should not be collected.  For instance:
-              !hardware, !network, !virtual, !ohai, !facter.  Note that a few
-              facts are always collected.  Use the filter parameter if you do
-              not want to display those."
+              !hardware, !network, !virtual, !ohai, !facter. If !all is specified
+              then only the min subset is collected. To avoid collecting even the
+              min subset, specify !all and !min subsets. To collect only specific facts,
+              use !all, !min, and specify the particular fact subsets.
+              Use the filter parameter if you do not want to display some collected
+              facts."
         required: false
         default: 'all'
     gather_timeout:
@@ -69,6 +62,7 @@ description:
        executed directly by C(/usr/bin/ansible) to check what variables are
        available to a host. Ansible provides many I(facts) about the system,
        automatically.
+     - This module is also supported for Windows targets.
 notes:
     - More ansible facts will be added with successive releases. If I(facter) or
       I(ohai) are installed, variables from these programs will also be snapshotted
@@ -85,6 +79,7 @@ notes:
       their output must be formattable in JSON (Ansible will take care of this). Test the
       output of your scripts.
       This option was added in Ansible 2.1.
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -101,39 +96,82 @@ EXAMPLES = """
 # Display only facts returned by facter.
 # ansible all -m setup -a 'filter=facter_*'
 
+# Collect only facts returned by facter.
+# ansible all -m setup -a 'gather_subset=!all,!any,facter'
+
 # Display only facts about certain interfaces.
 # ansible all -m setup -a 'filter=ansible_eth[0-2]'
 
-# Restrict additional gathered facts to network and virtual.
+# Restrict additional gathered facts to network and virtual (includes default minimum facts)
 # ansible all -m setup -a 'gather_subset=network,virtual'
+
+# Collect only network and virtual (excludes default minimum facts)
+# ansible all -m setup -a 'gather_subset=!all,!any,network,virtual'
 
 # Do not call puppet facter or ohai even if present.
 # ansible all -m setup -a 'gather_subset=!facter,!ohai'
 
-# Only collect the minimum amount of facts:
+# Only collect the default minimum amount of facts:
 # ansible all -m setup -a 'gather_subset=!all'
+
+# Collect no facts, even the default minimum subset of facts:
+# ansible all -m setup -a 'gather_subset=!all,!min'
 
 # Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
 # ansible windows -m setup -a "fact_path='c:\\custom_facts'"
 """
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
+from ansible.module_utils.facts.namespace import PrefixFactNamespace
+from ansible.module_utils.facts import ansible_collector
+
+from ansible.module_utils.facts import default_collectors
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             gather_subset=dict(default=["all"], required=False, type='list'),
             gather_timeout=dict(default=10, required=False, type='int'),
             filter=dict(default="*", required=False),
             fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
-    data = get_all_facts(module)
-    module.exit_json(**data)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.facts import *
+    gather_subset = module.params['gather_subset']
+    gather_timeout = module.params['gather_timeout']
+    filter_spec = module.params['filter']
+
+    # TODO: this mimics existing behavior where gather_subset=["!all"] actually means
+    #       to collect nothing except for the below list
+    # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
+    #       some tweaking on how gather_subset operations are performed
+    minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
+                                       'distribution', 'dns', 'env', 'fips', 'local', 'lsb',
+                                       'pkg_mgr', 'platform', 'python', 'selinux',
+                                       'service_mgr', 'ssh_pub_keys', 'user'])
+
+    all_collector_classes = default_collectors.collectors
+
+    # rename namespace_name to root_key?
+    namespace = PrefixFactNamespace(namespace_name='ansible',
+                                    prefix='ansible_')
+
+    fact_collector = \
+        ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,
+                                                namespace=namespace,
+                                                filter_spec=filter_spec,
+                                                gather_subset=gather_subset,
+                                                gather_timeout=gather_timeout,
+                                                minimal_gather_subset=minimal_gather_subset)
+
+    facts_dict = fact_collector.collect(module=module)
+
+    module.exit_json(ansible_facts=facts_dict)
+
 
 if __name__ == '__main__':
     main()

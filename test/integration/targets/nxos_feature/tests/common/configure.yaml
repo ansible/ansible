@@ -1,0 +1,60 @@
+---
+- debug: msg="START {{ connection.transport }}/configure.yaml"
+
+- name: setup
+  nxos_config:
+    lines: no feature bgp
+    match: none
+    provider: "{{ connection }}"
+
+- name: enable bgp
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify bgp
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: disable bgp
+  nxos_feature:
+    feature: bgp
+    state: disabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify bgp
+  nxos_feature:
+    feature: bgp
+    state: disabled
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines: no feature bgp
+    match: none
+    provider: "{{ connection }}"
+
+- debug: msg="END {{ connection.transport }}/configure.yaml"

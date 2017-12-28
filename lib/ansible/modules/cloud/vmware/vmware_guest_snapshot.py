@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 #
 # This module is also sponsored by E.T.A.I. (www.etai.fr)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -26,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: vmware_guest_snapshot
-short_description: Manages virtual machines snapshots in vcenter
+short_description: Manages virtual machines snapshots in vCenter
 description:
     - Create virtual machines snapshots
 version_added: 2.3
@@ -34,7 +24,7 @@ author:
     - James Tanner (@jctanner) <tanner.jc@gmail.com>
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 notes:
-    - Tested on vSphere 5.5
+    - Tested on vSphere 5.5, 6.0
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -47,7 +37,7 @@ options:
    name:
         description:
             - Name of the VM to work with
-        required: True
+            - This is required if uuid is not supplied.
    name_match:
         description:
             - If multiple VMs matching the name, use the first or last found
@@ -59,7 +49,21 @@ options:
             - This is required if name is not supplied.
    folder:
         description:
-            - Define instance folder location.
+            - Destination folder, absolute or relative path to find an existing guest.
+            - This is required if name is supplied.
+            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+            - 'Examples:'
+            - '   folder: /ha-datacenter/vm'
+            - '   folder: ha-datacenter/vm'
+            - '   folder: /datacenter1/vm'
+            - '   folder: datacenter1/vm'
+            - '   folder: /datacenter1/vm/folder1'
+            - '   folder: datacenter1/vm/folder1'
+            - '   folder: /folder1/datacenter1/vm'
+            - '   folder: folder1/datacenter1/vm'
+            - '   folder: /folder1/datacenter1/vm/folder2'
+            - '   folder: vm/folder2'
+            - '   folder: folder2'
    datacenter:
         description:
             - Destination datacenter for the deploy operation
@@ -71,6 +75,39 @@ options:
    description:
         description:
         - Define an arbitrary description to attach to snapshot.
+   quiesce:
+        description:
+            - If set to C(true) and virtual machine is powered on, it will quiesce the
+              file system in virtual machine.
+            - Note that VMWare Tools are required for this flag.
+            - If virtual machine is powered off or VMware Tools are not available, then
+              this flag is set to C(false).
+            - If virtual machine does not provide capability to take quiesce snapshot, then
+              this flag is set to C(false).
+        required: False
+        version_added: "2.4"
+   memory_dump:
+        description:
+            - If set to C(true), memory dump of virtual machine is also included in snapshot.
+            - Note that memory snapshots take time and resources, this will take longer time to create.
+            - If virtual machine does not provide capability to take memory snapshot, then
+              this flag is set to C(false).
+        required: False
+        version_added: "2.4"
+   remove_children:
+        description:
+            - If set to C(true) and state is set to C(absent), then entire snapshot subtree is set
+              for removal.
+        required: False
+        version_added: "2.4"
+   new_snapshot_name:
+        description:
+             - Value to rename the existing snapshot to
+        version_added: 2.5
+   new_description:
+        description:
+             - Value to change the description of an existing snapshot to
+        version_added: 2.5
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -80,6 +117,8 @@ EXAMPLES = '''
       hostname: 192.168.1.209
       username: administrator@vsphere.local
       password: vmware
+      datacenter: datacenter_name
+      folder: /myfolder
       name: dummy_vm
       state: present
       snapshot_name: snap1
@@ -92,6 +131,8 @@ EXAMPLES = '''
       username: administrator@vsphere.local
       password: vmware
       name: dummy_vm
+      datacenter: datacenter_name
+      folder: /myfolder
       state: remove
       snapshot_name: snap1
     delegate_to: localhost
@@ -101,6 +142,8 @@ EXAMPLES = '''
       hostname: 192.168.1.209
       username: administrator@vsphere.local
       password: vmware
+      datacenter: datacenter_name
+      folder: /myfolder
       name: dummy_vm
       state: revert
       snapshot_name: snap1
@@ -111,8 +154,45 @@ EXAMPLES = '''
       hostname: 192.168.1.209
       username: administrator@vsphere.local
       password: vmware
+      datacenter: datacenter_name
+      folder: /myfolder
       name: dummy_vm
       state: remove_all
+    delegate_to: localhost
+
+  - name: Take snapshot of a VM using quiesce and memory flag on
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: present
+      snapshot_name: dummy_vm_snap_0001
+      quiesce: True
+      memory_dump: True
+    delegate_to: localhost
+
+  - name: Remove a snapshot and snapshot subtree
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: remove
+      remove_children: True
+      snapshot_name: snap1
+    delegate_to: localhost
+
+  - name: Rename a snapshot
+    vmware_guest_snapshot:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      name: dummy_vm
+      state: present
+      snapshot_name: current_snap_name
+      new_snapshot_name: im_renamed
+      new_description: "renamed snapshot today"
     delegate_to: localhost
 '''
 
@@ -124,70 +204,21 @@ instance:
     sample: None
 """
 
-import os
 import time
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.vmware import connect_to_api
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-HAS_PYVMOMI = False
 try:
     import pyVmomi
     from pyVmomi import vim
-
-    HAS_PYVMOMI = True
 except ImportError:
     pass
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.vmware import PyVmomi, list_snapshots, vmware_argument_spec
 
-class PyVmomiHelper(object):
+
+class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
-        if not HAS_PYVMOMI:
-            module.fail_json(msg='pyvmomi module required')
-
-        self.module = module
-        self.params = module.params
-        self.si = None
-        self.content = connect_to_api(self.module)
-        self.change_detected = False
-
-    def getvm(self, name=None, uuid=None, folder=None):
-
-        # https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.SearchIndex.html
-        # self.si.content.searchIndex.FindByInventoryPath('DC1/vm/test_folder')
-
-        vm = None
-
-        if uuid:
-            vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
-        elif folder:
-            # Build the absolute folder path to pass into the search method
-            if not self.params['folder'].startswith('/'):
-                self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
-            searchpath = '%(datacenter)s%(folder)s' % self.params
-
-            # get all objects for this path ...
-            f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
-            if f_obj:
-                if isinstance(f_obj, vim.Datacenter):
-                    f_obj = f_obj.vmFolder
-                for c_obj in f_obj.childEntity:
-                    if not isinstance(c_obj, vim.VirtualMachine):
-                        continue
-                    if c_obj.name == name:
-                        vm = c_obj
-                        if self.params['name_match'] == 'first':
-                            break
-
-        return vm
+        super(PyVmomiHelper, self).__init__(module)
 
     @staticmethod
     def wait_for_task(task):
@@ -207,16 +238,60 @@ class PyVmomiHelper(object):
         return snap_obj
 
     def snapshot_vm(self, vm):
-        dump_memory = False
+        memory_dump = False
         quiesce = False
-        return vm.CreateSnapshot(self.module.params["snapshot_name"],
-                                 self.module.params["description"],
-                                 dump_memory,
-                                 quiesce)
+        # Check if there is a latest snapshot already present as specified by user
+        snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
+                                                          self.module.params["snapshot_name"])
+        if snap_obj:
+            # Snapshot already exists, do not anything.
+            self.module.exit_json(changed=False, msg="Snapshot named [%(snapshot_name)s] already exists." % self.module.params)
+        # Check if Virtual Machine provides capabilities for Quiesce and Memory Snapshots
+        if vm.capability.quiescedSnapshotsSupported:
+            quiesce = self.module.params['quiesce']
+        if vm.capability.memorySnapshotsSupported:
+            memory_dump = self.module.params['memory_dump']
+
+        task = None
+        try:
+            task = vm.CreateSnapshot(self.module.params["snapshot_name"],
+                                     self.module.params["description"],
+                                     memory_dump,
+                                     quiesce)
+        except vim.fault.RestrictedVersion as exc:
+            self.module.fail_json(msg="Failed to take snapshot due to VMware Licence: %s" % to_native(exc.msg))
+        except Exception as exc:
+            self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc)))
+        return task
+
+    def rename_snapshot(self, vm):
+        if vm.snapshot is None:
+            self.module.exit_json(msg="VM - %s doesn't have any snapshots" %
+                                  self.module.params.get('uuid') or self.module.params.get('name'))
+
+        snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
+                                                          self.module.params["snapshot_name"])
+        task = None
+        if len(snap_obj) == 1:
+            snap_obj = snap_obj[0].snapshot
+            if self.module.params["new_snapshot_name"] and self.module.params["new_description"]:
+                task = snap_obj.RenameSnapshot(name=self.module.params["new_snapshot_name"],
+                                               description=self.module.params["new_description"])
+            elif self.module.params["new_snapshot_name"]:
+                task = snap_obj.RenameSnapshot(name=self.module.params["new_snapshot_name"])
+            else:
+                task = snap_obj.RenameSnapshot(description=self.module.params["new_description"])
+        else:
+            self.module.exit_json(
+                msg="Couldn't find any snapshots with specified name: %s on VM: %s" %
+                    (self.module.params["snapshot_name"],
+                     self.module.params.get('uuid') or self.module.params.get('name')))
+        return task
 
     def remove_or_revert_snapshot(self, vm):
         if vm.snapshot is None:
-            self.module.exit_json(msg="VM - %s doesn't have any snapshots" % self.module.params["name"])
+            self.module.exit_json(msg="VM - %s doesn't have any snapshots" %
+                                  self.module.params.get('uuid') or self.module.params.get('name'))
 
         snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
                                                           self.module.params["snapshot_name"])
@@ -224,85 +299,81 @@ class PyVmomiHelper(object):
         if len(snap_obj) == 1:
             snap_obj = snap_obj[0].snapshot
             if self.module.params["state"] == "absent":
-                task = snap_obj.RemoveSnapshot_Task(True)
+                # Remove subtree depending upon the user input
+                remove_children = self.module.params.get('remove_children', False)
+                task = snap_obj.RemoveSnapshot_Task(remove_children)
             elif self.module.params["state"] == "revert":
                 task = snap_obj.RevertToSnapshot_Task()
         else:
             self.module.exit_json(
                 msg="Couldn't find any snapshots with specified name: %s on VM: %s" %
-                    (self.module.params["snapshot_name"], self.module.params["name"]))
+                    (self.module.params["snapshot_name"],
+                     self.module.params.get('uuid') or self.module.params.get('name')))
 
         return task
 
     def apply_snapshot_op(self, vm):
         result = {}
         if self.module.params["state"] == "present":
-            task = self.snapshot_vm(vm)
+            if self.module.params["new_snapshot_name"] or self.module.params["new_description"]:
+                self.rename_snapshot(vm)
+                result = {'changed': True, 'failed': False, 'renamed': True}
+                task = None
+            else:
+                task = self.snapshot_vm(vm)
         elif self.module.params["state"] in ["absent", "revert"]:
             task = self.remove_or_revert_snapshot(vm)
         elif self.module.params["state"] == "remove_all":
             task = vm.RemoveAllSnapshots()
         else:
             # This should not happen
-            assert False
+            raise AssertionError()
 
         if task:
             self.wait_for_task(task)
             if task.info.state == 'error':
                 result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
             else:
-                result = {'changed': True, 'failed': False}
+                result = {'changed': True, 'failed': False, 'results': list_snapshots(vm)}
 
         return result
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            hostname=dict(
-                type='str',
-                default=os.environ.get('VMWARE_HOST')
-            ),
-            username=dict(
-                type='str',
-                default=os.environ.get('VMWARE_USER')
-            ),
-            password=dict(
-                type='str', no_log=True,
-                default=os.environ.get('VMWARE_PASSWORD')
-            ),
-            state=dict(
-                required=False,
-                choices=['present', 'absent', 'revert', 'remove_all'],
-                default='present'),
-            validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=True, type='str'),
-            name_match=dict(required=False, type='str', default='first'),
-            uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default='/vm'),
-            datacenter=dict(required=True, type='str'),
-            snapshot_name=dict(required=False, type='str'),
-            description=dict(required=False, type='str', default=''),
-        ),
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        state=dict(default='present', choices=['present', 'absent', 'revert', 'remove_all']),
+        name=dict(type='str'),
+        name_match=dict(type='str', choices=['first', 'last'], default='first'),
+        uuid=dict(type='str'),
+        folder=dict(type='str'),
+        datacenter=dict(required=True, type='str'),
+        snapshot_name=dict(type='str'),
+        description=dict(type='str', default=''),
+        quiesce=dict(type='bool', default=False),
+        memory_dump=dict(type='bool', default=False),
+        remove_children=dict(type='bool', default=False),
+        new_snapshot_name=dict(type='str'),
+        new_description=dict(type='str'),
     )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_together=[['name', 'folder']],
+                           required_one_of=[['name', 'uuid']],
+                           )
 
-    # Prepend /vm if it was missing from the folder path, also strip trailing slashes
-    if not module.params['folder'].startswith('/vm') and module.params['folder'].startswith('/'):
-        module.params['folder'] = '/vm%(folder)s' % module.params
-    module.params['folder'] = module.params['folder'].rstrip('/')
+    if module.params['folder']:
+        # FindByInventoryPath() does not require an absolute path
+        # so we should leave the input folder path unmodified
+        module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
-    vm = pyv.getvm(name=module.params['name'],
-                   folder=module.params['folder'],
-                   uuid=module.params['uuid'])
+    vm = pyv.get_vm()
 
     if not vm:
         # If UUID is set, getvm select UUID, show error message accordingly.
-        if module.params['uuid'] is not None:
-            module.fail_json(msg="Unable to manage snapshots for non-existing VM %(uuid)s" % module.params)
-        else:
-            module.fail_json(msg="Unable to manage snapshots for non-existing VM %(name)s" % module.params)
+        module.fail_json(msg="Unable to manage snapshots for non-existing VM %s" % (module.params.get('uuid') or
+                                                                                    module.params.get('name')))
 
     if not module.params['snapshot_name'] and module.params['state'] != 'remove_all':
         module.fail_json(msg="snapshot_name param is required when state is '%(state)s'" % module.params)
@@ -316,6 +387,7 @@ def main():
         module.fail_json(**result)
     else:
         module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

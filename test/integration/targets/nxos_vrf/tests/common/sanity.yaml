@@ -1,0 +1,49 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vrf sanity test"
+
+- block:
+  - name: Ensure ntc VRF exists on switch
+    nxos_vrf: &configure
+      vrf: ntc
+      admin_state: down
+      description: testing
+      #vni: 5000
+      #rd: auto
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vrf: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Ensure ntc VRF does not exist on switch
+    nxos_vrf: &remove
+      vrf: ntc
+      admin_state: down
+      description: testing
+      #vni: 5000
+      #rd: auto
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 30
+
+  - name: "Remove Idempotence"
+    nxos_vrf: *remove
+    register: result
+
+  - assert: *false
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vrf sanity test"

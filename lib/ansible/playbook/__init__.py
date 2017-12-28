@@ -23,10 +23,10 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
-from ansible.plugins import get_all_plugin_loaders
+from ansible.plugins.loader import get_all_plugin_loaders
 
 try:
     from __main__ import display
@@ -45,7 +45,7 @@ class Playbook:
         # be either a play or an include statement
         self._entries = []
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
-        self._loader  = loader
+        self._loader = loader
         self._file_name = None
 
     @staticmethod
@@ -74,7 +74,11 @@ class Playbook:
                 if os.path.isdir(plugin_path):
                     obj.add_directory(plugin_path)
 
-        ds = self._loader.load_from_file(os.path.basename(file_name))
+        try:
+            ds = self._loader.load_from_file(os.path.basename(file_name))
+        except UnicodeDecodeError as e:
+            raise AnsibleParserError("Could not read playbook (%s) due to encoding issues: %s" % (file_name, to_native(e)))
+
         if not isinstance(ds, list):
             # restore the basedir in case this error is caught and handled
             self._loader.set_basedir(cur_basedir)
@@ -89,12 +93,15 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if 'include' in entry:
+            if any(action in entry for action in ('import_playbook', 'include')):
+                if 'include' in entry:
+                    display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead", version="2.8")
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
-                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color=C.COLOR_SKIP)
+                    which = entry.get('import_playbook', entry.get('include', entry))
+                    display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)

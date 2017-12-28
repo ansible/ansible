@@ -1,0 +1,203 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport}} nxos_bgp_neighbor sanity test"
+
+- set_fact: intname="{{ nxos_int1 }}"
+
+- set_fact: log_neighbor_changes="enable"
+  when: not titanium
+
+- set_fact: remove_private_as="all"
+  when: not titanium
+
+- name: "Enable feature BGP"
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Setup"
+  nxos_bgp: &remove
+    asn: 65535
+    state: absent
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: "Configure BGP neighbor defaults"
+    nxos_bgp_neighbor: &configure_default
+      asn: 65535
+      neighbor: 3.3.3.3
+      local_as: 20
+      remote_as: 30
+      description: "just a description"
+      update_source: "{{ intname.capitalize() }}"
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_default
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP neighbor non-defaults"
+    nxos_bgp_neighbor: &configure_non_default
+      asn: 65535
+      neighbor: 3.3.3.3
+      description: "tested by ansible"
+      connected_check: true
+      capability_negotiation: true
+      dynamic_capability: true
+      ebgp_multihop: 2
+      log_neighbor_changes: "{{log_neighbor_changes|default(omit)}}"
+      low_memory_exempt: true
+      remote_as: 12.1
+      remove_private_as: "{{remove_private_as|default(omit)}}"
+      shutdown: true
+      suppress_4_byte_as: true
+      timers_keepalive: 90
+      timers_holdtime: 270
+      update_source: loopback151
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_non_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor 3des password"
+    nxos_bgp_neighbor: &configure_3des_password
+      asn: 65535
+      neighbor: 3.3.3.3
+      remote_as: 30
+      pwd: '386c0565965f89de'
+      pwd_type: 3des
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_3des_password
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor type 7 password"
+    nxos_bgp_neighbor: &configure_type7_password
+      asn: 65535
+      neighbor: 3.3.3.3
+      remote_as: 30
+      pwd: '386c0565965f89de'
+      pwd_type: cisco_type_7
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_type7_password
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor transport type passive"
+    nxos_bgp_neighbor: &configure_transport_passive
+      asn: 65535
+      neighbor: 3.3.3.3
+      remote_as: 30
+      transport_passive_only: true
+      provider: "{{ connection }}"
+    register: result
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_transport_passive
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor transport type default"
+    nxos_bgp_neighbor: &configure_transport_default
+      asn: 65535
+      neighbor: 3.3.3.3
+      remote_as: 30
+      transport_passive_only: false
+      provider: "{{ connection }}"
+    register: result
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_transport_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp: *remove
+    register: result
+
+  - assert: *true
+
+  rescue:
+  - name: "Cleanup BGP"
+    nxos_bgp: *remove
+    ignore_errors: yes
+
+  always:
+  - name: "Disable feature bgp"
+    nxos_feature: &disable_bgp
+      feature: bgp
+      state: disabled
+      provider: "{{ connection }}"
+
+- debug: msg="END TRANSPORT:{{ connection.transport}} nxos_bgp_neighbor sanity test"

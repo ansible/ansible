@@ -18,18 +18,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars
+
 
 class Group:
     ''' a group of ansible hosts '''
 
-    #__slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
+    # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
     def __init__(self, name=None):
 
         self.depth = 0
         self.name = name
         self.hosts = []
+        self._hosts = None
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
@@ -53,11 +54,14 @@ class Group:
         for parent in self.parent_groups:
             parent_groups.append(parent.serialize())
 
+        self._hosts = None
+
         result = dict(
             name=self.name,
             vars=self.vars.copy(),
             parent_groups=parent_groups,
             depth=self.depth,
+            hosts=self.hosts,
         )
 
         return result
@@ -67,12 +71,20 @@ class Group:
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
+        self.hosts = data.get('hosts', [])
+        self._hosts = None
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
             g = Group()
             g.deserialize(parent_data)
             self.parent_groups.append(g)
+
+    @property
+    def host_names(self):
+        if self._hosts is None:
+            self._hosts = set(self.hosts)
+        return self._hosts
 
     def get_name(self):
         return self.name
@@ -87,7 +99,7 @@ class Group:
             self.child_groups.append(group)
 
             # update the depth of the child
-            group.depth = max([self.depth+1, group.depth])
+            group.depth = max([self.depth + 1, group.depth])
 
             # update the depth of the grandchildren
             group._check_children_depth()
@@ -105,22 +117,25 @@ class Group:
 
         try:
             for group in self.child_groups:
-                group.depth = max([self.depth+1, group.depth])
+                group.depth = max([self.depth + 1, group.depth])
                 group._check_children_depth()
         except RuntimeError:
             raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
     def add_host(self, host):
-
-        self.hosts.append(host)
-        host.add_group(self)
-        self.clear_hosts_cache()
+        if host.name not in self.host_names:
+            self.hosts.append(host)
+            self._hosts.add(host.name)
+            host.add_group(self)
+            self.clear_hosts_cache()
 
     def remove_host(self, host):
 
-        self.hosts.remove(host)
-        host.remove_group(self)
-        self.clear_hosts_cache()
+        if host.name in self.host_names:
+            self.hosts.remove(host)
+            self._hosts.remove(host.name)
+            host.remove_group(self)
+            self.clear_hosts_cache()
 
     def set_variable(self, key, value):
 
@@ -180,6 +195,5 @@ class Group:
         try:
             self.priority = int(priority)
         except TypeError:
-            #FIXME: warn about invalid priority
+            # FIXME: warn about invalid priority
             pass
-

@@ -1,0 +1,99 @@
+- name: call old WANTS_JSON module
+  legacy_only_old_way:
+  register: old_way
+
+- assert:
+    that:
+    - old_way.data == 'success'
+
+- name: call module with only legacy requires
+  legacy_only_new_way:
+  register: new_way
+
+- assert:
+    that:
+    - new_way.data == 'success'
+
+- name: call module with local module_utils
+  uses_local_utils:
+  register: local_utils
+
+- assert:
+    that:
+    - local_utils.data == "ValueFromCustomFunction"
+
+- name: call module that imports bogus Ansible-named module_utils
+  uses_bogus_utils:
+  ignore_errors: true
+  register: bogus_utils
+
+- assert:
+    that:
+    - bogus_utils is failed
+    - bogus_utils.msg is search("Could not find")
+
+- name: call module with camel conversion tests
+  camel_conversion_test:
+  register: camel_conversion
+
+- assert:
+    that:
+    - camel_conversion.data == 'success'
+
+- name: call module with SID tests
+  sid_utils_test:
+  register: sid_test
+
+- assert:
+    that:
+    - sid_test.data == 'success'
+
+- name: create temp testing folder
+  win_file:
+    path: C:\ansible testing
+    state: directory
+
+- name: download binary the outputs argv to stdout
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_module_utils/PrintArgv.exe
+    dest: C:\ansible testing\PrintArgv.exe
+
+- name: call module with CommandUtil tests
+  command_util_test:
+    exe: C:\ansible testing\PrintArgv.exe
+  register: command_util
+
+- assert:
+    that:
+    - command_util.data == 'success'
+
+- name: call module with ArgvParser tests
+  argv_parser_test:
+    exe: C:\ansible testing\PrintArgv.exe
+  register: argv_test
+
+- assert:
+    that:
+    - argv_test.data == 'success'
+
+- name: call module with symbolic link tests
+  symbolic_link_test:
+    path: C:\ansible testing
+  register: symbolic_link
+
+- assert:
+    that:
+    - symbolic_link.data == 'success'
+
+- name: remove testing folder
+  win_file:
+    path: C:\ansible testing
+    state: absent
+
+- name: call module with FileUtil tests
+  file_util_test:
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'

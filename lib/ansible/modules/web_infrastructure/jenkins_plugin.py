@@ -2,27 +2,15 @@
 # encoding: utf-8
 
 # (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -58,12 +46,6 @@ options:
     default: jenkins
     description:
       - Name of the Jenkins user on the OS.
-  params:
-    required: false
-    default: null
-    description:
-      - Option used to allow the user to overwrite any of the other options. To
-        remove an option, set the value of the option to C(null).
   state:
     required: false
     choices: [absent, present, pinned, unpinned, enabled, disabled, latest]
@@ -130,6 +112,8 @@ notes:
   - It is not possible to run the module remotely by changing the I(url)
     parameter to point to the Jenkins server. The module must be used on the
     host where Jenkins runs as it needs direct access to the plugin files.
+  - "The C(params) option was removed in Ansible 2.5 due to circumventing Ansible's
+    option handling"
 '''
 
 EXAMPLES = '''
@@ -178,20 +162,14 @@ EXAMPLES = '''
     state: absent
 
 #
-# Example of how to use the params
-#
-# Define a variable and specify all default parameters you want to use across
-# all jenkins_plugin calls:
-#
-# my_jenkins_params:
-#   url_username: admin
-#   url_password: p4ssw0rd
-#   url: http://localhost:8888
+# Example of how to authenticate
 #
 - name: Install plugin
   jenkins_plugin:
     name: build-pipeline-plugin
-    params: "{{ my_jenkins_params }}"
+    url_username: admin
+    url_password: p4ssw0rd
+    url: http://localhost:8888
 
 #
 # Example of a Play which handles Jenkins restarts during the state changes
@@ -774,11 +752,11 @@ def main():
         supports_check_mode=True,
     )
 
-    # Update module parameters by user's parameters if defined
-    if 'params' in module.params and isinstance(module.params['params'], dict):
-        module.params.update(module.params['params'])
-        # Remove the params
-        module.params.pop('params', None)
+    # Params was removed
+    # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
+    if module.params['params']:
+        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5"
+                         "since it circumvents Ansible's option handling")
 
     # Force basic authentication
     module.params['force_basic_auth'] = True

@@ -1,0 +1,39 @@
+# Test code for the ipify_facts
+# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+- debug: var=ansible_distribution
+- debug: var=ansible_distribution_version
+
+- set_fact:
+    validate_certs: false
+  when: (ansible_distribution == "MacOSX" and ansible_distribution_version == "10.11.1")
+
+- name: get information about current IP using ipify facts
+  ipify_facts:
+    timeout: 30
+    validate_certs: "{{ validate_certs }}"
+  register: external_ip
+- debug: var="{{ external_ip }}"
+
+- name: check if task was successful
+  assert:
+    that:
+      - "{{ external_ip.changed == false }}"
+      - "{{ external_ip['ansible_facts'] is defined }}"
+      - "{{ external_ip['ansible_facts']['ipify_public_ip'] is defined }}"

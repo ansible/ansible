@@ -13,9 +13,13 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    EnvironmentConfig,
     run_command,
     common_environment,
+)
+
+from lib.config import (
+    CoverageConfig,
+    CoverageReportConfig,
 )
 
 from lib.executor import (
@@ -88,11 +92,11 @@ def command_coverage_combine(args):
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
             elif '/ansible_module_' in filename:
-                module = re.sub('^.*/ansible_module_(?P<module>.*).py$', '\\g<module>', filename)
-                if module not in modules:
-                    display.warning('Skipping coverage of unknown module: %s' % module)
+                module_name = re.sub('^.*/ansible_module_(?P<module>.*).py$', '\\g<module>', filename)
+                if module_name not in modules:
+                    display.warning('Skipping coverage of unknown module: %s' % module_name)
                     continue
-                new_name = os.path.abspath(modules[module])
+                new_name = os.path.abspath(modules[module_name])
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
             elif re.search('^(/.*?)?/root/ansible/', filename):
@@ -137,7 +141,7 @@ def command_coverage_combine(args):
 
 def command_coverage_report(args):
     """
-    :type args: CoverageConfig
+    :type args: CoverageReportConfig
     """
     output_files = command_coverage_combine(args)
 
@@ -145,9 +149,14 @@ def command_coverage_report(args):
         if args.group_by or args.stub:
             display.info('>>> Coverage Group: %s' % ' '.join(os.path.basename(output_file).split('=')[1:]))
 
+        options = []
+
+        if args.show_missing:
+            options.append('--show-missing')
+
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'report'])
+        run_command(args, env=env, cmd=['coverage', 'report'] + options)
 
 
 def command_coverage_html(args):
@@ -160,7 +169,7 @@ def command_coverage_html(args):
         dir_name = 'test/results/reports/%s' % os.path.basename(output_file)
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'html', '-d', dir_name])
+        run_command(args, env=env, cmd=['coverage', 'html', '-i', '-d', dir_name])
 
 
 def command_coverage_xml(args):
@@ -173,7 +182,7 @@ def command_coverage_xml(args):
         xml_name = 'test/results/reports/%s.xml' % os.path.basename(output_file)
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'xml', '-o', xml_name])
+        run_command(args, env=env, cmd=['coverage', 'xml', '-i', '-o', xml_name])
 
 
 def command_coverage_erase(args):
@@ -239,16 +248,3 @@ def get_coverage_group(args, coverage_file):
             group += '=%s' % names[part]
 
     return group
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool

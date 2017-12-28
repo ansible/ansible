@@ -55,7 +55,7 @@ options:
         default: null
     cert_cn:
         description:
-            - Certificate CN (common name) embeded in the certificate signature.
+            - Certificate CN (common name) embedded in the certificate signature.
         required: true
         default: null
     signed_by:
@@ -81,11 +81,11 @@ EXAMPLES = '''
     signed_by: "root-ca"
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -96,9 +96,9 @@ import time
 
 try:
     import paramiko
-    HAS_LIB=True
+    HAS_LIB = True
 except ImportError:
-    HAS_LIB=False
+    HAS_LIB = False
 
 _PROMPTBUFF = 4096
 
@@ -113,20 +113,20 @@ def wait_with_timeout(module, shell, prompt, timeout=60):
             if len(endresult) != 0 and endresult[-1] == prompt:
                 break
 
-        if time.time()-now > timeout:
+        if time.time() - now > timeout:
             module.fail_json(msg="Timeout waiting for prompt")
 
     return result
 
 
 def generate_cert(module, ip_address, key_filename, password,
-                  cert_cn, cert_friendly_name, signed_by, rsa_nbits ):
+                  cert_cn, cert_friendly_name, signed_by, rsa_nbits):
     stdout = ""
 
     client = paramiko.SSHClient()
 
     # add policy to accept all host keys, I haven't found
-    # a way to retreive the instance SSH key fingerprint from AWS
+    # a way to retrieve the instance SSH key fingerprint from AWS
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     if not key_filename:
@@ -154,7 +154,7 @@ def generate_cert(module, ip_address, key_filename, password,
     shell.send('exit\n')
 
     if 'Success' not in buff:
-        module.fail_json(msg="Error generating self signed certificate: "+stdout)
+        module.fail_json(msg="Error generating self signed certificate: " + stdout)
 
     client.close()
     return stdout

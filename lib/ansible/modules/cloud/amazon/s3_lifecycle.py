@@ -1,21 +1,14 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -165,13 +158,14 @@ try:
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location
     from boto.s3.lifecycle import Lifecycle, Rule, Expiration, Transition
-    from boto.exception import BotoServerError, S3CreateError, S3ResponseError
+    from boto.exception import BotoServerError, S3ResponseError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, ec2_argument_spec, get_aws_connection_info
+
 
 def create_lifecycle_rule(connection, module):
 
@@ -261,6 +255,7 @@ def create_lifecycle_rule(connection, module):
         module.fail_json(msg=e.message)
 
     module.exit_json(changed=changed)
+
 
 def compare_rule(rule_a, rule_b):
 
@@ -370,27 +365,27 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=True, type='str'),
-            expiration_days = dict(default=None, required=False, type='int'),
-            expiration_date = dict(default=None, required=False, type='str'),
-            prefix = dict(default=None, required=False),
-            requester_pays = dict(default='no', type='bool'),
-            rule_id = dict(required=False, type='str'),
-            state = dict(default='present', choices=['present', 'absent']),
-            status = dict(default='enabled', choices=['enabled', 'disabled']),
-            storage_class = dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
-            transition_days = dict(default=None, required=False, type='int'),
-            transition_date = dict(default=None, required=False, type='str')
+            name=dict(required=True, type='str'),
+            expiration_days=dict(default=None, required=False, type='int'),
+            expiration_date=dict(default=None, required=False, type='str'),
+            prefix=dict(default=None, required=False),
+            requester_pays=dict(default='no', type='bool'),
+            rule_id=dict(required=False, type='str'),
+            state=dict(default='present', choices=['present', 'absent']),
+            status=dict(default='enabled', choices=['enabled', 'disabled']),
+            storage_class=dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
+            transition_days=dict(default=None, required=False, type='int'),
+            transition_date=dict(default=None, required=False, type='str')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive = [
-                               [ 'expiration_days', 'expiration_date' ],
-                               [ 'expiration_days', 'transition_date' ],
-                               [ 'transition_days', 'transition_date' ],
-                               [ 'transition_days', 'expiration_date' ]
-                               ]
+                           mutually_exclusive=[
+                               ['expiration_days', 'expiration_date'],
+                               ['expiration_days', 'transition_date'],
+                               ['transition_days', 'transition_date'],
+                               ['transition_days', 'expiration_date']
+                           ]
                            )
 
     if not HAS_BOTO:
@@ -434,7 +429,7 @@ def main():
         except ValueError as e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
 
-    boto_required_version = (2,40,0)
+    boto_required_version = (2, 40, 0)
     if storage_class == 'standard_ia' and tuple(map(int, (boto.__version__.split(".")))) < boto_required_version:
         module.fail_json(msg="'standard_ia' class requires boto >= 2.40.0")
 

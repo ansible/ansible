@@ -64,6 +64,7 @@ def return_schema(data):
         Required('description'): Any(list, *string_types),
         Required('returned'): Any(*string_types),
         Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
+        'version_added': Any(float, *string_types),
         'sample': Any(None, list, dict, int, float, *string_types),
         'example': Any(None, list, dict, int, float, *string_types)
     }
@@ -103,7 +104,7 @@ def doc_schema(module_name):
     )
 
 
-def metadata_schema(deprecated):
+def metadata_1_0_schema(deprecated):
     valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
     if deprecated:
         valid_status = Any('deprecated')
@@ -113,6 +114,20 @@ def metadata_schema(deprecated):
             Required('status'): [valid_status],
             Required('metadata_version'): '1.0',
             Required('supported_by'): Any('core', 'community', 'curated')
+        }
+    )
+
+
+def metadata_1_1_schema(deprecated):
+    valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
+    if deprecated:
+        valid_status = Any('deprecated')
+
+    return Schema(
+        {
+            Required('status'): [valid_status],
+            Required('metadata_version'): '1.1',
+            Required('supported_by'): Any('core', 'community', 'certified', 'network')
         }
     )
 

@@ -1,0 +1,55 @@
+---
+- debug: msg="START iosxr/set_name_servers.yaml"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no ip name-server 1.1.1.1
+      - no ip name-server 2.2.2.2
+      - no ip name-server 3.3.3.3
+    match: none
+
+- name: configure name_servers
+  net_system:
+    name_servers:
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 3
+      - "'domain name-server 1.1.1.1' in result.commands"
+      - "'domain name-server 2.2.2.2' in result.commands"
+      - "'domain name-server 3.3.3.3' in result.commands"
+
+- name: verify name_servers
+  net_system:
+    name_servers:
+      - 1.1.1.1
+      - 2.2.2.2
+      - 3.3.3.3
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one
+  net_system:
+    name_servers:
+      - 1.1.1.1
+      - 2.2.2.2
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 1
+      - "'no domain name-server 3.3.3.3' in result.commands"
+
+# FIXME: No teardown
+#
+- debug: msg="END iosxr/set_name_servers.yaml"

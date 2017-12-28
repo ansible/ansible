@@ -1,22 +1,13 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -103,7 +94,7 @@ options:
     choices: ['line', 'block']
   multiline_delimiter:
     description:
-      - This arugment is used when pushing a multiline configuration
+      - This argument is used when pushing a multiline configuration
         element to the Ordnance router.  It specifies the character to use
         as the delimiting character.  This only applies to the
         configuration action
@@ -195,14 +186,14 @@ backup_path:
 """
 import re
 import time
+import traceback
 
-
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network.common.network import NetworkModule, NetworkError
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.common.parsing import Command
+from ansible.module_utils.network.ordnance.ordnance import get_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.ordnance import get_config
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.netcli import Command
+from ansible.module_utils._text import to_native
 
 
 def check_args(module, warnings):
@@ -214,6 +205,7 @@ def check_args(module, warnings):
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
+
 
 def extract_banners(config):
     banners = {}
@@ -234,12 +226,14 @@ def extract_banners(config):
     config = re.sub(r'banner \w+ \^C\^C', '!! banner removed', config)
     return (config, banners)
 
+
 def diff_banners(want, have):
     candidate = {}
     for key, value in iteritems(want):
         if value != have.get(key):
             candidate[key] = value
     return candidate
+
 
 def load_banners(module, banners):
     delimiter = module.params['multiline_delimiter']
@@ -251,6 +245,7 @@ def load_banners(module, banners):
         time.sleep(1)
         module.connection.shell.receive()
 
+
 def get_config(module, result):
     contents = module.params['config']
     if not contents:
@@ -259,6 +254,7 @@ def get_config(module, result):
 
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -274,6 +270,7 @@ def get_candidate(module):
 
     return candidate, banners
 
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -284,7 +281,7 @@ def run(module, result):
     if match != 'none':
         config, have_banners = get_config(module, result)
         path = module.params['parents']
-        configobjs = candidate.difference(config, path=path,match=match,
+        configobjs = candidate.difference(config, path=path, match=match,
                                           replace=replace)
     else:
         configobjs = candidate.items
@@ -319,6 +316,7 @@ def run(module, result):
         if not module.check_mode:
             module.config.save_config()
         result['changed'] = True
+
 
 def main():
     """ main entry point for module execution
@@ -369,10 +367,9 @@ def main():
 
     try:
         run(module, result)
-    except NetworkError:
-        exc = get_exception()
+    except NetworkError as e:
         module.disconnect()
-        module.fail_json(msg=str(exc))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.disconnect()
     module.exit_json(**result)

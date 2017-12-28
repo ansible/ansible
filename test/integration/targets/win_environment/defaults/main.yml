@@ -1,0 +1,5 @@
+test_environment_name: TEST_VALUE
+test_machine_environment_value: "%SystemRoot%\\System32"
+test_new_machine_environment_value: C:\Windows\System32
+test_user_environment_value: C:\Program Files
+test_new_user_environment_value: C:\Program Files (x86)

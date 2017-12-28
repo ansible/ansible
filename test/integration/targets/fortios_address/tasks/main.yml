@@ -1,0 +1,14 @@
+---
+- name: install required libraries
+  pip:
+    requirements: "{{ role_path }}/files/requirements.txt"
+  become: True
+
+- name: copy backup config file to config file 
+  copy: 
+    src: "{{ role_path }}/files/default_config.conf.backup"
+    dest: "{{ role_path }}/files/default_config.conf"
+ 
+- { include: test_indempotency.yml }
+- { include: test_params_state_absent.yml }
+- { include: test_params_state_present.yml }

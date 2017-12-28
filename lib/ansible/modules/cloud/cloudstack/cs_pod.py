@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -38,7 +38,7 @@ options:
     required: true
   id:
     description:
-      - uuid of the exising pod.
+      - uuid of the existing pod.
     default: null
     required: false
   start_ip:
@@ -158,7 +158,6 @@ zone:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -199,14 +198,14 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
             if uuid:
                 args['id'] = uuid
                 args['zoneid'] = self.get_zone(key='id')
-                pods = self.cs.listPods(**args)
+                pods = self.query_api('listPods', **args)
                 if pods:
                     self.pod = pods['pod'][0]
                     return self.pod
 
             args['name'] = self.module.params.get('name')
             args['zoneid'] = self.get_zone(key='id')
-            pods = self.cs.listPods(**args)
+            pods = self.query_api('listPods', **args)
             if pods:
                 self.pod = pods['pod'][0]
         return self.pod
@@ -231,9 +230,7 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
         self.result['changed'] = True
         args = self._get_common_pod_args()
         if not self.module.check_mode:
-            res = self.cs.createPod(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createPod', **args)
             pod = res['pod']
         return pod
 
@@ -246,9 +243,7 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.updatePod(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updatePod', **args)
                 pod = res['pod']
         return pod
 
@@ -261,9 +256,7 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
                 'id': pod['id']
             }
             if not self.module.check_mode:
-                res = self.cs.deletePod(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deletePod', **args)
         return pod
 
 
@@ -286,18 +279,14 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_pod = AnsibleCloudStackPod(module)
-        state = module.params.get('state')
-        if state in ['absent']:
-            pod = acs_pod.absent_pod()
-        else:
-            pod = acs_pod.present_pod()
+    acs_pod = AnsibleCloudStackPod(module)
+    state = module.params.get('state')
+    if state in ['absent']:
+        pod = acs_pod.absent_pod()
+    else:
+        pod = acs_pod.present_pod()
 
-        result = acs_pod.get_result(pod)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_pod.get_result(pod)
 
     module.exit_json(**result)
 

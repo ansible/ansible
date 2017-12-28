@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_evpn_vni
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosEvpnVniModule(TestNxosModule):
     module = nxos_evpn_vni
 
     def setUp(self):
+        super(TestNxosEvpnVniModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_evpn_vni.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -41,12 +41,13 @@ class TestNxosEvpnVniModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosEvpnVniModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
-    def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_evpn_vni_config.cfg')
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('', 'nxos_evpn_vni_config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_evpn_vni_present(self):

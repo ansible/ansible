@@ -30,7 +30,7 @@ from ansible.template import Templar
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[], listof=(string_types,int))
+    _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int))
 
     def __init__(self):
         super(Taggable, self).__init__()
@@ -41,19 +41,17 @@ class Taggable:
         elif isinstance(ds, string_types):
             value = ds.split(',')
             if isinstance(value, list):
-                return [ x.strip() for x in value ]
+                return [x.strip() for x in value]
             else:
-                return [ ds ]
+                return [ds]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
     def _get_attr_tags(self):
         '''
-        Override for the 'tags' getattr fetcher, used from Base.
+        Override for the 'tags' getattr fetcher, used from Base, allow some classes to not give their tags to their 'children'
         '''
-        tags = self._attributes['tags']
-        if tags is None:
-            tags = []
+        tags = self._attributes.get('tags', [])
         if hasattr(self, '_get_parent_attribute'):
             tags = self._get_parent_attribute('tags', extend=True)
         return tags
@@ -73,7 +71,7 @@ class Taggable:
                 else:
                     tags = set([tags])
             else:
-                tags = set([i for i,_ in itertools.groupby(tags)])
+                tags = set([i for i, _ in itertools.groupby(tags)])
         else:
             # this makes isdisjoint work for untagged
             tags = self.untagged

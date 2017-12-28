@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -43,7 +43,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     config_settings:
         description:
             - Tenantconfiguration settings for tenant.
@@ -71,13 +83,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create Tenant using Service Engines in provider mode
     avi_tenant:
-      controller: ''
-      password: ''
-      username: ''
+      controller: '{{ controller }}'
+      password: '{{ password }}'
+      username: '{{ username }}'
       config_settings:
         se_in_provider_context: false
         tenant_access_to_provider_se: true
@@ -85,7 +96,8 @@ EXAMPLES = '''
       description: VCenter, Open Stack, AWS Virtual services
       local: true
       name: Demo
-'''
+"""
+
 RETURN = '''
 obj:
     description: Tenant (api/tenant) object
@@ -95,7 +107,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -105,6 +117,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         config_settings=dict(type='dict',),
         created_by=dict(type='str',),
         description=dict(type='str',),

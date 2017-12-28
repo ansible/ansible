@@ -6,12 +6,14 @@
     lines:
       - no ip domain lookup source-interface
       - vrf definition ansible
+    timeout: 30
     match: none
     provider: "{{ eapi }}"
 
 - name: configure lookup_source
   eos_system:
     lookup_source: Management1
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -23,6 +25,7 @@
 - name: verify lookup_source
   eos_system:
     lookup_source: Management1
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -35,6 +38,7 @@
     lookup_source:
       - interface: Management1
         vrf: ansible
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -50,6 +54,7 @@
     lookup_source:
       - interface: Management1
         vrf: ansible
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -62,6 +67,7 @@
     lines:
       - no ip domain lookup source-interface
       - no vrf definition ansible
+    timeout: 30
     match: none
     provider: "{{ eapi }}"
 

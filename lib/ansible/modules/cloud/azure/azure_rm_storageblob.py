@@ -3,25 +3,15 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -39,6 +29,7 @@ options:
         required: true
         aliases:
             - account_name
+            - storage_account
     blob:
         description:
             - Name of a blob object within the container.
@@ -46,6 +37,15 @@ options:
         default: null
         aliases:
             - blob_name
+    blob_type:
+        description:
+            - Type of Blob Object.
+        required: false
+        default: block
+        choices:
+            - block
+            - page
+        version_added: "2.5"
     container:
         description:
             - Name of a blob container within the storage account.
@@ -99,6 +99,8 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+        aliases:
+            - resource_group_name
     src:
         description:
             - Source file path. Use with state 'present' to upload a blob.
@@ -200,12 +202,7 @@ container:
     }
 '''
 
-
 import os
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
 
 try:
     from azure.storage.blob.models import ContentSettings
@@ -214,18 +211,21 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+
 
 class AzureRMStorageBlob(AzureRMModuleBase):
 
     def __init__(self):
 
         self.module_arg_spec = dict(
-            storage_account_name=dict(required=True, type='str', aliases=['account_name']),
+            storage_account_name=dict(required=True, type='str', aliases=['account_name', 'storage_account']),
             blob=dict(type='str', aliases=['blob_name']),
+            blob_type=dict(type='str', default='block', choices=['block', 'page']),
             container=dict(required=True, type='str', aliases=['container_name']),
-            dest=dict(type='str'),
+            dest=dict(type='path'),
             force=dict(type='bool', default=False),
-            resource_group=dict(required=True, type='str'),
+            resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
             src=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             public_access=dict(type='str', choices=['container', 'blob']),
@@ -244,6 +244,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.storage_account_name = None
         self.blob = None
         self.blob_obj = None
+        self.blob_type = None
         self.container = None
         self.container_obj = None
         self.dest = None
@@ -267,14 +268,14 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
 
         # add file path validation
 
-        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name)
+        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name, self.blob_type)
         self.container_obj = self.get_container()
 
         if self.blob is not None:
@@ -295,7 +296,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                 if self.src and self.src_is_valid():
                     if self.blob_obj and not self.force:
                         self.log("Cannot upload to {0}. Blob with that name already exists. "
-                            "Use the force option".format(self.blob))
+                                 "Use the force option".format(self.blob))
                     else:
                         self.upload_blob()
                 elif self.dest and self.dest_is_valid():
@@ -328,7 +329,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         return self.results
 
     def get_container(self):
-        result  = dict()
+        result = {}
         container = None
         if self.container:
             try:
@@ -364,7 +365,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                     content_language=blob.properties.content_settings.content_language,
                     content_disposition=blob.properties.content_settings.content_disposition,
                     cache_control=blob.properties.content_settings.cache_control,
-                    content_md5 =blob.properties.content_settings.content_md5
+                    content_md5=blob.properties.content_settings.content_md5
                 )
             )
         return result
@@ -442,8 +443,6 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
     def dest_is_valid(self):
         if not self.check_mode:
-            self.dest = os.path.expanduser(self.dest)
-            self.dest = os.path.expandvars(self.dest)
             if not os.path.basename(self.dest):
                 # dest is a directory
                 if os.path.isdir(self.dest):

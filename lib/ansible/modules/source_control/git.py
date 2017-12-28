@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
@@ -42,10 +32,8 @@ options:
     dest:
         required: true
         description:
-            - Absolute path of where the repository should be checked out to.
-              This parameter is required, unless C(clone) is set to C(no)
-              This change was made in version 1.8.3. Prior to this version,
-              the C(dest) parameter was always required.
+            - The path of where the repository should be checked out. This
+              parameter is required, unless C(clone) is set to C(no).
     version:
         required: false
         default: "HEAD"
@@ -60,9 +48,8 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.5"
         description:
-            - if C(yes), adds the hostkey for the repo url if not already
-              added. If ssh_opts contains "-o StrictHostKeyChecking=no",
-              this parameter is ignored.
+            - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
+              present as an ssh options.
     ssh_opts:
         required: false
         default: None
@@ -131,6 +118,8 @@ options:
         version_added: "1.2"
         description:
             - If C(no), do not retrieve new revisions from the origin repository
+            - Operations like archive will work on the existing (old) repository and might
+              not respond to changes to the options version or remote.
     executable:
         required: false
         default: null
@@ -184,7 +173,7 @@ options:
             - if C(yes), when cloning or checking out a C(version) verify the
               signature of a GPG signed commit. This requires C(git) version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
-              be trusted in the GPG trustdb.
+              be present in the GPG keyring.
 
     archive:
         required: false
@@ -248,7 +237,7 @@ EXAMPLES = '''
 
 RETURN = '''
 after:
-    description: last commit revision of the repository retrived during the update
+    description: last commit revision of the repository retrieved during the update
     returned: success
     type: string
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
@@ -280,8 +269,6 @@ import tempfile
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.known_hosts import add_git_host_key
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
 
@@ -367,6 +354,9 @@ if [ -z "$GIT_SSH_OPTS" ]; then
 else
     BASEOPTS=$GIT_SSH_OPTS
 fi
+
+# Let ssh fail rather than prompt
+BASEOPTS="$BASEOPTS -o BatchMode=yes"
 
 if [ -z "$GIT_KEY" ]; then
     ssh $BASEOPTS "$@"
@@ -467,9 +457,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend(['--reference', str(reference)])
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
-    if bare:
-        if remote != 'origin':
-            module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+    if bare and remote != 'origin':
+        module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
     if refspec:
         cmd = [git_path, 'fetch']
@@ -589,15 +578,17 @@ def get_branches(git_path, module, dest):
     return branches
 
 
-def get_tags(git_path, module, dest):
+def get_annotated_tags(git_path, module, dest):
     tags = []
-    cmd = '%s tag' % (git_path,)
+    cmd = [git_path, 'for-each-ref', 'refs/tags/', '--format', '%(objecttype):%(refname:short)']
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in to_native(out).split('\n'):
         if line.strip():
-            tags.append(line.strip())
+            tagtype, tagname = line.strip().split(':')
+            if tagtype == 'tag':
+                tags.append(tagname)
     return tags
 
 
@@ -777,15 +768,6 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             if not os.path.exists(os.path.join(dest, path, '.git')):
                 changed = True
 
-        # add the submodule repo's hostkey
-        if line.strip().startswith('url'):
-            repo = line.split('=', 1)[1].strip()
-            if module.params['ssh_opts'] is not None:
-                if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-                    add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-            else:
-                add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-
     # Check for updates to existing modules
     if not changed:
         # Fetch updates
@@ -895,7 +877,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
 
 
 def verify_commit_sign(git_path, module, dest, version):
-    if version in get_tags(git_path, module, dest):
+    if version in get_annotated_tags(git_path, module, dest):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
@@ -962,20 +944,19 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
             result.update(changed=False)
             # Cleanup before exiting
             try:
-                shutil.remove(tempdir)
+                shutil.rmtree(tempdir)
             except OSError:
                 pass
         else:
             try:
                 shutil.move(new_archive, archive)
-                shutil.remove(tempdir)
+                shutil.rmtree(tempdir)
                 result.update(changed=True)
-            except OSError:
-                exception = get_exception()
+            except OSError as e:
                 module.fail_json(msg="Failed to move %s to %s" %
                                      (new_archive, archive),
                                  details="Error occured while moving : %s"
-                                         % exception)
+                                         % to_native(e))
     else:
         # Perform archive from local directory
         git_archive(git_path, module, dest, archive, archive_fmt, version)
@@ -1031,6 +1012,13 @@ def main():
 
     result = dict(changed=False, warnings=list())
 
+    if module.params['accept_hostkey']:
+        if ssh_opts is not None:
+            if "-o StrictHostKeyChecking=no" not in ssh_opts:
+                ssh_opts += " -o StrictHostKeyChecking=no"
+        else:
+            ssh_opts = "-o StrictHostKeyChecking=no"
+
     # evaluate and set the umask before doing anything else
     if umask is not None:
         if not isinstance(umask, string_types):
@@ -1064,18 +1052,10 @@ def main():
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
-    ssh_wrapper = None
-    if key_file or ssh_opts:
-        ssh_wrapper = write_ssh_wrapper()
-        set_git_ssh(ssh_wrapper, key_file, ssh_opts)
-        module.add_cleanup_file(path=ssh_wrapper)
+    ssh_wrapper = write_ssh_wrapper()
+    set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+    module.add_cleanup_file(path=ssh_wrapper)
 
-    # add the git repo's hostkey
-    if module.params['ssh_opts'] is not None:
-        if "-o StrictHostKeyChecking=no" not in module.params['ssh_opts']:
-            add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-    else:
-        add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
@@ -1088,7 +1068,6 @@ def main():
     result.update(before=None)
 
     local_mods = False
-    need_fetch = True
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
@@ -1104,13 +1083,21 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
-        need_fetch = False
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
         # requested.
         result['before'] = get_version(module, git_path, dest)
         result.update(after=result['before'])
+        if archive:
+            # Git archive is not supported by all git servers, so
+            # we will first clone and perform git archive from local directory
+            if module.check_mode:
+                result.update(changed=True)
+                module.exit_json(**result)
+
+            create_archive(git_path, module, dest, archive, version, repo, result)
+
         module.exit_json(**result)
     else:
         # else do a pull
@@ -1184,14 +1171,6 @@ def main():
             module.exit_json(**result)
 
         create_archive(git_path, module, dest, archive, version, repo, result)
-
-    # cleanup the wrapper script
-    if ssh_wrapper:
-        try:
-            os.remove(ssh_wrapper)
-        except OSError:
-            # No need to fail if the file already doesn't exist
-            pass
 
     module.exit_json(**result)
 

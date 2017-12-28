@@ -121,40 +121,49 @@ def merge_hash(a, b):
 
 def load_extra_vars(loader, options):
     extra_vars = {}
-    for extra_vars_opt in options.extra_vars:
-        data = None
-        extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
-        if extra_vars_opt.startswith(u"@"):
-            # Argument is a YAML file (JSON is a subset of YAML)
-            data = loader.load_from_file(extra_vars_opt[1:])
-        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
-            # Arguments as YAML
-            data = loader.load(extra_vars_opt)
-        else:
-            # Arguments as Key-value
-            data = parse_kv(extra_vars_opt)
+    if hasattr(options, 'extra_vars'):
+        for extra_vars_opt in options.extra_vars:
+            data = None
+            extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
+            if extra_vars_opt.startswith(u"@"):
+                # Argument is a YAML file (JSON is a subset of YAML)
+                data = loader.load_from_file(extra_vars_opt[1:])
+            elif extra_vars_opt and extra_vars_opt[0] in u'[{':
+                # Arguments as YAML
+                data = loader.load(extra_vars_opt)
+            else:
+                # Arguments as Key-value
+                data = parse_kv(extra_vars_opt)
 
-        if isinstance(data, MutableMapping):
-            extra_vars = combine_vars(extra_vars, data)
-        else:
-            raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+            if isinstance(data, MutableMapping):
+                extra_vars = combine_vars(extra_vars, data)
+            else:
+                raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
 
     return extra_vars
 
 
 def load_options_vars(options, version):
-    options_vars = {}
-    # For now only return check mode, but we can easily return more
-    # options if we need variables for them
-    options_vars['ansible_check_mode'] = options.check
-    options_vars['ansible_version'] = version
+
+    options_vars = {'ansible_version': version}
+    aliases = {'check': 'check_mode',
+               'diff': 'diff_mode',
+               'inventory': 'inventory_sources',
+               'subset': 'limit',
+               'tags': 'run_tags'}
+
+    for attr in ('check', 'diff', 'forks', 'inventory', 'skip_tags', 'subset', 'tags'):
+        opt = getattr(options, attr, None)
+        if opt is not None:
+            options_vars['ansible_%s' % aliases.get(attr, attr)] = opt
+
     return options_vars
 
 
 def isidentifier(ident):
     """
     Determines, if string is valid Python identifier using the ast module.
-    Orignally posted at: http://stackoverflow.com/a/29586366
+    Originally posted at: http://stackoverflow.com/a/29586366
     """
 
     if not isinstance(ident, string_types):

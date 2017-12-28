@@ -25,9 +25,9 @@ import os.path
 import re
 import tempfile
 
-from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
@@ -87,21 +87,21 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
-        src        = self._task.args.get('src', None)
-        dest       = self._task.args.get('dest', None)
-        delimiter  = self._task.args.get('delimiter', None)
+        src = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
+        delimiter = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
-        regexp     = self._task.args.get('regexp', None)
-        follow     = self._task.args.get('follow', False)
+        regexp = self._task.args.get('regexp', None)
+        follow = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
-        decrypt    = self._task.args.get('decrypt', True)
+        decrypt = self._task.args.get('decrypt', True)
 
         if src is None or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
             return result
 
-        if boolean(remote_src):
+        if boolean(remote_src, strict=False):
             result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
             return result
         else:
@@ -159,7 +159,7 @@ class ActionModule(ActionBase):
             # fix file permissions when the copy is done as a different user
             self._fixup_perms2((tmp, remote_path))
 
-            new_module_args.update( dict( src=xfered,))
+            new_module_args.update(dict(src=xfered,))
 
             res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False)
             if diff:

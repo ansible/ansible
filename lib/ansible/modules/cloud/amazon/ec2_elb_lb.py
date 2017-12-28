@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'curated'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -394,6 +386,10 @@ EXAMPLES = """
     tags: {}
 """
 
+import random
+import time
+import traceback
+
 try:
     import boto
     import boto.ec2.elb
@@ -405,13 +401,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-import time
-import traceback
-import random
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
-from ansible.module_utils.ec2 import get_aws_connection_info
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError, get_aws_connection_info
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 def _throttleable_operation(max_retries):
@@ -432,6 +425,7 @@ def _throttleable_operation(max_retries):
         return _do_op
     return _operation_wrapper
 
+
 def _get_vpc_connection(module, region, aws_connect_params):
     try:
         return connect_to_aws(boto.vpc, region, **aws_connect_params)
@@ -440,6 +434,7 @@ def _get_vpc_connection(module, region, aws_connect_params):
 
 
 _THROTTLING_RETRIES = 5
+
 
 class ElbManager(object):
     """Handles ELB creation and destruction"""
@@ -586,10 +581,10 @@ class ElbManager(object):
 
             # status of instances behind the ELB
             if info['instances']:
-                info['instance_health'] = [ dict(
-                    instance_id = instance_state.instance_id,
-                    reason_code = instance_state.reason_code,
-                    state = instance_state.state
+                info['instance_health'] = [dict(
+                    instance_id=instance_state.instance_id,
+                    reason_code=instance_state.reason_code,
+                    state=instance_state.state
                 ) for instance_state in self.elb_conn.describe_instance_health(self.name)]
             else:
                 info['instance_health'] = []
@@ -647,13 +642,13 @@ class ElbManager(object):
     @_throttleable_operation(_THROTTLING_RETRIES)
     def _wait_for_elb_removed(self):
         polling_increment_secs = 15
-        max_retries = (self.wait_timeout / polling_increment_secs)
+        max_retries = (self.wait_timeout // polling_increment_secs)
         status_achieved = False
 
         for x in range(0, max_retries):
             try:
                 self.elb_conn.get_all_lb_attributes(self.name)
-            except (boto.exception.BotoServerError, StandardError) as e:
+            except (boto.exception.BotoServerError, Exception) as e:
                 if "LoadBalancerNotFound" in e.code:
                     status_achieved = True
                     break
@@ -665,12 +660,12 @@ class ElbManager(object):
     @_throttleable_operation(_THROTTLING_RETRIES)
     def _wait_for_elb_interface_removed(self):
         polling_increment_secs = 15
-        max_retries = (self.wait_timeout / polling_increment_secs)
+        max_retries = (self.wait_timeout // polling_increment_secs)
         status_achieved = False
 
         elb_interfaces = self.ec2_conn.get_all_network_interfaces(
             filters={'attachment.instance-owner-id': 'amazon-elb',
-                        'description': 'ELB {0}'.format(self.name) })
+                     'description': 'ELB {0}'.format(self.name)})
 
         for x in range(0, max_retries):
             for interface in elb_interfaces:
@@ -681,12 +676,12 @@ class ElbManager(object):
                         break
                     else:
                         time.sleep(polling_increment_secs)
-                except (boto.exception.BotoServerError, StandardError) as e:
+                except (boto.exception.BotoServerError, Exception) as e:
                     if 'InvalidNetworkInterfaceID' in e.code:
                         status_achieved = True
                         break
                     else:
-                        self.module.fail_json(msg=str(e))
+                        self.module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         return status_achieved
 
@@ -709,8 +704,8 @@ class ElbManager(object):
         try:
             return connect_to_aws(boto.ec2, self.region,
                                   **self.aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
-            self.module.fail_json(msg=str(e))
+        except (boto.exception.NoAuthHandlerFound, Exception) as e:
+            self.module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     @_throttleable_operation(_THROTTLING_RETRIES)
     def _delete_elb(self):
@@ -895,13 +890,13 @@ class ElbManager(object):
         if self.zones:
             if self.purge_zones:
                 zones_to_disable = list(set(self.elb.availability_zones) -
-                                    set(self.zones))
+                                        set(self.zones))
                 zones_to_enable = list(set(self.zones) -
-                                    set(self.elb.availability_zones))
+                                       set(self.elb.availability_zones))
             else:
                 zones_to_disable = None
                 zones_to_enable = list(set(self.zones) -
-                                    set(self.elb.availability_zones))
+                                       set(self.elb.availability_zones))
             if zones_to_enable:
                 self._enable_zones(zones_to_enable)
             # N.B. This must come second, in case it would have removed all zones
@@ -969,7 +964,7 @@ class ElbManager(object):
                 "enabled": True,
                 "s3_bucket_name": self.access_logs['s3_location'],
                 "s3_bucket_prefix": self.access_logs.get('s3_prefix', ''),
-                "emit_interval": self.access_logs.get('interval',  60),
+                "emit_interval": self.access_logs.get('interval', 60),
             }
 
             update_access_logs_config = False
@@ -1009,10 +1004,10 @@ class ElbManager(object):
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
 
     def _policy_name(self, policy_type):
-        return __file__.split('/')[-1].split('.')[0].replace('_', '-')  + '-' + policy_type
+        return __file__.split('/')[-1].split('.')[0].replace('_', '-') + '-' + policy_type
 
     def _create_policy(self, policy_param, policy_meth, policy):
-        getattr(self.elb_conn, policy_meth )(policy_param, self.elb.name, policy)
+        getattr(self.elb_conn, policy_meth)(policy_param, self.elb.name, policy)
 
     def _delete_policy(self, elb_name, policy):
         self.elb_conn.delete_lb_policy(elb_name, policy)
@@ -1021,7 +1016,9 @@ class ElbManager(object):
         self._delete_policy(self.elb.name, policy)
         self._create_policy(policy_param, policy_meth, policy)
 
-    def _set_listener_policy(self, listeners_dict, policy=[]):
+    def _set_listener_policy(self, listeners_dict, policy=None):
+        policy = [] if policy is None else policy
+
         for listener_port in listeners_dict:
             if listeners_dict[listener_port].startswith('HTTP'):
                 self.elb_conn.set_lb_policies_of_listener(self.elb.name, listener_port, policy)
@@ -1061,7 +1058,10 @@ class ElbManager(object):
                     if 'expiration' not in self.stickiness:
                         self.module.fail_json(msg='expiration must be set when type is loadbalancer')
 
-                    expiration = self.stickiness['expiration'] if self.stickiness['expiration'] is not 0 else None
+                    try:
+                        expiration = self.stickiness['expiration'] if int(self.stickiness['expiration']) else None
+                    except ValueError:
+                        self.module.fail_json(msg='expiration must be set to an integer')
 
                     policy_attrs = {
                         'type': policy_type,
@@ -1225,7 +1225,7 @@ class ElbManager(object):
                 params['Tags.member.%d.Value' % (i + 1)] = dictact[key]
 
             self.elb_conn.make_request('AddTags', params)
-            self.changed=True
+            self.changed = True
 
         # Remove extra tags
         dictact = dict(set(tagdict.items()) - set(self.tags.items()))
@@ -1234,7 +1234,7 @@ class ElbManager(object):
                 params['Tags.member.%d.Key' % (i + 1)] = key
 
             self.elb_conn.make_request('RemoveTags', params)
-            self.changed=True
+            self.changed = True
 
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
@@ -1277,7 +1277,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive = [['security_group_ids', 'security_group_names']]
+        mutually_exclusive=[['security_group_ids', 'security_group_names']]
     )
 
     if not HAS_BOTO:
@@ -1323,7 +1323,7 @@ def main():
         security_group_ids = []
         try:
             ec2 = connect_to_aws(boto.ec2, region, **aws_connect_params)
-            if subnets: # We have at least one subnet, ergo this is a VPC
+            if subnets:  # We have at least one subnet, ergo this is a VPC
                 vpc_conn = _get_vpc_connection(module=module, region=region, aws_connect_params=aws_connect_params)
                 vpc_id = vpc_conn.get_all_subnets([subnets[0]])[0].vpc_id
                 filters = {'vpc_id': vpc_id}
@@ -1332,13 +1332,13 @@ def main():
             grp_details = ec2.get_all_security_groups(filters=filters)
 
             for group_name in security_group_names:
-                if isinstance(group_name, basestring):
+                if isinstance(group_name, string_types):
                     group_name = [group_name]
 
-                group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
+                group_id = [str(grp.id) for grp in grp_details if str(grp.name) in group_name]
                 security_group_ids.extend(group_id)
         except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg = str(e))
+            module.fail_json(msg=str(e))
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,

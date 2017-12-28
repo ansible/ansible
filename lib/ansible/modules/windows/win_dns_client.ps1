@@ -135,7 +135,13 @@ Function Get-DnsClientMatch {
 
     $current_dns_v4 = ($current_dns_all | Where-Object AddressFamily -eq 2 <# IPv4 #>).ServerAddresses
 
-    $v4_match = @(Compare-Object $current_dns_v4 $ipv4_addresses).Count -eq 0
+    If ($current_dns_v4 -eq $null) {
+        $v4_match = $False
+    }
+
+    Else {
+        $v4_match = @(Compare-Object $current_dns_v4 $ipv4_addresses).Count -eq 0
+    }
 
     # TODO: implement IPv6
 

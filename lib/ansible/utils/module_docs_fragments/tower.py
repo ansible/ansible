@@ -19,7 +19,7 @@
 
 class ModuleDocFragment(object):
 
-    # Ansible Tower documention fragment
+    # Ansible Tower documentation fragment
     DOCUMENTATION = '''
 options:
     tower_host:
@@ -51,7 +51,6 @@ options:
 
 
 requirements:
-  - "python >= 2.6"
   - "ansible-tower-cli >= 3.0.2"
 
 notes:

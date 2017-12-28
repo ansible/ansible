@@ -31,7 +31,7 @@ The following  checklist items are important guidelines for people who want to c
 
     ANSIBLE_METADATA = {'status': ['preview'],
                         'supported_by': 'community',
-                        'metadata_version': '1.0'}
+                        'metadata_version': '1.1'}
 
 The complete module metadata specification is here: `Ansible metadata block <https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block>`_
 
@@ -55,7 +55,7 @@ The complete module metadata specification is here: `Ansible metadata block <htt
     * Examples--include them whenever possible and make sure they are reproducible.
     * Document the return structure of the module. Refer to :ref:`common_return_values` and :ref:`module_documenting` for additional information.
 * Predictable user interface: This is a particularly important section as it is also an area where we need significant improvements.
-    * Name consistency across modules (we’ve gotten better at this, but we still have many deviations).
+    * Name consistency across modules (we've gotten better at this, but we still have many deviations).
     * Declarative operation (not CRUD)--this makes it easy for a user not to care what the existing state is, just about the final state. ``started/stopped``, ``present/absent``--don't overload options too much. It is preferable to add a new, simple option than to add choices/states that don't fit with existing ones.
     * Keep options small, having them take large data structures might save us a few tasks, but adds a complex requirement that we cannot easily validate before passing on to the module.
     * Allow an "expert mode". This may sound like the absolute opposite of the previous one, but it is always best to let expert users deal with complex data. This requires different modules in some cases, so that you end up having one (1) expert module and several 'piecemeal' ones (ec2_vpc_net?). The reason for this is not, as many users express, because it allows a single task and keeps plays small (which just moves the data complexity into vars files, leaving you with a slightly different structure in another YAML file). It does, however, allow for a more 'atomic' operation against the underlying APIs and services.
@@ -108,7 +108,7 @@ The complete module metadata specification is here: `Ansible metadata block <htt
         main()
 
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
-* Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
+* Being `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant is a requirement. See :doc:`testing_pep8` for more information.
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role
@@ -136,78 +136,9 @@ The complete module metadata specification is here: `Ansible metadata block <htt
 
 Windows modules checklist
 =========================
-* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of Windows
-* modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
-* look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
-* Ansible uses strictmode version 2.0 so be sure to test with that enabled
 
-All powershell modules must start:
+For a checklist and details on how to write Windows modules please see :doc:`developing_modules_general_windows`
 
-
-.. code-block:: powershell
-
-    #!powershell
-
-    <GPL header>
-
-    # WANT_JSON
-    # POWERSHELL_COMMON
-
-To parse all arguments into a variable modules generally use:
-
-.. code-block:: powershell
-
-    $params = Parse-Args $args
-
-Arguments
----------
-
-* Try and use state present and state absent like other modules
-* You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function.
-* Required arguments:
-
-.. code-block:: powershell
-
-        $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
-
-Required arguments with name validation:
-
-.. code-block:: powershell
-
-        $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
-
-Optional arguments with name validation
----------------------------------------
-
-.. code-block:: powershell
-
-        $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
-
-* If the "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message
-  using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
-* Look at existing modules for more examples of argument checking.
-
-Results
--------
-* The result object should always contain an attribute called changed set to either $true or $false
-* Create your result object like this
-
-.. code-block:: powershell
-
-        $result = New-Object psobject @{
-        changed = $false
-        other_result_attribute = $some_value
-        };
-
-        If all is well, exit with a
-        Exit-Json $result
-
-* Ensure anything you return, including errors can be converted to json.
-* Be aware that because exception messages could contain almost anything.
-* ConvertTo-Json will fail if it encounters a trailing \ in a string.
-* If all is not well use Fail-Json to exit.
-
-* Have you tested for powershell 3.0 and 4.0 compliance?
 
 Deprecating and making module aliases
 ======================================

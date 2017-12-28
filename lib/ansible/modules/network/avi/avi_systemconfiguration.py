@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -43,10 +43,29 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     admin_auth_configuration:
         description:
             - Adminauthconfiguration settings for systemconfiguration.
+    default_license_tier:
+        description:
+            - Specifies the default license tier which would be used by new clouds.
+            - Enum options - ENTERPRISE_16, ENTERPRISE_18.
+            - Field introduced in 17.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as ENTERPRISE_18.
+        version_added: "2.5"
     dns_configuration:
         description:
             - Dnsconfiguration settings for systemconfiguration.
@@ -94,9 +113,6 @@ options:
             - Allowed hmac list for ssh to the management interface on the controller and service engines.
             - If this is not specified, all the default hmacs are allowed.
             - Ssh -q mac provides the list of default hmacs supported.
-    tech_support_uploader_configuration:
-        description:
-            - Techsupportuploaderconfiguration settings for systemconfiguration.
     url:
         description:
             - Avi controller URL of the object.
@@ -126,7 +142,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -136,7 +152,11 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         admin_auth_configuration=dict(type='dict',),
+        default_license_tier=dict(type='str',),
         dns_configuration=dict(type='dict',),
         dns_virtualservice_refs=dict(type='list',),
         docker_mode=dict(type='bool',),
@@ -150,7 +170,6 @@ def main():
         snmp_configuration=dict(type='dict',),
         ssh_ciphers=dict(type='list',),
         ssh_hmacs=dict(type='list',),
-        tech_support_uploader_configuration=dict(type='dict',),
         url=dict(type='str',),
         uuid=dict(type='str',),
     )
