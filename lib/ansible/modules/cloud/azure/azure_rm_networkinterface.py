@@ -298,10 +298,12 @@ def nic_to_dict(nic):
         etag=nic.etag,
     )
 
+
 def construct_ip_configuration_set(raw):
     configurations = [str(dict(
         private_ip_allocation_method=item.get('private_ip_allocation_method').encode('ascii'),
-        public_ip_address_name=item.get('public_ip_address').get('name').encode('ascii') if item.get('public_ip_address') else item.get('public_ip_address_name'),
+        public_ip_address_name=(item.get('public_ip_address').get('name').encode('ascii')
+                                if item.get('public_ip_address') else item.get('public_ip_address_name')),
         primary=item.get('primary'),
         name=item.get('name').encode('ascii')
     )) for item in raw]
@@ -369,7 +371,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         super(AzureRMNetworkInterface, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                       supports_check_mode=True,
                                                       required_if=required_if)
-    
+
     def exec_module(self, **kwargs):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
@@ -509,7 +511,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 poller = self.network_client.public_ip_addresses.create_or_update(self.resource_group, name, params)
                 pip = self.get_poller_result(poller)
             except CloudError as exc:
-                self.fail("Error creating {0} - {1}".format(public_ip_name, str(exc)))
+                self.fail("Error creating {0} - {1}".format(name, str(exc)))
         return pip
 
     def create_or_update_nic(self, nic):

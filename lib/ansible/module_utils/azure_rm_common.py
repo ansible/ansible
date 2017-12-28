@@ -344,7 +344,7 @@ class AzureRMModuleBase(object):
         :return: None
         '''
         self.module.fail_json(msg=msg, **kwargs)
-    
+
     def deprecate(self, msg, version=None):
         self.module.deprecate(msg, version)
 
