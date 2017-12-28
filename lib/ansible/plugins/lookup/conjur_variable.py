@@ -30,17 +30,13 @@ RETURN = """
 """
 
 import os.path
-import ssl
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 from base64 import b64encode
-from httplib import HTTPSConnection
-from httplib import HTTPConnection
 from netrc import netrc
 from os import environ
 from time import time
 from urllib import quote_plus
-from urlparse import urlparse
 import yaml
 
 import requests
