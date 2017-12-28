@@ -154,11 +154,11 @@ import re
 from time import time
 import boto3
 from botocore.exceptions import ClientError
-#from boto3 import ec2
-#from boto3 import rds
-#from boto3 import elasticache
-#from boto3 import route53
-#from boto3 import sts
+# from boto3 import ec2
+# from boto3 import rds
+# from boto3 import elasticache
+# from boto3 import route53
+# from boto3 import sts
 import six
 
 from ansible.module_utils import ec2 as ec2_utils
@@ -262,9 +262,9 @@ class Ec2Inventory(object):
 
         # Make sure that profile_name is not passed at all if not set
         # as pre 2.24 boto will fall over otherwise
-        #if self.boto_profile:
-        #    if not hasattr(boto.ec2.EC2Connection, 'profile_name'):
-        #        self.fail_with_error("boto version must be >= 2.24 to use profile")
+        # if self.boto_profile:
+        #     if not hasattr(boto.ec2.EC2Connection, 'profile_name'):
+        #         self.fail_with_error("boto version must be >= 2.24 to use profile")
 
         # Cache
         if self.args.refresh_cache:
@@ -281,6 +281,7 @@ class Ec2Inventory(object):
             if self.inventory == self._empty_inventory():
                 data_to_print = self.get_inventory_from_cache()
             else:
+                print self.inventory
                 data_to_print = self.json_format_dict(self.inventory, True)
 
         print(data_to_print)
@@ -539,7 +540,6 @@ class Ec2Inventory(object):
         ''' Do API calls to each region, and save data in cache files '''
 
         self.get_account_id()
-
         if self.route53_enabled:
             self.get_route53_records()
 
@@ -575,7 +575,7 @@ class Ec2Inventory(object):
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:
             connect_args['profile_name'] = self.boto_profile
-            #self.boto_fix_security_token_in_profile(connect_args)
+            # self.boto_fix_security_token_in_profile(connect_args)
 
         if self.iam_role:
             sts_conn = sts.connect_to_region(region, **connect_args)
@@ -584,7 +584,7 @@ class Ec2Inventory(object):
             connect_args['aws_secret_access_key'] = role.credentials.secret_key
             connect_args['security_token'] = role.credentials.session_token
 
-        #conn = module.connect_to_region(region, **connect_args)
+        # conn = module.connect_to_region(region, **connect_args)
         conn = boto3.resource(module)
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
@@ -607,8 +607,7 @@ class Ec2Inventory(object):
                     for filters in self.ec2_instance_filters:
                         reservations.extend(conn.get_all_instances(filters=filters))
             else:
-                reservations = conn.instances.filter(
-                        Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+                reservations = conn.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
 
             # Pull the tags back in a second step
             # AWS are on record as saying that the tags fetched in the first `get_all_instances` request are not
@@ -618,15 +617,15 @@ class Ec2Inventory(object):
             tags_by_instance_id = defaultdict(dict)
 
             for reservation in reservations:
-                #instance_ids.extend([reservation.id])
-                #for tag in reservation.tags:
-                #    tags_by_instance_id[reservation.id][tag['Key']] = tag['Value']
+                # instance_ids.extend([reservation.id])
+                # for tag in reservation.tags:
+                #     tags_by_instance_id[reservation.id][tag['Key']] = tag['Value']
                 self.add_instance(reservation, region)
 
-            #for reservation in reservations:
-            #    for instance in reservation.instances:
-            #        instance.tags = tags_by_instance_id[instance.id]
-            #        self.add_instance(instance, region)
+            # for reservation in reservations:
+            #     for instance in reservation.instances:
+            #         instance.tags = tags_by_instance_id[instance.id]
+            #         self.add_instance(instance, region)
 
         except ClientError as e:
             if e.error_code == 'AuthFailure':
@@ -1167,9 +1166,60 @@ class Ec2Inventory(object):
 
     def get_host_info_dict_from_instance(self, instance):
         instance_vars = {}
-        for key in vars(instance):
-            value = getattr(instance, key)
-            key = self.to_safe('ec2_' + key)
+
+        #for attr in dir(instance):
+        #    print("%s = %s %s" % (attr, getattr(instance, attr), type(getattr(instance, attr))))
+
+        hostvars = [ 'ami_launch_index',
+                     'architecture',
+                     'block_device_mappings',
+                     'client_token',
+                     'ebs_optimized',
+                     'elastic_gpu_associations',
+                     'ena_support',
+                     'hypervisor',
+                     'iam_instance_profile',
+                     'id',
+                     'image_id',
+                     'instance_lifecycle',
+                     'kernel_id',
+                     'key_name',
+                     'launch_time',
+                     'monitoring',
+                     'network_interfaces_attribute',
+                     'placement',
+                     'placement_group',
+                     'platform',
+                     'private_dns_name',
+                     'private_ip_address',
+                     'product_codes',
+                     'public_dns_name',
+                     'public_ip_address',
+                     'ramdisk_id',
+                     'root_device_name',
+                     'root_device_type',
+                     'security_groups',
+                     'source_dest_check',
+                     'spot_instance_request_id',
+                     'sriov_net_support',
+                     'state',
+                     'state_reason',
+                     'state_transition_reason',
+                     'subnet_id',
+                     'tags',
+                     'virtualization_type',
+                     'vpc_id' ]
+
+        for var in hostvars:
+        #for attr in dir(instance):
+
+            #if isinstance(getattr(instance, attr), (str, bool, int)):
+            #if type(getattr(instance, attr)) == 'str':
+
+        #for key in vars(instance):
+            #value = getattr(instance, key)
+            value = getattr(instance, var)
+            key = self.to_safe('ec2_' + var)
 
             # Handle complex types
             # state/previous_state changed to properties in boto in https://github.com/boto/boto/commit/a23c379837f698212252720d2af8dec0325c9518
@@ -1190,10 +1240,12 @@ class Ec2Inventory(object):
             elif key == 'ec2__placement':
                 instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
-                for k, v in value.items():
-                    if self.expand_csv_tags and ',' in v:
-                        v = list(map(lambda x: x.strip(), v.split(',')))
-                    key = self.to_safe('ec2_tag_' + k)
+                for tag in value:
+                    if self.expand_csv_tags and ',' in tag['Value']:
+                        v = list(map(lambda x: x.strip(), tag['Value'].split(',')))
+                    else:
+                        v = tag['Value']
+                    key = self.to_safe('ec2_tag_' + tag['Key'])
                     instance_vars[key] = v
             elif key == 'ec2_groups':
                 group_ids = []
