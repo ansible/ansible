@@ -149,7 +149,7 @@ def main():
         overwrite=dict(type='bool', default=False),
         overwrite_vars=dict(),
         update_on_launch=dict(type='bool', default=False),
-        update_cache_timeout = dict(type="int"),
+        update_cache_timeout=dict(type="int"),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
