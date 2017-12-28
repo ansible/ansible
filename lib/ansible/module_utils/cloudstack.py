@@ -10,7 +10,7 @@ import os
 import sys
 import time
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 
 try:
     from cs import CloudStack, CloudStackException, read_config
@@ -146,7 +146,7 @@ class AnsibleCloudStack:
             value = self.module.params.get(fallback_key)
         return value
 
-    def has_changed(self, want_dict, current_dict, only_keys=None):
+    def has_changed(self, want_dict, current_dict, only_keys=None, skip_diff_for_keys=None):
         result = False
         for key, value in want_dict.items():
 
@@ -160,6 +160,7 @@ class AnsibleCloudStack:
 
             if key in current_dict:
                 if isinstance(value, (int, float, long, complex)):
+
                     # ensure we compare the same type
                     if isinstance(value, int):
                         current_dict[key] = int(current_dict[key])
@@ -171,8 +172,9 @@ class AnsibleCloudStack:
                         current_dict[key] = complex(current_dict[key])
 
                     if value != current_dict[key]:
-                        self.result['diff']['before'][key] = current_dict[key]
-                        self.result['diff']['after'][key] = value
+                        if skip_diff_for_keys and key not in skip_diff_for_keys:
+                            self.result['diff']['before'][key] = current_dict[key]
+                            self.result['diff']['after'][key] = value
                         result = True
                 else:
                     before_value = to_text(current_dict[key])
@@ -180,18 +182,21 @@ class AnsibleCloudStack:
 
                     if self.case_sensitive_keys and key in self.case_sensitive_keys:
                         if before_value != after_value:
-                            self.result['diff']['before'][key] = before_value
-                            self.result['diff']['after'][key] = after_value
+                            if skip_diff_for_keys and key not in skip_diff_for_keys:
+                                self.result['diff']['before'][key] = before_value
+                                self.result['diff']['after'][key] = after_value
                             result = True
 
                     # Test for diff in case insensitive way
                     elif before_value.lower() != after_value.lower():
-                        self.result['diff']['before'][key] = before_value
-                        self.result['diff']['after'][key] = after_value
+                        if skip_diff_for_keys and key not in skip_diff_for_keys:
+                            self.result['diff']['before'][key] = before_value
+                            self.result['diff']['after'][key] = after_value
                         result = True
             else:
-                self.result['diff']['before'][key] = None
-                self.result['diff']['after'][key] = to_text(value)
+                if skip_diff_for_keys and key not in skip_diff_for_keys:
+                    self.result['diff']['before'][key] = None
+                    self.result['diff']['after'][key] = to_text(value)
                 result = True
         return result
 
@@ -212,7 +217,10 @@ class AnsibleCloudStack:
                 self.fail_json(msg="Failed: '%s'" % res['errortext'])
 
         except CloudStackException as e:
-            self.fail_json(msg='CloudStackException: %s' % str(e))
+            self.fail_json(msg='CloudStackException: %s' % to_native(e))
+
+        except Exception as e:
+            self.fail_json(msg=to_native(e))
 
         return res
 
