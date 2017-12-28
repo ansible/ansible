@@ -219,7 +219,7 @@ class AnsibleCloudStackVpnCustomerGateway(AnsibleCloudStack):
         vpn_customer_gateways = self.query_api('listVpnCustomerGateways', **args)
         if vpn_customer_gateways:
             for vgw in vpn_customer_gateways['vpncustomergateway']:
-                if vpn_customer_gateway in [vgw['id'], vgw['name']]:
+                if vpn_customer_gateway.lower() in [vgw['id'], vgw['name'].lower()]:
                     return vgw
 
     def present_vpn_customer_gateway(self):
