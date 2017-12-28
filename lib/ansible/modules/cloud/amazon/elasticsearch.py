@@ -110,7 +110,7 @@ from ansible.module_utils import ec2
 try:
     import botocore.exceptions
 except ImportError:
-    pass # will be detected by ec2.HAS_BOTO3
+    pass  # will be detected by ec2.HAS_BOTO3
 
 
 def _create_elasticsearch_domain(connection, module):
@@ -133,9 +133,9 @@ def _create_elasticsearch_domain(connection, module):
             'EBSEnabled': True,
             'VolumeType': module.params['ebs_volume_type'],
             'VolumeSize': module.params['ebs_volume_size'],
-            },
+        },
         AccessPolicies=module.params['access_policies'],
-        )
+    )
 
     return True
 
@@ -157,7 +157,7 @@ def is_present(connection, name):
     try:
         response = connection.describe_elasticsearch_domain(
             DomainName=name
-            )
+        )
 
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
@@ -186,15 +186,17 @@ def check_existing_config(module, domain):
             desired_config['dedicated_master_enabled']),
         (('EBSOptions', 'VolumeType'), desired_config['ebs_volume_type']),
         (('EBSOptions', 'VolumeSize'), desired_config['ebs_volume_size']),
-        ]
+    ]
 
     if desired_config['dedicated_master_enabled']:
-        config_to_check.extend([
-            (('ElasticsearchClusterConfig', 'DedicatedMasterType'),
-                desired_config['dedicated_master_type']),
-            (('ElasticsearchClusterConfig', 'DedicatedMasterCount'),
-                desired_config['dedicated_master_count']),
-            ])
+        config_to_check.extend(
+            [
+                (('ElasticsearchClusterConfig', 'DedicatedMasterType'),
+                    desired_config['dedicated_master_type']),
+                (('ElasticsearchClusterConfig', 'DedicatedMasterCount'),
+                    desired_config['dedicated_master_count']),
+            ]
+        )
 
     try:
         for key_path, desired_value in config_to_check:
@@ -237,32 +239,36 @@ def main():
             domain={'required': True},
             version={'required': False, 'default': '5.1'},
             instance_count={'required': False, 'type': 'int', 'default': 1},
-            instance_type=
-                {'required': False, 'default': 't2.medium.elasticsearch'},
-            zone_awareness=
-                {'required': False, 'type': 'bool', 'default': True},
-            dedicated_master_enabled=
-                {'required': False, 'type': 'bool', 'default': False,
-                    'choices': [True, False]},
+            instance_type={
+                'required': False, 'default': 't2.medium.elasticsearch'
+            },
+            zone_awareness={
+                'required': False, 'type': 'bool', 'default': True
+            },
+            dedicated_master_enabled={
+                'required': False, 'type': 'bool', 'default': False,
+                'choices': [True, False]
+            },
             dedicated_master_type={'required': False},
             dedicated_master_count={'required': False, 'type': 'int'},
-            ebs_volume_type=
-                {'required': False, 'default': 'gp2',
-                    'choices': ['standard', 'gp2', 'io1']},
+            ebs_volume_type={
+                'required': False, 'default': 'gp2',
+                'choices': ['standard', 'gp2', 'io1']
+            },
             ebs_volume_size={'required': True, 'type': 'int'},
             access_policies={'required': True},
             wait={'required': False, 'type': 'bool'},
-            )
         )
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        )
+    )
 
     if not ec2.HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
-    region, _, aws_connect_kwargs = ec2.get_aws_connection_info(module)
+    region, ec2_url, aws_connect_kwargs = ec2.get_aws_connection_info(module)
 
     if region:
         try:
@@ -292,7 +298,8 @@ def main():
 
     module.exit_json(
         changed=changed,
-        domain=domain)
+        domain=domain
+    )
 
 
 if __name__ == '__main__':
