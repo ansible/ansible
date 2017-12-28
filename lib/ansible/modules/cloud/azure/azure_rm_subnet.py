@@ -238,8 +238,8 @@ class AzureRMSubnet(AzureRMModuleBase):
                     )
                     if nsg:
                         subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
-                                                                             location=nsg.location,
-                                                                             resource_guid=nsg.resource_guid)
+                                                                                                 location=nsg.location,
+                                                                                                 resource_guid=nsg.resource_guid)
 
                 else:
                     # update subnet
@@ -250,8 +250,8 @@ class AzureRMSubnet(AzureRMModuleBase):
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
                         subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
-                                                                             location=nsg.location,
-                                                                             resource_guid=nsg.resource_guid)
+                                                                                                 location=nsg.location,
+                                                                                                 resource_guid=nsg.resource_guid)
 
                 self.results['state'] = self.create_or_update_subnet(subnet)
             elif self.state == 'absent':

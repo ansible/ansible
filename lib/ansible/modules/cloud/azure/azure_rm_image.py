@@ -236,10 +236,10 @@ class AzureRMImage(AzureRMModuleBase):
         snapshot_resource = self.compute_models.SubResource(snapshot) if snapshot else None
         managed_disk = self.compute_models.SubResource(disk) if disk else None
         return self.compute_models.ImageOSDisk(os_type=self.os_type,
-                           os_state=self.compute_models.OperatingSystemStateTypes.generalized,
-                           snapshot=snapshot_resource,
-                           managed_disk=managed_disk,
-                           blob_uri=blob_uri)
+                                               os_state=self.compute_models.OperatingSystemStateTypes.generalized,
+                                               snapshot=snapshot_resource,
+                                               managed_disk=managed_disk,
+                                               blob_uri=blob_uri)
 
     def create_data_disk(self, lun, source):
         blob_uri, disk, snapshot = self.resolve_storage_source(source)
@@ -247,9 +247,9 @@ class AzureRMImage(AzureRMModuleBase):
             snapshot_resource = self.compute_models.SubResource(snapshot) if snapshot else None
             managed_disk = self.compute_models.SubResource(disk) if disk else None
             return self.compute_models.ImageDataDisk(lun,
-                                 blob_uri=blob_uri,
-                                 snapshot=snapshot_resource,
-                                 managed_disk=managed_disk)
+                                                     blob_uri=blob_uri,
+                                                     snapshot=snapshot_resource,
+                                                     managed_disk=managed_disk)
 
     def create_data_disks(self):
         return list(filter(None, [self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources)]))
