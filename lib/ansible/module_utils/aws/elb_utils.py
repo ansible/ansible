@@ -1,6 +1,15 @@
+#!/usr/bin/env python
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Ansible imports
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
-from botocore.exceptions import ClientError
+# Non-ansible imports
+try:
+    from botocore.exceptions import ClientError
+except ImportError:
+    pass
 import traceback
 
 
