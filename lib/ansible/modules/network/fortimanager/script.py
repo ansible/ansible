@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.0'}
@@ -236,8 +239,7 @@ class FortiManager(object):
         response = self.make_request(body).json()
         return response
 
-
-    def set_script_schedule(self, script_name,  adom):
+    def set_script_schedule(self, script_name, adom):
         """
         This method will set a script execution schedule.
         """
@@ -268,7 +270,7 @@ class FortiManager(object):
         #data['option'] = 'syntax'
         '''
 
-    def execute_script(self, script_name,  scope, package, adom, vdom):
+    def execute_script(self, script_name, scope, package, adom, vdom):
         """
         This method will execute a specific script.
         """
@@ -331,6 +333,7 @@ class FortiManager(object):
 
         return response
 
+
 class FMdevice(FortiManager):
     """
     This is the class used for interacting with the "device" API Endpoint. In addition to device specific methods, the
@@ -341,7 +344,9 @@ class FMdevice(FortiManager):
                  **kwargs):
         super(FMdevice, self).__init__(host, user, passw, use_ssl, verify, adom, package, api_endpoint, **kwargs)
 
-##This dictionary maintains the input parameters for ansible playbooks
+# This dictionary maintains the input parameters for ansible playbooks
+
+
 def main():
     argument_spec = dict(
         adom=dict(required=False, type="str"),
@@ -433,20 +438,20 @@ def main():
             module.fail_json(msg="Unable to login", fortimanager_response=session_login.json())
     else:
         session.session = session_id
-    #if state is present the add the script, if its execute then run the script
+    # if state is present the add the script, if its execute then run the script
     if state == "present":
         # add script
-        results = session.set_script( script_name, script_type, script_content, script_description, script_target, adom)
+        results = session.set_script(script_name, script_type, script_content, script_description, script_target, adom)
         if not results["result"][0]["status"]["code"] == 0:
-            module.fail_json(msg="Setting Script Failed",**results)
+            module.fail_json(msg="Setting Script Failed", **results)
     elif state == "execute":
         # run script
-        results = session.execute_script(script_name,  script_scope, script_package, adom, vdom)
+        results = session.execute_script(script_name, script_scope, script_package, adom, vdom)
         if not results["result"][0]["status"]["code"] == 0:
-            module.fail_json(msg="Script Execution Failed",**results)
+            module.fail_json(msg="Script Execution Failed", **results)
 
     elif state == "delete":
-        results = session.delete_script (script_name, adom)
+        results = session.delete_script(script_name, adom)
 
     # logout, build in check for future logging capabilities
     if not session_id:
