@@ -220,6 +220,7 @@ def map_params_to_obj(module):
                 if item.get(key) is None:
                     item[key] = module.params[key]
 
+            item['name'] = item['name'].lower()
             validate_param_values(module, item, item)
             obj.append(item.copy())
     else:
