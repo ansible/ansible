@@ -123,6 +123,7 @@ cat << EOF > /tmp/args.json
 EOF
 
 # Fire up a mongodb replset
+pkill mongod
 rm -Rf mongotest/
 mkdir -p ./mongotest/db1/ ./mongotest/db2 ./mongotest/db3
 mongod --replSet rs0 --port 27017 --bind_ip localhost --dbpath ./mongotest/db1/ --logpath ./mongotest/db1/db1.log --smallfiles --oplogSize 128 --fork
@@ -131,7 +132,7 @@ mongod --replSet rs0 --port 27019 --bind_ip localhost --dbpath ./mongotest/db3/ 
 
 python ./lib/ansible/modules/database/mongodb/mongodb_replicaset.py /tmp/args.json
 
-2. Basic test, no auth with different replset name
+2. Basic test with different replset name
 cat << EOF > /tmp/args.json
 {
     "ANSIBLE_MODULE_ARGS": {
@@ -270,7 +271,7 @@ def replicaset_find(client, replica_set):
     Returns:
         dict: when user exists, False otherwise.
     """
-    for mongo_user in client["local"].system.replset.find({ "_id": replica_set }):
+    for rs in client["local"].system.replset.find({ "_id": replica_set }):
                 return replica_set
     return False
 
@@ -280,7 +281,7 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     members_dict_list = []
     index = 0
     settings = {
-        "chainingAllowed": chainingAllowed,
+        "chainingAllowed": bool(chainingAllowed),
     }
     if protocolVersion == 0:
         settings['heartbeatTimeoutSecs'] = heartbeatTimeoutSecs
@@ -342,12 +343,12 @@ def main():
             login_database=dict(default=None),
             replica_set=dict(default=None),
             members=dict(required=False, default="{{ play_hosts }}"),
-            arbiter_at_index=dict(required=False, default=None),
-            validate=dict(required=False, default=True),
+            arbiter_at_index=dict(required=False, default=None, type='int'),
+            validate=dict(required=False, default=True, type='bool'),
             ssl=dict(default=False, type='bool'),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
             protocolVersion=dict(required=False, default=1, type='int', choices=[ 0, 1 ]),
-            chainingAllowed=dict(required=False, default=True),
+            chainingAllowed=dict(required=False, default=True, type='bool'),
             heartbeatTimeoutSecs=dict(required=False, default=10, type='int'),
             electionTimeoutMillis=dict(required=False, default=10000, type='int')
         ),
@@ -363,7 +364,7 @@ def main():
 
     replica_set = module.params['replica_set']
     members = module.params['members']
-    arbiter_at_index = int(module.params['arbiter_at_index'])
+    arbiter_at_index = module.params['arbiter_at_index']
     validate = module.params['validate']
     ssl = module.params['ssl']
     protocolVersion = int(module.params['protocolVersion'])
@@ -380,7 +381,7 @@ def main():
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
             raise Exception # TODO Error properly here
-        if len(members) - 1 > arbiter_at_index:
+        if arbiter_at_index is not None and len(members) - 1 > arbiter_at_index:
             raise Exception # TODO Error properly here
 
     if ':' in members[0]:
@@ -401,7 +402,7 @@ def main():
         client = MongoClient(**connection_params)
 
         # NOTE: this check must be done ASAP.
-        # We doesn't need to be authenticated.
+        # We don't need to be authenticated.
         check_compatibility(module, client)
 
         if login_user is None and login_password is None:
@@ -422,25 +423,25 @@ def main():
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
 
-    #if state == 'present':
     if len(replica_set) == 0:
         module.fail_json(msg='replica_set parameter must not be an empty string') # TODO better validation, i.e. no special chars etc
 
     try:
-
+        replicaset_created = False
         if module.check_mode:
-            module.exit_json(changed=True, replica_set=replica_set)
-        replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
+            if not replicaset_find(client, replica_set):
+                module.exit_json(changed=True, replica_set=replica_set)
+            else:
+                module.exit_json(changed=False, replica_set=replica_set)
+        if not replicaset_find(client, replica_set):
+            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
+            replicaset_created = True
+        else:
+            pass # TODO Some extended validation of the replicaset here, maybe add remove members later?
     except Exception as e:
         module.fail_json(msg='Unable to create replica_set: %s' % to_native(e), exception=traceback.format_exc())
 
-    #elif state == 'absent':
-    #    try:
-    #        replicaset_remove(module, client, replica_set)
-    #    except Exception as e:
-    #        module.fail_json(msg='Unable to remove replica_set: %s' % to_native(replica_set), exception=traceback.format_exc())
-
-    module.exit_json(changed=True, replica_set=replica_set)
+    module.exit_json(changed=replicaset_created, replica_set=replica_set)
 
 
 if __name__ == '__main__':
