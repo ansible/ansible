@@ -197,6 +197,41 @@ mongod --replSet rhys --port 27023 --bind_ip localhost --dbpath ./mongotest/db7 
 
 python ./lib/ansible/modules/database/mongodb/mongodb_replicaset.py /tmp/args.json
 
+# Now create a root user to test auth handling
+mongo admin<<EOF
+	db.createUser(
+	{
+		user: "admin",
+		pwd: "admin",
+		roles: [ { role: "root", db: "admin" } ]
+	}
+	);
+EOF
+
+# Restart with auth and keyfile
+pkill mongod
+openssl rand -base64 741 > keyfile.txt && chmod 600 keyfile.txt;
+mongod --auth --keyFile keyfile.txt --replSet rhys --port 27017 --bind_ip localhost --dbpath ./mongotest/db1 --logpath ./mongotest/db1/db1.log --smallfiles --oplogSize 128 --fork
+mongod --auth --keyFile keyfile.txt --replSet rhys --port 27018 --bind_ip localhost --dbpath ./mongotest/db2 --logpath ./mongotest/db2/db2.log --smallfiles --oplogSize 128 --fork
+mongod --auth --keyFile keyfile.txt --replSet rhys --port 27019 --bind_ip localhost --dbpath ./mongotest/db3 --logpath ./mongotest/db3/db3.log --smallfiles --oplogSize 128 --fork
+mongod --auth --keyFile keyfile.txt --replSet rhys --port 27020 --bind_ip localhost --dbpath ./mongotest/db4 --logpath ./mongotest/db4/db4.log --smallfiles --oplogSize 128 --fork
+mongod --auth --keyFile keyfile.txt --replSet rhys --port 27021 --bind_ip localhost --dbpath ./mongotest/db5 --logpath ./mongotest/db5/db5.log --smallfiles --oplogSize 128 --fork
+mongod --auth --keyFile keyfile.txt --replSet rhys --port 27022 --bind_ip localhost --dbpath ./mongotest/db6 --logpath ./mongotest/db6/db6.log --smallfiles --oplogSize 128 --fork
+mongod --auth --keyFile keyfile.txt --replSet rhys --port 27023 --bind_ip localhost --dbpath ./mongotest/db7 --logpath ./mongotest/db7/db7.log --smallfiles --oplogSize 128 --fork
+
+cat << EOF > /tmp/args.json
+{
+    "ANSIBLE_MODULE_ARGS": {
+	    "replica_set": "rhys",
+	    "members": "localhost:27017,localhost:27018,localhost:27019,localhost:27020,localhost:27021,localhost:27022,localhost:27023",
+        "arbiter_at_index": 6,
+        "login_user": "admin",
+        "login_password": "admin"
+    }
+}
+EOF
+
+python ./lib/ansible/modules/database/mongodb/mongodb_replicaset.py /tmp/args.json
 '''
 
 RETURN = '''
@@ -261,8 +296,8 @@ def check_compatibility(module, client):
         module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
 
 
-def replicaset_find(client, replica_set):
-    """Check if the replicaset exists.
+def replicaset_find(client):
+    """Check if a replicaset exists.
 
     Args:
         client (cursor): Mongodb cursor on admin database.
@@ -271,8 +306,8 @@ def replicaset_find(client, replica_set):
     Returns:
         dict: when user exists, False otherwise.
     """
-    for rs in client["local"].system.replset.find({ "_id": replica_set }):
-                return replica_set
+    for rs in client["local"].system.replset.find({ }):
+                return rs["_id"]
     return False
 
 
@@ -415,10 +450,6 @@ def main():
 
         if login_user is not None and login_password is not None: # TODO CHange the logic here, perhaps try without auth first then we know we need to initiate or validate the replica_set
             client.admin.authenticate(login_user, login_password, source=login_database)
-        #elif LooseVersion(PyMongoVersion) >= LooseVersion('3.0'):
-        #    if db_name != "admin":
-        #        module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
-            #else: this has to be the first admin user added
 
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
@@ -429,15 +460,17 @@ def main():
     try:
         replicaset_created = False
         if module.check_mode:
-            if not replicaset_find(client, replica_set):
+            if not replicaset_find(client):
                 module.exit_json(changed=True, replica_set=replica_set)
             else:
                 module.exit_json(changed=False, replica_set=replica_set)
-        if not replicaset_find(client, replica_set):
+        if not replicaset_find(client):
             replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
             replicaset_created = True
         else:
-            pass # TODO Some extended validation of the replicaset here, maybe add remove members later?
+            rs = replicaset_find(client)
+            if rs is not None and rs != replica_set:
+                module.fail_json(msg='The replica_set name of \'{0}\' does not match the expected: \'{1}\''.format(rs, replica_set))
     except Exception as e:
         module.fail_json(msg='Unable to create replica_set: %s' % to_native(e), exception=traceback.format_exc())
 
