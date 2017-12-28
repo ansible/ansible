@@ -334,12 +334,6 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule
-    from azure.mgmt.network.models import (
-        SecurityRuleAccess,
-        SecurityRuleDirection,
-        SecurityRuleProtocol
-    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -348,7 +342,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
 
 
-def validate_rule(rule, rule_type=None):
+def validate_rule(self, rule, rule_type=None):
     '''
     Apply defaults to a rule dictionary and check that all values are valid.
 
@@ -375,7 +369,7 @@ def validate_rule(rule, rule_type=None):
     if not rule.get('access'):
         rule['access'] = 'Allow'
 
-    access_names = [member.value for member in SecurityRuleAccess]
+    access_names = [member.value for member in self.network_models.SecurityRuleAccess]
     if rule['access'] not in access_names:
         raise Exception("Rule access must be one of [{0}]".format(', '.join(access_names)))
 
@@ -388,14 +382,14 @@ def validate_rule(rule, rule_type=None):
     if not rule.get('protocol'):
         rule['protocol'] = '*'
 
-    protocol_names = [member.value for member in SecurityRuleProtocol]
+    protocol_names = [member.value for member in self.network_models.SecurityRuleProtocol]
     if rule['protocol'] not in protocol_names:
         raise Exception("Rule protocol must be one of [{0}]".format(', '.join(protocol_names)))
 
     if not rule.get('direction'):
         rule['direction'] = 'Inbound'
 
-    direction_names = [member.value for member in SecurityRuleDirection]
+    direction_names = [member.value for member in self.network_models.SecurityRuleDirection]
     if rule['direction'] not in direction_names:
         raise Exception("Rule direction must be one of [{0}]".format(', '.join(direction_names)))
 
@@ -438,14 +432,14 @@ def compare_rules(r, rule):
     return matched, changed
 
 
-def create_rule_instance(rule):
+def create_rule_instance(self, rule):
     '''
     Create an instance of SecurityRule from a dict.
 
     :param rule: dict
     :return: SecurityRule
     '''
-    return SecurityRule(
+    return self.network_models.SecurityRule(
         protocol=rule['protocol'],
         source_address_prefix=rule['source_address_prefix'],
         destination_address_prefix=rule['destination_address_prefix'],
@@ -566,14 +560,14 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         if self.rules:
             for rule in self.rules:
                 try:
-                    validate_rule(rule)
+                    validate_rule(self, rule)
                 except Exception as exc:
                     self.fail("Error validating rule {0} - {1}".format(rule, str(exc)))
 
         if self.default_rules:
             for rule in self.default_rules:
                 try:
-                    validate_rule(rule, 'default')
+                    validate_rule(self, rule, 'default')
                 except Exception as exc:
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
@@ -687,15 +681,15 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         return self.results
 
     def create_or_update(self, results):
-        parameters = NetworkSecurityGroup()
+        parameters = self.network_models.NetworkSecurityGroup()
         if results.get('rules'):
             parameters.security_rules = []
             for rule in results.get('rules'):
-                parameters.security_rules.append(create_rule_instance(rule))
+                parameters.security_rules.append(create_rule_instance(self, rule))
         if results.get('default_rules'):
             parameters.default_security_rules = []
             for rule in results.get('default_rules'):
-                parameters.default_security_rules.append(create_rule_instance(rule))
+                parameters.default_security_rules.append(create_rule_instance(self, rule))
         parameters.tags = results.get('tags')
         parameters.location = results.get('location')
 

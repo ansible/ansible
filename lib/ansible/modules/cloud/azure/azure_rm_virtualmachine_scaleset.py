@@ -354,10 +354,6 @@ try:
         UpgradePolicy, VirtualMachineScaleSetNetworkConfiguration, \
         ApiEntityReference, ImageReference, SubResource
 
-    from azure.mgmt.network.models import PublicIPAddress, \
-        NetworkSecurityGroup, NetworkInterface, \
-        NetworkInterfaceIPConfiguration, Subnet, VirtualNetwork
-
 except ImportError:
     # This is handled in azure_rm_common
     pass
