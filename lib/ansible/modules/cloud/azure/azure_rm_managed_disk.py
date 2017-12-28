@@ -141,7 +141,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import DiskCreateOption, DiskCreateOptionTypes, ManagedDiskParameters, DiskSku, DataDisk
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -289,8 +288,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         lun = max(luns) + 1 if luns else 0
 
         # prepare the data disk
-        params = ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
-        data_disk = DataDisk(lun, DiskCreateOptionTypes.attach, managed_disk=params)
+        params = self.compute_models.ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
+        data_disk = self.compute_models.DataDisk(lun, self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
 
@@ -321,16 +320,16 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
         if self.storage_account_type:
-            storage_account_type = DiskSku(self.storage_account_type)
+            storage_account_type = self.compute_models.DiskSku(self.storage_account_type)
             disk_params['sku'] = storage_account_type
         disk_params['disk_size_gb'] = self.disk_size_gb
         # TODO: Add support for EncryptionSettings
-        creation_data['create_option'] = DiskCreateOption.empty
+        creation_data['create_option'] = self.compute_models.DiskCreateOption.empty
         if self.create_option == 'import':
-            creation_data['create_option'] = DiskCreateOption.import_enum
+            creation_data['create_option'] = self.compute_models.DiskCreateOption.import_enum
             creation_data['source_uri'] = self.source_uri
         elif self.create_option == 'copy':
-            creation_data['create_option'] = DiskCreateOption.copy
+            creation_data['create_option'] = self.compute_models.DiskCreateOption.copy
             creation_data['source_resource_id'] = self.source_resource_uri
         disk_params['creation_data'] = creation_data
         return disk_params
