@@ -285,6 +285,10 @@ class Ec2Inventory(object):
 
         print(data_to_print)
 
+    def get_account_id(self):
+        client = boto3.client('sts')
+        self.aws_account_id = client.get_caller_identity()['Account']
+
     def is_cache_valid(self):
         ''' Determines if the cache files have expired, or if it is still valid '''
 
@@ -534,6 +538,8 @@ class Ec2Inventory(object):
     def do_api_calls_update_cache(self):
         ''' Do API calls to each region, and save data in cache files '''
 
+        self.get_account_id()
+
         if self.route53_enabled:
             self.get_route53_records()
 
@@ -623,8 +629,6 @@ class Ec2Inventory(object):
             #        self.add_instance(instance, region)
 
         except ClientError as e:
-            for attr in dir(e):
-                print("obj.%s = %s" % (attr, getattr(e, attr)))
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             else:
@@ -937,13 +941,8 @@ class Ec2Inventory(object):
 
         # Inventory: Group by security group
         if self.group_by_security_group:
-
-            for attr in dir(instance):
-                print("obj.%s = %s" % (attr, getattr(instance, attr)))
-
             try:
                 for group in instance.security_groups:
-                    print group
                     key = self.to_safe("security_group_" + group['GroupName'])
                     self.push(self.inventory, key, hostname)
                     if self.nested_groups:
@@ -961,22 +960,21 @@ class Ec2Inventory(object):
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
             for tags in instance.tags:
-              for k, v in tags.items():
-                  if self.expand_csv_tags and v and ',' in v:
-                      values = map(lambda x: x.strip(), v.split(','))
-                  else:
-                      values = [v]
+                if self.expand_csv_tags and tags['Value'] and ',' in tags['Value']:
+                    values = map(lambda x: x.string(), tags['Value'].split(''))
+                else:
+                    values = [tags['Value']]
 
-                  for v in values:
-                      if v:
-                          key = self.to_safe("tag_" + k + "=" + v)
-                      else:
-                          key = self.to_safe("tag_" + k)
-                      self.push(self.inventory, key, hostname)
-                      if self.nested_groups:
-                          self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                          if v:
-                              self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+                    for v in values:
+                        if v:
+                            key = self.to_safe("tag_" + tags['Key'] + "=" + v)
+                        else:
+                            key = self.to_safe("tag_" + tags['Key'])
+                        self.push(self.inventory, key, hostname)
+                        if self.nested_groups:
+                            self.push_group(self.inventory, 'tags', self.to_safe("tag_" + tags['Key']))
+                            if v:
+                                self.push_group(self.inventory, self.to_safe("tag_" + tags['Key']), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
@@ -1387,5 +1385,4 @@ class Ec2Inventory(object):
 
 if __name__ == '__main__':
     # Run the script
-    print "Start"
     Ec2Inventory()
