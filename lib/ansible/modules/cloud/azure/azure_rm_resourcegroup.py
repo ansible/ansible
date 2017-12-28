@@ -96,7 +96,6 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.resource.resources.models import ResourceGroup
 except ImportError:
     pass
 
@@ -193,13 +192,13 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     if self.name_exists():
                         self.fail("Error: a resource group with the name {0} already exists in your subscription."
                                   .format(self.name))
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=self.location,
                         tags=self.tags
                     )
                 else:
                     # Update resource group
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=results['location'],
                         tags=results['tags']
                     )
