@@ -379,12 +379,6 @@ except ImportError as exc:
 try:
     from itertools import chain
     from azure.common.exceptions import CloudError
-    from azure.mgmt.resource.resources.models import (DeploymentProperties,
-                                                      ParametersLink,
-                                                      TemplateLink,
-                                                      Deployment,
-                                                      ResourceGroup,
-                                                      Dependency)
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.network import NetworkManagementClient
 
@@ -482,21 +476,21 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         :return:
         """
 
-        deploy_parameter = DeploymentProperties(self.deployment_mode)
+        deploy_parameter = self.rm_models.DeploymentProperties(self.deployment_mode)
         if not self.parameters_link:
             deploy_parameter.parameters = self.parameters
         else:
-            deploy_parameter.parameters_link = ParametersLink(
+            deploy_parameter.parameters_link = self.rm_models.ParametersLink(
                 uri=self.parameters_link
             )
         if not self.template_link:
             deploy_parameter.template = self.template
         else:
-            deploy_parameter.template_link = TemplateLink(
+            deploy_parameter.template_link = self.rm_models.TemplateLink(
                 uri=self.template_link
             )
 
-        params = ResourceGroup(location=self.location, tags=self.tags)
+        params = self.rm_models.ResourceGroup(location=self.location, tags=self.tags)
 
         try:
             self.rm_client.resource_groups.create_or_update(self.resource_group_name, params)
@@ -627,7 +621,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         for dep in dependencies:
             if dep.resource_name not in tree:
                 tree[dep.resource_name] = dict(dep=dep, children=dict())
-            if isinstance(dep, Dependency) and dep.depends_on is not None and len(dep.depends_on) > 0:
+            if isinstance(dep, self.rm_models.Dependency) and dep.depends_on is not None and len(dep.depends_on) > 0:
                 self._build_hierarchy(dep.depends_on, tree[dep.resource_name]['children'])
 
         if 'top' in tree:
