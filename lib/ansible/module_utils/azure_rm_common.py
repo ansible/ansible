@@ -685,16 +685,16 @@ class AzureRMModuleBase(object):
                 # add an inbound SSH rule
                 parameters.security_rules = [
                     self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow SSH Access',
-                                 source_port_range='*', destination_port_range='22', priority=100, name='SSH')
+                                                     source_port_range='*', destination_port_range='22', priority=100, name='SSH')
                 ]
                 parameters.location = location
             else:
                 # for windows add inbound RDP and WinRM rules
                 parameters.security_rules = [
                     self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
-                                 source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
+                                                     source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
                     self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
-                                 source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
+                                                     source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
                 ]
         else:
             # Open custom ports
@@ -705,7 +705,7 @@ class AzureRMModuleBase(object):
                 rule_name = "Rule_{0}".format(priority)
                 parameters.security_rules.append(
                     self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
-                                 destination_port_range=str(port), priority=priority, name=rule_name)
+                                                     destination_port_range=str(port), priority=priority, name=rule_name)
                 )
 
         self.log('Creating default security group {0}'.format(security_group_name))
