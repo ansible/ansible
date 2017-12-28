@@ -21,11 +21,11 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
-module: fortimgr_scripts
+module: fmg_script
 version_added: "1.0"
 author: update by Andrew Welsh, original Jacob McGill (@jmcgill298)
 short_description: Add/Edit/Delete and execute scripts
@@ -125,7 +125,7 @@ options:
 
 EXAMPLES = '''
 - name: CREATE SCRIPT
-  fortimgr_scripts:
+  fmg_script:
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
@@ -136,7 +136,7 @@ EXAMPLES = '''
     script_description: "Create by Ansible"
     script_content: "get system status"
 - name: EXECUTE SCRIPT
-  fortimgr_scripts:
+  fmg_script:
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
@@ -145,7 +145,7 @@ EXAMPLES = '''
     state: "execute"
     script_scope: "FGT1,FGT2"
 - name: DELETE SCRIPT
-  fortimgr_scripts:
+  fmg_script:
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
