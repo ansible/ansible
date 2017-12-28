@@ -239,23 +239,23 @@ class FortiManager(object):
         response = self.make_request(body).json()
         return response
 
-    def set_script_schedule(self, script_name, adom):
-        """
-        This method will set a script execution schedule.
-        """
-
-        fields = dict()
-        fields["adom"] = adom
-        fields["datetime"] = adom
-        fields["day_of_week"] = scope
-        fields["name"] = script_name
-        fields["run_on_db"] = package
-        fields["type"] = scope
-        fields["device"] = script_name
-
-        body = {"method": "exec", "params": [{"url": '/dvmdb/adom/{adom_name}/script/execute'.format(adom=adom), "data": fields, "session": self.session}]}
-        response = self.make_request(body).json()
-        return response
+    # def set_script_schedule(self, script_name, adom):
+    #     """
+    #     This method will set a script execution schedule.
+    #     """
+    #
+    #     fields = dict()
+    #     fields["adom"] = adom
+    #     fields["datetime"] = adom
+    #     fields["day_of_week"] = scope
+    #     fields["name"] = script_name
+    #     fields["run_on_db"] = package
+    #     fields["type"] = scope
+    #     fields["device"] = script_name
+    #
+    #     body = {"method": "exec", "params": [{"url": '/dvmdb/adom/{adom_name}/script/execute'.format(adom=adom), "data": fields, "session": self.session}]}
+    #     response = self.make_request(body).json()
+    #     return response
 
         '''
         wrapper = list()
