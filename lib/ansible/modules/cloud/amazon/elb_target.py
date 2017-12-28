@@ -20,6 +20,11 @@ options:
       - The default behaviour for targets that are unused is to leave them registered. If instead you would like to remove them
         set I(deregister_unused) to yes.
     choices: [ 'yes', 'no' ]
+  target_az:
+    description:
+      - An Availability Zone or all. This determines whether the target receives traffic from the load balancer nodes in the specified
+        Availability Zone or from all enabled Availability Zones for the load balancer. This parameter is not supported if the target
+        type of the target group is instance.
   target_group_arn:
     description:
       - The Amazon Resource Name (ARN) of the target group. Mutually exclusive of I(target_group_name).
@@ -62,7 +67,13 @@ notes:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Register a target to a target group
+# Register an IP address target to a target group
+- elb_target:
+    target_group_name: myiptargetgroup
+    target_id: 10.0.0.10
+    state: present
+
+# Register an instance target to a target group
 - elb_target:
     target_group_name: mytargetgroup
     target_id: i-1234567
@@ -145,6 +156,7 @@ def register_target(connection, module):
     :return:
     """
 
+    target_az = module.params.get("target_az")
     target_group_arn = module.params.get("target_group_arn")
     target_id = module.params.get("target_id")
     target_port = module.params.get("target_port")
@@ -156,6 +168,8 @@ def register_target(connection, module):
         target_group_arn = convert_tg_name_to_arn(connection, module, module.params.get("target_group_name"))
 
     target = dict(Id=target_id)
+    if target_az:
+        target['AvailabilityZone'] = target_az
     if target_port:
         target['Port'] = target_port
 
@@ -252,6 +266,7 @@ def main():
     argument_spec.update(
         dict(
             deregister_unused=dict(type='bool', default=False),
+            target_az=dict(type='str'),
             target_group_arn=dict(type='str'),
             target_group_name=dict(type='str'),
             target_id=dict(type='str', required=True),
