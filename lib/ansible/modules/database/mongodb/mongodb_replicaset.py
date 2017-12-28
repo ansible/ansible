@@ -111,8 +111,8 @@ EXAMPLES = '''
 ###############################
 http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#localdirect-module-testing
 
-1. Basic test no auth
-#####################
+1. Basic test
+#############
 cat << EOF > /tmp/args.json
 {
     "ANSIBLE_MODULE_ARGS": {
@@ -448,8 +448,16 @@ def main():
         elif login_password is None or login_user is None:
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
-        if login_user is not None and login_password is not None: # TODO CHange the logic here, perhaps try without auth first then we know we need to initiate or validate the replica_set
-            client.admin.authenticate(login_user, login_password, source=login_database)
+        try:
+            client['admin'].command('listDatabases', 1.0) # if this throws an error we need to authenticate
+        except Exception as excep:
+            if "not authorized on" in str(excep):
+                if login_user is not None and login_password is not None:
+                    client.admin.authenticate(login_user, login_password, source=login_database)
+                else:
+                    raise excep
+            else:
+                raise excep
 
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
