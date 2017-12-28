@@ -29,6 +29,7 @@ options:
     description:
       - List of guest CIDRs behind the gateway.
       - Required if C(state=present).
+    aliases: [ cidr ]
   gateway:
     description:
       - Public IP address of the gateway.
