@@ -12,9 +12,9 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
-Optional region environment variable if region is 'auto'
+optional region environment variable if region is 'auto'
 
-This script also assumes that there is an ec2.ini file alongside it.  To specify a
+This script also assumes there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
     export EC2_INI_PATH=/path/to/my_ec2.ini
@@ -95,7 +95,7 @@ consistency with variable spellings (camelCase and underscores) since this
 just loops through all variables the object exposes. It is preferred to use the
 ones with underscores when multiple exist.
 
-In addition, if an instance has AWS tags associated with it, each tag is a new
+In addition, if an instance has AWS Tags associated with it, each tag is a new
 variable named:
  - ec2_tag_[Key] = [Value]
 
@@ -152,12 +152,13 @@ import os
 import argparse
 import re
 from time import time
-import boto
-from boto import ec2
-from boto import rds
-from boto import elasticache
-from boto import route53
-from boto import sts
+import boto3
+from botocore.exceptions import ClientError
+#from boto3 import ec2
+#from boto3 import rds
+#from boto3 import elasticache
+#from boto3 import route53
+#from boto3 import sts
 import six
 
 from ansible.module_utils import ec2 as ec2_utils
@@ -261,9 +262,9 @@ class Ec2Inventory(object):
 
         # Make sure that profile_name is not passed at all if not set
         # as pre 2.24 boto will fall over otherwise
-        if self.boto_profile:
-            if not hasattr(boto.ec2.EC2Connection, 'profile_name'):
-                self.fail_with_error("boto version must be >= 2.24 to use profile")
+        #if self.boto_profile:
+        #    if not hasattr(boto.ec2.EC2Connection, 'profile_name'):
+        #        self.fail_with_error("boto version must be >= 2.24 to use profile")
 
         # Cache
         if self.args.refresh_cache:
@@ -347,9 +348,11 @@ class Ec2Inventory(object):
             else:
                 configRegions_exclude = config.get('ec2', 'regions_exclude')
 
-                for regionInfo in ec2.regions():
-                    if regionInfo.name not in configRegions_exclude:
-                        self.regions.append(regionInfo.name)
+                ec2 = boto3.client('ec2')
+                response = ec2.describe_regions()
+                for regionInfo in response['Regions']:
+                    if regionInfo['RegionName'] not in configRegions_exclude:
+                        self.regions.append(regionInfo['RegionName'])
         else:
             self.regions = configRegions.split(",")
         if 'auto' in self.regions:
@@ -538,9 +541,6 @@ class Ec2Inventory(object):
             self.get_instances_by_region(region)
             if self.rds_enabled:
                 self.get_rds_instances_by_region(region)
-            if self.elasticache_enabled:
-                self.get_elasticache_clusters_by_region(region)
-                self.get_elasticache_replication_groups_by_region(region)
             if self.include_rds_clusters:
                 self.include_rds_clusters_by_region(region)
 
@@ -553,7 +553,7 @@ class Ec2Inventory(object):
             conn = boto.connect_euca(host=self.eucalyptus_host, **self.credentials)
             conn.APIVersion = '2010-08-31'
         else:
-            conn = self.connect_to_aws(ec2, region)
+            conn = self.connect_to_aws('ec2', region)
         return conn
 
     def boto_fix_security_token_in_profile(self, connect_args):
@@ -569,7 +569,7 @@ class Ec2Inventory(object):
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:
             connect_args['profile_name'] = self.boto_profile
-            self.boto_fix_security_token_in_profile(connect_args)
+            #self.boto_fix_security_token_in_profile(connect_args)
 
         if self.iam_role:
             sts_conn = sts.connect_to_region(region, **connect_args)
@@ -578,7 +578,8 @@ class Ec2Inventory(object):
             connect_args['aws_secret_access_key'] = role.credentials.secret_key
             connect_args['security_token'] = role.credentials.session_token
 
-        conn = module.connect_to_region(region, **connect_args)
+        #conn = module.connect_to_region(region, **connect_args)
+        conn = boto3.resource(module)
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
             self.fail_with_error("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
@@ -587,7 +588,6 @@ class Ec2Inventory(object):
     def get_instances_by_region(self, region):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
-
         try:
             conn = self.connect(region)
             reservations = []
@@ -601,33 +601,30 @@ class Ec2Inventory(object):
                     for filters in self.ec2_instance_filters:
                         reservations.extend(conn.get_all_instances(filters=filters))
             else:
-                reservations = conn.get_all_instances()
+                reservations = conn.instances.filter(
+                        Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
 
             # Pull the tags back in a second step
             # AWS are on record as saying that the tags fetched in the first `get_all_instances` request are not
             # reliable and may be missing, and the only way to guarantee they are there is by calling `get_all_tags`
             instance_ids = []
-            for reservation in reservations:
-                instance_ids.extend([instance.id for instance in reservation.instances])
-
-            max_filter_value = 199
             tags = []
-            for i in range(0, len(instance_ids), max_filter_value):
-                tags.extend(conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids[i:i + max_filter_value]}))
-
             tags_by_instance_id = defaultdict(dict)
-            for tag in tags:
-                tags_by_instance_id[tag.res_id][tag.name] = tag.value
-
-            if (not self.aws_account_id) and reservations:
-                self.aws_account_id = reservations[0].owner_id
 
             for reservation in reservations:
-                for instance in reservation.instances:
-                    instance.tags = tags_by_instance_id[instance.id]
-                    self.add_instance(instance, region)
+                #instance_ids.extend([reservation.id])
+                #for tag in reservation.tags:
+                #    tags_by_instance_id[reservation.id][tag['Key']] = tag['Value']
+                self.add_instance(reservation, region)
 
-        except boto.exception.BotoServerError as e:
+            #for reservation in reservations:
+            #    for instance in reservation.instances:
+            #        instance.tags = tags_by_instance_id[instance.id]
+            #        self.add_instance(instance, region)
+
+        except ClientError as e:
+            for attr in dir(e):
+                print("obj.%s = %s" % (attr, getattr(e, attr)))
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             else:
@@ -767,80 +764,6 @@ class Ec2Inventory(object):
 
         self.inventory['db_clusters'] = c_dict
 
-    def get_elasticache_clusters_by_region(self, region):
-        ''' Makes an AWS API call to the list of ElastiCache clusters (with
-        nodes' info) in a particular region.'''
-
-        # ElastiCache boto module doesn't provide a get_all_instances method,
-        # that's why we need to call describe directly (it would be called by
-        # the shorthand method anyway...)
-        try:
-            conn = self.connect_to_aws(elasticache, region)
-            if conn:
-                # show_cache_node_info = True
-                # because we also want nodes' information
-                response = conn.describe_cache_clusters(None, None, None, True)
-
-        except boto.exception.BotoServerError as e:
-            error = e.reason
-
-            if e.error_code == 'AuthFailure':
-                error = self.get_auth_error_message()
-            elif e.error_code == "OptInRequired":
-                error = "ElastiCache hasn't been enabled for this account yet. " \
-                    "You must either log in to the ElastiCache service through the AWS console to enable it, " \
-                    "or set 'elasticache = False' in ec2.ini"
-            elif not e.reason == "Forbidden":
-                error = "Looks like AWS ElastiCache is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting ElastiCache clusters')
-
-        try:
-            # Boto also doesn't provide wrapper classes to CacheClusters or
-            # CacheNodes. Because of that we can't make use of the get_list
-            # method in the AWSQueryConnection. Let's do the work manually
-            clusters = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
-
-        except KeyError as e:
-            error = "ElastiCache query to AWS failed (unexpected format)."
-            self.fail_with_error(error, 'getting ElastiCache clusters')
-
-        for cluster in clusters:
-            self.add_elasticache_cluster(cluster, region)
-
-    def get_elasticache_replication_groups_by_region(self, region):
-        ''' Makes an AWS API call to the list of ElastiCache replication groups
-        in a particular region.'''
-
-        # ElastiCache boto module doesn't provide a get_all_instances method,
-        # that's why we need to call describe directly (it would be called by
-        # the shorthand method anyway...)
-        try:
-            conn = self.connect_to_aws(elasticache, region)
-            if conn:
-                response = conn.describe_replication_groups()
-
-        except boto.exception.BotoServerError as e:
-            error = e.reason
-
-            if e.error_code == 'AuthFailure':
-                error = self.get_auth_error_message()
-            if not e.reason == "Forbidden":
-                error = "Looks like AWS ElastiCache [Replication Groups] is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting ElastiCache clusters')
-
-        try:
-            # Boto also doesn't provide wrapper classes to ReplicationGroups
-            # Because of that we can't make use of the get_list method in the
-            # AWSQueryConnection. Let's do the work manually
-            replication_groups = response['DescribeReplicationGroupsResponse']['DescribeReplicationGroupsResult']['ReplicationGroups']
-
-        except KeyError as e:
-            error = "ElastiCache [Replication Groups] query to AWS failed (unexpected format)."
-            self.fail_with_error(error, 'getting ElastiCache clusters')
-
-        for replication_group in replication_groups:
-            self.add_elasticache_replication_group(replication_group, region)
-
     def get_auth_error_message(self):
         ''' create an informative error message if there is an issue authenticating'''
         errors = ["Authentication error retrieving ec2 inventory."]
@@ -879,7 +802,7 @@ class Ec2Inventory(object):
         addressable '''
 
         # Only return instances with desired instance states
-        if instance.state not in self.ec2_instance_states:
+        if instance.state['Name'] not in self.ec2_instance_states:
             return
 
         # Select the best destination address
@@ -961,7 +884,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         if self.group_by_availability_zone:
-            self.push(self.inventory, instance.placement, hostname)
+            self.push(self.inventory, instance.placement['AvailabilityZone'], hostname)
             if self.nested_groups:
                 if self.group_by_region:
                     self.push_group(self.inventory, region, instance.placement)
@@ -1014,9 +937,14 @@ class Ec2Inventory(object):
 
         # Inventory: Group by security group
         if self.group_by_security_group:
+
+            for attr in dir(instance):
+                print("obj.%s = %s" % (attr, getattr(instance, attr)))
+
             try:
-                for group in instance.groups:
-                    key = self.to_safe("security_group_" + group.name)
+                for group in instance.security_groups:
+                    print group
+                    key = self.to_safe("security_group_" + group['GroupName'])
                     self.push(self.inventory, key, hostname)
                     if self.nested_groups:
                         self.push_group(self.inventory, 'security_groups', key)
@@ -1026,28 +954,29 @@ class Ec2Inventory(object):
 
         # Inventory: Group by AWS account ID
         if self.group_by_aws_account:
-            self.push(self.inventory, self.aws_account_id, hostname)
+            self.push(self.inventory, self.aws_account_id, dest)
             if self.nested_groups:
                 self.push_group(self.inventory, 'accounts', self.aws_account_id)
 
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
-            for k, v in instance.tags.items():
-                if self.expand_csv_tags and v and ',' in v:
-                    values = map(lambda x: x.strip(), v.split(','))
-                else:
-                    values = [v]
+            for tags in instance.tags:
+              for k, v in tags.items():
+                  if self.expand_csv_tags and v and ',' in v:
+                      values = map(lambda x: x.strip(), v.split(','))
+                  else:
+                      values = [v]
 
-                for v in values:
-                    if v:
-                        key = self.to_safe("tag_" + k + "=" + v)
-                    else:
-                        key = self.to_safe("tag_" + k)
-                    self.push(self.inventory, key, hostname)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                        if v:
-                            self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+                  for v in values:
+                      if v:
+                          key = self.to_safe("tag_" + k + "=" + v)
+                      else:
+                          key = self.to_safe("tag_" + k)
+                      self.push(self.inventory, key, hostname)
+                      if self.nested_groups:
+                          self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                          if v:
+                              self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
@@ -1189,245 +1118,6 @@ class Ec2Inventory(object):
 
         self.inventory["_meta"]["hostvars"][hostname] = self.get_host_info_dict_from_instance(instance)
         self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = dest
-
-    def add_elasticache_cluster(self, cluster, region):
-        ''' Adds an ElastiCache cluster to the inventory and index, as long as
-        it's nodes are addressable '''
-
-        # Only want available clusters unless all_elasticache_clusters is True
-        if not self.all_elasticache_clusters and cluster['CacheClusterStatus'] != 'available':
-            return
-
-        # Select the best destination address
-        if 'ConfigurationEndpoint' in cluster and cluster['ConfigurationEndpoint']:
-            # Memcached cluster
-            dest = cluster['ConfigurationEndpoint']['Address']
-            is_redis = False
-        else:
-            # Redis sigle node cluster
-            # Because all Redis clusters are single nodes, we'll merge the
-            # info from the cluster with info about the node
-            dest = cluster['CacheNodes'][0]['Endpoint']['Address']
-            is_redis = True
-
-        if not dest:
-            # Skip clusters we cannot address (e.g. private VPC subnet)
-            return
-
-        # Add to index
-        self.index[dest] = [region, cluster['CacheClusterId']]
-
-        # Inventory: Group by instance ID (always a group of 1)
-        if self.group_by_instance_id:
-            self.inventory[cluster['CacheClusterId']] = [dest]
-            if self.nested_groups:
-                self.push_group(self.inventory, 'instances', cluster['CacheClusterId'])
-
-        # Inventory: Group by region
-        if self.group_by_region and not is_redis:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
-
-        # Inventory: Group by availability zone
-        if self.group_by_availability_zone and not is_redis:
-            self.push(self.inventory, cluster['PreferredAvailabilityZone'], dest)
-            if self.nested_groups:
-                if self.group_by_region:
-                    self.push_group(self.inventory, region, cluster['PreferredAvailabilityZone'])
-                self.push_group(self.inventory, 'zones', cluster['PreferredAvailabilityZone'])
-
-        # Inventory: Group by node type
-        if self.group_by_instance_type and not is_redis:
-            type_name = self.to_safe('type_' + cluster['CacheNodeType'])
-            self.push(self.inventory, type_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'types', type_name)
-
-        # Inventory: Group by VPC (information not available in the current
-        # AWS API version for ElastiCache)
-
-        # Inventory: Group by security group
-        if self.group_by_security_group and not is_redis:
-
-            # Check for the existence of the 'SecurityGroups' key and also if
-            # this key has some value. When the cluster is not placed in a SG
-            # the query can return None here and cause an error.
-            if 'SecurityGroups' in cluster and cluster['SecurityGroups'] is not None:
-                for security_group in cluster['SecurityGroups']:
-                    key = self.to_safe("security_group_" + security_group['SecurityGroupId'])
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'security_groups', key)
-
-        # Inventory: Group by engine
-        if self.group_by_elasticache_engine and not is_redis:
-            self.push(self.inventory, self.to_safe("elasticache_" + cluster['Engine']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_engines', self.to_safe(cluster['Engine']))
-
-        # Inventory: Group by parameter group
-        if self.group_by_elasticache_parameter_group:
-            self.push(self.inventory, self.to_safe("elasticache_parameter_group_" + cluster['CacheParameterGroup']['CacheParameterGroupName']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_parameter_groups', self.to_safe(cluster['CacheParameterGroup']['CacheParameterGroupName']))
-
-        # Inventory: Group by replication group
-        if self.group_by_elasticache_replication_group and 'ReplicationGroupId' in cluster and cluster['ReplicationGroupId']:
-            self.push(self.inventory, self.to_safe("elasticache_replication_group_" + cluster['ReplicationGroupId']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_replication_groups', self.to_safe(cluster['ReplicationGroupId']))
-
-        # Global Tag: all ElastiCache clusters
-        self.push(self.inventory, 'elasticache_clusters', cluster['CacheClusterId'])
-
-        host_info = self.get_host_info_dict_from_describe_dict(cluster)
-
-        self.inventory["_meta"]["hostvars"][dest] = host_info
-
-        # Add the nodes
-        for node in cluster['CacheNodes']:
-            self.add_elasticache_node(node, cluster, region)
-
-    def add_elasticache_node(self, node, cluster, region):
-        ''' Adds an ElastiCache node to the inventory and index, as long as
-        it is addressable '''
-
-        # Only want available nodes unless all_elasticache_nodes is True
-        if not self.all_elasticache_nodes and node['CacheNodeStatus'] != 'available':
-            return
-
-        # Select the best destination address
-        dest = node['Endpoint']['Address']
-
-        if not dest:
-            # Skip nodes we cannot address (e.g. private VPC subnet)
-            return
-
-        node_id = self.to_safe(cluster['CacheClusterId'] + '_' + node['CacheNodeId'])
-
-        # Add to index
-        self.index[dest] = [region, node_id]
-
-        # Inventory: Group by node ID (always a group of 1)
-        if self.group_by_instance_id:
-            self.inventory[node_id] = [dest]
-            if self.nested_groups:
-                self.push_group(self.inventory, 'instances', node_id)
-
-        # Inventory: Group by region
-        if self.group_by_region:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
-
-        # Inventory: Group by availability zone
-        if self.group_by_availability_zone:
-            self.push(self.inventory, cluster['PreferredAvailabilityZone'], dest)
-            if self.nested_groups:
-                if self.group_by_region:
-                    self.push_group(self.inventory, region, cluster['PreferredAvailabilityZone'])
-                self.push_group(self.inventory, 'zones', cluster['PreferredAvailabilityZone'])
-
-        # Inventory: Group by node type
-        if self.group_by_instance_type:
-            type_name = self.to_safe('type_' + cluster['CacheNodeType'])
-            self.push(self.inventory, type_name, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'types', type_name)
-
-        # Inventory: Group by VPC (information not available in the current
-        # AWS API version for ElastiCache)
-
-        # Inventory: Group by security group
-        if self.group_by_security_group:
-
-            # Check for the existence of the 'SecurityGroups' key and also if
-            # this key has some value. When the cluster is not placed in a SG
-            # the query can return None here and cause an error.
-            if 'SecurityGroups' in cluster and cluster['SecurityGroups'] is not None:
-                for security_group in cluster['SecurityGroups']:
-                    key = self.to_safe("security_group_" + security_group['SecurityGroupId'])
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'security_groups', key)
-
-        # Inventory: Group by engine
-        if self.group_by_elasticache_engine:
-            self.push(self.inventory, self.to_safe("elasticache_" + cluster['Engine']), dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_engines', self.to_safe("elasticache_" + cluster['Engine']))
-
-        # Inventory: Group by parameter group (done at cluster level)
-
-        # Inventory: Group by replication group (done at cluster level)
-
-        # Inventory: Group by ElastiCache Cluster
-        if self.group_by_elasticache_cluster:
-            self.push(self.inventory, self.to_safe("elasticache_cluster_" + cluster['CacheClusterId']), dest)
-
-        # Global Tag: all ElastiCache nodes
-        self.push(self.inventory, 'elasticache_nodes', dest)
-
-        host_info = self.get_host_info_dict_from_describe_dict(node)
-
-        if dest in self.inventory["_meta"]["hostvars"]:
-            self.inventory["_meta"]["hostvars"][dest].update(host_info)
-        else:
-            self.inventory["_meta"]["hostvars"][dest] = host_info
-
-    def add_elasticache_replication_group(self, replication_group, region):
-        ''' Adds an ElastiCache replication group to the inventory and index '''
-
-        # Only want available clusters unless all_elasticache_replication_groups is True
-        if not self.all_elasticache_replication_groups and replication_group['Status'] != 'available':
-            return
-
-        # Skip clusters we cannot address (e.g. private VPC subnet or clustered redis)
-        if replication_group['NodeGroups'][0]['PrimaryEndpoint'] is None or \
-           replication_group['NodeGroups'][0]['PrimaryEndpoint']['Address'] is None:
-            return
-
-        # Select the best destination address (PrimaryEndpoint)
-        dest = replication_group['NodeGroups'][0]['PrimaryEndpoint']['Address']
-
-        # Add to index
-        self.index[dest] = [region, replication_group['ReplicationGroupId']]
-
-        # Inventory: Group by ID (always a group of 1)
-        if self.group_by_instance_id:
-            self.inventory[replication_group['ReplicationGroupId']] = [dest]
-            if self.nested_groups:
-                self.push_group(self.inventory, 'instances', replication_group['ReplicationGroupId'])
-
-        # Inventory: Group by region
-        if self.group_by_region:
-            self.push(self.inventory, region, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'regions', region)
-
-        # Inventory: Group by availability zone (doesn't apply to replication groups)
-
-        # Inventory: Group by node type (doesn't apply to replication groups)
-
-        # Inventory: Group by VPC (information not available in the current
-        # AWS API version for replication groups
-
-        # Inventory: Group by security group (doesn't apply to replication groups)
-        # Check this value in cluster level
-
-        # Inventory: Group by engine (replication groups are always Redis)
-        if self.group_by_elasticache_engine:
-            self.push(self.inventory, 'elasticache_redis', dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'elasticache_engines', 'redis')
-
-        # Global Tag: all ElastiCache clusters
-        self.push(self.inventory, 'elasticache_replication_groups', replication_group['ReplicationGroupId'])
-
-        host_info = self.get_host_info_dict_from_describe_dict(replication_group)
-
-        self.inventory["_meta"]["hostvars"][dest] = host_info
 
     def get_route53_records(self):
         ''' Get and store the map of resource records to domain names that
@@ -1697,4 +1387,5 @@ class Ec2Inventory(object):
 
 if __name__ == '__main__':
     # Run the script
+    print "Start"
     Ec2Inventory()
