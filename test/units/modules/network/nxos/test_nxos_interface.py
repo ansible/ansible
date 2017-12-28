@@ -73,8 +73,3 @@ class TestNxosInterfaceModule(TestNxosModule):
         set_module_args(dict(interface='loopback0', state='absent'))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
-
-    def test_nxos_interface_mtu_change(self):
-        set_module_args(dict(interface='Ethernet2/5', mtu=1606, state='present'))
-        result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['interface Ethernet2/5', 'mtu 1606', 'no shutdown'])
