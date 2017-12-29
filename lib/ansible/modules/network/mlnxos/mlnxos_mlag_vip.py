@@ -62,7 +62,6 @@ commands:
     - no mlag shutdown
 """
 
-import re
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -72,8 +71,6 @@ from ansible.module_utils.network.mlnxos.mlnxos import show_cmd
 
 
 class MlnxosMLagVipModule(BaseMlnxosModule):
-    LAG_ID_REGEX = re.compile(r"^(.*)(Po|Mpo)(\d+)(.*)$")
-    IF_NAME_REGEX = re.compile(r"^Eth(\d+\/\d+)(.*)$")
 
     def init_module(self):
         """ initialize module
