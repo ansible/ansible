@@ -1,12 +1,12 @@
 - name: Prepare random number
   set_fact:
-    random_postfix: "{{ 1000 | random }}"
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: Create instance of PostgreSQL Server -- check mode
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
-    name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "postgresqlsrv{{ rpfx }}"
     location: westus
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
@@ -20,7 +20,7 @@
 - name: Create instance of PostgreSQL Server
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
-    name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "postgresqlsrv{{ rpfx }}"
     location: westus
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
@@ -29,12 +29,12 @@
   assert:
     that:
       - output.changed
-      - output.user_visible_state == 'Ready'
+      - output.state == 'Ready'
 
 - name: Create again instance of PostgreSQL Server
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
-    name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "postgresqlsrv{{ rpfx }}"
     location: westus
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
@@ -43,12 +43,12 @@
   assert:
     that:
       - output.changed == false
-      - output.user_visible_state == 'Ready'
+      - output.state == 'Ready'
 
 - name: Delete instance of PostgreSQL Server -- check mode
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
-    name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "postgresqlsrv{{ rpfx }}"
     state: absent
   check_mode: yes
   register: output
@@ -60,7 +60,7 @@
 - name: Delete instance of PostgreSQL Server
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
-    name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "postgresqlsrv{{ rpfx }}"
     state: absent
   register: output
 - name: Assert the state has changed
@@ -71,7 +71,7 @@
 - name: Delete unexisting instance of PostgreSQL Server
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
-    name: "postgresqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "postgresqlsrv{{ rpfx }}"
     state: absent
   register: output
 - name: Assert the state has changed
