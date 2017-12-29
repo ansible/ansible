@@ -8,7 +8,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     callback: json
-    short_description: Ansbile screen output as JSON
+    short_description: Ansible screen output as JSON
     version_added: "2.2"
     description:
         - This callback converts all events into JSON output to stdout
