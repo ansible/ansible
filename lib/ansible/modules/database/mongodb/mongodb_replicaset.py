@@ -375,7 +375,7 @@ def main():
         argument_spec = dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
-            login_database=dict(default=None),
+            login_database=dict(default="admin"),
             replica_set=dict(default=None),
             members=dict(required=False, default="{{ play_hosts }}"),
             arbiter_at_index=dict(required=False, default=None, type='int'),
