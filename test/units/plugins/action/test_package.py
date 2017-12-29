@@ -20,6 +20,7 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock, Mock
+from ansible.errors import AnsibleActionFail
 from ansible.plugins.action.package import ActionModule
 from ansible.playbook.task import Task
 
@@ -59,3 +60,32 @@ class TestPackageAction(unittest.TestCase):
         self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
 
         self.assertDictEqual(self.mock_am.new_module_args(), {'name': 'at'})
+
+    def test_args_deb(self):
+
+        play_context = Mock()
+        task = MagicMock(Task)
+        task.async_val = False
+        connection = Mock()
+
+        task.args = {'name': 'at.deb'}
+        play_context.check_mode = False
+
+        self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
+
+        self.assertDictEqual(self.mock_am.new_module_args(), {'deb': 'at.deb'})
+
+    def test_args_deb_list(self):
+
+        play_context = Mock()
+        task = MagicMock(Task)
+        task.async_val = False
+        connection = Mock()
+
+        task.args = {'name': ['at.deb', 'foo']}
+        play_context.check_mode = False
+
+        self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
+
+        with self.assertRaises(AnsibleActionFail):
+            self.mock_am.new_module_args()

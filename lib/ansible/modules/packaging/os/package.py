@@ -28,6 +28,7 @@ options:
   name:
     description:
       - "Package name, or package specifier with version, like C(name-1.0)."
+      - This can be a package name, or with most package managers, a file path to a package or a URL.
       - "Be aware that packages are not always named the same and this module will not 'translate' them per distro."
     required: true
   state:
