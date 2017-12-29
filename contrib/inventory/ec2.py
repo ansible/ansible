@@ -281,7 +281,6 @@ class Ec2Inventory(object):
             if self.inventory == self._empty_inventory():
                 data_to_print = self.get_inventory_from_cache()
             else:
-                print self.inventory
                 data_to_print = self.json_format_dict(self.inventory, True)
 
         print(data_to_print)
@@ -1167,10 +1166,10 @@ class Ec2Inventory(object):
     def get_host_info_dict_from_instance(self, instance):
         instance_vars = {}
 
-        #for attr in dir(instance):
-        #    print("%s = %s %s" % (attr, getattr(instance, attr), type(getattr(instance, attr))))
+        # for attr in dir(instance):
+        #     print("%s = %s %s" % (attr, getattr(instance, attr), type(getattr(instance, attr))))
 
-        hostvars = [ 'ami_launch_index',
+        hostvars = ['ami_launch_index',
                      'architecture',
                      'block_device_mappings',
                      'client_token',
@@ -1208,16 +1207,10 @@ class Ec2Inventory(object):
                      'subnet_id',
                      'tags',
                      'virtualization_type',
-                     'vpc_id' ]
+                     'vpc_id']
 
         for var in hostvars:
-        #for attr in dir(instance):
 
-            #if isinstance(getattr(instance, attr), (str, bool, int)):
-            #if type(getattr(instance, attr)) == 'str':
-
-        #for key in vars(instance):
-            #value = getattr(instance, key)
             value = getattr(instance, var)
             key = self.to_safe('ec2_' + var)
 
