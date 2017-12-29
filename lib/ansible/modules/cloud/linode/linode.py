@@ -780,13 +780,7 @@ def linodeServers(module, api, state, name, name_add_id, name_id_separator,
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(default='present', choices=['active', 'present', 'started',
-                                                     'deleted', 'absent', 'stopped',
-                                                     'restarted']),
-            api_key = dict(no_log=True),
-            name = dict(type='str'),
-            name_add_id = dict(type='bool', default=True),
-            name_id_separator = dict(type='str', default='_'),
+            additional_disks= dict(type='list'),
             alert_bwin_enabled = dict(type='bool', default=None),
             alert_bwin_threshold = dict(type='int', default=None),
             alert_bwout_enabled = dict(type='bool', default=None),
@@ -797,28 +791,34 @@ def main():
             alert_cpu_threshold = dict(type='int', default=None),
             alert_diskio_enabled = dict(type='bool', default=None),
             alert_diskio_threshold = dict(type='int', default=None),
+            api_key = dict(no_log=True),
             backupsenabled = dict(type='int', default=None),
             backupweeklyday = dict(type='int', default=None),
             backupwindow = dict(type='int', default=None),
-            displaygroup = dict(type='str', default=''),
-            plan = dict(type='int'),
-            additional_disks= dict(type='list'),
-            distribution = dict(type='int'),
-            stackscript = dict(type='int'),
-            stackscript_responses = dict(type='dict', no_log=True),
             datacenter = dict(type='int'),
+            displaygroup = dict(type='str', default=''),
+            distribution = dict(type='int'),
             kernel_id = dict(type='int'),
             linode_id = dict(type='int', aliases=['lid']),
-            payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
+            name_add_id = dict(type='bool', default=True),
+            name = dict(type='str'),
+            name_id_separator = dict(type='str', default='_'),
             password = dict(type='str', no_log=True),
+            payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
+            plan = dict(type='int'),
+            private_dns_zone = dict(type='str', default=None),
             private_ip = dict(type='bool'),
+            private_round_robin = dict(type='str', default=None),
             ssh_pub_key = dict(type='str'),
+            stackscript = dict(type='int'),
+            stackscript_responses = dict(type='dict', no_log=True),
+            state = dict(default='present', choices=['active', 'present', 'started',
+                                                     'deleted', 'absent', 'stopped',
+                                                     'restarted']),
             swap = dict(type='int', default=512),
             wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300),
             watchdog = dict(type='bool', default=True),
-            private_dns_zone = dict(type='str', default=None),
-            private_round_robin = dict(type='str', default=None),
         )
     )
 
@@ -827,11 +827,7 @@ def main():
     if not HAS_LINODE:
         module.fail_json(msg='linode-python required for this module')
 
-    state = module.params.get('state')
-    api_key = module.params.get('api_key')
-    name = module.params.get('name')
-    name_add_id = module.params.get('name_add_id')
-    name_id_separator = module.params.get('name_id_separator')
+    additional_disks = module.params.get('additional_disks')
     alert_bwin_enabled = module.params.get('alert_bwin_enabled')
     alert_bwin_threshold = module.params.get('alert_bwin_threshold')
     alert_bwout_enabled = module.params.get('alert_bwout_enabled')
@@ -842,28 +838,32 @@ def main():
     alert_cpu_threshold = module.params.get('alert_cpu_threshold')
     alert_diskio_enabled = module.params.get('alert_diskio_enabled')
     alert_diskio_threshold = module.params.get('alert_diskio_threshold')
+    api_key = module.params.get('api_key')
     backupsenabled = module.params.get('backupsenabled')
     backupweeklyday = module.params.get('backupweeklyday')
     backupwindow = module.params.get('backupwindow')
-    displaygroup = module.params.get('displaygroup')
-    plan = module.params.get('plan')
-    additional_disks = module.params.get('additional_disks')
-    distribution = module.params.get('distribution')
-    stackscript = module.params.get('stackscript')
-    stackscript_responses = module.params.get('stackscript_responses')
     datacenter = module.params.get('datacenter')
+    displaygroup = module.params.get('displaygroup')
+    distribution = module.params.get('distribution')
     kernel_id = module.params.get('kernel_id')
     linode_id = module.params.get('linode_id')
-    payment_term = module.params.get('payment_term')
+    name_add_id = module.params.get('name_add_id')
+    name_id_separator = module.params.get('name_id_separator')
+    name = module.params.get('name')
     password = module.params.get('password')
+    payment_term = module.params.get('payment_term')
+    plan = module.params.get('plan')
+    private_dns_zone = str(module.params.get('private_dns_zone'))
     private_ip = module.params.get('private_ip')
+    private_round_robin = str(module.params.get('private_round_robin'))
     ssh_pub_key = module.params.get('ssh_pub_key')
+    stackscript = module.params.get('stackscript')
+    stackscript_responses = module.params.get('stackscript_responses')
+    state = module.params.get('state')
     swap = module.params.get('swap')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
     watchdog = int(module.params.get('watchdog'))
-    private_dns_zone = str(module.params.get('private_dns_zone'))
-    private_round_robin = str(module.params.get('private_round_robin'))
 
     kwargs = {}
     check_items = {'alert_bwin_enabled': alert_bwin_enabled, 'alert_bwin_threshold': alert_bwin_threshold,
