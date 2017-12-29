@@ -143,7 +143,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-# TBD
+result:
+api_response:
+    description: Raw response from Marathon API, content varies with API.
+    returned: success
+    type: complex
 '''
 
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
