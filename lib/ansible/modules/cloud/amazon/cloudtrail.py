@@ -64,10 +64,12 @@ options:
       - CloudTrail will create a hash for every log file delivered and produce a signed digest file that can be used to ensure log files have not been tampered.
     default: false
     version_added: "2.4"
+    aliases: [ "log_file_validation_enabled" ]
   include_global_events:
     description:
       - Record API calls from global services such as IAM and STS.
     default: true
+    aliases: [ "include_global_service_events" ]
   sns_topic_name:
     description:
       - SNS Topic name to send notifications to when a log file is delivered
@@ -438,8 +440,8 @@ def main():
         s3_key_prefix=dict(),
         sns_topic_name=dict(),
         is_multi_region_trail=dict(default=False, type='bool'),
-        enable_log_file_validation=dict(default=False, type='bool'),
-        include_global_events=dict(default=True, type='bool'),
+        enable_log_file_validation=dict(default=False, type='bool', aliases=['log_file_validation_enabled']),
+        include_global_events=dict(default=True, type='bool', aliases=['include_global_service_events']),
         cloudwatch_logs_role_arn=dict(),
         cloudwatch_logs_log_group_arn=dict(),
         kms_key_id=dict(),
