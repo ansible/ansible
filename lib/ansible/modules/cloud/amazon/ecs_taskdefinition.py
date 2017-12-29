@@ -50,7 +50,7 @@ options:
         description:
             - Always create new task definition
         required: False
-        version_added: 2.4
+        version_added: 2.5
     containers:
         description:
             - A list of containers definitions
