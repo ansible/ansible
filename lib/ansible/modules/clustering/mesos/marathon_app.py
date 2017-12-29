@@ -143,11 +143,17 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-result:
+changed:
+    description: True if the application state has changed
+    type: bool
+    returned: always
 api_response:
     description: Raw response from Marathon API, content varies with API.
-    returned: success
     type: complex
+    returned: always
+    contains:
+        deploymentId: "2604c2e3-049e-400b-bb7b-9cd41eb24584"
+        version: "2017-12-29T13:58:22.497Z"
 '''
 
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
