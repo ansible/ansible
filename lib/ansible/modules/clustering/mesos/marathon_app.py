@@ -58,7 +58,6 @@ options:
     choices:
       - present
       - absent
-      - update
       - replace
       - restart
   inline_data:
@@ -117,7 +116,7 @@ EXAMPLES = '''
     inline_data:
       id: /foo
       instances: 10
-    state: update
+    state: present
     wait: yes
 
 # Replaces parameters of a running application from a JSON file.
@@ -292,7 +291,7 @@ class MarathonApp(object):
 def main():
     module_args = dict(
         marathon_uri=dict(type='str', default='http://marathon.mesos:8080', aliases=['marathon_url', 'uri', 'url']),
-        state=dict(type='str', choices=['present', 'absent', 'update', 'replace', 'restart']),
+        state=dict(type='str', choices=['present', 'absent', 'replace', 'restart']),
         url_username=dict(type='str', default=None, aliases=['username']),
         url_password=dict(type='str', default=None, no_log=True, aliases=['password']),
         file_reference=dict(required=False),
@@ -343,10 +342,10 @@ def main():
     if module.params['state'] in ['absent', 'replace']:
         body = marathon.delete_app(data)
         marathon.results.append(body)
-    if module.params['state'] in ['present', 'update', 'replace']:
+    if module.params['state'] in ['present', 'replace']:
         body = marathon.create_app(data)
         marathon.results.append(body)
-    if module.params['state'] in ['restart']:
+    if module.params['state'] == 'restart':
         body = marathon.restart_app(data)
         marathon.results.append(body)
 
