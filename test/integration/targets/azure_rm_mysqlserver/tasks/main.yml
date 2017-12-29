@@ -1,12 +1,15 @@
 - name: Prepare random number
   set_fact:
-    random_postfix: "{{ 1000 | random }}"
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: Create instance of MySQL Server -- check mode
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "mysqlsrv{{ rpfx }}"
+    sku:
+      name: SkuName
+      tier: basic
     location: westus
     version: 5.6
     admin_username: zimxyz
@@ -21,7 +24,10 @@
 - name: Create instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "mysqlsrv{{ rpfx }}"
+    sku:
+      name: SkuName
+      tier: basic
     location: westus
     version: 5.6
     admin_username: zimxyz
@@ -31,12 +37,15 @@
   assert:
     that:
       - output.changed
-      - output.user_visible_state == 'Ready'
+      - output.state == 'Ready'
 
 - name: Create again instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "mysqlsrv{{ rpfx }}"
+    sku:
+      name: SkuName
+      tier: basic
     location: westus
     version: 5.6
     admin_username: zimxyz
@@ -46,12 +55,12 @@
   assert:
     that:
       - output.changed == false
-      - output.user_visible_state == 'Ready'
+      - output.state == 'Ready'
 
 - name: Delete instance of MySQL Server -- check mode
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "mysqlsrv{{ rpfx }}"
     state: absent
   check_mode: yes
   register: output
@@ -63,7 +72,7 @@
 - name: Delete instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "mysqlsrv{{ rpfx }}"
     state: absent
   register: output
 - name: Assert the state has changed
@@ -74,7 +83,7 @@
 - name: Delete unexisting instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ random_postfix }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    name: "mysqlsrv{{ rpfx }}"
     state: absent
   register: output
 - name: Assert the state has changed
