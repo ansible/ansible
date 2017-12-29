@@ -31,6 +31,12 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
+    def new_module_args(self):
+        new_args = self._task.args.copy()
+        if 'use' in new_args:
+            del new_args['use']
+        return new_args
+
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
 
@@ -64,10 +70,7 @@ class ActionModule(ActionBase):
                     raise AnsibleActionFail('Could not find a module for %s.' % module)
                 else:
                     # run the 'package' module
-                    new_module_args = self._task.args.copy()
-                    if 'use' in new_module_args:
-                        del new_module_args['use']
-
+                    new_module_args = self.new_module_args()
                     display.vvvv("Running %s" % module)
                     result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
             else:
