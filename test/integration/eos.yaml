@@ -139,6 +139,15 @@
         - set_fact:
             failed_modules: "{{ failed_modules }} + [ 'eos_interface' ]"
             test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_lldp
+        when: "limit_to in ['*', 'eos_lldp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_lldp' ]"
+            test_failed: true
 ###########
     - debug: var=failed_modules
       when: test_failed
