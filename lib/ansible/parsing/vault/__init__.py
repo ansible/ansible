@@ -1070,20 +1070,23 @@ class VaultEditor:
             os.chmod(dest, prev.st_mode)
             os.chown(dest, prev.st_uid, prev.st_gid)
 
+    def _is_exe(self, command):
+        return os.path.isfile(command) and os.access(command, os.X_OK)
+
     def _in_path(self, command):
         command_base = os.path.basename(command)
         for path in os.environ["PATH"].split(os.pathsep):
             cmd_path = os.path.join(path, command_base)
-            if os.path.isfile(cmd_path) and os.access(cmd_path, os.X_OK):
+            if self._is_exe(cmd_path):
                 return cmd_path
         return None
 
     def _editor_shell_command(self, filename):
         env_editor = os.environ.get('VISUAL')
-        if not env_editor or not self._in_path(env_editor):
+        if not env_editor or not self._is_exe(env_editor) or not self._in_path(env_editor):
             env_editor = os.environ.get('EDITOR', 'vi')
-            if not self._in_path(env_editor):
-                raise AnsibleFileNotFound(message="failed to executable editor", file_name=env_editor)
+            if not self._is_exe(env_editor) or not self._in_path(env_editor):
+                raise AnsibleFileNotFound(message="failed to find an editor", file_name=env_editor)
 
         editor = shlex.split(env_editor)
         editor.append(filename)
