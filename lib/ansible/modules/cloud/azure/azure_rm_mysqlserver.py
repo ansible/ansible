@@ -47,9 +47,6 @@ options:
             size:
                 description:
                     - The size code, to be interpreted by resource as appropriate.
-            family:
-                description:
-                    - The family of hardware.
     location:
         description:
             - Resource location. If not set, location from the resource group will be used as default.
@@ -198,7 +195,7 @@ class AzureRMServers(AzureRMModuleBase):
 
         super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
                                              supports_check_mode=True,
-                                             supports_tags=True)
+                                             supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
