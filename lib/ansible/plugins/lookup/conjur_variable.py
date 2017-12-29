@@ -59,7 +59,7 @@ class LookupModule(LookupBase):
             self.load_conf('~/.conjurrc')
         )
         if not conf:
-            raise AnsibleError('Conjur configuration should be in environment variables or in one of the following paths: \'~/.conjurrc\', \'/etc/conjur.conf\'')
+            raise AnsibleError('Conjur configuration should be in one of the following files: \'~/.conjurrc\', \'/etc/conjur.conf\'')
         display.vvvv("configuration: {}".format(conf))
 
         # Load Conjur identity
@@ -71,15 +71,14 @@ class LookupModule(LookupBase):
             raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
         display.vvvv("configuration: {}".format(identity))
 
-
         # Use credentials to retrieve temporary authorization token
         conjur_url = "{}/authn/{}/{}/authenticate".format(conf['appliance_url'], conf['account'], identity['id'])
         display.vvvv("Authentication request to Conjur at: {}, with user: {}".format(conjur_url, identity['id']))
 
         if 'cert_file' in conf:
-            response = requests.post(conjur_url, data = identity['api_key'], verify = conf['cert_file'])
+            response = requests.post(conjur_url, data=identity['api_key'], verify=conf['cert_file'])
         else:
-            response = requests.post(conjur_url, data = identity['api_key'])
+            response = requests.post(conjur_url, data=identity['api_key'])
         display.vvvv("response: {}".format(response.text))
 
         if response.status_code != 200:
@@ -94,7 +93,7 @@ class LookupModule(LookupBase):
         display.vvvv("Conjur Variable URL: {}".format(url))
 
         if 'cert_file' in conf:
-            response = requests.get(url, headers=headers, verify = conf['cert_file'])
+            response = requests.get(url, headers=headers, verify=conf['cert_file'])
         else:
             response = requests.get(url, headers=headers)
 
@@ -119,7 +118,7 @@ class LookupModule(LookupBase):
                     return yaml.safe_load(f.read())
                 except Exception as exception:
                     display.info("Error: parsing %s - %s" % (conf_path, str(exception)))
-                    self.fail("Error: parsing %s - %s" % (conf_path, str(exception)))
+                    AnsibleError("Error: parsing %s - %s" % (conf_path, str(exception)))
         return {}
 
     # Load identity and return as dictionary if file is present on file system
@@ -130,13 +129,13 @@ class LookupModule(LookupBase):
             display.vvvv("Loading identity from: %s" % identity_path)
             try:
                 identity = netrc(identity_path)
-                id, _, api_key = identity.authenticators('{}/authn'.format(appliance_url))
+                id, account, api_key = identity.authenticators('{}/authn'.format(appliance_url))
                 if not id or not api_key:
                     return {}
 
                 return {"id": id, "api_key": api_key}
             except Exception as exception:
-                self.fail("Error: parsing %s - %s" % (conf_path, str(exception)))
+                AnsibleError("Error: parsing %s - %s" % (identity_path, str(exception)))
 
         return {}
 
