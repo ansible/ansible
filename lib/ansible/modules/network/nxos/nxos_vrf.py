@@ -104,11 +104,26 @@ EXAMPLES = '''
     description: testing
     state: present
 
-- name: Aggregate definition of VRFS
+- name: Aggregate definition of VRFs
   nxos_vrf:
     aggregate:
       - { name: test1, description: Testing, admin_state: down }
       - { name: test2, interfaces: Ethernet1/2 }
+
+- name: Aggregate definitions of VRFs with Purge
+  nxos_vrf:
+    aggregate:
+      - { name: ntc1, description: purge test1 }
+      - { name: ntc2, description: purge test2 }
+    state: present
+    purge: yes
+
+- name: Delete VRFs exist on switch
+  nxos_vrf:
+    aggregate:
+      - { name: ntc1 }
+      - { name: ntc2 }
+    state: absent
 
 - name: Assign interfaces to VRF declaratively
   nxos_vrf:
@@ -172,6 +187,32 @@ def execute_show_command(command, module):
     return body
 
 
+def get_existing_vrfs(module):
+    objs = list()
+    command = "show vrf all"
+    try:
+        body = execute_show_command(command, module)[0]
+    except IndexError:
+        return list()
+    try:
+        vrf_table = body['TABLE_vrf']['ROW_vrf']
+    except (TypeError, IndexError, KeyError):
+        return list()
+
+    if isinstance(vrf_table, list):
+        for vrf in vrf_table:
+            obj = {}
+            obj['name'] = vrf['vrf_name']
+            objs.append(obj)
+
+    elif isinstance(vrf_table, dict):
+        obj = {}
+        obj['name'] = vrf_table['vrf_name']
+        objs.append(obj)
+
+    return objs
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
@@ -187,11 +228,6 @@ def map_obj_to_commands(updates, module):
         interfaces = w.get('interfaces') or []
         state = w['state']
         del w['state']
-
-        if name == 'default':
-            module.fail_json(msg='cannot use default as name of a VRF')
-        elif len(name) > 32:
-            module.fail_json(msg='VRF name exceeded max length of 32', name=name)
 
         obj_in_have = search_obj_in_list(name, have)
 
@@ -251,12 +287,26 @@ def map_obj_to_commands(updates, module):
                             commands.append('no vrf member {0}'.format(name))
 
     if purge:
-        for h in have:
-            obj_in_want = search_obj_in_list(h['name'], want)
-            if not obj_in_want:
-                commands.append('no vrf context {0}'.format(h['name']))
+        existing = get_existing_vrfs(module)
+        if existing:
+            for h in existing:
+                if h['name'] in ('default', 'management'):
+                    pass
+                else:
+                    obj_in_want = search_obj_in_list(h['name'], want)
+                    if not obj_in_want:
+                        commands.append('no vrf context {0}'.format(h['name']))
 
     return commands
+
+
+def validate_vrf(name, module):
+    if name == 'default':
+        module.fail_json(msg='cannot use default as name of a VRF')
+    elif len(name) > 32:
+        module.fail_json(msg='VRF name exceeded max length of 32', name=name)
+    else:
+        return name
 
 
 def map_params_to_obj(module):
@@ -267,10 +317,13 @@ def map_params_to_obj(module):
             for key in item:
                 if item.get(key) is None:
                     item[key] = module.params[key]
-            obj.append(item.copy())
+
+            d = item.copy()
+            d['name'] = validate_vrf(d['name'], module)
+            obj.append(d)
     else:
         obj.append({
-            'name': module.params['name'],
+            'name': validate_vrf(module.params['name'], module),
             'description': module.params['description'],
             'vni': module.params['vni'],
             'rd': module.params['rd'],
