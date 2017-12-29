@@ -786,7 +786,7 @@ DEFAULT_NO_LOG:
 DEFAULT_NO_TARGET_SYSLOG:
   name: No syslog on target
   default: False
-  description: Toggle Ansbile logging to syslog on the target when it executes tasks.
+  description: Toggle Ansible logging to syslog on the target when it executes tasks.
   env: [{name: ANSIBLE_NO_TARGET_SYSLOG}]
   ini:
   - {key: no_target_syslog, section: defaults}
