@@ -45,7 +45,7 @@ options:
     default: true
   dedicated_master_enabled:
     description:
-      - If cluster have dedicated master node(s).
+      - If cluster have dedicated master nodes.
     choices: [true, false]
     required: false
     default: false
@@ -53,10 +53,10 @@ options:
     description:
       - Instance type of dedicated master nodes. Ignored if dedicated_master_enabled is False.
     required: false
-    default: m3.medium.elasticsearch
+    default: t2.medium.elasticsearch
   dedicated_master_count:
     description:
-      - Number of dedicated master node(s). Ignored if dedicated_master_enabled is False.
+      - Number of dedicated master nodes. Ignored if dedicated_master_enabled is False.
     required: false
   ebs_volume_type:
     description:
@@ -83,21 +83,76 @@ EXAMPLES = """
 # It is assumed that their matching environment variables are set.
 
 # Basic example
-- aws_elasticsearch:
+- elasticsearch:
     domain: testing
     instance_count: 1
     zone_awareness: false
     instance_type: "t2.medium.elasticsearch"
     ebs_volume_size: 10
-    access_policies: '{"Statement": [{"Action": "*", "Resource": "arn:aws:iam::XXXXXXXXXXXXX:user/you", "Effect": "Allow"}]}'
-    region: us-east-1
+    access_policies: '{"Statement": [{"Action": "*", "Resource": "arn:aws:iam::0000000000000:user/you", "Effect": "Allow"}]}'
+    region: us-west-1
 """
 
 RETURN = """
-domain:
-    description: details about Elasticsearch cluster from describe_elasticsearch_domain()
+arn:
+    description: ARN of Elasticsearch cluster.
     returned: always
-    type: complex
+    type: string
+    sample: "arn:aws:es:us-west-1:000000000000:domain/testing"
+endpoint:
+    description: When cluster is finished being created, endpoint to submit requests to.
+    returned: always
+    type: string
+    sample: "https://testing-asdfqwerty.us-west-1.es.amazonaws.com"
+processing:
+    description: Is the cluster processing config changes.
+    returned: always
+    type: bool
+elasticsearch_version:
+    description: Which version of Elasticsearch cluster is running.
+    returned: always
+    type: string
+    sample: "5.1"
+instance_type:
+    description: Instance type of non-master nodes in the cluster.
+    returned: always
+    type: string
+    sample: "t2.medium.elasticsearch"
+instance_count:
+    description: Number of non-master nodes in the cluster.
+    returned: always
+    type: int
+dedicated_master_enabled:
+    description: Does cluster have dedicated master nodes.
+    returned: always
+    type: bool
+zone_awareness:
+    description: Is cluster aware of AWS availability zones.
+    returned: always
+    type: bool
+dedicated_master_type:
+    description: Instance type of dedicated master nodes.
+    returned: always
+    type: string
+    sample: "t2.medium.elasticsearch"
+dedicated_master_count:
+    description: Number of dedicated master nodes.
+    returned: always
+    type: int
+ebs_volume_type:
+    description: What EBS volume type nodes have.
+    returned: always
+    type: string
+    sample: "gp2"
+ebs_volume_size:
+    description: What size EBS volume each node has.
+    returned: always
+    type: int
+access_policies:
+    description: JSON string of the access policy of the cluster.
+    returned: always
+    type: string
+    sample: '{"Statement": [{"Action": "*", "Resource": "arn:aws:iam::0000000000000:user/you", "Effect": "Allow"}]}'
 """
 
 import collections
@@ -296,9 +351,25 @@ def main():
             time.sleep(10)
             domain = is_present(client, module.params['domain'])
 
+    domain_status = domain['DomainStatus']
+    cluster_config_status = domain_status['ElasticsearchClusterConfig']
+    ebs_options = domain_status['EBSOptions']
+
     module.exit_json(
         changed=changed,
-        domain=domain
+        arn=domain_status['ARN'],
+        endpoint=domain_status.get('Endpoint'),
+        processing=domain_status['Processing'],
+        elasticsearch_version=domain_status['ElasticsearchVersion'],
+        instance_type=cluster_config_status['InstanceType'],
+        instance_count=cluster_config_status['InstanceCount'],
+        dedicated_master_enabled=cluster_config_status['DedicatedMasterEnabled'],
+        zone_awareness=cluster_config_status['ZoneAwarenessEnabled'],
+        dedicated_master_type=cluster_config_status.get('DedicatedMasterType', ''),
+        dedicated_master_count=cluster_config_status.get('DedicatedMasterCount', 0),
+        ebs_volume_type=ebs_options['VolumeType'],
+        ebs_volume_size=ebs_options['VolumeSize'],
+        access_policies=domain_status['AccessPolicies']
     )
 
 
