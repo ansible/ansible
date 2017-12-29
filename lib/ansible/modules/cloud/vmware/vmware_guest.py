@@ -880,7 +880,7 @@ class PyVmomiHelper(PyVmomi):
 
                 if (nic.device.backing and not hasattr(nic.device.backing, 'port')) or \
                    (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
-                                              nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
+                                            nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     dvs_port_connection = vim.dvs.PortConnection()
                     dvs_port_connection.portgroupKey = pg_obj.key
                     dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
