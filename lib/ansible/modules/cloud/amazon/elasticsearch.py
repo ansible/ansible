@@ -103,7 +103,7 @@ endpoint:
     description: When cluster is finished being created, endpoint to submit requests to.
     returned: always
     type: string
-    sample: "https://testing-asdfqwerty.us-west-1.es.amazonaws.com"
+    sample: "search-testing-asdfqwerty.us-west-1.es.amazonaws.com"
 processing:
     description: Is the cluster processing config changes.
     returned: always
