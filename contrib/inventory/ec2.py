@@ -597,14 +597,15 @@ class Ec2Inventory(object):
             conn = self.connect(region)
             reservations = []
             if self.ec2_instance_filters:
+                instance_filters = []
                 if self.stack_filters:
-                    filters_dict = {}
-                    for filters in self.ec2_instance_filters:
-                        filters_dict.update(filters)
-                    reservations.extend(conn.get_all_instances(filters=filters_dict))
+                    print("TODO")
                 else:
                     for filters in self.ec2_instance_filters:
-                        reservations.extend(conn.get_all_instances(filters=filters))
+                        for key in filters:
+                           instance_filters.extend([{'Name': key, 'Values': [filters[key]]}])
+
+                reservations = conn.instances.filter(Filters=instance_filters)
             else:
                 reservations = conn.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
 
@@ -627,7 +628,7 @@ class Ec2Inventory(object):
             #         self.add_instance(instance, region)
 
         except ClientError as e:
-            if e.error_code == 'AuthFailure':
+            if e.response['Error']['Code'] == 'AuthFailure':
                 error = self.get_auth_error_message()
             else:
                 backend = 'Eucalyptus' if self.eucalyptus else 'AWS'
@@ -690,16 +691,16 @@ class Ec2Inventory(object):
                             self.add_rds_instance(instance, region)
                     if not marker:
                         break
-        except boto.exception.BotoServerError as e:
-            error = e.reason
+        except ClientError as e:
+            error = e.response['Error']['Message']
 
-            if e.error_code == 'AuthFailure':
+            if e.response['Error']['Code'] == 'AuthFailure':
                 error = self.get_auth_error_message()
-            elif e.error_code == "OptInRequired":
+            elif e.response['Error']['Code'] == "OptInRequired":
                 error = "RDS hasn't been enabled for this account yet. " \
                     "You must either log in to the RDS service through the AWS console to enable it, " \
                     "or set 'rds = False' in ec2.ini"
-            elif not e.reason == "Forbidden":
+            elif not e.response['Error']['Message'] == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
             self.fail_with_error(error, 'getting RDS instances')
 
@@ -1166,51 +1167,47 @@ class Ec2Inventory(object):
     def get_host_info_dict_from_instance(self, instance):
         instance_vars = {}
 
-        # for attr in dir(instance):
-        #     print("%s = %s %s" % (attr, getattr(instance, attr), type(getattr(instance, attr))))
-
         hostvars = ['ami_launch_index',
-                     'architecture',
-                     'block_device_mappings',
-                     'client_token',
-                     'ebs_optimized',
-                     'elastic_gpu_associations',
-                     'ena_support',
-                     'hypervisor',
-                     'iam_instance_profile',
-                     'id',
-                     'image_id',
-                     'instance_lifecycle',
-                     'kernel_id',
-                     'key_name',
-                     'launch_time',
-                     'monitoring',
-                     'network_interfaces_attribute',
-                     'placement',
-                     'placement_group',
-                     'platform',
-                     'private_dns_name',
-                     'private_ip_address',
-                     'product_codes',
-                     'public_dns_name',
-                     'public_ip_address',
-                     'ramdisk_id',
-                     'root_device_name',
-                     'root_device_type',
-                     'security_groups',
-                     'source_dest_check',
-                     'spot_instance_request_id',
-                     'sriov_net_support',
-                     'state',
-                     'state_reason',
-                     'state_transition_reason',
-                     'subnet_id',
-                     'tags',
-                     'virtualization_type',
-                     'vpc_id']
+                    'architecture',
+                    'block_device_mappings',
+                    'client_token',
+                    'ebs_optimized',
+                    'elastic_gpu_associations',
+                    'ena_support',
+                    'hypervisor',
+                    'iam_instance_profile',
+                    'id',
+                    'image_id',
+                    'instance_lifecycle',
+                    'kernel_id',
+                    'key_name',
+                    'launch_time',
+                    'monitoring',
+                    'network_interfaces_attribute',
+                    'placement',
+                    'placement_group',
+                    'platform',
+                    'private_dns_name',
+                    'private_ip_address',
+                    'product_codes',
+                    'public_dns_name',
+                    'public_ip_address',
+                    'ramdisk_id',
+                    'root_device_name',
+                    'root_device_type',
+                    'security_groups',
+                    'source_dest_check',
+                    'spot_instance_request_id',
+                    'sriov_net_support',
+                    'state',
+                    'state_reason',
+                    'state_transition_reason',
+                    'subnet_id',
+                    'tags',
+                    'virtualization_type',
+                    'vpc_id']
 
         for var in hostvars:
-
             value = getattr(instance, var)
             key = self.to_safe('ec2_' + var)
 
@@ -1240,18 +1237,19 @@ class Ec2Inventory(object):
                         v = tag['Value']
                     key = self.to_safe('ec2_tag_' + tag['Key'])
                     instance_vars[key] = v
-            elif key == 'ec2_groups':
+            elif key == "ec2_security_groups":
                 group_ids = []
                 group_names = []
                 for group in value:
-                    group_ids.append(group.id)
-                    group_names.append(group.name)
+                    group_ids.append(group['GroupId'])
+                    group_names.append(group['GroupName'])
                 instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
                 instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
-            elif key == 'ec2_block_device_mapping':
+            elif key == 'ec2_block_device_mappings':
                 instance_vars["ec2_block_devices"] = {}
-                for k, v in value.items():
-                    instance_vars["ec2_block_devices"][os.path.basename(k)] = v.volume_id
+
+                for device in value:
+                    instance_vars["ec2_block_devices"][os.path.basename(device['DeviceName'])] = device['Ebs']['VolumeId']
             else:
                 pass
                 # TODO Product codes if someone finds them useful
