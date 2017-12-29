@@ -97,6 +97,7 @@ options:
         - Time in seconds to consider an inventory sync to be current when update_on_launch is True.
       required: False
       default: null
+      version_added: "2.5"
     state:
       description:
         - Desired state of the resource.
