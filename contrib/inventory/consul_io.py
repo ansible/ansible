@@ -292,7 +292,7 @@ class ConsulInventory(object):
             self.load_data_for_node(node['Node'], datacenter)
 
     def load_data_for_node(self, node, datacenter):
-        '''loads the data for a sinle node adding it to various groups based on
+        '''loads the data for a single node adding it to various groups based on
         metadata retrieved from the kv store and service availability'''
 
         if self.config.suffixes == 'true':
