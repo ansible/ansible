@@ -7,16 +7,14 @@ from __future__ import absolute_import, division, print_function
 import json
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: linode
-short_description: create / delete / stop / restart an instance in Linode Public Cloud
+short_description: Manage instances on the Linode Public Cloud
 description:
      - creates / deletes a Linode Public Cloud instance and optionally waits for it to be 'running'.
 version_added: "1.3"
@@ -24,7 +22,7 @@ options:
   state:
     description:
      - Indicate desired state of the resource
-    choices: ['present', 'active', 'started', 'absent', 'deleted', 'stopped', 'restarted']
+    choices: [ absent, active, deleted, present, restarted, started, stopped ]
     default: present
   api_key:
     description:
@@ -32,8 +30,8 @@ options:
     default: null
   name:
     description:
-     - Name to give the instance (alphanumeric, dashes, underscore)
-     - To keep sanity on the Linode Web Console, name is prepended with LinodeID_
+     - Name to give the instance (alphanumeric, dashes, underscore).
+     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID_).
     default: null
   name_add_id:
     description:
@@ -166,6 +164,10 @@ options:
      - Linode DNS namespace where resource records should be created for new instances' private IP
      default: null
      type: string
+  private_round_robin:
+     - DNS round robin in private_dns_zone to which the instance private IP should be added
+     default: null
+     type: string
   datacenter:
     description:
      - datacenter to create an instance in (Linode Datacenter)
@@ -284,6 +286,7 @@ EXAMPLES = '''
         sspassword: 'superSecureRootPassword'
         sspubkey: 'ssh-rsa qwerty'
      private_dns_zone: dc1.example.com.
+     private_round_robin: test-service # adds private ip to test-service.dc1.example.com
 
 # Delete a server
 - local_action:
@@ -380,7 +383,10 @@ def delAResourceRecords(api, domain_id, private_resource_records, rname, rdata=N
                 raise(e)
     return { 'changed': changed }
 
-def putAResourceRecords(api, domain_id, rname, rdata):
+def putAResourceRecords(api, domain_id, private_resource_records, rname, rdata):
+    for rr in private_resource_records:
+        if rr['NAME'] == rname and rr['TARGET'] == rdata:
+            return(rr)
     try:
         create_result = api.domain_resource_create(
                         DomainID=domain_id,
@@ -452,7 +458,8 @@ def linodeServers(module, api, state, name, name_add_id, name_id_separator,
                   displaygroup, plan, additional_disks, distribution, stackscript,
                   stackscript_responses, datacenter, kernel_id, linode_id,
                   payment_term, password, private_ip, ssh_pub_key, swap, wait,
-                  wait_timeout, watchdog, private_dns_zone, **kwargs):
+                  wait_timeout, watchdog, private_dns_zone, private_round_robin,
+                  **kwargs):
     server = None
     instance = {}
     changed = False
@@ -657,10 +664,16 @@ def linodeServers(module, api, state, name, name_add_id, name_id_separator,
             try: # delete stale records and create a new one for the private IP
                 delAResourceRecords(api, domain_id, private_resource_records,
                                     rname=name, rdata=instance['private'][0]['ipv4'])
-                putAResourceRecords(api, domain_id,
+                putAResourceRecords(api, domain_id, private_resource_records,
                                     rname=name, rdata=instance['private'][0]['ipv4'])
             except Exception as e:
                 raise(e)
+            if private_round_robin:
+                try:
+                    putAResourceRecords(api, domain_id, private_resource_records,
+                                        rname=private_round_robin, rdata=instance['private'][0]['ipv4'])
+                except Exception as e:
+                    raise(e)
 
         # Start / Ensure servers are running
         # Ensure existing servers are up and running, boot if necessary
@@ -805,6 +818,7 @@ def main():
             wait_timeout = dict(default=300),
             watchdog = dict(type='bool', default=True),
             private_dns_zone = dict(type='str', default=None),
+            private_round_robin = dict(type='str', default=None),
         )
     )
 
@@ -849,6 +863,7 @@ def main():
     wait_timeout = int(module.params.get('wait_timeout'))
     watchdog = int(module.params.get('watchdog'))
     private_dns_zone = str(module.params.get('private_dns_zone'))
+    private_round_robin = str(module.params.get('private_round_robin'))
 
     kwargs = {}
     check_items = {'alert_bwin_enabled': alert_bwin_enabled, 'alert_bwin_threshold': alert_bwin_threshold,
@@ -880,7 +895,8 @@ def main():
             displaygroup, plan, additional_disks, distribution, stackscript,
             stackscript_responses, datacenter, kernel_id, linode_id,
             payment_term, password, private_ip, ssh_pub_key, swap, wait,
-            wait_timeout, watchdog, private_dns_zone, **kwargs)
+            wait_timeout, watchdog, private_dns_zone, private_round_robin,
+            **kwargs)
 
 
 if __name__ == '__main__':
