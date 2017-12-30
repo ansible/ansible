@@ -23,6 +23,11 @@ class TestMlnxosProtocolModule(TestMlnxosModule):
             "_get_protocols")
         self.get_config = self.mock_get_config.start()
 
+        self.mock_get_ip_config = patch.object(
+            mlnxos_protocol.MlnxosProtocolModule,
+            "_get_ip_routing")
+        self.get_ip_config = self.mock_get_ip_config.start()
+
         self.mock_load_config = patch(
             'ansible.module_utils.network.mlnxos.mlnxos.load_config')
         self.load_config = self.mock_load_config.start()
@@ -36,6 +41,7 @@ class TestMlnxosProtocolModule(TestMlnxosModule):
         config_file = 'mlnxos_protocols_show.cfg'
         self.get_config.return_value = load_fixture(config_file)
         self.load_config.return_value = None
+        self.get_ip_config.return_value = "IP routing: enabled"
 
     def test_mlag_enable(self):
         set_module_args(dict(mlag='enabled'))

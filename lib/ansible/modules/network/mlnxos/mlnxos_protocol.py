@@ -40,6 +40,9 @@ options:
   lacp:
     description: LACP protocol
     choices: ['enabled', 'disabled']
+  ip_l3:
+    description: IP L3 support
+    choices: ['enabled', 'disabled']
   ip_routing:
     description: IP routing support
     choices: ['enabled', 'disabled']
@@ -96,7 +99,9 @@ class MlnxosProtocolModule(BaseMlnxosModule):
         igmp_snooping=dict(name="igmp-snooping", enable="ip igmp snooping",
                            disable="no ip igmp snooping"),
         lacp=dict(name="lacp", enable="lacp", disable="no lacp"),
-        ip_routing=dict(name="IP L3", enable="ip routing",
+        ip_l3=dict(name="IP L3", enable="ip l3",
+                        disable="no ip l3"),
+        ip_routing=dict(name="IP routing", enable="ip routing",
                         disable="no ip routing"),
         lldp=dict(name="lldp", enable="lldp", disable="no lldp"),
         bgp=dict(name="bgp", enable="protocol bgp", disable="no protocol bgp"),
@@ -131,11 +136,25 @@ class MlnxosProtocolModule(BaseMlnxosModule):
     def _get_protocols(self):
         return show_cmd(self._module, "show protocols")
 
+    def _get_ip_routing(self):
+        return show_cmd(self._module, 'show ip routing | include "IP routing"',
+                        json_fmt=False)
+
     def load_current_config(self):
         self._current_config = dict()
         protocols_config = self._get_protocols()
         if not protocols_config:
-            return
+            protocols_config = dict()
+        ip_config = self._get_ip_routing()
+        if ip_config:
+            lines = ip_config.split('\n')
+            for line in lines:
+                line = line.strip()
+                line_attr = line.split(':')
+                if len(line_attr) == 2:
+                    attr = line_attr[0].strip()
+                    val = line_attr[1].strip()
+                    protocols_config[attr] = val
         for protocol, protocol_metadata in iteritems(self.PROTOCOL_MAPPING):
             protocol_json_attr = protocol_metadata['name']
             val = protocols_config.get(protocol_json_attr, 'disabled')
