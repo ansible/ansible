@@ -50,6 +50,7 @@
 
   - ec2_group:
       name: my_alb_sec_group
+      description: "{{ resource_prefix }} security group"
       state: present
       vpc_id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
@@ -99,6 +100,7 @@
   - name: destroy sec group
     ec2_group:
       name: "{{ sec_group.group_name }}"
+      description: "{{ resource_prefix }} security group"
       state: absent
       vpc_id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
