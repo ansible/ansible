@@ -70,7 +70,6 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        interfaces=dict(type='list'),
         state=dict(default='present',
                    choices=['present', 'absent',
                             'enabled', 'disabled'])
