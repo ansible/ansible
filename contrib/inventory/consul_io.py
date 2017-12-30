@@ -255,7 +255,7 @@ class ConsulInventory(object):
             self.load_data_for_datacenter(datacenter)
 
     def load_availability_groups(self, node, datacenter):
-        '''check the health of each service on a node and add add the node to either
+        '''check the health of each service on a node and add the node to either
         an 'available' or 'unavailable' grouping. The suffix for each group can be
         controlled from the config'''
         if self.config.has_config('availability'):
