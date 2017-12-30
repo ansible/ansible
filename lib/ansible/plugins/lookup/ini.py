@@ -49,10 +49,7 @@ EXAMPLES = """
 - debug:
     msg: "{{ item }}"
   with_ini:
-    - value[1-2]
-    - section: section1
-    - file: "lookup.ini"
-    - re: true
+    - '.* section=section1 file=test.ini re=True'
 """
 
 RETURN = """
@@ -130,13 +127,15 @@ class LookupModule(LookupBase):
                 for param in params[1:]:
                     name, value = param.split('=')
                     if name not in paramvals:
-                        raise AnsibleAssertionError('%s not in paramvals' % name)
+                        raise AnsibleAssertionError('%s not in paramvals' %
+                                                    name)
                     paramvals[name] = value
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
 
             # Retrieve file path
-            path = self.find_file_in_search_path(variables, 'files', paramvals['file'])
+            path = self.find_file_in_search_path(variables, 'files',
+                                                 paramvals['file'])
 
             # Create StringIO later used to parse ini
             config = StringIO()
@@ -147,12 +146,14 @@ class LookupModule(LookupBase):
 
             # Open file using encoding
             contents, show_data = self._loader._get_file_contents(path)
-            contents = to_text(contents, errors='surrogate_or_strict', encoding=paramvals['encoding'])
+            contents = to_text(contents, errors='surrogate_or_strict',
+                               encoding=paramvals['encoding'])
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
             self.cp.readfp(config)
-            var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+            var = self.get_value(key, paramvals['section'],
+                                 paramvals['default'], paramvals['re'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:
