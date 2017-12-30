@@ -123,7 +123,7 @@ options:
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
     description:
-      - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate.
+      - Indicates that minor version upgrades should be applied automatically. Used only when command=create, command=modify, or command=replicate.
     required: false
     default: no
     choices: [ "yes", "no" ]
