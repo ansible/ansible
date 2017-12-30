@@ -644,7 +644,8 @@ def is_executable(path):
     # These are all bitfields so first bitwise-or all the permissions we're
     # looking for, then bitwise-and with the file's mode to determine if any
     # execute bits are set.
-    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
+    st = os.stat(path)[stat.ST_MODE]
+    return stat.S_ISREG(st) and ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & st)
 
 
 def _load_params():
