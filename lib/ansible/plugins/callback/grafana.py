@@ -116,11 +116,13 @@ class CallbackModule(CallbackBase):
             'tags': ['ansible', 'ansible_event_start', self.playbook]
         }
         if int(self.secure) == 1:
-            self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
-        else:
             self.http = httplib.HTTPSConnection(self.grafana_server, self.grafana_port)
+        else:
+            self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
         self.http.request("POST", "/api/annotations", json.dumps(data), self.headers)
-        print(json.dumps(data))
+        response = self.http.getresponse()
+        if response.status != 200:
+            self._display.warning("Grafana server responded with HTTP %d", response.status)
 
     def v2_playbook_on_stats(self, stats):
         end_time = datetime.now()
@@ -148,7 +150,9 @@ class CallbackModule(CallbackBase):
         }
         self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
         self.http.request("POST", "/api/annotations", json.dumps(data), self.headers)
-        print(json.dumps(data))
+        response = self.http.getresponse()
+        if response.status != 200:
+            self._display.warning("Grafana server responded with HTTP %d", response.status)
 
     def v2_runner_on_failed(self, result, **kwargs):
         text = PLAYBOOK_ERROR_TXT.format(playbook=self.playbook, hostname=self.hostname,
@@ -162,4 +166,6 @@ class CallbackModule(CallbackBase):
         self.errors += 1
         self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
         self.http.request("POST", "/api/annotations", json.dumps(data), self.headers)
-        print(json.dumps(data))
+        response = self.http.getresponse()
+        if response.status != 200:
+            self._display.warning("Grafana server responded with HTTP %d", response.status)
