@@ -77,6 +77,8 @@ class CallbackModule(CallbackBase):
     This plugin makes use of the following environment variables:
         GRAFANA_SERVER   (optional): defaults to localhost
         GRAFANA_PORT     (optional): defaults to 3000
+        GRAFANA_SECURE   (optional): Set to 1 if HTTPs is implemented on Grafana.
+                                     defaults to 0 (false)
         GRAFANA_API_TOKEN          : Grafana API authentication token
     """
 
@@ -89,6 +91,9 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
         token = os.getenv('GRAFANA_API_TOKEN')
+        self.secure = os.getenv('GRAFANA_SECURE', 0)
+        if self.secure not in [0, 1]:
+            self.secure = 0
         if token is None:
             self.disabled = True
             self._display.warning("GRAFANA_API_TOKEN not defined in the environment")
@@ -110,7 +115,10 @@ class CallbackModule(CallbackBase):
             'text': text,
             'tags': ['ansible', 'ansible_event_start', self.playbook]
         }
-        self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
+        if int(self.secure) == 1:
+            self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
+        else:
+            self.http = httplib.HTTPSConnection(self.grafana_server, self.grafana_port)
         self.http.request("POST", "/api/annotations", json.dumps(data), self.headers)
         print(json.dumps(data))
 
