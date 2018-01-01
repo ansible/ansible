@@ -68,6 +68,13 @@ options:
         type: bool
         default: no
         version_added: "2.0"
+
+    assume_installed:
+        description:
+            - Virtual packages to add to the transaction to satisfy
+              dependencies, in the format "package=version".
+        default: []
+        version_added: "2.5"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -258,7 +265,7 @@ def remove_packages(module, pacman_path, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, pacman_path, state, packages, package_files):
+def install_packages(module, pacman_path, state, assume_installed, packages, package_files):
     install_c = 0
     package_err = []
     message = ""
@@ -302,6 +309,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
 
     if to_install_files:
         cmd = "%s -U %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_files))
+        cmd += ' ' + ' '.join('--assume-installed ' + pkg for pkg in assume_installed)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -386,6 +394,7 @@ def main():
             force=dict(type='bool', default=False),
             upgrade=dict(type='bool', default=False),
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
+            assume_installed=dict(type='list', default=[]),
         ),
         required_one_of=[['name', 'update_cache', 'upgrade']],
         supports_check_mode=True,
@@ -400,6 +409,9 @@ def main():
         p['state'] = 'present'
     elif p['state'] in ['absent', 'removed']:
         p['state'] = 'absent'
+
+    if p["assume_installed"] and p['state'] not in ['present', 'latest']:
+        module.fail_json(msg="assume_installed is only valid when installing")
 
     if p["update_cache"] and not module.check_mode:
         update_package_db(module, pacman_path)
@@ -431,7 +443,7 @@ def main():
             check_packages(module, pacman_path, pkgs, p['state'])
 
         if p['state'] in ['present', 'latest']:
-            install_packages(module, pacman_path, p['state'], pkgs, pkg_files)
+            install_packages(module, pacman_path, p['state'], p['assume_installed'], pkgs, pkg_files)
         elif p['state'] == 'absent':
             remove_packages(module, pacman_path, pkgs)
 
