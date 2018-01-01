@@ -464,22 +464,26 @@ class PyVmomiDeviceHelper(object):
 
         return diskspec
 
+    def get_device(self, device_type, name):
+        if device_type == 'pcnet32':
+            device = vim.vm.device.VirtualPCNet32()
+        elif device_type == 'vmxnet2':
+            device = vim.vm.device.VirtualVmxnet2()
+        elif device_type == 'vmxnet3':
+            device = vim.vm.device.VirtualVmxnet3()
+        elif device_type == 'e1000':
+            device = vim.vm.device.VirtualE1000()
+        elif device_type == 'e1000e':
+            device = vim.vm.device.VirtualE1000e()
+        elif device_type == 'sriov':
+            device = vim.vm.device.VirtualSriovEthernetCard()
+        else:
+            self.module.fail_json(msg='Invalid device_type "%s" for network "%s"' % (device_type, name))
+        return device
+
     def create_nic(self, device_type, device_label, device_infos):
         nic = vim.vm.device.VirtualDeviceSpec()
-        if device_type == 'pcnet32':
-            nic.device = vim.vm.device.VirtualPCNet32()
-        elif device_type == 'vmxnet2':
-            nic.device = vim.vm.device.VirtualVmxnet2()
-        elif device_type == 'vmxnet3':
-            nic.device = vim.vm.device.VirtualVmxnet3()
-        elif device_type == 'e1000':
-            nic.device = vim.vm.device.VirtualE1000()
-        elif device_type == 'e1000e':
-            nic.device = vim.vm.device.VirtualE1000e()
-        elif device_type == 'sriov':
-            nic.device = vim.vm.device.VirtualSriovEthernetCard()
-        else:
-            self.module.fail_json(msg='Invalid device_type "%s" for network "%s"' % (device_type, device_infos['name']))
+        nic.device = get_device(device_type, device_infos['name'])
 
         nic.device.wakeOnLanEnabled = bool(device_infos.get('wake_on_lan', True))
         nic.device.deviceInfo = vim.Description()
@@ -841,20 +845,13 @@ class PyVmomiHelper(PyVmomi):
                                       % (len(network_devices), len(current_net_devices)))
 
         for key in range(0, len(network_devices)):
-            # Default device type is vmxnet3, VMWare best practice
-            device_type = network_devices[key].get('device_type', 'vmxnet3')
-            nic = self.device_helper.create_nic(device_type,
-                                                'Network Adapter %s' % (key + 1),
-                                                network_devices[key])
+
+            nic_edit = key < len(current_net_devices) and (vm_obj or self.params['template'])
 
             nic_change_detected = False
-            if key < len(current_net_devices) and (vm_obj or self.params['template']):
+            if nic_edit:
+                nic = vim.vm.device.VirtualDeviceSpec()
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                # Changing mac address has no effect when editing interface
-                if 'mac' in network_devices[key] and nic.device.macAddress != current_net_devices[key].macAddress:
-                    self.module.fail_json(msg="Changing MAC address has not effect when interface is already present. "
-                                              "The failing new MAC address is %s" % nic.device.macAddress)
-
                 nic.device = current_net_devices[key]
                 if ('wake_on_lan' in network_devices[key] and
                         nic.device.wakeOnLanEnabled != network_devices[key].get('wake_on_lan')):
@@ -870,7 +867,33 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
 
                 nic.device.deviceInfo = vim.Description()
+
+                if nic.device.deviceInfo.summary != network_devices[key]['name']:
+                    nic.device.deviceInfo.summary = network_devices[key]['name']
+                    nic_change_detected = True
+
+                if 'device_type' in network_devices[key]:
+                    device = self.device_helper.get_device(network_devices[key]['device_type'], network_devices[key]['name'])
+                    if nic.device != device:
+                        self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
+                                                  "The failing device type is %s" % network_devices[key]['device_type'])
+
+                if 'mac' in network_devices[key]:
+                    if nic.device.addressType != 'manual' or nic.device.macAddress != network_devices[key]['mac']:
+                        nic.device.addressType = 'manual'
+                        nic.device.macAddress = network_devices[key]['mac']
+                        nic_change_detected = True
+                else:
+                    if nic.device.addressType != 'generated':
+                        nic.device.addressType = 'generated'
+                        nic_change_detected = True
+
             else:
+                # Default device type is vmxnet3, VMWare best practice
+                device_type = network_devices[key].get('device_type', 'vmxnet3')
+                nic = self.device_helper.create_nic(device_type,
+                                                    'Network Adapter %s' % (key + 1),
+                                                    network_devices[key])
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 nic_change_detected = True
 
@@ -1442,7 +1465,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan'):
+                if key not in ('device_type', 'name', 'vlan'):
                     network_changes = True
                     break
 
