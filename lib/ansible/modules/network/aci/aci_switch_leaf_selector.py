@@ -60,7 +60,7 @@ options:
 
 EXAMPLES = r'''
 - name: adding a switch policy leaf profile selector associated Node Block range
-  aci_switch_leaf_selector_node_block:
+  aci_switch_leaf_selector:
     hostname: apic
     username: someusername
     password: somepassword
