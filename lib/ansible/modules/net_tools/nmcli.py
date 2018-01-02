@@ -48,8 +48,8 @@ options:
             - A special value of "*" can be used for interface-independent connections.
             - The ifname argument is mandatory for all connection types except bond, team, bridge and vlan.
     type:
-        required: False
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, vlan ]
+        required: True
+        choices: [ethernet, team, team-slave, bond, bond-slave, bridge, vlan]
         description:
             - This is the type of device or network connection that you wish to create or modify.
     mode:
@@ -1037,7 +1037,7 @@ def main():
             conn_name=dict(required=True, type='str'),
             master=dict(required=False, default=None, type='str'),
             ifname=dict(required=False, default=None, type='str'),
-            type=dict(required=False, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
+            type=dict(required=True, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
             dns4=dict(required=False, default=None, type='list'),
