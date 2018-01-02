@@ -1,16 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2015, Chris Long <alcamie@gmail.com> <chlong@redhat.com>
+# Copyright: (c) 2015, Chris Long <alcamie@gmail.com> <chlong@redhat.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -21,7 +23,7 @@ short_description: Manage Networking
 requirements: [ nmcli, dbus, NetworkManager-glib ]
 version_added: "2.0"
 description:
-    - Manage the network devices. Create, modify, and manage, ethernet, teams, bonds, vlans etc.
+    - Manage the network devices. Create, modify and manage various connection and device type e.g., ethernet, teams, bonds, vlans etc.
 options:
     state:
         required: True
@@ -49,9 +51,10 @@ options:
             - The ifname argument is mandatory for all connection types except bond, team, bridge and vlan.
     type:
         required: False
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, vlan ]
+        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, vlan, generic ]
         description:
             - This is the type of device or network connection that you wish to create or modify.
+            - "type C(generic) is added in version 2.5."
     mode:
         required: False
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
@@ -864,12 +867,17 @@ class Nmcli(object):
         # format for modifying bond-slave interface
         return cmd
 
-    def create_connection_ethernet(self):
-        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'ethernet', 'con-name']
+    def create_connection_ethernet(self, conn_type='ethernet'):
         # format for creating ethernet interface
         # To add an Ethernet connection with static IP configuration, issue a command as follows
         # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
         # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
+        cmd = [self.nmcli_bin, 'con', 'add', 'type']
+        if conn_type == 'ethernet':
+            cmd.append('ethernet')
+        elif conn_type == 'generic':
+            cmd.append('generic')
+        cmd.append('con-name')
         if self.conn_name is not None:
             cmd.append(self.conn_name)
         elif self.ifname is not None:
@@ -896,12 +904,12 @@ class Nmcli(object):
             cmd.append(self.bool_to_string(self.autoconnect))
         return cmd
 
-    def modify_connection_ethernet(self):
+    def modify_connection_ethernet(self, conn_type='ethernet'):
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
-        # format for  modifying ethernet interface
-        # To add an Ethernet connection with static IP configuration, issue a command as follows
-        # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
-        # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
+        # format for modifying ethernet interface
+        # To modify an Ethernet connection with static IP configuration, issue a command as follows
+        # - nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
+        # nmcli con mod con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
         if self.ip4 is not None:
             cmd.append('ipv4.address')
             cmd.append(self.ip4)
@@ -920,7 +928,7 @@ class Nmcli(object):
         if self.dns6 is not None:
             cmd.append('ipv6.dns')
             cmd.append(self.dns6)
-        if self.mtu is not None:
+        if self.mtu is not None and conn_type == 'ethernet':
             cmd.append('802-3-ethernet.mtu')
             cmd.append(self.mtu)
         if self.autoconnect is not None:
@@ -993,6 +1001,8 @@ class Nmcli(object):
             cmd = self.create_connection_bridge()
         elif self.type == 'vlan':
             cmd = self.create_connection_vlan()
+        elif self.type == 'generic':
+            cmd = self.create_connection_ethernet(conn_type='generic')
 
         if cmd:
             return self.execute_command(cmd)
@@ -1021,6 +1031,8 @@ class Nmcli(object):
             cmd = self.modify_connection_bridge()
         elif self.type == 'vlan':
             cmd = self.modify_connection_vlan()
+        elif self.type == 'generic':
+            cmd = self.modify_connection_ethernet(conn_type='generic')
         if cmd:
             return self.execute_command(cmd)
         else:
@@ -1037,7 +1049,10 @@ def main():
             conn_name=dict(required=True, type='str'),
             master=dict(required=False, default=None, type='str'),
             ifname=dict(required=False, default=None, type='str'),
-            type=dict(required=False, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
+            type=dict(required=False, default=None,
+                      choices=['ethernet', 'team', 'team-slave', 'bond',
+                               'bond-slave', 'bridge', 'vlan', 'generic'],
+                      type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
             dns4=dict(required=False, default=None, type='list'),
