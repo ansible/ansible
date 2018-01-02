@@ -118,7 +118,7 @@ class DefineOid(object):
 
         # From IF-MIB
         self.ifIndex = dp + "1.3.6.1.2.1.2.2.1.1"
-        self.ifDescr = dp + "1.3.6.1.2.1.2.2.1.2"
+        self.ifDescr = dp + "1.3.6.1.2.1.2.2.1.2."
         self.ifMtu = dp + "1.3.6.1.2.1.2.2.1.4"
         self.ifSpeed = dp + "1.3.6.1.2.1.2.2.1.5"
         self.ifPhysAddress = dp + "1.3.6.1.2.1.2.2.1.6"
