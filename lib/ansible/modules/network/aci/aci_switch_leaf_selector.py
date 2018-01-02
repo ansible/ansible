@@ -83,8 +83,8 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update({
         'leaf_profile': dict(type='str', aliases=['leaf_profile_name']),
-        'leaf': dict(type='str', aliases=['leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
-        'leaf_node_blk': dict(type='str', aliases=['name', 'leaf_node_blk_name', 'node_blk_name']),
+        'leaf': dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
+        'leaf_node_blk': dict(type='str', aliases=['leaf_node_blk_name', 'node_blk_name']),
         'from': dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
         'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
