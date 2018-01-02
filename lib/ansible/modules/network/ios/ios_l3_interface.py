@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: ios_l3_interface
 version_added: "2.5"
 author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Manage L3 interfaces on IOS network devices.
+short_description: Manage L3 interfaces on Cisco IOS network devices.
 description:
   - This module provides declarative management of L3 interfaces
     on IOS network devices.
