@@ -33,11 +33,11 @@ options:
  leaf:
    description:
    - Name of Leaf Selector.
-   aliases: [ leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
+   aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
  leaf_node_blk:
    description:
    - Name of Node Block range to be added to Leaf Selector of given Leaf Profile
-   aliases: [ name, leaf_node_blk_name, node_blk_name ]
+   aliases: [ leaf_node_blk_name, node_blk_name ]
  from:
    description:
    - Start of Node Block Range
