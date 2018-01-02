@@ -29,7 +29,7 @@ options:
       - The script type, can not be changed once created.
     default: boot
     choices: [ boot, pxe ]
-  aliases: [ type ]
+    aliases: [ type ]
   script:
     description:
       - The script source code.
