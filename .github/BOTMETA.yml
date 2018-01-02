@@ -362,7 +362,7 @@ files:
   $modules/database/postgresql/postgresql_user.py: $team_ansible matburt nerzhul
   $modules/database/proxysql/: bmildren
   $modules/database/vertica/: dareko
-  $modules/files/acl.py: $team_ansible astorije bcoca
+  $modules/files/acl.py: $team_ansible bcoca
   $modules/files/archive.py: bendoh
   $modules/files/assemble.py: $team_ansible sfromm
   $modules/files/blockinfile.py: yaegashi
