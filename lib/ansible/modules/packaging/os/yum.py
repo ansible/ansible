@@ -330,10 +330,10 @@ def po_to_envra(po):
     return '%s:%s-%s-%s.%s' % (po.epoch, po.name, po.version, po.release, po.arch)
 
 
-def is_group_env_installed(name):
+def is_group_env_installed(name, conf_file, installroot='/'):
     name_lower = name.lower()
 
-    my = yum_base()
+    my = yum_base(conf_file, installroot)
     if yum.__version__ >= '3.4':
         groups_list = my.doGroupLists(return_evgrps=True)
     else:
@@ -793,7 +793,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
         # groups
         elif spec.startswith('@'):
-            if is_group_env_installed(spec):
+            if is_group_env_installed(spec, conf_file, installroot=installroot):
                 continue
 
             pkg = spec
@@ -899,7 +899,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
     for pkg in items:
         if pkg.startswith('@'):
-            installed = is_group_env_installed(pkg)
+            installed = is_group_env_installed(pkg, conf_file, installroot=installroot)
         else:
             installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
@@ -932,7 +932,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         # at this point we check to see if the pkg is no longer present
         for pkg in pkgs:
             if pkg.startswith('@'):
-                installed = is_group_env_installed(pkg)
+                installed = is_group_env_installed(pkg, conf_file, installroot=installroot)
             else:
                 installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
