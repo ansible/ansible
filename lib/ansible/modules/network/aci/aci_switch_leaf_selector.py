@@ -14,45 +14,62 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_switch_leaf_selector
-short_description: Add a leaf Selector to a Switch Policy Leaf Profile on Cisco ACI fabrics (infra:LeafS)
+short_description: Add a leaf Selector with Node Block Range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics (infra:LeafS, infra:NodeBlk, infra:RsAccNodePGrp)
 description:
-- Add a leaf Selector (without associated Node Block) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
+- Add a leaf Selector with Node Block range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(infra:LeafS) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  I(infra:LeafS, infra:NodeBlk, infra:RsAccNodePGrp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- This module is to be used with
-  M(aci_switch_policy_leaf_profile) and M(aci_switch_leaf_selector_node_block).
-  One first creates a leaf profile (infra:NodeP),
-  creates an associated selector (infra:LeafS),
-  finally adds a node block range to the selector (infra:NodeBlk).
+- This module is to be used with M(aci_switch_policy_leaf_profile)
+  One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
 options:
-  leaf_profile:
-    description:
-    - Name of the Leaf Profile to which we add a Selector.
-    aliases: [ leaf_profile_name ]
-  leaf:
-    description:
-    - Name of Leaf Selector to be added and associated with the Leaf Profile.
-    aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
-  state:
-    description:
-    - Use C(present) or C(absent) for adding or removing.
-    - Use C(query) for listing an object or multiple objects.
-    choices: [ absent, present, query ]
-    default: present
+ leaf_profile:
+   description:
+   - Name of the Leaf Profile to which we add a Selector.
+   aliases: [ leaf_profile_name ]
+ leaf:
+   description:
+   - Name of Leaf Selector.
+   aliases: [ leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
+ leaf_node_blk:
+   description:
+   - Name of Node Block range to be added to Leaf Selector of given Leaf Profile
+   aliases: [ name, leaf_node_blk_name, node_blk_name ]
+ from:
+   description:
+   - Start of Node Block Range
+   aliases: [ node_blk_range_from, from_range, range_from ]
+ to:
+   description:
+   - Start of Node Block Range
+   aliases: [ node_blk_range_to, to_range, range_to ]
+ policy_group:
+   description:
+   - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile
+   aliases: [ name, policy_group_name ]
+ state:
+   description:
+   - Use C(present) or C(absent) for adding or removing.
+   - Use C(query) for listing an object or multiple objects.
+   choices: [ absent, present, query ]
+   default: present
 '''
 
 EXAMPLES = r'''
-- name: creating a switch policy leaf profile selector (with no associated Node Block range)
-  aci_switch_leaf_selector:
+- name: adding a switch policy leaf profile selector associated Node Block range
+  aci_switch_leaf_selector_node_block:
     hostname: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name
     leaf: leaf_selector_name
+    leaf_node_blk: node_blk_name
+    from: 1011
+    to: 1011
+    policy_group: somepolicygroupname
     state: present
 '''
 
@@ -64,23 +81,31 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     argument_spec = aci_argument_spec
-    argument_spec.update(
-        leaf_profile=dict(type='str', aliases=['leaf_profile_name']),
-        leaf=dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
-    )
+    argument_spec.update({
+        'leaf_profile': dict(type='str', aliases=['leaf_profile_name']),
+        'leaf': dict(type='str', aliases=['leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
+        'leaf_node_blk': dict(type='str', aliases=['name', 'leaf_node_blk_name', 'node_blk_name']),
+        'from': dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
+        'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
+        'policy_group': dict(type='str', aliases=['policy_group_name']),
+        'state': dict(type='str', default='present', choices=['absent', 'present', 'query'])
+    })
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['leaf_profile', 'leaf']],
-            ['state', 'present', ['leaf_profile', 'leaf']]
-        ],
+            ['state', 'present', ['leaf_profile', 'leaf', 'leaf_node_blk', 'from', 'to']]
+        ]
     )
 
     leaf_profile = module.params['leaf_profile']
     leaf = module.params['leaf']
+    leaf_node_blk = module.params['leaf_node_blk']
+    from_ = module.params['from']
+    to_ = module.params['to']
+    policy_group = module.params['policy_group']
     state = module.params['state']
 
     aci = ACIModule(module)
@@ -93,11 +118,14 @@ def main():
         ),
         subclass_1=dict(
             aci_class='infraLeafS',
-            # normal rn: leaves-{name}-typ-{type}, hence here hardcoded to range for purposes of module
+            # NOTE: normal rn: leaves-{name}-typ-{type}, hence here hardcoded to range for purposes of module
             aci_rn='leaves-{}-typ-range'.format(leaf),
             filter_target='eq(infraLeafS.name, "{}")'.format(leaf),
             module_object=leaf,
-        )
+        ),
+        # NOTE: infraNodeBlk is not made into a subclass because there is a 1-1 mapping between node block and leaf selector name
+        child_classes=['infraNodeBlk', 'infraRsAccNodePGrp']
+
     )
 
     aci.get_existing()
@@ -108,7 +136,11 @@ def main():
             aci_class='infraLeafS',
             class_config=dict(
                 name=leaf
-            )
+            ),
+            child_configs=[
+                dict(infraNodeBlk=dict(attributes=dict(name=leaf_node_blk, from_=from_, to_=to_))),
+                dict(infraRsAccNodePGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accnodepgrp-{}'.format(policy_group)))),
+            ],
         )
 
         # Generate config diff which will be used as POST request body
