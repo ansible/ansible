@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: win_domain
 short_description: Ensures the existence of a Windows domain.
 version_added: 2.3
