@@ -322,7 +322,7 @@ class EcsServiceManager:
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy):
+                       placement_constraints, placement_strategy, network_configuration):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -333,7 +333,8 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy)
+            placementStrategy=placement_strategy,
+            networkConfiguration=network_configuration)
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
@@ -380,7 +381,8 @@ def main():
         repeat=dict(required=False, type='int', default=10),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
-        placement_strategy=dict(required=False, default=[], type='list')
+        placement_strategy=dict(required=False, default=[], type='list'),
+        network_configuration=dict(required=False, default=[], type='dict')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -449,7 +451,8 @@ def main():
                                                           role,
                                                           deploymentConfiguration,
                                                           module.params['placement_constraints'],
-                                                          module.params['placement_strategy'])
+                                                          module.params['placement_strategy'],
+                                                          module.params['network_configuration'])
 
                 results['service'] = response
 

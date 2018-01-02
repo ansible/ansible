@@ -216,7 +216,7 @@ def main():
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
         containers=dict(required=False, type='list'),
-        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
+        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'awsvpc', 'none'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list')))
 
