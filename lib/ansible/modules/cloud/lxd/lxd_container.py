@@ -61,7 +61,7 @@ options:
             (e.g. { "type": "image",
                     "mode": "pull",
                     "server": "https://images.linuxcontainers.org",
-                    "protocol": "lxd",
+                    "protocol": "simplestreams",
                     "alias": "ubuntu/xenial/amd64" }).
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)'
         required: false
@@ -151,7 +151,7 @@ EXAMPLES = '''
           type: image
           mode: pull
           server: https://images.linuxcontainers.org
-          protocol: lxd
+          protocol: simplestreams
           alias: ubuntu/xenial/amd64
         profiles: ["default"]
         wait_for_ipv4_addresses: true
