@@ -113,6 +113,7 @@ class StrategyBase:
         self._final_q = tqm._final_q
         self._step = getattr(tqm._options, 'step', False)
         self._diff = getattr(tqm._options, 'diff', False)
+        self.flush_cache = getattr(tqm._options, 'flush_cache', False)
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
@@ -878,7 +879,7 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             self.run_handlers(iterator, play_context)
             msg = "ran handlers"
-        elif meta_action == 'refresh_inventory':
+        elif meta_action == 'refresh_inventory' or self.flush_cache:
             self._inventory.refresh_inventory()
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':

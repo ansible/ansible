@@ -611,12 +611,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             :param path: the path to the inventory config file
         '''
         # get unique cache key
-        cache_key = "aws_ec2_" + self._get_cache_prefix(path) + "_" + self._get_config_identifier(path)
-        if cache_key not in self._cache:
-            self._cache[cache_key] = {}
-        else:
-            self.cache = self._cache[cache_key]
-
+        cache_key = self.get_cache_key(self.NAME, path)
         cache_dir = options['cache_connection']
         cache_timeout = options['cache_timeout']
 
@@ -679,30 +674,31 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
+
         config_data = self._validate_config(loader, path)
         self._set_credentials(config_data)
 
         # get user specifications
         regions, filters, group_by, hostnames, strict_permissions = self._get_query_options(config_data)
 
-        results = {}
+        # Cache
+        using_current_cache = False
+        meta_cache = cache  # False if meta: refresh_inventory or cli option --flush-cache is used
 
         cache = self._options['cache']
         cache_key, cache_connection, cache_timeout = self._set_cache(path, self._options)
         cache_path = cache_connection + "/" + cache_key
 
-        using_current_cache = False
         if cache and not cache_connection:
             raise AnsibleError("Must specify a cache directory using ini option cache_connection in the inventory section, "
                                "or using env var ANSIBLE_INVENTORY_CACHE_CONNECTION.")
 
         if cache:
-            if self._valid_cache(cache_connection, cache_key, cache_timeout):
-                # FIXME Take --refresh-cache into account
+            if meta_cache and self._valid_cache(cache_connection, cache_key, cache_timeout):
                 using_current_cache = True
-            else:
-                pass
 
+        # Generate inventory
+        results = {}
         formatted_inventory = {}
         if using_current_cache:
             if self._cache.get(cache_key):
@@ -715,7 +711,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             self._populate(results, hostnames)
             formatted_inventory = self._format_inventory(results, hostnames)
 
+        # Update cache
         if cache and not using_current_cache:
-            # update cache
             self._cache[cache_key] = jsonify(formatted_inventory, sort_keys=True, indent=4)
             self.cache._dump(formatted_inventory, cache_path)

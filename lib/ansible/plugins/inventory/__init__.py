@@ -222,6 +222,9 @@ class Cacheable(object):
 
     _cache = {}
 
+    def get_cache_key(self, name, path):
+        return name + "_" + self._get_cache_prefix(path) + "_" + self._get_config_identifier(path)
+
     def _get_cache_prefix(self, path):
         ''' create predictable unique prefix for plugin/inventory '''
 
