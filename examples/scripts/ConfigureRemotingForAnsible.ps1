@@ -21,6 +21,8 @@
 #
 # Use option -EnableCredSSP to enable CredSSP as an authentication option.
 #
+# Use option -DisableBasicAuth to disable basic authentication.
+#
 # Use option -SkipNetworkProfileCheck to skip the network profile check.
 # Without specifying this the script will only run if the device's interfaces
 # are in DOMAIN or PRIVATE zones.  Provide this switch if you want to enable
@@ -36,6 +38,7 @@
 # Updated by Nicolas Simond <contact@nicolas-simond.com>
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
+# Updated by Erwan Quélin <erwan.quelin@gmail.com>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
@@ -44,6 +47,7 @@
 # Version 1.4 - 2017-01-05
 # Version 1.5 - 2017-02-09
 # Version 1.6 - 2017-04-18
+# Version 1.7 - 2017-11-23
 
 # Support -Verbose option
 [CmdletBinding()]
@@ -54,8 +58,9 @@ Param (
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
-    [switch]$EnableCredSSP,
-    [switch]$GlobalHttpFirewallAccess
+    [switch]$GlobalHttpFirewallAccess,
+    [switch]$DisableBasicAuth = $false,
+    [switch]$EnableCredSSP
 )
 
 Function Write-Log
@@ -309,16 +314,33 @@ Else
 }
 
 # Check for basic authentication.
-$basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "Basic"}
-If (($basicAuthSetting.Value) -eq $false)
+$basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "Basic"}
+
+If ($DisableBasicAuth) 
 {
-    Write-Verbose "Enabling basic auth support."
-    Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
-    Write-Log "Enabled basic auth support."
-}
-Else
+    If (($basicAuthSetting.Value) -eq $true) 
+    {
+        Write-Verbose "Disabling basic auth support."
+        Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $false
+        Write-Log "Disabled basic auth support."
+    }
+    Else
+    {
+        Write-Verbose "Basic auth is already disabled."
+    }
+} 
+Else 
 {
-    Write-Verbose "Basic auth is already enabled."
+    If (($basicAuthSetting.Value) -eq $false)
+    {
+        Write-Verbose "Enabling basic auth support."
+        Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
+        Write-Log "Enabled basic auth support."
+    }
+    Else
+    {
+        Write-Verbose "Basic auth is already enabled."
+    }
 }
 
 # If EnableCredSSP if set to true
