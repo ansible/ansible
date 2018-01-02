@@ -149,6 +149,17 @@ foreach ($item in Get-ChildItem Env:) {
     $env_vars.Add($name, $value)
 }
 
+$domain_roles = @{
+    0 = "Stand-alone workstation"
+    1 = "Member workstation"
+    2 = "Stand-alone server"
+    3 = "Member server"
+    4 = "Backup domain controller"
+    5 = "Primary domain controller"
+}
+
+$domain_role = $domain_roles.Get_Item([Int32]$win32_cs.DomainRole)
+
 $ansible_facts = @{
     ansible_architecture = $win32_os.OSArchitecture
     ansible_bios_date = $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
@@ -192,6 +203,8 @@ $ansible_facts = @{
     ansible_user_id = $env:username
     ansible_user_sid = $user.User.Value
     ansible_windows_domain = $win32_cs.Domain
+    ansible_windows_domain_member = $win32_cs.PartOfDomain
+    ansible_windows_domain_role = $domain_role
 
     # Win32_PhysicalMemory is empty on some virtual platforms
     ansible_memtotal_mb = ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
