@@ -242,7 +242,7 @@ class LinodeInventory(object):
         self.push(self.inventory, "linode", dest)
 
         # Add host info to hostvars
-        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info(node)
+        self.inventory["_meta"]["hostvars"][dest] = self._get_host_info(node)
 
     def get_node_public_ip(self, node):
         """Returns a the public IP address of the node"""
@@ -265,9 +265,9 @@ class LinodeInventory(object):
         node_id = self.index[self.args.host]
         node = self.get_node(node_id)
 
-        return self.json_format_dict(self.get_host_info(node), True)
+        return self.json_format_dict(self._get_host_info(node), True)
 
-    def get_host_info(self, node):
+    def _get_host_info(self, node):
         node_vars = {}
         for direct_attr in [
             "api_id",
