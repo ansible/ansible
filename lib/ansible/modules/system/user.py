@@ -642,13 +642,17 @@ class User(object):
             ssh_key_file = self.ssh_file
         else:
             if not os.path.exists(info[5]) and not self.module.check_mode:
-                return (1, '', 'User %s home directory does not exist' % self.name)
+                raise Exception('User %s home directory does not exist' % self.name)
             ssh_key_file = os.path.join(info[5], self.ssh_file)
         return ssh_key_file
 
     def ssh_key_gen(self):
         info = self.user_info()
-        ssh_key_file = self.get_ssh_key_path()
+        try:
+            ssh_key_file = self.get_ssh_key_path()
+        except Exception:
+            e = get_exception()
+            return (1, '', str(e))
         ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
             if self.module.check_mode:
