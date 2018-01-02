@@ -29,5 +29,6 @@
   vars:
     nodejs_version: '{{ item }}'
   with_items:
+    - 7.10.1 # provides npm 4.2.0 (last npm < 5 released)
     - 8.0.0 # provides npm 5.0.0
     - 8.2.0 # provides npm 5.3.0 (output change with this version)
