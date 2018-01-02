@@ -127,6 +127,18 @@ options:
     type: bool
     default: "no"
     version_added: "2.4"
+  enable_plugin:
+    description:
+      - I(Plugin) name to enable for the install/update operation.
+        The enabled plugin will not persist beyond the transaction.
+    required: false
+    version_added: "2.5"
+  disable_plugin:
+    description:
+      - I(Plugin) name to disable for the install/update operation.
+        The disabled plugins will not persist beyond the transaction.
+    required: false
+    version_added: "2.5"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -1149,7 +1161,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check, exclude, repoq, skip_broken, update_only, security,
-           installroot='/', allow_downgrade=False):
+           installroot='/', allow_downgrade=False, disable_plugin='', enable_plugin=''):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1181,6 +1193,12 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         en_repos = enablerepo.split(',')
         r_cmd = ['--enablerepo=%s' % enablerepo]
         yum_basecmd.extend(r_cmd)
+
+    if enable_plugin:
+        yum_basecmd.extend(['--enableplugin', enable_plugin])
+
+    if disable_plugin:
+        yum_basecmd.extend(['--disableplugin', disable_plugin])
 
     if exclude:
         e_cmd = ['--exclude=%s' % exclude]
@@ -1291,6 +1309,8 @@ def main():
             install_repoquery=dict(type='bool', default=True),
             allow_downgrade=dict(type='bool', default=False),
             security=dict(type='bool', default=False),
+            enable_plugin=dict(type='list', default=[]),
+            disable_plugin=dict(type='list', default=[]),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
@@ -1307,6 +1327,12 @@ def main():
         module.fail_json(msg='. '.join(error_msgs))
 
     params = module.params
+    enable_plugin = params.get('enable_plugin', '')
+    if enable_plugin:
+        enable_plugin = ','.join(enable_plugin)
+    disable_plugin = params.get('disable_plugin', '')
+    if disable_plugin:
+        disable_plugin = ','.join(disable_plugin)
 
     if params['list']:
         repoquerybin = ensure_yum_utils(module)
@@ -1349,7 +1375,8 @@ def main():
         allow_downgrade = params['allow_downgrade']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, update_only, security, params['installroot'], allow_downgrade)
+                         skip_broken, update_only, security, params['installroot'], allow_downgrade,
+                         disable_plugin=disable_plugin, enable_plugin=enable_plugin)
         if repoquery:
             results['msg'] = '%s %s' % (
                 results.get('msg', ''),
