@@ -363,9 +363,9 @@ If you receive an connection error please double check the inventory and Playboo
 
 .. seealso::
 
-  * intro_network
-  * intro_inventory
-  * playbooks_best_practices.html#best-practices-for-variables-and-vaults
+  * :doc:`intro_network`
+  * :doc:`intro_inventory`
+  * :ref:`Vault best practices <best-practices-for-variables-and-vaults>`
 
 
 
