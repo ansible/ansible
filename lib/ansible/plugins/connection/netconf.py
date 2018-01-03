@@ -87,15 +87,6 @@ options:
         response after issuing a call to a RPC.  If the RPC does not return in
         timeout seconds, an error is generated.
     default: 120
-  connect_timeout:
-    type: int
-    description:
-      - Configures the connect timeout for when the connection is initially
-        established to the remote device.  The connect_timeout value should
-        be specified in seconds.
-    ini:
-      section: persistent_connection
-      key: connect_timeout
   host_key_auto_add:
     type: boolean
     description:
@@ -110,11 +101,32 @@ options:
       key: host_key_auto_add
     env:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
-
-
-# TODO:
-# persistent_connection/connect_retry_timeout
-# persistent_connection/command_timeout
+  persistent_connect_timeout:
+    type: int
+    description:
+      - Configures, in seconds, the amount of time to wait when trying to
+        initially establish a persistent connection.  If this value expires
+        before the connection to the remote device is completed, the connection
+        will fail
+    default: 30
+    ini:
+      section: persistent_connection
+      key: persistent_connect_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+  persistent_command_timeout:
+    type: int
+    description:
+      - Configures, in seconds, the amount of time to wait for a command to
+        return from the remote device.  If this timer is exceeded before the
+        command returns, the connection plugin will raise an exception and
+        close
+    default: 10
+    ini:
+      section: persistent_connection
+      key: persistent_command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 
 import os
