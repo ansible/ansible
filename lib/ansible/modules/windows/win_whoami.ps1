@@ -40,7 +40,6 @@ namespace Ansible
 
         // TOKEN_GROUPS
         public ArrayList Groups { get; internal set; }
-        public Sid LogonSid { get; internal set; }
         public ArrayList Rights { get; internal set; }
 
         // TOKEN_MANDATORY_LABEL
@@ -570,7 +569,6 @@ namespace Ansible
             }
 
             // Get Current Process LogonSID, User Rights and Groups
-            Sid logonSid = null;
             ArrayList userRights = new ArrayList();
             ArrayList userGroups = new ArrayList();
             TOKEN_GROUPS groups;
@@ -598,9 +596,7 @@ namespace Ansible
                         }
                     }
                     // Do not include the Logon SID in the groups category
-                    if (attributes.HasFlag(TokenGroupAttributes.SE_GROUP_LOGON_ID))
-                        logonSid = new Sid(sidAndAttribute.Sid);
-                    else
+                    if (!attributes.HasFlag(TokenGroupAttributes.SE_GROUP_LOGON_ID))
                     {
                         Hashtable groupInfo = new Hashtable();
                         Sid group = new Sid(sidAndAttribute.Sid);
@@ -645,7 +641,6 @@ namespace Ansible
             Marshal.FreeHGlobal(tokenStatsPtr);
 
             SessionInfo sessionInfo = GetSessionDataForLogonSession(tokenStats.AuthenticationId);
-            sessionInfo.LogonSid = logonSid;
             sessionInfo.Groups = userGroups;
             sessionInfo.Label = integritySid;
             sessionInfo.ImpersonationLevel = tokenStats.ImpersonationLevel;
