@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: win_domain_controller
 short_description: Manage domain controller/member server state for a Windows host
 version_added: 2.3
@@ -54,6 +54,18 @@ options:
     choices:
       - domain_controller
       - member_server
+  database_path:
+    description:
+    - The path to a directory on a fixed disk of the Windows host where the
+      domain database will be created..
+    - If not set then the default path is C(%SYSTEMROOT%\NTDS).
+    version_added: '2.5'
+  sysvol_path:
+    description:
+    - The path to a directory on a fixed disk of the Windows host where the
+      Sysvol folder will be created.
+    - If not set then the default path is C(%SYSTEMROOT%\SYSVOL).
+    version_added: '2.5'
 author:
     - Matt Davis (@nitzmahone)
 '''
