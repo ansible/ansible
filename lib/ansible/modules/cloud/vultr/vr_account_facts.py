@@ -97,10 +97,7 @@ class AnsibleVultrAccountFacts(Vultr):
         }
 
     def get_account_info(self):
-        account_info = self.api_query(path="/v1/account/info")
-        if account_info:
-            return account_info
-        return {}
+        return self.api_query(path="/v1/account/info")
 
 
 def main():
