@@ -364,13 +364,28 @@ class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
         return httplib.HTTPSConnection(host, **kwargs)
 
 
+class ParseResultDottedDict(dict):
+    '''
+    A dict that acts similarly to the ParseResult named tuple from urllib
+    '''
+    def __init__(self, *args, **kwargs):
+        super(ParseResultDottedDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+    def as_list(self):
+        '''
+        Generate a list from this dict, that looks like the ParseResult named tuple
+        '''
+        return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
+
+
 def generic_urlparse(parts):
     '''
     Returns a dictionary of url parts as parsed by urlparse,
     but accounts for the fact that older versions of that
     library do not support named attributes (ie. .netloc)
     '''
-    generic_parts = dict()
+    generic_parts = ParseResultDottedDict()
     if hasattr(parts, 'netloc'):
         # urlparse is newer, just read the fields straight
         # from the parts object
@@ -729,16 +744,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
 
 def maybe_add_ssl_handler(url, validate_certs):
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] == 'https' and validate_certs:
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.scheme == 'https' and validate_certs:
         if not HAS_SSL:
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
         # do the cert validation
-        netloc = parsed[1]
+        netloc = parsed.netloc
         if '@' in netloc:
             netloc = netloc.split('@', 1)[1]
         if ':' in netloc:
@@ -767,10 +780,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if ssl_handler:
         handlers.append(ssl_handler)
 
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] != 'ftp':
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.scheme != 'ftp':
         username = url_username
 
         if headers is None:
@@ -778,20 +789,20 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
         if username:
             password = url_password
-            netloc = parsed[1]
-        elif '@' in parsed[1]:
-            credentials, netloc = parsed[1].split('@', 1)
+            netloc = parsed.netloc
+        elif '@' in parsed.netloc:
+            credentials, netloc = parsed.netloc.split('@', 1)
             if ':' in credentials:
                 username, password = credentials.split(':', 1)
             else:
                 username = credentials
                 password = ''
 
-            parsed = list(parsed)
-            parsed[1] = netloc
+            parsed_list = parsed.as_list()
+            parsed_list[1] = netloc
 
             # reconstruct url without credentials
-            url = urlunparse(parsed)
+            url = urlunparse(parsed_list)
 
         if username and not force_basic_auth:
             passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
@@ -815,7 +826,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         else:
             try:
                 rc = netrc.netrc(os.environ.get('NETRC'))
-                login = rc.authenticators(parsed[1])
+                login = rc.authenticators(parsed.hostname)
             except IOError:
                 login = None
 

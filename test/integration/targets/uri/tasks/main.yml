@@ -373,3 +373,17 @@
   register: result
   failed_when: result is not failed
   when: has_httptester
+
+- name: Write out netrc template
+  template:
+    src: netrc.j2
+    dest: "{{ output_dir }}/netrc"
+
+- debug:
+    msg: "{{ lookup('file', output_dir ~ '/netrc') }}"
+
+- name: Test netrc with port
+  uri:
+    url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
+  environment:
+    NETRC: "{{ output_dir|expanduser }}/netrc"
