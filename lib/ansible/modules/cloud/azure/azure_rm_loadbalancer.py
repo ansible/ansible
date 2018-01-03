@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_loadbalancer
 
-version_added: "2.4"
+version_added: "2.5"
 
 short_description: Manage Azure load balancers.
 
