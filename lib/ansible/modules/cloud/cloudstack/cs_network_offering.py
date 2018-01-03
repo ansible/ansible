@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
+# Copyright: (c) 2017, David Passante (@dpassante)
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -16,11 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -39,9 +39,9 @@ options:
   state:
     description:
       - State of the network offering.
+    choices: ['enabled', 'present', 'disabled', 'absent']
     required: false
-    default: 'present'
-    choices: [ 'enabled, 'present', 'disabled', 'absent']
+    default: present
   display_text:
     description:
       - Display text of the network offerings
@@ -49,7 +49,7 @@ options:
     default: null
   guest_ip_type:
     description:
-      - Guest type of the network offering: Shared or Isolated
+      - Guest type of the network offering. Shared or Isolated
     choices: ['Shared', 'Isolated']
     required: true
     default: null
@@ -65,7 +65,8 @@ options:
     default: null
   traffic_type:
     description:
-      - The traffic type for the network offering. Supported type in current release is GUEST only
+      - The traffic type for the network offering.
+      - Supported type in current release is GUEST only
     required: false
     default: GUEST
   availability:
@@ -82,44 +83,47 @@ options:
   details:
     description:
       - Network offering details in key/value pairs.
-      - Supported keys are internallbprovider/publiclbprovider with service provider as a value
+      - Supported keys are internallbprovider/publiclbprovider
+      - with service provider as a value
     choices: ['internallbprovider', 'publiclbprovider']
     required: false
     default: null
   egress_default_policy:
     description:
-      - True if guest network default egress policy is allow; false if default egress policy is deny
+      - True if guest network default egress policy is allow.
+      - false if default egress policy is deny
     choices: ['true', 'false']
     required: false
-    default: null
+    default: false
   persistent:
     description:
-      - True if network offering supports persistent networks; defaulted to false if not specified
+      - True if network offering supports persistent networks
+      - defaulted to false if not specified
     required: false
     default: false
   keepalive_enabled:
     description:
-      - If true keepalive will be turned on in the loadbalancer. 
-      - At the time of writing this has only an effect on haproxy; 
+      - If true keepalive will be turned on in the loadbalancer.
+      - At the time of writing this has only an effect on haproxy;
       - the mode http and httpclose options are unset in the haproxy conf file.
     choices: ['true', 'false']
     required: false
-    default: null
+    default: false
   max_connections:
     description:
       - Maximum number of concurrent connections supported by the network offering
     required: false
-    default: true
+    default: null
   network_rate:
     description:
       - Data transfer rate in megabits per second allowed
     required: false
-    default: true
+    default: null
   service_capability_list:
     description:
       - Desired service capabilities as part of network offering
     required: false
-    default: true
+    default: null
   service_offering_id:
     description:
       - The service offering ID used by virtual router provider
@@ -127,15 +131,18 @@ options:
     default: null
   service_provider_list:
     description:
-      - provider to service mapping. If not specified, the provider for the service will be mapped to the default provider on the physical network
+      - provider to service mapping
+      - If not specified, the provider for the service
+      - will be mapped to the default provider on the physical network
     required: false
     default: null
   specify_ip_ranges:
     description:
-      - true if network offering supports specifying ip ranges; defaulted to false if not specified
+      - true if network offering supports specifying ip ranges
+      - defaulted to false if not specified
     choices: ['true', 'false']
     required: false
-    default: null
+    default: false
   specify_vlan:
     description:
       - true if network offering supports vlans
@@ -195,21 +202,29 @@ state:
   type: string
   sample: Enabled
 guestiptype:
+  description: Guest type of the network offering
   returned: success
   type: string
   sample: Isolated
 availability:
+  description: The availability of network offering
   returned: success
   type: string
   sample: Optional
 serviceofferingid:
+  description: The service offering ID
   returned: success
   type: string
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
@@ -227,7 +242,6 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
         if self.network_offering:
             return self.network_offering
 
-
         args = {
             'name': self.module.params.get('name'),
             'guestiptype': self.module.params.get('guest_type'),
@@ -241,11 +255,11 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
     def create_or_update(self):
         network_offering = self.get_network_offering()
         if not network_offering:
-          network_offering = self.create_network_offering()
+            network_offering = self.create_network_offering()
 
         return self.update_network_offering(network_offering=network_offering)
 
-    def create_network_offering(self): 
+    def create_network_offering(self):
         self.result['changed'] = True
         args = {
             'state': self.module.params.get('state'),
@@ -282,7 +296,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
 
         if not network_offering:
             return network_offering
-        
+
         self.result['changed'] = True
 
         if not self.module.check_mode:
@@ -304,7 +318,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
         else:
             del args['state']
 
-        for k,v in args.items():
+        for k, v in args.items():
             if network_offering[k] != args[k]:
                 self.result['changed'] = True
 
@@ -312,6 +326,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             network_offering = self.cs.updateNetworkOffering(**args)
 
         return network_offering['networkoffering']
+
 
 def main():
     argument_spec = cs_argument_spec()
@@ -339,6 +354,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_together=cs_required_together(),
         supports_check_mode=True
     )
 
@@ -358,7 +374,5 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
