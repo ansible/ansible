@@ -42,8 +42,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/18731)
 * correctly ensure 'ungrouped' membership rules (https://github.com/ansible/ansible/pull/33878)
 * made warnings less noisy when empty/no inventory is supplied (https://github.com/ansible/ansible/pull/32806)
-
 * Fixes a failure which prevents to create servers in module cloudscale_server
+* Fix win_firewall_rule "Specified cast is invalid" error when modifying a rule with all of Domain/Public/Private profiles set (https://github.com/ansible/ansible/pull/34383)
 
 <a id="2.4.2"></a>
 
