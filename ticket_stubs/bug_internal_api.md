@@ -1,5 +1,5 @@
-Interal Ansible API
-===================
+Internal Ansible API
+====================
 
 Hi!
 
