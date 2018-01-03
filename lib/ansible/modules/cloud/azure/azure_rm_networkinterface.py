@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_networkinterface
 
-version_added: "2.1"
+version_added: "2.5"
 
 short_description: Manage Azure network interfaces.
 
