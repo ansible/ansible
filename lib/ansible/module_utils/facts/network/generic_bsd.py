@@ -51,10 +51,12 @@ class GenericBsdIfconfigNetwork(Network):
 
         self.merge_default_interface(default_ipv4, interfaces, 'ipv4')
         self.merge_default_interface(default_ipv6, interfaces, 'ipv6')
-        network_facts['interfaces'] = sorted(list(interfaces.keys()))
+
+        network_facts['interfaces'] = {}
 
         for iface in interfaces:
             network_facts[iface] = interfaces[iface]
+            network_facts['interfaces'][iface] = interfaces[iface]
 
         network_facts['default_ipv4'] = default_ipv4
         network_facts['default_ipv6'] = default_ipv6

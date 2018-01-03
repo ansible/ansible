@@ -39,9 +39,10 @@ class HPUXNetwork(Network):
         network_facts.update(default_interfaces_facts)
 
         interfaces = self.get_interfaces_info()
-        network_facts['interfaces'] = interfaces.keys()
+        network_facts['interfaces'] = {}
         for iface in interfaces:
             network_facts[iface] = interfaces[iface]
+            network_fact['interfaces'][iface] = interfaces[iface]
 
         return network_facts
 

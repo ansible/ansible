@@ -52,9 +52,10 @@ class LinuxNetwork(Network):
         default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path,
                                                                  collected_facts=collected_facts)
         interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
-        network_facts['interfaces'] = interfaces.keys()
+        network_facts['interfaces'] = {}
         for iface in interfaces:
             network_facts[iface] = interfaces[iface]
+            network_facts['interfaces'][iface] = interfaces[iface]
         network_facts['default_ipv4'] = default_ipv4
         network_facts['default_ipv6'] = default_ipv6
         network_facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
