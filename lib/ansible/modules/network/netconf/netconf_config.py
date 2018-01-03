@@ -184,13 +184,7 @@ def netconf_edit_config(m, xml, commit, retkwargs, datastore, capabilities, loca
         if local_connection:
             changed = config_before.data_xml != config_after.data_xml
         else:
-            config_before = fromstring(to_native(config_before))
-            config_before = config_before.findall("./data")[0]
-
-            config_after = fromstring(to_native(config_after))
-            config_after = config_after.findall("./data")[0]
-
-            changed = tostring(config_before) != tostring(config_after)
+            changed = config_before != config_after
 
         if changed and commit and datastore == "candidate":
             if ":confirmed-commit" in capabilities:
@@ -219,11 +213,11 @@ def main():
             save=dict(type='bool', default=False),
 
             # connection arguments
-            host=dict(type='str', required=True),
+            host=dict(type='str'),
             port=dict(type='int', default=830),
 
-            username=dict(type='str', required=True, no_log=True),
-            password=dict(type='str', required=True, no_log=True),
+            username=dict(type='str', no_log=True),
+            password=dict(type='str', no_log=True),
 
             hostkey_verify=dict(type='bool', default=True),
             look_for_keys=dict(type='bool', default=True),
