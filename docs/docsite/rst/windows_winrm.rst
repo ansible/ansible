@@ -25,7 +25,7 @@ with the Ansible package, but can be installed by running the following::
 Authentication Options
 ``````````````````````
 When connecting to a Windows host, there are several different options that can be used
-when authentication with an account. The authentication type may be set on inventory 
+when authenticating with an account. The authentication type may be set on inventory 
 hosts or groups with the ``ansible_winrm_transport`` variable.
 
 The following matrix is a high level overview of the options:
@@ -349,7 +349,7 @@ In the section that starts with:
 
     [domain_realm]
 
-Add a line like the following for each domain that Ansible needs access for:
+Add a line like the following for each domain that Ansible needs access to:
 
 ::
 
@@ -659,7 +659,7 @@ for each authentication option. See the section on authentication above for more
 
 Limitations
 ```````````
-Due to the design of the WinRM protocol , there are a few limitations
+Due to the design of the WinRM protocol, there are a few limitations
 when using WinRM that can cause issues when creating playbooks for Ansible.
 These include:
 
@@ -672,7 +672,7 @@ These include:
 * Some programs fail to install with WinRM due to no credential delegation or
   because they access forbidden Windows API like WUA over WinRM.
 
-* Commands under WinRM are done under a non-interactive session, which can prevent
+* Commands under WinRM are run under a non-interactive session, which can prevent
   certain commands or executables from running.
 
 * You cannot run a process that interacts with ``DPAPI``, which is used by some 
@@ -682,12 +682,12 @@ Some of these limitations can be mitigated by doing one of the following:
 
 * Set ``ansible_winrm_transport`` to ``credssp`` or ``kerberos`` (with
   ``ansible_winrm_kerberos_delegation=true``) to bypass the double hop issue
-  and access network resources
+  and access network resources.
 
 * Use ``become`` to bypass all WinRM restrictions and run a command as it would
   locally. Unlike using an authentication transport like ``credssp``, this will
   also remove the non-interactive restriction and API restrictions like WUA and
-  DPAPI
+  DPAPI.
 
 * Use a scheduled task to run a command which can be created with the
   ``win_scheduled_task`` module. Like ``become``, this bypasses all WinRM

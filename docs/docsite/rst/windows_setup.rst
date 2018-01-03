@@ -102,7 +102,7 @@ WinRM Setup
 ```````````
 Once Powershell has been upgraded to at least version 3.0, the final step is for the
 WinRM service to be configured so that Ansible can connect to it. There are two
-main components of the WinRM service that governs how Ansible can interface with
+main components of the WinRM service that govern how Ansible can interface with
 the Windows host: the ``listener`` and the ``service`` configuration settings.
 
 Details about each component can be read below, but the script
@@ -169,7 +169,7 @@ In the example above there are two listeners activated; one is listening on
 port 5985 over HTTP and the other is listening on port 5986 over HTTPS. Some of
 the key options that are useful to understand are:
 
-* ``Transport``: Whether the listener is run over HTTP or HTTPS, it is
+* ``Transport``: Whether the listener is run over HTTP or HTTPS.  It is
   recommended to use a listener over HTTPS as the data is encrypted without
   any further changes required.
 

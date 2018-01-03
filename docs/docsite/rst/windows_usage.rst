@@ -10,7 +10,7 @@ This document covers details specific to using Ansible for Windows.
 Use Cases
 `````````
 Ansible can be used to orchestrate a multitude of tasks on Windows servers. 
-Below are some examples and info about common tasks.
+Below are some examples and information about common tasks.
 
 Installing Software
 -------------------
