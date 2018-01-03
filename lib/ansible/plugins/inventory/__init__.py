@@ -49,7 +49,7 @@ class BaseInventoryPlugin(object):
 
         self.inventory = None
         self.display = display
-        self.cache = cache
+        self.cache = cache or {}
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
