@@ -89,9 +89,7 @@ class TestIncludedFile(unittest.TestCase):
         mock_variable_manager = MagicMock(name='MockVariableManager')
         mock_variable_manager.get_vars.return_value = dict()
 
-        res = IncludedFile.process_include_results(results, mock_tqm, mock_iterator,
-                                                   mock_inventory, fake_loader,
-                                                   mock_variable_manager)
+        res = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
         self.assertIsInstance(res, list)
         self.assertEquals(res[0]._filename, os.path.join(os.getcwd(), 'include_test.yml'))
         self.assertEquals(res[1]._filename, os.path.join(os.getcwd(), 'other_include_test.yml'))
