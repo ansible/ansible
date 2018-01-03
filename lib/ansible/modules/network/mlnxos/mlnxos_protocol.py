@@ -15,12 +15,12 @@ DOCUMENTATION = """
 module: mlnxos_protocol
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: Enables/Disables protocols on MLNX-OS network devices
+short_description: Enables/Disables protocols on Mellanox MLNX-OS network devices
 description:
-  - This module provides a mechanism for enabling disabling protocols
-    on MLNX-OS network devices.
+  - This module provides a mechanism for enabling and disabling protocols
+    Mellanox on MLNX-OS network devices.
 notes:
-  - tested on Mellanox OS 3.6.4000
+  - Tested on MLNX-OS 3.6.4000
 options:
   mlag:
     description: MLAG protocol
@@ -60,11 +60,11 @@ options:
 EXAMPLES = """
 - name: enable protocols for MLAG
   mlnxos_protocol:
-      lacp: enabled
-      spanning_tree: disabled
-      ip_routing: enabled
-      mlag: enabled
-      dcb_pfc: enabled
+    lacp: enabled
+    spanning_tree: disabled
+    ip_routing: enabled
+    mlag: enabled
+    dcb_pfc: enabled
 """
 
 RETURN = """
@@ -124,6 +124,7 @@ class MlnxosProtocolModule(BaseMlnxosModule):
         argument_spec.update(element_spec)
         self._module = AnsibleModule(
             argument_spec=argument_spec,
+            supports_check_mode=True
         )
 
     def get_required_config(self):
