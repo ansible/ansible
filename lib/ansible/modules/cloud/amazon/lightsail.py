@@ -413,7 +413,7 @@ def core(module):
         client = boto3_conn(module, conn_type='client', resource='lightsail',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json('Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
+        module.fail_json(msg='Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
 
     changed = False
     state = module.params['state']
@@ -467,6 +467,7 @@ def main():
         core(module)
     except (botocore.exceptions.ClientError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()
