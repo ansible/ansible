@@ -95,6 +95,15 @@ options:
     - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for VM
           will always be equal to the VM's memory size. version_added: 2.5"
     - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines. version_added: 2.5.'
+    - ' - C(mem_limit) (integer): The memory utilization of a virtual machine will not exceed this limit. Unit is MB.
+          version_added: 2.5'
+    - ' - C(mem_reservation) (integer): The amount of memory resource that is guaranteed available to the virtual
+          machine. Unit is MB. version_added: 2.5'
+    - ' - C(cpu_limit) (integer): The CPU utilization of a virtual machine will not exceed this limit. Unit is MHz.
+          version_added: 2.5'
+    - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
+          Unit is MHz. version_added: 2.5'
+
   guest_id:
     description:
     - Set the guest ID (Debian, RHEL, Windows...).
@@ -232,6 +241,10 @@ EXAMPLES = r'''
       scsi: paravirtual
       memory_reservation: 512
       memory_reservation_lock: True
+      mem_limit: 8096
+      mem_reservation: 4096
+      cpu_limit: 8096
+      cpu_reservation: 4096
       max_connections: 5
       hotadd_cpu: True
       hotremove_cpu: True
@@ -625,6 +638,59 @@ class PyVmomiHelper(PyVmomi):
         if self.params['guest_id'] and (vm_obj is None or self.params['guest_id'] != vm_obj.summary.config.guestId):
             self.change_detected = True
             self.configspec.guestId = self.params['guest_id']
+
+    def configure_resource_alloc_info(self, vm_obj):
+        """
+        Function to configure resource allocation information about virtual machine
+        :param vm_obj: VM object in case of reconfigure, None in case of deploy
+        :return: None
+        """
+        self.configspec.memoryAllocation = vim.ResourceAllocationInfo()
+        self.configspec.cpuAllocation = vim.ResourceAllocationInfo()
+
+        if 'hardware' in self.params:
+            if 'mem_limit' in self.params['hardware']:
+                mem_limit = None
+                try:
+                    mem_limit = int(self.params['hardware'].get('mem_limit'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.mem_limit attribute should be an integer value.")
+                self.configspec.memoryAllocation.limit = mem_limit
+                if vm_obj is None or self.configspec.memoryAllocation.limit != vm_obj.config.memoryAllocation.limit:
+                    self.change_detected = True
+
+            if 'mem_reservation' in self.params['hardware']:
+                mem_reservation = None
+                try:
+                    mem_reservation = int(self.params['hardware'].get('mem_reservation'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
+
+                self.configspec.memoryAllocation.reservation = mem_reservation
+                if vm_obj is None or \
+                        self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
+                    self.change_detected = True
+
+            if 'cpu_limit' in self.params['hardware']:
+                cpu_limit = None
+                try:
+                    cpu_limit = int(self.params['hardware'].get('cpu_limit'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.cpu_limit attribute should be an integer value.")
+                self.configspec.cpuAllocation.limit = cpu_limit
+                if vm_obj is None or self.configspec.cpuAllocation.limit != vm_obj.config.cpuAllocation.limit:
+                    self.change_detected = True
+
+            if 'cpu_reservation' in self.params['hardware']:
+                cpu_reservation = None
+                try:
+                    cpu_reservation = int(self.params['hardware'].get('cpu_reservation'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.cpu_reservation should be an integer value.")
+                self.configspec.cpuAllocation.reservation = cpu_reservation
+                if vm_obj is None or \
+                        self.configspec.cpuAllocation.reservation != vm_obj.config.cpuAllocation.reservation:
+                    self.change_detected = True
 
     def configure_cpu_and_memory(self, vm_obj, vm_creation=False):
         # set cpu/memory/etc
@@ -1433,6 +1499,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
+        self.configure_resource_alloc_info(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
@@ -1501,6 +1568,9 @@ class PyVmomiHelper(PyVmomi):
                 resource_pool = self.get_resource_pool()
                 try:
                     task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
+                except vmodl.fault.InvalidRequest as e:
+                    self.module.fail_json(msg="Failed to create virtual machine due to invalid configuration "
+                                              "parameter %s" % to_native(e.msg))
                 except vim.fault.RestrictedVersion as e:
                     self.module.fail_json(msg="Failed to create virtual machine due to "
                                               "product versioning restrictions: %s" % to_native(e.msg))
@@ -1570,6 +1640,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
+        self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
