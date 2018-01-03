@@ -46,12 +46,16 @@
         memory_mb: 512
         hotadd_memory: true
         hotadd_cpu: false
-        # vcsim does not support this changes so commenting
+        # vcsim does not support these settings, so commenting
         # till the time.
         # memory_reservation: 512
         # memory_reservation_lock: False
         # nested_virt: True
         # hotremove_cpu: True
+        # mem_limit: 8096
+        # mem_reservation: 4096
+        # cpu_limit: 8096
+        # cpu_reservation: 4096
         max_connections: 10
     disk:
         - size: 0gb
