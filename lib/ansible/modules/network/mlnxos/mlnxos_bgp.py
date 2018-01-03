@@ -15,36 +15,36 @@ DOCUMENTATION = """
 module: mlnxos_bgp
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: configures BGP on MLNX-OS Mellanox network devices
+short_description: Configures BGP on Mellanox MLNX-OS network devices
 description:
   - This module provides declarative management of BGP router and neighbors
-    on MLNX-OS network devices.
+    on Mellanox MLNX-OS network devices.
 notes:
-  - tested on Mellanox OS 3.6.4000
+  - Tested on MLNX-OS 3.6.4000
 options:
   as_number:
     description:
-      - local AS number.
+      - Local AS number.
     required: true
   router_id:
     description:
-      - router IP address
-    required: true
+      - Router IP address. Required if I(state=present).
   neighbors:
     description:
-      - list of neighbors
+      - List of neighbors.
     suboptions:
       remote_as:
         description:
-          - local AS number
+          - Remote AS number.
         required: true
       neighbor:
         description:
-          - neighbor IP address
+          - Neighbor IP address.
         required: true
   state:
     description:
       - BGP state.
+    default: present
     choices: ['present', 'absent']
 """
 
@@ -69,7 +69,6 @@ commands:
     - exit
     - router bgp 172 router-id 2.3.4.5 force
     - router bgp 172 neighbor 2.3.4.6 remote-as 173
-    - exit
 """
 
 import re
@@ -90,11 +89,11 @@ class MlnxosBgpModule(BaseMlnxosModule):
         """ initialize module
         """
         neighbor_spec = dict(
-            remote_as=dict(type='int'),
-            neighbor=dict(),
+            remote_as=dict(type='int', required=True),
+            neighbor=dict(required=True),
         )
         element_spec = dict(
-            as_number=dict(type='int'),
+            as_number=dict(type='int', required=True),
             router_id=dict(),
             neighbors=dict(type='list', elements='dict',
                            options=neighbor_spec),
