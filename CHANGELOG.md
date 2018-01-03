@@ -46,6 +46,7 @@ Ansible Changes By Release
 * Fix win_firewall_rule "Specified cast is invalid" error when modifying a rule with all of Domain/Public/Private profiles set (https://github.com/ansible/ansible/pull/34383)
 * Fix case for multilib when installing from a file in the yum module
   (https://github.com/ansible/ansible/pull/32236)
+* Fix WinRM parsing/escaping of IPv6 addresses (https://github.com/ansible/ansible/pull/34072)
 
 <a id="2.4.2"></a>
 
