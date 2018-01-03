@@ -44,6 +44,8 @@ Ansible Changes By Release
 * made warnings less noisy when empty/no inventory is supplied (https://github.com/ansible/ansible/pull/32806)
 * Fixes a failure which prevents to create servers in module cloudscale_server
 * Fix win_firewall_rule "Specified cast is invalid" error when modifying a rule with all of Domain/Public/Private profiles set (https://github.com/ansible/ansible/pull/34383)
+* Fix case for multilib when installing from a file in the yum module
+  (https://github.com/ansible/ansible/pull/32236)
 
 <a id="2.4.2"></a>
 
