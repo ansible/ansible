@@ -2,6 +2,7 @@
 - import_playbook: playbook2.yml            # Test tag added to import_playbook
   tags:
     - canary22
+
 - import_playbook: playbook3.yml            # Test skipping tags added to import_playbook
   tags:
     - skipme

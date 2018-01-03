@@ -39,4 +39,3 @@
           assert:
             that:
               - set_in_tasks4
-

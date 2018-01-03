@@ -25,27 +25,25 @@
     - name: Test conditional role include
       include_role:
         name: role1
+        tasks_from: canary1.yml
       when: run_role
-      register: _conditional_check
 
     - name: Assert that role ran
       assert:
         that:
-          - _conditional_check is not skipped
+          - role1_canary1 == 'r1c1'
 
     - name: Test conditional role include that should be skipped
       include_role:
         name: role1
+        tasks_from: canary2.yml
       when: do_not_run_role
-      register: _conditional_check
 
-    - name: Assert that role ran
+    - name: Assert that role did not run
       assert:
         that:
-          - _conditional_check is skipped
+          - role1_canary2 is not defined
 
-    # FIXME This looks like it's running the list item in the list three time
-    # instead of running each role once
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
@@ -124,7 +122,6 @@
             name: role2
 
       always:
-        # Looks like this runs role1, role2, and role3. No idea why.
         - name: Include role inside always
           include_role:
             name: role3

@@ -8,4 +8,5 @@
         that:
           - group_var1 == 'set in group_vars/all.yml'
           - group_var2 == 'set in dir/group_vars/all.yml'
-      ignore_errors: yes
+      tags:
+        - never
