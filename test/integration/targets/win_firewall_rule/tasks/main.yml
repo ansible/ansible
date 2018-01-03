@@ -78,6 +78,7 @@
     action: allow
     direction: in
     protocol: tcp
+    profiles: public,private,domain
 
 - name: Change firewall rule
   win_firewall_rule:
@@ -326,7 +327,7 @@
   # Works on windows >= Windows 8/Windows Server 2012
   when: ansible_distribution_version | version_compare('6.2', '>=')
 
-- name: Set firewall rule profile back to 'all'
+- name: Set firewall rule profile back to 'private'
   win_firewall_rule:
     name: http
     enabled: yes
@@ -335,10 +336,11 @@
     action: allow
     direction: in
     protocol: tcp
-    profiles: 'Domain,Public,Private'
+    security: authenticate
+    profiles: Private
   register: add_firewall_rule_with_string_profiles
 
-- name: Check that setting firewall rule profile back to 'all' succeeds with a change
+- name: Check that setting firewall rule profile back to 'private' succeeds with a change
   assert:
     that:
     - add_firewall_rule_with_string_profiles.changed == true
