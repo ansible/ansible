@@ -45,6 +45,7 @@ options:
         description:
             - Config params for waf.
             - Field introduced in 17.2.1.
+        required: true
     description:
         description:
             - Field introduced in 17.2.1.
@@ -102,7 +103,7 @@ def main():
         avi_api_update_method=dict(default='put',
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
-        config=dict(type='dict',),
+        config=dict(type='dict', required=True),
         description=dict(type='str',),
         files=dict(type='list',),
         name=dict(type='str', required=True),
