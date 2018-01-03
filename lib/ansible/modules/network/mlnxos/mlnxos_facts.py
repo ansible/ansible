@@ -15,7 +15,7 @@ DOCUMENTATION = """
 module: mlnxos_facts
 version_added: "2.5"
 author: "Waleed Mousa (@waleedym), Samer Deeb (@samerd)"
-short_description: Collect facts from MLNX-OS Mellanox network devices
+short_description: Collect facts from Mellanox MLNX-OS network devices
 description:
   - Collects a base set of device facts from a MLNX-OS Mellanox network devices
     This module prepends all of the base network fact keys with
@@ -38,20 +38,18 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
 ---
-# Collect all facts from the device
-- mlnxos_facts:
+- name: Collect all facts from the device
+  mlnxos_facts:
     gather_subset: all
 
-# Collect only the interfaces facts
-- mlnxos_facts:
+- name: Collect only the interfaces facts
+  mlnxos_facts:
     gather_subset:
       - interfaces
 
-# Do not collect version facts
-- mlnxos_facts:
+- name: Do not collect version facts
+  mlnxos_facts:
     gather_subset:
       - "!version"
 """
