@@ -154,7 +154,6 @@ EXAMPLES = '''
     state: "delete"
 '''
 
-import time
 import requests
 from ansible.module_utils.basic import AnsibleModule, env_fallback, return_values
 
@@ -256,19 +255,19 @@ class FortiManager(object):
     #     body = {"method": "exec", "params": [{"url": '/dvmdb/adom/{adom_name}/script/execute'.format(adom=adom), "data": fields, "session": self.session}]}
     #     response = self.make_request(body).json()
     #     return response
-
-        '''
-        wrapper = list()
-        data = dict()
-        data['url'] = '/dvmdb/adom/{adom}/script/{script_name}/script_schedule'.format(adom=adom, script_name=script_name)
-        data['datetime'] = (datetime.datetime.now() + datetime.timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
-        data['day_of_week'] = 'tues'
-        data['name'] = 'apitest'
-        data['run_on_db'] = 'disable'
-        data['type'] = 'onetime'
-        data['device'] = 131
-        #data['option'] = 'syntax'
-        '''
+    #
+    #     '''
+    #     wrapper = list()
+    #     data = dict()
+    #     data['url'] = '/dvmdb/adom/{adom}/script/{script_name}/script_schedule'.format(adom=adom, script_name=script_name)
+    #     data['datetime'] = (datetime.datetime.now() + datetime.timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
+    #     data['day_of_week'] = 'tues'
+    #     data['name'] = 'apitest'
+    #     data['run_on_db'] = 'disable'
+    #     data['type'] = 'onetime'
+    #     data['device'] = 131
+    #     #data['option'] = 'syntax'
+    #     '''
 
     def execute_script(self, script_name, scope, package, adom, vdom):
         """
