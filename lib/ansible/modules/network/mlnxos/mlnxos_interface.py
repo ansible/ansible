@@ -1,30 +1,14 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #
-# (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -123,9 +107,10 @@ commands:
   returned: always
   type: list
   sample:
-    - interface Eth1/2
+    - interface ethernet 1/2
     - description test-interface
     - mtu 512
+    - exit
 """
 
 from copy import deepcopy
@@ -133,15 +118,41 @@ import re
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import conditional, \
-    remove_default_spec
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import conditional
+from ansible.module_utils.network.common.utils import remove_default_spec
 
-from ansible.module_utils.network.mlnxos.mlnxos import BaseMlnxosModule, \
-    get_interfaces_config
+from ansible.module_utils.network.mlnxos.mlnxos import BaseMlnxosModule
+from ansible.module_utils.network.mlnxos.mlnxos import get_interfaces_config
 
 
 class MlnxosInterfaceModule(BaseMlnxosModule):
-    ETH_IF_NAME_REGEX = re.compile(r'^Eth(\d\/\d+(|\/\d))$')
+    IF_ETH_REGEX = re.compile(r"^Eth(\d+\/\d+|Eth\d+\/\d+\d+)$")
+    IF_VLAN_REGEX = re.compile(r"^Vlan (\d+)$")
+    IF_LOOPBACK_REGEX = re.compile(r"^Loopback (\d+)$")
+
+    IF_TYPE_ETH = "ethernet"
+    IF_TYPE_LOOPBACK = "loopback"
+    IF_TYPE_VLAN = "vlan"
+
+    IF_TYPE_MAP = {
+        IF_TYPE_ETH: IF_ETH_REGEX,
+        IF_TYPE_VLAN: IF_VLAN_REGEX,
+        IF_TYPE_LOOPBACK: IF_LOOPBACK_REGEX,
+    }
+    UNSUPPORTED_ATTRS = {
+        IF_TYPE_ETH: (),
+        IF_TYPE_VLAN: ('speed', 'rx_rate', 'tx_rate'),
+        IF_TYPE_LOOPBACK: ('speed', 'mtu', 'rx_rate', 'tx_rate'),
+    }
+    UNSUPPORTED_STATES = {
+        IF_TYPE_ETH: ('absent',),
+        IF_TYPE_VLAN: (),
+        IF_TYPE_LOOPBACK: ('up', 'down'),
+    }
+
+    IF_MODIFIABLE_ATTRS = ('speed', 'description', 'mtu')
+    _interface_type = None
 
     @classmethod
     def _get_element_spec(cls):
@@ -150,7 +161,7 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
             description=dict(),
             speed=dict(choices=['1G', '10G', '25G', '40G', '50G', '56G', '100G']),
             mtu=dict(type='int'),
-            enabled=dict(default=True, type='bool'),
+            enabled=dict(type='bool'),
             delay=dict(default=10, type='int'),
             state=dict(default='present',
                        choices=['present', 'absent', 'up', 'down']),
@@ -189,24 +200,60 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
             mutually_exclusive=mutually_exclusive,
             supports_check_mode=True)
 
-    def validate_name(self, value):
-        if not self.ETH_IF_NAME_REGEX.match(value):
-            self._module.fail_json(msg='Invalid interface name!')
-
     def validate_purge(self, value):
         if value:
             self._module.fail_json(
-                msg='Purge is not supported for ethernet interfaces!')
+                msg='Purge is not supported!')
 
     def validate_duplex(self, value):
         if value != 'auto':
             self._module.fail_json(
-                msg='Duplex is not supported for ethernet interfaces')
+                msg='Duplex is not supported!')
 
-    def validate_state(self, value):
-        if value == 'absent':
+    def _get_interface_type(self, if_name):
+        if_type = None
+        if_id = None
+        for interface_type, interface_regex in iteritems(self.IF_TYPE_MAP):
+            match = interface_regex.match(if_name)
+            if match:
+                if_type = interface_type
+                if_id = match.group(1)
+                break
+        return if_type, if_id
+
+    def _set_if_type(self, params):
+        if_name = params['name']
+        if_type, if_id = self._get_interface_type(if_name)
+        if not if_id:
             self._module.fail_json(
-                msg='Cannot remove physical interfaces')
+                msg='unsupported interface: %s' % if_name)
+        params['if_type'] = if_type
+        params['if_id'] = if_id
+
+    def _check_supported_attrs(self, if_obj):
+        unsupported_attrs = self.UNSUPPORTED_ATTRS[self._interface_type]
+        for attr in unsupported_attrs:
+            val = if_obj[attr]
+            if val is not None:
+                self._module.fail_json(
+                    msg='attribute %s is not supported for %s interface' % (
+                        attr, self._interface_type))
+        req_state = if_obj['state']
+        unsupported_states = self.UNSUPPORTED_STATES[self._interface_type]
+        if req_state in unsupported_states:
+            self._module.fail_json(
+                msg='%s state is not supported for %s interface' % (
+                    req_state, self._interface_type))
+
+    def _validate_interface_type(self):
+        for if_obj in self._required_config:
+            if_type = if_obj['if_type']
+            if not self._interface_type:
+                self._interface_type = if_type
+            elif self._interface_type != if_type:
+                self._module.fail_json(
+                    msg='Cannot aggreagte interfaces from different types')
+            self._check_supported_attrs(if_obj)
 
     def get_required_config(self):
         self._required_config = list()
@@ -220,8 +267,8 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
 
                 self.validate_param_values(item, item)
                 req_item = item.copy()
+                self._set_if_type(req_item)
                 self._required_config.append(req_item)
-
         else:
             params = {
                 'name': module_params['name'],
@@ -236,15 +283,13 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
             }
 
             self.validate_param_values(params)
+            self._set_if_type(params)
             self._required_config.append(params)
+        self._validate_interface_type()
 
     @classmethod
     def get_if_name(cls, item):
         return cls.get_config_attr(item, "header")
-
-    @classmethod
-    def get_if_cmd(cls, if_name):
-        return if_name.replace("Eth", "interface ethernet ")
 
     @classmethod
     def get_admin_state(cls, item):
@@ -254,15 +299,15 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
     @classmethod
     def get_oper_state(cls, item):
         oper_state = cls.get_config_attr(item, "Operational state")
+        if not oper_state:
+            oper_state = cls.get_config_attr(item, "State")
         return str(oper_state).lower()
 
-    def add_command_to_interface(self, interface, cmd):
-        if interface not in self._commands:
-            self._commands.append(interface)
-        self._commands.append(cmd)
-
-    def get_speed(self, item):
-        speed = self.get_config_attr(item, 'Actual speed')
+    @classmethod
+    def get_speed(cls, item):
+        speed = cls.get_config_attr(item, 'Actual speed')
+        if not speed:
+            return
         try:
             speed = int(speed.split()[0])
             return "%dG" % speed
@@ -270,67 +315,108 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
             return None
 
     def _create_if_data(self, name, item):
-        return {
-            'name': name,
-            'description': self.get_config_attr(item, 'Description'),
-            'speed': self.get_speed(item),
-            'mtu': self.get_mtu(item),
-            'enabled': self.get_admin_state(item),
-            'state': self.get_oper_state(item)
-        }
+        regex = self.IF_TYPE_MAP[self._interface_type]
+        if_id = ''
+        match = regex.match(name)
+        if match:
+            if_id = match.group(1)
+        return dict(
+            name=name,
+            description=self.get_config_attr(item, 'Description'),
+            speed=self.get_speed(item),
+            mtu=self.get_mtu(item),
+            enabled=self.get_admin_state(item),
+            state=self.get_oper_state(item),
+            if_id=if_id)
 
     def _get_interfaces_config(self):
-        return get_interfaces_config(self._module, "ethernet")
+        return get_interfaces_config(self._module, self._interface_type)
 
     def load_current_config(self):
         self._current_config = dict()
         config = self._get_interfaces_config()
+        if not config:
+            return
 
         for item in config:
             name = self.get_if_name(item)
             self._current_config[name] = self._create_if_data(name, item)
 
-    def generate_commands(self):
-        for req_if in self._required_config:
+    def _generate_no_if_commands(self, req_if, curr_if):
+        if self._interface_type == self.IF_TYPE_ETH:
             name = req_if['name']
-            curr_if = self._current_config.get(name)
-            if not curr_if:
-                self._module.fail_json(
-                    msg='could not find interface %s' % name)
-                continue
-            self._generate_if_commands(name, req_if, curr_if)
+            self._module.fail_json(
+                msg='cannot remove ethernet interface %s' % name)
+        if not curr_if:
+            return
+        if_id = req_if['if_id']
+        if not if_id:
+            return
+        self._commands.append(
+            'no interface %s %s' % (self._interface_type, if_id))
 
-    def _generate_if_commands(self, name, req_if, curr_if):
-        args = ('speed', 'description', 'mtu')
+    def _add_commands_to_interface(self, req_if, cmd_list):
+        if not cmd_list:
+            return
+        if_id = req_if['if_id']
+        if not if_id:
+            return
+        self._commands.append(
+            'interface %s %s' % (self._interface_type, if_id))
+        self._commands.extend(cmd_list)
+        self._commands.append('exit')
+
+    def _generate_if_commands(self, req_if, curr_if):
         enabled = req_if['enabled']
-        add_exit = False
-        interface_prefix = self.get_if_cmd(name)
-
-        for attr_name in args:
+        cmd_list = []
+        for attr_name in self.IF_MODIFIABLE_ATTRS:
             candidate = req_if.get(attr_name)
             running = curr_if.get(attr_name)
             if candidate != running:
                 if candidate:
                     cmd = attr_name + ' ' + str(candidate)
-                    if attr_name in ('mtu', 'speed'):
+                    if self._interface_type == self.IF_TYPE_ETH and \
+                            attr_name in ('mtu', 'speed'):
                         cmd = cmd + ' ' + 'force'
-                    self.add_command_to_interface(interface_prefix, cmd)
-                    add_exit = True
+                    cmd_list.append(cmd)
         curr_enabled = curr_if.get('enabled', False)
-        if enabled != curr_enabled:
+        if enabled is not None and enabled != curr_enabled:
             cmd = 'shutdown'
             if enabled:
                 cmd = "no %s" % cmd
-            self.add_command_to_interface(interface_prefix, cmd)
-            add_exit = True
-        if add_exit:
-            self._commands.append('exit')
+            cmd_list.append(cmd)
+        if cmd_list:
+            self._add_commands_to_interface(req_if, cmd_list)
+
+    def generate_commands(self):
+        for req_if in self._required_config:
+            name = req_if['name']
+            curr_if = self._current_config.get(name, {})
+            if not curr_if and self._interface_type == self.IF_TYPE_ETH:
+                self._module.fail_json(
+                    msg='could not find ethernet interface %s' % name)
+                continue
+            req_state = req_if['state']
+            if req_state == 'absent':
+                self._generate_no_if_commands(req_if, curr_if)
+            else:
+                self._generate_if_commands(req_if, curr_if)
 
     def _get_interfaces_rates(self):
-        return get_interfaces_config(self._module, "ethernet", "rates")
+        return get_interfaces_config(self._module, self._interface_type,
+                                     "rates")
 
     def _get_interfaces_status(self):
-        return get_interfaces_config(self._module, "ethernet", "status")
+        return get_interfaces_config(self._module, self._interface_type,
+                                     "status")
+
+    def _check_state(self, name, want_state, statuses):
+        curr_if = statuses.get(name, {})
+        if curr_if:
+            curr_if = curr_if[0]
+            curr_state = self.get_oper_state(curr_if).strip()
+            if curr_state is None or not conditional(want_state, curr_state):
+                return 'state eq(%s)' % want_state
 
     def check_declarative_intent_params(self, result):
         failed_conditions = []
@@ -351,17 +437,11 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
                 if delay > 0:
                     sleep(delay)
             if want_state in ('up', 'down'):
-                if not statuses:
-                    statuses = self._get_interfaces_status()
-                    curr_if = statuses.get(name)
-                    curr_state = None
-                    if curr_if:
-                        curr_if = curr_if[0]
-                        curr_state = self.get_oper_state(curr_if)
-                    if curr_state is None or not \
-                            conditional(want_state, curr_state.strip()):
-                        failed_conditions.append(
-                            'state ' + 'eq(%s)' % want_state)
+                if statuses is None:
+                    statuses = self._get_interfaces_status() or {}
+                cond = self._check_state(name, want_state, statuses)
+                if cond:
+                    failed_conditions.append(cond)
             if_rates = None
             if want_tx_rate or want_rx_rate:
                 if not rates:
