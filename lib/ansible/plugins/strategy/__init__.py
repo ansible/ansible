@@ -791,9 +791,7 @@ class StrategyBase:
         try:
             included_files = IncludedFile.process_include_results(
                 host_results,
-                self._tqm,
                 iterator=iterator,
-                inventory=self._inventory,
                 loader=self._loader,
                 variable_manager=self._variable_manager
             )
