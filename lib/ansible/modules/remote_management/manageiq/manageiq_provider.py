@@ -37,7 +37,7 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon', 'oVirt']
+    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware']
   zone:
     description: The ManageIQ zone name that will manage the provider.
     required: false
@@ -46,6 +46,16 @@ options:
     description: The provider region name to connect to (e.g. AWS region for Amazon).
     required: false
     default: null
+  host_default_vnc_port_start:
+    required: false
+    default: null
+    description: The first port in the host VNC range. defaults to None.
+    version_added: "2.5"
+  host_default_vnc_port_end:
+    required: false
+    default: null
+    description: The last port in the host VNC range. defaults to None.
+    version_added: "2.5"
 
   provider:
     required: false
@@ -375,6 +385,22 @@ EXAMPLES = '''
       username: 'admin'
       password: 'password'
       verify_ssl: true
+
+- name: Create a new VMware provider in ManageIQ
+  manageiq_provider:
+    name: 'EngVMware'
+    type: 'VMware'
+    state: 'present'
+    provider:
+      hostname: 'vcenter.example.com'
+      host_default_vnc_port_start: 5800
+      host_default_vnc_port_end: 5801
+      userid: 'root'
+      password: 'password'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      token: 'VeryLongToken'
+      verify_ssl: true
 '''
 
 RETURN = '''
@@ -400,6 +426,9 @@ def supported_providers():
             class_name='ManageIQ::Providers::Redhat::InfraManager',
             default_role='default',
             metrics_role='metrics',
+        ),
+        VMware=dict(
+            class_name='ManageIQ::Providers::Vmware::InfraManager',
         ),
     )
 
@@ -553,7 +582,8 @@ class ManageIQProvider(object):
 
         return dict(changed=True, msg=result['message'])
 
-    def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region):
+    def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
+                      host_default_vnc_port_start, host_default_vnc_port_end):
         """ Edit a user from manageiq.
 
         Returns:
@@ -566,6 +596,8 @@ class ManageIQProvider(object):
             zone={'id': zone_id},
             provider_region=provider_region,
             connection_configurations=endpoints,
+            host_default_vnc_port_start=host_default_vnc_port_start,
+            host_default_vnc_port_end=host_default_vnc_port_end,
         )
 
         # NOTE: we do not check for diff's between requested and current
@@ -587,7 +619,8 @@ class ManageIQProvider(object):
             changed=True,
             msg="successfully updated the provider %s: %s" % (provider['name'], result))
 
-    def create_provider(self, name, provider_type, endpoints, zone_id, provider_region):
+    def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
+                        host_default_vnc_port_start, host_default_vnc_port_end):
         """ Creates the user in manageiq.
 
         Returns:
@@ -606,6 +639,8 @@ class ManageIQProvider(object):
                 type=supported_providers()[provider_type]['class_name'],
                 zone={'id': zone_id},
                 provider_region=provider_region,
+                host_default_vnc_port_start=host_default_vnc_port_start,
+                host_default_vnc_port_end=host_default_vnc_port_end,
                 connection_configurations=endpoints,
             )
         except Exception as e:
@@ -624,6 +659,8 @@ def main():
         name=dict(required=True),
         zone=dict(default='default'),
         provider_region=dict(),
+        host_default_vnc_port_start=dict(),
+        host_default_vnc_port_end=dict(),
         type=dict(choices=supported_providers().keys()),
     )
     # add the manageiq connection arguments to the arguments
@@ -642,6 +679,8 @@ def main():
     provider_type = module.params['type']
     raw_endpoints = module.params
     provider_region = module.params['provider_region']
+    host_default_vnc_port_start = module.params['host_default_vnc_port_start']
+    host_default_vnc_port_end = module.params['host_default_vnc_port_end']
     state = module.params['state']
 
     manageiq = ManageIQ(module)
@@ -687,10 +726,12 @@ def main():
 
         # if we have a provider, edit it
         if provider:
-            res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region)
+            res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region,
+                                                       host_default_vnc_port_start, host_default_vnc_port_end)
         # if we do not have a provider, create it
         else:
-            res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region)
+            res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region,
+                                                         host_default_vnc_port_start, host_default_vnc_port_end)
 
     module.exit_json(**res_args)
 
