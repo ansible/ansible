@@ -18,9 +18,9 @@ author: "Samer Deeb (@samerd)"
 short_description: Manage priority flow control on MLNX-OS network devices
 description:
   - This module provides declarative management of priority flow control (PFC)
-    on interfaces of MLNX-OS network devices.
+    on interfaces of Mellanox MLNX-OS network devices.
 notes:
-  - tested on Mellanox OS 3.6.4000
+  - Tested on MLNX-OS 3.6.4000
 options:
   name:
     description:
@@ -93,14 +93,11 @@ class MlnxosPfcInterfaceModule(BaseMlnxosModule):
         """
         element_spec = self._get_element_spec()
         aggregate_spec = self._get_aggregate_spec(element_spec)
-        if aggregate_spec:
-            argument_spec = dict(
-                aggregate=dict(type='list', elements='dict',
-                               options=aggregate_spec),
-                purge=dict(default=False, type='bool'),
-            )
-        else:
-            argument_spec = dict()
+        argument_spec = dict(
+            aggregate=dict(type='list', elements='dict',
+                           options=aggregate_spec),
+            purge=dict(default=False, type='bool'),
+        )
         argument_spec.update(element_spec)
         required_one_of = [['name', 'aggregate']]
         mutually_exclusive = [['name', 'aggregate']]
