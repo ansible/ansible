@@ -1,24 +1,10 @@
 #!powershell
-
-# (c) 2017, Red Hat, Inc.
-#
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 Set-StrictMode -Version 2
 
@@ -118,6 +104,8 @@ $domain_admin_password= Get-AnsibleParam $param "domain_admin_password" -failife
 $local_admin_password= Get-AnsibleParam $param "local_admin_password"
 $database_path = Get-AnsibleParam $param "database_path" -type "path"
 $sysvol_path = Get-AnsibleParam $param "sysvol_path" -type "path"
+$read_only = Get-AnsibleParam $param "read_only" -type "bool" -default $false
+$site_name = Get-AnsibleParam $param "site_name" -type "str" -failifempty $read_only
 
 $state = Get-AnsibleParam $param "state" -validateset ("domain_controller", "member_server") -failifempty $result
 $log_path = Get-AnsibleParam $param "log_path"
@@ -216,7 +204,10 @@ Try {
                 if ($sysvol_path) {
                     $install_params.SysvolPath = $sysvol_path
                 }
-                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                if ($site_name) {
+                    $install_params.SiteName = $site_name
+                }
+                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -ReadOnlyReplica:$read_only -Force @install_params
 
                 Write-DebugLog "Installation completed, needs reboot..."
             }
