@@ -24,11 +24,11 @@ author:
 version_added: '2.5'
 notes:
 - The C(domain) and C(vlan_pool) parameters should exist before using this module.
-  The M(aci_domain) and M(aci_encap_pool) can be used for these.
+  The M(aci_domain) and M(aci_vlan_pool) can be used for these.
 options:
   domain:
     description:
-    - Name of the domain being associated with the Encap Pool.
+    - Name of the domain being associated with the VLAN Pool.
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
@@ -40,7 +40,7 @@ options:
     aliases: [ pool_name, vlan_pool ]
   pool_allocation_mode:
     description:
-    - The method used for allocating encaps to resources.
+    - The method used for allocating VLANs to resources.
     aliases: [ mode ]
     choices: [ dynamic, static]
     required: yes
@@ -56,7 +56,71 @@ options:
     choices: [ microsoft, openstack, redhat, vmware ]
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Bind a VMM domain to VLAN pool
+  aci_domain_to_vlan_pool:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: vmw_dom
+    domain_type: vmm
+    pool: vmw_pool
+    pool_allocation_mode: dynamic
+    vm_provider: vmware
+    state: present
+
+- name: Remove a VMM domain to VLAN pool binding
+  aci_domain_to_vlan_pool:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: vmw_dom
+    domain_type: vmm
+    pool: vmw_pool
+    pool_allocation_mode: dynamic
+    vm_provider: vmware
+    state: absent
+
+- name: Bind a physical domain to VLAN pool
+  aci_domain_to_vlan_pool:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: phys_pool
+    pool_allocation_mode: static
+    state: present
+
+- name: Bind a physical domain to VLAN pool
+  aci_domain_to_vlan_pool:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: phys_pool
+    pool_allocation_mode: static
+    state: absent
+
+- name: Query an domain to VLAN pool binding
+  aci_domain_to_vlan_pool:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: phys_pool
+    pool_allocation_mode: static
+    state: query
+
+- name: Query all domain to VLAN pool bindings
+  aci_domain_to_vlan_pool:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+'''
 
 RETURN = ''' # '''
 
@@ -129,7 +193,6 @@ def main():
         domain_class = 'vmmDomP'
         domain_mo = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
         domain_rn = 'dom-{}'.format(domain)
-
 
     aci_mo = 'uni/infra/vlanns-' + pool_name
 
