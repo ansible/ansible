@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_networkinterface
 
-version_added: "2.5"
+version_added: "2.1"
 
 short_description: Manage Azure network interfaces.
 
@@ -39,6 +39,7 @@ options:
             - Name of a resource group where the subnet exists.
         required: false
         default: resource_group
+        version_added: "2.5"
     name:
         description:
             - Name of the network interface.
@@ -78,12 +79,14 @@ options:
             - Name of an existing load balancer. Required when creating a load balancer backend address pool.
         required: false
         default: null
+        version_added: "2.5"
     load_balancer_backend_pool:
         description:
             - Name of an existing backend pool within the specified load balancer. Required when creating a
               load balancer address pool.
         required: false
         default: null
+        version_added: "2.5"
     os_type:
         description:
             - Determines any rules to be added to a default security group. When creating a network interface, if no

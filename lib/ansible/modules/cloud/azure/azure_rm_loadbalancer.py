@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_loadbalancer
 
-version_added: "2.5"
+version_added: "2.4"
 
 short_description: Manage Azure load balancers.
 
@@ -151,6 +151,7 @@ options:
             - subnet
         required: false
         default: null
+        version_added: "2.5"
     virtual_network_name:
         description:
             - Name of an existing virtual network. Required when subnet_name is given.
@@ -159,26 +160,31 @@ options:
             - vnet
         required: false
         default: null
+        version_added: "2.5"
     backend_address_pool_name:
         description:
             - Name of the backend address pool.
         required: false
         default: LoadBalancerBackEnd
+        version_added: "2.5"
     frontend_ip_config_name:
         description:
             - Name of the frontend ip configuration.
         required: false
         default: LoadBalancerFrontEnd
+        version_added: "2.5"
     probe_name:
         description:
             - Name of the health probe
         required: false
         default: LoadBalancerProbe
+        version_added: "2.5"
     load_balancing_rule_name:
         description:
             - Name of the load balancing rule.
         required: false
         default: LoadBalancerRule
+        version_added: "2.5"
     private_ip_allocation_method:
         description:
             - The allocation method when using private IP as frontend
@@ -187,16 +193,19 @@ options:
         choices:
             - Dynamic
             - Static
+        version_added: "2.5"
     inbound_nat_pool_name:
         description:
             - Name of the inbound nat pool name. Deprecated soon!
         required: false
         default: LoadBalancerInboundNatPool
+        version_added: "2.5"
     nat_name:
         description:
             - Name of the inbound nat rule.
         required: false
         default: LoadBalancerInboundNatRule
+        version_added: "2.5"
     nat_protocol:
         description:
             - The protocol (TCP or UDP) that the inbount nat rule will use.
@@ -204,14 +213,17 @@ options:
         choices:
             - Tcp
             - Udp
+        version_added: "2.5"
     nat_frontend_port:
         description:
             - Frontend port that will be exposed for the inbound nat rule. Required when nat_protocol is given.
         required: false
+        version_added: "2.5"
     nat_backend_port:
         description:
             - Backend port that will be exposed for the inbound nat rule. Default to nat_frontend_port.
         required: false
+        version_added: "2.5"
 
 extends_documentation_fragment:
     - azure
