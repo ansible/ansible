@@ -51,7 +51,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        exclusive with I(lines), I(parents).
     required: false
     default: null
     version_added: "2.2"
@@ -281,7 +281,8 @@ def main():
 
     argument_spec.update(iosxr_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),

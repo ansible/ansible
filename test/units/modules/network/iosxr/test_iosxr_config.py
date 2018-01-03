@@ -137,3 +137,33 @@ class TestIosxrConfigModule(TestIosxrModule):
         set_module_args(dict(lines=lines, parents=parents, match='exact'))
         commands = parents + lines
         self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_iosxr_config_src_and_lines_fails(self):
+        args = dict(src='foo', lines='foo')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_src_and_parents_fails(self):
+        args = dict(src='foo', parents='foo')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_match_exact_requires_lines(self):
+        args = dict(match='exact')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_match_strict_requires_lines(self):
+        args = dict(match='strict')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_replace_block_requires_lines(self):
+        args = dict(replace='block')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_replace_config_requires_src(self):
+        args = dict(replace='config')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
