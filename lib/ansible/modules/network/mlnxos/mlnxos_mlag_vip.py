@@ -15,32 +15,30 @@ DOCUMENTATION = """
 module: mlnxos_mlag_vip
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: configures MLAG VIP on mlnxos network devices
+short_description: Configures MLAG VIP on Mellanox MLNX-OS network devices
 description:
   - This module provides declarative management of MLAG virtual IPs
-    on MLNX-OS network devices.
+    on Mellanox MLNX-OS network devices.
 notes:
-  - tested on Mellanox OS 3.6.4000
+  - Tested on MLNX-OS 3.6.4000
 options:
   ipaddress:
     description:
-      - virtual IP address of the MLAG.
-    required: true #if state is present
+      - Virtual IP address of the MLAG. Required if I(state=present).
   group_name:
     description:
-      - MLAG group name
-    required: true #if state is present
+      - MLAG group name. Required if I(state=present).
   mac_address:
     description:
-      - MLAG system mac address
-    required: true #if state is present
+      - MLAG system MAC address. Required if I(state=present).
   state:
     description:
       - MLAG VIP state.
     choices: ['present', 'absent']
   delay:
     description:
-      - delay interval, in seconds, waiting for the changes on mlag VIP to take effect
+      - Delay interval, in seconds, waiting for the changes on mlag VIP to take
+        effect.
     default: 12
 """
 
