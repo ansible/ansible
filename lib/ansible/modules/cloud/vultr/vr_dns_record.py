@@ -109,17 +109,17 @@ vultr_dns_record:
   returned: success
   type: complex
   contains:
-   id:
-     description: The ID of the DNS record.
-     returned: success
-     type: int
-     sample: 1265277
+    id:
+      description: The ID of the DNS record.
+      returned: success
+      type: int
+      sample: 1265277
     name:
       description: The name of the DNS record.
       returned: success
       type: string
       sample: web
-    type:
+    record_type:
       description: The name of the DNS record.
       returned: success
       type: string
@@ -129,7 +129,7 @@ vultr_dns_record:
       returned: success
       type: string
       sample: 10.10.10.10
-    record:
+    domain:
       description: Domain the DNS record is related to.
       returned: success
       type: string
