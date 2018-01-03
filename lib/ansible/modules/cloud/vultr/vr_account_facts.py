@@ -71,7 +71,7 @@ vultr_account_facts:
       type: string
       sample: "2017-08-26 12:47:48"
     last_payment_amount:
-      description: The amaount of the last payment transaction.
+      description: The amount of the last payment transaction.
       returned: success
       type: float
       sample: -250.0
