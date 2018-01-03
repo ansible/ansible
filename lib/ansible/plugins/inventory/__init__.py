@@ -193,9 +193,9 @@ class BaseInventoryPlugin(AnsiblePlugin):
         return config
 
     def _set_cache_options(self, options):
-        self.cache = InventoryFileCacheModule(plugin_name=options['cache_plugin'],
-                                              timeout=options['cache_timeout'],
-                                              cache_dir=options['cache_connection'])
+        self.cache = InventoryFileCacheModule(plugin_name=options.get('cache_plugin'),
+                                              timeout=options.get('cache_timeout'),
+                                              cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
         ''' update existing options from file data'''

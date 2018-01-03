@@ -188,11 +188,12 @@ def test_assemble_groups():
 
 
 def test_boto3_conn():
-    config_data = {"boto_profile": "test_profile",
-                   "aws_access_key_id": "test_access_key",
-                   "aws_secret_access_key": "test_secret_key"}
     inv = InventoryModule()
-    inv._set_credentials(config_data)
+    inv._options = {"boto_profile": "first_precedence",
+                    "aws_access_key_id": "test_access_key",
+                    "aws_secret_access_key": "test_secret_key",
+                    "aws_security_token": "test_security_token"}
+    inv._set_credentials()
     with pytest.raises(AnsibleError) as error_message:
         for connection, region in inv._boto3_conn(regions=['us-east-1']):
             assert error_message == "Insufficient credentials found."
@@ -218,7 +219,7 @@ def test_format_instance_data():
 def test_get_hostname_default():
     inv = InventoryModule()
     formatted_instance = [instance for instance in inv._format_instance_data('us-east-1', instances)][0]
-    assert inv._get_hostname(formatted_instance, hostnames=None) == "ec2-12-345-67-890.compute-1.amazonaws.com"
+    assert inv._get_hostname(formatted_instance, hostnames=None) == "ip-098-76-54-321.ec2.internal"
 
 
 def test_get_hostname():
@@ -228,24 +229,13 @@ def test_get_hostname():
     assert inv._get_hostname(formatted_instance, hostnames) == "12.345.67.890"
 
 
-def test_find_cred(monkeypatch):
-    monkeypatch.setenv(name="AWS_PROFILE", value="")
-    monkeypatch.setenv(name="AWS_DEFAULT_PROFILE", value="test_profile")
-    possible_env_vars = ["AWS_PROFILE", "AWS_DEFAULT_PROFILE"]
-    inv = InventoryModule()
-    assert inv._find_cred(possible_env_vars) == "test_profile"
-
-
 def test_set_credentials(monkeypatch):
-    monkeypatch.setenv(name="AWS_PROFILE", value="test_profile")
-    monkeypatch.setenv(name="AWS_DEFAULT_PROFILE", value="other_profile")
-    monkeypatch.setenv(name="AWS_ACCESS_KEY_ID", value="")
-    monkeypatch.setenv(name="AWS_ACCESS_KEY", value="test_access_key")
-    monkeypatch.setenv(name="AWS_SECRET_ACCESS_KEY", value="test_secret_key")
-    monkeypatch.setenv(name="AWS_SECURITY_TOKEN", value="test_security_token")
-
     inv = InventoryModule()
-    inv._set_credentials(config_data={})
+    inv._options = {'aws_access_key_id': 'test_access_key',
+                    'aws_secret_access_key': 'test_secret_key',
+                    'aws_security_token': 'test_security_token',
+                    'boto_profile': 'test_profile'}
+    inv._set_credentials()
 
     assert inv.boto_profile == "test_profile"
     assert inv.aws_access_key_id == "test_access_key"
@@ -254,16 +244,7 @@ def test_set_credentials(monkeypatch):
 
 
 def test_insufficient_credentials(monkeypatch):
-    profile_vars = ['AWS_PROFILE', 'AWS_DEFAULT_PROFILE']
-    access_key_vars = ['AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY', 'EC2_ACCESS_KEY']
-    secret_key_vars = ['AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_KEY', 'EC2_SECRET_KEY']
-    security_token_vars = ['AWS_SECURITY_TOKEN', 'AWS_SESSION_TOKEN', 'EC2_SECURITY_TOKEN']
-
-    for possible_vars in (profile_vars, access_key_vars, secret_key_vars, security_token_vars):
-        for name in possible_vars:
-            monkeypatch.setenv(name, "")
-
     inv = InventoryModule()
     with pytest.raises(AnsibleError) as error_message:
-        inv._set_credentials(config_data={})
+        inv._set_credentials()
         assert "Insufficient boto credentials found" in error_message

@@ -86,7 +86,6 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.basic import jsonify
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
-from ansible.plugins.cache import InventoryFileCacheModule
 
 from collections import namedtuple
 import os
@@ -581,15 +580,15 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             for hostvar in host.instance_data.keys():
                 self.inventory.set_variable(hostname, hostvar, host.instance_data[hostvar])
 
-    def _set_credentials(self, config_data):
+    def _set_credentials(self):
         '''
             :param config_data: contents of the inventory config file
         '''
 
-        self.boto_profile = self._options['boto_profile']
-        self.aws_access_key_id = self._options['aws_access_key_id']
-        self.aws_secret_key_id = self._options['aws_secret_access_key']
-        self.aws_security_token = self._options['aws_security_token']
+        self.boto_profile = self._options.get('boto_profile')
+        self.aws_access_key_id = self._options.get('aws_access_key_id')
+        self.aws_secret_access_key = self._options.get('aws_secret_access_key')
+        self.aws_security_token = self._options.get('aws_security_token')
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
@@ -612,8 +611,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         '''
         # get unique cache key
         cache_key = self.get_cache_key(self.NAME, path)
-        cache_dir = options['cache_connection']
-        cache_timeout = options['cache_timeout']
+        cache_dir = options.get('cache_connection')
+        cache_timeout = options.get('cache_timeout')
 
         return cache_key, cache_dir, cache_timeout
 
@@ -676,7 +675,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = self._validate_config(loader, path)
-        self._set_credentials(config_data)
+        self._set_credentials()
 
         # get user specifications
         regions, filters, group_by, hostnames, strict_permissions = self._get_query_options(config_data)
