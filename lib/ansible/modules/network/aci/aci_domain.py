@@ -50,7 +50,61 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add a new physical domain
+  aci_domain:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    state: present
+
+- name: Remove a physical domain
+  aci_domain:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    state: absent
+
+- name: Add a new VMM domain
+  aci_domain:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: hyperv_dom
+    domain_type: vmm
+    vm_provider: microsoft
+    state: present
+
+- name: Remove a VMM domain
+  aci_domain:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: hyperv_dom
+    domain_type: vmm
+    vm_provider: microsoft
+    state: absent
+
+- name: Query a specific physical domain
+  aci_domain:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    state: query
+
+- name: Query all domains
+  aci_domain:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+'''
 
 RETURN = r''' # '''
 
