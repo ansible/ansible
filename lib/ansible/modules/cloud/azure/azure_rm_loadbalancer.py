@@ -49,6 +49,7 @@ options:
             - Name of a resource group where the subnet exists.
         required: false
         default: resource_group
+        version_added: "2.5"
     name:
         description:
             - Name of the load balancer.
