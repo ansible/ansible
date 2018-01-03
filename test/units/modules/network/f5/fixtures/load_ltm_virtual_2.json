@@ -1,0 +1,65 @@
+{
+  "kind": "tm:ltm:virtual:virtualstate",
+  "name": "my-virtual-server",
+  "partition": "Common",
+  "fullPath": "/Common/my-virtual-server",
+  "generation": 152,
+  "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server?ver=12.1.2",
+  "addressStatus": "yes",
+  "autoLasthop": "default",
+  "cmpEnabled": "yes",
+  "connectionLimit": 0,
+  "destination": "/Common/10.10.10.10:443",
+  "enabled": true,
+  "gtmScore": 0,
+  "ipProtocol": "any",
+  "mask": "255.255.255.255",
+  "mirror": "disabled",
+  "mobileAppTunnel": "disabled",
+  "nat64": "disabled",
+  "rateLimit": "disabled",
+  "rateLimitDstMask": 0,
+  "rateLimitMode": "object",
+  "rateLimitSrcMask": 0,
+  "serviceDownImmediateAction": "none",
+  "source": "0.0.0.0/0",
+  "sourceAddressTranslation": {
+    "type": "automap"
+  },
+  "sourcePort": "preserve",
+  "synCookieStatus": "not-activated",
+  "translateAddress": "enabled",
+  "translatePort": "enabled",
+  "vlansDisabled": true,
+  "vsIndex": 19,
+  "vlans": [
+    "/Common/net1"
+  ],
+  "vlansReference": [
+    {
+      "link": "https://localhost/mgmt/tm/net/vlan/~Common~net1?ver=12.1.2"
+    }
+  ],
+  "policiesReference": {
+    "link": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/policies?ver=12.1.2",
+    "isSubcollection": true
+  },
+  "profilesReference": {
+    "link": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/profiles?ver=12.1.2",
+    "isSubcollection": true,
+    "items": [
+      {
+        "kind": "tm:ltm:virtual:profiles:profilesstate",
+        "name": "fastL4",
+        "partition": "Common",
+        "fullPath": "/Common/fastL4",
+        "generation": 148,
+        "selfLink": "https://localhost/mgmt/tm/ltm/virtual/~Common~my-virtual-server/profiles/~Common~fastL4?ver=12.1.2",
+        "context": "all",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/ltm/profile/fastl4/~Common~fastL4?ver=12.1.2"
+        }
+      }
+    ]
+  }
+}
