@@ -55,6 +55,8 @@ $result = @{
     cmd = $raw_command_line
 }
 
+Import-FileUtil
+
 if ($creates -and $(Test-AnsiblePath -Path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }

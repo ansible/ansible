@@ -4,7 +4,6 @@ examples/scripts/upgrade_to_ps3.ps1 PSAvoidUsingWriteHost
 examples/scripts/upgrade_to_ps3.ps1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 PSUseApprovedVerbs
-lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSProvideCommentHelp
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSUseOutputTypeCorrectly
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSAvoidUsingWMICmdlet
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSUseApprovedVerbs

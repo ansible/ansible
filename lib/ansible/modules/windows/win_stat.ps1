@@ -27,6 +27,8 @@ $result = @{
     }
 }
 
+Import-LinkUtil
+
 # get_md5 will be an undocumented option in 2.9 to be removed at a later
 # date if possible (3.0+)
 if (Get-Member -inputobject $params -name "get_md5") {
@@ -97,14 +99,14 @@ If ($info -ne $null) {
 
         if ($get_md5) {
             try {
-                $stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
+                $stat.md5 = Get-AnsibleFileHash -Path $path -Algorithm "md5"
             } catch {
                 Fail-Json -obj $result -message "failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)"
             }
         }
         if ($get_checksum) {
             try {
-                $stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+                $stat.checksum = Get-AnsibleFileHash -Path $path -Algorithm $checksum_algorithm
             } catch {
                 Fail-Json -obj $result -message "failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)"
             }
@@ -112,7 +114,6 @@ If ($info -ne $null) {
     }
 
     # Get symbolic link, junction point, hard link info
-    Load-LinkUtils
     try {
         $link_info = Get-Link -link_path $info.FullName
     } catch {

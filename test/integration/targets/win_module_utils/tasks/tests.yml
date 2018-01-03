@@ -1,0 +1,158 @@
+---
+- name: call old WANTS_JSON module
+  legacy_only_old_way:
+  register: old_way
+
+- assert:
+    that:
+    - old_way.data == 'success'
+
+- name: call module with only legacy requires
+  legacy_only_new_way:
+  register: new_way
+
+- assert:
+    that:
+    - new_way.data == 'success'
+
+- name: call old WANTS_JSON module with windows line endings
+  legacy_only_old_way_win_line_ending:
+  register: old_way_win
+
+- assert:
+    that:
+    - old_way_win.data == 'success'
+
+- name: call module with only legacy requires and windows line endings
+  legacy_only_new_way_win_line_ending:
+  register: new_way_win
+
+- assert:
+    that:
+    - new_way_win.data == 'success'
+
+- name: call module with local module_utils
+  uses_local_utils:
+  register: local_utils
+
+- assert:
+    that:
+    - local_utils.data == "ValueFromCustomFunction"
+
+- name: call module that imports bogus Ansible-named module_utils
+  uses_bogus_utils:
+  ignore_errors: true
+  register: bogus_utils
+
+- assert:
+    that:
+    - bogus_utils is failed
+    - bogus_utils.msg is search("Could not find")
+
+- name: call module that imports module_utils with further imports
+  recursive_requires:
+  register: recursive_requires
+
+- assert:
+    that:
+    - 'recursive_requires.value == "Get-Test3: 2: Get-Test2, 1: Get-Test1, 3: Get-NewTest3"'
+
+- name: call module with camel conversion tests
+  camel_conversion_test:
+  register: camel_conversion
+
+- assert:
+    that:
+    - camel_conversion.data == 'success'
+
+- name: call module with SID tests
+  sid_utils_test:
+    sid_account: '{{ sid_test_username }}'
+  register: sid_test
+
+- assert:
+    that:
+    - sid_test.data == 'success'
+
+- name: call module with CommandUtil tests
+  command_util_test:
+    exe: '{{ test_util_path }}\PrintArgv.exe'
+  register: command_util
+
+- assert:
+    that:
+    - command_util.data == 'success'
+
+- name: call module with ArgvParser tests
+  argv_parser_test:
+    exe: '{{ test_util_path }}\PrintArgv.exe'
+  register: argv_test
+
+- assert:
+    that:
+    - argv_test.data == 'success'
+
+- name: call module with LinkUtil tests
+  symbolic_link_test:
+    path: '{{ test_util_path }}'
+  register: symbolic_link
+
+- assert:
+    that:
+    - symbolic_link.data == 'success'
+
+- name: call module with FileUtil tests
+  file_util_test:
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'
+
+- name: call module with FileUtil tests for Ansible.IO c# code
+  file_util_test_ansible_io:
+    path: '{{ test_util_path }}'
+    encrypt_tests: no
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'
+
+- name: call module with FileUtil tests for Ansible.IO c# code as standard become user
+  file_util_test_ansible_io:
+    path: '{{ test_util_path }}'
+    encrypt_tests: yes
+  vars:
+    ansible_become_user: '{{ become_test_standard_username }}'
+    ansible_become_password: '{{ gen_pw }}'
+    ansible_become_method: runas
+    ansible_become: yes
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'
+
+- name: call module with FileUtil tests for Ansible.IO c# code as admin become user
+  file_util_test_ansible_io:
+    path: '{{ test_util_path }}'
+    encrypt_tests: yes
+  vars:
+    ansible_become_user: '{{ become_test_admin_username }}'
+    ansible_become_password: '{{ gen_pw }}'
+    ansible_become_method: runas
+    ansible_become: yes
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'
+
+- name: call module with PrivilegeUtil tests
+  privilege_util_test:
+  register: privilege_util_test
+
+- assert:
+    that:
+    - privilege_util_test.data == 'success'

@@ -24,6 +24,8 @@ options:
         description:
             - The full path of the file/object to get the facts of; both forward and
               back slashes are accepted.
+            - To get information on a path that exceeds 260 characters, prepend with
+              C(\\?\C:\...) for local paths or C(\\?\UNC\server\share\..) for UNC paths.
         required: yes
         type: path
     get_md5:
@@ -96,6 +98,14 @@ EXAMPLES = r'''
 
 - debug:
     var: sha256_checksum.stat.checksum
+
+- name: get info on a local file that exceeds 260 characters
+  win_stat:
+    path: \\?\C:\Users\user\AppData\{{ some_really_long_path }}\dir\test.txt
+
+- name: get info on a network file that exceeds 260 characters
+  win_stat:
+    path: \\?\UNC\server\share\Documents\Users\user\{{ some_really_long_path }}\dir\test.txt
 '''
 
 RETURN = r'''

@@ -1,0 +1,4 @@
+---
+minor_changes:
+- Added C# code in the namespace Ansible.IO that allows modules to work with paths that exceed 260 characters.
+- win_stat - Use Ansible.IO in Ansible.ModuleUtils.FileUtil to work with paths exceeding 260 characters.

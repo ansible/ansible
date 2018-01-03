@@ -13,15 +13,15 @@ $result = @{
     changed = $false
 }
 
+Import-LinkUtil
+
 if ($state -eq "absent") {
-    if (Test-Path -Path $src) {
-        Load-LinkUtils
+    if (Test-AnsiblePath -Path $src) {
         Remove-Link -link_path $src
         $result.changed = $true
     }
 } else {
-    if (-not (Test-Path -Path $src)) {
-        Load-LinkUtils
+    if (-not (Test-AnsiblePath -Path $src)) {
         New-Link -link_path $src -link_target $target -link_type "link"
         $result.changed = $true
     }

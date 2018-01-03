@@ -21,6 +21,13 @@
   - path: '{{ bogus_driveletter.stdout_lines[0] }}:\goodpath'
   - path: '{{ bogus_driveletter.stdout_lines[0] }}:\badpath*%@:\blar'
     should_fail: true
+  # path validation should not occur with \\?\, pretty much the only invalid char is \x00 but Win32 handles everything differently
+  # we rely on CreateFileW to handle the validation for us
+  - path: \\?\C:\long_path
+  - path: \\?\C:\path\{{ "a" * 255 }}\{{ "a" * 255 }}\dir
+  - path: \\?\{{ bogus_driveletter.stdout_lines[0] }}:\badpath*%@:\blar
+  - path: \\?\UNC\server\share\file
+  - path: \\?\UNC\server\share\file\badpath*%@:\blar
 
 - name: test list parameters
   testlist:

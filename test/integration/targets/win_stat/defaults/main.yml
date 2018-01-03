@@ -1,2 +1,5 @@
 win_stat_dir: '{{win_output_dir}}\win_stat'
+win_stat_dir_forward: "{{win_stat_dir|regex_replace('\\\\', '/')}}"
+win_stat_dir_double: "{{win_stat_dir|regex_replace('\\\\', '\\\\\\\\')}}"
+win_stat_dir_long: \\?\{{win_stat_dir}}
 win_stat_user: test-stat

@@ -209,8 +209,10 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         if ($type -eq "path") {
             # Expand environment variables on path-type
             $value = Expand-Environment($value)
-            # Test if a valid path is provided
-            if (-not (Test-Path -IsValid $value)) {
+            # Test-Path -IsValid failed when the long path prefix is there, we don't want
+            # to check this ourselves and just rely on Windows to validate the path when
+            # using it
+            if ((-not ($value.StartsWith("\\?\"))) -and (-not (Test-Path -Path $value -IsValid))) {
                 $path_invalid = $true
                 # could still be a valid-shaped path with a nonexistent drive letter
                 if ($value -match "^\w:") {
