@@ -45,6 +45,7 @@ options:
         description:
             - Name of the custom ipam dns profile.
             - Field introduced in 17.1.1.
+        required: true
     script_params:
         description:
             - Parameters that are always passed to the ipam/dns script.
@@ -53,6 +54,7 @@ options:
         description:
             - Script uri of form controller //ipamdnsscripts/<file-name>.
             - Field introduced in 17.1.1.
+        required: true
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -99,9 +101,9 @@ def main():
         avi_api_update_method=dict(default='put',
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
-        name=dict(type='str',),
+        name=dict(type='str', required=True),
         script_params=dict(type='list',),
-        script_uri=dict(type='str',),
+        script_uri=dict(type='str', required=True),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
