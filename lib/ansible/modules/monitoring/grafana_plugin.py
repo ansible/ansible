@@ -18,24 +18,24 @@ module: grafana_plugin
 author:
   - "Thierry Sallé (@tsalle)"
 version_added: "2.5"
-short_description: Manage grafana plugins via grafana-cli
+short_description: Manage Grafana plugins via grafana-cli
 description:
-  - install and remove grafana plugins
+  - Install and remove Grafana plugins.
 options:
   name:
     required: true
     description:
-      - Name of the plugin
+      - Name of the plugin.
   version:
     description:
       - Version of the plugin to install.
       - Default to latest
   grafana_plugins_dir:
     description:
-      - Directory where grafana plugin will be installed.
+      - Directory where Grafana plugin will be installed.
   grafana_repo:
     description:
-      - Grafana repository. If not set, gafana-cli will use the default value https://grafana.net/api/plugins
+      - Grafana repository. If not set, gafana-cli will use the default value C(https://grafana.net/api/plugins).
   grafana_plugin_url:
     description:
       - Custom Grafana plugin URL
@@ -44,13 +44,13 @@ options:
     default: present
     choices: [present, absent]
     description:
-      - Status of the grafana plugin.
-      - If latest is set, the version parameter will be ignored
+      - Status of the Grafana plugin.
+      - If latest is set, the version parameter will be ignored.
 '''
 
 EXAMPLES = '''
 ---
-- name: install - update grafana piechart panel plugin
+- name: install - update Grafana piechart panel plugin
   grafana_plugin:
     name: grafana-piechart-panel
     version: latest
