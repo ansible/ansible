@@ -110,6 +110,8 @@ Ansible Changes By Release
 - ovirt
   * ovirt_api_facts
   * ovirt_disk_facts
+- panos
+  * panos_op
 - spotinst
   * spotinst_aws_elastigroup
 - vmware
