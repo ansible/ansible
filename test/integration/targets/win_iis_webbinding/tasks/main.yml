@@ -12,9 +12,9 @@
   - include_tasks: setup.yml
   - include_tasks: http.yml
   - include_tasks: https-lt6.2.yml
-    when: os_version.stdout_lines[0] | version_compare('6.2','lt')
+    when: os_version.stdout_lines[0]  is version('6.2','lt')
   - include_tasks: https-ge6.2.yml
-    when: os_version.stdout_lines[0] | version_compare('6.2','ge')
+    when: os_version.stdout_lines[0]  is version('6.2','ge')
   - include_tasks: failures.yml
 
   always:
@@ -59,4 +59,4 @@
   - name: reboot after feature install
     win_reboot:
     when: feature_uninstall.reboot_required
-  when: os_version.stdout_lines[0] | version_compare('6.1','gt')
+  when: os_version.stdout_lines[0]  is version('6.1','gt')
