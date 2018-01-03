@@ -116,6 +116,8 @@ $safe_mode_password= Get-AnsibleParam $param "safe_mode_password"
 $domain_admin_user = Get-AnsibleParam $param "domain_admin_user" -failifempty $result
 $domain_admin_password= Get-AnsibleParam $param "domain_admin_password" -failifempty $result
 $local_admin_password= Get-AnsibleParam $param "local_admin_password"
+$database_path = Get-AnsibleParam $param "database_path" -type "path"
+$sysvol_path = Get-AnsibleParam $param "sysvol_path" -type "path"
 
 $state = Get-AnsibleParam $param "state" -validateset ("domain_controller", "member_server") -failifempty $result
 $log_path = Get-AnsibleParam $param "log_path"
@@ -203,8 +205,18 @@ Try {
 
                 $safe_mode_secure = $safe_mode_password | ConvertTo-SecureString -AsPlainText -Force
                 Write-DebugLog "Installing domain controller..."
-
-                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -DomainName $dns_domain_name -Credential $domain_admin_cred -SafeModeAdministratorPassword $safe_mode_secure -Force
+                $install_params = @{
+                    DomainName = $dns_domain_name
+                    Credential = $domain_admin_cred
+                    SafeModeAdministratorPassword = $safe_mode_secure
+                }
+                if ($database_path) {
+                    $install_params.DatabasePath = $database_path
+                }
+                if ($sysvol_path) {
+                    $install_params.SysvolPath = $sysvol_path
+                }
+                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
 
                 Write-DebugLog "Installation completed, needs reboot..."
             }
@@ -251,5 +263,4 @@ Catch {
 
     Throw
 }
-
 
