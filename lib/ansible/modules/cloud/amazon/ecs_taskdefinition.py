@@ -46,6 +46,11 @@ options:
         description:
             - A revision number for the task definition
         required: False
+    force_create:
+        description:
+            - Always create new task definition
+        required: False
+        version_added: 2.5
     containers:
         description:
             - A list of containers definitions
@@ -220,6 +225,7 @@ def main():
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
+        force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
@@ -343,7 +349,7 @@ def main():
                 if existing:
                     break
 
-        if existing:
+        if existing and not module.params.get('force_create'):
             # Awesome. Have an existing one. Nothing to do.
             results['taskdefinition'] = existing
         else:
