@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import os
 import random
 import shlex
@@ -840,11 +841,18 @@ class VaultEditor:
                 self.write_data(existing_data, tmp_path, shred=False)
 
             # drop the user into an editor on the tmp file
-            subprocess.call(self._editor_shell_command(tmp_path))
+            editor = self._editor_shell_command()
+            subprocess.call([editor, tmp_path])
+        except OSError as e:
+            # whatever happens, destroy the decrypted file
+            self._shred_file(tmp_path)
+            if e.errno == errno.ENOENT:
+                raise AnsibleFileNotFound(message="failed to find an editor", file_name=editor)
+            else:
+                raise
         except:
             # whatever happens, destroy the decrypted file
             self._shred_file(tmp_path)
-            raise
 
         b_tmpdata = self.read_data(tmp_path)
 
@@ -1070,27 +1078,10 @@ class VaultEditor:
             os.chmod(dest, prev.st_mode)
             os.chown(dest, prev.st_uid, prev.st_gid)
 
-    def _is_exe(self, command):
-        return os.path.isfile(command) and os.access(command, os.X_OK)
-
-    def _in_path(self, command):
-        command_base = os.path.basename(command)
-        for path in os.environ["PATH"].split(os.pathsep):
-            cmd_path = os.path.join(path, command_base)
-            if self._is_exe(cmd_path):
-                return cmd_path
-        return None
-
-    def _editor_shell_command(self, filename):
-        env_editor = os.environ.get('VISUAL')
-        if not env_editor or not self._is_exe(env_editor) or not self._in_path(env_editor):
-            env_editor = os.environ.get('EDITOR', 'vi')
-            if not self._is_exe(env_editor) or not self._in_path(env_editor):
-                raise AnsibleFileNotFound(message="failed to find an editor", file_name=env_editor)
-
-        editor = shlex.split(env_editor)
-        editor.append(filename)
-
+    def _editor_shell_command(self):
+        editor = os.environ.get('VISUAL')
+        if not editor:
+            editor = os.environ.get('EDITOR', 'vi')
         return editor
 
 
