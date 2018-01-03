@@ -12,11 +12,14 @@ author: Ansible Networking Team
 connection: netconf
 short_description: Provides a persistent connection using the netconf protocol
 description:
-  - This plugin actually forces use of 'local' execution but uses paramiko to
-    establish a remote ssh netconf session on the network device.  This connection
-    plugin will load an additional plugin to manage the session.  It will
-    load a netconf plugin to handle serializing requests to the remote device.
+  - This connection plugin provides a connection to remote devices over the
+    SSH NETCONF subsystem.  This connection plugin is typically used by
+    network devices for sending and receiving RPC calls over NETCONF.
+  - Note this connection plugin requires ncclient to be installed on the
+    local Ansible controller.
 version_added: "2.3"
+requirements:
+  - ncclient
 options:
   host:
     description:
@@ -25,7 +28,6 @@ options:
     default: inventory_hostname
     vars:
       - name: ansible_host
-      - name: ansible_ssh_host
   port:
     type: int
     description:
@@ -39,7 +41,6 @@ options:
       - name: ANSIBLE_REMOTE_PORT
     vars:
       - name: ansible_port
-      - name: ansible_ssh_port
   network_os:
     description:
       - Configures the device platform network operating system.  This value is
@@ -53,7 +54,7 @@ options:
       - The username used to authenticate to the remote device when the SSH
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the ``--user`` or ``-u`` options
+      - Can be configured form the CLI via the C(--user) or C(-u) options
     ini:
       - section: defaults
         key: remote_user
@@ -85,7 +86,6 @@ options:
         This timeout is used as the default timeout value when awaiting a
         response after issuing a call to a RPC.  If the RPC does not return in
         timeout seconds, an error is generated.
-        type: int
     default: 120
   connect_timeout:
     type: int
@@ -100,10 +100,8 @@ options:
     type: boolean
     description:
       - By default, Ansible will prompt the user before adding SSH keys to the
-        known hosts file.  Since persistent connections such as network_cli run
-        in background processes, the user will never be prompted.  By enabling
-        this option, unknown host keys will automatically be added to the
-        known hosts file.
+        known hosts file.  Enabling this option, unknown host keys will
+        automatically be added to the known hosts file.
       - Be sure to fully understand the security implications of enabling this
         option on production systems as it could create a security vulnerability.
     default: False

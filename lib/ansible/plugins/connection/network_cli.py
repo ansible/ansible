@@ -11,15 +11,9 @@ author: Ansible Networking Team
 connection: network_cli
 short_description: Use network_cli to run command on network appliances
 description:
-  - This plugin actually forces use of 'local' execution but uses paramiko to
-    establish a remote ssh shell on the network device.  This connection
-    plugin will load two additional plugins to manage the session.  It will
-    load a terminal plugin to setup terminal parameters and a cliconf plugin
-    to handle serializing requests to the remote device.  Both plugins are
-    loaded based on the network_os configuration value (see options below).  If
-    the network device needs privilege escalation (for instance 'enable' mode),
-    set the become directive in the playbook for the play or task (or configure
-    it in inventory)
+  - This connection plugin provides a connection to remote devices over the
+    SSH and implements a CLI shell.  This connection plugin is typically used by
+    network devices for sending and receiving CLi commands to network devices.
 version_added: "2.3"
 options:
   host:
@@ -29,7 +23,6 @@ options:
     default: inventory_hostname
     vars:
       - name: ansible_host
-      - name: ansible_ssh_host
   port:
     type: int
     description:
@@ -43,7 +36,6 @@ options:
       - name: ANSIBLE_REMOTE_PORT
     vars:
       - name: ansible_port
-      - name: ansible_ssh_port
   network_os:
     description:
       - Configures the device platform network operating system.  This value is
@@ -57,7 +49,7 @@ options:
       - The username used to authenticate to the remote device when the SSH
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the ``--user`` or ``-u`` options
+      - Can be configured form the CLI via the C(--user) or C(-u) options
     ini:
       - section: defaults
         key: remote_user
@@ -85,22 +77,21 @@ options:
   timeout:
     type: int
     description:
-      - Sets the connection time for the communicating with the remote device.
-        This timeout is used as the default timeout value for commands when
-        issuing a command to the network CLI.  If the command does not return
-        in timeout seconds, the an error is generated.
-        type: int
+      - Sets the connection time, in seconds, for the communicating with the
+        remote device.  This timeout is used as the default timeout value for
+        commands when issuing a command to the network CLI.  If the command
+        does not return in timeout seconds, the an error is generated.
     default: 120
   become:
     type: boolean
     description:
-      - The become option will instruct the CLi session to attempt privilege
+      - The become option will instruct the CLI session to attempt privilege
         escalation on platforms that support it.  Normally this means
-        transitioning from user mode to ``enable`` mode in the CLI session.
+        transitioning from user mode to C(enable) mode in the CLI session.
         If become is set to True and the remote device does not support
         privilege escalation or the privilege has already been elevated, then
         this option is silently ignored
-      - Can be configured form the CLI via the ``--become`` or ``-b`` options
+      - Can be configured form the CLI via the C(--become) or C(-b) options
     default: False
     ini:
       section: privilege_escalation
@@ -113,7 +104,7 @@ options:
     description:
       - This option allows the become method to be specified in for handling
         privilege escalation.  Typically the become_method value is set to
-        ``enable`` but could be defined as other values.
+        C(enable) but could be defined as other values.
     default: sudo
     ini:
       section: privilege_escalation
