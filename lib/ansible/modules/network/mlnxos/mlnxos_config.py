@@ -20,7 +20,7 @@ short_description: Manage Mellanox MLNX-OS configuration sections
 description:
   - Mellanox MLNX-OS configurations uses a simple block indent file syntax
     for segmenting configuration into sections. This module provides
-    an implementation for working with MLNXOS configuration sections in
+    an implementation for working with MLNX-OS configuration sections in
     a deterministic way.
 options:
   lines:
@@ -30,8 +30,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
@@ -39,8 +37,6 @@ options:
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -48,8 +44,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -57,16 +51,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -77,7 +67,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -88,7 +77,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct
-    required: false
     default: line
     choices: ['line', 'block']
   backup:
@@ -98,7 +86,6 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
     default: no
     choices: ['yes', 'no']
   config:
@@ -107,35 +94,21 @@ options:
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
-    required: false
-    default: null
   save:
     description:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
     default: no
     choices: ['yes', 'no']
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    authorize: yes
-
 ---
 - mlnxos_config:
     lines:
       - snmp-server community
       - snmp-server host 10.2.2.2 traps version 2c
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -154,8 +127,9 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
-from ansible.module_utils.network.mlnxos.mlnxos import get_config, \
-    load_config, run_commands
+from ansible.module_utils.network.mlnxos.mlnxos import get_config
+from ansible.module_utils.network.mlnxos.mlnxos import load_config
+from ansible.module_utils.network.mlnxos.mlnxos import run_commands
 
 
 def get_candidate(module):
