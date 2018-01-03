@@ -42,7 +42,7 @@ class HPUXNetwork(Network):
         network_facts['interfaces'] = {}
         for iface in interfaces:
             network_facts[iface] = interfaces[iface]
-            network_fact['interfaces'][iface] = interfaces[iface]
+            network_facts['interfaces'][iface] = interfaces[iface]
 
         return network_facts
 
