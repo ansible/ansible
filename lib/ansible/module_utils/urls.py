@@ -1066,10 +1066,12 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             pass
 
         # parse the cookies into a nice dictionary
+        cookie_list = []
         cookie_dict = dict()
         for cookie in cookies:
             cookie_dict[cookie.name] = cookie.value
-        info['cookie_string'] = '; '.join('%s=%s' % c for c in cookie_dict.items())
+            cookie_list.append((cookie.name, cookie.value))
+        info['cookies_string'] = '; '.join('%s=%s' % c for c in cookie_list)
 
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
