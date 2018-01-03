@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fmg_script
-version_added: "1.0"
+version_added: "2.5"
 author: update by Andrew Welsh, original Jacob McGill (@jmcgill298)
 short_description: Add/Edit/Delete and execute scripts
 description:
@@ -153,6 +153,13 @@ EXAMPLES = '''
     script_name: "TestScript"
     state: "delete"
 '''
+
+RETURN = """
+api_result:
+  description: full API response, includes status code and message
+  returned: always
+  type: string
+"""
 
 import requests
 from ansible.module_utils.basic import AnsibleModule, env_fallback, return_values
