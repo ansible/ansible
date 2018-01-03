@@ -52,14 +52,8 @@ class IncludedFile:
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
 
     @staticmethod
-    def process_include_results(results, tqm, iterator, inventory, loader, variable_manager):
+    def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
-
-        def get_original_host(host):
-            if host.name in inventory._hosts_cache:
-                return inventory._hosts_cache[host.name]
-            else:
-                return inventory.get_host(host.name)
 
         for res in results:
 
