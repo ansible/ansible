@@ -96,21 +96,13 @@ RETURN = '''
 
 '''
 
-import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info, HAS_BOTO3)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 try:
     import botocore
-    HAS_BOTOCORE = True
 except ImportError:
-    HAS_BOTOCORE = False
-
-try:
-    import boto3
-except ImportError:
-    # will be caught by imported HAS_BOTO3
-    pass
+    pass  # handled by AnsibleAWSModule
 
 
 def create_lifecycle_hook(connection, module):
@@ -151,8 +143,8 @@ def create_lifecycle_hook(connection, module):
             AutoScalingGroupName=asg_name,
             LifecycleHookNames=[lch_name]
         )['LifecycleHooks']
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to get Lifecycle Hook %s" % str(e), exception=traceback.format_exc(e))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to get Lifecycle Hook")
 
     if not existing_hook:
         changed = True
@@ -168,8 +160,8 @@ def create_lifecycle_hook(connection, module):
     if changed:
         try:
             connection.put_lifecycle_hook(**lch_params)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to create LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to create LifecycleHook")
 
     return(changed)
 
@@ -200,8 +192,8 @@ def delete_lifecycle_hook(connection, module):
         all_hooks = connection.describe_lifecycle_hooks(
             AutoScalingGroupName=asg_name
         )
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to get Lifecycle Hooks %s" % str(e), exception=traceback.format_exc(e))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to get Lifecycle Hooks")
 
     for hook in all_hooks['LifecycleHooks']:
         if hook['LifecycleHookName'] == lch_name:
@@ -213,8 +205,8 @@ def delete_lifecycle_hook(connection, module):
             try:
                 connection.delete_lifecycle_hook(**lch_params)
                 changed = True
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Failed to delete LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Failed to delete LifecycleHook")
         else:
             pass
 
@@ -237,38 +229,23 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              required_if=[['state', 'present', ['transition']]])
     state = module.params.get('state')
-
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='botocore is required for this module')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-    if not region:
-        module.fail_json(msg="region parameter is required")
+    connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_params)
 
-    try:
-        connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_params)
-        if not connection:
-            module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg=str(e))
-
-    changed = create_changed = replace_changed = False
+    changed = False
 
     if state == 'present':
-        if not module.params.get('transition'):
-            module.fail_json(msg="transition parameter is required")
-
         changed = create_lifecycle_hook(connection, module)
     elif state == 'absent':
         changed = delete_lifecycle_hook(connection, module)
 
     module.exit_json(changed=changed)
+
 
 if __name__ == '__main__':
     main()

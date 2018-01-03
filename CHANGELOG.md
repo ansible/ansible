@@ -85,6 +85,7 @@ Ansible Changes By Release
   * aws_kms_facts
   * aws_s3_cors
   * aws_ssm_parameter_store
+  * ec2_asg_lifecycle_hook
   * ec2_ami_facts
   * ec2_placement_group
   * ec2_placement_group_facts
