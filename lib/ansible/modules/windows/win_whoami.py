@@ -133,31 +133,6 @@ groups:
           "type": "Alias"
       }
   ]
-logon_sid:
-  description: The logon SID details.
-  returned: success
-  type: complex
-  contains:
-    domain_name:
-      description: The domain name of the logon SID.
-      returned: success
-      type: str
-      sample: NT AUTHORITY
-    sid:
-      description: The SID in string form.
-      returned: success
-      type: str
-      sample: S-1-5-5-0-4163312
-    account_name:
-      description: The account name of the logon SID.
-      returned: success
-      type: str
-      sample: LogonSessionId_0_4163312
-    type:
-      description: The type of SID.
-      returned: success
-      type: str
-      sample: Logon
 account:
   description: The running account SID details.
   returned: success
