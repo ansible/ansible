@@ -26,7 +26,6 @@ description:
 version_added: "2.2"
 author: "William Albert (@walbert947)"
 requirements:
-    - "python >= 2.6"
     - "apache-libcloud >= 0.19.0"
 options:
     state:
@@ -124,9 +123,12 @@ try:
     from libcloud.common.google import ResourceExistsError
     from libcloud.common.google import ResourceNotFoundError
     from libcloud.dns.types import Provider
+    # The libcloud Google Cloud DNS provider.
+    PROVIDER = Provider.GOOGLE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
+    PROVIDER = None
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcdns import gcdns_connect
@@ -140,9 +142,6 @@ from ansible.module_utils.gcdns import gcdns_connect
 # v1 API. Earlier versions contained the beta v1 API, which has since been
 # deprecated and decommissioned.
 MINIMUM_LIBCLOUD_VERSION = '0.19.0'
-
-# The libcloud Google Cloud DNS provider.
-PROVIDER = Provider.GOOGLE
 
 # The URL used to verify ownership of a zone in Google Cloud DNS.
 ZONE_VERIFICATION_URL = 'https://www.google.com/webmasters/verification/'
