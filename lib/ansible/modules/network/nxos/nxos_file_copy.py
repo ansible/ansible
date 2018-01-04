@@ -134,7 +134,7 @@ def local_file_exists(module):
 
 
 def get_flash_size(module):
-    command = 'dir {}'.format(module.params['file_system'])
+    command = 'dir {0}'.format(module.params['file_system'])
     body = run_commands(module, {'command': command, 'output': 'text'})[0]
 
     match = re.search(r'(\d+) bytes free', body)
@@ -173,7 +173,7 @@ def transfer_file(module, dest):
         password=password,
         port=port)
 
-    full_remote_path = '{}{}'.format(module.params['file_system'], dest)
+    full_remote_path = '{0}{1}'.format(module.params['file_system'], dest)
     scp = SCPClient(ssh.get_transport())
     try:
         scp.put(module.params['local_file'], full_remote_path)
@@ -230,7 +230,7 @@ def main():
     results['file_system'] = file_system
 
     if not local_file_exists(module):
-        module.fail_json(msg="Local file {} not found".format(local_file))
+        module.fail_json(msg="Local file {0} not found".format(local_file))
 
     dest = remote_file or os.path.basename(local_file)
     remote_exists = remote_file_exists(module, dest, file_system=file_system)
