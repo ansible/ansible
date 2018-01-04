@@ -808,6 +808,11 @@ def main():
         supports_check_mode=True
     )
 
+    if import_failure:
+        module.fail_json(
+            msg='firewalld and its python module are required for this module, version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
+        )
+
     if fw_offline:
         # Pre-run version checking
         if FW_VERSION < "0.3.9":
@@ -824,11 +829,6 @@ def main():
         except AttributeError:
             module.fail_json(msg="firewalld connection can't be established,\
                     installed version (%s) likely too old. Requires firewalld >= 0.2.11" % FW_VERSION)
-
-    if import_failure:
-        module.fail_json(
-            msg='firewalld and its python module are required for this module, version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
-        )
 
     permanent = module.params['permanent']
     desired_state = module.params['state']
