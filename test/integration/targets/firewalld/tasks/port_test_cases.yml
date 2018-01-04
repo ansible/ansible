@@ -26,7 +26,6 @@
 - name: assert firewalld port test permanent enabled worked
   assert:
     that:
-    - not result|failed
     - result|changed
 
 - name: firewalld port test permanent enabled rerun (verify not changed)
@@ -39,7 +38,6 @@
 - name: assert firewalld port test permanent enabled rerun worked (verify not changed)
   assert:
     that:
-    - not result|failed
     - not result|changed
 
 - name: firewalld port test permanent disabled
@@ -52,7 +50,6 @@
 - name: assert firewalld port test permanent disabled worked
   assert:
     that:
-    - not result|failed
     - result|changed
 
 - name: firewalld port test permanent disabled rerun (verify not changed)
@@ -65,5 +62,4 @@
 - name: assert firewalld port test permanent disabled rerun worked (verify not changed)
   assert:
     that:
-    - not result|failed
     - not result|changed
