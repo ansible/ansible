@@ -118,7 +118,7 @@ def main():
         key_file=dict(required=True, type='path'),
         key_passphrase=dict(no_log=True, default=None, required=False),
         wait=dict(type='bool', default=False, required=False),
-        wait_timeout=dict(default=120, required=False),
+        wait_timeout=dict(default=120, required=False, type='int'),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -136,7 +136,7 @@ def main():
     else:
         b_key_passphrase = to_bytes(module.params.get('key_passphrase'), errors='surrogate_or_strict')
     wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
 
     ec2 = ec2_connect(module)
 
