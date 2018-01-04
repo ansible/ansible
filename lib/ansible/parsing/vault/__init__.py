@@ -853,6 +853,7 @@ class VaultEditor:
         except:
             # whatever happens, destroy the decrypted file
             self._shred_file(tmp_path)
+            raise
 
         b_tmpdata = self.read_data(tmp_path)
 
