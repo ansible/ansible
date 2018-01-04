@@ -219,7 +219,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-            not wrap_async,                            # async does not support pipelining
+            not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
             self._play_context.become_method != 'su',  # su does not work with pipelining,
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
@@ -694,7 +694,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         in_data = None
         cmd = ""
 
-        if wrap_async:
+        if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
             (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
                                                                                                          task_vars=task_vars)
