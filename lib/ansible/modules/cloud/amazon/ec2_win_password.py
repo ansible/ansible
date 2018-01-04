@@ -147,7 +147,7 @@ def main():
         while datetime.datetime.now() < end:
             data = ec2.get_password_data(instance_id)
             decoded = b64decode(data)
-            if wait and not decoded:
+            if not decoded:
                 time.sleep(5)
             else:
                 break
