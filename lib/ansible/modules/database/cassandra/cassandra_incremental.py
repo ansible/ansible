@@ -107,8 +107,6 @@ EXAMPLES = '''
 
 '''
 
-import grp
-
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 
 
@@ -117,7 +115,7 @@ class NodeToolCmd(object):
     This is a generic NodeToolCmd class for building nodetool commands
     """
 
-    def __init__(self, module, additional_command):
+    def __init__(self, module):
         self.module                 = module
         self.host                   = module.params['host']
         self.port                   = module.params['port']
@@ -125,13 +123,12 @@ class NodeToolCmd(object):
         self.passwordFile           = module.params['passwordFile']
         self.username               = module.params['username']
         self.nodetool_path          = module.params['nodetool_path']
-        self.additional_command     = additional_command
         self.debug                  = module.params['debug']
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
 
-    def nodetool_cmd(self, additional_command):
+    def nodetool_cmd(self, sub_command):
         if self.nodetool_path is not None and not self.nodetool_path.endswith('/'):
             self.nodetool_path += '/'
         cmd = "{0}nodetool --host {1} --port {2}".format(self.nodetool_path,
@@ -144,7 +141,7 @@ class NodeToolCmd(object):
             else:
                 cmd += " --password '{0}'".format(self.password)
         # The thing we want nodetool to execute
-        cmd += " {0}".format(self.additional_command)
+        cmd += " {0}".format(sub_command)
         if self.debug:
             print(cmd)
         return self.execute_command(cmd)
@@ -160,13 +157,7 @@ class NodeToolIncrementalBackup(NodeToolCmd):
     """
 
     def check_incremental_enabled(self):
-        o = self.nodetool_cmd("statusbackup")
-        if "not running" in str(o):
-            return False
-        elif "running" in str(o):
-            return True
-        else:
-            raise Exception(o)
+        return self.nodetool_cmd("statusbackup")
 
     def enable_incremental(self):
         return self.nodetool_cmd("enablebackup")
@@ -184,52 +175,54 @@ def main():
             username=dict(type='str'),
             incremental=dict(choices=[True, False], type='bool', required=True),
             nodetool_path=dict(default=None, required=False),
-            debug=dict(default=False, required=False),
+            debug=dict(type='bool', default=False, required=False),
         ),
         supports_check_mode=True
     )
-    if module.params['incremental']:
-        module.params['additional_command'] = "enablebackup"
-    else:
-        module.params['additional_command'] = "disablebackup"
 
-    n = NodeToolIncrementalBackup(module, module.params['additional_command'])
+    n = NodeToolIncrementalBackup(module)
 
     rc = None
     out = ''
     err = ''
     result = {}
-    #result['name'] = group.name
-    #result['state'] = group.state
+    changed = False
 
     if module.params['incremental'] == False:
 
-        if n.check_incremental_enabled():
-            if module.check_mode:
+        (rc, out, err) = n.check_incremental_enabled()
+        if rc != 0:
+            module.fail_json(name=module.params['additional_command'], msg=err)
+        if module.check_mode:
+            if out == "running":
                 module.exit_json(changed=True)
+            else:
+                module.exit_json(changed=False)
+        if out.strip() == "running":
             (rc, out, err) = n.disable_incremental()
-            if rc != 0:
-                module.fail_json(name=module.params['additional_command'], msg=err)
-
-    elif module.params['incremental'] == True:
-
-        if not  n.check_incremental_enabled():
-            if module.check_mode:
-                module.exit_json(changed=True)
-            (rc, out, err) = n.enable_incremental()
-
-        if rc is not None and rc != 0:
+            changed = True
+        if rc != 0:
             module.fail_json(name=module.params['additional_command'], msg=err)
 
-    if rc is None:
-        result['changed'] = False
-    else:
-        result['changed'] = True
+    elif module.params['incremental'] == True:
+        (rc, out, err) = n.check_incremental_enabled()
+        if rc != 0:
+            module.fail_json(name=module.params['additional_command'], msg=err)
+        if module.check_mode:
+            if out == "not running":
+                module.exit_json(changed=True)
+            else:
+                module.exit_json(changed=False)
+        if out.strip() == "not running":
+            (rc, out, err) = n.enable_incremental()
+            changed = True
+        if rc is not None and rc != 0:
+            module.fail_json(name=module.params['additional_command'], msg=err)
+    result['changed'] = changed
     if out:
         result['stdout'] = out
     if err:
         result['stderr'] = err
-
     module.exit_json(**result)
 
 
