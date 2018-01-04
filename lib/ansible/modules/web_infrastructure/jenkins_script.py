@@ -148,7 +148,7 @@ def main():
             script=dict(required=True, type="str"),
             url=dict(required=False, type="str", default="http://localhost:8080"),
             validate_certs=dict(required=False, type="bool", default=True),
-            user=dict(required=False, no_log=True, type="str", default=None),
+            user=dict(required=False, type="str", default=None),
             password=dict(required=False, no_log=True, type="str", default=None),
             timeout=dict(required=False, type="int", default=10),
             args=dict(required=False, type="dict", default=None)
