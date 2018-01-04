@@ -67,7 +67,7 @@ options:
     description:
       - The traffic type for the network offering.
       - Supported type in current release is GUEST only
-    required: false
+    required: true
     default: GUEST
   availability:
     description:
@@ -201,7 +201,7 @@ state:
   returned: success
   type: string
   sample: Enabled
-guestiptype:
+guest_ip_type:
   description: Guest type of the network offering
   returned: success
   type: string
@@ -211,7 +211,7 @@ availability:
   returned: success
   type: string
   sample: Optional
-serviceofferingid:
+service_offering_id:
   description: The service offering ID
   returned: success
   type: string
@@ -221,7 +221,6 @@ serviceofferingid:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -254,13 +253,16 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
 
     def create_or_update(self):
         network_offering = self.get_network_offering()
+
         if not network_offering:
             network_offering = self.create_network_offering()
 
         return self.update_network_offering(network_offering=network_offering)
 
     def create_network_offering(self):
+        network_offering = None
         self.result['changed'] = True
+
         args = {
             'state': self.module.params.get('state'),
             'displaytext': self.module.params.get('display_text'),
@@ -286,8 +288,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             res = self.cs.createNetworkOffering(**args)
             if 'errortext' in res:
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-            if res:
-                network_offering = res['networkoffering']
+            network_offering = res['networkoffering']
 
         return network_offering
 
@@ -305,6 +306,9 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
         return network_offering
 
     def update_network_offering(self, network_offering):
+        if not network_offering:
+            return network_offering
+
         args = {
             'id': network_offering['id'],
             'state': self.module.params.get('state'),
@@ -323,9 +327,10 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
                 self.result['changed'] = True
 
         if not self.module.check_mode:
-            network_offering = self.cs.updateNetworkOffering(**args)
+            res = self.cs.updateNetworkOffering(**args)
+            network_offering = res['networkoffering']
 
-        return network_offering['networkoffering']
+        return network_offering
 
 
 def main():
@@ -358,19 +363,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_network_offering = AnsibleCloudStackNetworkOffering(module)
+    acs_network_offering = AnsibleCloudStackNetworkOffering(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            network_offering = acs_network_offering.delete_network_offering()
-        else:
-            network_offering = acs_network_offering.create_or_update()
+    state = module.params.get('state')
+    if state in ['absent']:
+        network_offering = acs_network_offering.delete_network_offering()
+    else:
+        network_offering = acs_network_offering.create_or_update()
 
-        result = acs_network_offering.get_result(network_offering)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_network_offering.get_result(network_offering)
 
     module.exit_json(**result)
 
