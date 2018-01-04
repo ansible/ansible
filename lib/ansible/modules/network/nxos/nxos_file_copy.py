@@ -38,6 +38,8 @@ notes:
   - If the file is already present (md5 sums match), no transfer will
     take place.
   - Check mode will tell you if the file would be copied.
+requirements:
+  - paramiko
 options:
   local_file:
     description:
@@ -93,10 +95,16 @@ remote_file:
 import os
 import re
 import time
-import paramiko
+
 from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 try:
     from scp import SCPClient
@@ -196,6 +204,12 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    if not HAS_PARAMIKO:
+        module.fail_json(
+            msg='library paramiko is required but does not appear to be '
+                'installed. It can be installed using `pip install paramiko`'
+        )
 
     if not HAS_SCP:
         module.fail_json(
