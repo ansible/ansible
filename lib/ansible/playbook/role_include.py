@@ -26,6 +26,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
+from ansible.template import Templar
 
 try:
     from __main__ import display
@@ -74,6 +75,9 @@ class IncludeRole(TaskInclude):
         else:
             myplay = play
 
+        templar = Templar(loader=loader, variables=self.vars)
+        if templar.templatable(self._role_name):
+            self._role_name = templar.template(self._role_name)
         ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
         ri.vars.update(self.vars)
 
