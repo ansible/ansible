@@ -72,6 +72,8 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * ec2_vpc.
 * ec2_ami_search, use ec2_ami_facts instead.
 * nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
+  https://github.com/ansible/ansible/issues/29387
+* panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 
 ### New Plugins
 
