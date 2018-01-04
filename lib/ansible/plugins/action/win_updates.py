@@ -238,10 +238,11 @@ class ActionModule(ActionBase):
                     changed = True
 
         # finally create the return dict based on the aggregated execution
-        # values
-        result['changed'] = changed
-        result['updates'] = updates
-        result['found_update_count'] = found_update_count
-        result['installed_update_count'] = installed_update_count
+        # values if we are not in async
+        if self._task.async_val == 0:
+            result['changed'] = changed
+            result['updates'] = updates
+            result['found_update_count'] = found_update_count
+            result['installed_update_count'] = installed_update_count
 
         return result
