@@ -529,12 +529,13 @@ class ClustersModule(BaseModule):
     def update_check(self, entity):
         sched_policy = self._get_sched_policy()
         migration_policy = getattr(entity.migration, 'policy', None)
+        cluster_cpu = getattr(entity, 'cpu', dict())
         return (
             equal(self.param('comment'), entity.comment) and
             equal(self.param('description'), entity.description) and
             equal(self.param('switch_type'), str(entity.switch_type)) and
-            equal(self.param('cpu_arch'), str(entity.cpu.architecture)) and
-            equal(self.param('cpu_type'), entity.cpu.type) and
+            equal(self.param('cpu_arch'), str(getattr(cluster_cpu, 'architecture', None))) and
+            equal(self.param('cpu_type'), getattr(cluster_cpu, 'type', None)) and
             equal(self.param('ballooning'), entity.ballooning_enabled) and
             equal(self.param('gluster'), entity.gluster_service) and
             equal(self.param('virt'), entity.virt_service) and
