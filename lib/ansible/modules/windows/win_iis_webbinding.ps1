@@ -105,7 +105,10 @@ try {
       $result.ip = $ip
 
       Push-Location IIS:\SslBindings\
-      Get-Item Cert:\LocalMachine\$certificateStoreName\$certificateHash | New-Item  "$($ip)!$($port)"
+      $newbinding = Get-WebBinding -name $host_header -Protocol $protocol
+      if($newbinding) {
+        $newbinding.AddSslCertificate($certificatehash, $certificateStoreName)
+      }
       Pop-Location
     }
 
