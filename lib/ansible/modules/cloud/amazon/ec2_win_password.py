@@ -98,9 +98,13 @@ import datetime
 import time
 from base64 import b64decode
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
+try:
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
 
 try:
     import boto.ec2
@@ -111,9 +115,6 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
 from ansible.module_utils._text import to_bytes
-
-
-BACKEND = default_backend()
 
 
 def main():
@@ -130,6 +131,9 @@ def main():
 
     if not HAS_BOTO:
         module.fail_json(msg='Boto required for this module.')
+
+    if not HAS_CRYPTOGRAPHY:
+        module.fail_json(msg='cryptography package required for this module.')
 
     instance_id = module.params.get('instance_id')
     key_file = module.params.get('key_file')
@@ -167,7 +171,7 @@ def main():
     else:
         try:
             with f:
-                key = load_pem_private_key(f.read(), b_key_passphrase, BACKEND)
+                key = load_pem_private_key(f.read(), b_key_passphrase, default_backend())
         except (ValueError, TypeError) as e:
             module.fail_json(msg="unable to parse key file")
 
