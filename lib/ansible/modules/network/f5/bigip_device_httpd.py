@@ -21,9 +21,17 @@ description:
     to change when you want to set GUI timeouts and other TMUI related settings.
 version_added: "2.5"
 options:
+  allow:
+    description:
+      - Specifies, if you have enabled HTTPD access, the IP address or address
+        range for other systems that can communicate with this system.
+    choices:
+      - all
+      - IP address, such as 172.27.1.10
+      - IP range, such as 172.27.*.* or 172.27.0.0/255.255.0.0
   auth_name:
     description:
-      - Sets the BIG-IP authentication realm name
+      - Sets the BIG-IP authentication realm name.
   auth_pam_idle_timeout:
     description:
       - Sets the GUI timeout for automatic logout, in seconds.
@@ -102,6 +110,51 @@ auth_pam_idle_timeout:
   returned: changed
   type: string
   sample: 1200
+auth_name:
+  description: The new authentication realm name.
+  returned: changed
+  type: string
+  sample: 'foo'
+auth_pam_validate_ip:
+  description: The new authPamValidateIp setting.
+  returned: changed
+  type: bool
+  sample: on
+auth_pam_dashboard_timeout:
+  description: Whether or not the BIG-IP dashboard will timeout.
+  returned: changed
+  type: bool
+  sample: off
+fast_cgi_timeout:
+  description: The new timeout of FastCGI.
+  returned: changed
+  type: int
+  sample: 500
+hostname_lookup:
+  description: Whether or not to display the hostname, if possible.
+  returned: changed
+  type: bool
+  sample: on
+log_level:
+  description: The new minimum httpd log level.
+  returned: changed
+  type: string
+  sample: crit
+max_clients:
+  description: The new maximum number of clients that can connect to the GUI at once.
+  returned: changed
+  type: int
+  sample: 20
+redirect_http_to_https:
+  description: Whether or not to redirect http requests to the GUI to https.
+  returned: changed
+  type: bool
+  sample: on
+ssl_port:
+  description: The new HTTPS port to listen on.
+  returned: changed
+  type: int
+  sample: 10443
 '''
 
 import time
@@ -142,19 +195,21 @@ class Parameters(AnsibleF5Parameters):
     api_attributes = [
         'authPamIdleTimeout', 'authPamValidateIp', 'authName', 'authPamDashboardTimeout',
         'fastcgiTimeout', 'hostnameLookup', 'logLevel', 'maxClients', 'sslPort',
-        'redirectHttpToHttps'
+        'redirectHttpToHttps', 'allow'
     ]
 
     returnables = [
         'auth_pam_idle_timeout', 'auth_pam_validate_ip', 'auth_name',
         'auth_pam_dashboard_timeout', 'fast_cgi_timeout', 'hostname_lookup',
-        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port'
+        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port',
+        'allow'
     ]
 
     updatables = [
         'auth_pam_idle_timeout', 'auth_pam_validate_ip', 'auth_name',
         'auth_pam_dashboard_timeout', 'fast_cgi_timeout', 'hostname_lookup',
-        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port'
+        'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port',
+        'allow'
     ]
 
     def __init__(self, params=None):
@@ -255,9 +310,31 @@ class ModuleParameters(Parameters):
             return "enabled"
         return "disabled"
 
+    @property
+    def allow(self):
+        if self._values['allow'] is None:
+            return None
+        if self._values['allow'][0] == 'all':
+            return 'all'
+        if self._values['allow'][0] == '':
+            return ''
+        allow = self._values['allow']
+        result = list(set([str(x) for x in allow]))
+        result = sorted(result)
+        return result
+
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def allow(self):
+        if self._values['allow'] is None:
+            return ''
+        if self._values['allow'][0] == 'All':
+            return 'all'
+        allow = self._values['allow']
+        result = list(set([str(x) for x in allow]))
+        result = sorted(result)
+        return result
 
 
 class Changes(Parameters):
@@ -300,6 +377,21 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def allow(self):
+        if self.want.allow is None:
+            return None
+        if self.want.allow == 'all' and self.have.allow == 'all':
+            return None
+        if self.want.allow == 'all':
+            return ['All']
+        if self.want.allow == '' and self.have.allow == '':
+            return None
+        if self.want.allow == '':
+            return []
+        if self.want.allow != self.have.allow:
+            return self.want.allow
 
 
 class ModuleManager(object):
@@ -403,6 +495,9 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
         self.argument_spec = dict(
+            allow=dict(
+                type='list'
+            ),
             auth_name=dict(),
             auth_pam_idle_timeout=dict(
                 type='int'
