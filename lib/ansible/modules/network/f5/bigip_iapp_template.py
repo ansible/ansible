@@ -451,10 +451,17 @@ class ArgumentSpec(object):
         self.f5_product_name = 'bigip'
 
 
-def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
+def cleanup_tokens(client):
+    try:
+        resource = client.api.shared.authz.tokens_s.token.load(
+            name=client.api.icrs.token
+        )
+        resource.delete()
+    except Exception:
+        pass
 
+
+def main():
     spec = ArgumentSpec()
 
     client = AnsibleF5Client(
@@ -464,11 +471,17 @@ def main():
     )
 
     try:
+        if not HAS_F5SDK:
+            raise F5ModuleError("The python f5-sdk module is required")
+
         mm = ModuleManager(client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         client.module.exit_json(**results)
     except F5ModuleError as e:
+        cleanup_tokens(client)
         client.module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()
