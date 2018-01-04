@@ -55,8 +55,8 @@ aci_argument_spec = dict(
     hostname=dict(type='str', required=True, aliases=['host']),
     username=dict(type='str', default='admin', aliases=['user']),
     password=dict(type='str', required=True, no_log=True),
-    client_cert=dict(type='path', required=False),
-    client_key=dict(type='path', required=False),
+    client_cert=dict(type='path'),
+    client_key=dict(type='path'),
     protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     timeout=dict(type='int', default=30),
     use_proxy=dict(type='bool', default=True),
@@ -108,6 +108,7 @@ def aci_response_error(result):
     ''' Set error information when found '''
     result['error_code'] = 0
     result['error_text'] = 'Success'
+
     # Handle possible APIC error information
     if result['totalCount'] != '0':
         try:
@@ -161,7 +162,12 @@ class ACIModule(object):
         self.result = dict(changed=False)
         self.headers = None
 
-        self.login()
+        # Ensure protocol is set
+        self.define_protocol()
+
+        # When client certificate authentication is used, don't log in
+        if self.params['client_cert'] is None:
+            self.login()
 
     def define_protocol(self):
         ''' Set protocol based on use_ssl parameter '''
@@ -190,9 +196,6 @@ class ACIModule(object):
 
     def login(self):
         ''' Log in to APIC '''
-
-        # Ensure protocol is set (only do this once)
-        self.define_protocol()
 
         # Perform login request
         url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % self.params
