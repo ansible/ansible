@@ -313,9 +313,6 @@ def main():
     content = module.params['content']
     src = module.params['src']
 
-    method = module.params['method']
-    timeout = module.params['timeout']
-
     # Report missing file
     file_exists = False
     if src:
@@ -369,22 +366,34 @@ def main():
             except Exception as e:
                 module.fail_json(msg='Failed to parse provided XML content: %s' % to_text(e), payload=payload)
 
-    # Perform actual request using auth cookie (Same as aci_request,but also supports XML)
-    url = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
-    if method != 'get':
-        url = update_qsl(url, {'rsp-subtree': 'modified'})
-    aci.result['url'] = url
+    # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
+    if aci.params['method'] != 'get':
+        aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})
 
-    resp, info = fetch_url(module, url, data=payload, method=method.upper(), timeout=timeout, headers=aci.headers)
+    # Sign and encode URL / payload as to APIC's wishes
+    if aci.params['client_cert_key'] is not None:
+        aci.client_auth(payload)
+
+    # Perform request
+    resp, info = fetch_url(module, aci.result['url'],
+                           data=payload,
+                           headers=aci.headers,
+                           method=aci.params['method'].upper(),
+                           timeout=aci.params['timeout'],
+                           use_proxy=aci.params['use_proxy'])
+
     aci.result['response'] = info['msg']
     aci.result['status'] = info['status']
 
     # Report failure
     if info['status'] != 200:
         try:
+            # APIC error
             aci_response(aci.result, info['body'], rest_type)
             module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, payload=payload, **aci.result)
         except KeyError:
+            # Connection error
             module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, payload=payload, **aci.result)
 
     aci_response(aci.result, resp.read(), rest_type)
