@@ -420,6 +420,35 @@ Because local service accounts do not have passwords, the
 ``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
+Accounts without a Password
+---------------------------
+
+.. Warning:: As a general security best practice, you should avoid allowing accounts without passwords.
+
+Ansible can be used to become an account that does not have a password (like the
+``Guest`` account). To become an account without a password, set up the
+variables like normal but either do not define ``ansible_become_pass`` or set
+``ansible_become_pass: ''``.
+
+Before become can work on an account like this, the local policy
+`Accounts: Limit local account use of blank passwords to console logon only <https://technet.microsoft.com/en-us/library/jj852174.aspx>`_
+must be disabled. This can either be done through a Group Policy Object (GPO)
+or with this Ansible task:
+
+.. code-block:: yaml
+
+   - name: allow blank password on become
+     win_regedit:
+       path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+       name: LimitBlankPasswordUse
+       data: 0
+       type: dword
+       state: present
+
+.. Note:: This is only for accounts that do not have a password. You still need
+    to set the account's password under ``ansible_become_pass`` if the
+    become_user has a password.
+
 Limitations
 -----------
 
