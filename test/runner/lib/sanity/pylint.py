@@ -6,6 +6,11 @@ import json
 import os
 import datetime
 
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -48,6 +53,12 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
+    def __init__(self):
+        super(PylintTest, self).__init__()
+
+        self.plugin_dir = 'test/sanity/pylint/plugins'
+        self.plugin_names = sorted(p[0] for p in [os.path.splitext(p) for p in os.listdir(self.plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -222,6 +233,17 @@ class PylintTest(SanitySingleVersion):
         if not os.path.exists(rcfile):
             rcfile = 'test/sanity/pylint/config/default'
 
+        parser = configparser.SafeConfigParser()
+        parser.read(rcfile)
+
+        if parser.has_section('ansible-test'):
+            config = dict(parser.items('ansible-test'))
+        else:
+            config = dict()
+
+        disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
+        load_plugins = set(self.plugin_names) - disable_plugins
+
         cmd = [
             'python%s' % args.python_version,
             find_executable('pylint'),
@@ -230,9 +252,11 @@ class PylintTest(SanitySingleVersion):
             '--max-line-length', '160',
             '--rcfile', rcfile,
             '--output-format', 'json',
+            '--load-plugins', ','.join(load_plugins),
         ] + paths
 
         env = ansible_environment(args)
+        env['PYTHONPATH'] += '%s%s' % (os.pathsep, self.plugin_dir)
 
         if paths:
             try:
