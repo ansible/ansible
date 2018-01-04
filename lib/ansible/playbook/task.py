@@ -415,6 +415,8 @@ class Task(Base, Conditional, Taggable, Become):
         '''
 
         value = None
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
             if self._parent and (value is None or extend):
@@ -441,12 +443,6 @@ class Task(Base, Conditional, Taggable, Become):
         if value is None:
             value = C.ANY_ERRORS_FATAL
         return value
-
-    def _get_attr_environment(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def get_dep_chain(self):
         if self._parent:

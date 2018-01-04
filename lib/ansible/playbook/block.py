@@ -278,15 +278,14 @@ class Block(Base, Become, Conditional, Taggable):
             for dep in dep_chain:
                 dep.set_loader(loader)
 
-    def _get_attr_environment(self):
-        return self._get_parent_attribute('environment', extend=True, prepend=True)
-
     def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
         '''
 
         value = None
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
 
