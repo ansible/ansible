@@ -219,7 +219,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-            not wrap_async or self._connection.always_pipeline_modules, # async does not normally support pipelining unless it does (eg winrm)
+            not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
             self._play_context.become_method != 'su',  # su does not work with pipelining,
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
