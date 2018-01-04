@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: ios_lldp
+module: nxos_lldp
 version_added: "2.5"
 author: "Ganesh Nalawade (@ganeshrn)"
 short_description: Manage LLDP configuration on Cisco NXOS network devices.
