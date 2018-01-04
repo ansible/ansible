@@ -62,10 +62,9 @@ except ImportError:
 aci_argument_spec = dict(
     hostname=dict(type='str', required=True, aliases=['host']),
     username=dict(type='str', default='admin', aliases=['user']),
-    password=dict(type='str', required=True, no_log=True),
-    client_cert=dict(type='path'),
-    client_cert_name=dict(type='str'),
-    client_key=dict(type='path'),
+    password=dict(type='str', no_log=True),
+    client_cert_name=dict(type='str'),  # Beware, this is not the same as client_cert !
+    client_cert_key=dict(type='path'),  # Beware, this is not the same as client_key !
     protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     timeout=dict(type='int', default=30),
     use_proxy=dict(type='bool', default=True),
@@ -174,9 +173,17 @@ class ACIModule(object):
         # Ensure protocol is set
         self.define_protocol()
 
-        # When client certificate authentication is used, don't log in
-        if self.params['client_cert'] is None:
+        if self.params['client_cert_name'] is None:
+            if self.params['password'] is None:
+                self.module.fail(msg="Parameter 'password' is required for HTTP authentication")
+            # Only log in when client certificate authentication is not used
             self.login()
+        elif not HAS_OPENSSL:
+            self.module.fail_json(msg='Cannot use client certificate authentication because pyopenssl is not available')
+        elif self.params['client_cert_key'] is None:
+            self.module.fail(msg="Parameter 'client_cert_key' is required for ACI client certificate authentication")
+        elif self.params['password'] is not None:
+            self.module.warn('When doing ACI client certificate authentication, a password is not required')
 
     def define_protocol(self):
         ''' Set protocol based on use_ssl parameter '''
@@ -230,16 +237,13 @@ class ACIModule(object):
         # Retain cookie for later use
         self.headers = dict(Cookie=resp.headers['Set-Cookie'])
 
-    def client_auth(self):
-        if not HAS_OPENSSL:
-            self.module.fail_json(msg='Cannot use client certificate authentication because pyopenssl is not available')
-
+    def client_auth(self, payload=''):
         try:
-            sig_key = load_privatekey(FILETYPE_PEM, open(self.params['client_key'], 'r').read())
+            sig_key = load_privatekey(FILETYPE_PEM, open(self.params['client_cert_key'], 'r').read())
         except:
-            self.module.fail_json(msg='Cannot load private key %s' % self.params['client_key'])
+            self.module.fail_json(msg='Cannot load private key %s' % self.params['client_cert_key'])
 
-        sig_payload = '%s%s%s' % (self.params['method'].upper(), self.result['url'], payload if payload else '')
+        sig_payload = '%s%s%s' % (self.params['method'].upper(), self.result['url'], payload)
 
         self.headers['APIC-Request-Signature'] = base64.b64encode(sign(sig_key, sig_payload, 'sha256'))
         self.headers['APIC-Certificate-Algorithm'] = 'v1.0'
@@ -251,12 +255,11 @@ class ACIModule(object):
 
         # Ensure method is set (only do this once)
         self.define_method()
-
         self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
 
         # Sign and encode URL / payload as to APIC's wishes
-        if self.params['client_key'] is not None:
-            self.client_auth()
+        if self.params['client_cert_key'] is not None:
+            self.client_auth(payload)
 
         # Perform request
         resp, info = fetch_url(self.module, self.result['url'],
@@ -283,8 +286,17 @@ class ACIModule(object):
 
     def query(self, path):
         ''' Perform a query with no payload '''
-        url = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
-        resp, query = fetch_url(self.module, url,
+
+        # Ensure method is set
+        self.params['method'] = 'GET'
+        self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
+
+        # Sign and encode URL / payload as to APIC's wishes
+        if self.params['client_cert_key'] is not None:
+            self.client_auth()
+
+        # Perform request
+        resp, query = fetch_url(self.module, self.result['url'],
                                 data=None,
                                 headers=self.headers,
                                 method='GET',
