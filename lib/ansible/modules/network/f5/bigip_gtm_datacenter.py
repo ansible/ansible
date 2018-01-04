@@ -29,15 +29,6 @@ options:
   description:
     description:
       - The description of the data center.
-  enabled:
-    description:
-      - Whether the data center should be enabled. At least one of C(state) and
-        C(enabled) are required.
-      - Deprecated in 2.4. Use C(state) and either C(enabled) or C(disabled)
-        instead.
-    choices:
-      - yes
-      - no
   location:
     description:
       - The location of the data center.
@@ -97,6 +88,16 @@ enabled:
   returned: changed
   type: bool
   sample: true
+disabled:
+  description: Whether the datacenter is disabled or not.
+  returned: changed
+  type: bool
+  sample: true
+state:
+  description: State of the datacenter.
+  returned: changed
+  type: string
+  sample: disabled
 location:
   description: The location that is set for the datacenter.
   returned: changed
@@ -104,8 +105,6 @@ location:
   sample: 222 West 23rd
 '''
 
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
@@ -121,96 +120,16 @@ class Parameters(AnsibleF5Parameters):
     api_map = {}
 
     updatables = [
-        'location', 'description', 'contact',
-
-        # TODO: Remove this method in v2.5
-        'enabled'
+        'location', 'description', 'contact', 'state'
     ]
 
     returnables = [
-        'location', 'description', 'contact',
-
-        # TODO: Remove this method in v2.5
-        'enabled'
+        'location', 'description', 'contact', 'state', 'enabled', 'disabled'
     ]
 
     api_attributes = [
-        'enabled', 'location', 'description', 'contact'
+        'enabled', 'location', 'description', 'contact', 'disabled'
     ]
-
-    @property
-    def disabled(self):
-        if self._values['state'] == 'disabled':
-            return True
-        # TODO: Remove this method in v2.5
-        elif self._values['disabled'] in BOOLEANS_TRUE:
-            return True
-        # TODO: Remove this method in v2.5
-        elif self._values['disabled'] in BOOLEANS_FALSE:
-            return False
-        # TODO: Remove this method in v2.5
-        elif self._values['enabled'] in BOOLEANS_FALSE:
-            return True
-        # TODO: Remove this method in v2.5
-        elif self._values['enabled'] in BOOLEANS_TRUE:
-            return False
-        elif self._values['state'] == 'enabled':
-            return False
-        else:
-            return None
-
-    @property
-    def enabled(self):
-        if self._values['state'] == 'enabled':
-            return True
-        # TODO: Remove this method in v2.5
-        elif self._values['enabled'] in BOOLEANS_TRUE:
-            return True
-        # TODO: Remove this method in v2.5
-        elif self._values['enabled'] in BOOLEANS_FALSE:
-            return False
-        # TODO: Remove this method in v2.5
-        elif self._values['disabled'] in BOOLEANS_FALSE:
-            return True
-        # TODO: Remove this method in v2.5
-        elif self._values['disabled'] in BOOLEANS_TRUE:
-            return False
-        elif self._values['state'] == 'disabled':
-            return False
-        else:
-            return None
-
-    @property
-    def state(self):
-        if self.enabled and self._values['state'] != 'present':
-            return 'enabled'
-        elif self.disabled and self._values['state'] != 'present':
-            return 'disabled'
-        else:
-            return self._values['state']
-
-    # TODO: Remove this method in v2.5
-    @state.setter
-    def state(self, value):
-        self._values['state'] = value
-
-        # Only do this if not using legacy params
-        if self._values['enabled'] is None:
-            if self._values['state'] in ['enabled', 'present']:
-                self._values['enabled'] = True
-                self._values['disabled'] = False
-            elif self._values['state'] == 'disabled':
-                self._values['enabled'] = False
-                self._values['disabled'] = True
-        else:
-            if self._values['__warnings'] is None:
-                self._values['__warnings'] = []
-            self._values['__warnings'].append(
-                dict(
-                    msg="Usage of the 'enabled' parameter is deprecated",
-                    version='2.4'
-                )
-            )
 
     def to_return(self):
         result = {}
@@ -231,42 +150,119 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
-class Changes(Parameters):
+class ApiParameters(Parameters):
+    @property
+    def disabled(self):
+        if self._values['disabled'] is True:
+            return True
+        return None
+
     @property
     def enabled(self):
-        if self._values['enabled'] in BOOLEANS_TRUE:
+        if self._values['enabled'] is True:
+            return True
+        return None
+
+
+class ModuleParameters(Parameters):
+    @property
+    def disabled(self):
+        if self._values['state'] == 'disabled':
             return True
         else:
+            return None
+
+    @property
+    def enabled(self):
+        if self._values['state'] in ['enabled', 'present']:
+            return True
+        return None
+
+    @property
+    def state(self):
+        if self.enabled and self._values['state'] != 'present':
+            return 'enabled'
+        elif self.disabled and self._values['state'] != 'present':
+            return 'disabled'
+        else:
+            return self._values['state']
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    @property
+    def disabled(self):
+        if self._values['state'] == 'disabled':
+            return True
+        elif self._values['state'] in ['enabled', 'present']:
             return False
+        return None
+
+    @property
+    def enabled(self):
+        if self._values['state'] in ['enabled', 'present']:
+            return True
+        elif self._values['state'] == 'disabled':
+            return False
+        return None
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def state(self):
+        if self.want.enabled != self.have.enabled:
+            return dict(
+                state=self.want.state,
+                enabled=self.want.enabled
+            )
+        if self.want.disabled != self.have.disabled:
+            return dict(
+                state=self.want.state,
+                disabled=self.want.disabled
+            )
 
 
 class ModuleManager(object):
     def __init__(self, client):
         self.client = client
-        self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Changes()
-
-    def _set_changed_options(self):
-        changed = {}
-        for key in Parameters.returnables:
-            if getattr(self.want, key) is not None:
-                changed[key] = getattr(self.want, key)
-        if changed:
-            self.changes = Changes(changed)
-
-    def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
-        if changed:
-            self.changes = Changes(changed)
-            return True
-        return False
+        self.want = ModuleParameters(params=self.client.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
 
     def exec_module(self):
         changed = False
@@ -281,23 +277,38 @@ class ModuleManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        self._announce_deprecations()
+        self._announce_deprecations(result)
         return result
 
-    def _announce_deprecations(self):
-        warnings = []
-        if self.want:
-            warnings += self.want._values.get('__warnings', [])
-        if self.have:
-            warnings += self.have._values.get('__warnings', [])
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
         for warning in warnings:
             self.client.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(changed)
+            return True
+        return False
 
     def should_update(self):
         result = self._update_changed_options()
@@ -323,7 +334,7 @@ class ModuleManager(object):
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(result)
+        return ApiParameters(result)
 
     def exists(self):
         result = self.client.api.tm.gtm.datacenters.datacenter.exists(
@@ -350,7 +361,8 @@ class ModuleManager(object):
         resource.modify(**params)
 
     def create(self):
-        self._set_changed_options()
+        self.have = ApiParameters()
+        self.should_update()
         if self.client.check_mode:
             return True
         self.create_on_device()
@@ -389,9 +401,6 @@ class ArgumentSpec(object):
         self.argument_spec = dict(
             contact=dict(),
             description=dict(),
-            enabled=dict(
-                type='bool',
-            ),
             location=dict(),
             name=dict(required=True),
             state=dict(
@@ -401,6 +410,16 @@ class ArgumentSpec(object):
             )
         )
         self.f5_product_name = 'bigip'
+
+
+def cleanup_tokens(client):
+    try:
+        resource = client.api.shared.authz.tokens_s.token.load(
+            name=client.api.icrs.token
+        )
+        resource.delete()
+    except Exception:
+        pass
 
 
 def main():
@@ -418,9 +437,12 @@ def main():
     try:
         mm = ModuleManager(client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         client.module.exit_json(**results)
     except F5ModuleError as e:
+        cleanup_tokens(client)
         client.module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()
