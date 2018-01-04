@@ -49,6 +49,8 @@ Ansible Changes By Release
 * Fix WinRM parsing/escaping of IPv6 addresses (https://github.com/ansible/ansible/pull/34072)
 * Fix win_package to detect MSI regardless of the extension case
   (https://github.com/ansible/ansible/issues/34465)
+* Updated win_mapped_drive docs to clarify what it is used for
+  (https://github.com/ansible/ansible/pull/34478)
 
 <a id="2.4.2"></a>
 
