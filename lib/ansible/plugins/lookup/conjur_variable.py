@@ -36,7 +36,7 @@ from base64 import b64encode
 from netrc import netrc
 from os import environ
 from time import time
-from urllib import quote_plus
+from ansible.module_utils.six.moves.urllib.parse import quote_plus
 import yaml
 
 import requests
