@@ -55,6 +55,8 @@ aci_argument_spec = dict(
     hostname=dict(type='str', required=True, aliases=['host']),
     username=dict(type='str', default='admin', aliases=['user']),
     password=dict(type='str', required=True, no_log=True),
+    client_cert=dict(type='path', required=False),
+    client_key=dict(type='path', required=False),
     protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     timeout=dict(type='int', default=30),
     use_proxy=dict(type='bool', default=True),
