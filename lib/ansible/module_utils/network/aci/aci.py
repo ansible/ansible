@@ -30,11 +30,19 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import json
 from copy import deepcopy
 
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
+
+# Optionaly, only used for client certificate authentication
+try:
+    from OpenSSL.crypto import FILETYPE_PEM, load_privatekey, sign
+    HAS_OPENSSL = True
+except ImportError:
+    HAS_OPENSSL = False
 
 # Optional, only used for XML payload
 try:
@@ -56,6 +64,7 @@ aci_argument_spec = dict(
     username=dict(type='str', default='admin', aliases=['user']),
     password=dict(type='str', required=True, no_log=True),
     client_cert=dict(type='path'),
+    client_cert_name=dict(type='str'),
     client_key=dict(type='path'),
     protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     timeout=dict(type='int', default=30),
@@ -221,14 +230,35 @@ class ACIModule(object):
         # Retain cookie for later use
         self.headers = dict(Cookie=resp.headers['Set-Cookie'])
 
+    def client_auth(self):
+        if not HAS_OPENSSL:
+            self.module.fail_json(msg='Cannot use client certificate authentication because pyopenssl is not available')
+
+        try:
+            sig_key = load_privatekey(FILETYPE_PEM, open(self.params['client_key'], 'r').read())
+        except:
+            self.module.fail_json(msg='Cannot load private key %s' % self.params['client_key'])
+
+        sig_payload = '%s%s%s' % (self.params['method'].upper(), self.result['url'], payload if payload else '')
+
+        self.headers['APIC-Request-Signature'] = base64.b64encode(sign(sig_key, sig_payload, 'sha256'))
+        self.headers['APIC-Certificate-Algorithm'] = 'v1.0'
+        self.headers['APIC-Certificate-Fingerprint'] = 'fingerprint'
+        self.headers['APIC-Certificate-DN'] = 'uni/userext/user-%s/usercert-%s' % (self.params['username'], self.params['client_cert_name'])
+
     def request(self, path, payload=None):
         ''' Perform a REST request '''
 
         # Ensure method is set (only do this once)
         self.define_method()
 
-        # Perform request
         self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
+
+        # Sign and encode URL / payload as to APIC's wishes
+        if self.params['client_key'] is not None:
+            self.client_auth()
+
+        # Perform request
         resp, info = fetch_url(self.module, self.result['url'],
                                data=payload,
                                headers=self.headers,
