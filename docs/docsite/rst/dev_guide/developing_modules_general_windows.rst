@@ -314,7 +314,7 @@ are some steps that need to be followed to set this up:
 - Add the following to the start of the module script that was copied to the server::
 
     ### start setup code
-    $complex_args = @{
+    $params = @{
         "_ansible_check_mode" = $false
         "_ansible_diff" = $false
         "path" = "C:\temp"
@@ -324,7 +324,12 @@ are some steps that need to be followed to set this up:
     Import-Module -Name .\Ansible.ModuleUtils.Legacy.psm1
     ### end setup code
 
-You can add more args to ``$complex_args`` as required by the module. The
+- Comment the $params line of the module script that was copied to the server::
+
+    ### commented for debug reasons
+    #$params = Parse-Args -arguments $args -supports_check_mode $true
+
+You can add more args to ``$params`` as required by the module. The
 module can now be run on the Windows host either directly through Powershell
 or through an IDE.
 
@@ -344,7 +349,7 @@ these steps.
 - Log onto the Windows server using the same user account that Ansible used to execute the module.
 - Navigate to ``%TEMP%\..``. It should contain a folder starting with ``ansible-tmp-``.
 - Inside this folder, open the PowerShell script for the module.
-- In this script is a raw JSON script under ``$json_raw`` which contains the module arguments under ``module_args``. These args can be assigned manually to the ``$complex_args`` variable that is defined on your debug script.
+- In this script is a raw JSON script under ``$json_raw`` which contains the module arguments under ``module_args``. These args can be assigned manually to the ``$params`` variable that is defined on your debug script.
 
 
 Windows unit testing
