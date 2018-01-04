@@ -252,6 +252,9 @@ use the default remote connection type::
     - hosts: 127.0.0.1
       connection: local
 
+Be aware that changing the connection is not a 'full delegation' so other settings like ``ansible_python_interpreter`` might also need to be overriden.
+Most of the time it is better to use ``local_action`` or ``delegate_to: localhost``.
+
 .. _interrupt_execution_on_any_error:
 
 Interrupt execution on any error
