@@ -26,8 +26,7 @@
 - name: assert firewalld service test permanent enabled worked
   assert:
     that:
-    - not result|failed
-    - result|changed
+    - result is changed
 
 - name: firewalld service test permanent enabled rerun (verify not changed)
   firewalld:
@@ -39,8 +38,7 @@
 - name: assert firewalld service test permanent enabled rerun worked (verify not changed)
   assert:
     that:
-    - not result|failed
-    - not result|changed
+    - result is not changed
 
 - name: firewalld service test permanent disabled
   firewalld:
@@ -52,8 +50,7 @@
 - name: assert firewalld service test permanent disabled worked
   assert:
     that:
-    - not result|failed
-    - result|changed
+    - result is changed
 
 - name: firewalld service test permanent disabled rerun (verify not changed)
   firewalld:
@@ -65,5 +62,4 @@
 - name: assert firewalld service test permanent disabled rerun worked (verify not changed)
   assert:
     that:
-    - not result|failed
-    - not result|changed
+    - result is not changed
