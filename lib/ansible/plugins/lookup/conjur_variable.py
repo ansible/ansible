@@ -52,24 +52,8 @@ except ImportError:
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-
-        # Load Conjur configuration
-        conf = self.merge_dictionaries(
-            self.load_conf('/etc/conjur.conf'),
-            self.load_conf('~/.conjurrc')
-        )
-        if not conf:
-            raise AnsibleError('Conjur configuration should be in one of the following files: \'~/.conjurrc\', \'/etc/conjur.conf\'')
-        display.vvvv('configuration: {0}'.format(conf))
-
-        # Load Conjur identity
-        identity = self.merge_dictionaries(
-            self.load_identity('/etc/conjur.identity', conf['appliance_url']),
-            self.load_identity('~/.netrc', conf['appliance_url'])
-        )
-        if not identity:
-            raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
-        display.vvvv('configuration: {0}'.format(identity))
+        conf = self.load_configuration()
+        identity = self.load_identity(conf['appliance_url'])
 
         # Use credentials to retrieve temporary authorization token
         conjur_url = '{0}/authn/{1}/{2}/authenticate'.format(conf['appliance_url'], conf['account'], identity['id'])
@@ -108,23 +92,43 @@ class LookupModule(LookupBase):
             raise AnsibleError('The variable {0} does not exist'.format(terms[0]))
 
     # Load configuration and return as dictionary if file is present on file system
-    def load_conf(self, conf_path):
+    def load_conf_from_file(self, conf_path):
         conf_path = os.path.expanduser(conf_path)
 
-        if conf_path and os.path.exists(conf_path):
+        if os.path.exists(conf_path):
             display.vvvv('Loading configuration from: {0}'.format(conf_path))
             with open(conf_path) as f:
                 try:
                     return yaml.safe_load(f.read())
                 except Exception as exception:
-                    AnsibleError('Error: parsing {0} - {1}'.format(conf_path, str(exception)))
+                    raise AnsibleError('Error: parsing {0} - {1}'.format(conf_path, str(exception)))
         return {}
 
+    # Load Conjur configuration from either `/etc/conjur.conf` or `~/.conjurrc`
+    def load_configuration(self):
+        for location in ['~/.conjurrc', '/etc/conjur.conf']:
+            conf = self.load_conf_from_file(location)
+            if conf:
+                display.vvvv('configuration: {0}'.format(conf))
+                return conf
+
+        raise AnsibleError('Conjur configuration should be in one of the following files: \'~/.conjurrc\', \'/etc/conjur.conf\'')
+
+    # Load Conjur identity from either `/etc/conjur.identity`, or `~/.netrc`
+    def load_identity(self, appliance_url):
+        for location in ['~/.netrc', '/etc/conjur.identity']:
+            identity = self.load_identity_from_file(location, appliance_url)
+            if identity:
+                display.vvvv('configuration: {0}'.format(identity))
+                return identity
+
+        raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
+
     # Load identity and return as dictionary if file is present on file system
-    def load_identity(self, identity_path, appliance_url):
+    def load_identity_from_file(self, identity_path, appliance_url):
         identity_path = os.path.expanduser(identity_path)
 
-        if identity_path and os.path.exists(identity_path):
+        if os.path.exists(identity_path):
             display.vvvv('Loading identity from: {0}'.format(identity_path))
             try:
                 identity = netrc(identity_path)
@@ -134,12 +138,6 @@ class LookupModule(LookupBase):
 
                 return {'id': id, 'api_key': api_key}
             except Exception as exception:
-                AnsibleError('Error: parsing {0} - {1}'.format(identity_path, str(exception)))
+                raise AnsibleError('Error: parsing {0} - {1}'.format(identity_path, str(exception)))
 
         return {}
-
-    def merge_dictionaries(self, *arg):
-        ret = {}
-        for a in arg:
-            ret.update(a)
-        return ret
