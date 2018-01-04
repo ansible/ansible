@@ -70,7 +70,7 @@ options:
         IPV4:NN); the keyword 'auto', or the keyword 'default'.
     required: false
     default: null
-    version_added: "2.5"
+    version_added: "2.2"
   interfaces:
     description:
       - List of interfaces to check the VRF has been
