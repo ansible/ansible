@@ -51,7 +51,7 @@ options:
         version_added: '2.5'
     reboot_timeout:
         description:
-        - The time in secons to wait until the host is back online from a
+        - The time in seconds to wait until the host is back online from a
           reboot.
         - This is only used if C(reboot=True) and a reboot is required.
         default: 1200
@@ -71,9 +71,11 @@ options:
         required: false
 author: "Matt Davis (@nitzmahone)"
 notes:
-- C(win_updates) must be run by a user with membership in the local Administrators group
-- C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
-- C(win_updates) does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
+- C(win_updates) must be run by a user with membership in the local Administrators group.
+- C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
+- By default C(win_updates) does not manage reboots, but will signal when a
+  reboot is required with the I(reboot_required) return value, as of Ansible 2.5
+  C(reboot) can be used to reboot the host if required in the one task.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
 '''
@@ -101,6 +103,37 @@ EXAMPLES = r'''
     category_names:
     - SecurityUpdates
     reboot: yes
+
+# Note async on works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
+- name: Search for Windows updates asynchronously
+  win_updates:
+    category_names:
+    - SecurityUpdates
+    state: searched
+  async: 180
+  poll: 10
+  register: updates_to_install
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
+
+# Async can also be run in the background in a fire and forget fashion
+- name: Search for Windows updates asynchronously (poll and forget)
+  win_updates:
+    category_names:
+    - SecurityUpdates
+    state: searched
+  async: 180
+  poll: 0
+  register: updates_to_install_async
+
+- name: get status of Windows Update async job
+  async_status:
+    jid: '{{ updates_to_install_async.ansible_job_id }}'
+  register: updates_to_install_result
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
 '''
 
 RETURN = r'''
