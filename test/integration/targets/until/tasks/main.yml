@@ -29,4 +29,43 @@
 - assert:
     that: runcount.stdout | int == 6 # initial + 5 retries
 
-- file: path="{{ until_tempfile_path }}" state=absent
+- file:
+    path: "{{ until_tempfile_path }}"
+    state: absent
+
+- name: Test failed_when impacting until
+  shell: 'true'
+  register: failed_when_until
+  failed_when: True
+  until: failed_when_until is successful
+  retries: 3
+  delay: 0.5
+  ignore_errors: True
+
+- assert:
+    that:
+      - failed_when_until.attempts == 3
+
+- name: Test changed_when impacting until
+  shell: 'true'
+  register: changed_when_until
+  changed_when: False
+  until: changed_when_until is changed
+  retries: 3
+  delay: 0.5
+  ignore_errors: True
+
+- assert:
+    that:
+      - changed_when_until.attempts == 3
+
+# This task shouldn't fail, previously .attempts was not available to changed_when/failed_when
+# and would cause the conditional to fail due to ``'dict object' has no attribute 'attempts'``
+# https://github.com/ansible/ansible/issues/34139
+- name: Test access to attempts in changed_when/failed_when
+  shell: 'true'
+  register: changed_when_attempts
+  until: 1 == 0
+  retries: 5
+  delay: 0.5
+  failed_when: changed_when_attempts.attempts > 6
