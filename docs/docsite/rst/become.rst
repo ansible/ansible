@@ -423,17 +423,14 @@ specified.
 Accounts without a Password
 ---------------------------
 
-.. Warning:: Not setting a password for a Windows account is not recommended
-    and should be avoided in most scenarios. There are some security
-    restrictions that are set by default which would need to be bypassed to get
-    this working.
+.. Warning:: As a general security best practice, you should avoid allowing accounts without passwords.
 
-Ansible can be used to become an account that does not have a password like the
-``Guest`` account. To become an account without a password, set up the
+Ansible can be used to become an account that does not have a password (like the
+``Guest`` account). To become an account without a password, set up the
 variables like normal but either do not define ``ansible_become_pass`` or set
 ``ansible_become_pass: ''``.
 
-Before become would work on an account like this, the local policy
+Before become can work on an account like this, the local policy
 `Accounts: Limit local account use of blank passwords to console logon only <https://technet.microsoft.com/en-us/library/jj852174.aspx>`_
 must be disabled. This can either be done through a Group Policy Object (GPO)
 or with this Ansible task:
