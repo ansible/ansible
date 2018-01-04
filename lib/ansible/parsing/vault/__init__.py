@@ -843,34 +843,32 @@ class VaultEditor:
             # drop the user into an editor on the tmp file
             editor = self._editor_shell_command()
             subprocess.call([editor, tmp_path])
+
+            b_tmpdata = self.read_data(tmp_path)
+
+            # Do nothing if the content has not changed
+            if existing_data == b_tmpdata and not force_save:
+                self._shred_file(tmp_path)
+                return
+
+            # encrypt new data and write out to tmp
+            # An existing vaultfile will always be UTF-8,
+            # so decode to unicode here
+            b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
+            self.write_data(b_ciphertext, tmp_path)
+
+            # shuffle tmp file into place
+            self.shuffle_files(tmp_path, filename)
+            display.vvvvv('Saved edited file "%s" encrypted using %s and  vault id "%s"' % (filename, secret, vault_id))
+
         except OSError as e:
-            # whatever happens, destroy the decrypted file
-            self._shred_file(tmp_path)
             if e.errno == errno.ENOENT:
                 raise AnsibleFileNotFound(message="failed to find an editor", file_name=editor)
             else:
                 raise
-        except:
+        finally:
             # whatever happens, destroy the decrypted file
             self._shred_file(tmp_path)
-            raise
-
-        b_tmpdata = self.read_data(tmp_path)
-
-        # Do nothing if the content has not changed
-        if existing_data == b_tmpdata and not force_save:
-            self._shred_file(tmp_path)
-            return
-
-        # encrypt new data and write out to tmp
-        # An existing vaultfile will always be UTF-8,
-        # so decode to unicode here
-        b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
-        self.write_data(b_ciphertext, tmp_path)
-
-        # shuffle tmp file into place
-        self.shuffle_files(tmp_path, filename)
-        display.vvvvv('Saved edited file "%s" encrypted using %s and  vault id "%s"' % (filename, secret, vault_id))
 
     def _real_path(self, filename):
         # '-' is special to VaultEditor, dont expand it.
