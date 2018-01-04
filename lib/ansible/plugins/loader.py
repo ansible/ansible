@@ -424,7 +424,14 @@ class PluginLoader:
                 continue
 
             if path not in self._module_cache:
-                self._module_cache[path] = self._load_module_source(name, path)
+                module = self._load_module_source(name, path)
+                if module in self._module_cache.values():
+                    # In ``_load_module_source`` if a plugin has a duplicate name, we just return the
+                    # previously matched plugin from sys.modules, which means you are never getting both,
+                    # just one, but cached for both paths, this isn't normally a problem, except with callbacks
+                    # where it will run that single callback twice. This rejects duplicates.
+                    continue
+                self._module_cache[path] = module
                 found_in_cache = False
 
             try:
