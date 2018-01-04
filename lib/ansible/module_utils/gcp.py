@@ -60,9 +60,19 @@ except ImportError:
     HAS_GOOGLE_API_LIB = False
 
 
+# google-cloud-storage
+try:
+    from google.cloud import storage
+    from google.api_core import exceptions as gs_except
+    HAS_GOOGLE_STORAGE_LIB = True
+except ImportError:
+    HAS_GOOGLE_STORAGE_LIB = False
+
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 GCP_DEFAULT_SCOPES = ['https://www.googleapis.com/auth/cloud-platform']
+
+GOOGLE_STORAGE_DEFAULT_SCOPES = ['https://www.googleapis.com/auth/devstorage.full_control']
 
 
 def _get_gcp_ansible_credentials(module):
@@ -348,6 +358,17 @@ def get_google_cloud_credentials(module, scopes=None):
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
         return (None, None)
+
+
+def gcp_storage_connect(module, credentials, conn_params, scopes=None):
+    if not HAS_GOOGLE_STORAGE_LIB:
+        module.fail_json(msg="Please install google-cloud-storage to run this module")
+    if not scopes:
+        scopes = GOOGLE_STORAGE_DEFAULT_SCOPES
+    try:
+        return storage.Client(project=conn_params['project_id'], credentials=credentials)
+    except gs_except.GoogleAPIError as e:
+        module.fail_json(msg=str(e))
 
 
 def get_google_api_auth(module, scopes=None, user_agent_product='ansible-python-api', user_agent_version='NA'):
