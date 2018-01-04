@@ -65,7 +65,7 @@ class CacheModule(BaseCacheModule):
 
     def _manage_indexes(self, collection):
         '''
-        This funciton manages indexes on the mongo collection.
+        This function manages indexes on the mongo collection.
         We only do this once, at run time based on _managed_indexes,
         rather than per connection instantiation as that would be overkill
         '''
