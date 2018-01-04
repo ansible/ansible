@@ -112,10 +112,24 @@ options:
             - Key/value pairs that must be present in the issuer name field of the certificate.
               If you need to specify more than one value with the same key, use a list as value.
 
+    issuer_strict:
+        default: False
+        type: bool
+        description:
+            - If set to True, the I(issuer) field must contain only these values.
+        version_added: "2.5"
+
     subject:
         description:
             - Key/value pairs that must be present in the subject name field of the certificate.
               If you need to specify more than one value with the same key, use a list as value.
+
+    subject_strict:
+        default: False
+        type: bool
+        description:
+            - If set to True, the I(subject) field must contain only these values.
+        version_added: "2.5"
 
     has_expired:
         default: False
@@ -479,12 +493,12 @@ class AssertOnlyCertificate(Certificate):
             self.subject = crypto_utils.parse_name_field(module.params['subject'])
         else:
             self.subject = []
-        self.subject_strict = False
+        self.subject_strict = module.params['subject_strict']
         if module.params['issuer']:
             self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
         else:
             self.issuer = []
-        self.issuer_strict = False
+        self.issuer_strict = module.params['issuer_strict']
         self.has_expired = module.params['has_expired']
         self.version = module.params['version']
         self.keyUsage = module.params['keyUsage']
@@ -776,7 +790,9 @@ def main():
             privatekey_passphrase=dict(type='path', no_log=True),
             signature_algorithms=dict(type='list'),
             subject=dict(type='dict'),
+            subject_strict=dict(type='bool', default=False),
             issuer=dict(type='dict'),
+            issuer_strict=dict(type='bool', default=False),
             has_expired=dict(type='bool', default=False),
             version=dict(type='int'),
             keyUsage=dict(type='list', aliases=['key_usage']),
