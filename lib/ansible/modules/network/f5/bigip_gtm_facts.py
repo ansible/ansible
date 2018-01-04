@@ -928,6 +928,16 @@ class ArgumentSpec(object):
         self.f5_product_name = 'bigip'
 
 
+def cleanup_tokens(client):
+    try:
+        resource = client.api.shared.authz.tokens_s.token.load(
+            name=client.api.icrs.token
+        )
+        resource.delete()
+    except Exception:
+        pass
+
+
 def main():
     if not HAS_F5SDK:
         raise F5ModuleError("The python f5-sdk module is required")
