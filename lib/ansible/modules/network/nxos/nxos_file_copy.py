@@ -54,7 +54,7 @@ options:
   file_system:
     description:
       - The remote file system of the device. If omitted,
-        devices that support a file_system parameter will use
+        devices that support a I(file_system) parameter will use
         their default values.
     required: false
     default: null
