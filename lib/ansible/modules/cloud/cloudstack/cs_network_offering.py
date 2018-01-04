@@ -124,9 +124,9 @@ options:
       - Desired service capabilities as part of network offering
     required: false
     default: null
-  service_offering_id:
+  service_offering:
     description:
-      - The service offering ID used by virtual router provider
+      - The service offering name or ID used by virtual router provider
     required: false
     default: null
   service_provider_list:
@@ -211,8 +211,8 @@ availability:
   returned: success
   type: string
   sample: Optional
-service_offering_id:
-  description: The service offering ID
+service_offering:
+  description: The service offering name or ID
   returned: success
   type: string
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
@@ -233,9 +233,25 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
         self.returns = {
             'guestiptype': 'guest_ip_type',
             'availability': 'availability',
-            'serviceofferingid': 'service_offering_id',
+            'serviceofferingid': 'service_offering',
         }
         self.network_offering = None
+
+    def get_service_offering_id(self):
+        service_offering = self.module.params.get('service_offering')
+        if not service_offering:
+            return None
+
+        args = {
+            'issystem': True
+        }
+
+        service_offerings = self.query_api('listServiceOfferings', **args)
+        if service_offerings:
+            for s in service_offerings['serviceoffering']:
+                if service_offering in [s['name'], s['id']]:
+                    return s['id']
+        self.fail_json(msg="Service offering '%s' not found" % service_offering)
 
     def get_network_offering(self):
         if self.network_offering:
@@ -245,7 +261,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'name': self.module.params.get('name'),
             'guestiptype': self.module.params.get('guest_type'),
         }
-        no = self.cs.listNetworkOfferings(**args)
+        no = self.query_api('listNetworkOfferings', **args)
         if no:
             self.network_offering = no['networkoffering'][0]
 
@@ -279,15 +295,13 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'maxconnections': self.module.params.get('max_connections'),
             'networkrate': self.module.params.get('network_rate'),
             'servicecapabilitylist': self.module.params.get('service_capability_list'),
-            'serviceofferingid': self.module.params.get('service_offering_id'),
+            'serviceofferingid': self.get_service_offering_id(),
             'serviceproviderlist': self.module.params.get('service_provider_list'),
             'specifyipranges': self.module.params.get('specify_ip_ranges'),
             'specifyvlan': self.module.params.get('specify_vlan'),
         }
         if not self.module.check_mode:
-            res = self.cs.createNetworkOffering(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createNetworkOffering', **args)
             network_offering = res['networkoffering']
 
         return network_offering
@@ -301,7 +315,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
         self.result['changed'] = True
 
         if not self.module.check_mode:
-            res = self.cs.deleteNetworkOffering(id=network_offering['id'])
+            res = self.query_api('deleteNetworkOffering', id=network_offering['id'])
 
         return network_offering
 
@@ -322,13 +336,12 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
         else:
             del args['state']
 
-        for k, v in args.items():
-            if network_offering[k] != args[k]:
-                self.result['changed'] = True
+        if self.has_changed(args, network_offering):
+            self.result['changed'] = True
 
-        if not self.module.check_mode:
-            res = self.cs.updateNetworkOffering(**args)
-            network_offering = res['networkoffering']
+            if not self.module.check_mode:
+                res = self.query_api('updateNetworkOffering', **args)
+                network_offering = res['networkoffering']
 
         return network_offering
 
@@ -348,10 +361,10 @@ def main():
         egress_default_policy=dict(type='bool'),
         persistent=dict(type='bool', default=False),
         keepalive_enabled=dict(type='bool', default=False),
-        max_connections=dict(),
-        network_rate=dict(),
+        max_connections=dict(type='int'),
+        network_rate=dict(type='int'),
         service_capability_list=dict(type='list'),
-        service_offering_id=dict(),
+        service_offering=dict(),
         service_provider_list=dict(type='list', required=True),
         specify_ip_ranges=dict(type='bool', default=False),
         specify_vlan=dict(type='bool', default=False),

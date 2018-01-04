@@ -398,4 +398,3 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Enabled"
     - netoffer.display_text == "network offering description"
-
