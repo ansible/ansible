@@ -32,6 +32,7 @@
 
 import base64
 import json
+import os
 from copy import deepcopy
 
 from ansible.module_utils.urls import fetch_url
@@ -173,15 +174,13 @@ class ACIModule(object):
         # Ensure protocol is set
         self.define_protocol()
 
-        if self.params['client_cert_name'] is None:
+        if self.params['client_cert_key'] is None:
             if self.params['password'] is None:
                 self.module.fail(msg="Parameter 'password' is required for HTTP authentication")
             # Only log in when client certificate authentication is not used
             self.login()
         elif not HAS_OPENSSL:
             self.module.fail_json(msg='Cannot use client certificate authentication because pyopenssl is not available')
-        elif self.params['client_cert_key'] is None:
-            self.module.fail(msg="Parameter 'client_cert_key' is required for ACI client certificate authentication")
         elif self.params['password'] is not None:
             self.module.warn('When doing ACI client certificate authentication, a password is not required')
 
@@ -238,6 +237,10 @@ class ACIModule(object):
         self.headers = dict(Cookie=resp.headers['Set-Cookie'])
 
     def client_auth(self, payload=''):
+        # Use the private key basename (without extension) as client_cert_name
+        if self.params['client_cert_name'] is None:
+            self.params['client_cert_name'] = os.path.basename(os.path.splitext(self.params['client_cert_key'])[0])
+
         try:
             sig_key = load_privatekey(FILETYPE_PEM, open(self.params['client_cert_key'], 'r').read())
         except:

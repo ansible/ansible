@@ -38,12 +38,13 @@ options:
     description:
     - The password to use for authentication.
     required: yes
+  client_cert_key:
+    description:
+    - PEM formatted file that contains your private key to be used for client certificate authentication.
   client_cert_name:
     description:
     - The x.509 certificate name attached to the APIC AAA user.
-  client_cert_key:
-    description:
-    - PEM formatted file that contains your private key to be used for client authentication.
+    - If this parameter is missing, it defaults to the C(client_cert_key) basename, without extension.
   timeout:
     description:
     - The socket level timeout in seconds.
