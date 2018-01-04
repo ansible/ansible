@@ -47,6 +47,8 @@ Ansible Changes By Release
 * Fix case for multilib when installing from a file in the yum module
   (https://github.com/ansible/ansible/pull/32236)
 * Fix WinRM parsing/escaping of IPv6 addresses (https://github.com/ansible/ansible/pull/34072)
+* Fix win_package to detect MSI regardless of the extension case
+  (https://github.com/ansible/ansible/issues/34465)
 
 <a id="2.4.2"></a>
 
