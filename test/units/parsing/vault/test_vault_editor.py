@@ -442,12 +442,7 @@ class TestVaultEditor(unittest.TestCase):
                                 ve.decrypt_file,
                                 src_file_path)
 
-    @patch.object(vault.VaultEditor, '_editor_shell_command')
-    def test_create_file(self, mock_editor_shell_command):
-
-        def sc_side_effect(filename):
-            return ['touch', filename]
-        mock_editor_shell_command.side_effect = sc_side_effect
+    def test_create_file(self):
 
         tmp_file = tempfile.NamedTemporaryFile()
         os.unlink(tmp_file.name)
