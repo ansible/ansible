@@ -10,8 +10,8 @@
 
   - assert:
       that:
-        - 'fs_result|changed'
-        - 'fs_result|success'
+        - 'fs_result is changed'
+        - 'fs_result is success'
 
   - command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
     register: uuid
@@ -27,8 +27,8 @@
 
   - assert:
       that:
-        - 'not (fs2_result|changed)'
-        - 'fs2_result|success'
+        - 'not (fs2_result is changed)'
+        - 'fs2_result is success'
         - 'uuid.stdout == uuid2.stdout'
 
   - name: Check that filesystem is recreated if force is used
@@ -43,8 +43,8 @@
 
   - assert:
       that:
-        - 'fs3_result|changed'
-        - 'fs3_result|success'
+        - 'fs3_result is changed'
+        - 'fs3_result is success'
         - 'uuid.stdout != uuid3.stdout'
 
   - name: increase fake device
@@ -64,8 +64,8 @@
 
     - assert:
         that:
-          - 'fs4_result|changed'
-          - 'fs4_result|success'
+          - 'fs4_result is changed'
+          - 'fs4_result is success'
           - 'uuid3.stdout == uuid4.stdout' # unchanged
 
     - name: Try to expand filesystem again
@@ -77,8 +77,8 @@
 
     - assert:
         that:
-          - 'not (fs5_result|changed)'
-          - 'fs5_result|success'
+          - 'not (fs5_result is changed)'
+          - 'fs5_result is successful'
 
   - import_tasks: overwrite_another_fs.yml
 

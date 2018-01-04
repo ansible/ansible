@@ -24,7 +24,7 @@
 
 - assert:
     that:
-      - 'fs_result|failed'
+      - 'fs_result is failed'
       - 'uuid.stdout == uuid2.stdout'
 
 - name: "Check that an existing filesystem (not handled by this module) is overwritten when force is used"
@@ -39,6 +39,6 @@
 
 - assert:
     that:
-      - 'fs_result2|success'
-      - 'fs_result2|changed'
+      - 'fs_result2 is successful'
+      - 'fs_result2 is changed'
       - 'uuid2.stdout != uuid3.stdout'
