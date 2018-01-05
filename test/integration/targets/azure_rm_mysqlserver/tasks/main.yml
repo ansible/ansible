@@ -8,10 +8,11 @@
     resource_group: "{{ resource_group }}"
     name: "mysqlsrv{{ rpfx }}"
     sku:
-      name: SkuName
+      name: MYSQLB50
       tier: basic
     location: westus
     version: 5.6
+    enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
   check_mode: yes
@@ -26,10 +27,11 @@
     resource_group: "{{ resource_group }}"
     name: "mysqlsrv{{ rpfx }}"
     sku:
-      name: SkuName
+      name: MYSQLB50
       tier: basic
     location: westus
     version: 5.6
+    enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
   register: output
@@ -44,10 +46,11 @@
     resource_group: "{{ resource_group }}"
     name: "mysqlsrv{{ rpfx }}"
     sku:
-      name: SkuName
+      name: MYSQLB50
       tier: basic
     location: westus
     version: 5.6
+    enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
   register: output
