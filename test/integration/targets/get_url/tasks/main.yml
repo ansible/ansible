@@ -33,17 +33,18 @@
 
 - name: Define test files for file schema
   set_fact:
-    geturl_srcfile: "{{ output_dir | expanduser }}/aurlfile.txt"
-    geturl_dstfile: "{{ output_dir | expanduser }}/aurlfile_copy.txt"
+    geturl_srcfile: "{{ output_dir }}/aurlfile.txt"
+    geturl_dstfile: "{{ output_dir }}/aurlfile_copy.txt"
 
 - name: Create source file
   copy:
     dest: "{{ geturl_srcfile }}"
     content: "foobar"
+  register: source_file_copied
 
 - name: test file fetch
   get_url:
-    url: "{{ 'file://' + geturl_srcfile }}"
+    url: "file://{{ source_file_copied.dest }}"
     dest: "{{ geturl_dstfile }}"
   register: result
 
@@ -55,8 +56,8 @@
 
 - name: test nonexisting file fetch
   get_url:
-    url: "{{ 'file://' + geturl_srcfile + 'NOFILE' }}"
-    dest: "{{ geturl_dstfile + 'NOFILE' }}"
+    url: "file://{{ source_file_copied.dest }}NOFILE"
+    dest: "{{ geturl_dstfile }}NOFILE"
   register: result
   ignore_errors: True
 
