@@ -338,7 +338,7 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        current = ParametersModule(load_fixture('load_ltm_monitor_tcp.json'))
+        current = Parameters(load_fixture('load_ltm_monitor_tcp.json'))
         client = AnsibleF5Client(
             argument_spec=self.spec.argument_spec,
             supports_check_mode=self.spec.supports_check_mode,
