@@ -53,6 +53,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/34478)
 * Fix file related modules run in check_mode when the file being operated on does not exist
   (https://github.com/ansible/ansible/pull/33967)
+* Make eos_vlan idempotent
+  (https://github.com/ansible/ansible/pull/34443)
 
 
 <a id="2.4.2"></a>
