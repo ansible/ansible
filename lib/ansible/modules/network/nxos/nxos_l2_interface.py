@@ -31,7 +31,7 @@ options:
       - Full name of the interface excluding any logical
         unit number, i.e. Ethernet1/1.
     required: true
-    aliases: interface
+    aliases: ['interface']
   mode:
     description:
       - Mode in which interface needs to be configured.
@@ -49,7 +49,7 @@ options:
       - List of VLANs to be configured in trunk port.
         If C(mode=trunk), used as the VLAN range to ADD or REMOVE
         from the trunk.
-    aliases: trunk_add_vlans
+    aliases: ['trunk_add_vlans']
   trunk_allowed_vlans:
     description:
       - List of allowed VLANs in a given trunk port.

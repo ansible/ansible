@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_aaa_server_host tacacs.yaml sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_aaa_server_host tacacs.yaml sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Enable feature tacacs+"
   nxos_feature:
@@ -121,7 +123,7 @@
 
   rescue:
 
-  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_aaa_server_host failure detected"
+  - debug: msg="connection={{ ansible_connection }} nxos_aaa_server_host failure detected"
 
   always:
 
@@ -135,4 +137,4 @@
       state: disabled
       provider: "{{ connection }}"
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_aaa_server_host tacacs.yaml sanity test"  
+  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host tacacs.yaml sanity test"  

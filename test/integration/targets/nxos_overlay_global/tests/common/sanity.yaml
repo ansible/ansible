@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_overlay_global sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_overlay_global sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: overlay_global_supported="false"
 - set_fact: overlay_global_supported="true"
@@ -101,4 +103,4 @@
     ignore_errors: yes
     when: overlay_global_supported
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_overlay_global sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_overlay_global sanity test"

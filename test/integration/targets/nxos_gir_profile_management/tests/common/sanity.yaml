@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_gir_profile_management sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_gir_profile_management sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Setup - Remove maintenace mode profiles"
   nxos_gir_profile_management: &remove_maintenance
@@ -91,7 +93,7 @@
 
   rescue:
 
-  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_gir_profile_management failure detected"
+  - debug: msg="connection={{ ansible_connection }} nxos_gir_profile_management failure detected"
 
   always:
 
@@ -107,4 +109,4 @@
       state: disabled
       provider: "{{ connection }}"
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_gir_profile_management sanity test"  
+  - debug: msg="END connection={{ ansible_connection }} nxos_gir_profile_management sanity test"  

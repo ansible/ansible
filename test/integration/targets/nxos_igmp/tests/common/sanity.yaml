@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_igmp sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_igmp sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
 
@@ -43,4 +45,4 @@
     nxos_igmp: *default
     register: result
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_igmp sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_igmp sanity test"

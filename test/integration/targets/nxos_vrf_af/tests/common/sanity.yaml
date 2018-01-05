@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vrf_af sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf_af sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: Configure feature bgp
   nxos_feature:
@@ -77,4 +79,4 @@
       provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vrf_af sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_vrf_af sanity test"

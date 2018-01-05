@@ -3,12 +3,12 @@
   nxos_config:
     lines:
       - feature nxapi
-    provider: "{{ cli }}"
+  connection: network_cli
   ignore_errors: yes
 
 - name: Set nxapi to default state
   nxos_nxapi:
-      provider: "{{ cli }}"
+  connection: network_cli
 
 # Gather the list of interfaces on this device and make the list
 # available for integration tests that need them.
@@ -23,8 +23,8 @@
 - name: "Collect interface list"
   nxos_command:
     commands: ['show interface brief | json']
-    provider: "{{ nxapi }}"
     timeout: 60
+  connection: network_cli
   register: intout
 
 - set_fact: intdataraw="{{ intout.stdout_lines[0]['TABLE_interface']['ROW_interface'] }}"
@@ -36,7 +36,7 @@
 - name: "Gather image version info"
   nxos_command:
     commands: ['sh version | json']
-    provider: "{{ cli }}"
+  connection: network_cli
   register: nxos_version_output
 
 - set_fact: image_version="{{ nxos_version_output.stdout[0]['kickstart_ver_str'] }}"
@@ -51,7 +51,7 @@
 - name: "Gather platform info"
   nxos_command:
     commands: ['sh inventory | json']
-    provider: "{{ cli }}"
+  connection: network_cli
   register: nxos_inventory_output
 
 - set_fact: platform="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[0] }}"
