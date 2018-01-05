@@ -167,7 +167,7 @@ def main():
             password=dict(type='str', no_log=True),
             passwordFile=dict(type='str', no_log=True),
             username=dict(type='str'),
-            incremental=dict(choices=[True, False], type='bool', required=True),
+            incremental=dict(type='bool', required=True),
             nodetool_path=dict(type='str', default=None, required=False),
             debug=dict(type='bool', default=False, required=False),
         ),
