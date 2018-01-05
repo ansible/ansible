@@ -16,6 +16,11 @@
     provider: "{{ connection }}"
   ignore_errors: yes
 
+- name: Setup - Ensure interface is layer2
+  nxos_interface:
+    interface: "{{ intname }}"
+    mode: layer2
+
 - name: "Setup vlans"
   nxos_vlan:
     vlan_range: "5-10,20"
