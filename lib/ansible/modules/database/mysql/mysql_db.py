@@ -139,9 +139,9 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None):
     cmd = module.get_bin_path('mysqldump', True)
-    # If defined, mysqldump demands --defaults-extra-file be the first option
+    # If defined, mysqldump demands --defaults-file be the first option
     if config_file:
-        cmd += " --defaults-extra-file=%s" % pipes.quote(config_file)
+        cmd += " --defaults-file=%s" % pipes.quote(config_file)
     if user is not None:
         cmd += " --user=%s" % pipes.quote(user)
     if password is not None:
@@ -189,7 +189,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     cmd = [module.get_bin_path('mysql', True)]
     # --defaults-file must go first, or errors out
     if config_file:
-        cmd.append("--defaults-extra-file=%s" % pipes.quote(config_file))
+        cmd.append("--defaults-file=%s" % pipes.quote(config_file))
     if user:
         cmd.append("--user=%s" % pipes.quote(user))
     if password:
