@@ -6,6 +6,7 @@
     lines: no lldp run
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Enable LLDP service
   eos_lldp:
@@ -13,6 +14,7 @@
     authorize: yes
     provider: "{{ cli }}"
   register: result
+  become: yes
 
 - assert:
     that:
@@ -25,6 +27,7 @@
     authorize: yes
     provider: "{{ cli }}"
   register: result
+  become: yes
 
 - assert:
     that:
@@ -36,6 +39,7 @@
     authorize: yes
     provider: "{{ cli }}"
   register: result
+  become: yes
 
 - assert:
     that:
@@ -48,6 +52,7 @@
     authorize: yes
     provider: "{{ cli }}"
   register: result
+  become: yes
 
 - assert:
     that:

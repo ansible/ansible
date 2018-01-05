@@ -12,6 +12,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - name: Configure interface ipv4 address
@@ -21,6 +22,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -36,6 +38,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -49,6 +52,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -64,6 +68,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -79,6 +84,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -92,6 +98,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -106,6 +113,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -121,6 +129,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - name: Delete second interface ipv4 and ipv6 address (setup)
@@ -129,6 +138,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - name: Configure ipv4 and ipv6 address using aggregate
@@ -138,6 +148,7 @@
     - { name: "{{ test_interface_2 }}", ipv4: 192.162.0.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -157,6 +168,7 @@
     - { name: "{{ test_interface_2 }}", ipv4: 192.162.0.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -170,6 +182,7 @@
     - { name: "{{ test_interface_2 }}", ipv4: 192.169.2.2/24, ipv6: "fd5b:12c9:2201:5::5/90" }
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -191,6 +204,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -211,6 +225,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
