@@ -21,6 +21,7 @@ author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configures a bridge port on Cumulus Linux
 deprecated:
   version: "2.3"
+  why: The M(nclu) module is designed to be easier to use for individuals who are new to Cumulus Linux and/or network automation in general by exposing the NCLU interface in an automatable way.
   alternative: Use M(nclu) instead.
 description:
     - Configures a bridge interface on Cumulus Linux To configure a bond port

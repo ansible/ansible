@@ -22,6 +22,7 @@ short_description: Install a different Cumulus Linux version.
 deprecated:
   version: "2.3"
   why: The image slot system no longer exists in Cumulus Linux.
+  alternative: n/a
 description:
     - install a different version of Cumulus Linux in the inactive slot. For
       more details go the Image Management User Guide at

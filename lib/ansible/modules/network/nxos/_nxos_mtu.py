@@ -27,6 +27,7 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 deprecated:
   version: "2.3"
+  why: Replaced with common C(*_system) network modules.
   alternative: Use M(nxos_system)'s C(mtu) option.
 short_description: Manages MTU settings on Nexus switch.
 description:

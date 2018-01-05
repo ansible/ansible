@@ -20,7 +20,9 @@ version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Install licenses for Cumulus Linux
 deprecated:
+  why: The M(nclu) module is designed to be easier to use for individuals who are new to Cumulus Linux and/or network automation in general by exposing the NCLU interface in an automatable way.
   version: "2.3"
+  alternative: Use M(nclu) instead.
 description:
     - Installs a Cumulus Linux license. The module reports no change of status
       when a license is installed.

@@ -27,6 +27,7 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 deprecated:
   version: "2.5"
+  why: Replaced with common C(*_linkagg) network modules.
   alternative: Use M(nxos_linkagg) instead.
 short_description: Manages port-channel interfaces.
 description:

@@ -16,12 +16,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: accelerate
-removed: True
 short_description: Enable accelerated mode on remote node
 deprecated:
+  version: "2.2"
+  why: Replaces by ControlPersist
   alternative: Use SSH with ControlPersist instead.
+  removed: True
 description:
-     - This module has been removed, this file is kept for historicaly documentation purposes
+     - This module has been removed, this file is kept for historical documentation purposes.
      - This modules launches an ephemeral I(accelerate) daemon on the remote node which
        Ansible can use to communicate with nodes at high speed.
      - The daemon listens on a configurable port for a configurable amount of time.

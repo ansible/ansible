@@ -31,6 +31,7 @@ module: win_msi
 version_added: '1.7'
 deprecated:
   version: "2.4"
+  why: The win_msi module has a number of issues, the M(win_package) module is easier to maintain and use.
   alternative: Use M(win_package) instead.
 short_description: Installs and uninstalls Windows MSI files
 description:

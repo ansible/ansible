@@ -32,6 +32,7 @@ requirements:
     - pan-python
 deprecated:
   version: "2.4"
+  why: M(panos_nat_rule) uses next generation SDK (PanDevice).
   alternative: Use M(panos_nat_rule) instead.
 options:
     ip_address:
