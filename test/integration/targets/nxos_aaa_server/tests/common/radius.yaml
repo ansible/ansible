@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_aaa_server radius.yaml sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Setup"
   nxos_aaa_server: &remove
@@ -85,11 +87,11 @@
 
   rescue:
 
-  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_aaa_server failure detected"
+  - debug: msg="connection={{ ansible_connection }} nxos_aaa_server failure detected"
 
   always:
   - name: "Remove radius server configuration"
     nxos_aaa_server: *remove
     register: result
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_aaa_server radius.yaml sanity test"  
+  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"  

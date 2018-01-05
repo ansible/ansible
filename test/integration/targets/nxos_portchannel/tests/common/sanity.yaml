@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_portchannel sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_portchannel sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: testint1="{{ nxos_int1 }}"
 - set_fact: testint2="{{ nxos_int2 }}"
@@ -96,4 +98,4 @@
     nxos_portchannel: *delpc
     register: result
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_portchannel sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_portchannel sanity test"

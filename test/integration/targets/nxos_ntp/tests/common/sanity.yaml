@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_ntp sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_ntp sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: Setup - Remove ntp if configured
   nxos_ntp: &remove
@@ -53,4 +55,4 @@
   - name: Remove ntp config
     nxos_ntp: *remove
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_ntp sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_ntp sanity test"

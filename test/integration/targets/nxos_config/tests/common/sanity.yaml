@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_config sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_config sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: setup
   nxos_config:
@@ -38,4 +40,4 @@
     provider: "{{ connection }}"
     match: none
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_config sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_config sanity test"

@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vlan sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_vlan sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
   - name: "Enable feature vn segment"
@@ -102,4 +104,4 @@
       ignore_errors: yes
       when: platform is search('N9K')
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vlan sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_vlan sanity test"
