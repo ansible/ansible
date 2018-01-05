@@ -1,13 +1,13 @@
 ============================
 Ansible Project, 2.5
 ============================
-**Core Engine Freeze and Module Freeze: 15 January 2018**
+**Core Engine Freeze and Module Freeze: 22 January 2018**
 
-**Core and Curated Module Freeze: 15 January 2018**
+**Core and Curated Module Freeze: 22 January 2018**
 
-**Community Module Freeze: 31 January 2018**
+**Community Module Freeze: 7 February 2018**
 
-**Release Candidate 1 will be 14 February, 2018**
+**Release Candidate 1 will be 21 February, 2018**
 
 **Target: March 2018**
 
