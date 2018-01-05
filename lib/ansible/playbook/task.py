@@ -414,16 +414,15 @@ class Task(Base, Conditional, Taggable, Become):
         Generic logic to get the attribute or parent attribute for a task value.
         '''
 
-        value = None
         extend = self._valid_attrs[attr].extend
         prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
             if self._parent and (value is None or extend):
-                if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
+                if getattr(self._parent, 'statically_loaded', True):
                     # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
-                        parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
+                    if attr != 'vars' and getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
+                        parent_value = self._parent._get_parent_attribute(attr)
                     else:
                         parent_value = self._parent._attributes.get(attr, None)
 

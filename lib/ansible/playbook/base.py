@@ -48,12 +48,13 @@ def _generic_g_method(prop_name, self):
 
 def _generic_g_parent(prop_name, self):
     try:
-        value = self._attributes[prop_name]
-        if value is None and not self._squashed and not self._finalized:
+        if self._squashed or self._finalized:
+            value = self._attributes[prop_name]
+        else:
             try:
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
-                pass
+                value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 

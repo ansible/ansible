@@ -25,20 +25,21 @@ from copy import deepcopy
 class Attribute:
 
     def __init__(
-            self,
-            isa=None,
-            private=False,
-            default=None,
-            required=False,
-            listof=None,
-            priority=0,
-            class_type=None,
-            always_post_validate=False,
-            inherit=True,
-            alias=None,
-            extend=False,
-            prepend=False,
-        ):
+        self,
+        isa=None,
+        private=False,
+        default=None,
+        required=False,
+        listof=None,
+        priority=0,
+        class_type=None,
+        always_post_validate=False,
+        inherit=True,
+        alias=None,
+        extend=False,
+        prepend=False,
+    ):
+
         """
         :class:`Attribute` specifies constraints for attributes of objects which
         derive from playbook data.  The attributes of the object are basically
