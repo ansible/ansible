@@ -325,7 +325,7 @@
         state: absent
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
 
@@ -354,7 +354,7 @@
             healthy_threshold: 2
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
 
@@ -364,7 +364,7 @@
         state: absent
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
       with_items:
@@ -379,7 +379,7 @@
         state: absent
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
 
@@ -396,7 +396,7 @@
           - "{{ testing_subnet.subnet.id }}"
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
 
@@ -406,7 +406,7 @@
         state: absent
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
 
@@ -421,7 +421,7 @@
           Name: Ansible Testing Subnet
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
 
@@ -435,6 +435,6 @@
         tenancy: default
         <<: *aws_connection_info
       register: removed
-      until: removed | success
+      until: removed is not failed
       ignore_errors: yes
       retries: 10
