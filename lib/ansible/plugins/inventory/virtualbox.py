@@ -14,6 +14,7 @@ DOCUMENTATION = '''
         - The inventory_hostname is always the 'Name' of the virtualbox instance.
     extends_documentation_fragment:
       - constructed
+      - inventory_cache
     options:
         running_only:
             description: toggles showing all vms vs only those currently running
@@ -100,6 +101,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         netinfo = self.get_option('network_info_path')
 
         for line in source_data:
+            line = to_text(line)
+            if ':' not in line:
+                continue
             try:
                 k, v = line.split(':', 1)
             except:
@@ -158,7 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        cache_key = self._get_cache_prefix(path)
+        cache_key = self.get_cache_key(path)
 
         config_data = self._read_config_data(path)
 
@@ -166,9 +170,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self._consume_options(config_data)
 
         source_data = None
-        if cache and cache_key in self._cache:
+        if cache:
+            cache = self._options.get('cache')
+
+        if cache:
             try:
-                source_data = self._cache[cache_key]
+                source_data = self.cache.get(cache_key)
             except KeyError:
                 pass
 
@@ -193,6 +200,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 AnsibleParserError(to_native(e))
 
             source_data = p.stdout.read()
-            self._cache[cache_key] = to_text(source_data, errors='surrogate_or_strict')
+            if cache:
+                self.cache.set(cache_key, to_text(source_data, errors='surrogate_or_strict'))
 
         self._populate_from_source(source_data.splitlines())

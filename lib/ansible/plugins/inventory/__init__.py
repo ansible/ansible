@@ -24,7 +24,6 @@ import os
 import re
 import string
 
-from time import time
 from collections import MutableMapping
 
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
