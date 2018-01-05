@@ -17,7 +17,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = '''
@@ -25,6 +25,9 @@ DOCUMENTATION = '''
 module: nxos_switchport
 extends_documentation_fragment: nxos
 version_added: "2.1"
+deprecated:
+  version: 2.5
+  alternative: Use M(nxos_l2_interface) instead.
 short_description: Manages Layer 2 switchport interfaces.
 description:
   - Manages Layer 2 interfaces
