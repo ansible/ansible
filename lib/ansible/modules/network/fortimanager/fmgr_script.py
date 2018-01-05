@@ -178,7 +178,6 @@ def execute_script(fmg, script_name, scope, package, adom, vdom):
 
     datagram = {
         'adom': adom,
-        'scope': scope,
         'script': script_name,
         'package': package,
         'scope': scope_list,
