@@ -1,6 +1,7 @@
 """Sanity test using pylint."""
 from __future__ import absolute_import, print_function
 
+import collections
 import json
 import os
 import datetime
@@ -20,6 +21,10 @@ from lib.util import (
     find_executable,
 )
 
+from lib.executor import (
+    SUPPORTED_PYTHON_VERSIONS,
+)
+
 from lib.ansible_util import (
     ansible_environment,
 )
@@ -29,10 +34,12 @@ from lib.config import (
 )
 
 from lib.test import (
+    calculate_confidence,
     calculate_best_confidence,
 )
 
 PYLINT_SKIP_PATH = 'test/sanity/pylint/skip.txt'
+PYLINT_IGNORE_PATH = 'test/sanity/pylint/ignore.txt'
 
 UNSUPPORTED_PYTHON_VERSIONS = (
     '2.6',
@@ -53,6 +60,37 @@ class PylintTest(SanitySingleVersion):
 
         with open(PYLINT_SKIP_PATH, 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()
+
+        invalid_ignores = []
+
+        supported_versions = set(SUPPORTED_PYTHON_VERSIONS) - set(UNSUPPORTED_PYTHON_VERSIONS)
+        supported_versions = set([v.split('.')[0] for v in supported_versions]) | supported_versions
+
+        with open(PYLINT_IGNORE_PATH, 'r') as ignore_fd:
+            ignore_entries = ignore_fd.read().splitlines()
+            ignore = collections.defaultdict(dict)
+            line = 0
+
+            for ignore_entry in ignore_entries:
+                line += 1
+
+                if ' ' not in ignore_entry:
+                    invalid_ignores.append((line, 'Invalid syntax'))
+                    continue
+
+                path, code = ignore_entry.split(' ', 1)
+
+                if ' ' in code:
+                    code, version = code.split(' ', 1)
+
+                    if version not in supported_versions:
+                        invalid_ignores.append((line, 'Invalid version: %s' % version))
+                        continue
+
+                    if version != args.python_version and version != args.python_version.split('.')[0]:
+                        continue  # ignore version specific entries for other versions
+
+                ignore[path][code] = line
 
         skip_paths_set = set(skip_paths)
 
@@ -114,6 +152,26 @@ class PylintTest(SanitySingleVersion):
 
         line = 0
 
+        filtered = []
+
+        for error in errors:
+            if error.code in ignore[error.path]:
+                ignore[error.path][error.code] = None  # error ignored, clear line number of ignore entry to track usage
+            else:
+                filtered.append(error)  # error not ignored
+
+        errors = filtered
+
+        for invalid_ignore in invalid_ignores:
+            errors.append(SanityMessage(
+                code='A201',
+                message=invalid_ignore[1],
+                path=PYLINT_IGNORE_PATH,
+                line=invalid_ignore[0],
+                column=1,
+                confidence=calculate_confidence(PYLINT_IGNORE_PATH, line, args.metadata) if args.metadata.changes else None,
+            ))
+
         for path in skip_paths:
             line += 1
 
@@ -126,6 +184,25 @@ class PylintTest(SanitySingleVersion):
                     line=line,
                     column=1,
                     confidence=calculate_best_confidence(((PYLINT_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
+                ))
+
+        for path in paths:
+            if path not in ignore:
+                continue
+
+            for code in ignore[path]:
+                line = ignore[path][code]
+
+                if not line:
+                    continue
+
+                errors.append(SanityMessage(
+                    code='A102',
+                    message='Remove since "%s" passes "%s" pylint test' % (path, code),
+                    path=PYLINT_IGNORE_PATH,
+                    line=line,
+                    column=1,
+                    confidence=calculate_best_confidence(((PYLINT_IGNORE_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
                 ))
 
         if errors:
