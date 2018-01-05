@@ -1,0 +1,71 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_l2_interface aggregate test"
+
+# Select interface for test
+- set_fact: intname1="{{ nxos_int1 }}"
+- set_fact: intname2="{{ nxos_int2 }}"
+
+- name: "Setup vlans"
+  nxos_vlan:
+    vlan_range: "6,15"
+    provider: "{{ connection }}"
+
+- name: Setup - Remove interface aggregate before testing
+  nxos_l2_interface:
+    aggregate:
+      - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
+      - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+    state: absent
+    provider: "{{ connection }}"
+
+- block:
+  - name: Configure interface for access_vlan aggregate
+    nxos_l2_interface: &conf_agg
+      aggregate:
+        - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
+        - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: Configure interface for access_vlan aggregate(Idempotence)
+    nxos_l2_interface: *conf_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: Remove interface aggregate
+    nxos_l2_interface: &rm_agg
+      aggregate:
+        - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
+        - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: Remove interface aggregate(Idempotence)
+    nxos_l2_interface: *rm_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: "remove vlans"
+    nxos_vlan:
+      vlan_range: "6,15"
+      state: absent
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_l2_interface aggregate test"

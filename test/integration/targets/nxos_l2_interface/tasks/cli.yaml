@@ -1,0 +1,25 @@
+---
+- name: collect common cli test cases
+  find:
+    paths: "{{ role_path }}/tests/common"
+    patterns: "{{ testcase }}.yaml"
+  register: test_cases
+
+- name: collect cli test cases
+  find:
+    paths: "{{ role_path }}/tests/cli"
+    patterns: "{{ testcase }}.yaml"
+  register: cli_cases
+
+- set_fact:
+    test_cases:
+      files: "{{ test_cases.files }} + {{ cli_cases.files }}"
+
+- name: set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+
+- name: run test case
+  include: "{{ test_case_to_run }} connection={{ cli }}"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
