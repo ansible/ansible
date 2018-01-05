@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # 2017 Rhys Campbell <rhys.james.campbell@googlemail.com>
+# https://github.com/rhysmeister
 # Based on the group module by  Stephen Fromm <sfromm@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
