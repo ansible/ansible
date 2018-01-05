@@ -161,10 +161,8 @@ api_result:
   type: string
 """
 
-
-from ansible.module_utils.basic import AnsibleModule, env_fallback, return_values
-
-from ansible.module_utils.network.fortimanager.fortimanager_mod import AnsibleFortiManager
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
 
 # check for pyFMG lib
 try:
@@ -190,6 +188,7 @@ def set_script(fmg, script_name, script_type, script_content, script_desc, scrip
 
     return response
 
+
 def delete_script(fmg, script_name, adom):
     """
     This method deletes a script.
@@ -202,36 +201,6 @@ def delete_script(fmg, script_name, adom):
 
     return response
 
-# def set_script_schedule(script_name, adom):
-#     """
-#     This method will set a script execution schedule.
-#     """
-#
-#     fields = dict()
-#     fields["adom"] = adom
-#     fields["datetime"] = adom
-#     fields["day_of_week"] = scope
-#     fields["name"] = script_name
-#     fields["run_on_db"] = package
-#     fields["type"] = scope
-#     fields["device"] = script_name
-#
-#     body = {"method": "exec", "params": [{"url": '/dvmdb/adom/{adom_name}/script/execute'.format(adom=adom), "data": fields, "session": self.session}]}
-#     response = self.make_request(body).json()
-#     return response
-#
-#     '''
-#     wrapper = list()
-#     data = dict()
-#     data['url'] = '/dvmdb/adom/{adom}/script/{script_name}/script_schedule'.format(adom=adom, script_name=script_name)
-#     data['datetime'] = (datetime.datetime.now() + datetime.timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
-#     data['day_of_week'] = 'tues'
-#     data['name'] = 'apitest'
-#     data['run_on_db'] = 'disable'
-#     data['type'] = 'onetime'
-#     data['device'] = 131
-#     #data['option'] = 'syntax'
-#     '''
 
 def execute_script(fmg, script_name, scope, package, adom, vdom):
     """
@@ -255,6 +224,7 @@ def execute_script(fmg, script_name, scope, package, adom, vdom):
 
     return response
 
+
 def main():
     argument_spec = dict(
         adom=dict(required=False, type="str"),
@@ -277,12 +247,12 @@ def main():
         script_content=dict(required=False, type="str"),
         script_scope=dict(required=False, type="str"),
         script_package=dict(required=False, type="str"),
-
     )
 
     module = AnsibleModule(argument_spec, supports_check_mode=True,)
 
     fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
+    fmg.login()
 
     adom = module.params["adom"]
     if adom is None:
@@ -339,6 +309,8 @@ def main():
         results = delete_script(fmg, script_name, adom)
         if not results[0] == 0:
             module.fail_json(msg="Script Execution Failed", **results)
+
+    fmg.logout()
 
     return module.exit_json(**results[1])
 
