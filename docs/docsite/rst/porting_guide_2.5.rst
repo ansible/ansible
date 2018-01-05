@@ -81,6 +81,7 @@ The following modules will be removed in Ansible 2.9. Please update update your 
 * :ref:`fixme <fixme>`
 * :ref:`nxos_ip_interface <nxos_ip_interface>` use :ref:`nxos_l3_interface <nxos_l3_interface>` instead.
 * :ref:`nxos_portchannel <nxos_portchannel>` use :ref:`nxos_linkagg <nxos_linkagg>` instead.
+* :ref:`nxos_switchport <nxos_switchport>` use :ref:`nxos_l2_interface <nxos_l2_interface>` instead.
 
 Noteworthy module changes
 -------------------------
