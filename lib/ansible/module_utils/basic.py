@@ -1081,6 +1081,10 @@ class AnsibleModule(object):
 
         if not HAVE_SELINUX or not self.selinux_enabled():
             return changed
+
+        if self.check_file_absent_if_check_mode(path):
+            return True
+
         cur_context = self.selinux_context(path)
         new_context = list(cur_context)
         # Iterate over the current context instead of the
@@ -1119,11 +1123,17 @@ class AnsibleModule(object):
         return changed
 
     def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
+
+        if owner is None:
+            return changed
+
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        if owner is None:
-            return changed
+
+        if self.check_file_absent_if_check_mode(b_path):
+            return True
+
         orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
             uid = int(owner)
@@ -1154,11 +1164,17 @@ class AnsibleModule(object):
         return changed
 
     def set_group_if_different(self, path, group, changed, diff=None, expand=True):
+
+        if group is None:
+            return changed
+
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        if group is None:
-            return changed
+
+        if self.check_file_absent_if_check_mode(b_path):
+            return True
+
         orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
             gid = int(group)
@@ -1189,13 +1205,17 @@ class AnsibleModule(object):
         return changed
 
     def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
+
+        if mode is None:
+            return changed
+
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
         path_stat = os.lstat(b_path)
 
-        if mode is None:
-            return changed
+        if self.check_file_absent_if_check_mode(b_path):
+            return True
 
         if not isinstance(mode, int):
             try:
@@ -1272,6 +1292,9 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
+
+        if self.check_file_absent_if_check_mode(b_path):
+            return True
 
         existing = self.get_file_attributes(b_path)
 
@@ -1466,6 +1489,9 @@ class AnsibleModule(object):
             file_args['path'], file_args['attributes'], changed, diff, expand
         )
         return changed
+
+    def check_file_absent_if_check_mode(self, file_path):
+        return self.check_mode and not os.path.exists(file_path)
 
     def set_directory_attributes_if_different(self, file_args, changed, diff=None, expand=True):
         return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
