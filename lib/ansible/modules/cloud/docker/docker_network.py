@@ -72,6 +72,11 @@ options:
       - Dictionary of IPAM options.
     default: null
 
+  enable_network:
+    description:
+      - enable_ipv6
+    default: false
+
   state:
     description:
       - I(absent) deletes the network. If a network has connected containers, it
@@ -176,6 +181,7 @@ class TaskParameters(DockerBaseClass):
         self.appends = None
         self.force = None
         self.debug = None
+        self.enable_ipv6 = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -285,6 +291,7 @@ class DockerNetworkManager(object):
                 resp = self.client.create_network(self.parameters.network_name,
                                                   driver=self.parameters.driver,
                                                   options=self.parameters.driver_options,
+                                                  enable_ipv6=self.parameters.enable_ipv6,
                                                   ipam=ipam_config)
 
                 self.existing_network = self.client.inspect_network(resp['Id'])
@@ -372,6 +379,7 @@ def main():
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
         ipam_options=dict(type='dict', default={}),
+        enable_ipv6=dict(type='bool', default=False),
         debug=dict(type='bool', default=False)
     )
 
