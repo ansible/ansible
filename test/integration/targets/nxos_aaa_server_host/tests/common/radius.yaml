@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_aaa_server_host radius.yaml sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_aaa_server_host radius.yaml sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Setup"
   nxos_aaa_server_host: &remove
@@ -117,7 +119,7 @@
 
   rescue:
 
-  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_aaa_server_host failure detected"
+  - debug: msg="connection={{ ansible_connection }} nxos_aaa_server_host failure detected"
 
   always:
 
@@ -125,4 +127,4 @@
     nxos_aaa_server_host: *remove
     register: result
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_aaa_server_host radius.yaml sanity test"  
+  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host radius.yaml sanity test"  

@@ -33,9 +33,9 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'nxos'
-        reply = self.get(b'show version | json')
+        reply = self.get('show version | json')
         data = json.loads(reply)
-        platform_reply = self.get(b'show inventory | json')
+        platform_reply = self.get('show inventory | json')
         platform_info = json.loads(platform_reply)
 
         device_info['network_os_version'] = data.get('sys_ver_str') or data.get('kickstart_ver_str')
@@ -53,7 +53,7 @@ class Cliconf(CliconfBase):
     def get_config(self, source='running', flags=None):
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
 
-        cmd = b'show {} '.format(lookup[source])
+        cmd = 'show {} '.format(lookup[source])
         cmd += ' '.join(flags)
         cmd = cmd.strip()
 
@@ -61,7 +61,7 @@ class Cliconf(CliconfBase):
 
     def edit_config(self, command):
         responses = []
-        for cmd in chain([b'configure'], to_list(command), [b'end']):
+        for cmd in chain(['configure'], to_list(command), ['end']):
             responses.append(self.send_command(cmd))
 
         return json.dumps(responses)

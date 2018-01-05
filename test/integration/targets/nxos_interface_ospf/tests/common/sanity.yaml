@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_interface_ospf sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_interface_ospf sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: testint="{{ nxos_int1 }}"
 
@@ -232,4 +234,4 @@
     nxos_config: *removepcandlb
 
   always:
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_interface_ospf sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_interface_ospf sanity test"
