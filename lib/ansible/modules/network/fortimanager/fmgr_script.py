@@ -24,11 +24,11 @@ from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiM
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '2.5'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
-module: fmg_script
+module: fmgr_script
 version_added: "2.5"
 author: Andrew Welsh
 short_description: Add/Edit/Delete and execute scripts
@@ -89,7 +89,7 @@ options:
 
 EXAMPLES = '''
 - name: CREATE SCRIPT
-  fmg_script:
+  fmgr_script:
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
@@ -100,7 +100,7 @@ EXAMPLES = '''
     script_description: "Create by Ansible"
     script_content: "get system status"
 - name: EXECUTE SCRIPT
-  fmg_script:
+  fmgr_script:
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
@@ -109,7 +109,7 @@ EXAMPLES = '''
     state: "execute"
     script_scope: "FGT1,FGT2"
 - name: DELETE SCRIPT
-  fmg_script:
+  fmgr_script:
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
