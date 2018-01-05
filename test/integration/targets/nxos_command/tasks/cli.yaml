@@ -3,14 +3,14 @@
   find:
     paths: "{{ role_path }}/tests/common"
     patterns: "{{ testcase }}.yaml"
-  delegate_to: localhost
+  connection: local
   register: test_cases
 
 - name: collect cli test cases
   find:
     paths: "{{ role_path }}/tests/cli"
     patterns: "{{ testcase }}.yaml"
-  delegate_to: localhost
+  connection: local
   register: cli_cases
 
 - set_fact:
