@@ -60,6 +60,8 @@ options:
     enforce_ssl:
         description:
             - Enable SSL enforcement.
+        type: bool
+        default: False
     admin_username:
         description:
             - "The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation)."
@@ -69,7 +71,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -82,12 +83,12 @@ EXAMPLES = '''
       resource_group: TestGroup
       name: testserver
       sku:
-        name: SkuName
+        name: PGSQLS100
         tier: Basic
         capacity: 100
       location: eastus
       storage_mb: 1024
-      enforce_ssl: Enabled
+      enforce_ssl: True
       admin_username: cloudsa
       admin_password: password
 '''
@@ -98,25 +99,25 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: id
+    sample: /subscriptions/12345678-1234-1234-1234-123412341234/resourceGroups/samplerg/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
 version:
     description:
         - Server version. Possible values include: C(9.5), C(9.6)
     returned: always
     type: str
-    sample: version
+    sample: 9.6
 state:
     description:
         - A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)
     returned: always
     type: str
-    sample: user_visible_state
+    sample: Ready
 fully_qualified_domain_name:
     description:
         - The fully qualified domain name of a server.
     returned: always
     type: str
-    sample: fully_qualified_domain_name
+    sample: postgresqlsrv1b6dd89593.postgresql.database.azure.com
 '''
 
 import time
