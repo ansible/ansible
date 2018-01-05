@@ -340,7 +340,7 @@ class Difference(object):
 
     @property
     def parent(self):
-        if self.want.parent != self.want.parent:
+        if self.want.parent != self.have.parent:
             raise F5ModuleError(
                 "The parent profile cannot be changed"
             )

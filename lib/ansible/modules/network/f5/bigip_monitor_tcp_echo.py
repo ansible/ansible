@@ -194,6 +194,11 @@ class Parameters(AnsibleF5Parameters):
                     # If the mapped value is not a @property
                     self._values[map_key] = v
 
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
+        return value
+
     def to_return(self):
         result = {}
         try:
@@ -289,7 +294,7 @@ class Difference(object):
 
     @property
     def parent(self):
-        if self.want.parent != self.want.parent:
+        if self.want.parent != self.have.parent:
             raise F5ModuleError(
                 "The parent monitor cannot be changed"
             )
@@ -486,7 +491,7 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         self.argument_spec = dict(
             name=dict(required=True),
-            parent=dict(default='tcp_echo'),
+            parent=dict(default='/Common/tcp_echo'),
             ip=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
