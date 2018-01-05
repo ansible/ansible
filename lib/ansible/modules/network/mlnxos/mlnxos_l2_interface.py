@@ -96,7 +96,7 @@ class MlnxosL2InterfaceModule(BaseMlnxosModule):
     @classmethod
     def _get_aggregate_spec(cls, element_spec):
         aggregate_spec = deepcopy(element_spec)
-        aggregate_spec['vlan_id'] = dict(required=True)
+        aggregate_spec['name'] = dict(required=True)
 
         # remove default in aggregate spec, to handle common arguments
         remove_default_spec(aggregate_spec)
