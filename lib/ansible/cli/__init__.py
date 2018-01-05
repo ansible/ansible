@@ -52,36 +52,6 @@ except ImportError:
     display = Display()
 
 
-def _version(prog, module_path=None):
-    ''' return ansible version '''
-
-    module_path = module_path or []
-
-    # prepend cli paths to configured path
-    if C.DEFAULT_MODULE_PATH:
-        module_path.extend(C.DEFAULT_MODULE_PATH)
-
-    result = "{0} {1}".format(prog, __version__)
-
-    gitinfo = CLI._gitinfo()
-    if gitinfo:
-        result = result + " {0}".format(gitinfo)
-
-    result += "\n  config file = %s" % C.CONFIG_FILE
-
-    if module_path is None:
-        cpath = "Default w/o overrides"
-    else:
-        cpath = module_path
-
-    result = result + "\n  configured module search path = %s" % cpath
-    result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
-    result = result + "\n  executable location = %s" % sys.argv[0]
-    result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
-
-    return result
-
-
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
@@ -91,8 +61,8 @@ class SortedOptParser(optparse.OptionParser):
 
     def get_version(self):
         # if args have been parsed and cli, update module path based on cli options
-        return _version(self.get_prog_name(),
-                        module_path=getattr(self.values, 'module_path', None))
+        return CLI.version(self.get_prog_name(),
+                           module_path=getattr(self.values, 'module_path', None))
 
 
 # Note: Inherit from SortedOptParser so that we get our format_help method
@@ -659,17 +629,41 @@ class CLI(with_metaclass(ABCMeta, object)):
                 self.options.inventory = C.DEFAULT_HOST_LIST
 
     @staticmethod
-    def version(prog):
+    def version(prog, module_path=None):
         ''' return ansible version '''
-        # for API compat
-        return _version(prog)
+
+        module_path = module_path or []
+
+        # prepend cli paths to configured path
+        if C.DEFAULT_MODULE_PATH:
+            module_path.extend(C.DEFAULT_MODULE_PATH)
+
+        result = "{0} {1}".format(prog, __version__)
+
+        gitinfo = CLI._gitinfo()
+        if gitinfo:
+            result = result + " {0}".format(gitinfo)
+
+        result += "\n  config file = %s" % C.CONFIG_FILE
+
+        if module_path is None:
+            cpath = "Default w/o overrides"
+        else:
+            cpath = module_path
+
+        result = result + "\n  configured module search path = %s" % cpath
+        result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
+        result = result + "\n  executable location = %s" % sys.argv[0]
+        result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
+
+        return result
 
     @staticmethod
     def version_info(gitinfo=False):
         ''' return full ansible version info '''
         if gitinfo:
             # expensive call, user with care
-            ansible_version_string = _version('')
+            ansible_version_string = CLI.version('')
         else:
             ansible_version_string = __version__
         ansible_version = ansible_version_string.split()[0]
