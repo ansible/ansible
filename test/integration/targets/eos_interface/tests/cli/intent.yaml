@@ -14,6 +14,7 @@
     rx_rate: ge(0)
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -29,6 +30,7 @@
     authorize: yes
     provider: "{{ cli }}"
   ignore_errors: yes
+  become: yes
   register: result
 
 - assert:
@@ -45,6 +47,7 @@
     state: down
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -59,6 +62,7 @@
     state: up
     provider: "{{ cli }}"
   ignore_errors: yes
+  become: yes
   register: result
 
 - assert:
@@ -72,6 +76,7 @@
       - show lldp neighbors management1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: show_lldp_neighbors_result
 
 - block:
@@ -83,6 +88,7 @@
             host: an-vyos-02
         authorize: yes
         provider: "{{ cli }}"
+      become: yes
       register: result
 
     - assert:
@@ -98,6 +104,7 @@
         authorize: yes
         provider: "{{ cli }}"
       ignore_errors: yes
+      become: yes
       register: result
 
     - assert:
@@ -116,6 +123,7 @@
     authorize: yes
     provider: "{{ cli }}"
   ignore_errors: yes
+  become: yes
   register: result
 
 - assert:
@@ -133,6 +141,7 @@
         authorize: yes
         provider: "{{ cli }}"
       ignore_errors: yes
+      become: yes
       register: result
 
     - assert:
@@ -151,6 +160,7 @@
         authorize: yes
         provider: "{{ cli }}"
       ignore_errors: yes
+      become: yes
       register: result
 
     - assert:
