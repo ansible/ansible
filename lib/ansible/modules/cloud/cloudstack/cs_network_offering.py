@@ -79,7 +79,7 @@ options:
       - true if the network offering is IP conserve mode enabled
     choices: ['true', 'false']
     required: false
-    default: true
+    default: null
   details:
     description:
       - Network offering details in key/value pairs.
@@ -94,13 +94,13 @@ options:
       - false if default egress policy is deny
     choices: ['true', 'false']
     required: false
-    default: false
+    default: null
   persistent:
     description:
       - True if network offering supports persistent networks
       - defaulted to false if not specified
     required: false
-    default: false
+    default: null
   keepalive_enabled:
     description:
       - If true keepalive will be turned on in the loadbalancer.
@@ -108,7 +108,7 @@ options:
       - the mode http and httpclose options are unset in the haproxy conf file.
     choices: ['true', 'false']
     required: false
-    default: false
+    default: null
   max_connections:
     description:
       - Maximum number of concurrent connections supported by the network offering
@@ -119,9 +119,10 @@ options:
       - Data transfer rate in megabits per second allowed
     required: false
     default: null
-  service_capability_list:
+  service_capabilities:
     description:
       - Desired service capabilities as part of network offering
+    aliases: [ service_capability ]
     required: false
     default: null
   service_offering:
@@ -142,13 +143,13 @@ options:
       - defaulted to false if not specified
     choices: ['true', 'false']
     required: false
-    default: false
+    default: null
   specify_vlan:
     description:
       - true if network offering supports vlans
     choices: ['true', 'false']
     required: false
-    default: false
+    default: null
 extends_documentation_fragment: cloudstack
 '''
 
@@ -294,7 +295,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'keepaliveenabled': self.module.params.get('keepalive_enabled'),
             'maxconnections': self.module.params.get('max_connections'),
             'networkrate': self.module.params.get('network_rate'),
-            'servicecapabilitylist': self.module.params.get('service_capability_list'),
+            'servicecapabilitylist': self.module.params.get('service_capabilities'),
             'serviceofferingid': self.get_service_offering_id(),
             'serviceproviderlist': self.module.params.get('service_provider_list'),
             'specifyipranges': self.module.params.get('specify_ip_ranges'),
@@ -365,19 +366,19 @@ def main():
         name=dict(required=True),
         supported_services=dict(),
         traffic_type=dict(default='GUEST'),
-        availability=dict(default='Optional'),
-        conserve_mode=dict(type='bool', default=True),
+        availability=dict(),
+        conserve_mode=dict(type='bool'),
         details=dict(type='list'),
         egress_default_policy=dict(type='bool'),
-        persistent=dict(type='bool', default=False),
-        keepalive_enabled=dict(type='bool', default=False),
+        persistent=dict(type='bool'),
+        keepalive_enabled=dict(type='bool'),
         max_connections=dict(type='int'),
         network_rate=dict(type='int'),
-        service_capability_list=dict(type='list'),
+        service_capabilities=dict(type='list', aliases=['service_capability']),
         service_offering=dict(),
         service_provider_list=dict(type='list'),
-        specify_ip_ranges=dict(type='bool', default=False),
-        specify_vlan=dict(type='bool', default=False),
+        specify_ip_ranges=dict(type='bool'),
+        specify_vlan=dict(type='bool'),
     ))
 
     module = AnsibleModule(
