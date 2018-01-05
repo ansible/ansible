@@ -143,8 +143,7 @@ def main():
         state=dict(default='present', type='str', choices=['present', 'absent']),
         user_name=dict(required=True, type='str'),
         user_password=dict(required=False, type='str', no_log=True),
-        admin=dict(default='False', type='bool'),
-        # database_name=dict(defult='None', type='str')  # hack to pass ansible.module_utils.influxdb mandatory parametr.
+        admin=dict(default='False', type='bool')
 
     )
     module = AnsibleModule(
