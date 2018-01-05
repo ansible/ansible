@@ -31,7 +31,13 @@ options:
   password:
     description:
       - Password of the user.
+      - See C(force) for changing a password.
       - Required if C(state=present).
+  force:
+    description:
+      - Password will only be changed with enforcement.
+    default: no
+    choices: [ yes, no ]
   api_enabled:
     description:
       - Whether the API is enabled or not.
