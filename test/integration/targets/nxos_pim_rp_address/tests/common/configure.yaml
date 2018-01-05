@@ -1,5 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }} nxos_pim_rp_address sanity"
+- debug: msg="START connection={{ ansible_connection }} nxos_pim_rp_address sanity"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: bidir="false" 
   when: platform is search('N3K')
@@ -127,4 +129,4 @@
     - name: "Disable feature PIM"
       nxos_feature: *disable_feature
 
-- debug: msg="END {{ connection.transport }} nxos_pim_rp_address sanity"
+- debug: msg="END connection={{ ansible_connection }} nxos_pim_rp_address sanity"

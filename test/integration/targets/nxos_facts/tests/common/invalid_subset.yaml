@@ -1,5 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }}/invalid_subset.yaml"
+- debug: msg="START connection={{ ansible_connection }}/invalid_subset.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 
 - name: test invalid subset (foobar)
@@ -45,4 +47,4 @@
 
 
 
-- debug: msg="END {{ connection.transport }}/invalid_subset.yaml"
+- debug: msg="END connection={{ ansible_connection }}/invalid_subset.yaml"
