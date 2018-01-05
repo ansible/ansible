@@ -169,7 +169,7 @@ class ACIModule(object):
         self.module = module
         self.params = module.params
         self.result = dict(changed=False)
-        self.headers = None
+        self.headers = dict()
 
         # Ensure protocol is set
         self.define_protocol()
@@ -234,9 +234,20 @@ class ACIModule(object):
                 self.module.fail_json(msg='Authentication failed for %(url)s. %(msg)s' % auth)
 
         # Retain cookie for later use
-        self.headers = dict(Cookie=resp.headers['Set-Cookie'])
+        self.headers['Cookie'] = resp.headers['Set-Cookie']
 
-    def client_auth(self, payload=''):
+    def client_auth(self, path=None, payload='', method=None):
+        if method is None:
+            method = self.params['method'].upper()
+
+        # NOTE: ACI documentation incorrectly uses complete URL
+        if path is None:
+            path = self.result['path']
+        path = '/' + path.lstrip('/')
+
+        if payload is None:
+            payload = ''
+
         # Use the private key basename (without extension) as client_cert_name
         if self.params['client_cert_name'] is None:
             self.params['client_cert_name'] = os.path.basename(os.path.splitext(self.params['client_cert_key'])[0])
@@ -246,23 +257,26 @@ class ACIModule(object):
         except:
             self.module.fail_json(msg='Cannot load private key %s' % self.params['client_cert_key'])
 
-        sig_payload = '%s%s%s' % (self.params['method'].upper(), self.result['url'], payload)
-
-        self.headers['APIC-Request-Signature'] = base64.b64encode(sign(sig_key, sig_payload, 'sha256'))
-        self.headers['APIC-Certificate-Algorithm'] = 'v1.0'
-        self.headers['APIC-Certificate-Fingerprint'] = 'fingerprint'
-        self.headers['APIC-Certificate-DN'] = 'uni/userext/user-%s/usercert-%s' % (self.params['username'], self.params['client_cert_name'])
+        # NOTE: ACI documentation incorrectly adds a space between method and path
+        sig_request = method + path + payload
+        sig_signature = base64.b64encode(sign(sig_key, sig_request, 'sha256'))
+        sig_dn = 'uni/userext/user-%s/usercert-%s' % (self.params['username'], self.params['client_cert_name'])
+        self.headers['Cookie'] = 'APIC-Certificate-Algorithm=v1.0; ' +\
+                                 'APIC-Certificate-DN=%s; ' % sig_dn +\
+                                 'APIC-Certificate-Fingerprint=fingerprint; ' +\
+                                 'APIC-Request-Signature=%s' % sig_signature
 
     def request(self, path, payload=None):
         ''' Perform a REST request '''
 
         # Ensure method is set (only do this once)
         self.define_method()
+        self.result['path'] = path
         self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
 
         # Sign and encode URL / payload as to APIC's wishes
         if self.params['client_cert_key'] is not None:
-            self.client_auth(payload)
+            self.client_auth(path=path, payload=payload)
 
         # Perform request
         resp, info = fetch_url(self.module, self.result['url'],
@@ -291,12 +305,12 @@ class ACIModule(object):
         ''' Perform a query with no payload '''
 
         # Ensure method is set
-        self.params['method'] = 'GET'
+        self.result['path'] = path
         self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
 
         # Sign and encode URL / payload as to APIC's wishes
         if self.params['client_cert_key'] is not None:
-            self.client_auth()
+            self.client_auth(path=path, method='GET')
 
         # Perform request
         resp, query = fetch_url(self.module, self.result['url'],
@@ -364,6 +378,7 @@ class ACIModule(object):
         else:
             path, filter_string = self._construct_url_1(root_class, child_includes)
 
+        self.result['path'] = path
         self.result['url'] = '{}://{}/{}'.format(self.module.params['protocol'], self.module.params['hostname'], path)
         self.result['filter_string'] = filter_string
 
@@ -558,6 +573,10 @@ class ACIModule(object):
             return
 
         elif not self.module.check_mode:
+            # Sign and encode URL / payload as to APIC's wishes
+            if self.params['client_cert_key'] is not None:
+                self.client_auth(method='DELETE')
+
             resp, info = fetch_url(self.module, self.result['url'],
                                    headers=self.headers,
                                    method='DELETE',
@@ -689,6 +708,10 @@ class ACIModule(object):
         """
         uri = self.result['url'] + self.result['filter_string']
 
+        # Sign and encode URL / payload as to APIC's wishes
+        if self.params['client_cert_key'] is not None:
+            self.client_auth(path=self.result['path'] + self.result['filter_string'], method='GET')
+
         resp, info = fetch_url(self.module, uri,
                                headers=self.headers,
                                method='GET',
@@ -782,6 +805,10 @@ class ACIModule(object):
         if not self.result['config']:
             return
         elif not self.module.check_mode:
+            # Sign and encode URL / payload as to APIC's wishes
+            if self.params['client_cert_key'] is not None:
+                self.client_auth(method='POST', payload=json.dumps(self.result['config']))
+
             resp, info = fetch_url(self.module, self.result['url'],
                                    data=json.dumps(self.result['config']),
                                    headers=self.headers,

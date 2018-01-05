@@ -373,7 +373,7 @@ def main():
 
     # Sign and encode URL / payload as to APIC's wishes
     if aci.params['client_cert_key'] is not None:
-        aci.client_auth(payload)
+        aci.client_auth(path=path, payload=payload)
 
     # Perform request
     resp, info = fetch_url(module, aci.result['url'],
@@ -391,10 +391,10 @@ def main():
         try:
             # APIC error
             aci_response(aci.result, info['body'], rest_type)
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, payload=payload, **aci.result)
+            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
         except KeyError:
             # Connection error
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, payload=payload, **aci.result)
+            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **aci.result)
 
     aci_response(aci.result, resp.read(), rest_type)
 
