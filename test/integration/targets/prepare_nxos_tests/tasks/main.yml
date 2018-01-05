@@ -23,9 +23,8 @@
 - name: "Collect interface list"
   nxos_command:
     commands: ['show interface brief | json']
-    provider: "{{ nxapi }}"
     timeout: 60
-  connection: local
+  connection: network_cli
   register: intout
 
 - set_fact: intdataraw="{{ intout.stdout_lines[0]['TABLE_interface']['ROW_interface'] }}"
