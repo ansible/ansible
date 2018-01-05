@@ -7,9 +7,15 @@ __metaclass__ = type
 import os
 import sys
 import tempfile
-import yaml
 
 from collections import namedtuple
+
+from yaml import load as yaml_load
+try:
+    # use C version if possible for speedup
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:
+    from yaml import SafeLoader
 
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
@@ -181,7 +187,7 @@ class ConfigManager(object):
         # consume definitions
         if os.path.exists(b_defs_file):
             with open(b_defs_file, 'rb') as config_def:
-                self._base_defs = yaml.safe_load(config_def)
+                self._base_defs = yaml_load(config_def, Loader=SafeLoader)
         else:
             raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
 
