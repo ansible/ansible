@@ -166,7 +166,7 @@ def main():
             port=dict(type='int', default=7199),
             password=dict(type='str', no_log=True),
             passwordFile=dict(type='str', no_log=True),
-            username=dict(type='str'),
+            username=dict(type='str', no_log=True),
             incremental=dict(type='bool', required=True),
             nodetool_path=dict(type='str', default=None, required=False),
             debug=dict(type='bool', default=False, required=False),
