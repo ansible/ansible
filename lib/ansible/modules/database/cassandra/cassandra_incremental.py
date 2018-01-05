@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: cassandra_backup
 author: "Rhys Campbell (rhys.james.campbell@googlemail.com)"
-version_added: "2.1.1"
+version_added: "2.3.2.0"
 short_description: Enable and disable the incremental backup feature
 requirements: [ nodetool ]
 description:
@@ -33,7 +33,7 @@ options:
       description:
         - Remote jmx agent port number
       required: False
-      default: ???? TODO
+      default: 7199
    password:
      description:
        - Remote jmx agent password
@@ -59,14 +59,9 @@ options:
        - The path to nodetool
      required: false
      default: null
+'''
 
-########################
-# LOCAL MODULE TESTING #
-########################
-
-export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk1.8.0_73.jdk/Contents/Home"
-export PATH=$JAVA_HOME/bin:$PATH
-
+LOCAL_TESTING = '''
 1. Basic test
 #############
 cat << EOF > /tmp/args.json
@@ -104,7 +99,6 @@ EXAMPLES = '''
     username: admin
     password: secret
     incremental: false
-
 '''
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
@@ -174,7 +168,7 @@ def main():
             passwordFile=dict(type='str', no_log=True),
             username=dict(type='str'),
             incremental=dict(choices=[True, False], type='bool', required=True),
-            nodetool_path=dict(default=None, required=False),
+            nodetool_path=dict(type='str', default=None, required=False),
             debug=dict(type='bool', default=False, required=False),
         ),
         supports_check_mode=True
@@ -188,11 +182,12 @@ def main():
     result = {}
     changed = False
 
+    (rc, out, err) = n.check_incremental_enabled()
+
     if module.params['incremental'] == False:
 
-        (rc, out, err) = n.check_incremental_enabled()
         if rc != 0:
-            module.fail_json(name=module.params['additional_command'], msg=err)
+            module.fail_json(name="statusbackup", msg=err)
         if module.check_mode:
             if out == "running":
                 module.exit_json(changed=True)
@@ -202,12 +197,12 @@ def main():
             (rc, out, err) = n.disable_incremental()
             changed = True
         if rc != 0:
-            module.fail_json(name=module.params['additional_command'], msg=err)
+            module.fail_json(name="disablebackup", msg=err)
 
     elif module.params['incremental'] == True:
-        (rc, out, err) = n.check_incremental_enabled()
+
         if rc != 0:
-            module.fail_json(name=module.params['additional_command'], msg=err)
+            module.fail_json(name="statsbackup", msg=err)
         if module.check_mode:
             if out == "not running":
                 module.exit_json(changed=True)
@@ -217,7 +212,8 @@ def main():
             (rc, out, err) = n.enable_incremental()
             changed = True
         if rc is not None and rc != 0:
-            module.fail_json(name=module.params['additional_command'], msg=err)
+            module.fail_json(name="enablebackup", msg=err)
+
     result['changed'] = changed
     if out:
         result['stdout'] = out
