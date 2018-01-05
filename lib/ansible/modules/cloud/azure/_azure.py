@@ -21,6 +21,7 @@ description:
 version_added: "1.7"
 deprecated:
   version: "2.4"
+  why: Replaced with various dedicated Azure modules.
   alternative: M(azure_rm_virtualmachine)
 options:
   name:

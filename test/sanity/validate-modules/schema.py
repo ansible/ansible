@@ -91,8 +91,9 @@ def deprecation_schema():
         #   * git rm old modules
         #   * Update CHANGELOG & porting_guide
         Required('version'): Any("2.0", "2.2", "2.3", "2.4", "2.5"),
-        'why': Any(*string_types),
-        'alternative': Any(*string_types),
+        Required('why'): Any(*string_types),
+        Required('alternative'): Any(*string_types),
+        'removed': Any(True),
     }
     return Schema(
         deprecation_schema_dict,

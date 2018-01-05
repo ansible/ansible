@@ -201,7 +201,13 @@ The following fields can be used and are all required unless specified otherwise
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
 :deprecated:
-  In addition to updating the ``CHANGELOG`` and ``porting_guide.X.y.rst`` the module should be renamed to start with an ``_`` and the following values should be set:
+  If a module is deprecated it should
+
+  * Mentioned in ``CHANGELOG``
+  * Referenced in the ``porting_guide.X.y.rst``
+  * File should be renamed to start with an ``_``
+  * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
+  * Following values should be set:
 
   :version: A `string` which represents the version of Ansible the deprecation starts, i.e. ``version: "2.5"``. Not the version this will be removed in.
   :why: Optional string that used to detail why this has been removed.
