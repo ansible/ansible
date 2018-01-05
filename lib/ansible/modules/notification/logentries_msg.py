@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
+# Copyright 2017, Ansible Project
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -55,11 +48,9 @@ EXAMPLES = '''
     msg="{{ ansible_hostname }}"
 '''
 
-
-# import module snippets
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import AnsibleModule
 import socket
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def send_msg(module, token, msg, api, port):
@@ -73,8 +64,7 @@ def send_msg(module, token, msg, api, port):
     try:
         if not module.check_mode:
             s.send(message)
-    except:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="failed to send message, msg=%s" % e)
     s.close()
 
@@ -98,8 +88,7 @@ def main():
     try:
         send_msg(module, token, msg, api, port)
         changed = True
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="unable to send msg: %s" % e)
 
     module.exit_json(changed=changed, msg=msg)
