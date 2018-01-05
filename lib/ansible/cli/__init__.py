@@ -90,8 +90,9 @@ class SortedOptParser(optparse.OptionParser):
         return optparse.OptionParser.format_help(self, formatter=None)
 
     def get_version(self):
-        # if args have been parsed, update module path based on cli options
-        return _version(self.get_prog_name(), module_path=self.values.module_path)
+        # if args have been parsed and cli, update module path based on cli options
+        return _version(self.get_prog_name(),
+                        module_path=getattr(self.values, 'module_path', None))
 
 
 # Note: Inherit from SortedOptParser so that we get our format_help method

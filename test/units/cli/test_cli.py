@@ -36,6 +36,12 @@ class TestCliVersion(unittest.TestCase):
         self.assertIn('ansible-cli-test', ver)
         self.assertIn('python version', ver)
 
+    def test_version_with_module_path(self):
+        ver = cli._version('ansible-cli-test', module_path=['/dev/null/module_path'])
+        self.assertIn('ansible-cli-test', ver)
+        self.assertIn('python version', ver)
+        self.assertIn('/dev/null/module_path', ver)
+
     def test_version_info(self):
         version_info = cli.CLI.version_info()
         self.assertEqual(version_info['string'], __version__)
