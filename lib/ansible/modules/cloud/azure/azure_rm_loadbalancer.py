@@ -389,7 +389,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
-        for key in list(self.module_args.keys()) + ['tags']:
+        # for key in list(self.module_args.keys()) + ['tags']:
+        for key in self.module_args.keys():
             setattr(self, key, kwargs[key])
 
         if self.state == 'absent':
@@ -526,8 +527,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             return self.results
 
         # From now changed==True
-        if self.tags:
-            load_balancer_props['tags'] = self.tags
+        # if self.tags:
+        #     load_balancer_props['tags'] = self.tags
         frontend_ip_config_id = frontend_ip_configuration_id(
             subscription_id=self.subscription_id,
             resource_group_name=self.resource_group,
