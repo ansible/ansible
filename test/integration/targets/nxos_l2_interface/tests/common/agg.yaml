@@ -12,6 +12,13 @@
     vlan_range: "6,15"
     provider: "{{ connection }}"
 
+- name: Setup - Ensure interfaces are layer2
+  nxos_interface:
+    aggregate:
+      - { name: "{{ intname1 }}" }
+      - { name: "{{ intname2 }}" }
+    mode: layer2
+
 - name: Setup - Remove interface aggregate before testing
   nxos_l2_interface:
     aggregate:
