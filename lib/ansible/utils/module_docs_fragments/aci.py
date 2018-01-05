@@ -38,13 +38,17 @@ options:
     description:
     - The password to use for authentication.
     required: yes
-  client_cert_key:
+  private_key:
     description:
     - PEM formatted file that contains your private key to be used for client certificate authentication.
-  client_cert_name:
+    - The name of the key (without extension) is used as the certificate name in ACI, unless C(certificate_name) is specified.
+    aliases: [ cert_key ]
+  certificate_name:
     description:
-    - The x.509 certificate name attached to the APIC AAA user.
-    - If this parameter is missing, it defaults to the C(client_cert_key) basename, without extension.
+    - The X.509 certificate name attached to the APIC AAA user.
+    - It defaults to the C(private_key) basename, without extension.
+    aliases: [ cert_name ]
+    default: C(private_key) basename
   timeout:
     description:
     - The socket level timeout in seconds.

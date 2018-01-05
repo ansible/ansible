@@ -60,11 +60,11 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Add a tenant
+- name: Add a tenant using certifcate authentication
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/aci_config.xml
@@ -74,7 +74,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni/tn-[Sales].json
     method: post
@@ -89,7 +89,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni/tn-[Sales].json
     method: post
@@ -108,7 +108,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/{{ aci_username}}.key
     validate_certs: no
     path: /api/mo/uni/tn-[Sales].xml
     method: post
@@ -116,7 +116,7 @@ EXAMPLES = r'''
       <fvTenant name="Sales" descr="Sales departement"/>
   delegate_to: localhost
 
-- name: Get tenants
+- name: Get tenants using password authentication
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
@@ -129,7 +129,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/contract_config.xml
@@ -139,7 +139,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     method: post
     path: /api/mo/uni/controller/nodeidentpol.xml
@@ -155,7 +155,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
   register: apics
@@ -372,9 +372,9 @@ def main():
         path += '?rsp-subtree=modified'
         aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})
 
-    # Sign and encode URL / payload as to APIC's wishes
-    if aci.params['client_cert_key'] is not None:
-        aci.client_auth(path=path, payload=payload)
+    # Sign and encode request as to APIC's wishes
+    if aci.params['private_key'] is not None:
+        aci.cert_auth(path=path, payload=payload)
 
     # Perform request
     resp, info = fetch_url(module, aci.result['url'],
