@@ -721,7 +721,7 @@ class VaultLib:
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
-                    display.vvvvv('decrypt succesful with secret=%s and vault_id=%s' % (vault_secret, vault_secret_id))
+                    display.vvvvv('decrypt successful with secret=%s and vault_id=%s' % (vault_secret, vault_secret_id))
                     break
             except AnsibleVaultFormatError as exc:
                 msg = "There was a vault format error"
