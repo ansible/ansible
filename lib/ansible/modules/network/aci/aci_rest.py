@@ -369,6 +369,7 @@ def main():
     # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
     if aci.params['method'] != 'get':
+        path += '?rsp-subtree=modified'
         aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})
 
     # Sign and encode URL / payload as to APIC's wishes
