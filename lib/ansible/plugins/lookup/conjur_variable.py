@@ -103,20 +103,32 @@ class LookupModule(LookupBase):
 
         raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
 
+    # Load configuration and return as dictionary if file is present on file system
+    def load_conf_from_file(self, conf_path):
+        conf_path = os.path.expanduser(conf_path)
+
+        if os.path.exists(conf_path):
+            display.vvvv('Loading configuration from: {0}'.format(conf_path))
+            with open(conf_path) as f:
+                return yaml.safe_load(f.read())
+        return {}
+
     # Load identity and return as dictionary if file is present on file system
     def load_identity_from_file(self, identity_path, appliance_url):
         identity_path = os.path.expanduser(identity_path)
 
         if os.path.exists(identity_path):
-            display.vvvv('Loading identity from: {0}'.format(identity_path))
-            try:
-                identity = netrc(identity_path)
-                id, account, api_key = identity.authenticators('{0}/authn'.format(appliance_url))
-                if not id or not api_key:
-                    return {}
+            display.vvvv('Loading identity from: {0} for {1}'.format(identity_path, appliance_url))
 
-                return {'id': id, 'api_key': api_key}
-            except Exception as exception:
-                raise AnsibleError('Error: parsing {0} - {1}'.format(identity_path, str(exception)))
+            conjur_authn_url = '{0}/authn'.format(appliance_url)
+            identity = netrc(identity_path)
+            if identity.authenticators(conjur_authn_url) is None:
+                raise AnsibleError('The netrc file does not contain an entry for: {0}'.format(conjur_authn_url))
+
+            id, account, api_key = identity.authenticators(conjur_authn_url)
+            if not id or not api_key:
+                return {}
+
+            return {'id': id, 'api_key': api_key}
 
         return {}
