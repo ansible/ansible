@@ -1,5 +1,5 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport}} nxos_acl_interface sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_acl_interface sanity test"
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
@@ -117,4 +117,4 @@
     ignore_errors: yes
 
   always:
-  - debug: msg="END TRANSPORT:{{ connection.transport}} nxos_acl_interface sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_acl_interface sanity test"
