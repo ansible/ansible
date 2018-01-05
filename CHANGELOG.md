@@ -51,6 +51,9 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/34465)
 * Updated win_mapped_drive docs to clarify what it is used for
   (https://github.com/ansible/ansible/pull/34478)
+* Fix file related modules run in check_mode when the file being operated on does not exist
+  (https://github.com/ansible/ansible/pull/33967)
+
 
 <a id="2.4.2"></a>
 
