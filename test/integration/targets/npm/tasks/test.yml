@@ -28,8 +28,8 @@
 
     - assert:
         that:
-          - npm_install|success
-          - npm_install|changed
+          - npm_install is success
+          - npm_install is changed
 
     - name: 'Reinstall simple package without dependency'
       npm:
@@ -44,8 +44,8 @@
     - name: Check there is no change
       assert:
         that:
-          - npm_reinstall|success
-          - not (npm_reinstall|changed)
+          - npm_reinstall is success
+          - not (npm_reinstall is changed)
 
     - name: 'Manually delete package'
       file:
@@ -65,5 +65,5 @@
     - name: Check result is changed and successful
       assert:
         that:
-          - npm_fix_install|success
-          - npm_fix_install|changed
+          - npm_fix_install is success
+          - npm_fix_install is changed
