@@ -367,7 +367,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         if self.options.ask_su_pass or self.options.su_user:
             _dep('su')
 
-    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
+    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False, vault_rekey_opts=False):
         ''' check for conflicting options '''
 
         op = self.options
@@ -377,6 +377,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             if (op.ask_vault_pass and op.vault_password_files):
                 self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
+        if vault_rekey_opts:
             if (op.new_vault_id and op.new_vault_password_file):
                 self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
 

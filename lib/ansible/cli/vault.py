@@ -125,6 +125,7 @@ class VaultCLI(CLI):
         self.set_action()
 
         super(VaultCLI, self).parse()
+        self.validate_conflicts(vault_opts=True, vault_rekey_opts=True)
 
         display.verbosity = self.options.verbosity
 
