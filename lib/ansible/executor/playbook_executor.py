@@ -68,7 +68,6 @@ class PlaybookExecutor:
         check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE)
 
     def run(self):
-
         '''
         Run the given playbook, based on the settings in the play which
         may limit the runs to serialized groups, etc.
@@ -103,8 +102,16 @@ class PlaybookExecutor:
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
+                    # Create a temporary copy of the play here, so we can run post_validate
+                    # on it without the templating changes affecting the original object.
+                    # Doing this before vars_prompt to allow for using variables in prompt.
+                    all_vars = self._variable_manager.get_vars(play=play)
+                    templar = Templar(loader=self._loader, variables=all_vars)
+                    new_play = play.copy()
+                    new_play.post_validate(templar)
+
                     if play.vars_prompt:
-                        for var in play.vars_prompt:
+                        for var in new_play.vars_prompt:
                             vname = var['name']
                             prompt = var.get("prompt", vname)
                             default = var.get("default", None)
@@ -121,12 +128,10 @@ class PlaybookExecutor:
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
-                    # Create a temporary copy of the play here, so we can run post_validate
-                    # on it without the templating changes affecting the original object.
-                    all_vars = self._variable_manager.get_vars(play=play)
-                    templar = Templar(loader=self._loader, variables=all_vars)
-                    new_play = play.copy()
-                    new_play.post_validate(templar)
+                        # Post validating again in case variables were entered in the prompt.
+                        all_vars = self._variable_manager.get_vars(play=play)
+                        templar = Templar(loader=self._loader, variables=all_vars)
+                        new_play.post_validate(templar)
 
                     if self._options.syntax:
                         continue
