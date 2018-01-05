@@ -242,7 +242,7 @@ EXAMPLES = """
     lines:
       - ip helper-address 172.26.1.10
       - ip helper-address 172.26.3.8
-    parents: {{ item }}
+    parents: "{{ item }}"
   with_items:
     - interface Ethernet1
     - interface Ethernet2
