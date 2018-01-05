@@ -32,9 +32,8 @@ options:
     choices: ['host', 'console', 'monitor', 'buffered', 'file']
   name:
     description:
-      - If value of C(dest) is:
-        * I(file) name indicates file-name.
-        * I(host) name indicates the host-name or ip-address of syslog server.
+      - When C(dest) = I(file) name indicates file-name
+      - When C(dest) = I(host) name indicates the host-name or ip-address of syslog server.
   vrf:
     description:
       - vrf name when syslog server is configured, C(dest) = C(host)
@@ -42,8 +41,8 @@ options:
     version_added: 2.5
   size:
     description:
-      - * Size of buffer when C(dest) = C(buffered). The acceptable value is in the range I(307200 to 125000000 bytes). Default: 307200
-        * Size of file when C(dest) = C(file). The acceptable value is in the range I(1 to 2097152)KB. Default: 2 GB
+      - Size of buffer when C(dest) = C(buffered). The acceptable value is in the range I(307200 to 125000000 bytes). Default 307200
+      - Size of file when C(dest) = C(file). The acceptable value is in the range I(1 to 2097152)KB. Default 2 GB
   facility:
     description:
       - To configure the type of syslog facility in which system logging (syslog) messages are sent to syslog servers
