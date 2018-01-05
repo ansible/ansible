@@ -16,6 +16,7 @@ module: kubernetes
 version_added: "2.1"
 deprecated:
   version: "2.5"
+  why: This module used the oc command line tool, where as M(k8s_raw) goes over the REST API.
   alternative: Use M(k8s_raw) instead.
 short_description: Manage Kubernetes resources
 description:

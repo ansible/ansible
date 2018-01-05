@@ -20,6 +20,7 @@ version_added: "1.4"
 short_description: manage docker containers
 deprecated:
   version: "2.2"
+  why: Replaced by dedicated modules.
   alternative: Use M(docker_container) and M(docker_image) instead.
 description:
   - This is the original Ansible module for managing the Docker container life cycle.
