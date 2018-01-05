@@ -19,6 +19,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '2.5'}
@@ -41,31 +44,9 @@ options:
     description:
       - The FortiManager's Address.
     required: true
-  lock:
-    description:
-      - True locks the ADOM, makes necessary configuration updates, saves the config, and unlocks the ADOM
-    required: false
-    default: True
-    type: bool
   password:
     description:
       - The password associated with the username account.
-    required: false
-  port:
-    description:
-      - The TCP port used to connect to the FortiManager if other than the default used by the transport
-        method(http=80, https=443).
-    required: false
-  provider:
-    description:
-      - Dictionary which acts as a collection of arguments used to define the characteristics
-        of how to connect to the device.
-      - Arguments hostname, username, and password must be specified in either provider or local param.
-      - Local params take precedence, e.g. hostname is preferred to provider["hostname"] when both are specified.
-    required: false
-  session_id:
-    description:
-      - The session_id of an established and active session
     required: false
   state:
     description:
@@ -76,23 +57,6 @@ options:
     required: false
     default: present
     choices: ["present", "execute", "delete"]
-  use_ssl:
-    description:
-      - Determines whether to use HTTPS(True) or HTTP(False).
-    required: false
-    default: True
-    type: bool
-  username:
-    description:
-      - The username used to authenticate with the FortiManager.
-
-  validate_certs:
-    description:
-      - Determines whether to validate certs against a trusted certificate file (True), or accept all certs (False)
-    required: false
-    default: False
-    type: bool
-
   script_name:
     description:
       - The name of the script.
@@ -161,9 +125,6 @@ api_result:
   type: string
 """
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
-
 # check for pyFMG lib
 try:
     from pyFMG.fortimgr import FortiManager
@@ -176,16 +137,17 @@ def set_script(fmg, script_name, script_type, script_content, script_desc, scrip
     """
     This method sets a script.
     """
-    fields = dict()
-    fields["content"] = script_content
-    fields["desc"] = script_desc
-    fields["name"] = script_name
-    fields["target"] = script_target
-    fields["type"] = script_type
+
+    datagram = {
+        'content': script_content,
+        'desc': script_desc,
+        'name': script_name,
+        'target': script_target,
+        'type': script_type,
+    }
 
     url = '/dvmdb/adom/{adom}/script/'.format(adom=adom)
-    response = fmg.set(url, fields)
-
+    response = fmg.set(url, datagram)
     return response
 
 
@@ -193,12 +155,13 @@ def delete_script(fmg, script_name, adom):
     """
     This method deletes a script.
     """
-    fields = dict()
-    fields["name"] = script_name
+
+    datagram = {
+        'name': script_name,
+    }
 
     url = '/dvmdb/adom/{adom}/script/{script_name}'.format(adom=adom, script_name=script_name)
-    response = fmg.delete(url, fields)
-
+    response = fmg.delete(url, datagram)
     return response
 
 
@@ -207,21 +170,22 @@ def execute_script(fmg, script_name, scope, package, adom, vdom):
     This method will execute a specific script.
     """
 
-    fields = dict()
-    fields["adom"] = adom
-    fields["scope"] = scope
-    fields["script"] = script_name
-    fields["package"] = package
     scope_list = list()
     scope = scope.replace(' ', '')
     scope = scope.split(',')
     for dev_name in scope:
         scope_list.append({'name': dev_name, 'vdom': vdom})
-    fields['scope'] = scope_list
+
+    datagram = {
+        'adom': adom,
+        'scope': scope,
+        'script': script_name,
+        'package': package,
+        'scope': scope_list,
+    }
+
     url = '/dvmdb/adom/{adom}/script/execute'.format(adom=adom)
-
-    response = fmg.execute(url, fields)
-
+    response = fmg.execute(url, datagram)
     return response
 
 
@@ -229,16 +193,10 @@ def main():
     argument_spec = dict(
         adom=dict(required=False, type="str"),
         vdom=dict(required=False, type="str"),
-        host=dict(required=False, type="str"),
-        lock=dict(required=False, type="bool"),
+        host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        port=dict(required=False, type="int"),
-        provider=dict(required=False, type="dict"),
-        session_id=dict(required=False, type="str"),
-        state=dict(choices=["execute", "delete", "schedule", "present"], type="str"),
-        use_ssl=dict(required=False, type="bool"),
-        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
-        validate_certs=dict(required=False, type="bool"),
+        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
+        state=dict(choices=["execute", "delete", "present"], type="str"),
 
         script_name=dict(required=True, type="str"),
         script_type=dict(required=False, type="str"),
@@ -261,22 +219,11 @@ def main():
     if vdom is None:
         vdom = "root"
     host = module.params["host"]
-    lock = module.params["lock"]
-    if lock is None:
-        module.params["lock"] = True
     password = module.params["password"]
-    port = module.params["port"]
-    session_id = module.params["session_id"]
     state = module.params["state"]
     if state is None:
         state = "present"
-    use_ssl = module.params["use_ssl"]
-    if use_ssl is None:
-        use_ssl = True
     username = module.params["username"]
-    validate_certs = module.params["validate_certs"]
-    if validate_certs is None:
-        validate_certs = False
 
     script_name = module.params["script_name"]
     script_type = module.params["script_type"]
@@ -286,21 +233,17 @@ def main():
     script_scope = module.params["script_scope"]
     script_package = module.params["script_package"]
 
-    # validate required arguments are passed; not used in argument_spec to allow params to be called from provider
-    argument_check = dict(adom=adom, host=host)
-    for key, val in argument_check.items():
-        if not val:
-            module.fail_json(msg="{} is required".format(key))
+    # check if params are set
+    if host is None or username is None:
+        module.fail_json(msg="Host and username are required")
 
-    # if state is present the add the script, if its execute then run the script
+    # if state is present (default), then add the script
     if state == "present":
-        # add script
         results = set_script(fmg, script_name, script_type, script_content, script_description, script_target, adom)
         if not results[0] == 0:
             module.fail_json(msg="Setting Script Failed", **results)
 
     elif state == "execute":
-        # run script
         results = execute_script(fmg, script_name, script_scope, script_package, adom, vdom)
         if not results[0] == 0:
             module.fail_json(msg="Script Execution Failed", **results)
@@ -308,7 +251,7 @@ def main():
     elif state == "delete":
         results = delete_script(fmg, script_name, adom)
         if not results[0] == 0:
-            module.fail_json(msg="Script Execution Failed", **results)
+            module.fail_json(msg="Script Deletion Failed", **results)
 
     fmg.logout()
 
