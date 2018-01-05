@@ -142,6 +142,22 @@ options:
         The disabled plugins will not persist beyond the transaction.
     required: false
     version_added: "2.5"
+  disable_excludes:
+    description:
+      - Disable the excludes defined in YUM config files.
+      - If set to C(all), disables all excludes.
+      - If set to C(main), disable excludes defined in [main] in yum.conf.
+      - If set to C(repoid), disable excludes defined for given repo id.
+    choices: [ all, main, repoid ]
+    version_added: "2.5"
+  disable_includes:
+    description:
+      - Disable the includes defined in YUM config files.
+      - If set to C(all), disables all includes.
+      - If set to C(repoid), disable includes defined for given repo id.
+    choices: [ all, repoid ]
+    version_added: "2.5"
+
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -248,6 +264,12 @@ EXAMPLES = '''
   yum:
     name: sos
     disablerepo: "epel,ol7_latest"
+
+- name: Install php which is mentioned in excludes of yum conf
+  yum:
+    name: php
+    disable_excludes: main
+
 '''
 
 import os
@@ -1239,7 +1261,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check, exclude, repoq, skip_broken, update_only, security,
-           installroot='/', allow_downgrade=False, disable_plugin='', enable_plugin=''):
+           installroot='/', allow_downgrade=False, disable_plugin='', enable_plugin='',
+           disable_excludes='', disable_includes=''):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1281,6 +1304,12 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if exclude:
         e_cmd = ['--exclude=%s' % exclude]
         yum_basecmd.extend(e_cmd)
+
+    if disable_excludes != '':
+        yum_basecmd.extend(['--disableexcludes', disable_excludes])
+
+    if disable_includes != '':
+        yum_basecmd.extend(['--disableincludes', disable_includes])
 
     if installroot != '/':
         # do not setup installroot by default, because of error
@@ -1389,6 +1418,8 @@ def main():
             security=dict(type='bool', default=False),
             enable_plugin=dict(type='list', default=[]),
             disable_plugin=dict(type='list', default=[]),
+            disable_excludes=dict(type='str', choices=['all', 'main', 'repoid']),
+            disable_includes=dict(type='str', choices=['all', 'repoid']),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
@@ -1451,10 +1482,14 @@ def main():
         update_only = params['update_only']
         security = params['security']
         allow_downgrade = params['allow_downgrade']
+        disable_excludes = params.get('disable_excludes', '')
+        disable_includes = params.get('disable_includes', '')
+
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
                          skip_broken, update_only, security, params['installroot'], allow_downgrade,
-                         disable_plugin=disable_plugin, enable_plugin=enable_plugin)
+                         disable_plugin=disable_plugin, enable_plugin=enable_plugin,
+                         disable_excludes=disable_excludes, disable_includes=disable_includes)
         if repoquery:
             results['msg'] = '%s %s' % (
                 results.get('msg', ''),
