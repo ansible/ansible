@@ -1,13 +1,32 @@
 ---
-- name: test fail if missing params
+- name: setup
+  cs_network_offering: name={{ cs_resource_prefix }}_name state=absent
+  register: netoffer
+- name: verify setup
+  assert:
+    that:
+    - netoffer is successful
+
+- name: test fail if missing name
   action: cs_network_offering
+  register: netoffer
+  ignore_errors: true
+- name: verify results of fail if missing name
+  assert:
+    that:
+    - netoffer is failed
+    - 'netoffer.msg == "missing required arguments: name"'
+
+- name: test fail if missing params
+  cs_network_offering:
+    name: "{{ cs_resource_prefix }}_name"
   register: netoffer
   ignore_errors: true
 - name: verify results of fail if missing params
   assert:
     that:
     - netoffer is failed
-    - 'netoffer.msg == "missing required arguments: service_provider_list, supported_services, guest_ip_type, name, display_text"'
+    - 'netoffer.msg == "missing required arguments: display_text, guest_ip_type, supported_services, service_provider_list"'
 
 - name: test create network offer in check mode
   cs_network_offering:
@@ -258,6 +277,52 @@
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description renamed"
 
+- name: test update offer with minimal params in check_mode
+  cs_network_offering:
+    name: "{{ cs_resource_prefix }}_name"
+    display_text: "network offering description update"
+  register: netoffer
+  check_mode: yes
+- name: verify results of update offer with minimal params in check_mode
+  assert:
+    that:
+    - netoffer is successful
+    - netoffer is changed
+    - netoffer.name == "{{ cs_resource_prefix }}_name"
+    - netoffer.guest_ip_type == "Isolated"
+    - netoffer.state == "Disabled"
+    - netoffer.display_text == "network offering description renamed"
+
+- name: test update offer with minimal params
+  cs_network_offering:
+    name: "{{ cs_resource_prefix }}_name"
+    display_text: "network offering description update"
+  register: netoffer
+- name: verify results of update offer with minimal params
+  assert:
+    that:
+    - netoffer is successful
+    - netoffer is changed
+    - netoffer.name == "{{ cs_resource_prefix }}_name"
+    - netoffer.guest_ip_type == "Isolated"
+    - netoffer.state == "Disabled"
+    - netoffer.display_text == "network offering description update"
+
+- name: test update offer with minimal params idempotency
+  cs_network_offering:
+    name: "{{ cs_resource_prefix }}_name"
+    display_text: "network offering description update"
+  register: netoffer
+- name: verify results of update offer with minimal params idempotency
+  assert:
+    that:
+    - netoffer is successful
+    - netoffer is not changed
+    - netoffer.name == "{{ cs_resource_prefix }}_name"
+    - netoffer.guest_ip_type == "Isolated"
+    - netoffer.state == "Disabled"
+    - netoffer.display_text == "network offering description update"
+
 - name: test remove network offer in check_mode
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
@@ -278,7 +343,7 @@
     - netoffer.name == "{{ cs_resource_prefix }}_name"
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
-    - netoffer.display_text == "network offering description renamed"
+    - netoffer.display_text == "network offering description update"
 
 - name: test remove network offer
   cs_network_offering:
@@ -299,7 +364,7 @@
     - netoffer.name == "{{ cs_resource_prefix }}_name"
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
-    - netoffer.display_text == "network offering description renamed"
+    - netoffer.display_text == "network offering description update"
 
 - name: test remove network offer idempotence
   cs_network_offering:

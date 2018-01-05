@@ -45,13 +45,13 @@ options:
   display_text:
     description:
       - Display text of the network offerings
-    required: true
+    required: false
     default: null
   guest_ip_type:
     description:
       - Guest type of the network offering. Shared or Isolated
     choices: ['Shared', 'Isolated']
-    required: true
+    required: false
     default: null
   name:
     description:
@@ -61,13 +61,13 @@ options:
   supported_services:
     description:
       - Services supported by the network offering
-    required: true
+    required: false
     default: null
   traffic_type:
     description:
       - The traffic type for the network offering.
       - Supported type in current release is GUEST only
-    required: true
+    required: false
     default: GUEST
   availability:
     description:
@@ -300,6 +300,16 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'specifyipranges': self.module.params.get('specify_ip_ranges'),
             'specifyvlan': self.module.params.get('specify_vlan'),
         }
+
+        required_params = [
+            'display_text',
+            'guest_ip_type',
+            'supported_services',
+            'service_provider_list',
+        ]
+
+        self.module.fail_on_missing_params(required_params=required_params)
+
         if not self.module.check_mode:
             res = self.query_api('createNetworkOffering', **args)
             network_offering = res['networkoffering']
@@ -350,10 +360,10 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         state=dict(choices=['enabled', 'present', 'disabled', 'absent'], default='present'),
-        display_text=dict(required=True),
-        guest_ip_type=dict(required=True, choices=['Shared', 'Isolated']),
+        display_text=dict(),
+        guest_ip_type=dict(choices=['Shared', 'Isolated']),
         name=dict(required=True),
-        supported_services=dict(required=True),
+        supported_services=dict(),
         traffic_type=dict(default='GUEST'),
         availability=dict(default='Optional'),
         conserve_mode=dict(type='bool', default=True),
@@ -365,7 +375,7 @@ def main():
         network_rate=dict(type='int'),
         service_capability_list=dict(type='list'),
         service_offering=dict(),
-        service_provider_list=dict(type='list', required=True),
+        service_provider_list=dict(type='list'),
         specify_ip_ranges=dict(type='bool', default=False),
         specify_vlan=dict(type='bool', default=False),
     ))
