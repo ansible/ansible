@@ -5,12 +5,9 @@
 
 - vars:
     # sample: node-v8.2.0-linux-x64.tar.xz
-    node_path: '{{ remote_dir }}/node-v{{ nodejs_version }}-{{ ansible_system|lower }}-x{{ ansible_userspace_bits }}/bin'
+    node_path: '{{ remote_dir }}/{{ nodejs_path }}/bin'
+    package: 'iconv-lite'
   block:
-    - shell: echo $PATH
-      environment:
-        PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
-
     - shell: npm --version
       environment:
         PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
@@ -24,7 +21,7 @@
         path: '{{ remote_dir }}'
         executable: '{{ node_path }}/npm'
         state: present
-        name: iconv-lite
+        name: '{{ package }}'
       environment:
         PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
       register: npm_install
@@ -39,7 +36,7 @@
         path: '{{ remote_dir }}'
         executable: '{{ node_path }}/npm'
         state: present
-        name: iconv-lite
+        name: '{{ package }}'
       environment:
         PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
       register: npm_reinstall
@@ -52,7 +49,7 @@
 
     - name: 'Manually delete package'
       file:
-        path: '{{ remote_dir }}/node_modules/iconv-lite'
+        path: '{{ remote_dir }}/node_modules/{{ package }}'
         state: absent
 
     - name: 'reinstall simple package'
@@ -60,7 +57,7 @@
         path: '{{ remote_dir }}'
         executable: '{{ node_path }}/npm'
         state: present
-        name: iconv-lite
+        name: '{{ package }}'
       environment:
         PATH: '{{ node_path }}:{{ ansible_env.PATH }}'
       register: npm_fix_install
