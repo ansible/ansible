@@ -39,8 +39,7 @@ from time import time
 from ansible.module_utils.six.moves.urllib.parse import quote_plus
 import yaml
 
-import requests
-from requests.auth import HTTPBasicAuth
+from ansible.module_utils.urls import open_url
 
 try:
     from __main__ import display
@@ -59,50 +58,30 @@ class LookupModule(LookupBase):
         conjur_url = '{0}/authn/{1}/{2}/authenticate'.format(conf['appliance_url'], conf['account'], identity['id'])
         display.vvvv('Authentication request to Conjur at: {0}, with user: {1}'.format(conjur_url, identity['id']))
 
-        if 'cert_file' in conf:
-            response = requests.post(conjur_url, data=identity['api_key'], verify=conf['cert_file'])
-        else:
-            response = requests.post(conjur_url, data=identity['api_key'])
-        display.vvvv('response: {0}'.format(response.text))
+        response = open_url(conjur_url, data=identity['api_key'], method='POST')
 
-        if response.status_code != 200:
+        if response.getcode() != 200:
             raise AnsibleError('Failed to authenticate as \'{0}\''.format(identity['id']))
 
         # Retrieve Conjur variable using the temporary token
-        token = b64encode(response.text)
+        token = b64encode(response.read())
         headers = {'Authorization': 'Token token="{0}"'.format(token)}
         display.vvvv('Header: {0}'.format(headers))
 
         url = '{0}/secrets/{1}/variable/{2}'.format(conf['appliance_url'], conf['account'], quote_plus(terms[0]))
         display.vvvv('Conjur Variable URL: {0}'.format(url))
 
-        if 'cert_file' in conf:
-            response = requests.get(url, headers=headers, verify=conf['cert_file'])
-        else:
-            response = requests.get(url, headers=headers)
+        response = open_url(url, headers=headers, method='GET')
 
-        if response.status_code == 200:
+        if response.getcode() == 200:
             display.vvvv('Conjur variable {0} was successfully retrieved'.format(terms[0]))
-            return [response.text]
-        if response.status_code == 401:
+            return [response.read()]
+        if response.getcode() == 401:
             raise AnsibleError('Conjur request has invalid authorization credentials')
-        if response.status_code == 403:
+        if response.getcode() == 403:
             raise AnsibleError('Conjur host does not have authorization to retrieve {0}'.format(terms[0]))
-        if response.status_code == 404:
+        if response.getcode() == 404:
             raise AnsibleError('The variable {0} does not exist'.format(terms[0]))
-
-    # Load configuration and return as dictionary if file is present on file system
-    def load_conf_from_file(self, conf_path):
-        conf_path = os.path.expanduser(conf_path)
-
-        if os.path.exists(conf_path):
-            display.vvvv('Loading configuration from: {0}'.format(conf_path))
-            with open(conf_path) as f:
-                try:
-                    return yaml.safe_load(f.read())
-                except Exception as exception:
-                    raise AnsibleError('Error: parsing {0} - {1}'.format(conf_path, str(exception)))
-        return {}
 
     # Load Conjur configuration from either `/etc/conjur.conf` or `~/.conjurrc`
     def load_configuration(self):
