@@ -72,10 +72,11 @@ options:
       - Dictionary of IPAM options.
     default: null
 
-  enable_network:
+  enable_ipv6:
     description:
-      - enable_ipv6
+      - Enable IPv6 on the network.
     default: false
+    version_added: "2.5"
 
   state:
     description:
