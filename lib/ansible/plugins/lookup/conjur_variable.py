@@ -41,6 +41,7 @@ import yaml
 
 from ansible.module_utils.urls import open_url
 
+
 try:
     from __main__ import display
 except ImportError:
@@ -106,7 +107,7 @@ def _fetch_conjur_token(conjur_url, account, username, api_key):
     response = open_url(conjur_url, data=api_key, method='POST')
 
     if response.getcode() != 200:
-        raise AnsibleError('Failed to authenticate as \'{0}\''.format(identity['id']))
+        raise AnsibleError('Failed to authenticate as \'{0}\''.format(username))
 
     return response.read()
 
