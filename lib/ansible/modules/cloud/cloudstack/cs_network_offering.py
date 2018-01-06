@@ -154,6 +154,16 @@ service_offering_id:
   returned: success
   type: string
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
+max_connections:
+  description: The maximum number of concurrents connections to be handled by LB.
+  returned: success
+  type: int
+  sample: 300
+network_rate:
+  description: The network traffic transfer ate in Mbit/s.
+  returned: success
+  type: int
+  sample: 200
 traffic_type:
   description: The traffic type.
   returned: success
@@ -177,6 +187,8 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'guestiptype': 'guest_ip_type',
             'availability': 'availability',
             'serviceofferingid': 'service_offering_id',
+            'networkrate': 'network_rate',
+            'maxconnections': 'max_connections',
             'traffictype': 'traffic_type',
         }
         self.network_offering = None

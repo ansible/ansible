@@ -1,6 +1,8 @@
 ---
 - name: setup
-  cs_network_offering: name={{ cs_resource_prefix }}_name state=absent
+  cs_network_offering:
+    name: "{{ cs_resource_prefix }}_name"
+    state: absent
   register: netoffer
 - name: verify setup
   assert:
@@ -326,12 +328,6 @@
 - name: test remove network offer in check_mode
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
   check_mode: yes
@@ -348,12 +344,6 @@
 - name: test remove network offer
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
 - name: verify results of rename network offer
@@ -369,12 +359,6 @@
 - name: test remove network offer idempotence
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
 - name: verify results of rename network offer idempotence
@@ -446,12 +430,6 @@
 - name: remove network offer
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
 - name: verify results of remove network offer
