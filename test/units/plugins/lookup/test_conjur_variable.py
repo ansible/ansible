@@ -31,7 +31,6 @@ from ansible.plugins.lookup import conjur_variable
 import tempfile
 
 
-
 class TestLookupModule(unittest.TestCase):
     def test_valid_netrc_file(self):
         temp_netrc = tempfile.NamedTemporaryFile()
