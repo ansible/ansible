@@ -97,8 +97,8 @@
       vars:
         where_am_i_defined: in the task
 
-    # FIXME Currently failing
-    #
+    ## FIXME Currently failing
+    ## ERROR! Vars in a IncludeRole must be specified as a dictionary, or a list of dictionaries
     # - name: Pass all variables in a variable to role
     #   import_role:
     #     name: role1

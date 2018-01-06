@@ -14,6 +14,7 @@ ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.ym
 # Tasks
 ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_import_tasks.yml -i ../../inventory "$@" --skip-tags never
 ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks.yml -i ../../inventory "$@" --skip-tags never
+ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks_tags.yml -i ../../inventory "$@" --tags tasks1,canary1,validate --skip-tags never
 
 # Role
 ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i ../../inventory "$@" --skip-tags never
@@ -25,6 +26,7 @@ ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i ../../inve
 # Tasks
 ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_include_tasks.yml -i ../../inventory "$@" --skip-tags never
 ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_include_tasks.yml -i ../../inventory "$@" --skip-tags never
+ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_include_tasks_tags.yml -i ../../inventory "$@" --tags tasks1,canary1,validate --skip-tags never
 
 # Role
 ANSIBLE_STRATEGY='linear' ansible-playbook role/test_include_role.yml -i ../../inventory "$@" --skip-tags never

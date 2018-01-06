@@ -2,4 +2,4 @@
   set_fact:
     set_in_tasks1: yes
   tags:
-    - task1
+    - tasks1

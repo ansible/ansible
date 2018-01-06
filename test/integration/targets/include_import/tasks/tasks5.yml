@@ -3,3 +3,4 @@
     set_in_tasks5: yes
   tags:
     - tasks5
+    - canary1
