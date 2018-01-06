@@ -149,8 +149,8 @@ availability:
   returned: success
   type: string
   sample: Optional
-service_offering:
-  description: The service offering name or ID
+service_offering_id:
+  description: The service offering ID.
   returned: success
   type: string
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
@@ -176,7 +176,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
         self.returns = {
             'guestiptype': 'guest_ip_type',
             'availability': 'availability',
-            'serviceofferingid': 'service_offering',
+            'serviceofferingid': 'service_offering_id',
             'traffictype': 'traffic_type',
         }
         self.network_offering = None
