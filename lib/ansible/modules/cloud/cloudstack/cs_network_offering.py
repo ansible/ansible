@@ -55,8 +55,8 @@ options:
     choices: [ internallbprovider, publiclbprovider ]
   egress_default_policy:
     description:
-      - Whether the default egress policy is allow (yes) or to deny (no).
-    choices: [ yes no ]
+      - Whether the default egress policy is allow or to deny.
+    choices: [ allow, deny ]
   persistent:
     description:
       - True if network offering supports persistent networks
@@ -169,6 +169,11 @@ traffic_type:
   returned: success
   type: string
   sample: Guest
+egress_default_policy:
+  description: Default egress policy.
+  returned: success
+  type: string
+  sample: allow
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -245,7 +250,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'availability': self.module.params.get('availability'),
             'conservemode': self.module.params.get('conserve_mode'),
             'details': self.module.params.get('details'),
-            'egressdefaultpolicy': self.module.params.get('egress_default_policy'),
+            'egressdefaultpolicy': self.module.params.get('egress_default_policy') == 'allow',
             'ispersistent': self.module.params.get('persistent'),
             'keepaliveenabled': self.module.params.get('keepalive_enabled'),
             'maxconnections': self.module.params.get('max_connections'),
@@ -308,6 +313,12 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
 
         return network_offering
 
+    def get_result(self, network_offering):
+        super(AnsibleCloudStackNetworkOffering, self).get_result(network_offering)
+        if network_offering:
+            self.result['egress_default_policy'] = 'allow' if network_offering.get('egressdefaultpolicy') else 'deny'
+        return self.result
+
 
 def main():
     argument_spec = cs_argument_spec()
@@ -321,7 +332,7 @@ def main():
         availability=dict(),
         conserve_mode=dict(type='bool'),
         details=dict(type='list'),
-        egress_default_policy=dict(type='bool'),
+        egress_default_policy=dict(choices=['allow', 'deny']),
         persistent=dict(type='bool'),
         keepalive_enabled=dict(type='bool'),
         max_connections=dict(type='int'),
