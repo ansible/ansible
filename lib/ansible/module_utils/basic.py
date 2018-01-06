@@ -1778,7 +1778,16 @@ class AnsibleModule(object):
                 continue
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
                 if k in param:
-                    if param[k] not in choices:
+                    # Allow one or more when type='list' param with choices
+                    if isinstance(param[k], list):
+                        for item in param[k]:
+                            if item not in choices:
+                                choices_str = ", ".join([to_native(c) for c in choices])
+                                msg = "value of %s must be one or more of: %s, got: %s" % (k, choices_str, param[k])
+                                if self._options_context:
+                                    msg += " found in %s" % " -> ".join(self._options_context)
+                                self.fail_json(msg=msg)
+                    elif param[k] not in choices:
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
