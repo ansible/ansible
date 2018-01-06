@@ -193,7 +193,7 @@ class AnsibleVultrUser(Vultr):
         acls = self.module.params.get('acls')
         for acl in acls or []:
             if acl not in ACLS:
-                self.fail_json(msg='value of acls must be one of: %s, got: %s' % (ACLS, acls))
+                self.fail_json(msg='value of acls must be one or more of: %s, got: %s' % (ACLS, acls))
 
         user = self.get_user()
         if not user:
