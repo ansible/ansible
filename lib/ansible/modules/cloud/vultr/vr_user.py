@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vr_user
 short_description: Manages user on Vultr.
@@ -31,8 +31,7 @@ options:
   password:
     description:
       - Password of the user.
-      - See C(force) for changing a password.
-      - Required if C(state=present).
+      - Only considered while creating a user or when C(force=yes).
   force:
     description:
       - Password will only be changed with enforcement.
@@ -65,7 +64,7 @@ options:
 extends_documentation_fragment: vultr
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Ensure a user exists
   local_action:
     module: vr_user
@@ -86,7 +85,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 vultr_api:
   description: Response from Vultr API with a few additions/modification
@@ -190,6 +189,7 @@ class AnsibleVultrUser(Vultr):
         return {}
 
     def present_user(self):
+        # Choices with list
         acls = self.module.params.get('acls')
         for acl in acls or []:
             if acl not in ACLS:
@@ -215,7 +215,10 @@ class AnsibleVultrUser(Vultr):
         return False
 
     def _create_user(self, user):
+        self.module.fail_on_missing_params(required_params=['password'])
+
         self.result['changed'] = True
+
         data = self._common_args()
         self.result['diff']['before'] = {}
         self.result['diff']['after'] = data
@@ -291,7 +294,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_if=[
-            ('state', 'present', ['email', 'acls', 'password']),
+            ('state', 'present', ['email', 'acls']),
         ],
         supports_check_mode=True,
     )
