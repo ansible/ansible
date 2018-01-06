@@ -25,6 +25,7 @@
 - name: set expected value for files in a single directory
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 5
       failed: False
@@ -108,6 +109,7 @@
 - name: set fact for hidden files
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 11
       failed: False
@@ -150,6 +152,7 @@
 - name: set fact for pattern files
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 5
       failed: False
@@ -188,6 +191,7 @@
 - name: set expected value for files in a nested directory
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 8
       failed: False
@@ -257,6 +261,7 @@
 - name: set expected value for files in a nested directory while following links
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 10
       failed: False
@@ -340,6 +345,7 @@
 - name: set expected fact for directories with recurse and follow
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 2
       failed: False
@@ -405,6 +411,7 @@
 - name: set expected fact for files by size
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 5
       failed: False
@@ -448,6 +455,7 @@
 - name: set expected fact for files by size (less than)
   set_fact:
     expected:
+      attempts: 1
       changed: False
       examined: 5
       failed: False
