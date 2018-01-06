@@ -17,8 +17,13 @@ Function Assert-Equals($actual, $expected) {
     }
 }
 
+Load-FileUtilFunctions
+
 # Test-AnsiblePath Hidden system file
 $actual = Test-AnsiblePath -Path C:\pagefile.sys
+Assert-Equals -actual $actual -expected $true
+
+$actual = Test-AnsiblePath -Path "\\?\C:\pagefile.sys"
 Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath File that doesn't exist
@@ -42,11 +47,6 @@ try {
 }
 Assert-Equals -actual $failed -expected $true
 
-# Get-AnsibleItem doesn't exist with -ErrorAction SilentlyContinue param
-$actual = Get-AnsibleItem -Path C:\fakefile -ErrorAction SilentlyContinue
-Assert-Equals -actual $actual -expected $null
-
-
 # Get-AnsibleItem file
 $actual = Get-AnsibleItem -Path C:\pagefile.sys
 Assert-Equals -actual $actual.FullName -expected C:\pagefile.sys
@@ -58,6 +58,30 @@ $actual = Get-AnsibleItem -Path C:\Windows
 Assert-Equals -actual $actual.FullName -expected C:\Windows
 Assert-Equals -actual $actual.Attributes.HasFlag([System.IO.FileAttributes]::Directory) -expected $true
 Assert-Equals -actual $actual.Exists -expected $true
+
+# Get-AnsibleItem doesn't exists
+$failed = $false
+try {
+    $actual = Get-AnsibleItem -Path C:\fakefile
+} catch {
+    $failed = $true
+    Assert-Equals -actual $_.Exception.Message -expected "Cannot find path 'C:\fakefile' because it does not exist."
+}
+Assert-Equals -actual $failed -expected $true
+
+# Get-AnsibleItem doesn't exist with -ErrorAction SilentlyContinue param
+$actual = Get-AnsibleItem -Path C:\fakefile -ErrorAction SilentlyContinue
+Assert-Equals -actual $actual -expected $null
+
+# call Get-AnsibleFileHash with invalid algorithm
+$failed = $false
+try {
+    Get-AnsibleFileHash -Path C:\fakefile -Algorithm sha449
+} catch {
+    $failed = $true
+    Assert-Equals -actual ($_.Exception.Message.StartsWith("Cannot find type [System.Security.Cryptography.sha449CryptoServiceProvider]")) -expected $true
+}
+Assert-Equals -actual $failed -expected $true
 
 $result.data = "success"
 Exit-Json -obj $result

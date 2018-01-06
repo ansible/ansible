@@ -12,7 +12,7 @@
 #     $dir = New-Object -TypeName Ansible.IO.DirectoryInfo -ArgumentList "\\?\C:\temp"
 #     [Ansible.IO.Directory]::CreateDirectory("\\?\C:\temp")
 # You can also use a normal path like "C:\temp" as you would normally with the System.IO.*
-# classes but they are still subjectr to the restriction of 260 characters in the path
+# classes but they are still subject to the restriction of 260 characters in the path
 Function Load-FileUtilFunctions {
     $file_util = @"
 using Microsoft.Win32.SafeHandles;
@@ -33,6 +33,7 @@ namespace Ansible.IO
         public const UInt32 ERROR_FILE_NOT_FOUND = 2;
         public const UInt32 ERROR_PATH_NOT_FOUND = 3;
         public const UInt32 ERROR_NO_MORE_FILES = 18;
+        public const UInt32 ERROR_SHARING_VIOLATION = 32;
         public const UInt32 ERROR_FILE_EXISTS = 80;
         public const UInt32 ERROR_DIR_NOT_EMPTY = 145;
         public const UInt32 ERROR_ALREADY_EXISTS = 183;
@@ -575,16 +576,16 @@ namespace Ansible.IO
         public static T GetAcl<T>(string path, AccessControlSections includeSections) where T : ObjectSecurity, new()
         {
             NativeHelpers.SECURITY_INFORMATION secInfo = NativeHelpers.SECURITY_INFORMATION.NONE;
-            if ((includeSections & AccessControlSections.Access) != 0)
+            if ((includeSections.HasFlag(AccessControlSections.Access)))
                 secInfo |= NativeHelpers.SECURITY_INFORMATION.DACL_SECURITY_INFORMATION;
-            if ((includeSections & AccessControlSections.Audit) != 0)
+            if ((includeSections.HasFlag(AccessControlSections.Audit)))
             {
                 secInfo |= NativeHelpers.SECURITY_INFORMATION.SACL_SECURITY_INFORMATION;
                 Ansible.IO.Privileges.EnablePrivilege("SeSecurityPrivilege");
             }
-            if ((includeSections & AccessControlSections.Group) != 0)
+            if ((includeSections.HasFlag(AccessControlSections.Group)))
                 secInfo |= NativeHelpers.SECURITY_INFORMATION.GROUP_SECURITY_INFORMATION;
-            if ((includeSections & AccessControlSections.Owner) != 0)
+            if ((includeSections.HasFlag(AccessControlSections.Owner)))
                 secInfo |= NativeHelpers.SECURITY_INFORMATION.OWNER_SECURITY_INFORMATION;
 
             IntPtr pSidOwner, pSidGroup, pDacl, pSacl, pSecurityDescriptor = IntPtr.Zero;
@@ -664,6 +665,22 @@ namespace Ansible.IO
                 int lastErr = Marshal.GetLastWin32Error();
                 if ((uint)lastErr == Win32Errors.ERROR_FILE_NOT_FOUND || (uint)lastErr == Win32Errors.ERROR_PATH_NOT_FOUND)
                     attrData.dwFileAttributes = (FileAttributes)(-1);
+                else if ((uint)lastErr == Win32Errors.ERROR_SHARING_VIOLATION)
+                {
+                    // For files that have a system lock like C:\pagefile.sys, use the FindFirstFileW function
+                    // and populate the file data based on the find data
+                    NativeHelpers.WIN32_FIND_DATA findData;
+                    IntPtr findHandle = NativeMethods.FindFirstFileW(path, out findData);
+                    if (findHandle.ToInt64() == -1)
+                        throw new Win32Exception("Failed to get file attributes for file in use");
+                    NativeMethods.FindClose(findHandle);
+                    attrData.dwFileAttributes = findData.dwFileAttributes;
+                    attrData.ftCreationTime = findData.ftCreationTime;
+                    attrData.ftLastAccessTime = findData.ftLastAccessTime;
+                    attrData.ftLastWriteTime = findData.ftLastWriteTime;
+                    attrData.nFileSizeHigh = findData.nFileSizeHigh;
+                    attrData.nFileSizeLow = findData.nFileSizeLow;
+                }
                 else
                     throw new Win32Exception(String.Format("GetFileAttributesExW({0}) failed", path));
             }
@@ -774,7 +791,7 @@ namespace Ansible.IO
         public static void AppendAllLines(string path, IEnumerable<string> contents) { AppendAllLines(path, contents, DefaultEncoding); }
         public static void AppendAllLines(string path, IEnumerable<string> contents, Encoding encoding)
         {
-            using (StreamWriter writer = AppendText(path))
+            using (StreamWriter writer = AppendText(path, encoding))
             {
                 foreach (string content in contents)
                     writer.Write(content);
@@ -783,7 +800,7 @@ namespace Ansible.IO
         public static void AppendAllText(string path, string contents) { AppendAllText(path, contents, DefaultEncoding); }
         public static void AppendAllText(string path, string contents, Encoding encoding)
         {
-            using (StreamWriter writer = AppendText(path))
+            using (StreamWriter writer = AppendText(path, encoding))
             {
                 writer.Write(contents);
             }
@@ -835,7 +852,7 @@ namespace Ansible.IO
         public static void Encrypt(string path)
         {
             if (!NativeMethods.EncryptFileW(path))
-                throw new Win32Exception(String.Format("EncryptFIleW({0}) failed", path));
+                throw new Win32Exception(String.Format("EncryptFileW({0}) failed", path));
         }
         public static bool Exists(string path) { return new FileInfo(path).Exists; }
         public static FileSecurity GetAccessControl(string path) { return GetAccessControl(path, AccessControlSections.Access | AccessControlSections.Group | AccessControlSections.Owner); }
@@ -853,14 +870,26 @@ namespace Ansible.IO
         public static FileStream Open(string path, FileMode mode, FileAccess access, FileShare share) { return Open(path, mode, access, share, DefaultBuffer, FileOptions.None); }
         public static FileStream Open(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, FileOptions options)
         {
-            SafeFileHandle fileHandle = CreateFileHandle(path, mode, access, share, options, null);
+            FileMode fileMode;
+            if (mode == FileMode.Append)
+                fileMode = FileMode.Open;
+            else
+                fileMode = mode;
+
+            SafeFileHandle fileHandle = CreateFileHandle(path, fileMode, access, share, options, null);
+            FileStream fs = null;
             try
             {
-                return new FileStream(fileHandle, access, bufferSize, options.HasFlag(FileOptions.Asynchronous));
+                fs = new FileStream(fileHandle, access, bufferSize, options.HasFlag(FileOptions.Asynchronous));
+                if (mode == FileMode.Append)
+                    fs.Seek(0, SeekOrigin.End);
+                return fs;
             }
             catch
             {
                 fileHandle.Dispose();
+                if (fs != null)
+                    fs.Close();
                 throw;
             }
         }
@@ -962,10 +991,32 @@ namespace Ansible.IO
             else
                 accessRights = FileSystemRights.ReadData | FileSystemRights.WriteData;
             NativeHelpers.FlagsAndAttributes attr = (NativeHelpers.FlagsAndAttributes)options;
-            NativeHelpers.SecurityAttributes secAttr = new NativeHelpers.SecurityAttributes(fileSecurity);
-            if (fileSecurity != null)
-                accessRights |= (FileSystemRights)0x01000000;  // ACCESS_SYSTEM_SECURITY - Bit 24
 
+            if (fileSecurity != null)
+            {
+                byte[] securityInfoBytes = fileSecurity.GetSecurityDescriptorBinaryForm();
+                IntPtr securityInfo = Marshal.AllocHGlobal(securityInfoBytes.Length);
+                Marshal.Copy(securityInfoBytes, 0, securityInfo, securityInfoBytes.Length);
+                try
+                {
+                    IntPtr pSacl = IntPtr.Zero;
+                    bool saclPresent, saclDefaulted;
+                    if (!NativeMethods.GetSecurityDescriptorSacl(securityInfo, out saclPresent, out pSacl, out saclDefaulted))
+                        throw new Win32Exception("GetSecurityDescriptorSacl() failed");
+
+                    if (saclPresent)
+                    {
+                        accessRights |= (FileSystemRights)0x01000000;  // ACCESS_SYSTEM_SECURITY - Bit 24
+                        Ansible.IO.Privileges.EnablePrivilege("SeSecurityPrivilege");
+                    }
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(securityInfo);
+                }
+            }
+
+            NativeHelpers.SecurityAttributes secAttr = new NativeHelpers.SecurityAttributes(fileSecurity);
             SafeFileHandle fileHandle = NativeMethods.CreateFileW(path, accessRights, share, secAttr, mode, attr, IntPtr.Zero);
             secAttr.Dispose();
             if (fileHandle.IsInvalid)
@@ -1288,11 +1339,14 @@ namespace Ansible.IO
 }
 
 <#
-Test-Path/Get-Item cannot find/return info on files that are locked like
-C:\pagefile.sys. These 2 functions are designed to work with these files and
-provide similar functionality with the normal cmdlets with as minimal overhead
-as possible. They work by using Get-ChildItem with a filter and return the
-result from that.
+Test-Path/Get-Item/Get-FileHash does not work with locked files like
+C:\pagefile.sys or files/directories that exceed the MAX_PATH limit of 260
+chars. These functions are designed to replace as much functionality of these
+functions as possible while adding support for paths with the max path override
+of \\?\ or \\?\UNC.
+
+The Load-FileUtilFunctions must be called before calling any of the below
+functions.
 #>
 
 Function Test-AnsiblePath {
@@ -1301,12 +1355,8 @@ Function Test-AnsiblePath {
         [Parameter(Mandatory=$true)][string]$Path
     )
     # Replacement for Test-Path
-    try {
-        $file_attributes = [System.IO.File]::GetAttributes($Path)
-    } catch [System.IO.FileNotFoundException] {
-        return $false
-    }
-
+    $file_attributes = [Ansible.IO.File]::GetAttributes($Path)
+    
     if ([Int32]$file_attributes -eq -1) {
         return $false
     } else {
@@ -1320,14 +1370,38 @@ Function Get-AnsibleItem {
         [Parameter(Mandatory=$true)][string]$Path
     )
     # Replacement for Get-Item
-    $file_attributes = [System.IO.File]::GetAttributes($Path)
+    $file_attributes = [Ansible.IO.File]::GetAttributes($Path)
     if ([Int32]$file_attributes -eq -1) {
         throw New-Object -TypeName System.Management.Automation.ItemNotFoundException -ArgumentList "Cannot find path '$Path' because it does not exist."
     } elseif ($file_attributes.HasFlag([System.IO.FileAttributes]::Directory)) {
-        return New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path
+        return New-Object -TypeName Ansible.IO.DirectoryInfo -ArgumentList $Path
     } else {
-        return New-Object -TypeName System.IO.FileInfo -ArgumentList $Path
+        return New-Object -TypeName Ansible.IO.FileInfo -ArgumentList $Path
     }
 }
 
-Export-ModuleMember -Function Test-FilePath, Get-FileItem, Load-FileUtilFunctions
+Function Get-AnsibleFileHash {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter()][string]$Algorithm = "sha1"
+    )
+    # Replacement for Get-FileHash
+    $crypto_service_provider = "$($algorithm)CryptoServiceProvider"
+    $sp = New-Object -TypeName System.Security.Cryptography.$crypto_service_provider
+    $compute_method = $sp | Get-Member -Type Method | Where-Object { $_.Name -eq "ComputeHash" }
+    if ($compute_method -eq $null) {
+        throw New-Object -TypeName System.ArgumentException -ArgumentList "Unsupported hash algorithm supplied '$algorithm'"
+    }
+
+    $fs = [Ansible.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
+    try {
+        $hash = $sp.ComputeHash($fs)
+        $hash_string = [System.BitConverter]::ToString($hash).Replace("-", "").ToLower()
+    } finally {
+        $fs.Close()
+    }
+    return $hash_string
+}
+
+Export-ModuleMember -Function Load-FileUtilFunctions, Test-AnsiblePath, Get-AnsibleItem, Get-AnsibleFileHash
