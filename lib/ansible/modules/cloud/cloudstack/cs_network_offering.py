@@ -40,7 +40,7 @@ options:
   traffic_type:
     description:
       - The traffic type for the network offering.
-    default: GUEST
+    default: Guest
   availability:
     description:
       - The availability of network offering. Default value is Optional
@@ -154,6 +154,11 @@ service_offering:
   returned: success
   type: string
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
+traffic_type:
+  description: The traffic type.
+  returned: success
+  type: string
+  sample: Guest
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -172,6 +177,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'guestiptype': 'guest_ip_type',
             'availability': 'availability',
             'serviceofferingid': 'service_offering',
+            'traffictype': 'traffic_type',
         }
         self.network_offering = None
 
@@ -299,7 +305,7 @@ def main():
         guest_ip_type=dict(choices=['Shared', 'Isolated']),
         name=dict(required=True),
         supported_services=dict(),
-        traffic_type=dict(default='GUEST'),
+        traffic_type=dict(default='Guest'),
         availability=dict(),
         conserve_mode=dict(type='bool'),
         details=dict(type='list'),
