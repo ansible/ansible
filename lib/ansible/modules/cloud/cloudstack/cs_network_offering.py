@@ -107,10 +107,10 @@ EXAMPLES = '''
     display_text: network offering description
     state: enabled
     guest_ip_type: Isolated
-    service_provider_list:
     supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
 
 
 - name: Remove a network offering
@@ -260,7 +260,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'networkrate': self.module.params.get('network_rate'),
             'servicecapabilitylist': self.module.params.get('service_capabilities'),
             'serviceofferingid': self.get_service_offering_id(),
-            'serviceproviderlist': self.module.params.get('service_provider_list'),
+            'serviceproviderlist': self.module.params.get('service_providers'),
             'specifyipranges': self.module.params.get('specify_ip_ranges'),
             'specifyvlan': self.module.params.get('specify_vlan'),
         }
@@ -269,7 +269,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'display_text',
             'guest_ip_type',
             'supported_services',
-            'service_provider_list',
+            'service_providers',
         ]
 
         self.module.fail_on_missing_params(required_params=required_params)
@@ -342,7 +342,7 @@ def main():
         network_rate=dict(type='int'),
         service_capabilities=dict(type='list', aliases=['service_capability']),
         service_offering=dict(),
-        service_provider_list=dict(type='list'),
+        service_providers=dict(type='list', aliases=['service_provider']),
         specify_ip_ranges=dict(type='bool'),
         specify_vlan=dict(type='bool'),
     ))
