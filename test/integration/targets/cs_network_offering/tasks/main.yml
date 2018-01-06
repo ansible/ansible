@@ -265,6 +265,7 @@
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
+    max_connections: 300
   register: netoffer
   check_mode: yes
 - name: verify results of update offer with minimal params in check_mode
@@ -276,11 +277,13 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description renamed"
+    - netoffer.max_connections == 300
 
 - name: test update offer with minimal params
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
+    max_connections: 300
   register: netoffer
 - name: verify results of update offer with minimal params
   assert:
@@ -291,11 +294,13 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description update"
+    - netoffer.max_connections == 300
 
 - name: test update offer with minimal params idempotency
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
+    max_connections: 300
   register: netoffer
 - name: verify results of update offer with minimal params idempotency
   assert:
@@ -306,6 +311,7 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description update"
+    - netoffer.max_connections == 300
 
 - name: test remove network offer in check_mode
   cs_network_offering:

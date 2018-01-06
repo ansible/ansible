@@ -300,6 +300,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'displaytext': self.module.params.get('display_text'),
             'name': self.module.params.get('name'),
             'availability': self.module.params.get('availability'),
+            'maxconnections': self.module.params.get('max_connections'),
         }
 
         if args['state'] in ['enabled', 'disabled']:
