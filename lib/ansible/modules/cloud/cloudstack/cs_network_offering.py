@@ -37,6 +37,9 @@ options:
   supported_services:
     description:
       - Services supported by the network offering.
+      - One or more of the choices.
+    choices: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    aliases: [ supported_service ]
   traffic_type:
     description:
       - The traffic type for the network offering.
@@ -104,8 +107,8 @@ EXAMPLES = '''
     display_text: network offering description
     state: enabled
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
     service_provider_list:
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
       - {service: 'dns', provider: 'virtualrouter'}
       - {service: 'dhcp', provider: 'virtualrouter'}
 
@@ -327,7 +330,7 @@ def main():
         display_text=dict(),
         guest_ip_type=dict(choices=['Shared', 'Isolated']),
         name=dict(required=True),
-        supported_services=dict(),
+        supported_services=dict(type='list', aliases=['supported_service']),
         traffic_type=dict(default='Guest'),
         availability=dict(),
         conserve_mode=dict(type='bool'),
