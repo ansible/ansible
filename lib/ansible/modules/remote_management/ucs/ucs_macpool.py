@@ -34,6 +34,7 @@ options:
     - first_addr (First MAC address in the MAC addresses block)
     - last_addr (Last MAC address in the MAC addresses block)
     required: yes
+    type: list
   org_dn:
     description:
     - Org dn (distinguished name)
@@ -123,7 +124,6 @@ def main():
                                          descr=mac['descr'],
                                          assignment_order=mac['order'])
 
-                        if 'last_addr' in mac and 'first_addr' in mac:
                             mo_1 = MacpoolBlock(parent_mo_or_dn=mo,
                                                 to=mac['last_addr'],
                                                 r_from=mac['first_addr'])
