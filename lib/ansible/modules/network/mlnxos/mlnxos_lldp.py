@@ -63,7 +63,7 @@ class MlnxosLldpModule(BaseMlnxosModule):
         )
 
     def init_module(self):
-        """ main entry point for module execution
+        """ module initialization
         """
         element_spec = self._get_element_spec()
         argument_spec = dict()

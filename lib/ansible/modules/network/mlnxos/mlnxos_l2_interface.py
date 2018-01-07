@@ -47,23 +47,23 @@ options:
 EXAMPLES = """
 - name: configure Layer-2 interface
   mlnxos_l2_interface:
-    name: gigabitethernet0/0/1
+    name: Eth1/1
     mode: access
     access_vlan: 30
 
 - name: remove Layer-2 interface configuration
   mlnxos_l2_interface:
-    name: gigabitethernet0/0/1
+    name: Eth1/1
     state: absent
 """
 
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device
-  returned: always, except for the platforms that use Netconf transport to manage the device.
+  returned: always.
   type: list
   sample:
-    - interface gigabitethernet0/0/1
+    - interface ethernet 1/1
     - switchport mode access
     - switchport access vlan 30
 """
@@ -74,8 +74,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import remove_default_spec
 
-from ansible.module_utils.network.mlnxos.mlnxos import BaseMlnxosModule, \
-    get_interfaces_config
+from ansible.module_utils.network.mlnxos.mlnxos import BaseMlnxosModule
+from ansible.module_utils.network.mlnxos.mlnxos import get_interfaces_config
 
 
 class MlnxosL2InterfaceModule(BaseMlnxosModule):
@@ -96,7 +96,7 @@ class MlnxosL2InterfaceModule(BaseMlnxosModule):
     @classmethod
     def _get_aggregate_spec(cls, element_spec):
         aggregate_spec = deepcopy(element_spec)
-        aggregate_spec['vlan_id'] = dict(required=True)
+        aggregate_spec['name'] = dict(required=True)
 
         # remove default in aggregate spec, to handle common arguments
         remove_default_spec(aggregate_spec)
@@ -107,13 +107,10 @@ class MlnxosL2InterfaceModule(BaseMlnxosModule):
         """
         element_spec = self._get_element_spec()
         aggregate_spec = self._get_aggregate_spec(element_spec)
-        if aggregate_spec:
-            argument_spec = dict(
-                aggregate=dict(type='list', elements='dict',
-                               options=aggregate_spec),
-            )
-        else:
-            argument_spec = dict()
+        argument_spec = dict(
+            aggregate=dict(type='list', elements='dict',
+                           options=aggregate_spec),
+        )
         argument_spec.update(element_spec)
         required_one_of = [['name', 'aggregate']]
         mutually_exclusive = [['name', 'aggregate']]
