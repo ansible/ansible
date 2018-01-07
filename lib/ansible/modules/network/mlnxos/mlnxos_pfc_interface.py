@@ -175,7 +175,7 @@ class MlnxosPfcInterfaceModule(BaseMlnxosModule):
         self._commands.append(cmd_prefix + pfc_cmd)
 
     def _gen_pfc_commands(self, if_name, curr_conf, req_state):
-        curr_state = curr_conf.get('state')
+        curr_state = curr_conf.get('state', 'disabled')
         if curr_state != req_state:
             self._add_if_pfc_commands(if_name, req_state)
 
