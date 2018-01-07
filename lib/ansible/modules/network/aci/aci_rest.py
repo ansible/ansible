@@ -60,11 +60,11 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Add a tenant
+- name: Add a tenant using certifcate authentication
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/aci_config.xml
@@ -74,7 +74,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni/tn-[Sales].json
     method: post
@@ -89,7 +89,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni/tn-[Sales].json
     method: post
@@ -108,7 +108,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/{{ aci_username}}.key
     validate_certs: no
     path: /api/mo/uni/tn-[Sales].xml
     method: post
@@ -116,7 +116,7 @@ EXAMPLES = r'''
       <fvTenant name="Sales" descr="Sales departement"/>
   delegate_to: localhost
 
-- name: Get tenants
+- name: Get tenants using password authentication
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
@@ -129,7 +129,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
     src: /home/cisco/ansible/aci/configs/contract_config.xml
@@ -139,7 +139,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     method: post
     path: /api/mo/uni/controller/nodeidentpol.xml
@@ -155,7 +155,7 @@ EXAMPLES = r'''
   aci_rest:
     hostname: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    private_key: pki/admin.key
     validate_certs: no
     path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
   register: apics
@@ -313,9 +313,6 @@ def main():
     content = module.params['content']
     src = module.params['src']
 
-    method = module.params['method']
-    timeout = module.params['timeout']
-
     # Report missing file
     file_exists = False
     if src:
@@ -369,23 +366,36 @@ def main():
             except Exception as e:
                 module.fail_json(msg='Failed to parse provided XML content: %s' % to_text(e), payload=payload)
 
-    # Perform actual request using auth cookie (Same as aci_request,but also supports XML)
-    url = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
-    if method != 'get':
-        url = update_qsl(url, {'rsp-subtree': 'modified'})
-    aci.result['url'] = url
+    # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
+    if aci.params['method'] != 'get':
+        path += '?rsp-subtree=modified'
+        aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})
 
-    resp, info = fetch_url(module, url, data=payload, method=method.upper(), timeout=timeout, headers=aci.headers)
+    # Sign and encode request as to APIC's wishes
+    if aci.params['private_key'] is not None:
+        aci.cert_auth(path=path, payload=payload)
+
+    # Perform request
+    resp, info = fetch_url(module, aci.result['url'],
+                           data=payload,
+                           headers=aci.headers,
+                           method=aci.params['method'].upper(),
+                           timeout=aci.params['timeout'],
+                           use_proxy=aci.params['use_proxy'])
+
     aci.result['response'] = info['msg']
     aci.result['status'] = info['status']
 
     # Report failure
     if info['status'] != 200:
         try:
+            # APIC error
             aci_response(aci.result, info['body'], rest_type)
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, payload=payload, **aci.result)
+            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
         except KeyError:
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, payload=payload, **aci.result)
+            # Connection error
+            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **aci.result)
 
     aci_response(aci.result, resp.read(), rest_type)
 
