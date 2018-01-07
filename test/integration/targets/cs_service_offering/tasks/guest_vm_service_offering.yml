@@ -1,6 +1,6 @@
 ---
 - name: setup service offering
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     state: absent
   register: so
@@ -10,7 +10,7 @@
     - so is successful
 
 - name: create service offering in check mode
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
@@ -29,7 +29,7 @@
     - so is changed
 
 - name: create service offering
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
@@ -55,7 +55,7 @@
     - so.storage_type == "local"
 
 - name: create service offering idempotence
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
@@ -81,7 +81,7 @@
     - so.storage_type == "local"
 
 - name: update service offering in check mode
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     display_text: Micro RAM 512MB 1vCPU
   register: so
@@ -100,7 +100,7 @@
     - so.storage_type == "local"
 
 - name: update service offering
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     display_text: Micro RAM 512MB 1vCPU
   register: so
@@ -118,7 +118,7 @@
     - so.storage_type == "local"
 
 - name: update service offering idempotence
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     display_text: Micro RAM 512MB 1vCPU
   register: so
@@ -136,7 +136,7 @@
     - so.storage_type == "local"
 
 - name: remove service offering in check mode
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     state: absent
   check_mode: true
@@ -155,7 +155,7 @@
     - so.storage_type == "local"
 
 - name: remove service offering
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     state: absent
   register: so
@@ -173,7 +173,7 @@
     - so.storage_type == "local"
 
 - name: remove service offering idempotence
-  cs_serviceoffer:
+  cs_service_offering:
     name: Micro
     state: absent
   register: so
