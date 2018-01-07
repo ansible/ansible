@@ -17,18 +17,18 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: Clean slate
-  include: clean.yml
+  import_tasks: clean.yml
 
 - name: Test in normal mode
-  include: tests.yml
+  import_tasks: tests.yml
   vars:
     in_check_mode: no
 
 - name: Clean slate
-  include: clean.yml
+  import_tasks: clean.yml
 
 - name: Test in check-mode
-  include: tests.yml
+  import_tasks: tests.yml
   vars:
     in_check_mode: yes
   check_mode: yes
