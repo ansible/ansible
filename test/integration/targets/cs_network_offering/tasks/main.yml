@@ -35,6 +35,7 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
+    max_connections: 300
     supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
     service_providers:
       - { service: 'dns', provider: 'virtualrouter' }
@@ -52,6 +53,7 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
+    max_connections: 300
     supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
     service_providers:
       - { service: 'dns', provider: 'virtualrouter' }
@@ -72,6 +74,7 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
+    max_connections: 300
     supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
     service_providers:
       - { service: 'dns', provider: 'virtualrouter' }
@@ -265,7 +268,7 @@
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
-    max_connections: 300
+    max_connections: 400
   register: netoffer
   check_mode: yes
 - name: verify results of update offer with minimal params in check_mode
@@ -283,7 +286,7 @@
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
-    max_connections: 300
+    max_connections: 400
   register: netoffer
 - name: verify results of update offer with minimal params
   assert:
@@ -294,13 +297,13 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description update"
-    - netoffer.max_connections == 300
+    - netoffer.max_connections == 400
 
 - name: test update offer with minimal params idempotency
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
-    max_connections: 300
+    max_connections: 400
   register: netoffer
 - name: verify results of update offer with minimal params idempotency
   assert:
@@ -311,7 +314,7 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description update"
-    - netoffer.max_connections == 300
+    - netoffer.max_connections == 400
 
 - name: test remove network offer in check_mode
   cs_network_offering:
