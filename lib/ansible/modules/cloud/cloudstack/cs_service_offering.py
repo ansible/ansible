@@ -36,7 +36,7 @@ options:
   limit_cpu_usage:
     description:
       - Restrict the CPU usage to committed service offering.
-    type: bool
+    choices: [ yes, no ]
   deployment_planner:
     description:
       - The deployment planner heuristics used to deploy a VM of this offering.
@@ -77,12 +77,14 @@ options:
   is_system:
     description:
       - Whether it is a system VM offering or not.
-    default: false
+    choices: [ yes, no ]
+    default: no
   is_volatile:
     description:
       - Whether the virtual machine needs to be volatile or not.
       - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
-    default: false
+    choices: [ yes, no ]
+    default: no
   memory:
     description:
       - The total memory of the service offering in MB.
@@ -97,7 +99,8 @@ options:
   offer_ha:
     description:
       - Whether HA is set for the service offering.
-    default: false
+    choices: [ yes, no ]
+    default: no
   provisioning_type:
     description:
       - Provisioning type used to create volumes.
@@ -171,7 +174,7 @@ EXAMPLES = '''
     cpu_speed: 2198
     memory: 1024
     storage_type: shared
-    is_volatile: true
+    is_volatile: yes
     host_tags: eco
     storage_tags: eco
 
@@ -186,7 +189,7 @@ EXAMPLES = '''
     module: cs_service_offering
     name: System Offering for Console Proxy 2GB
     display_text: System Offering for Console Proxy 2GB RAM
-    is_system: true
+    is_system: yes
     system_vm_type: consoleproxy
     cpu_number: 1
     cpu_speed: 2198
@@ -197,8 +200,8 @@ EXAMPLES = '''
 - name: Remove a system offering
   local_action:
     module: cs_service_offering
-    name: "System Offering for Console Proxy 2GB"
-    is_system: true
+    name: System Offering for Console Proxy 2GB
+    is_system: yes
     state: absent
 '''
 
