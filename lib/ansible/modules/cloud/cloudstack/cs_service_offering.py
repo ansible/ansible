@@ -328,8 +328,7 @@ service_offering_details:
   description: Additioanl service offering details
   returned: success
   type: dict
-  sample: "{'vgpuType': 'GRID K180Q','pciDevice':'Group of NVIDIA Corporation GK107GL
-[GRID K1] GPUs'}"
+  sample: "{'vgpuType': 'GRID K180Q','pciDevice':'Group of NVIDIA Corporation GK107GL [GRID K1] GPUs'}"
 network_rate:
   description: Data transfer rate in megabits per second allowed
   returned: success
@@ -443,7 +442,7 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'storagetype': self.module.params.get('storage_type'),
             'systemvmtype': system_vm_type,
             'tags': self.module.params.get('storage_tags'),
-            'limit_cpu_use': self.module.params.get('limit_cpu_usage')
+            'limitcpuuse': self.module.params.get('limit_cpu_usage')
         }
         if not self.module.check_mode:
             res = self.query_api('createServiceOffering', **args)
