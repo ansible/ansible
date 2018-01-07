@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cs_serviceoffer
+module: cs_service_offering
 description:
   - Create and delete service offerings for guest and system VMs.
   - Update display_text of existing service offering.
@@ -140,7 +140,7 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 - name: Create a non-volatile compute service offering with local storage
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
@@ -151,7 +151,7 @@ EXAMPLES = '''
 
 - name: Create a volatile compute service offering with shared storage
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Tiny
     display_text: Tiny 1gb 1cpu
     cpu_number: 1
@@ -164,7 +164,7 @@ EXAMPLES = '''
 
 - name: Create or update a volatile compute service offering with shared storage
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Tiny
     display_text: Tiny 1gb 1cpu
     cpu_number: 1
@@ -177,13 +177,13 @@ EXAMPLES = '''
 
 - name: Remove a compute service offering
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Tiny
     state: absent
 
 - name: Create or update a system offering for the console proxy
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: System Offering for Console Proxy 2GB
     display_text: System Offering for Console Proxy 2GB RAM
     is_system: true
@@ -196,7 +196,7 @@ EXAMPLES = '''
 
 - name: Remove a system offering
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: "System Offering for Console Proxy 2GB"
     is_system: true
     state: absent
