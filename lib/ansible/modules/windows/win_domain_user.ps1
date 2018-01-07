@@ -64,6 +64,9 @@ $user_info = @{
     Country = Get-AnsibleParam -obj $params -name "country" -type "str"
 }
 
+# Additional attributes
+$attributes = Get-AnsibleParam -obj $params -name "attributes"
+
 # Parameter validation
 If ($account_locked -ne $null -and $account_locked) {
     Fail-Json $result "account_locked must be set to 'no' if provided"
@@ -163,6 +166,46 @@ If ($state -eq 'present') {
                 $user_obj = Get-ADUser -Identity $username -Properties *
             }
         }
+
+        # Set additional attributes
+        $set_args = @{}
+        $run_change = $false
+        if ($attributes -ne $null) {
+            $add_attributes = @{}
+            $replace_attributes = @{}
+            foreach ($attribute in $attributes.GetEnumerator()) {
+                $attribute_name = $attribute.Name
+                $attribute_value = $attribute.Value
+
+                $valid_property = [bool]($user_obj.PSobject.Properties.name -eq $attribute_name)
+                if ($valid_property) {
+                    $existing_value = $user_obj.$attribute_name
+                    if ($existing_value -cne $attribute_value) {
+                        $replace_attributes.$attribute_name = $attribute_value
+                    }                
+                } else {
+                    $add_attributes.$attribute_name = $attribute_value
+                }
+            }
+            if ($add_attributes.Count -gt 0) {
+                $set_args.Add = $add_attributes
+                $run_change = $true
+            }
+            if ($replace_attributes.Count -gt 0) {
+                $set_args.Replace = $replace_attributes
+                $run_change = $true
+            }
+        }
+
+        if ($run_change) {
+            try {
+                $user_obj = $user_obj | Set-ADUser -WhatIf:$check_mode -PassThru @set_args
+            } catch {
+                Fail-Json $result "failed to change user $($username): $($_.Exception.Message)"
+            }
+            $result.changed = $true
+        }
+
 
         # Configure group assignment
         If ($groups -ne $null) {

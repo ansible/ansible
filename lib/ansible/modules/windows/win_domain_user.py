@@ -148,6 +148,13 @@ options:
         if you specify a path on an existing user, the user's path will not
         be updated - you must delete (e.g., state=absent) the user and
         then re-add the user with the appropriate path.
+  attributes:
+    description:
+      - A dict of custom LDAP attributes to set on the user.
+      - This can be used to set custom attributes that are not exposed as module
+        parameters, e.g. C(telephoneNumber).
+      - See the examples on how to format this parameter.
+    version_added: "2.5"
 notes:
   - Works with Windows 2012R2 and newer.
   - If running on a server that is not a Domain Controller, credential
@@ -175,6 +182,8 @@ EXAMPLES = r'''
     state_province: IN
     postal_code: 12345
     country: US
+    attributes:
+      telephoneNumber: 555-123456
 
 - name: Ensure user bob is present in OU ou=test,dc=domain,dc=local
   win_domain_user:
