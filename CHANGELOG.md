@@ -40,6 +40,22 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33931)
 * Fix extended file attributes detection and changing:
   (https://github.com/ansible/ansible/pull/18731)
+* correctly ensure 'ungrouped' membership rules (https://github.com/ansible/ansible/pull/33878)
+* made warnings less noisy when empty/no inventory is supplied (https://github.com/ansible/ansible/pull/32806)
+* Fixes a failure which prevents to create servers in module cloudscale_server
+* Fix win_firewall_rule "Specified cast is invalid" error when modifying a rule with all of Domain/Public/Private profiles set (https://github.com/ansible/ansible/pull/34383)
+* Fix case for multilib when installing from a file in the yum module
+  (https://github.com/ansible/ansible/pull/32236)
+* Fix WinRM parsing/escaping of IPv6 addresses (https://github.com/ansible/ansible/pull/34072)
+* Fix win_package to detect MSI regardless of the extension case
+  (https://github.com/ansible/ansible/issues/34465)
+* Updated win_mapped_drive docs to clarify what it is used for
+  (https://github.com/ansible/ansible/pull/34478)
+* Fix file related modules run in check_mode when the file being operated on does not exist
+  (https://github.com/ansible/ansible/pull/33967)
+* Make eos_vlan idempotent
+  (https://github.com/ansible/ansible/pull/34443)
+
 
 <a id="2.4.2"></a>
 

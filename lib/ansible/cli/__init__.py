@@ -798,3 +798,20 @@ class CLI(with_metaclass(ABCMeta, object)):
         variable_manager.options_vars = load_options_vars(options, CLI.version_info(gitinfo=False))
 
         return loader, inventory, variable_manager
+
+    @staticmethod
+    def get_host_list(inventory, subset, pattern='all'):
+
+        no_hosts = False
+        if len(inventory.list_hosts()) == 0:
+            # Empty inventory
+            display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
+            no_hosts = True
+
+        inventory.subset(subset)
+
+        hosts = inventory.list_hosts(pattern)
+        if len(hosts) == 0 and no_hosts is False:
+            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+
+        return hosts

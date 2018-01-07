@@ -52,7 +52,8 @@ Param (
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
-    [switch]$EnableCredSSP
+    [switch]$EnableCredSSP,
+    [switch]$GlobalHttpFirewallAccess
 )
 
 Function Write-Log
@@ -71,7 +72,7 @@ Function Write-VerboseLog
 Function Write-HostLog
 {
     $Message = $args[0]
-    Write-Host $Message
+    Write-Output $Message
     Write-Log $Message
 }
 
@@ -121,6 +122,60 @@ Function New-LegacySelfSignedCert
     return $parsed_cert.Thumbprint
 }
 
+Function Enable-GlobalHttpFirewallAccess
+{
+    Write-Verbose "Forcing global HTTP firewall access"
+    # this is a fairly naive implementation; could be more sophisticated about rule matching/collapsing
+    $fw = New-Object -ComObject HNetCfg.FWPolicy2
+
+    # try to find/enable the default rule first
+    $add_rule = $false
+    $matching_rules = $fw.Rules | ? { $_.Name -eq "Windows Remote Management (HTTP-In)" }
+    $rule = $null
+    If ($matching_rules) {
+        If ($matching_rules -isnot [Array]) {
+            Write-Verbose "Editing existing single HTTP firewall rule"
+            $rule = $matching_rules
+        }
+        Else {
+            # try to find one with the All or Public profile first
+            Write-Verbose "Found multiple existing HTTP firewall rules..."
+            $rule = $matching_rules | % { $_.Profiles -band 4 }[0]
+
+            If (-not $rule -or $rule -is [Array]) {
+                Write-Verbose "Editing an arbitrary single HTTP firewall rule (multiple existed)"
+                # oh well, just pick the first one
+                $rule = $matching_rules[0]
+            }
+        }
+    }
+
+    If (-not $rule) {
+        Write-Verbose "Creating a new HTTP firewall rule"
+        $rule = New-Object -ComObject HNetCfg.FWRule
+        $rule.Name = "Windows Remote Management (HTTP-In)"
+        $rule.Description = "Inbound rule for Windows Remote Management via WS-Management. [TCP 5985]"
+        $add_rule = $true
+    }
+
+    $rule.Profiles = 0x7FFFFFFF
+    $rule.Protocol = 6
+    $rule.LocalPorts = 5985
+    $rule.RemotePorts = "*"
+    $rule.LocalAddresses = "*"
+    $rule.RemoteAddresses = "*"
+    $rule.Enabled = $true
+    $rule.Direction = 1
+    $rule.Action = 1
+    $rule.Grouping = "Windows Remote Management"
+
+    If ($add_rule) {
+        $fw.Rules.Add($rule)
+    }
+
+    Write-Verbose "HTTP firewall rule $($rule.Name) updated"
+}
+
 # Setup error handling.
 Trap
 {
@@ -139,8 +194,8 @@ $adminRole=[System.Security.Principal.WindowsBuiltInRole]::Administrator
 # Check to see if we are currently running "as Administrator"
 if (-Not $myWindowsPrincipal.IsInRole($adminRole))
 {
-    Write-Host "ERROR: You need elevated Administrator privileges in order to run this script."
-    Write-Host "       Start Windows PowerShell by using the Run as Administrator option."
+    Write-Output "ERROR: You need elevated Administrator privileges in order to run this script."
+    Write-Output "       Start Windows PowerShell by using the Run as Administrator option."
     Exit 2
 }
 
@@ -275,6 +330,10 @@ If ($EnableCredSSP)
         Enable-WSManCredSSP -role server -Force
         Write-Log "Enabled CredSSP auth support."
     }
+}
+
+If ($GlobalHttpFirewallAccess) {
+    Enable-GlobalHttpFirewallAccess
 }
 
 # Configure firewall to allow WinRM HTTPS connections.
