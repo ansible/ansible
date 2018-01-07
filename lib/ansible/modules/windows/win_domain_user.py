@@ -154,6 +154,7 @@ options:
       - This can be used to set custom attributes that are not exposed as module
         parameters, e.g. C(telephoneNumber).
       - See the examples on how to format this parameter.
+    version_added: "2.5"
 notes:
   - Works with Windows 2012R2 and newer.
   - If running on a server that is not a Domain Controller, credential
