@@ -670,11 +670,6 @@ namespace Ansible
                 StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
                 stderr_write.Close();
 
-                int test = 0;
-                test = test + 1;
-                //if (test == 1)
-                //    throw new Exception(stdinInput);
-
                 stdin.WriteLine(stdinInput);
                 stdin.Close();
 
