@@ -76,6 +76,11 @@ EXAMPLES = '''
     state: absent
     name: mpm_worker
     ignore_configcheck: True
+# enable dump_io module, which is identified as dumpio_module inside apache2
+- apache2_module:
+    state: present
+    name: dump_io
+    identifier: dumpio_module
 '''
 
 RETURN = '''
