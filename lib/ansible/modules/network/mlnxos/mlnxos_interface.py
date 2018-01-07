@@ -62,7 +62,8 @@ options:
     description:
       - Purge Interfaces not defined in the aggregate parameter.
         This applies only for logical interface.
-    default: no
+    default: false
+    type: bool
   state:
     description:
       - State of the Interface configuration, C(up) means present and
@@ -179,18 +180,15 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
         return aggregate_spec
 
     def init_module(self):
-        """ main entry point for module execution
+        """ module initialization
         """
         element_spec = self._get_element_spec()
         aggregate_spec = self._get_aggregate_spec(element_spec)
-        if aggregate_spec:
-            argument_spec = dict(
-                aggregate=dict(type='list', elements='dict',
-                               options=aggregate_spec),
-                purge=dict(default=False, type='bool'),
-            )
-        else:
-            argument_spec = dict()
+        argument_spec = dict(
+            aggregate=dict(type='list', elements='dict',
+                           options=aggregate_spec),
+            purge=dict(default=False, type='bool'),
+        )
         argument_spec.update(element_spec)
         required_one_of = [['name', 'aggregate']]
         mutually_exclusive = [['name', 'aggregate']]

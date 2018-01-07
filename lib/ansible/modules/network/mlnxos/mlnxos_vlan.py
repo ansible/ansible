@@ -96,14 +96,11 @@ class MlnxosVlanModule(BaseMlnxosModule):
         """
         element_spec = self._get_element_spec()
         aggregate_spec = self._get_aggregate_spec(element_spec)
-        if aggregate_spec:
-            argument_spec = dict(
-                aggregate=dict(type='list', elements='dict',
-                               options=aggregate_spec),
-                purge=dict(default=False, type='bool'),
-            )
-        else:
-            argument_spec = dict()
+        argument_spec = dict(
+            aggregate=dict(type='list', elements='dict',
+                           options=aggregate_spec),
+            purge=dict(default=False, type='bool'),
+        )
         argument_spec.update(element_spec)
         required_one_of = [['vlan_id', 'aggregate']]
         mutually_exclusive = [['vlan_id', 'aggregate']]
