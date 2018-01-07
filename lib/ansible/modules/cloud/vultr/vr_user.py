@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vr_user
-short_description: Manages user on Vultr.
+short_description: Manages users on Vultr.
 description:
   - Create, update and remove users.
 version_added: "2.5"
@@ -46,7 +46,7 @@ options:
     description:
       - List of ACLs this users should have, see U(https://www.vultr.com/api/#user_user_list).
       - Required if C(state=present).
-      - One or more of the choices list.
+      - One or more of the choices list, some depend on each other.
     choices:
       - manage_users
       - subscriptions
