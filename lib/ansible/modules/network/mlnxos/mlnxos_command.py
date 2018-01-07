@@ -1,27 +1,14 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -31,65 +18,53 @@ version_added: "2.5"
 author: "Samer Deeb (@samerd)"
 short_description: Run commands on remote devices running Mellanox MLNX-OS
 description:
-  - >-
-       Sends arbitrary commands to an mlnxos node and returns the results
-       read from the device. This module includes an
-       argument that will cause the module to wait for a specific condition
-       before returning or timing out if the condition is not met.
-  - >-
-      This module does not support running commands in configuration mode.
-      Please use M(mlnxos_config) to configure Mellanox MLNX-OS devices.
+  - Sends arbitrary commands to an Mellanox MLNX-OS network device and returns
+    the results read from the device. This module includes an
+    argument that will cause the module to wait for a specific condition
+    before returning or timing out if the condition is not met.
+  - This module does not support running commands in configuration mode.
+    Please use M(mlnxos_config) to configure Mellanox MLNX-OS devices.
 notes:
-  - tested on Mellanox OS 3.6.4000
+  - Tested on MLNX-OS 3.6.4000
 options:
   commands:
     description:
-      - >-
-           List of commands to send to the remote mlnxos device over the
-           configured provider. The resulting output from the command
-           is returned. If the I(wait_for) argument is provided, the
-           module is not returned until the condition is satisfied or
-           the number of retries has expired.
+      - List of commands to send to the remote mlnxos device over the
+        configured provider. The resulting output from the command
+        is returned. If the I(wait_for) argument is provided, the
+        module is not returned until the condition is satisfied or
+        the number of retries has expired.
     required: true
   wait_for:
     description:
-      - >-
-          List of conditions to evaluate against the output of the
-          command. The task will wait for each condition to be true
-          before moving forward. If the conditional is not true
-          within the configured number of retries, the task fails.
-          See examples.
-    required: false
-    default: null
+      - List of conditions to evaluate against the output of the
+        command. The task will wait for each condition to be true
+        before moving forward. If the conditional is not true
+        within the configured number of retries, the task fails.
+        See examples.
   match:
     description:
-      - >-
-          The I(match) argument is used in conjunction with the
-          I(wait_for) argument to specify the match policy.  Valid
-          values are C(all) or C(any).  If the value is set to C(all)
-          then all conditionals in the wait_for must be satisfied.  If
-          the value is set to C(any) then only one of the values must be
-          satisfied.
-    required: false
+      - The I(match) argument is used in conjunction with the
+        I(wait_for) argument to specify the match policy.  Valid
+        values are C(all) or C(any).  If the value is set to C(all)
+        then all conditionals in the wait_for must be satisfied.  If
+        the value is set to C(any) then only one of the values must be
+        satisfied.
     default: all
     choices: ['any', 'all']
   retries:
     description:
-      - >-
-          Specifies the number of retries a command should by tried
-          before it is considered failed. The command is run on the
-          target device every retry and evaluated against the
-          I(wait_for) conditions.
-    required: false
+      - Specifies the number of retries a command should by tried
+        before it is considered failed. The command is run on the
+        target device every retry and evaluated against the
+        I(wait_for) conditions.
     default: 10
   interval:
     description:
-      - >-
-          Configures the interval in seconds to wait between retries
-          of the command. If the command does not pass the specified
-          conditions, the interval indicates how long to wait before
-          trying the command again.
-    required: false
+      - Configures the interval in seconds to wait between retries
+        of the command. If the command does not pass the specified
+        conditions, the interval indicates how long to wait before
+        trying the command again.
     default: 1
 """
 

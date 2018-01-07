@@ -20,11 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.mlnxos import mlnxos_l2_interface
-from ansible.module_utils.network.mlnxos import mlnxos as mlnxos_utils
 from units.modules.utils import set_module_args
 from .mlnxos_module import TestMlnxosModule, load_fixture
 
@@ -103,3 +100,15 @@ class TestMlnxosInterfaceModule(TestMlnxosModule):
                     'switchport access vlan 10',
                     'switchport hybrid allowed-vlan add 11', 'exit']
         self.execute_module(changed=True, commands=commands)
+
+    def test_aggregate(self):
+        aggregate = list()
+        aggregate.append(dict(name='Eth1/10'))
+        aggregate.append(dict(name='Eth1/12'))
+
+        set_module_args(dict(aggregate=aggregate, access_vlan=10))
+        commands = ['interface ethernet 1/10', 'switchport mode access',
+                    'switchport access vlan 10', 'exit',
+                    'interface ethernet 1/12', 'switchport mode access',
+                    'switchport access vlan 10', 'exit']
+        self.execute_module(changed=True, commands=commands, sort=False)
