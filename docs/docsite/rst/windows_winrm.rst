@@ -651,7 +651,7 @@ for additional configuration of WinRM connections:
 * ``ansible_winrm_*``: Any additional keyword arguments supported by
   ``winrm.Protocol`` may be provided in place of ``*``
 
-In addtion, there are also specific variables that need to be set
+In addition, there are also specific variables that need to be set
 for each authentication option. See the section on authentication above for more information.
 
 .. Note:: Ansible 2.0 has deprecated the "ssh" from ``ansible_ssh_user``,
