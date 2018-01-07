@@ -672,6 +672,9 @@ def main():
         argument_spec=argument_spec,
         required_if=[
             ('state', 'present', ['provider'])],
+        required_together=[
+            ['host_default_vnc_port_start', 'host_default_vnc_port_end']
+        ],
     )
 
     name = module.params['name']
