@@ -1,6 +1,8 @@
 ---
 - name: setup
-  cs_network_offering: name={{ cs_resource_prefix }}_name state=absent
+  cs_network_offering:
+    name: "{{ cs_resource_prefix }}_name"
+    state: absent
   register: netoffer
 - name: verify setup
   assert:
@@ -26,17 +28,18 @@
   assert:
     that:
     - netoffer is failed
-    - 'netoffer.msg == "missing required arguments: display_text, guest_ip_type, supported_services, service_provider_list"'
+    - 'netoffer.msg == "missing required arguments: display_text, guest_ip_type, supported_services, service_providers"'
 
 - name: test create network offer in check mode
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    max_connections: 300
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
   register: netoffer
   check_mode: yes
 - name: verify results of network offer in check mode
@@ -50,10 +53,11 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    max_connections: 300
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
   register: netoffer
 - name: verify results of network offer
   assert:
@@ -70,10 +74,11 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    max_connections: 300
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
   register: netoffer
 - name: verify results of create network offer idempotence
   assert:
@@ -85,19 +90,13 @@
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description"
 
-- name: test enabling network offer in check_mode
+- name: test enabling existing network offer in check_mode
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: enabled
   register: netoffer
   check_mode: yes
-- name: verify results of enabling network offer in check_mode
+- name: verify results of enabling existing network offer in check_mode
   assert:
     that:
     - netoffer is successful
@@ -107,18 +106,12 @@
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description"
 
-- name: test enabling network offer
+- name: test enabling existing network offer
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: enabled
   register: netoffer
-- name: verify results of enabling network offer
+- name: verify results of enabling existing network offer
   assert:
     that:
     - netoffer is successful
@@ -128,18 +121,12 @@
     - netoffer.state == "Enabled"
     - netoffer.display_text == "network offering description"
 
-- name: test enabling network offer idempotence
+- name: test enabling existing network offer idempotence
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: enabled
   register: netoffer
-- name: verify results of enabling network idempotence
+- name: verify results of enabling existing network idempotence
   assert:
     that:
     - netoffer is successful
@@ -154,10 +141,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: disabled
   register: netoffer
   check_mode: yes
@@ -176,10 +163,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: disabled
   register: netoffer
 - name: verify results of disabling network offer
@@ -197,10 +184,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: disabled
   register: netoffer
 - name: verify results of disabling network idempotence
@@ -218,10 +205,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description renamed"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: disabled
   register: netoffer
   check_mode: yes
@@ -240,10 +227,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description renamed"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: disabled
   register: netoffer
 - name: verify results of rename network offer
@@ -261,10 +248,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description renamed"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: disabled
   register: netoffer
 - name: verify results of rename network offer idempotence
@@ -281,6 +268,7 @@
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
+    max_connections: 400
   register: netoffer
   check_mode: yes
 - name: verify results of update offer with minimal params in check_mode
@@ -292,11 +280,13 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description renamed"
+    - netoffer.max_connections == 300
 
 - name: test update offer with minimal params
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
+    max_connections: 400
   register: netoffer
 - name: verify results of update offer with minimal params
   assert:
@@ -307,11 +297,13 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description update"
+    - netoffer.max_connections == 400
 
 - name: test update offer with minimal params idempotency
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description update"
+    max_connections: 400
   register: netoffer
 - name: verify results of update offer with minimal params idempotency
   assert:
@@ -322,16 +314,11 @@
     - netoffer.guest_ip_type == "Isolated"
     - netoffer.state == "Disabled"
     - netoffer.display_text == "network offering description update"
+    - netoffer.max_connections == 400
 
 - name: test remove network offer in check_mode
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
   check_mode: yes
@@ -348,12 +335,6 @@
 - name: test remove network offer
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
 - name: verify results of rename network offer
@@ -369,12 +350,6 @@
 - name: test remove network offer idempotence
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
 - name: verify results of rename network offer idempotence
@@ -388,10 +363,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: enabled
   register: netoffer
   check_mode: yes
@@ -406,10 +381,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: enabled
   register: netoffer
 - name: verify results of create enabled network offer
@@ -427,10 +402,10 @@
     name: "{{ cs_resource_prefix }}_name"
     display_text: "network offering description"
     guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+    supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+    service_providers:
+      - { service: 'dns', provider: 'virtualrouter' }
+      - { service: 'dhcp', provider: 'virtualrouter' }
     state: enabled
   register: netoffer
 - name: verify results of create enabled network offer idempotence
@@ -446,12 +421,6 @@
 - name: remove network offer
   cs_network_offering:
     name: "{{ cs_resource_prefix }}_name"
-    display_text: "network offering description renamed"
-    guest_ip_type: Isolated
-    supported_services: Dns,PortForwarding,Dhcp,SourceNat,UserData,Firewall,StaticNat,Vpn,Lb
-    service_provider_list:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
     state: absent
   register: netoffer
 - name: verify results of remove network offer
