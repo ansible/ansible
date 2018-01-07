@@ -15,12 +15,12 @@ DOCUMENTATION = """
 module: mlnxos_magp
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: Manage MAGP protocol on MLNX-OS network devices
+short_description: Manage MAGP protocol on Mellanox MLNX-OS network devices
 description:
   - This module provides declarative management of MAGP protocol on vlan
-     interface of MLNX-OS network devices.
+    interface of Mellanox MLNX-OS network devices.
 notes:
-  - tested on Mellanox OS 3.6.4000
+  - Tested on MLNX-OS 3.6.4000
 options:
   magp_id:
     description:
@@ -32,15 +32,15 @@ options:
     required: true
   state:
     description:
-      - vlan interface state
+      - MAGP state.
     default: present
     choices: ['present', 'absent', 'enabled', 'disabled']
   router_ip:
     description:
-      - MAGP router ip address
+      - MAGP router IP address.
   router_mac:
     description:
-      - MAGP router MAC address
+      - MAGP router MAC address.
 """
 
 EXAMPLES = """
@@ -188,7 +188,10 @@ class MlnxosMagpModule(BaseMlnxosModule):
                 self._commands.append(cmd)
         req_router_mac = self._required_config['router_mac']
         curr_router_mac = curr_magp_data.get('router_mac')
+        if curr_router_mac:
+            curr_router_mac = curr_router_mac.lower()
         if req_router_mac:
+            req_router_mac = req_router_mac.lower()
             if curr_router_mac != req_router_mac or create_new_magp:
                 cmd = '%s ip virtual-router mac-address %s' % (
                     magp_prefix, req_router_mac)

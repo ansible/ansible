@@ -15,12 +15,12 @@ DOCUMENTATION = """
 module: mlnxos_mlag_ipl
 version_added: "2.5"
 author: "Samer Deeb (@samerd)"
-short_description: Manage IPL (inter-peer link) on MLNX-OS network devices
+short_description: Manage IPL (inter-peer link) on Mellanox MLNX-OS network devices
 description:
   - This module provides declarative management of IPL (inter-peer link)
-     management on MLNX-OS network devices.
+    management on Mellanox MLNX-OS network devices.
 notes:
-  - tested on Mellanox OS 3.6.4000
+  - Tested on MLNX-OS 3.6.4000
 options:
   name:
     description:
@@ -31,12 +31,12 @@ options:
       - Name of the IPL vlan interface.
   state:
     description:
-      - IPL state
+      - IPL state.
     default: present
     choices: ['present', 'absent']
   peer_address:
     description:
-      - IPL peer IP address
+      - IPL peer IP address.
 """
 
 EXAMPLES = """
@@ -84,7 +84,7 @@ class MlnxosMlagIplModule(BaseMlnxosModule):
         )
 
     def init_module(self):
-        """ main entry point for module execution
+        """ module initialization
         """
         element_spec = self._get_element_spec()
         argument_spec = dict()

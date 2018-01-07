@@ -42,7 +42,8 @@ options:
   purge:
     description:
       - Purge link aggregation groups not defined in the I(aggregate) parameter.
-    default: no
+    default: false
+    type: bool
   state:
     description:
       - State of the link aggregation group.
@@ -142,14 +143,11 @@ class MlnxosLinkAggModule(BaseMlnxosModule):
         """
         element_spec = self._get_element_spec()
         aggregate_spec = self._get_aggregate_spec(element_spec)
-        if aggregate_spec:
-            argument_spec = dict(
-                aggregate=dict(type='list', elements='dict',
-                               options=aggregate_spec),
-                purge=dict(default=False, type='bool'),
-            )
-        else:
-            argument_spec = dict()
+        argument_spec = dict(
+            aggregate=dict(type='list', elements='dict',
+                           options=aggregate_spec),
+            purge=dict(default=False, type='bool'),
+        )
         argument_spec.update(element_spec)
         required_one_of = [['name', 'aggregate']]
         mutually_exclusive = [['name', 'aggregate']]
