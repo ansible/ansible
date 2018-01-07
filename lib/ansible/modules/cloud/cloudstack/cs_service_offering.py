@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cs_serviceoffer
+module: cs_service_offering
 description:
   - Create and delete service offerings for guest and system VMs.
   - Update display_text of existing service offering.
@@ -36,7 +36,7 @@ options:
   limit_cpu_usage:
     description:
       - Restrict the CPU usage to committed service offering.
-    type: bool
+    choices: [ yes, no ]
   deployment_planner:
     description:
       - The deployment planner heuristics used to deploy a VM of this offering.
@@ -77,12 +77,14 @@ options:
   is_system:
     description:
       - Whether it is a system VM offering or not.
-    default: false
+    choices: [ yes, no ]
+    default: no
   is_volatile:
     description:
       - Whether the virtual machine needs to be volatile or not.
       - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
-    default: false
+    choices: [ yes, no ]
+    default: no
   memory:
     description:
       - The total memory of the service offering in MB.
@@ -97,7 +99,8 @@ options:
   offer_ha:
     description:
       - Whether HA is set for the service offering.
-    default: false
+    choices: [ yes, no ]
+    default: no
   provisioning_type:
     description:
       - Provisioning type used to create volumes.
@@ -140,7 +143,7 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 - name: Create a non-volatile compute service offering with local storage
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
@@ -151,7 +154,7 @@ EXAMPLES = '''
 
 - name: Create a volatile compute service offering with shared storage
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Tiny
     display_text: Tiny 1gb 1cpu
     cpu_number: 1
@@ -164,29 +167,29 @@ EXAMPLES = '''
 
 - name: Create or update a volatile compute service offering with shared storage
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Tiny
     display_text: Tiny 1gb 1cpu
     cpu_number: 1
     cpu_speed: 2198
     memory: 1024
     storage_type: shared
-    is_volatile: true
+    is_volatile: yes
     host_tags: eco
     storage_tags: eco
 
 - name: Remove a compute service offering
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: Tiny
     state: absent
 
 - name: Create or update a system offering for the console proxy
   local_action:
-    module: cs_serviceoffer
+    module: cs_service_offering
     name: System Offering for Console Proxy 2GB
     display_text: System Offering for Console Proxy 2GB RAM
-    is_system: true
+    is_system: yes
     system_vm_type: consoleproxy
     cpu_number: 1
     cpu_speed: 2198
@@ -196,9 +199,9 @@ EXAMPLES = '''
 
 - name: Remove a system offering
   local_action:
-    module: cs_serviceoffer
-    name: "System Offering for Console Proxy 2GB"
-    is_system: true
+    module: cs_service_offering
+    name: System Offering for Console Proxy 2GB
+    is_system: yes
     state: absent
 '''
 
@@ -328,8 +331,7 @@ service_offering_details:
   description: Additioanl service offering details
   returned: success
   type: dict
-  sample: "{'vgpuType': 'GRID K180Q','pciDevice':'Group of NVIDIA Corporation GK107GL
-[GRID K1] GPUs'}"
+  sample: "{'vgpuType': 'GRID K180Q','pciDevice':'Group of NVIDIA Corporation GK107GL [GRID K1] GPUs'}"
 network_rate:
   description: Data transfer rate in megabits per second allowed
   returned: success
@@ -443,7 +445,7 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'storagetype': self.module.params.get('storage_type'),
             'systemvmtype': system_vm_type,
             'tags': self.module.params.get('storage_tags'),
-            'limit_cpu_use': self.module.params.get('limit_cpu_usage')
+            'limitcpuuse': self.module.params.get('limit_cpu_usage')
         }
         if not self.module.check_mode:
             res = self.query_api('createServiceOffering', **args)
