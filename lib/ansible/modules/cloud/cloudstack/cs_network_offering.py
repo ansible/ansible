@@ -177,6 +177,16 @@ egress_default_policy:
   returned: success
   type: string
   sample: allow
+is_persistent:
+  description: Whether persistent networks are supported or not.
+  returned: success
+  type: bool
+  sample: false
+is_default:
+  description: Whether network offering is the default offering or not.
+  returned: success
+  type: bool
+  sample: false
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -198,6 +208,8 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'networkrate': 'network_rate',
             'maxconnections': 'max_connections',
             'traffictype': 'traffic_type',
+            'isdefault': 'is_default',
+            'ispersistent': 'is_persistent',
         }
         self.network_offering = None
 
