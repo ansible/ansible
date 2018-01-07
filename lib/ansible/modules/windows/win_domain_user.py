@@ -148,7 +148,7 @@ options:
         if you specify a path on an existing user, the user's path will not
         be updated - you must delete (e.g., state=absent) the user and
         then re-add the user with the appropriate path.
-    attributes:
+  attributes:
     description:
       - A dict of custom LDAP attributes to set on the user.
       - This can be used to set custom attributes that are not exposed as module
