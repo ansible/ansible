@@ -21,7 +21,7 @@ module: xml
 short_description: Manage bits and pieces of XML files or strings
 description:
 - A CRUD-like interface to managing bits of XML files.
-- You might also be interested in a brief tutorial from U(http://www.w3schools.com/xpath/)
+- You might also be interested in a brief tutorial from U(https://www.w3schools.com/xml/xpath_intro.asp)
   and U(https://developer.mozilla.org/en-US/docs/Web/XPath).
 version_added: '2.4'
 options:
