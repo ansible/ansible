@@ -1,6 +1,6 @@
 ---
 - name: setup system offering
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     is_system: true
     state: absent
@@ -11,7 +11,7 @@
     - so is successful
 
 - name: fail missing storage type and is_system
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     cpu_number: 1
     cpu_speed: 500
@@ -31,7 +31,7 @@
     - so.msg.startswith('missing required arguments:')
 
 - name: create system service offering in check mode
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     cpu_number: 1
     cpu_speed: 500
@@ -51,7 +51,7 @@
     - so is changed
 
 - name: create system service offering
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     cpu_number: 1
     cpu_speed: 500
@@ -82,7 +82,7 @@
     - so.is_system == true
 
 - name: create system service offering idempotence
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     cpu_number: 1
     cpu_speed: 500
@@ -113,7 +113,7 @@
     - so.is_system == true
 
 - name: remove system service offering in check mode
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     is_system: true
     state: absent
@@ -127,7 +127,7 @@
     - so.is_system == true
 
 - name: remove system service offering
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     is_system: true
     state: absent
@@ -140,7 +140,7 @@
     - so.is_system == true
 
 - name: remove system service offering idempotence
-  cs_serviceoffer:
+  cs_service_offering:
     name: System Offering for Ansible
     is_system: true
     state: absent

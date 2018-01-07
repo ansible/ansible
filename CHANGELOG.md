@@ -100,7 +100,7 @@ Ansible Changes By Release
 - cloudscale
   * cloudscale_floating_ip
 - cloudstack
-  * cs_serviceoffer
+  * cs_service_offering
 - digital_ocean
   * digital_ocean_certificate
   * digital_ocean_sshkey_facts
