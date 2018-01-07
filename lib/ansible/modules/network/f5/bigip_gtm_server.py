@@ -83,8 +83,9 @@ options:
       - Specifies whether the system auto-discovers the links for this server. When
         creating a new GTM server, if this parameter is not specified, the default
         value C(disabled) is used.
-      - If you set this parameter to C(enabled), you must also ensure that the
-        C(virtual_server_discovery) parameter is also set to C(enabled).
+      - If you set this parameter to C(enabled) or C(enabled-no-delete), you must
+        also ensure that the C(virtual_server_discovery) parameter is also set to
+        C(enabled) or C(enabled-no-delete).
     choices:
       - enabled
       - disabled
@@ -125,7 +126,7 @@ EXAMPLES = r'''
     datacenter: /Common/New York
     server_type: bigip
     link_discovery: disabled
-    virtual_server_discovery: no
+    virtual_server_discovery: disabled
     devices:
       - {'name': 'server_1', 'address': '1.1.1.1'}
       - {'name': 'server_2', 'address': '2.2.2.1', 'translation':'192.168.2.1'}
@@ -143,7 +144,7 @@ EXAMPLES = r'''
     datacenter: /Common/New York
     server_type: bigip
     link_discovery: disabled
-    virtual_server_discovery: no
+    virtual_server_discovery: disabled
     devices:
       - name: server_1
         address: 1.1.1.1
@@ -430,7 +431,7 @@ class Difference(object):
         else:
             link_discovery = self.want.link_discovery
 
-        if link_discovery == 'enabled' and virtual_server_discovery == 'disabled':
+        if link_discovery in ['enabled', 'enabled-no-delete'] and virtual_server_discovery == 'disabled':
             raise F5ModuleError(
                 "Virtual server discovery must be enabled if link discovery is enabled"
             )
@@ -648,7 +649,7 @@ class BaseManager(object):
             )
 
     def _check_link_discovery_requirements(self):
-        if self.want.link_discovery == 'enabled' and self.want.virtual_server_discovery == 'disabled':
+        if self.want.link_discovery in ['enabled', 'enabled-no-delete'] and self.want.virtual_server_discovery == 'disabled':
             raise F5ModuleError(
                 "Virtual server discovery must be enabled if link discovery is enabled"
             )
