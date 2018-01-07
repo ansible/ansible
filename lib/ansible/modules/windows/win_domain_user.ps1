@@ -170,6 +170,7 @@ If ($state -eq 'present') {
         # Set additional attributes
         $set_args = @{}
         if ($attributes -ne $null) {
+            $run_change = $false
             $add_attributes = @{}
             $replace_attributes = @{}
             foreach ($attribute in $attributes.GetEnumerator()) {
@@ -306,11 +307,6 @@ try {
             $user_groups += $group.name
         }
         $result.groups = $user_groups
-        Foreach ($attribute in $attributes.GetEnumerator()){
-            $attribute_name = $attribute.Name
-            $attribute_value = $attribute.Value
-            $result.$attribute_name = $attribute_value
-        }
         $result.msg = "User '$username' is present"
         $result.state = "present"
     }
