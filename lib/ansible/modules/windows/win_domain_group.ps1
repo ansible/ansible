@@ -25,7 +25,7 @@ $organizational_unit = Get-AnsibleParam -obj $params -name "organizational_unit"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 $protect = Get-AnsibleParam -obj $params -name "protect" -type "bool"
 $ignore_protection = Get-AnsibleParam -obj $params -name "ignore_protection" -type "bool" -default $false
-$server = Get-AnsibleParam -obj $params -name "server" -type "str"
+$domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 $result = @{
     changed = $false
@@ -46,8 +46,8 @@ if ($domain_username -ne $null) {
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
 }
-if ($server -ne $null) {
-    $extra_args.Server = $server
+if ($domain_server -ne $null) {
+    $extra_args.Server = $domain_server
 }
 
 try {

@@ -45,6 +45,13 @@ options:
   domain_password:
     description:
     - The password for C(username).
+  domain_server:
+    description:
+    - Specifies the Active Directory Domain Services instance to connect to.
+    - Can be in the form of an FQDN or NetBIOS name.
+    - If not specified then the value is based on the domain of the computer
+      running PowerShell.
+    version_added: '2.5'
   ignore_protection:
     description:
     - Will ignore the C(ProtectedFromAccidentalDeletion) flag when deleting or
@@ -89,13 +96,6 @@ options:
     - If C(state=absent) this module will delete the group if it exists
     default: present
     choices: [ absent, present ]
-  server:
-    description:
-    - Specifies the Active Directory Domain Services instance to connect to.
-    - Can be in the form of an FQDN or NetBIOS name.
-    - If not specified then the value is based on the domain of the computer
-      running PowerShell.
-    version_added: '2.5'
 notes:
 - This must be run on a host that has the ActiveDirectory powershell module
   installed.
@@ -146,10 +146,10 @@ EXAMPLES = r'''
 - name: add group and specify the AD domain services to use for the create
   win_domain_group:
     name: Test Group
-    domain_admin_user: user@CORP.ANSIBLE.COM
-    domain_admin_password: Password01!
+    domain_username: user@CORP.ANSIBLE.COM
+    domain_password: Password01!
+    domain_server: corp-DC12.corp.ansible.com
     scope: domainlocal
-    server: corp-DC12.corp.ansible.com
 '''
 
 RETURN = r'''
