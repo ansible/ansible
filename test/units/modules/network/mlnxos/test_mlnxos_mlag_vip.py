@@ -62,7 +62,7 @@ class TestMlnxosMlagVipModule(TestMlnxosModule):
                              mac_address='00:00:5E:00:01:4E',
                              delay=0))
         commands = ['mlag-vip neo-mlag-vip-500 ip 10.209.25.107 /24 force',
-                    'mlag system-mac 00:00:5E:00:01:4E', 'no mlag shutdown']
+                    'mlag system-mac 00:00:5e:00:01:4e', 'no mlag shutdown']
         self.execute_module(changed=True, commands=commands)
 
     def test_mlag_absent_no_change(self):
