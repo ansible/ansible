@@ -169,8 +169,8 @@ If ($state -eq 'present') {
 
         # Set additional attributes
         $set_args = @{}
+        $run_change = $false
         if ($attributes -ne $null) {
-            $run_change = $false
             $add_attributes = @{}
             $replace_attributes = @{}
             foreach ($attribute in $attributes.GetEnumerator()) {
