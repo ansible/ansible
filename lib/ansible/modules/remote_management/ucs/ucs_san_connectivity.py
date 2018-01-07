@@ -27,24 +27,39 @@ options:
     default: present
   name:
     description:
-    - Name of the SAN Connectivity Policy
+    - The name of the SAN Connectivity Policy.
+    - This name can be between 1 and 16 alphanumeric characters.
+    - "You cannot use spaces or any special characters other than - (hyphen), \"_\" (underscore), : (colon), and . (period)."
+    - You cannot change this name after the policy is created.
     required: yes
   description:
     description:
-    - Description for the SAN Connectivity Policy
+    - A description of the policy.
+    - Cisco recommends including information about where and when to use the policy.
+    - Enter up to 256 characters.
+    - "You can use any characters or spaces except the following:"
+    - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
     aliases: [ descr ]
   wwnn_pool:
     description:
-    - WWNN Pool name
+    - Name of the WWNN pool to use for WWNN assignment.
     default: default
   vhba_list:
     description:
-    - List of vHBAs contained in the SAN Connectivity Policy
-    - Each list element has the following suboptions
-    - name (Name of the vHBA (required))
-    - vhba_template (vHBA template (required))
-    - adapter_policy ('' (default), Linux, Solaris, VMware, Windows, WindowsBoot, or default)
-    - order (string specifying vHBA assignment order (unspecified (default), '1', '2', etc.)
+    - List of vHBAs used by the SAN Connectivity Policy.
+    - vHBAs used by the SAN Connectivity Policy must be created from a vHBA template.
+    - "Each list element has the following suboptions:"
+    - "= name"
+    - "  The name of the virtual HBA (required)."
+    - "= vhba_template"
+    - "  The name of the virtual HBA template (required)."
+    - "- adapter_policy"
+    - "  The name of the Fibre Channel adapter policy."
+    - "  A user defined policy can be used, or one of the system defined policies (default, Linux, Solaris, VMware, Windows, WindowsBoot)"
+    - "  [Default: default]"
+    - "- order"
+    - "  String specifying the vHBA assignment order (e.g., '1', '2')."
+    - "  [Default: unspecified]"
   org_dn:
     description:
     - Org dn (distinguished name)
@@ -157,16 +172,14 @@ def main():
             if mo:
                 mo_exists = True
                 # check top-level mo props
-                kwargs = {}
-                kwargs['descr'] = san_connectivity['descr']
+                kwargs = dict(descr=san_connectivity['descr'])
                 if (mo.check_prop_match(**kwargs)):
                     # top-level props match, check next level mo/props
                     # vnicFcNode object
                     child_dn = dn + '/fc-node'
                     mo_1 = ucs.login_handle.query_dn(child_dn)
                     if mo_1:
-                        kwargs = {}
-                        kwargs['ident_pool_name'] = san_connectivity['wwnn_pool']
+                        kwargs = dict(ident_pool_name=san_connectivity['wwnn_pool'])
                         if (mo_1.check_prop_match(**kwargs)):
                             if not san_connectivity.get('vhba_list'):
                                 props_match = True
