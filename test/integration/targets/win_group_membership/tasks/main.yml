@@ -15,13 +15,13 @@
   block:
 
   - name: Test in normal mode
-    include_tasks: tests.yml
+    import_tasks: tests.yml
     vars:
       win_local_group: WinGroupMembershipTest
       in_check_mode: no
 
   - name: Test in check-mode
-    include_tasks: tests.yml
+    import_tasks: tests.yml
     vars:
       win_local_group: WinGroupMembershipTest
       in_check_mode: yes
