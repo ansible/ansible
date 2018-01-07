@@ -136,10 +136,14 @@ class MlnxosMLagVipModule(BaseMlnxosModule):
         current_group = self._current_config.get('group_name')
         current_ip = self._current_config.get('ipaddress')
         current_mac = self._current_config.get('mac_address')
+        if current_mac:
+            current_mac = current_mac.lower()
 
         req_group = self._required_config.get('group_name')
         req_ip = self._required_config.get('ipaddress')
         req_mac = self._required_config.get('mac_address')
+        if req_mac:
+            req_mac = req_mac.lower()
 
         if req_group != current_group or req_ip != current_ip:
             ipaddr, mask = req_ip.split('/')
