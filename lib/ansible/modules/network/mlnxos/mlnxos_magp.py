@@ -188,7 +188,10 @@ class MlnxosMagpModule(BaseMlnxosModule):
                 self._commands.append(cmd)
         req_router_mac = self._required_config['router_mac']
         curr_router_mac = curr_magp_data.get('router_mac')
+        if curr_router_mac:
+            curr_router_mac = curr_router_mac.lower()
         if req_router_mac:
+            req_router_mac = req_router_mac.lower()
             if curr_router_mac != req_router_mac or create_new_magp:
                 cmd = '%s ip virtual-router mac-address %s' % (
                     magp_prefix, req_router_mac)
