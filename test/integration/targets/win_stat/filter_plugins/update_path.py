@@ -9,4 +9,3 @@ class FilterModule(object):
         for key, value in repl_dict.items():
             new_dict['stat'][key] = value
         return new_dict
-
