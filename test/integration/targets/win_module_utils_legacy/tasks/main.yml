@@ -19,7 +19,10 @@
   - path: C:\Windows
   - path: HKLM:\Software
   - path: '{{ bogus_driveletter.stdout_lines[0] }}:\goodpath'
+  - path: \\?\C:\long_path
   - path: '{{ bogus_driveletter.stdout_lines[0] }}:\badpath*%@:\blar'
+    should_fail: true
+  - path: \\?\{{ bogus_driveletter.stdout_lines[0] }}:\badpath*%@:\blar
     should_fail: true
 
 - name: test list parameters

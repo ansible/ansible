@@ -1160,8 +1160,11 @@ namespace Ansible.IO
                 foreach (string filePath in EnumerateFileSystemEntries(path))
                 {
                     FileAttributes fileAttributes = File.GetAttributes(filePath);
-                    if (fileAttributes.HasFlag(FileAttributes.Directory))
+                    // only do a recursive delete if file entry is a dir and not a link
+                    if (fileAttributes.HasFlag(FileAttributes.Directory) && !fileAttributes.HasFlag(FileAttributes.ReparsePoint))
                         Delete(filePath, true);
+                    else if (fileAttributes.HasFlag(FileAttributes.Directory) && fileAttributes.HasFlag(FileAttributes.ReparsePoint))
+                        Delete(filePath, false);
                     else
                         File.Delete(filePath);
                 }
