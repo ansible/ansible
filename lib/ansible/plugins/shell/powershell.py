@@ -1145,7 +1145,7 @@ Function Parse-BecomeFlags($flags) {
     } else {
         throw "become_flags must be a string, was $($flags.GetType())"
     }
-    
+
     foreach ($flag in $flag_split) {
         $split = $flag.Split("=")
         if ($split.Count -ne 2) {
