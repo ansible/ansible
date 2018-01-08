@@ -4,6 +4,13 @@
   when: ansible_connection == "local"
 
 - block:
+  - name: 'Setup: Delete VRF before test'
+    nxos_config:
+      lines:
+        - no vrf context ntc
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
   - name: Ensure ntc VRF exists on switch
     nxos_vrf: &configure
       vrf: ntc
@@ -47,5 +54,12 @@
     register: result
 
   - assert: *false
+
+  - name: 'Teardown: Delete VRF after test'
+    nxos_config:
+      lines:
+        - no vrf context ntc
+      provider: "{{ connection }}"
+    ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vrf sanity test"
