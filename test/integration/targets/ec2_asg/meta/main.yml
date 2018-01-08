@@ -1,0 +1,2 @@
+dependencies:
+  - boto3_conn
