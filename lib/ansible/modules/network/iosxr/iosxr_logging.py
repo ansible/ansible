@@ -220,7 +220,6 @@ class ConfigBase(object):
                     if item.get(key) is None:
                         item[key] = self._module.params[key]
 
-                self._module._check_required_if(required_if, item)
                 d = item.copy()
 
                 if d['dest'] not in ('host', 'file'):
@@ -297,7 +296,6 @@ class CliConfiguration(ConfigBase):
             del want_item['state']
 
             have_size = None
-            have_level = None
             have_console_level = None
             have_monitor_level = None
             have_prefix = None
@@ -306,7 +304,6 @@ class CliConfiguration(ConfigBase):
             for item in self._have:
                 if item['dest'] == 'buffered':
                     have_size = item['size']
-                    have_level = item['level']
                 if item['dest'] == 'console':
                     have_console_level = item['level']
                 if item['dest'] == 'monitor':
@@ -690,20 +687,21 @@ def main():
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)
 
-    argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
-    )
-
-    argument_spec.update(element_spec)
-    argument_spec.update(iosxr_argument_spec)
-
     mutually_exclusive = [('dest', 'facility', 'hostnameprefix')]
 
     required_if = [('dest', 'host', ['name']),
                    ('dest', 'file', ['name']),
-                   ('dest', 'buffered', ['size', 'level']),
+                   ('dest', 'buffered', ['size']),
                    ('dest', 'console', ['level']),
                    ('dest', 'monitor', ['level'])]
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec,
+                       mutually_exclusive=mutually_exclusive, required_if=required_if),
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(iosxr_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
