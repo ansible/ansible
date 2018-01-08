@@ -363,60 +363,41 @@ class AnsibleVultrServer(Vultr):
         )
 
     def get_os(self):
-        name = self.module.params.get('os')
-        if not name:
-            return {}
-
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('os'),
             resource='os',
             use_cache=True
         )
 
     def get_ssh_key(self):
-        name = self.module.params.get('ssh_key')
-        if not name:
-            return {}
-
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('ssh_key'),
             resource='sshkey',
             use_cache=True
         )
 
     def get_region(self):
-        name = self.module.params.get('region')
-        if not name:
-            return {}
-
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('region'),
             resource='regions',
             use_cache=True
         )
 
     def get_plan(self):
-        name = self.module.params.get('plan')
-        if not name:
-            return {}
-
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('plan'),
             resource='plans',
             use_cache=True
         )
 
     def get_firewall_group(self):
-        name = self.module.params.get('firewall_group')
-        if not name:
-            return {}
         return self.query_resource_by_key(
             key='description',
-            value=name,
+            value=self.module.params.get('firewall_group'),
             resource='firewall',
             query_by='group_list'
         )
