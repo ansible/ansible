@@ -1182,6 +1182,8 @@ While neither is technically a new plugin, these connections may now be used dir
   * purefa_pg
   * purefa_snap
   * purefa_volume
+- glusterfs
+  * glusterfs_volume
 
 #### System
   * aix_lvol
