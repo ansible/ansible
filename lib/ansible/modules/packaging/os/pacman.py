@@ -138,21 +138,60 @@ def get_version(pacman_output):
     return None
 
 
+def find_provider(output, target_package):
+    """Parses a pacman info dump to find the package providing `target_package`"""
+    target_package = target_package.lower()
+    provider = None
+    version = None
+
+    packages = output.split('\n\n')
+
+    for package in packages:
+        lines = package.split('\n')
+        pkg_name = pkg_version = None
+        pkg_provides = []
+
+        for line in lines:
+            if line.startswith("Name"):
+                pkg_name = line.split(':', 1)[1].strip().lower()
+            if line.startswith("Provides"):
+                pkg_provides = [x.strip().lower() for x in line.split(':', 1)[1].strip().split()]
+            if line.startswith("Version"):
+                pkg_version = line.split(':', 1)[1].strip()
+
+        if pkg_name == target_package or target_package in pkg_provides:
+            if not pkg_version:
+                error = "Package {0} provides target {1}, but specifies no version".format(pkg_name, target_package)
+                raise Exception(error)
+            provider = pkg_name
+            version = pkg_version
+            break
+
+    return (provider, version)
+
+
 def query_package(module, pacman_path, name, state="present"):
     """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second
     boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available
     """
     if state == "present":
-        lcmd = "%s -Qi %s" % (pacman_path, name)
+        lcmd = "%s -Q %s" % (pacman_path, name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
         if lrc != 0:
-            # package is not installed locally
-            return False, False, False
+            # Package was not found, see if it's provided by some other package
+            lcmd = "%s -Qqei" % pacman_path
+            lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
+            if lrc != 0:
+                # some unknown error
+                return False, False, False
+            realname, lversion = find_provider(lstdout, name)
+            if not realname:
+                return False, False, False
+        else:
+            realname = lstdout.split()[0]
+            lversion = lstdout.split()[1]
 
-        # get the version installed locally (if any)
-        lversion = get_version(lstdout)
-
-        rcmd = "%s -Si %s" % (pacman_path, name)
+        rcmd = "%s -Si %s" % (pacman_path, realname)
         rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
         # get the version in the repository
         rversion = get_version(rstdout)
