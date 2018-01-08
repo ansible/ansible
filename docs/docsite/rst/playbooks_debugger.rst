@@ -254,6 +254,14 @@ q(uit)
 
 Quit from the debugger. The playbook execution is aborted.
 
+Use with the free strategy
+++++++++++++++++++++++++++
+
+Using the debugger on the ``free`` strategy will cause no further tasks to be queued or executed
+while the debugger is active. Additionally, using ``redo`` on a task to schedule it for re-execution
+may cause the rescheduled task to execute after subsequent tasks listed in your playbook.
+
+
 .. seealso::
 
    :doc:`playbooks`
