@@ -59,7 +59,7 @@ class TestNxosVrfModule(TestNxosModule):
 
     def test_nxos_vrf_present(self):
         set_module_args(dict(vrf='ntc', state='present', admin_state='up'))
-        self.execute_module(changed=True, commands=['vrf context ntc', 'no shutdown'])
+        self.execute_module(changed=True, commands=['vrf context ntc', 'no shutdown', 'exit'])
 
     def test_nxos_vrf_present_no_change(self):
         set_module_args(dict(vrf='management', state='present', admin_state='up'))
