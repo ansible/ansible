@@ -30,10 +30,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 from ansible.module_utils.k8s.helper import\
     AnsibleMixin,\
-    HAS_STRING_UTILS,\
-    COMMON_ARG_SPEC,\
-    AUTH_ARG_SPEC,\
-    OPENSHIFT_ARG_SPEC
+    HAS_STRING_UTILS
 
 try:
     from openshift.helper.kubernetes import KubernetesObjectHelper
@@ -97,8 +94,12 @@ class KubernetesAnsibleModuleHelper(AnsibleMixin, KubernetesObjectHelper):
 
 
 class KubernetesAnsibleModule(AnsibleModule):
+    resource_definition = None
+    api_version = None
+    kind = None
+    helper = None
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
         if not HAS_K8S_MODULE_HELPER:
             raise Exception(
@@ -115,48 +116,14 @@ class KubernetesAnsibleModule(AnsibleModule):
                 "This module requires Python string utils. Try `pip install python-string-utils`"
             )
 
-        mutually_exclusive = [
-            ('resource_definition', 'src'),
-        ]
-
-        AnsibleModule.__init__(self,
-                               argument_spec=self._argspec,
-                               supports_check_mode=True,
-                               mutually_exclusive=mutually_exclusive)
-
-        self.kind = self.params.pop('kind')
-        self.api_version = self.params.pop('api_version')
-        self.resource_definition = self.params.pop('resource_definition')
-        self.src = self.params.pop('src')
-        if self.src:
-            self.resource_definition = self.load_resource_definition(self.src)
-
-        if self.resource_definition:
-            self.api_version = self.resource_definition.get('apiVersion')
-            self.kind = self.resource_definition.get('kind')
-
-        self.api_version = self.api_version.lower()
-        self.kind = to_snake(self.kind)
-
-        if not self.api_version:
-            self.fail_json(
-                msg=("Error: no api_version specified. Use the api_version parameter, or provide it as part of a ",
-                     "resource_definition.")
-            )
-        if not self.kind:
-            self.fail_json(
-                msg="Error: no kind specified. Use the kind parameter, or provide it as part of a resource_definition"
-            )
-
-        self.helper = self._get_helper(self.api_version, self.kind)
+        kwargs['argument_spec'] = self.argspec
+        AnsibleModule.__init__(self, *args, **kwargs)
 
     @property
-    def _argspec(self):
-        argspec = copy.deepcopy(COMMON_ARG_SPEC)
-        argspec.update(copy.deepcopy(AUTH_ARG_SPEC))
-        return argspec
+    def argspec(self):
+        raise NotImplementedError()
 
-    def _get_helper(self, api_version, kind):
+    def get_helper(self, api_version, kind):
         try:
             helper = KubernetesAnsibleModuleHelper(api_version=api_version, kind=kind, debug=False)
             helper.get_model(api_version, kind)
@@ -165,86 +132,7 @@ class KubernetesAnsibleModule(AnsibleModule):
             self.fail_json(msg="Error initializing module helper: {0}".format(exc.message))
 
     def execute_module(self):
-        if self.resource_definition:
-            resource_params = self.resource_to_parameters(self.resource_definition)
-            self.params.update(resource_params)
-
-        self._authenticate()
-
-        state = self.params.pop('state', None)
-        force = self.params.pop('force', False)
-        name = self.params.get('name')
-        namespace = self.params.get('namespace')
-        existing = None
-
-        self._remove_aliases()
-
-        return_attributes = dict(changed=False, result=dict())
-
-        if self.helper.base_model_name_snake.endswith('list'):
-            k8s_obj = self._read(name, namespace)
-            return_attributes['result'] = k8s_obj.to_dict()
-            self.exit_json(**return_attributes)
-
-        try:
-            existing = self.helper.get_object(name, namespace)
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.message),
-                           error=exc.value.get('status'))
-
-        if state == 'absent':
-            if not existing:
-                # The object already does not exist
-                self.exit_json(**return_attributes)
-            else:
-                # Delete the object
-                if not self.check_mode:
-                    try:
-                        self.helper.delete_object(name, namespace)
-                    except KubernetesException as exc:
-                        self.fail_json(msg="Failed to delete object: {0}".format(exc.message),
-                                       error=exc.value.get('status'))
-                return_attributes['changed'] = True
-                self.exit_json(**return_attributes)
-        else:
-            if not existing:
-                k8s_obj = self._create(namespace)
-                return_attributes['result'] = k8s_obj.to_dict()
-                return_attributes['changed'] = True
-                self.exit_json(**return_attributes)
-
-            if existing and force:
-                k8s_obj = None
-                request_body = self.helper.request_body_from_params(self.params)
-                if not self.check_mode:
-                    try:
-                        k8s_obj = self.helper.replace_object(name, namespace, body=request_body)
-                    except KubernetesException as exc:
-                        self.fail_json(msg="Failed to replace object: {0}".format(exc.message),
-                                       error=exc.value.get('status'))
-                return_attributes['result'] = k8s_obj.to_dict()
-                return_attributes['changed'] = True
-                self.exit_json(**return_attributes)
-
-            # Check if existing object should be patched
-            k8s_obj = copy.deepcopy(existing)
-            try:
-                self.helper.object_from_params(self.params, obj=k8s_obj)
-            except KubernetesException as exc:
-                self.fail_json(msg="Failed to patch object: {0}".format(exc.message))
-            match, diff = self.helper.objects_match(self.helper.fix_serialization(existing), k8s_obj)
-            if match:
-                return_attributes['result'] = existing.to_dict()
-                self.exit_json(**return_attributes)
-            # Differences exist between the existing obj and requested params
-            if not self.check_mode:
-                try:
-                    k8s_obj = self.helper.patch_object(name, namespace, k8s_obj)
-                except KubernetesException as exc:
-                    self.fail_json(msg="Failed to patch object: {0}".format(exc.message))
-            return_attributes['result'] = k8s_obj.to_dict()
-            return_attributes['changed'] = True
-            self.exit_json(**return_attributes)
+        raise NotImplementedError()
 
     def exit_json(self, **return_attributes):
         """ Filter any sensitive data that we don't want logged """
@@ -257,7 +145,7 @@ class KubernetesAnsibleModule(AnsibleModule):
                     remove_secret_data(item)
         super(KubernetesAnsibleModule, self).exit_json(**return_attributes)
 
-    def _authenticate(self):
+    def authenticate(self):
         try:
             auth_options = {}
             auth_args = ('host', 'api_key', 'kubeconfig', 'context', 'username', 'password',
@@ -269,39 +157,15 @@ class KubernetesAnsibleModule(AnsibleModule):
         except KubernetesException as e:
             self.fail_json(msg='Error loading config', error=str(e))
 
-    def _remove_aliases(self):
+    def remove_aliases(self):
         """
         The helper doesn't know what to do with aliased keys
         """
-        for k, v in iteritems(self._argspec):
+        for k, v in iteritems(self.argspec):
             if 'aliases' in v:
                 for alias in v['aliases']:
                     if alias in self.params:
                         self.params.pop(alias)
-
-    def _create(self, namespace):
-        request_body = None
-        k8s_obj = None
-        try:
-            request_body = self.helper.request_body_from_params(self.params)
-        except KubernetesException as exc:
-            self.fail_json(msg="Failed to create object: {0}".format(exc.message))
-        if not self.check_mode:
-            try:
-                k8s_obj = self.helper.create_object(namespace, body=request_body)
-            except KubernetesException as exc:
-                self.fail_json(msg="Failed to create object: {0}".format(exc.message),
-                               error=exc.value.get('status'))
-        return k8s_obj
-
-    def _read(self, name, namespace):
-        k8s_obj = None
-        try:
-            k8s_obj = self.helper.get_object(name, namespace)
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to retrieve requested object',
-                           error=exc.value.get('status'))
-        return k8s_obj
 
     def load_resource_definition(self, src):
         """ Load the requested src path """
@@ -354,41 +218,12 @@ class OpenShiftAnsibleModuleHelper(AnsibleMixin, OpenShiftObjectHelper):
     pass
 
 
-class OpenShiftAnsibleModule(KubernetesAnsibleModule):
-    def __init__(self):
-        super(OpenShiftAnsibleModule, self).__init__()
+class OpenShiftAnsibleModuleMixin(object):
 
-    @property
-    def _argspec(self):
-        args = super(OpenShiftAnsibleModule, self)._argspec
-        args.update(copy.deepcopy(OPENSHIFT_ARG_SPEC))
-        return args
-
-    def _get_helper(self, api_version, kind):
+    def get_helper(self, api_version, kind):
         try:
             helper = OpenShiftAnsibleModuleHelper(api_version=api_version, kind=kind, debug=False)
             helper.get_model(api_version, kind)
             return helper
         except KubernetesException as exc:
             self.fail_json(msg="Error initializing module helper: {0}".format(exc.message))
-
-    def _create(self, namespace):
-        if self.kind.lower() == 'project':
-            return self._create_project()
-        return super(OpenShiftAnsibleModule, self)._create(namespace)
-
-    def _create_project(self):
-        new_obj = None
-        k8s_obj = None
-        try:
-            new_obj = self.helper.object_from_params(self.params)
-        except KubernetesException as exc:
-            self.fail_json(msg="Failed to create object: {}".format(exc.message))
-        try:
-            k8s_obj = self.helper.create_project(metadata=new_obj.metadata,
-                                                 display_name=self.params.get('display_name'),
-                                                 description=self.params.get('description'))
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to retrieve requested object',
-                           error=exc.value.get('status'))
-        return k8s_obj

@@ -23,11 +23,12 @@ import math
 import time
 
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.k8s.common import KubernetesAnsibleModule, OpenShiftAnsibleModuleHelper
+from ansible.module_utils.k8s.common import OpenShiftAnsibleModuleMixin
+from ansible.module_utils.k8s.raw import KubernetesRawModule
 from ansible.module_utils.k8s.helper import AUTH_ARG_SPEC, COMMON_ARG_SPEC
 
 try:
-    from kubernetes import watch
+    from openshift import watch
     from openshift.helper.exceptions import KubernetesException
 except ImportError as exc:
     class KubernetesException(Exception):
@@ -43,14 +44,14 @@ SCALE_ARG_SPEC = {
 }
 
 
-class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
+class KubernetesAnsibleScaleModule(KubernetesRawModule):
 
     def execute_module(self):
         if self.resource_definition:
             resource_params = self.resource_to_parameters(self.resource_definition)
             self.params.update(resource_params)
 
-        self._authenticate()
+        self.authenticate()
 
         name = self.params.get('name')
         namespace = self.params.get('namespace')
@@ -110,7 +111,7 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
         return parameters
 
     @property
-    def _argspec(self):
+    def argspec(self):
         args = copy.deepcopy(COMMON_ARG_SPEC)
         args.pop('state')
         args.pop('force')
@@ -233,13 +234,5 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
         return obj
 
 
-class OpenShiftAnsibleScaleModule(KubernetesAnsibleScaleModule):
-
-    def _get_helper(self, api_version, kind):
-        helper = None
-        try:
-            helper = OpenShiftAnsibleModuleHelper(api_version=api_version, kind=kind, debug=False)
-            helper.get_model(api_version, kind)
-        except KubernetesException as exc:
-            self.exit_json(msg="Error initializing module helper {}".format(exc.message))
-        return helper
+class OpenShiftAnsibleScaleModule(OpenShiftAnsibleModuleMixin, KubernetesAnsibleScaleModule):
+    pass

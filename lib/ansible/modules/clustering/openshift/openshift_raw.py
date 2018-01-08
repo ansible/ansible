@@ -193,11 +193,11 @@ result:
        type: list
 '''
 
-from ansible.module_utils.k8s.common import OpenShiftAnsibleModule
+from ansible.module_utils.k8s.raw import OpenShiftRawModule
 
 
 def main():
-    OpenShiftAnsibleModule().execute_module()
+    OpenShiftRawModule().execute_module()
 
 
 if __name__ == '__main__':
