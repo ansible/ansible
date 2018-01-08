@@ -1,0 +1,8 @@
+---
+- hosts: buildah-container
+  connection: buildah
+  gather_facts: no
+  vars:
+    output_dir: /tmp/ansible_test_synchronize_buildah
+  roles:
+  - test_buildah_synchronize
