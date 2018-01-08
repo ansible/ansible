@@ -55,6 +55,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33967)
 * Make eos_vlan idempotent
   (https://github.com/ansible/ansible/pull/34443)
+* Fix win_iis_website to properly check attributes before setting
+  (https://github.com/ansible/ansible/pull/34501)
 
 
 <a id="2.4.2"></a>
