@@ -7,8 +7,9 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 
-# Copyright 2017 Dag Wieers <dag@wieers.com>
-# Copyright 2017 Swetha Chunduri (@schunduri)
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+# Copyright: (c) 2017, Swetha Chunduri (@schunduri)
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without modification,
@@ -176,7 +177,7 @@ class ACIModule(object):
 
         if self.params['private_key'] is None:
             if self.params['password'] is None:
-                self.module.fail(msg="Parameter 'password' is required for HTTP authentication")
+                self.module.fail_json(msg="Parameter 'password' is required for HTTP authentication")
             # Only log in when password-based authentication is used
             self.login()
         elif not HAS_OPENSSL:
