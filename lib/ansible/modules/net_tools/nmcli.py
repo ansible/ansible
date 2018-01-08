@@ -568,6 +568,7 @@ class Nmcli(object):
         self.priority = module.params['priority']
         self.mode = module.params['mode']
         self.miimon = module.params['miimon']
+        self.primary = module.params['primary']
         self.downdelay = module.params['downdelay']
         self.updelay = module.params['updelay']
         self.arp_interval = module.params['arp_interval']
@@ -817,6 +818,9 @@ class Nmcli(object):
         if self.downdelay is not None:
             cmd.append('arp-ip-target')
             cmd.append(self.arp_ip_target)
+        if self.primary is not None:
+            cmd.append('primary')
+            cmd.append(self.primary)
         return cmd
 
     def modify_connection_bond(self):
@@ -1067,6 +1071,7 @@ def main():
             updelay=dict(required=False, default=None, type='str'),
             arp_interval=dict(required=False, default=None, type='str'),
             arp_ip_target=dict(required=False, default=None, type='str'),
+            primary=dict(required=False, default=None, type='str'),
             # general usage
             mtu=dict(required=False, default=None, type='str'),
             mac=dict(required=False, default=None, type='str'),
