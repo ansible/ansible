@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_lldp netconf/basic.yaml"
+- debug: msg="START junos_lldp netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - Disable lldp and remove it's configuration
   junos_lldp:
@@ -115,3 +115,5 @@
 - assert:
     that:
       - "result.changed == false"
+
+- debug: msg="END junos_lldp netconf/basic.yaml on connection={{ ansible_connection }}"

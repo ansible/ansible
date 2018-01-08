@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/changeport.yaml"
+- debug: msg="START netconf/changeport.yaml on connection={{ ansible_connection }}"
 
 
 - name: Setup
@@ -38,6 +38,7 @@
     - get-software-information
     provider: "{{ netconf }}"
     port: 8022
+  connection: netconf
 
 - name: wait for persistent socket to timeout
   pause:
@@ -49,6 +50,7 @@
     rpcs: get-software-information
     provider: "{{ netconf }}"
   register: result
+  connection: netconf
   ignore_errors: true
 
 - assert:
@@ -69,5 +71,6 @@
     rpcs:
     - get-software-information
     provider: "{{ netconf }}"
+  connection: netconf
 
-- debug: msg="END netconf/changeport.yaml"
+- debug: msg="END netconf/changeport.yaml on connection={{ ansible_connection }}"

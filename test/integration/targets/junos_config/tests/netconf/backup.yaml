@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/backup.yaml"
+- debug: msg="START netconf/backup.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   junos_config:
@@ -44,4 +44,4 @@
     that:
       - "backup_files.files is defined"
 
-- debug: msg="END netconf/backup.yaml"
+- debug: msg="END netconf/backup.yaml on connection={{ ansible_connection }}"
