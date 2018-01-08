@@ -933,7 +933,7 @@ class Connection(ConnectionBase):
                 else:
                     in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
                     in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
