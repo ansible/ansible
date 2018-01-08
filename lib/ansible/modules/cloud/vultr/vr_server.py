@@ -67,6 +67,10 @@ options:
   user_data:
     description:
       - User data to be passed to the server.
+  startup_script:
+    description:
+      - Name of the startup script to execute on boot.
+      - Only considered while creating the server.
   ssh_keys:
     description:
       - List of SSH keys passed to the server on creation.
@@ -351,6 +355,13 @@ class AnsibleVultrServer(Vultr):
         }
         self.server_power_state = None
 
+    def get_startup_script(self):
+        return self.query_resource_by_key(
+            key='name',
+            value=self.module.params.get('startup_script'),
+            resource='startupscript',
+        )
+
     def get_os(self):
         name = self.module.params.get('os')
         if not name:
@@ -492,6 +503,7 @@ class AnsibleVultrServer(Vultr):
                 'tag': self.module.params.get('tag'),
                 'reserved_ip_v4': self.module.params.get('reserved_ip_v4'),
                 'user_data': self.get_user_data(),
+                'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
             self.api_query(
                 path="/v1/server/create",
@@ -835,6 +847,7 @@ def main():
         tag=dict(),
         reserved_ip_v4=dict(),
         firewall_group=dict(),
+        startup_script=dict(),
         user_data=dict(),
         ssh_keys=dict(type='list', aliases=['ssh_key']),
         region=dict(),
