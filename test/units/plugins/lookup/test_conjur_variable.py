@@ -33,50 +33,39 @@ import tempfile
 
 class TestLookupModule(unittest.TestCase):
     def test_valid_netrc_file(self):
-        temp_netrc = tempfile.NamedTemporaryFile()
-        temp_netrc.writelines([
-            "machine http://localhost/authn",
-            "  login admin",
-            "  password my-pass",
-        ])
-        temp_netrc.seek(0)
+        with tempfile.NamedTemporaryFile() as temp_netrc:
+            temp_netrc.write(b"machine http://localhost/authn\n")
+            temp_netrc.write(b"  login admin\n")
+            temp_netrc.write(b"  password my-pass\n")
+            temp_netrc.seek(0)
 
-        results = conjur_variable._load_identity_from_file(temp_netrc.name, 'http://localhost')
+            results = conjur_variable._load_identity_from_file(temp_netrc.name, 'http://localhost')
 
-        self.assertEquals(results['id'], 'admin')
-        self.assertEquals(results['api_key'], 'my-pass')
-        temp_netrc.close
+            self.assertEquals(results['id'], 'admin')
+            self.assertEquals(results['api_key'], 'my-pass')
 
     def test_netrc_without_host_file(self):
-        temp_netrc = tempfile.NamedTemporaryFile()
-        temp_netrc.writelines([
-            "machine http://localhost/authn\n",
-            "  login admin\n",
-            "  password my-pass\n",
-        ])
-        temp_netrc.seek(0)
+        with tempfile.NamedTemporaryFile() as temp_netrc:
+            temp_netrc.write(b"machine http://localhost/authn\n")
+            temp_netrc.write(b"  login admin\n")
+            temp_netrc.write(b"  password my-pass\n")
+            temp_netrc.seek(0)
 
-        with self.assertRaises(AnsibleError):
-            conjur_variable._load_identity_from_file(temp_netrc.name, 'http://foo')
+            with self.assertRaises(AnsibleError):
+                conjur_variable._load_identity_from_file(temp_netrc.name, 'http://foo')
 
-        temp_netrc.close
 
     def test_valid_configuration(self):
-        configuration_file = tempfile.NamedTemporaryFile()
-        configuration_file.writelines([
-            "---\n",
-            "account: demo-policy\n",
-            "plugins: []\n",
-            "appliance_url: http://localhost:8080\n"
-        ])
-        configuration_file.seek(0)
-        print(configuration_file.read())
+        with tempfile.NamedTemporaryFile() as configuration_file:
+            configuration_file.write(b"---\n")
+            configuration_file.write(b"account: demo-policy\n")
+            configuration_file.write(b"plugins: []\n")
+            configuration_file.write(b"appliance_url: http://localhost:8080\n")
+            configuration_file.seek(0)
 
-        results = conjur_variable._load_conf_from_file(configuration_file.name)
-
-        self.assertEquals(results['account'], 'demo-policy')
-        self.assertEquals(results['appliance_url'], 'http://localhost:8080')
-        configuration_file.close
+            results = conjur_variable._load_conf_from_file(configuration_file.name)
+            self.assertEquals(results['account'], 'demo-policy')
+            self.assertEquals(results['appliance_url'], 'http://localhost:8080')
 
     # This test fails do to missing patch :(
     # @patch('ansible.plugins.lookup.conjur_variable.open_url')
