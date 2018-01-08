@@ -1,0 +1,70 @@
+---
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp parameter test"
+
+- name: "Disable feature BGP"
+  nxos_feature:
+    feature: bgp
+    state: disabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Enable feature BGP"
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  # these tasks will fail on N3k A8 code and n7k running helsinki
+  # due to no support
+  - name: "set disable policy"
+    nxos_bgp: &set1
+      asn: 65535
+      disable_policy_batching: true
+      disable_policy_batching_ipv4_prefix_list: v4_p
+      disable_policy_batching_ipv6_prefix_list: v6_p
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_bgp: *set1
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "reset disable policy"
+    nxos_bgp: &reset1
+      asn: 65535
+      disable_policy_batching: false
+      disable_policy_batching_ipv4_prefix_list: default
+      disable_policy_batching_ipv6_prefix_list: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *reset1
+    register: result
+
+  - assert: *false
+
+  rescue:
+  - debug: msg="Tests can fail on A8 or helsinki images"
+
+  always:
+  - name: "Disable feature bgp"
+    nxos_feature:
+      feature: bgp
+      state: disabled
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_bgp parameter test"
