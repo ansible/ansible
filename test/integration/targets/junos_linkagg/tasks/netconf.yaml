@@ -5,7 +5,6 @@
     patterns: "{{ testcase }}.yaml"
   register: test_cases
   connection: local
-  delegate_to: localhost
 
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
