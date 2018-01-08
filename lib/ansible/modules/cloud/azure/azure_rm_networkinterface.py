@@ -76,65 +76,90 @@ options:
             - Windows
             - Linux
         default: Linux
-        required: false
     private_ip_address:
         description:
             - (Deprecate) Valid IPv4 address that falls within the specified subnet.
-        required: false
+            - This option will be deprecated in 2.9, use I(ip_configurations) instead.
     private_ip_allocation_method:
         description:
             - "(Deprecate) Specify whether or not the assigned IP address is permanent. NOTE: when creating a network interface
               specifying a value of 'Static' requires that a private_ip_address value be provided. You can update
               the allocation method to 'Static' after a dynamic private ip address has been assigned."
+            - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         default: Dynamic
         choices:
             - Dynamic
             - Static
-        required: false
     public_ip:
         description:
             - (Deprecate) When creating a network interface, if no public IP address name is provided a default public IP
               address will be created. Set to false, if you do not want a public IP address automatically created.
+            - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         default: true
-        required: false
     public_ip_address_name:
         description:
             - (Deprecate) Name of an existing public IP address object to associate with the security group.
+            - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         aliases:
             - public_ip_address
             - public_ip_name
-        required: false
         default: null
     public_ip_allocation_method:
         description:
             - (Deprecate) If a public_ip_address_name is not provided, a default public IP address will be created. The allocation
               method determines whether or not the public IP address assigned to the network interface is permanent.
+            - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         choices:
             - Dynamic
             - Static
         default: Dynamic
-        required: false
     ip_configurations:
         description:
             - List of ip configuration if contains mutilple configuration, should contain configuration object include
               field private_ip_address, private_ip_allocation_method, public_ip_address_name, public_ip, subnet_name,
               virtual_network_name, public_ip_allocation_method, name
+            suboptions:
+                name:
+                    description:
+                        - Name of the ip configuration.
+                    required: true
+                private_ip_address:
+                    description:
+                        - Private ip address for the ip configuration.
+                private_ip_allocation_method:
+                    description:
+                        - private ip allocation method.
+                    choices:
+                        - Dynamic
+                        - Static
+                    default: Dynamic
+                public_ip_address_name:
+                    description:
+                        - Name of the public ip address. None for disable ip address.
+                public_ip_allocation_method:
+                    description:
+                        - public ip allocation method.
+                    choices:
+                        - Dynamic
+                        - Static
+                    default: Dynamic
+                primary:
+                    description:
+                        - Whether the ip configuration is the primary one in the list.
+                    default: False
         version_added: 2.5
-        required: false
     security_group_name:
         description:
             - Name of an existing security group with which to associate the network interface. If not provided, a
               default security group will be created.
         aliases:
             - security_group
-        required: false
         default: null
     open_ports:
         description:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
-        required: false
         default: null
 extends_documentation_fragment:
     - azure
@@ -152,6 +177,10 @@ EXAMPLES = '''
             resource_group: Testing
             virtual_network_name: vnet001
             subnet_name: subnet001
+            ip_configurations:
+                name: ipconfig1
+                public_ip_address_name: publicip001
+                primary: True
 
     - name: Create a network interface with private IP address only (no Public IP)
       azure_rm_networkinterface:
@@ -159,7 +188,9 @@ EXAMPLES = '''
             resource_group: Testing
             virtual_network_name: vnet001
             subnet_name: subnet001
-            public_ip: no
+            ip_configurations:
+                name: ipconfig1
+                primary: True
 
     - name: Create a network interface for use in a Windows host (opens RDP port) with custom RDP port
       azure_rm_networkinterface:
@@ -169,6 +200,10 @@ EXAMPLES = '''
             subnet_name: subnet001
             os_type: Windows
             rdp_port: 3399
+            ip_configurations:
+                name: ipconfig1
+                public_ip_address_name: publicip001
+                primary: True
 
     - name: Create a network interface using existing security group and public IP
       azure_rm_networkinterface:
@@ -177,7 +212,10 @@ EXAMPLES = '''
             virtual_network_name: vnet001
             subnet_name: subnet001
             security_group_name: secgroup001
-            public_ip_address_name: publicip001
+            ip_configurations:
+                name: ipconfig1
+                public_ip_address_name: publicip001
+                primary: True
 
     - name: Create a network with mutilple ip configurations
       azure_rm_networkinterface:
@@ -188,9 +226,9 @@ EXAMPLES = '''
             security_group_name: secgroup001
             ip_configurations:
                 - name: ipconfig1
+                  public_ip_address_name: publicip001
                   primary: True
                 - name: ipconfig2
-                  public_ip: False
 
     - name: Delete network interface
       azure_rm_networkinterface:
@@ -245,10 +283,6 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
 
 
-def get_config_name(name, index):
-    return name or 'ipconfig{0}'.format(index)
-
-
 def subnet_to_dict(subnet):
     dic = azure_id_to_dict(subnet.id)
     return dict(
@@ -301,11 +335,11 @@ def nic_to_dict(nic):
 
 def construct_ip_configuration_set(raw):
     configurations = [str(dict(
-        private_ip_allocation_method=item.get('private_ip_allocation_method').encode('ascii'),
-        public_ip_address_name=(item.get('public_ip_address').get('name').encode('ascii')
-                                if item.get('public_ip_address') else item.get('public_ip_address_name').encode('ascii')),
+        private_ip_allocation_method=item.get('private_ip_allocation_method').to_native(),
+        public_ip_address_name=(item.get('public_ip_address').get('name').to_native()
+                                if item.get('public_ip_address') else item.get('public_ip_address_name').to_native()),
         primary=item.get('primary'),
-        name=item.get('name').encode('ascii')
+        name=item.get('name').to_native()
     )) for item in raw]
     return set(configurations)
 

@@ -156,3 +156,14 @@
 - assert:
     that:
       - output.changed
+
+- name: Delete the NIC (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed
