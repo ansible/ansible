@@ -239,6 +239,7 @@ Ansible Changes By Release
 #### Windows
   * win_audit_policy_system
   * win_audit_rule
+  * win_certificate_store
   * win_disk_facts
   * win_scheduled_task_stat
   * win_whoami
