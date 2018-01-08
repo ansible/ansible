@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_system netconf/basic.yaml"
+- debug: msg="START junos_system netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove hostname
   junos_system:
@@ -403,3 +403,5 @@
       - "result.changed == true"
       - "'<name>8.8.8.8</name>' not in config.xml"
       - "'<name>8.8.4.4</name>' not in config.xml"
+
+- debug: msg="END junos_system netconf/basic.yaml on connection={{ ansible_connection }}"

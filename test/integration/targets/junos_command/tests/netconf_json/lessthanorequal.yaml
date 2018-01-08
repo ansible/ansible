@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf_json/lessthanorequal.yaml"
+- debug: msg="START netconf_json/lessthanorequal.yaml on connection={{ ansible_connection }}"
 
 - name: test le operator
   junos_command:
@@ -35,4 +35,4 @@
       - "result.stdout is defined"
       - "result.stdout_lines is defined"
 
-- debug: msg="END netconf_json/lessthanorequal.yaml"
+- debug: msg="END netconf_json/lessthanorequal.yaml on connection={{ ansible_connection }}"

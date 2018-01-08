@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_linkagg netconf/basic.yaml"
+- debug: msg="START junos_linkagg netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove linkagg
   junos_linkagg:
@@ -236,3 +236,5 @@
 - assert:
     that:
       - "result.changed == false"
+
+- debug: msg="END junos_linkagg netconf/basic.yaml on connection={{ ansible_connection }}"

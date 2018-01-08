@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/bad_action.yaml"
+- debug: msg="START netconf/bad_action.yaml on connection={{ ansible_connection }}"
 
 - name: configure single bad_action command
   junos_config:
@@ -13,4 +13,4 @@
     that:
       - "result.failed == true"
 
-- debug: msg="END netconf/bad_action.yaml"
+- debug: msg="END netconf/bad_action.yaml on connection={{ ansible_connection }}"

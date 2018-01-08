@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/facts.yaml"
+- debug: msg="START netconf/facts.yaml on connection={{ ansible_connection }}"
 
 
 - name: Collect default facts from device
@@ -107,4 +107,4 @@
       - "result.changed == false"
       - "'system {\n    host-name {{ inventory_hostname_short }};' in result['ansible_facts']['ansible_net_config']"
 
-- debug: msg="END netconf/facts.yaml"
+- debug: msg="END netconf/facts.yaml on connection={{ ansible_connection }}"

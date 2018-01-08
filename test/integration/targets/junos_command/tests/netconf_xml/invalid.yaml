@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf_xml/invalid.yaml"
+- debug: msg="START netconf_xml/invalid.yaml on connection={{ ansible_connection }}"
 
 - name: run invalid command
   junos_command:
@@ -28,4 +28,4 @@
       - "result.failed == true"
       - "result.msg is defined"
 
-- debug: msg="END netconf_xml/invalid.yaml"
+- debug: msg="END netconf_xml/invalid.yaml on connection={{ ansible_connection }}"

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_interface netconf/intent.yaml"
+- debug: msg="START junos_interface netconf/intent.yaml on connection={{ ansible_connection }}"
 
 - name: get facts
   junos_facts:
@@ -92,3 +92,5 @@
 - assert:
     that:
       - "result.failed == false"
+
+- debug: msg="END junos_interface netconf/intent.yaml on connection={{ ansible_connection }}"

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_banner netconf/basic.yaml"
+- debug: msg="START junos_banner netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove login banner
   junos_banner:
@@ -190,3 +190,5 @@
     that:
       - "result.changed == true"
       - "'<announcement>this is my motd banner</announcement>' not in config.xml"
+
+- debug: msg="END junos_banner netconf/basic.yaml on connection={{ ansible_connection }}"
