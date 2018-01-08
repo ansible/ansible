@@ -3,6 +3,8 @@
   find:
     paths: "{{ role_path }}/tests/netconf_json"
     patterns: "{{ testcase }}.yaml"
+  connection: local
+  delegate_to: localhost
   register: test_cases
 
 - name: set test_items

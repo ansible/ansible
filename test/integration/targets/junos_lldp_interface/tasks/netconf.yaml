@@ -4,6 +4,7 @@
     paths: "{{ role_path }}/tests/netconf"
     patterns: "{{ testcase }}.yaml"
   register: test_cases
+  connection: local
   delegate_to: localhost
 
 - name: set test_items
