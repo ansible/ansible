@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils.six import iteritems
+from ansible.plugins.cache import FactCache
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
 
@@ -60,6 +61,9 @@ class InventoryData(object):
         for group in ('all', 'ungrouped'):
             self.add_group(group)
         self.add_child('all', 'ungrouped')
+
+        # prime cache
+        self.cache = FactCache()
 
     def serialize(self):
         data = dict()
@@ -115,6 +119,10 @@ class InventoryData(object):
 
             mygroups = host.get_groups()
 
+            # ensure hosts are always in 'all'
+            if 'all' not in mygroups and not host.implicit:
+                self.add_child('all', host.name)
+
             if self.groups['ungrouped'] in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
                 if set(mygroups).difference(set([self.groups['all'], self.groups['ungrouped']])):
@@ -123,7 +131,7 @@ class InventoryData(object):
             elif not host.implicit:
                 # add ungrouped hosts to ungrouped, except implicit
                 length = len(mygroups)
-                if length == 0 or (length == 1 and self.groups['all'] in mygroups):
+                if length == 0 or (length == 1 and all in mygroups):
                     self.add_child('ungrouped', host.name)
 
             # special case for implicit hosts

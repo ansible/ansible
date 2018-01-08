@@ -62,13 +62,12 @@ def _generic_g_method(prop_name, self):
 
 def _generic_g_parent(prop_name, self):
     try:
-        if self._squashed or self._finalized:
-            value = self._attributes[prop_name]
-        else:
+        value = self._attributes[prop_name]
+        if value is None and not self._squashed and not self._finalized:
             try:
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
-                value = self._attributes[prop_name]
+                pass
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
@@ -159,7 +158,7 @@ class Base(with_metaclass(BaseMeta, object)):
     _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
 
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list', extend=True, prepend=True)
+    _environment         = FieldAttribute(isa='list')
     _no_log              = FieldAttribute(isa='bool')
     _always_run          = FieldAttribute(isa='bool')
     _run_once            = FieldAttribute(isa='bool')

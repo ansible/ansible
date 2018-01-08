@@ -137,8 +137,7 @@ function New-FWRule
     if ($remoteAddresses -and $remoteAddresses -ne "any") { $rule.RemoteAddresses = $remoteAddresses }
     if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
     if ($action) { $rule.Action = Parse-Action -actionStr $action }
-    # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
-    if ($profiles) { $rule.Profiles = [int](Parse-Profiles -profilesStr $profiles) }
+    if ($profiles) { $rule.Profiles = Parse-Profiles -profilesStr $profiles }
     if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
     if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
         # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
@@ -257,14 +256,7 @@ try {
                     }
 
                     if (-not $check_mode) {
-                        # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
-                        # to prevent InvalidCastException under PS5+
-                        If($prop -eq 'Profiles') {
-                            $existingRule.Profiles = [int] $rule.$prop
-                        }
-                        Else {
-                            $existingRule.$prop = $rule.$prop
-                        }
+                        $existingRule.$prop = $rule.$prop
                     }
                     $result.changed = $true
                 }
@@ -278,9 +270,7 @@ try {
         }
     }
 } catch [Exception] {
-    $ex = $_
-    $result['exception'] = $($ex | Out-String)
-    Fail-Json $result $ex.Exception.Message
+    Fail-Json $result $_.Exception.Message
 }
 
 Exit-Json $result

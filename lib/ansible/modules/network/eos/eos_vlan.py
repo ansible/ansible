@@ -140,8 +140,7 @@ def map_obj_to_commands(updates, module):
         elif state == 'present':
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
-                if w['name']:
-                    commands.append('name %s' % w['name'])
+                commands.append('name %s' % w['name'])
 
                 if w['interfaces']:
                     for i in w['interfaces']:
@@ -173,15 +172,13 @@ def map_obj_to_commands(updates, module):
         else:
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
-                if w['name']:
-                    commands.append('name %s' % w['name'])
+                commands.append('name %s' % w['name'])
                 commands.append('state %s' % w['state'])
-            elif (w['name'] and obj_in_have['name'] != w['name']) or obj_in_have['state'] != w['state']:
+            elif obj_in_have['name'] != w['name'] or obj_in_have['state'] != w['state']:
                 commands.append('vlan %s' % w['vlan_id'])
 
-                if w['name']:
-                    if obj_in_have['name'] != w['name']:
-                        commands.append('name %s' % w['name'])
+                if obj_in_have['name'] != w['name']:
+                    commands.append('name %s' % w['name'])
 
                 if obj_in_have['state'] != w['state']:
                     commands.append('state %s' % w['state'])

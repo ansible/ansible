@@ -80,8 +80,7 @@ def _check_mode_unchanged_when_already_0660(self, mode):
     # 0660 mode work.  It cannot be used to check that setting a mode that is
     # not equivalent to 0660 works.
     with patch('os.lstat', side_effect=[self.mock_stat2, self.mock_stat2, self.mock_stat2]) as m_lstat:
-        with patch('os.path.exists', return_value=True):
-            self.assertEqual(self.am.set_mode_if_different('/path/to/file', mode, False), False)
+        self.assertEqual(self.am.set_mode_if_different('/path/to/file', mode, False), False)
 
 
 SYNONYMS_0660 = (

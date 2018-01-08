@@ -231,7 +231,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
 
     # set the location type and validate the path
     if ($path -ne $null) {
-        if ($path.EndsWith(".msi", [System.StringComparison]::CurrentCultureIgnoreCase)) {
+        if ($path.EndsWith(".msi")) {
             $metadata.msi = $true
         } else {
             $metadata.msi = $false
