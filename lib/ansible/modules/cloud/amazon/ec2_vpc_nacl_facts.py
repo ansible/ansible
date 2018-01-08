@@ -104,10 +104,11 @@ nacls:
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, get_aws_connection_info,
                                       ansible_dict_to_boto3_filter_list, HAS_BOTO3,
@@ -130,7 +131,11 @@ def list_ec2_vpc_nacls(connection, module):
     try:
         nacls = connection.describe_network_acls(NetworkAclIds=nacl_ids, Filters=filters)
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except BotoCoreError as e:
+        module.fail_json(msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)),
+                         exception=traceback.format_exc())
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_nacls = []
@@ -211,15 +216,8 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        try:
-            connection = boto3_conn(module, conn_type='client', resource='ec2',
-                                    region=region, endpoint=ec2_url, **aws_connect_params)
-        except (NoCredentialsError, ProfileNotFound) as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module, conn_type='client', resource='ec2',
+                            region=region, endpoint=ec2_url, **aws_connect_params)
 
     list_ec2_vpc_nacls(connection, module)
 
