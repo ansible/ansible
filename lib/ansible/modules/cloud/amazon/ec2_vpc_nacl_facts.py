@@ -148,9 +148,9 @@ def list_ec2_vpc_nacls(connection, module):
             nacl['tags'] = boto3_tag_list_to_ansible_dict(nacl['tags'], 'key', 'value')
         if 'entries' in nacl:
             nacl['egress'] = [nacl_entry_to_list(entry) for entry in nacl['entries']
-                              if entry['rule_number'] < 32766 and entry['egress']]
+                              if entry['rule_number'] < 32767 and entry['egress']]
             nacl['ingress'] = [nacl_entry_to_list(entry) for entry in nacl['entries']
-                               if entry['rule_number'] < 32766 and not entry['egress']]
+                               if entry['rule_number'] < 32767 and not entry['egress']]
             del nacl['entries']
         if 'associations' in nacl:
             nacl['subnets'] = [a['subnet_id'] for a in nacl['associations']]
