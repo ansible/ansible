@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/netconf.yaml"
+- debug: msg="START netconf/netconf.yaml on connection={{ ansible_connection }}"
 
 
 - name: Ensure netconf is enabled
@@ -26,6 +26,7 @@
   junos_command:
     rpcs: get-software-information
     provider: "{{ netconf }}"
+  connection: netconf
 
 # Disable netconf
 
@@ -56,6 +57,7 @@
     rpcs: get-software-information
     provider: "{{ netconf }}"
   register: result
+  connection: netconf
   ignore_errors: true
 
 - assert:
@@ -68,4 +70,4 @@
   register: result
 
 
-- debug: msg="END netconf/netconfg.yaml"
+- debug: msg="END netconf/netconfg.yaml on connection={{ ansible_connection }}"

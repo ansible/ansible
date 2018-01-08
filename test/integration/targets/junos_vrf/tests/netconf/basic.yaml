@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_vrf netconf/basic.yaml"
+- debug: msg="START junos_vrf netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove vrf
   junos_vrf:
@@ -320,3 +320,5 @@
 - assert:
     that:
       - "result.changed == false"
+
+- debug: msg="END junos_vrf netconf/basic.yaml on connection={{ ansible_connection }}"
