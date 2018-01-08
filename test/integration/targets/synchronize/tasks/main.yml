@@ -16,11 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- set_fact:
+    # These tests are also run under alternative transports, such as lxd and this changes
+    # rsync's output slightly, which is why we need this set_fact.
+    transfer_char: "{% if non_local|d(False) %}<{% else %}>{% endif %}"
+
+- name: ensure output dir
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+
 - name: cleanup old files
-  shell: rm -rf {{output_dir}}/*
+  shell: rm -f {{output_dir}}/*
+
+- name: cleanup old files
+  local_action: shell rm -f {{output_dir}}/*
 
 - name: create test new files
-  copy: dest={{output_dir}}/{{item}} mode=0644 content="hello world"
+  local_action: copy dest={{output_dir}}/{{item}} mode=0644 content="hello world"
   with_items:
     - foo.txt
     - bar.txt
@@ -36,7 +49,7 @@
         - "'cmd' in sync_result"
         - "'rsync' in sync_result.cmd"
         - "'msg' in sync_result"
-        - "sync_result.msg.startswith('>f+')"
+        - "sync_result.msg.startswith(transfer_char + 'f+')"
         - "sync_result.msg.endswith('+ foo.txt\n')"
 
 - name: test that the file was really copied over
@@ -79,7 +92,7 @@
         - "'cmd' in sync_result"
         - "'rsync' in sync_result.cmd"
         - "'msg' in sync_result"
-        - "sync_result.msg.startswith('>f+')"
+        - "sync_result.msg.startswith(transfer_char + 'f+')"
         - "sync_result.msg.endswith('+ foo.txt\n')"
 
 - name: test that the file was really copied over
@@ -108,13 +121,13 @@
     state: absent
     path: "{{output_dir}}/{{item}}"
   with_items:
-    - foo.result
+    # We don't cleanup foo.result, we'll need it for the next test
     - bar.result
 
 - name: Synchronize using the mode=pull param
   synchronize:
-    src: "{{output_dir}}/foo.txt"
-    dest: "{{output_dir}}/foo.result"
+    src: "{{output_dir}}/foo.result"
+    dest: "{{output_dir}}/foo.result-pulled"
     mode: pull
   register: sync_result
 
@@ -126,11 +139,10 @@
         - "'rsync' in sync_result.cmd"
         - "'msg' in sync_result"
         - "sync_result.msg.startswith('>f+')"
-        - "sync_result.msg.endswith('+ foo.txt\n')"
+        - "sync_result.msg.endswith('+ foo.result\n')"
 
 - name: test that the file was really copied over
-  stat:
-    path: "{{ output_dir }}/foo.result"
+  local_action: stat path="{{ output_dir }}/foo.result-pulled"
   register: stat_result
 
 - assert:
@@ -140,8 +152,8 @@
 
 - name: test that the file is not copied a second time
   synchronize:
-    src: "{{output_dir}}/foo.txt"
-    dest: "{{output_dir}}/foo.result"
+    src: "{{output_dir}}/foo.result"
+    dest: "{{output_dir}}/foo.result-pulled"
     mode: pull
   register: sync_result
 
@@ -150,12 +162,9 @@
      - "sync_result.changed == False"
 
 - name: Cleanup
-  file:
-    state: absent
-    path: "{{output_dir}}/{{item}}"
+  local_action: file state=absent path="{{output_dir}}/{{item}}"
   with_items:
-    - foo.result
-    - bar.result
+    - foo.result-pulled
 
 - name: synchronize files using with_items (issue#5965)
   synchronize: src={{output_dir}}/{{item}} dest={{output_dir}}/{{item}}.result
@@ -182,7 +191,7 @@
     - bar.txt
 
 - name: synchronize files using rsync_path (issue#7182)
-  synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.rsync_path rsync_path="sudo rsync"
+  synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.rsync_path rsync_path="rsync"
   register: sync_result
 
 - assert:
@@ -193,7 +202,7 @@
         - "'rsync' in sync_result.cmd"
         - "'rsync_path' in sync_result.cmd"
         - "'msg' in sync_result"
-        - "sync_result.msg.startswith('>f+')"
+        - "sync_result.msg.startswith(transfer_char + 'f+')"
         - "sync_result.msg.endswith('+ foo.txt\n')"
 
 - name: Cleanup

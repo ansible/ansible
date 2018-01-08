@@ -18,14 +18,111 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os.path
+import stat
+import tempfile
 from collections import MutableSequence
 
 from ansible import constants as C
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import connection_loader
+
+
+class TransportAdapter(object):
+    has_user_prefixes = True
+    can_sudo = True
+    supported = True
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def get_rsync_opt(self, user, become, become_user, play_context):
+        return []
+
+    def cleanup(self):
+        pass
+
+
+class UnsupportedTransportAdapter(TransportAdapter):
+    supported = False
+
+
+class DockerTransportAdapter(TransportAdapter):
+    # If using docker, do not add user information
+    has_user_prefixes = False
+
+    # don't escalate for docker. doing --rsync-path with docker exec fails
+    # and we can switch directly to the user via docker arguments
+    can_sudo = False
+
+    def get_rsync_opt(self, user, become, become_user, play_context):
+        # If launching synchronize against docker container
+        # use rsync_opts to support container to override rsh options
+        result = ['--blocking-io']
+
+        # Handle docker connection options
+        docker_cmd = self.connection.docker_cmd
+        if play_context.docker_extra_args:
+            docker_cmd = "%s %s" % (docker_cmd, play_context.docker_extra_args)
+        if become and self._play_context.become_user:
+            result.append("--rsh=%s exec -u %s -i" % (docker_cmd, become_user))
+        elif user is not None:
+            result.append("--rsh=%s exec -u %s -i" % (docker_cmd, user))
+        else:
+            result.append("--rsh=%s exec -i" % docker_cmd)
+        return result
+
+
+class LXDTransportAdapter(TransportAdapter):
+    # If using LXD, do not add user information
+    has_user_prefixes = False
+
+    # don't escalate for LXD. doing --rsync-path with lxc exec fails. We su into our user manually.
+    can_sudo = False
+
+    def get_rsync_opt(self, user, become, become_user, play_context):
+        # If launching synchronize against a LXD container
+        # use rsync_opts to support container to override rsh options
+        result = ['--blocking-io']
+
+        # Handle docker connection options
+        lxc_cmd = self.connection._lxc_cmd
+        rsync_cmd = '\"$@\"'
+        if become and become_user:
+            user = become_user
+        if user:
+            # We'll need sudo. Let's test if we actually have it.
+            ret, _, _ = self.connection.exec_command('sudo /bin/true')
+            if ret != 0:
+                raise RuntimeError("sudo wasn't found. It is needed for rsync under the lxd transport.")
+            rsync_cmd = 'sudo -u %s %s' % (user, rsync_cmd)
+
+        fd, self._tmpscript = tempfile.mkstemp()
+        script = "#!/bin/sh\nn=$1; shift; %s exec \"$n\" -- %s" % (lxc_cmd, rsync_cmd)
+        os.write(fd, script)
+        os.close(fd)
+        os.chmod(self._tmpscript, stat.S_IEXEC | stat.S_IREAD)
+        result.append("--rsh=%s" % self._tmpscript)
+        return result
+
+    def cleanup(self):
+        if hasattr(self, '_tmpscript'):
+            os.unlink(self._tmpscript)
+
+
+TRANSPORT_ADAPTER_MAP = {
+    'ssh': TransportAdapter,
+    'paramiko': TransportAdapter,
+    'local': TransportAdapter,
+    'docker': DockerTransportAdapter,
+    'lxd': LXDTransportAdapter,
+}
+
+
+def get_transport_adapter(connection):
+    return TRANSPORT_ADAPTER_MAP.get(connection.transport, UnsupportedTransportAdapter)(connection)
 
 
 class ActionModule(ActionBase):
@@ -59,8 +156,7 @@ class ActionModule(ActionBase):
         if path.startswith('rsync://'):
             return path
 
-        # If using docker, do not add user information
-        if self._remote_transport not in ['docker'] and user:
+        if self._remote_transport.has_user_prefixes and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -166,13 +262,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         # Store remote connection type
-        self._remote_transport = self._connection.transport
-
-        # Handle docker connection options
-        if self._remote_transport == 'docker':
-            self._docker_cmd = self._connection.docker_cmd
-            if self._play_context.docker_extra_args:
-                self._docker_cmd = "%s %s" % (self._docker_cmd, self._play_context.docker_extra_args)
+        self._remote_transport = get_transport_adapter(self._connection)
 
         # self._connection accounts for delegate_to so
         # remote_transport is the transport ansible thought it would need
@@ -190,10 +280,13 @@ class ActionModule(ActionBase):
 
         # ssh paramiko docker and local are fully supported transports.  Anything
         # else only works with delegate_to
-        if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local', 'docker'):
+        if delegate_to is None and not self._remote_transport.supported:
             result['failed'] = True
-            result['msg'] = ("synchronize uses rsync to function. rsync needs to connect to the remote host via ssh, docker client or a direct filesystem "
-                             "copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport)
+            allowed = ', '.join(sorted(TRANSPORT_ADAPTER_MAP))
+            selected = self._connection.transport
+            result['msg'] = ("synchronize uses rsync to function and only supports these transport "
+                             "types: %s. This remote host is being accessed via %s instead so it "
+                             "cannot work." % (allowed, selected))
             return result
 
         use_ssh_args = _tmp_args.pop('use_ssh_args', None)
@@ -356,9 +449,7 @@ class ActionModule(ActionBase):
         become = self._play_context.become
 
         if not dest_is_local:
-            # don't escalate for docker. doing --rsync-path with docker exec fails
-            # and we can switch directly to the user via docker arguments
-            if self._play_context.become and not rsync_path and self._remote_transport != 'docker':
+            if self._play_context.become and not rsync_path and self._remote_transport.can_sudo:
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
@@ -380,9 +471,17 @@ class ActionModule(ActionBase):
             ]
             _tmp_args['ssh_args'] = ' '.join([a for a in ssh_args if a])
 
-        # If launching synchronize against docker container
-        # use rsync_opts to support container to override rsh options
-        if self._remote_transport in ['docker']:
+        try:
+            transport_rsync_opt = self._remote_transport.get_rsync_opt(
+                user, become, self._play_context.become_user, self._play_context,
+            )
+        except RuntimeError as e:
+            result['failed'] = True
+            result['msg'] = text_type(e)
+            return result
+
+        if transport_rsync_opt:
+            # Merge with existing rsync_opts
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
@@ -391,18 +490,14 @@ class ActionModule(ActionBase):
                 elif isinstance(tmp_rsync_opts, (int, float)):
                     tmp_rsync_opts = [to_text(tmp_rsync_opts)]
                 _tmp_args['rsync_opts'] = tmp_rsync_opts
-
-            if '--blocking-io' not in _tmp_args['rsync_opts']:
-                _tmp_args['rsync_opts'].append('--blocking-io')
-            if become and self._play_context.become_user:
-                _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
-            elif user is not None:
-                _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
-            else:
-                _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
+            for arg in transport_rsync_opt:
+                if arg not in _tmp_args['rsync_opts']:
+                    _tmp_args['rsync_opts'].append(arg)
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))
+
+        self._remote_transport.cleanup()
 
         if 'SyntaxError' in result.get('exception', result.get('msg', '')):
             # Emit a warning about using python3 because synchronize is

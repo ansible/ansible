@@ -1,0 +1,1 @@
+testhost ansible_host=centos-7-amd64 ansible_connection=lxd
