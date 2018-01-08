@@ -1416,16 +1416,12 @@ def main():
     replace_instances = module.params.get('replace_instances')
     replace_all_instances = module.params.get('replace_all_instances')
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    try:
-        connection = boto3_conn(module,
-                                conn_type='client',
-                                resource='autoscaling',
-                                region=region,
-                                endpoint=ec2_url,
-                                **aws_connect_params)
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
-                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    connection = boto3_conn(module,
+                            conn_type='client',
+                            resource='autoscaling',
+                            region=region,
+                            endpoint=ec2_url,
+                            **aws_connect_params)
     changed = create_changed = replace_changed = False
 
     if state == 'present':
