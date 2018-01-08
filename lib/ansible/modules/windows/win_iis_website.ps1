@@ -150,8 +150,15 @@ Try {
     # Set properties
     if($parameters) {
       $parameters | foreach {
-        $parameter_value = Get-ItemProperty "IIS:\Sites\$($site.Name)" $_[0]
-        if((-not $parameter_value) -or ($parameter_value.Value -as [String]) -ne $_[1]) {
+        $property_value = Get-ItemProperty "IIS:\Sites\$($site.Name)" $_[0]
+
+        switch ($property_value.GetType().Name)
+        {
+            "ConfigurationAttribute" { $parameter_value = $property_value.value }
+            "String" { $parameter_value = $property_value }
+        }
+        
+        if((-not $parameter_value) -or ($parameter_value) -ne $_[1]) {
           Set-ItemProperty "IIS:\Sites\$($site.Name)" $_[0] $_[1]
           $result.changed = $true
         }
