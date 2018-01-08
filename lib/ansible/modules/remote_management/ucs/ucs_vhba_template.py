@@ -27,48 +27,64 @@ options:
     default: present
   name:
     description:
-    - Name of the vHBA template
+    - The name of the virtual HBA template.
+    - This name can be between 1 and 16 alphanumeric characters.
+    - "You cannot use spaces or any special characters other than - (hyphen), \"_\" (underscore), : (colon), and . (period)."
+    - You cannot change this name after the template is created.
     required: yes
   description:
     description:
-    - Description for the vHBA template
+    - A user-defined description of the template.
+    - Enter up to 256 characters.
+    - "You can use any characters or spaces except the following:"
+    - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
     aliases: [ descr ]
   fabric:
     description:
-    - Fabric ID
+    - The Fabric ID field.
+    - The name of the fabric interconnect that vHBAs created with this template are associated with.
     choices: [A, B]
     default: A
   redundancy_type:
     description:
-    - Redundancy Type
+    - The Redundancy Type used for template pairing from the Primary or Secondary redundancy template.
+    - "primary — Creates configurations that can be shared with the Secondary template."
+    - Any other shared changes on the Primary template are automatically synchronized to the Secondary template.
+    - "secondary — All shared configurations are inherited from the Primary template."
+    - "none - Legacy vHBA template behavior. Select this option if you do not want to use redundancy."
     choices: [none, primary, secondary]
     default: none
   vsan:
     description:
-    - VSAN name
+    - The VSAN to associate with vHBAs created from this template.
     default: default
   template_type:
     description:
-    - Template Type
+    - The Template Type field.
+    - "This can be one of the following:"
+    - "initial-template — vHBAs created from this template are not updated if the template changes."
+    - "updating-template - vHBAs created from this template are updated if the template changes."
     choices: [initial-template, updating-template]
     default: initial-template
   max_data:
     description:
-    - Max Data Field Size
+    - The Max Data Field Size field.
+    - The maximum size of the Fibre Channel frame payload bytes that the vHBA supports.
+    - Enter an string between '256' and '2112'.
     default: '2048'
   wwpn_pool:
     description:
-    - WWPN Pool name
+    - The WWPN pool that a vHBA created from this template uses to derive its WWPN address.
     default: default
   qos_policy:
     description:
-    - QoS Policy name
+    - The QoS policy that is associated with vHBAs created from this template.
   pin_group:
     description:
-    - Pin Group
+    - The SAN pin group that is associated with vHBAs created from this template.
   stats_policy:
     description:
-    - Stats Threshold Policy name
+    - The statistics collection policy that is associated with vHBAs created from this template.
     default: default
   org_dn:
     description:
@@ -192,8 +208,7 @@ def main():
             if mo:
                 mo_exists = True
                 # check top-level mo props
-                kwargs = {}
-                kwargs['descr'] = vhba_template['descr']
+                kwargs = dict(descr=vhba_template['descr'])
                 kwargs['switch_id'] = vhba_template['fabric']
                 kwargs['redundancy_pair_type'] = vhba_template['redundancy_type']
                 kwargs['templ_type'] = vhba_template['template_type']
@@ -207,8 +222,7 @@ def main():
                     child_dn = dn + '/if-default'
                     mo_1 = ucs.login_handle.query_dn(child_dn)
                     if mo_1:
-                        kwargs = {}
-                        kwargs['name'] = vhba_template['vsan']
+                        kwargs = dict(name=vhba_template['vsan'])
                         if (mo_1.check_prop_match(**kwargs)):
                             props_match = True
 
