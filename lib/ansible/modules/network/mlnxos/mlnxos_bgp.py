@@ -31,7 +31,7 @@ options:
       - Router IP address. Required if I(state=present).
   neighbors:
     description:
-      - List of neighbors.
+      - List of neighbors. Required if I(state=present).
     suboptions:
       remote_as:
         description:
