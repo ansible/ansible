@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vr_account_facts
 short_description: Gather facts about the Vultr account.
@@ -22,7 +22,7 @@ author: "René Moser (@resmo)"
 extends_documentation_fragment: vultr
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Gather Vultr account facts
   local_action:
     module: vr_account_facts
@@ -30,10 +30,9 @@ EXAMPLES = '''
 - name: Print the gathered facts
   debug:
     var: ansible_facts.vultr_account_facts
-
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 vultr_api:
   description: Response from Vultr API with a few additions/modification
