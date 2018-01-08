@@ -37,32 +37,33 @@ options:
     default: 'present'
   name:
     description:
-      - Name of the queue. A queue name can have up to 80 characters. Valid values: alphanumeric characters, hyphens (- ), and underscores (_ ).
+      - Name of the queue.  Valid up to 80 characters
     required: true
   queue_type:
     description:
-      - The type of queue to create.  Can only be set at creation time and can't be changed later.  Will append ".fifo" to name of queue as this is required by AWS.
+      - The type of queue to create.  Can only be set at creation time and can't be changed later.  Will append ".fifo" to the queue name
     required: false
     choices: ['standard', 'fifo']
     default: standard
+    version_added: "2.5"
   default_visibility_timeout:
     description:
-      - The default visibility timeout in seconds. Valid values: An integer from 0 to 43,200 (12 hours).
+      - The default visibility timeout in seconds. Valid range 0 to 43,200
     required: false
     default: 30
   message_retention_period:
     description:
-      - The length of time, in seconds, for which Amazon SQS retains a message. Valid values: An integer representing seconds, from 60 (1 minute) to 1,209,600 (14 days)
+      - The length of time to retain a message in seconds. Valid range 60 to 1,209,600 (14 days)
     required: false
-    default: 345,600 (4 days)
+    default: 345,600
   maximum_message_size:
     description:
-      - The limit of how many bytes a message can contain before Amazon SQS rejects it. Valid values: An integer from 1,024 bytes (1 KiB) up to 262,144 bytes (256 KiB).
+      - Maximum size of the message in bytes. Valid range 1,024 bytes (1 KiB) up to 262,144 bytes (256 KiB).
     required: false
-    default: 262,144 (256 KiB)
+    default: 262,144
   delivery_delay:
     description:
-      - The length of time, in seconds, for which the delivery of all messages in the queue is delayed. Valid values: An integer from 0 to 900 (15 minutes).
+      - Message delay time in seconds. Valid range 0 to 900 (15 minutes).
     required: false
     default: 0
   receive_message_wait_time:
@@ -72,7 +73,7 @@ options:
     default: 0
   policy:
     description:
-      - The json dict policy to attach to queue.  For more information, see 'Overview of AWS IAM Policies' in the Amazon IAM User Guide.
+      - The json dict policy to attach to queue.
     required: false
     default: null
   redrive_policy:
@@ -82,21 +83,24 @@ options:
     default: null
   fifo_content_based_deduplication:
     description:
-      - Option to enable / disable Content Based Deduplication.  'queue_type' must be set to 'fifo' to use this option.
+      - Option to enable / disable Content Based Deduplication. 'queue_type' must be set to 'fifo' to use this option.
     required: False
     choices: ['true', 'false']
     default: false
+    version_added: "2.5"
   tags:
     description:
       - Cost allocation tags for the queue.
     required: False
     default: None
+    version_added: "2.5"
   purge_tags:
     description:
       - Should existing tags be purged if not listed in "tags"
     required: False
     choices: ['true', 'false']
     default: true
+    version_added: "2.5"
 
 extends_documentation_fragment:
     - aws
@@ -197,17 +201,15 @@ import json
 import traceback
 
 try:
-  import botocore
-  import boto3
-  HAS_BOTO3 = True
+    import botocore
+    import boto3
+    HAS_BOTO3 = True
 except ImportError:
-  HAS_BOTO3 = False
+    HAS_BOTO3 = False
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
+from ansible.module_utils.ec2 import AnsibleAWSError, get_aws_connection_info, ec2_argument_spec, boto3_conn, camel_dict_to_snake_dict, compare_aws_tags
 
-from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 def create_or_update_sqs_queue(connection, module):
     queue_name = module.params.get('name')
@@ -229,7 +231,7 @@ def create_or_update_sqs_queue(connection, module):
     if queue_type == 'fifo':
         queue_name = queue_name + '.fifo'
         try:
-            queue_attributes.update({'fifo_content_based_deduplication':module.params.get('fifo_content_based_deduplication')})
+            queue_attributes.update({'fifo_content_based_deduplication': module.params.get('fifo_content_based_deduplication')})
         except botocore.exceptions.ClientError:
             result['msg'] = 'Failed to create/update sqs queue due to error: ' + traceback.format_exc()
             module.fail_json(**result)
@@ -249,19 +251,33 @@ def create_or_update_sqs_queue(connection, module):
             pass
 
         if existing_queue:
-            result['changed'] = update_sqs_queue(connection, queue_url, module.params.get('tags'), module.params.get('purge_tags'), check_mode=module.check_mode, **queue_attributes)
+            result['changed'] = update_sqs_queue(connection,
+                                                 module,
+                                                 result,
+                                                 queue_url,
+                                                 module.params.get('tags'),
+                                                 module.params.get('purge_tags'),
+                                                 check_mode=module.check_mode,
+                                                 **queue_attributes)
         else:
             # Create new one if it doesn't exist and not in check mode
             if not module.check_mode:
                 # Add attributes for a FIFO queue type
                 if queue_type == 'fifo':
-                    queue_url = connection.create_queue(QueueName=queue_name, Attributes={'FifoQueue':'True'})['QueueUrl']
+                    queue_url = connection.create_queue(QueueName=queue_name, Attributes={'FifoQueue': 'True'})['QueueUrl']
                     result['changed'] = True
                 else:
                     queue_url = connection.create_queue(QueueName=queue_name)['QueueUrl']
                     result['changed'] = True
 
-                update_sqs_queue(connection, queue_url, module.params.get('tags'), module.params.get('purge_tags'), check_mode=module.check_mode, **queue_attributes)
+                update_sqs_queue(connection,
+                                 module,
+                                 result,
+                                 queue_url,
+                                 module.params.get('tags'),
+                                 module.params.get('purge_tags'),
+                                 check_mode=module.check_mode,
+                                 **queue_attributes)
 
         if not module.check_mode:
             queue_attributes = connection.get_queue_attributes(QueueUrl=queue_url, AttributeNames=['All'])
@@ -282,6 +298,8 @@ def create_or_update_sqs_queue(connection, module):
 
 
 def update_sqs_queue(connection,
+                     module,
+                     result,
                      queue_url,
                      tags,
                      purge_tags,
@@ -313,7 +331,7 @@ def update_sqs_queue(connection,
     changed = set_queue_attribute(connection, queue_url, 'ContentBasedDeduplication', fifo_content_based_deduplication,
                                   check_mode=check_mode) or changed
 
-    changed = modify_tags (queue_url, connection, tags, purge_tags)
+    changed = modify_tags(queue_url, connection, module, result, tags, purge_tags)
 
     return changed
 
@@ -336,7 +354,7 @@ def set_queue_attribute(connection, queue_url, attribute, value, check_mode=Fals
 
     if str(value).lower() != existing_value:
         if not check_mode:
-            result = connection.set_queue_attributes(QueueUrl=queue_url, Attributes={attribute:str(value)})
+            result = connection.set_queue_attributes(QueueUrl=queue_url, Attributes={attribute: str(value)})
         return True
 
     return False
@@ -370,7 +388,7 @@ def delete_sqs_queue(connection, module):
         module.exit_json(**camel_dict_to_snake_dict(result))
 
 
-def modify_tags(queue_url, connection, tags, purge_tags):
+def modify_tags(queue_url, connection, module, result, tags, purge_tags):
     current_tags = None
     changed = False
 
@@ -402,7 +420,6 @@ def modify_tags(queue_url, connection, tags, purge_tags):
             module.fail_json(**result)
 
     return changed
-
 
 
 def main():
