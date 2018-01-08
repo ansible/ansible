@@ -23,7 +23,8 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: "loop through list"
-  debug: msg="An item: {{item}}"
+  debug:
+    msg: "An item: {{item}}"
   with_items:
     - 1
     - 2
