@@ -306,16 +306,21 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
     return exists
 
 
-def keysum(module, s3, bucket, obj, version=None):
+def keysum(module, s3, bucket, obj, version=None, meta_md5=None):
     if version:
         key_check = s3.head_object(Bucket=bucket, Key=obj, VersionId=version)
     else:
         key_check = s3.head_object(Bucket=bucket, Key=obj)
     if not key_check:
         return None
-    md5_remote = key_check['ETag'][1:-1]
-    if '-' in md5_remote:  # Check for multipart, etag is not md5
-        return None
+    md5_remote = None
+    # check metadata for custom md5 value (e.g. for comparison of multipart uploads)
+    if meta_md5:
+        md5_remote = key_check['Metadata'].get(meta_md5)
+    else:
+        md5_remote = key_check['ETag'][1:-1]
+        if '-' in md5_remote:  # Check for multipart, etag is not md5
+            md5_remote = None
     return md5_remote
 
 
@@ -602,6 +607,7 @@ def main():
             s3_url=dict(aliases=['S3_URL']),
             rgw=dict(default='no', type='bool'),
             src=dict(),
+            meta_md5=dict(),
             ignore_nonexistent_bucket=dict(default=False, type='bool')
         ),
     )
@@ -635,6 +641,7 @@ def main():
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
+    meta_md5 = module.params.get('meta_md5')
 
     object_canned_acl = ["private", "public-read", "public-read-write", "aws-exec-read", "authenticated-read", "bucket-owner-read", "bucket-owner-full-control"]
     bucket_canned_acl = ["private", "public-read", "public-read-write", "authenticated-read"]
@@ -710,7 +717,7 @@ def main():
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if path_check(dest):
             # Determine if the remote and local object are identical
-            if keysum(module, s3, bucket, obj, version=version) == module.md5(dest):
+            if keysum(module, s3, bucket, obj, version=version, meta_md5=meta_md5) == module.md5(dest):
                 sum_matches = True
                 if overwrite == 'always':
                     download_s3file(module, s3, bucket, obj, dest, retries, version=version)
@@ -728,6 +735,17 @@ def main():
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
+        src_md5 = None
+        # If we have a custom md5 header, add it to the metadata when uploading
+        if meta_md5:
+            src_md5 = module.md5(src)
+            if metadata:
+                if meta_md5 in metadata:
+                    module.fail_json(msg="meta_md5 key conflicts with key defined in metadata")
+                else:
+                    metadata[meta_md5] = src_md5
+            else:
+                metadata = {meta_md5: src_md5}
 
         # if putting an object in a bucket yet to be created, acls for the bucket and/or the object may be specified
         # these were separated into the variables bucket_acl and object_acl above
@@ -742,8 +760,10 @@ def main():
 
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
         if bucketrtn and keyrtn:
+            if not src_md5:
+                src_md5 = module.md5(src)
             # Compare the local and remote object
-            if module.md5(src) == keysum(module, s3, bucket, obj):
+            if src_md5 == keysum(module, s3, bucket, obj, meta_md5=meta_md5):
                 sum_matches = True
                 if overwrite == 'always':
                     # only use valid object acls for the upload_s3file function
