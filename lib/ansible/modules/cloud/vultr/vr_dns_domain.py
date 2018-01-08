@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vr_dns_domain
 short_description: Manages DNS domains on Vultr.
@@ -38,21 +38,21 @@ options:
 extends_documentation_fragment: vultr
 '''
 
-EXAMPLES = '''
-- name: ensure a domain exists
+EXAMPLES = r'''
+- name: Ensure a domain exists
   local_action:
     module: vr_dns_domain
     name: example.com
     server_ip: 10.10.10.10
 
-- name: ensure a domain is absent
+- name: Ensure a domain is absent
   local_action:
     module: vr_dns_domain
     name: example.com
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 vultr_api:
   description: Response from Vultr API with a few additions/modification
