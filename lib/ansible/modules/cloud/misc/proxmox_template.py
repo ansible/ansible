@@ -184,7 +184,7 @@ def main():
             api_password=dict(no_log=True),
             validate_certs=dict(type='bool', default='no'),
             node=dict(),
-            src=dict(),
+            src=dict(type='path'),
             template=dict(),
             content_type=dict(default='vztmpl', choices=['vztmpl', 'iso']),
             storage=dict(default='local'),
@@ -223,17 +223,15 @@ def main():
             content_type = module.params['content_type']
             src = module.params['src']
 
-            from ansible import utils
-            realpath = utils.path_dwim(None, src)
-            template = os.path.basename(realpath)
+            template = os.path.basename(src)
             if get_template(proxmox, node, storage, content_type, template) and not module.params['force']:
                 module.exit_json(changed=False, msg='template with volid=%s:%s/%s is already exists' % (storage, content_type, template))
             elif not src:
                 module.fail_json(msg='src param to uploading template file is mandatory')
-            elif not (os.path.exists(realpath) and os.path.isfile(realpath)):
-                module.fail_json(msg='template file on path %s not exists' % realpath)
+            elif not (os.path.exists(src) and os.path.isfile(src)):
+                module.fail_json(msg='template file on path %s not exists' % src)
 
-            if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
+            if upload_template(module, proxmox, api_host, node, storage, content_type, src, timeout):
                 module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
         except Exception as e:
             module.fail_json(msg="uploading of template %s failed with exception: %s" % (template, e))
