@@ -3,8 +3,8 @@
   find:
     paths: "{{ role_path }}/tests/netconf"
     patterns: "{{ testcase }}.yaml"
+  connection: local
   register: test_cases
-  delegate_to: localhost
 
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
