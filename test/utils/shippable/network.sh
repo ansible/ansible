@@ -32,7 +32,6 @@ if [ -s /tmp/network.txt ]; then
 
     platforms=(
         --platform vyos/1.1.8
-        --platform ios/csr1000v
     )
 else
     echo "No changes requiring integration tests specific to networking were detected."
