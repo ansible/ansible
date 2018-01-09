@@ -24,7 +24,7 @@ f5-icontrol-rest ; python_version >= '2.7'
 deepdiff
 
 # requirements for Fortinet specific modules
-pyFMG
+pyfmg
 
 # requirement for aci_rest module
 xmljson
