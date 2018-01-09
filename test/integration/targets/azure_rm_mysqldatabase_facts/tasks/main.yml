@@ -1,0 +1,55 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "mysqlsrv{{ rpfx }}"
+    sku:
+      name: MYSQLB50
+      tier: basic
+    location: westus
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+- name: Create MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: "mysqlsrv{{ rpfx }}"
+    name: testdatabase
+
+- name: Gather facts MySQL Database
+  azure_rm_mysqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "mysqlsrv{{ rpfx }}"
+    database_name: testdatabase
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Gather facts MySQL Database
+  azure_rm_mysqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "mysqlsrv{{ rpfx }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Delete instance of MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: "mysqlsrv{{ rpfx }}"
+    name: testdatabase
+    state: absent
+- name: Delete instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "mysqlsrv{{ rpfx }}"
+    state: absent
