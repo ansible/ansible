@@ -18,9 +18,7 @@ provider="${P:-default}"
 # python versions to test in order
 # all versions run full tests
 python_versions=(
-    2.6
     2.7
-    3.5
     3.6
 )
 
@@ -32,7 +30,6 @@ if [ -s /tmp/network.txt ]; then
 
     platforms=(
         --platform vyos/1.1.8
-        --platform ios/csr1000v
     )
 else
     echo "No changes requiring integration tests specific to networking were detected."

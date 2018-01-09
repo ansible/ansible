@@ -373,6 +373,7 @@ def network_init(args, internal_targets):
         return
 
     platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+    net_commands = set(a[4:] for t in internal_targets for a in t.aliases if a.startswith('net_'))
 
     instances = []  # type: list [lib.thread.WrappedThread]
 
@@ -383,7 +384,10 @@ def network_init(args, internal_targets):
         platform, version = platform_version.split('/', 1)
         platform_target = 'network/%s/' % platform
 
-        if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+        # check to see if the platform supports any of the platform agnostic tests we're going to run (if any)
+        platform_agnostic = any(os.path.exists('lib/ansible/modules/network/%s/%s_%s.py' % (platform, platform, command)) for command in net_commands)
+
+        if platform_target not in platform_targets and not platform_agnostic:
             display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
                 platform_version, platform))
             continue
@@ -436,6 +440,7 @@ def network_inventory(remotes):
     :rtype: str
     """
     groups = dict([(remote.platform, []) for remote in remotes])
+    net = []
 
     for remote in remotes:
         options = dict(
@@ -452,6 +457,10 @@ def network_inventory(remotes):
                 ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
+
+        net.append(remote.platform)
+
+    groups['net:children'] = net
 
     template = ''
 
