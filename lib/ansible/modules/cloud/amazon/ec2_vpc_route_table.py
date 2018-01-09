@@ -575,7 +575,7 @@ def ensure_route_table_absent(connection, module):
     # disassociate subnets before deleting route table
     if not module.check_mode:
         ensure_subnet_associations(connection=connection, module=module, route_table=route_table,
-                                   routes=[], check_mode=False, purge_subnets=purge_subnets)
+                                   subnets=[], check_mode=False, purge_subnets=purge_subnets)
         try:
             connection.delete_route_table(RouteTableId=route_table['RouteTableId'])
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -662,7 +662,7 @@ def ensure_route_table_present(connection, module):
         changed = changed or result['changed']
 
     if not tags_valid and tags is not None:
-        result = ensure_tags(connection=connection, module=module, route_table_id=route_table['RouteTableId'], tags=tags,
+        result = ensure_tags(connection=connection, module=module, resource_id=route_table['RouteTableId'], tags=tags,
                              purge_tags=purge_tags, check_mode=module.check_mode)
         route_table['Tags'] = result['tags']
         changed = changed or result['changed']
@@ -671,7 +671,7 @@ def ensure_route_table_present(connection, module):
         associated_subnets = find_subnets(connection, module, vpc_id, subnets)
 
         result = ensure_subnet_associations(connection=connection, module=module, route_table=route_table,
-                                            associated_subnets=associated_subnets, check_mode=module.check_mode,
+                                            subnets=associated_subnets, check_mode=module.check_mode,
                                             purge_subnets=purge_subnets)
         changed = changed or result['changed']
 
