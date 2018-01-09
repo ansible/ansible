@@ -56,36 +56,36 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    id:
-        description:
-            - Resource ID
-        returned: always
-        type: str
-        sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/databases/db1
-    name:
-        description:
-            - Resource name.
-        returned: always
-        type: str
-        sample: db1
-    type:
-        description:
-            - Resource type.
-        returned: always
-        type: str
-        sample: Microsoft.DBforPostgreSQL/servers/databases
-    charset:
-        description:
-            - The charset of the database.
-        returned: always
-        type: str
-        sample: UTF8
-    collation:
-        description:
-            - The collation of the database.
-        returned: always
-        type: str
-        sample: English_United States.1252
+id:
+    description:
+        - Resource ID
+    returned: always
+    type: str
+    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/databases/db1
+name:
+    description:
+        - Resource name.
+    returned: always
+    type: str
+    sample: db1
+type:
+    description:
+        - Resource type.
+    returned: always
+    type: str
+    sample: Microsoft.DBforPostgreSQL/servers/databases
+charset:
+    description:
+        - The charset of the database.
+    returned: always
+    type: str
+    sample: UTF8
+collation:
+    description:
+        - The collation of the database.
+    returned: always
+    type: str
+    sample: English_United States.1252
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
