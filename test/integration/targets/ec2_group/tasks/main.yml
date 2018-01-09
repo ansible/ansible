@@ -162,14 +162,21 @@
            - '"validate the provided access credentials" in result.msg'
 
     # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
     - name: test state=absent
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: absent
       register: result
 
@@ -178,10 +185,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
       register: result
 
@@ -196,10 +200,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}CHANGED'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
       ignore_errors: true
       register: result
@@ -215,10 +216,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
       register: result
 
@@ -233,10 +231,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -256,10 +251,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -285,10 +277,7 @@
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
         ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        state: present
+        <<: *aws_connection_info
         rules:
         - proto: "tcp"
           from_port: 8182
@@ -307,10 +296,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -329,10 +315,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         purge_rules: no
         rules:
@@ -355,10 +338,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -383,10 +363,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -414,10 +391,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -441,10 +415,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -467,10 +438,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -520,10 +488,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -546,11 +511,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -564,10 +525,7 @@
         name: "{{ resource_prefix }}-vpc"
         state: present
         cidr_block: "10.232.232.128/26"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
@@ -577,10 +535,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -603,10 +558,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -632,10 +584,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         purge_rules_egress: false
@@ -661,10 +610,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -688,10 +634,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -713,10 +656,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -739,10 +679,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         # purge the other rules so assertions work for the subsequent tests for rule descriptions
         purge_rules_egress: true
@@ -785,10 +722,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -826,14 +760,43 @@
 
     # ============================================================
 
+    - name: test creating rule in default vpc with egress rule (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}-default-vpc'
+        description: '{{ec2_group_description}} default VPC'
+        <<: *aws_connection_info
+        purge_rules_egress: true
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 2
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 2
+      register: result
+
+    - name: assert that rule descriptions were modified (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.ip_permissions_egress|length == 1'
+
+    # ============================================================
+
     - name: test that keeping the same rule descriptions (expected changed=false)
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -875,10 +838,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -920,11 +880,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -940,27 +896,27 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: tidy up default VPC security group
+      ec2_group:
+        name: '{{ec2_group_name}}-default-vpc'
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
 
     - name: tidy up automatically created SG
       ec2_group:
         name: "{{ resource_prefix }} - Another security group"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
+      ignore_errors: yes
 
     - name: tidy up VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
         state: absent
         cidr_block: "10.232.232.128/26"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
+      ignore_errors: yes
