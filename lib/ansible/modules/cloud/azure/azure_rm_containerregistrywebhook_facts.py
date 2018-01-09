@@ -83,14 +83,6 @@ location:
     returned: always
     type: str
     sample: westus
-tags:
-    description:
-        - The tags of the resource.
-    returned: always
-    type: complex
-    sample: {
-  "key": "value"
-}
 status:
     description:
         - The status of the webhook at the time the operation was called. Possible values include: C(enabled), C(disabled)
