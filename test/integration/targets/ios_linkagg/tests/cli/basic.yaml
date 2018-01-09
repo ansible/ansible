@@ -6,7 +6,6 @@
 #    lines:
 #      - no interface port-channel 20
 #    authorize: yes
-#  become: yes
 #  ignore_errors: yes
 
 #- name: setup - remove config used in test(part2)
@@ -14,7 +13,6 @@
 #    lines:
 #      - no interface port-channel 5
 #    authorize: yes
-#  become: yes
 #  ignore_errors: yes
 
 #- name: setup - remove config used in test(part3)
@@ -26,14 +24,12 @@
 #  loop:
 #    - interface GigabitEthernet0/1
 #    - interface GigabitEthernet0/2
-#  become: yes
 
 #- name: create linkagg
 #  ios_linkagg: &create
 #    group: 20
 #    state: present
 #    authorize: yes
-#  become: yes
 #  register: result
 
 #- assert:
@@ -43,7 +39,6 @@
 
 #- name: create linkagg(Idempotence)
 #  ios_linkagg: *create
-#  become: yes
 #  register: result
 
 #- assert:
@@ -58,7 +53,6 @@
 #      - GigabitEthernet0/1
 #      - GigabitEthernet0/2
 #    authorize: yes
-#  become: yes
 #  register: result
 
 #- assert:
@@ -71,7 +65,6 @@
 
 #- name: set link aggregation group to members(Idempotence)
 #  ios_linkagg: *configure_member
-#  become: yes
 #  register: result
 
 #- assert:
@@ -85,7 +78,6 @@
 #    members:
 #      - GigabitEthernet0/2
 #    authorize: yes
-#  become: yes
 #  register: result
 
 #- assert:
@@ -96,7 +88,6 @@
 
 #- name: remove link aggregation group from member(Idempotence)
 #  ios_linkagg: *remove_member
-#  become: yes
 #  register: result
 
 #- assert:
@@ -108,7 +99,6 @@
 #    group: 20
 #    state: absent
 #    authorize: yes
-#  become: yes
 #  register: result
 
 #- assert:
@@ -118,7 +108,6 @@
 
 #- name: remove linkagg(Idempotence)
 #  ios_linkagg: *remove
-#  become: yes
 #  register: result
 
 #- assert:
@@ -131,7 +120,6 @@
 #      - { group: 5 }
 #      - { group: 20, mode: active, members: ['GigabitEthernet0/1'] }
 #    authorize: yes
-#  become: yes
 #  register: result
 
 #- assert:
@@ -144,7 +132,6 @@
 
 #- name: create aggregate of linkagg definitions(Idempotence)
 #  ios_linkagg: *create_agg
-#  become: yes
 #  register: result
 
 #- assert:
@@ -156,7 +143,6 @@
 #    lines:
 #      - no interface port-channel 20
 #    authorize: yes
-#  become: yes
 #  ignore_errors: yes
 
 #- name: teardown(part2)
@@ -164,7 +150,6 @@
 #    lines:
 #      - no interface port-channel 5
 #    authorize: yes
-#  become: yes
 #  ignore_errors: yes
 
 #- name: teardown(part3)
@@ -176,6 +161,5 @@
 #  loop:
 #    - interface GigabitEthernet0/1
 #    - interface GigabitEthernet0/2
-#  become: yes
 
 #- debug: msg="END cli/basic.yaml on connection={{ ansible_connection }}"

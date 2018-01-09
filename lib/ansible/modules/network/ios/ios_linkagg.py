@@ -268,20 +268,22 @@ def main():
     aggregate_spec = deepcopy(element_spec)
     aggregate_spec['group'] = dict(required=True)
 
+    required_one_of = [['group', 'aggregate']]
+    required_together = [['members', 'mode']]
+    mutually_exclusive = [['group', 'aggregate']]
+
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec,
+                       required_together=required_together),
         purge=dict(default=False, type='bool')
     )
 
     argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
-    required_one_of = [['group', 'aggregate']]
-    required_together = [['members', 'mode']]
-    mutually_exclusive = [['group', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            required_together=required_together,
