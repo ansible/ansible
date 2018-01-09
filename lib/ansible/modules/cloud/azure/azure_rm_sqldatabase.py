@@ -151,7 +151,7 @@ status:
         - The status of the database.
     returned: always
     type: str
-    sample: status
+    sample: Online
 '''
 
 import time
