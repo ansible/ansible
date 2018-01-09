@@ -350,15 +350,9 @@ def main():
                               ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
-                           required_if=[
-                               ['vm_id_type', 'inventory_path', ['folder']]
-                           ],
-                           mutually_exclusive=[
-                               ['directory', 'copy', 'fetch']
-                           ],
-                           required_one_of=[
-                               ['directory', 'copy', 'fetch']
-                           ],
+                           required_if=[['vm_id_type', 'inventory_path', ['folder']]],
+                           mutually_exclusive=[['directory', 'copy', 'fetch']],
+                           required_one_of=[['directory', 'copy', 'fetch']],
                            )
 
     if not HAS_PYVMOMI:
