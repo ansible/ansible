@@ -186,7 +186,6 @@ def directory(module, content, vm):
         except vim.fault.FileAlreadyExists:
             result['changed'] = False
             result['msg'] = "Guest directory %s already exist" % path
-            pass
         except vim.fault.GuestPermissionDenied:
             module.fail_json(msg="Permission denied for path %s" % path, uuid=vm.summary.config.uuid)
         except vim.fault.InvalidGuestLogin:
@@ -203,7 +202,6 @@ def directory(module, content, vm):
         except vim.fault.FileNotFound:
             result['changed'] = False
             result['msg'] = "Guest directory %s not exists" % path
-            pass
         except vim.fault.FileFault as e:
             module.fail_json(msg="FileFault:%s" % e.msg, uuid=vm.summary.config.uuid)
         except vim.fault.GuestPermissionDenied:
@@ -236,7 +234,6 @@ def fetch(module, content, vm):
         result['changed'] = False
         result['msg'] = "Guest file %s not exists" % src
         return result
-        pass
     except vim.fault.FileFault as e:
         module.fail_json(msg="FileFault:%s" % e.msg, uuid=vm.summary.config.uuid)
     except vim.fault.GuestPermissionDenied:
@@ -297,7 +294,6 @@ def copy(module, content, vm):
         result['changed'] = False
         result['msg'] = "Guest file %s already exists" % dest
         return result
-        pass
     except vim.fault.FileFault as e:
         module.fail_json(msg="FileFault:%s" % e, uuid=vm.summary.config.uuid)
     except vim.fault.GuestPermissionDenied:
@@ -340,8 +336,7 @@ def main():
                                   type='dict',
                                   default=None,
                                   options=dict(
-                                      src=dict(required=True, type='str'),
-                                      dest=dict(required=True, type='str'),
+                                      src=dict(required=True, type='str'), dest=dict(required=True, type='str'),
                                       overwrite=dict(required=False, type='bool', default=False)
                                   )
                               ),
@@ -349,14 +344,12 @@ def main():
                                   type='dict',
                                   default=None,
                                   options=dict(
-                                      src=dict(required=True, type='str'),
-                                      dest=dict(required=True, type='str'),
+                                      src=dict(required=True, type='str'), dest=dict(required=True, type='str'),
                                   )
                               )
                               ))
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_if=[
                                ['vm_id_type', 'inventory_path', ['folder']]
                            ],
