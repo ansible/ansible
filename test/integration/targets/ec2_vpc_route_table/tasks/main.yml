@@ -61,32 +61,20 @@
       <<: *aws_connection_info
     register: nat_gateway
 
-# FIXME:
-#    The full traceback is:
-#    Traceback (most recent call last):
-#      File "/tmp/ansible_7v93st3b/ansible_module_ec2_vpc_route_table.py", line 721, in <module>
-#        main()
-#      File "/tmp/ansible_7v93st3b/ansible_module_ec2_vpc_route_table.py", line 713, in main
-#        result = ensure_route_table_present(connection, module)
-#      File "/tmp/ansible_7v93st3b/ansible_module_ec2_vpc_route_table.py", line 656, in ensure_route_table_present
-#        check_mode=module.check_mode, purge_routes=purge_routes)
-#      File "/tmp/ansible_7v93st3b/ansible_module_ec2_vpc_route_table.py", line 436, in ensure_routes
-#        routes_to_match = [route for route in route_table['Routes']]
-#    TypeError: 'NoneType' object is not subscriptable
-#  - name: CHECK MODE - route table should be created
-#    ec2_vpc_route_table:
-#      vpc_id: "{{ vpc.vpc.id }}"
-#      tags:
-#        Public: "true"
-#        Name: "Public route table"
-#      <<: *aws_connection_info
-#    check_mode: true
-#    register: check_mode_results
+  - name: CHECK MODE - route table should be created
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+    check_mode: true
+    register: check_mode_results
 
-#  - name: assert that the public route table would be created
-#    assert:
-#      that:
-#        - check_mode_results.changed
+  - name: assert that the public route table would be created
+    assert:
+      that:
+        - check_mode_results.changed
 
   - name: create public route table
     ec2_vpc_route_table:
@@ -411,36 +399,24 @@
       <<: *aws_connection_info
     register: nat_gateway
 
-# FIXME:
-#    The full traceback is:
-#    Traceback (most recent call last):
-#      File "/tmp/ansible_5g1e834v/ansible_module_ec2_vpc_route_table.py", line 721, in <module>
-#        main()
-#      File "/tmp/ansible_5g1e834v/ansible_module_ec2_vpc_route_table.py", line 713, in main
-#        result = ensure_route_table_present(connection, module)
-#      File "/tmp/ansible_5g1e834v/ansible_module_ec2_vpc_route_table.py", line 656, in ensure_route_table_present
-#        check_mode=module.check_mode, purge_routes=purge_routes)
-#      File "/tmp/ansible_5g1e834v/ansible_module_ec2_vpc_route_table.py", line 436, in ensure_routes
-#        routes_to_match = [route for route in route_table['Routes']]
-#    TypeError: 'NoneType' object is not subscriptable
-#  - name: CHECK MODE - create private route table
-#    ec2_vpc_route_table:
-#      vpc_id: "{{ vpc.vpc.id }}"
-#      tags:
-#        Public: "false"
-#        Name: "Private route table"
-#      routes:
-#      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
-#        dest: 0.0.0.0/0
-#      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
-#      <<: *aws_connection_info
-#    check_mode: True
-#    register: check_mode_results
+  - name: CHECK MODE - create private route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "false"
+        Name: "Private route table"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
 
-#  - name: assert the route table would be created
-#    assert:
-#      that:
-#        - check_mode_results.changed
+  - name: assert the route table would be created
+    assert:
+      that:
+        - check_mode_results.changed
 
   - name: create private route table
     ec2_vpc_route_table:

@@ -649,6 +649,9 @@ def ensure_route_table_present(connection, module):
                 route_table = connection.create_route_table(VpcId=vpc_id)['RouteTable']
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Error creating route table")
+        else:
+            route_table = {"id": "rtb-xxxxxxxx", "route_table_id": "rtb-xxxxxxxx", "vpc_id": vpc_id}
+            module.exit_json(changed=changed, route_table=route_table)
 
     if routes is not None:
         result = ensure_routes(connection=connection, module=module, route_table=route_table,
