@@ -115,14 +115,6 @@ type:
     returned: always
     type: str
     sample: Microsoft.Sql/servers/databases
-tags:
-    description:
-        - Resource tags.
-    returned: always
-    type: complex
-    sample: {
-  "tagKey1": "TagValue1"
-}
 location:
     description:
         - Resource location.
