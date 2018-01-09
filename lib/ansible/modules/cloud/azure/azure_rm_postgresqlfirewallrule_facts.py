@@ -61,7 +61,8 @@ RETURN = '''
             - Resource ID
         returned: always
         type: str
-        sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/firewallRules/rule1
+        sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/firewallRules/r
+                 ule1"
     name:
         description:
             - Resource name.
