@@ -85,8 +85,20 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
-"""
+  route_both:
+    description:
+      - Adds an export and import list of extended route target communities to the VRF.
+    version_added: "2.5"
+  route_export:
+    description:
+      - Adds an export list of extended route target communities to the VRF.
+    version_added: "2.5"
+  route_import:
+    description:
+      - Adds an import list of extended route target communities to the VRF.
+    version_added: "2.5"
 
+"""
 EXAMPLES = """
 - name: configure a vrf named management
   ios_vrf:
@@ -107,6 +119,30 @@ EXAMPLES = """
       - blue
       - green
     purge: yes
+
+- name: Creates a list of import RTs for the VRF with the same parameters
+  ios_vrf:
+    name: test_import
+    rd: 1:100
+    route_import:
+      - 1:100
+      - 3:100
+
+- name: Creates a list of export RTs for the VRF with the same parameters
+  ios_vrf:
+    name: test_export
+    rd: 1:100
+    route_export:
+      - 1:100
+      - 3:100
+
+- name: Creates a list of import and export route targets for the VRF with the same parameters
+  ios_vrf:
+    name: test_both
+    rd: 1:100
+    route_both:
+      - 1:100
+      - 3:100
 """
 
 RETURN = """
@@ -205,6 +241,21 @@ def map_obj_to_commands(updates, module):
             cmd = 'rd %s' % want['rd']
             add_command_to_vrf(want['name'], cmd, commands)
 
+        if needs_update(want, have, 'route_import'):
+            for route in want['route_import']:
+                cmd = 'route-target import %s' % route
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_export'):
+            for route in want['route_export']:
+                cmd = 'route-target export %s' % route
+                add_command_to_vrf(want['name'], cmd, commands)
+
+        if needs_update(want, have, 'route_both'):
+            for route in want['route_both']:
+                cmd = 'route-target both %s' % route
+                add_command_to_vrf(want['name'], cmd, commands)
+
         if want['interfaces'] is not None:
             # handle the deletes
             for intf in set(have.get('interfaces', [])).difference(want['interfaces']):
@@ -247,17 +298,38 @@ def parse_rd(configobj, name):
 def parse_interfaces(configobj, name):
     vrf_cfg = 'vrf forwarding %s' % name
     interfaces = list()
-
     for intf in re.findall('^interface .+', str(configobj), re.M):
         if vrf_cfg in '\n'.join(configobj[intf].children):
             interfaces.append(intf.split(' ')[1])
     return interfaces
 
 
+def parse_import(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    cfg = '\n'.join(cfg.children)
+    matches = re.findall(r'route-target\s+import\s+(.+)', cfg, re.M)
+    return matches
+
+
+def parse_export(configobj, name):
+    cfg = configobj['vrf definition %s' % name]
+    cfg = '\n'.join(cfg.children)
+    matches = re.findall(r'route-target\s+export\s+(.+)', cfg, re.M)
+    return matches
+
+
+def parse_both(configobj, name):
+    matches = list()
+    export_match = parse_export(configobj, name)
+    import_match = parse_import(configobj, name)
+    matches.extend(export_match)
+    matches.extend(import_match)
+    return matches
+
+
 def map_config_to_obj(module):
     config = get_config(module)
     configobj = NetworkConfig(indent=1, contents=config)
-
     match = re.findall(r'^vrf definition (\S+)', config, re.M)
     if not match:
         return list()
@@ -270,7 +342,10 @@ def map_config_to_obj(module):
             'state': 'present',
             'description': parse_description(configobj, item),
             'rd': parse_rd(configobj, item),
-            'interfaces': parse_interfaces(configobj, item)
+            'interfaces': parse_interfaces(configobj, item),
+            'route_import': parse_import(configobj, item),
+            'route_export': parse_export(configobj, item),
+            'route_both': parse_both(configobj, item)
         }
         instances.append(obj)
     return instances
@@ -322,6 +397,9 @@ def map_params_to_obj(module):
         item['rd'] = get_value('rd')
         item['interfaces'] = get_value('interfaces')
         item['state'] = get_value('state')
+        item['route_import'] = get_value('route_import')
+        item['route_export'] = get_value('route_export')
+        item['route_both'] = get_value('route_both')
         objects.append(item)
 
     return objects
@@ -375,6 +453,9 @@ def main():
         name=dict(),
         description=dict(),
         rd=dict(),
+        route_export=dict(type='list'),
+        route_import=dict(type='list'),
+        route_both=dict(type='list'),
 
         interfaces=dict(type='list'),
 
@@ -385,8 +466,7 @@ def main():
 
     argument_spec.update(ios_argument_spec)
 
-    mutually_exclusive = [('name', 'vrfs')]
-
+    mutually_exclusive = [('name', 'vrfs'), ('route_import', 'route_both'), ('route_export', 'route_both')]
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
