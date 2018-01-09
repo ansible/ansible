@@ -83,13 +83,14 @@ class AdHocCLI(CLI):
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
-    def _play_ds(self, pattern, async, poll):
+    def _play_ds(self, pattern, async_val, poll):
         check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         return dict(
             name="Ansible Ad-Hoc",
             hosts=pattern,
             gather_facts='no',
-            tasks=[dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async=async, poll=poll)]
+            tasks=[dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async_val=async_val,
+                        poll=poll)]
         )
 
     def run(self):
