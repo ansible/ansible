@@ -52,58 +52,58 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    id:
-        description:
-            - The resource ID.
-        returned: always
-        type: str
-        sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/repl
-                 ications/myReplication"
-    name:
-        description:
-            - The name of the resource.
-        returned: always
-        type: str
-        sample: myReplication
-    type:
-        description:
-            - The type of the resource.
-        returned: always
-        type: str
-        sample: Microsoft.ContainerRegistry/registries/replications
-    location:
-        description:
-            - The location of the resource. This cannot be changed after the resource is created.
-        returned: always
-        type: str
-        sample: eastus
-    tags:
-        description:
-            - The tags of the resource.
-        returned: always
-        type: complex
-        sample: {
-      "key": "value"
-    }
-    status:
-        description:
-            - The status of the replication at the time the operation was called.
-        returned: always
-        type: complex
-        sample: status
-        suboptions:
-            message:
-                description:
-                    - The detailed message for the status, including alerts and error messages.
-                returned: always
-                type: str
-                sample: The replication is ready.
-            timestamp:
-                description:
-                    - The timestamp when the status was changed to the current value.
-                returned: always
-                type: datetime
-                sample: 2017-03-01T23:15:37.0707808Z
+id:
+    description:
+        - The resource ID.
+    returned: always
+    type: str
+    sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/repl
+             ications/myReplication"
+name:
+    description:
+        - The name of the resource.
+    returned: always
+    type: str
+    sample: myReplication
+type:
+    description:
+        - The type of the resource.
+    returned: always
+    type: str
+    sample: Microsoft.ContainerRegistry/registries/replications
+location:
+    description:
+        - The location of the resource. This cannot be changed after the resource is created.
+    returned: always
+    type: str
+    sample: eastus
+tags:
+    description:
+        - The tags of the resource.
+    returned: always
+    type: complex
+    sample: {
+  "key": "value"
+}
+status:
+    description:
+        - The status of the replication at the time the operation was called.
+    returned: always
+    type: complex
+    sample: status
+    contains:
+        message:
+            description:
+                - The detailed message for the status, including alerts and error messages.
+            returned: always
+            type: str
+            sample: The replication is ready.
+        timestamp:
+            description:
+                - The timestamp when the status was changed to the current value.
+            returned: always
+            type: datetime
+            sample: 2017-03-01T23:15:37.0707808Z
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
