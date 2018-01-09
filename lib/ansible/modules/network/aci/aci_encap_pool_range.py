@@ -67,7 +67,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: Add a new vlan range
-  aci_pool_to_range:
+  aci_vlan_pool_encap_block:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -78,7 +78,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove a vlan range
-  aci_pool_to_range:
+  aci_vlan_pool_encap_block:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -89,7 +89,7 @@ EXAMPLES = r'''
     state: absent
 
 - name: Query a vlan range
-  aci_pool_to_range:
+  aci_vlan_pool_encap_block:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -100,7 +100,7 @@ EXAMPLES = r'''
     state: query
 
 - name: Query a vlan pool for ranges
-  aci_pool_to_range:
+  aci_vlan_pool_encap_block:
     hostname: apic
     username: admin
     password: SomeSecretPassword
@@ -109,7 +109,7 @@ EXAMPLES = r'''
     state: query
 
 - name: Query all vlan ranges
-  aci_pool_to_range:
+  aci_vlan_pool_encap_block:
     hostname: apic
     username: admin
     password: SomeSecretPassword
