@@ -233,17 +233,22 @@
     that:
       - result.changed == False
 # ============================================================
+- name: create a tempfile for the path
+  tempfile:
+  register: tmp1
+
+- name: make tempfile 4 GB for OSX
+  command:
+    _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
+  when: ansible_distribution == 'MacOSX'
+
+- name: make tempfile 4 GB for linux
+  command:
+    _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1M count=4096"
+  when: ansible_distribution == 'Linux'
+
 - name: test multipart download - platform specific
   block:
-
-    - name: create a tempfile for multipart test
-      tempfile:
-      register: tmp1
-
-    - name: make tempfile 4 GB
-      command:
-        _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
-
     - name: make a bucket to upload the file
       aws_s3:
         bucket: "{{ bucket_name }}"
@@ -307,5 +312,5 @@
         mode: delete
         <<: *aws_connection_info
 
-  when: ansible_distribution == 'MacOSX'
+  when: ansible_distribution in ['MacOSX', 'Linux']
 # ============================================================
