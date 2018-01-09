@@ -957,7 +957,7 @@ def main():
                 del groupRules[default_egress_rule]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        if purge_rules_egress and vpc_id is not None:
+        if purge_rules_egress and 'VpcId' in group:
             for (rule, grant) in groupRules.values():
                 # we shouldn't be revoking 0.0.0.0 egress
                 if grant != '0.0.0.0/0':
