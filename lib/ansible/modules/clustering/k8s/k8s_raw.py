@@ -152,11 +152,11 @@ result:
        type: list
 '''
 
-from ansible.module_utils.k8s.common import KubernetesAnsibleModule
+from ansible.module_utils.k8s.raw import KubernetesRawModule
 
 
 def main():
-    KubernetesAnsibleModule().execute_module()
+    KubernetesRawModule().execute_module()
 
 
 if __name__ == '__main__':
