@@ -1,1 +1,1 @@
-test_file: ~/foo.txt
+test_file: "{{ output_dir }}/foo.txt"
