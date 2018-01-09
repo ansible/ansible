@@ -9,9 +9,19 @@
     package:
       name: "{{ item }}"
     with_items:
+      - python{{ ansible_python_version.split(".")[0] }}-rpmfluff
+    when:
+      - ansible_distribution in ['Fedora']
+
+  - name: Install rpmfluff and deps
+    package:
+      name: "{{ item }}"
+    with_items:
       - python-rpmfluff
       - createrepo_c
       - createrepo  # used by el6 version of rpmfluff
+    when:
+      - ansible_distribution not in ['Fedora']
 
   - name: Copy script for creating a repo
     copy:
