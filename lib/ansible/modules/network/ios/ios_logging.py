@@ -169,7 +169,10 @@ def map_obj_to_commands(updates, module):
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {0}'.format(size))
+                if level and level != 'debugging':
+                    commands.append('logging buffered {0} {1}'.format(size, level))
+                else:
+                    commands.append('logging buffered {0}'.format(size))
 
             else:
                 dest_cmd = 'logging {0}'.format(dest)
@@ -229,7 +232,11 @@ def parse_level(line, dest):
         level = 'debugging'
 
     else:
-        match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+        if dest == 'buffered':
+            match = re.search(r'logging buffered (?:\d+ )([a-z]+)', line, re.M)
+        else:
+            match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+
         if match:
             if match.group(1) in level_group:
                 level = match.group(1)
@@ -260,6 +267,16 @@ def map_config_to_obj(module):
                     'facility': parse_facility(line, dest),
                     'level': parse_level(line, dest)
                 })
+            else:
+                ip_match = re.search(r'\d+\.\d+\.\d+\.\d+', match.group(1), re.M)
+                if ip_match:
+                    dest = 'host'
+                    obj.append({
+                        'dest': dest,
+                        'name': match.group(1),
+                        'facility': parse_facility(line, dest),
+                        'level': parse_level(line, dest)
+                    })
     return obj
 
 
