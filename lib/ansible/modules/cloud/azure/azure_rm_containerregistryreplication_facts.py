@@ -77,14 +77,6 @@ location:
     returned: always
     type: str
     sample: eastus
-tags:
-    description:
-        - The tags of the resource.
-    returned: always
-    type: complex
-    sample: {
-  "key": "value"
-}
 status:
     description:
         - The status of the replication at the time the operation was called.
