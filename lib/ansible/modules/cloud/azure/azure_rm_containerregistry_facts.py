@@ -84,14 +84,6 @@ location:
     returned: always
     type: str
     sample: westus
-tags:
-    description:
-        - The tags of the resource.
-    returned: always
-    type: complex
-    sample: {
-  "key": "value"
-}
 sku:
     description:
         - The SKU of the container registry.
