@@ -56,25 +56,25 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    id:
-        description:
-            - Resource ID
-        returned: always
-        type: str
-        sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/firewallRules/r
-                 ule1"
-    name:
-        description:
-            - Resource name.
-        returned: always
-        type: str
-        sample: rule1
-    type:
-        description:
-            - Resource type.
-        returned: always
-        type: str
-        sample: Microsoft.DBforPostgreSQL/servers/firewallRules
+id:
+    description:
+        - Resource ID
+    returned: always
+    type: str
+    sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/firewallRules/r
+             ule1"
+name:
+    description:
+        - Resource name.
+    returned: always
+    type: str
+    sample: rule1
+type:
+    description:
+        - Resource type.
+    returned: always
+    type: str
+    sample: Microsoft.DBforPostgreSQL/servers/firewallRules
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
