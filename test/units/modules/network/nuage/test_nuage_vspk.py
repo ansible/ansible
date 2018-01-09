@@ -43,8 +43,8 @@ class TestNuageVSPKModule(TestNuageModule):
 
         self.patches = []
 
-        def enterprises_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                            callback=None):
+        def enterprises_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                            callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             if 'unknown' in filter:
@@ -59,7 +59,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.enterprises_get_mock.start()
         self.patches.append(self.enterprises_get_mock)
 
-        def enterprises_get_first(self, filter=None, order_by=None, group_by=None, query_parameters=None, commit=False, async=False, callback=None):
+        def enterprises_get_first(self, filter=None, order_by=None, group_by=None, query_parameters=None, commit=False, callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             if filter == 'name == "test-enterprise-create"' or 'unknown' in filter:
@@ -70,14 +70,14 @@ class TestNuageVSPKModule(TestNuageModule):
         self.enterprises_get_first_mock.start()
         self.patches.append(self.enterprises_get_first_mock)
 
-        def enterprise_delete(self, response_choice=1, async=False, callback=None):
+        def enterprise_delete(self, response_choice=1, callback=None, **kwargs):
             pass
 
         self.enterprise_delete_mock = patch('vspk.v5_0.NUEnterprise.delete', new=enterprise_delete)
         self.enterprise_delete_mock.start()
         self.patches.append(self.enterprise_delete_mock)
 
-        def enterprise_fetch(self, async=False, callback=None):
+        def enterprise_fetch(self, callback=None, **kwargs):
             self.id = 'enterprise-id'
             self.name = 'test-enterprise'
 
@@ -85,7 +85,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.enterprise_fetch_mock.start()
         self.patches.append(self.enterprise_fetch_mock)
 
-        def enterprise_save(self, response_choice=None, async=False, callback=None):
+        def enterprise_save(self, response_choice=None, callback=None, **kwargs):
             self.id = 'enterprise-id'
             self.name = 'test-enterprise-update'
 
@@ -93,7 +93,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.enterprise_save_mock.start()
         self.patches.append(self.enterprise_save_mock)
 
-        def enterprise_create_child(self, nurest_object, response_choice=None, async=False, callback=None, commit=True):
+        def enterprise_create_child(self, nurest_object, response_choice=None, callback=None, commit=True, **kwargs):
             nurest_object.id = 'user-id-create'
             return nurest_object
 
@@ -101,7 +101,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.enterprise_create_child_mock.start()
         self.patches.append(self.enterprise_create_child_mock)
 
-        def me_create_child(self, nurest_object, response_choice=None, async=False, callback=None, commit=True):
+        def me_create_child(self, nurest_object, response_choice=None, callback=None, commit=True, **kwargs):
             nurest_object.id = 'enterprise-id-create'
             return nurest_object
 
@@ -109,7 +109,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.me_create_child_mock.start()
         self.patches.append(self.me_create_child_mock)
 
-        def user_fetch(self, async=False, callback=None):
+        def user_fetch(self, callback=None, **kwargs):
             self.id = 'user-id'
             self.first_name = 'John'
             self.last_name = 'Doe'
@@ -121,7 +121,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.user_fetch_mock.start()
         self.patches.append(self.user_fetch_mock)
 
-        def user_save(self, response_choice=None, async=False, callback=None):
+        def user_save(self, response_choice=None, callback=None, **kwargs):
             self.id = 'user-id'
             self.first_name = 'John'
             self.last_name = 'Doe'
@@ -133,8 +133,8 @@ class TestNuageVSPKModule(TestNuageModule):
         self.user_save_mock.start()
         self.patches.append(self.user_save_mock)
 
-        def groups_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                       callback=None):
+        def groups_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                       callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -143,7 +143,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.groups_get_mock.start()
         self.patches.append(self.groups_get_mock)
 
-        def group_fetch(self, async=False, callback=None):
+        def group_fetch(self, callback=None, **kwargs):
             self.id = 'group-id'
             self.name = 'group'
 
@@ -151,7 +151,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.group_fetch_mock.start()
         self.patches.append(self.group_fetch_mock)
 
-        def group_assign(self, objects, nurest_object_type, async=False, callback=None, commit=True):
+        def group_assign(self, objects, nurest_object_type, callback=None, commit=True, **kwargs):
             self.id = 'group-id'
             self.name = 'group'
 
@@ -159,7 +159,7 @@ class TestNuageVSPKModule(TestNuageModule):
         self.group_assign_mock.start()
         self.patches.append(self.group_assign_mock)
 
-        def job_fetch(self, async=False, callback=None):
+        def job_fetch(self, callback=None, **kwargs):
             global _LOOP_COUNTER
             self.id = 'job-id'
             self.command = 'EXPORT'
@@ -418,8 +418,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                      callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                      callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return [vsdk.NUUser(id='user-id'), vsdk.NUUser(id='user-id-2')]
@@ -441,8 +441,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                      callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                      callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -501,8 +501,8 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                      callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                      callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -539,8 +539,8 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                      callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                      callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return []
@@ -579,8 +579,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                      callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                      callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return [vsdk.NUUser(id='user-id')]
@@ -620,7 +620,7 @@ class TestNuageVSPKModule(TestNuageModule):
             'command': 'find'
         })
 
-        def group_failed_fetch(self, async=False, callback=None):
+        def group_failed_fetch(self, callback=None, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -639,7 +639,7 @@ class TestNuageVSPKModule(TestNuageModule):
             'command': 'find'
         })
 
-        def enterprise_failed_fetch(self, async=False, callback=None):
+        def enterprise_failed_fetch(self, callback=None, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -658,8 +658,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'command': 'find'
         })
 
-        def enterprises_failed_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                                   callback=None):
+        def enterprises_failed_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                                   callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
@@ -680,7 +680,7 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def enterprise_failed_fetch(self, async=False, callback=None):
+        def enterprise_failed_fetch(self, callback=None, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -700,7 +700,7 @@ class TestNuageVSPKModule(TestNuageModule):
         })
 
         def enterprises_failed_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
-                                         async=False, callback=None):
+                                         callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
@@ -719,7 +719,7 @@ class TestNuageVSPKModule(TestNuageModule):
             'command': 'get_csp_enterprise'
         })
 
-        def enterprise_failed_fetch(self, async=False, callback=None):
+        def enterprise_failed_fetch(self, callback=None, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='404', reason='Not Found', errors={'description': 'Entity not found'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -740,13 +740,13 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                      callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                      callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return []
 
-        def group_assign(self, objects, nurest_object_type, async=False, callback=None, commit=True):
+        def group_assign(self, objects, nurest_object_type, callback=None, commit=True, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='500', reason='Server exception', errors={'description': 'Unable to assign member'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -768,13 +768,13 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                      callback=None):
+        def users_get(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                      callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return [vsdk.NUUser(id='user-id'), vsdk.NUUser(id='user-id-2')]
 
-        def group_assign(self, objects, nurest_object_type, async=False, callback=None, commit=True):
+        def group_assign(self, objects, nurest_object_type, callback=None, commit=True, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='500', reason='Server exception', errors={'description': 'Unable to remove member'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -796,7 +796,7 @@ class TestNuageVSPKModule(TestNuageModule):
             }
         })
 
-        def me_create_child(self, nurest_object, response_choice=None, async=False, callback=None, commit=True):
+        def me_create_child(self, nurest_object, response_choice=None, callback=None, commit=True, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='500', reason='Server exception', errors={'description': 'Unable to create entity'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -818,7 +818,7 @@ class TestNuageVSPKModule(TestNuageModule):
             }
         })
 
-        def enterprise_save(self, response_choice=None, async=False, callback=None):
+        def enterprise_save(self, response_choice=None, callback=None, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='500', reason='Server exception', errors={'description': 'Unable to save entity'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -837,7 +837,7 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'absent'
         })
 
-        def enterprise_delete(self, response_choice=1, async=False, callback=None):
+        def enterprise_delete(self, response_choice=1, callback=None, **kwargs):
             raise BambouHTTPError(MockNuageConnection(status_code='500', reason='Server exception', errors={'description': 'Unable to delete entity'}))
 
         with self.assertRaises(AnsibleFailJson) as exc:
@@ -856,7 +856,7 @@ class TestNuageVSPKModule(TestNuageModule):
             'command': 'wait_for_job'
         })
 
-        def job_fetch(self, async=False, callback=None):
+        def job_fetch(self, callback=None, **kwargs):
             global _LOOP_COUNTER
             self.id = 'job-id'
             self.command = 'EXPORT'
@@ -988,8 +988,8 @@ class TestNuageVSPKModule(TestNuageModule):
             'state': 'present'
         })
 
-        def users_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                            callback=None):
+        def users_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                            callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return None
@@ -1139,8 +1139,8 @@ class TestNuageVSPKModule(TestNuageModule):
             ]
         })
 
-        def users_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True, async=False,
-                            callback=None):
+        def users_get_first(self, filter=None, order_by=None, group_by=None, page=None, page_size=None, query_parameters=None, commit=True,
+                            callback=None, **kwargs):
             group_by = [] if group_by is None else group_by
 
             return None
