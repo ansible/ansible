@@ -118,35 +118,35 @@ options:
             - List of ip configuration if contains mutilple configuration, should contain configuration object include
               field private_ip_address, private_ip_allocation_method, public_ip_address_name, public_ip, subnet_name,
               virtual_network_name, public_ip_allocation_method, name
-            suboptions:
-                name:
-                    description:
-                        - Name of the ip configuration.
-                    required: true
-                private_ip_address:
-                    description:
-                        - Private ip address for the ip configuration.
-                private_ip_allocation_method:
-                    description:
-                        - private ip allocation method.
-                    choices:
-                        - Dynamic
-                        - Static
-                    default: Dynamic
-                public_ip_address_name:
-                    description:
-                        - Name of the public ip address. None for disable ip address.
-                public_ip_allocation_method:
-                    description:
-                        - public ip allocation method.
-                    choices:
-                        - Dynamic
-                        - Static
-                    default: Dynamic
-                primary:
-                    description:
-                        - Whether the ip configuration is the primary one in the list.
-                    default: False
+        suboptions:
+            name:
+                description:
+                    - Name of the ip configuration.
+                required: true
+            private_ip_address:
+                description:
+                    - Private ip address for the ip configuration.
+            private_ip_allocation_method:
+                description:
+                    - private ip allocation method.
+                choices:
+                    - Dynamic
+                    - Static
+                default: Dynamic
+            public_ip_address_name:
+                description:
+                    - Name of the public ip address. None for disable ip address.
+            public_ip_allocation_method:
+                description:
+                    - public ip allocation method.
+                choices:
+                    - Dynamic
+                    - Static
+                default: Dynamic
+            primary:
+                description:
+                    - Whether the ip configuration is the primary one in the list.
+                default: False
         version_added: 2.5
     security_group_name:
         description:
@@ -281,6 +281,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils._text import to_native
 
 
 def subnet_to_dict(subnet):
@@ -335,11 +336,11 @@ def nic_to_dict(nic):
 
 def construct_ip_configuration_set(raw):
     configurations = [str(dict(
-        private_ip_allocation_method=item.get('private_ip_allocation_method').to_native(),
-        public_ip_address_name=(item.get('public_ip_address').get('name').to_native()
-                                if item.get('public_ip_address') else item.get('public_ip_address_name').to_native()),
+        private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
+        public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
+                                if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
         primary=item.get('primary'),
-        name=item.get('name').to_native()
+        name=to_native(item.get('name'))
     )) for item in raw]
     return set(configurations)
 
