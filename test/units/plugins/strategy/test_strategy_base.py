@@ -336,6 +336,13 @@ class TestStrategyBase(unittest.TestCase):
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
+
+        strategy_base._queue_task_args = MagicMock()
+        strategy_base._queue_task_args.pop.return_value = {
+            'task_vars': {},
+            'play_context': {},
+        }
+
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], task_result)
@@ -539,6 +546,11 @@ class TestStrategyBase(unittest.TestCase):
             strategy_base._notified_handlers = {mock_handler_task._uuid: [mock_host]}
 
             task_result = TaskResult(Host('host01'), Handler(), dict(changed=False))
+            strategy_base._queue_task_args = MagicMock()
+            strategy_base._queue_task_args.pop.return_value = {
+                'task_vars': {},
+                'play_context': mock_play_context
+            }
             tqm._final_q.put(task_result)
 
             result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)

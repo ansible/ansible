@@ -19,7 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import cmd
+import functools
 import os
+import pprint
+import sys
 import threading
 import time
 
@@ -76,6 +80,7 @@ class SharedPluginLoaderObj:
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
 
+
 _sentinel = StrategySentinel()
 
 
@@ -93,6 +98,67 @@ def results_thread_main(strategy):
             break
         except Queue.Empty:
             pass
+
+
+def debug_closure(func):
+    """Closure to wrap ``StrategyBase._process_pending_results`` and invoke the task debugger"""
+    @functools.wraps(func)
+    def inner(self, iterator, one_pass=False, max_passes=None):
+        status_to_stats_map = (
+            ('is_failed', 'failures'),
+            ('is_unreachable', 'dark'),
+            ('is_changed', 'changed'),
+            ('is_skipped', 'skipped'),
+        )
+
+        # We don't know the host yet, copy the previous states, for lookup after we process new results
+        prev_host_states = iterator._host_states.copy()
+
+        results = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
+        _processed_results = []
+
+        for result in results:
+            task = result._task
+            host = result._host
+            _queue_task_args = self._queue_task_args.pop('%s%s' % (host.name, task._uuid))
+            task_vars = _queue_task_args['task_vars']
+            play_context = _queue_task_args['play_context']
+            # Try to grab the previous host state, if it doesn't exist use get_host_state to generate an empty state
+            try:
+                prev_host_state = prev_host_states[host.name]
+            except KeyError:
+                prev_host_state = iterator.get_host_state(host)
+
+            while result.needs_debugger(globally_enabled=self.debugger_active):
+                next_action = NextAction()
+                dbg = Debugger(task, host, task_vars, play_context, result, next_action)
+                dbg.cmdloop()
+
+                if next_action.result == NextAction.REDO:
+                    # rollback host state
+                    self._tqm.clear_failed_hosts()
+                    iterator._host_states[host.name] = prev_host_state
+                    for method, what in status_to_stats_map:
+                        if getattr(result, method)():
+                            self._tqm._stats.decrement(what, host.name)
+                    self._tqm._stats.decrement('ok', host.name)
+
+                    # redo
+                    self._queue_task(host, task, task_vars, play_context)
+
+                    _processed_results.extend(debug_closure(func)(self, iterator, one_pass))
+                    break
+                elif next_action.result == NextAction.CONTINUE:
+                    _processed_results.append(result)
+                    break
+                elif next_action.result == NextAction.EXIT:
+                    # Matches KeyboardInterrupt from bin/ansible
+                    sys.exit(99)
+            else:
+                _processed_results.append(result)
+
+        return _processed_results
+    return inner
 
 
 class StrategyBase:
@@ -113,6 +179,7 @@ class StrategyBase:
         self._final_q = tqm._final_q
         self._step = getattr(tqm._options, 'step', False)
         self._diff = getattr(tqm._options, 'diff', False)
+        self._queue_task_args = {}
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
@@ -136,6 +203,8 @@ class StrategyBase:
         # holds the list of active (persistent) connections to be shutdown at
         # play completion
         self._active_connections = dict()
+
+        self.debugger_active = C.ENABLE_TASK_DEBUGGER
 
     def cleanup(self):
         # close active persistent connections
@@ -200,6 +269,13 @@ class StrategyBase:
 
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
+
+        self._queue_task_args['%s%s' % (host.name, task._uuid)] = {
+            'host': host,
+            'task': task,
+            'task_vars': task_vars,
+            'play_context': play_context
+        }
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
 
@@ -268,6 +344,7 @@ class StrategyBase:
 
         return [actual_host]
 
+    @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
         Reads results off the final queue and takes appropriate action
@@ -949,3 +1026,106 @@ class StrategyBase:
                 if socket_path:
                     if r._host not in self._active_connections:
                         self._active_connections[r._host] = socket_path
+
+
+class NextAction(object):
+    """ The next action after an interpreter's exit. """
+    REDO = 1
+    CONTINUE = 2
+    EXIT = 3
+
+    def __init__(self, result=EXIT):
+        self.result = result
+
+
+class Debugger(cmd.Cmd):
+    prompt_continuous = '> '  # multiple lines
+
+    def __init__(self, task, host, task_vars, play_context, result, next_action):
+        # cmd.Cmd is old-style class
+        cmd.Cmd.__init__(self)
+
+        self.prompt = '[%s] %s (debug)> ' % (host, task)
+        self.intro = None
+        self.scope = {}
+        self.scope['task'] = task
+        self.scope['task_vars'] = task_vars
+        self.scope['host'] = host
+        self.scope['play_context'] = play_context
+        self.scope['result'] = result
+        self.next_action = next_action
+
+    def cmdloop(self):
+        try:
+            cmd.Cmd.cmdloop(self)
+        except KeyboardInterrupt:
+            pass
+
+    do_h = cmd.Cmd.do_help
+
+    def do_EOF(self, args):
+        """Quit"""
+        return self.do_quit(args)
+
+    def do_quit(self, args):
+        """Quit"""
+        display.display('User interrupted execution')
+        self.next_action.result = NextAction.EXIT
+        return True
+
+    do_q = do_quit
+
+    def do_continue(self, args):
+        """Continue to next result"""
+        self.next_action.result = NextAction.CONTINUE
+        return True
+
+    do_c = do_continue
+
+    def do_redo(self, args):
+        """Schedule task for re-execution. The re-execution may not be the next result"""
+        self.next_action.result = NextAction.REDO
+        return True
+
+    do_r = do_redo
+
+    def evaluate(self, args):
+        try:
+            return eval(args, globals(), self.scope)
+        except Exception:
+            t, v = sys.exc_info()[:2]
+            if isinstance(t, str):
+                exc_type_name = t
+            else:
+                exc_type_name = t.__name__
+            display.display('***%s:%s' % (exc_type_name, repr(v)))
+            raise
+
+    def do_pprint(self, args):
+        """Pretty Print"""
+        try:
+            result = self.evaluate(args)
+            display.display(pprint.pformat(result))
+        except Exception:
+            pass
+
+    do_p = do_pprint
+
+    def execute(self, args):
+        try:
+            code = compile(args + '\n', '<stdin>', 'single')
+            exec(code, globals(), self.scope)
+        except Exception:
+            t, v = sys.exc_info()[:2]
+            if isinstance(t, str):
+                exc_type_name = t
+            else:
+                exc_type_name = t.__name__
+            display.display('***%s:%s' % (exc_type_name, repr(v)))
+            raise
+
+    def default(self, line):
+        try:
+            self.execute(line)
+        except Exception:
+            pass
