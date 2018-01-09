@@ -71,6 +71,8 @@ def interfaceConfig(
                     deviceType, "portchannel_interface_string", interfaceArg2)
                 if(value == "ok"):
                     newPrompt = "(config-if-range)#"
+                    if '/' in interfaceArg2:
+                        newPrompt = "(config-if)#"
                     retVal = retVal + \
                         waitForDeviceResponse(command, newPrompt, timeout, obj)
                 else:
@@ -106,6 +108,8 @@ def interfaceConfig(
                     command = command + \
                         interfaceArg1 + " " + interfaceArg2 + "\n"
                     newPrompt = "(config-if-range)#"
+                    if '/' in interfaceArg2:
+                        newPrompt = "(config-if)#"
                     retVal = retVal + \
                         waitForDeviceResponse(command, newPrompt, timeout, obj)
                 else:
