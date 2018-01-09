@@ -932,6 +932,18 @@ DEFAULT_STDOUT_CALLBACK:
   env: [{name: ANSIBLE_STDOUT_CALLBACK}]
   ini:
   - {key: stdout_callback, section: defaults}
+ENABLE_TASK_DEBUGGER:
+  name: Whether to enable the task debugger
+  default: False
+  description:
+    - Whether or not to enable the task debugger, this previously was done as a strategy plugin.
+    - Now all strategy plugins can inherit this behavior. The debugger defaults to activating when
+    - a task is failed on unreachable. Use the debugger keyword for more flexibility.
+  type: boolean
+  env: [{name: ANSIBLE_ENABLE_TASK_DEBUGGER}]
+  ini:
+    - {key: enable_task_debugger, section: defaults}
+  version_added: "2.5"
 DEFAULT_STRATEGY:
   name: Implied strategy
   default: 'linear'

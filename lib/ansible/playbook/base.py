@@ -162,6 +162,9 @@ class Base(with_metaclass(BaseMeta, object)):
     _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool')
 
+    # explicitly invoke a debugger on tasks
+    _debugger = FieldAttribute(isa='string')
+
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
         'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
@@ -273,6 +276,12 @@ class Base(with_metaclass(BaseMeta, object)):
 
     def get_variable_manager(self):
         return self._variable_manager
+
+    def _validate_debugger(self, attr, name, value):
+        valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
+        if value and isinstance(value, string_types) and value not in valid_values:
+            raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
+        return value
 
     def _validate_attributes(self, ds):
         '''
