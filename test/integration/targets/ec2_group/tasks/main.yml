@@ -826,6 +826,41 @@
 
     # ============================================================
 
+    - name: test creating rule in default vpc with egress rule (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}-default-vpc'
+        description: '{{ec2_group_description}} default VPC'
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        purge_rules_egress: true
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+          rule_desc: ipv6 rule desc 2
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 2
+      register: result
+
+    - name: assert that rule descriptions were modified (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.ip_permissions_egress|length == 1'
+
+    # ============================================================
+
     - name: test that keeping the same rule descriptions (expected changed=false)
       ec2_group:
         name: '{{ec2_group_name}}'
@@ -945,6 +980,18 @@
         EC2_ACCESS_KEY: '{{ec2_access_key}}'
         EC2_SECRET_KEY: '{{ec2_secret_key}}'
         EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+      ignore_errors: yes
+
+    - name: tidy up default VPC security group
+      ec2_group:
+        name: '{{ec2_group_name}}-default-vpc'
+        state: absent
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: '{{ec2_access_key}}'
+        EC2_SECRET_KEY: '{{ec2_secret_key}}'
+        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+      ignore_errors: yes
 
     - name: tidy up automatically created SG
       ec2_group:
@@ -954,6 +1001,7 @@
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
+      ignore_errors: yes
 
     - name: tidy up VPC
       ec2_vpc_net:
@@ -964,3 +1012,4 @@
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
+      ignore_errors: yes
