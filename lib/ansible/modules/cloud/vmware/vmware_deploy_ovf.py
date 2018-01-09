@@ -320,6 +320,8 @@ class VMwareDeployOvf:
 
         lease, import_spec = self.get_lease()
 
+        uploaders = []
+
         for file_item in import_spec.fileItem:
             vmdk_post_url = None
             for device_url in lease.info.deviceUrl:
@@ -359,16 +361,23 @@ class VMwareDeployOvf:
                     )
                 vmdk_tarinfo = None
 
-            uploader = VMDKUploader(
-                vmdk,
-                vmdk_post_url,
-                self.params['validate_certs'],
-                tarinfo=vmdk_tarinfo
+            uploaders.append(
+                VMDKUploader(
+                    vmdk,
+                    vmdk_post_url,
+                    self.params['validate_certs'],
+                    tarinfo=vmdk_tarinfo
+                )
             )
+
+        total_size = sum(u.size for u in uploaders)
+        total_bytes_read = [0] * len(uploaders)
+        for i, uploader in enumerate(uploaders):
             uploader.start()
             while uploader.is_alive():
                 time.sleep(0.1)
-                lease.HttpNfcLeaseProgress(int(100.0 * uploader.bytes_read / uploader.size))
+                total_bytes_read[i] = uploader.bytes_read
+                lease.HttpNfcLeaseProgress(int(100.0 * sum(total_bytes_read) / total_size))
 
             if uploader.e:
                 lease.HttpNfcLeaseAbort(
