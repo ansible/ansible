@@ -58,60 +58,60 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    id:
-        description:
-            - The resource ID.
-        returned: always
-        type: str
-        sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/webh
-                 ooks/myWebhook"
-    name:
-        description:
-            - The name of the resource.
-        returned: always
-        type: str
-        sample: myWebhook
-    type:
-        description:
-            - The type of the resource.
-        returned: always
-        type: str
-        sample: Microsoft.ContainerRegistry/registries/webhooks
-    location:
-        description:
-            - The location of the resource. This cannot be changed after the resource is created.
-        returned: always
-        type: str
-        sample: westus
-    tags:
-        description:
-            - The tags of the resource.
-        returned: always
-        type: complex
-        sample: {
-      "key": "value"
-    }
-    status:
-        description:
-            - The status of the webhook at the time the operation was called. Possible values include: C(enabled), C(disabled)
-        returned: always
-        type: str
-        sample: enabled
-    scope:
-        description:
-            - "The scope of repositories where the event can be triggered. For example, C(foo:*) means events for all tags under repository C(foo). C(foo:bar) me
-               ans events for C(foo:bar) only. C(foo) is equivalent to C(foo:latest). Empty means all events."
-        returned: always
-        type: str
-        sample: myRepository
-    actions:
-        description:
-            - The list of actions that trigger the webhook to post notifications.
-        returned: always
-        type: str
-        sample: [
-      "push"
-    ]
+id:
+    description:
+        - The resource ID.
+    returned: always
+    type: str
+    sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/webh
+             ooks/myWebhook"
+name:
+    description:
+        - The name of the resource.
+    returned: always
+    type: str
+    sample: myWebhook
+type:
+    description:
+        - The type of the resource.
+    returned: always
+    type: str
+    sample: Microsoft.ContainerRegistry/registries/webhooks
+location:
+    description:
+        - The location of the resource. This cannot be changed after the resource is created.
+    returned: always
+    type: str
+    sample: westus
+tags:
+    description:
+        - The tags of the resource.
+    returned: always
+    type: complex
+    sample: {
+  "key": "value"
+}
+status:
+    description:
+        - The status of the webhook at the time the operation was called. Possible values include: C(enabled), C(disabled)
+    returned: always
+    type: str
+    sample: enabled
+scope:
+    description:
+        - "The scope of repositories where the event can be triggered. For example, C(foo:*) means events for all tags under repository C(foo). C(foo:bar) me
+           ans events for C(foo:bar) only. C(foo) is equivalent to C(foo:latest). Empty means all events."
+    returned: always
+    type: str
+    sample: myRepository
+actions:
+    description:
+        - The list of actions that trigger the webhook to post notifications.
+    returned: always
+    type: str
+    sample: [
+  "push"
+]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
