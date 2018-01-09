@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# (c) 2018, Jason Vanderhoof <jason.vanderhoof@cyberark.com>
 #
 # This file is part of Ansible
 #
@@ -53,7 +53,6 @@ class TestLookupModule(unittest.TestCase):
 
             with self.assertRaises(AnsibleError):
                 conjur_variable._load_identity_from_file(temp_netrc.name, 'http://foo')
-
 
     def test_valid_configuration(self):
         with tempfile.NamedTemporaryFile() as configuration_file:

@@ -59,6 +59,7 @@ def _load_configuration():
 
     raise AnsibleError('Conjur configuration should be in one of the following files: \'~/.conjurrc\', \'/etc/conjur.conf\'')
 
+
 # Load Conjur identity from either `/etc/conjur.identity`, or `~/.netrc`
 def _load_identity(appliance_url):
     for location in ['~/.netrc', '/etc/conjur.identity']:
@@ -69,6 +70,7 @@ def _load_identity(appliance_url):
 
     raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
 
+
 # Load configuration and return as dictionary if file is present on file system
 def _load_conf_from_file(conf_path):
     conf_path = os.path.expanduser(conf_path)
@@ -78,6 +80,7 @@ def _load_conf_from_file(conf_path):
         with open(conf_path) as f:
             return yaml.safe_load(f.read())
     return {}
+
 
 # Load identity and return as dictionary if file is present on file system
 def _load_identity_from_file(identity_path, appliance_url):
@@ -99,6 +102,7 @@ def _load_identity_from_file(identity_path, appliance_url):
 
     return {}
 
+
 # Use credentials to retrieve temporary authorization token
 def _fetch_conjur_token(conjur_url, account, username, api_key):
     conjur_url = '{0}/authn/{1}/{2}/authenticate'.format(conjur_url, account, username)
@@ -110,6 +114,7 @@ def _fetch_conjur_token(conjur_url, account, username, api_key):
         raise AnsibleError('Failed to authenticate as \'{0}\''.format(username))
 
     return response.read()
+
 
 # Retrieve Conjur variable using the temporary token
 def _fetch_conjur_variable(conjur_variable, token, conjur_url, account):
