@@ -34,7 +34,6 @@ try:
 except ImportError:
     HAS_PYFMGR = False
 
-
 class AnsibleFortiManager(object):
 
     def __init__(self, module, ip=None, username=None, passwd=None, use_ssl=True, verify_ssl=False, timeout=300):
@@ -56,7 +55,7 @@ class AnsibleFortiManager(object):
             self.fmgr_instance = FortiManager(self.ip, self.username, self.passwd, use_ssl=self.use_ssl,
                                               verify_ssl=self.verify_ssl, timeout=self.timeout, debug=False,
                                               disable_request_warnings=True)
-            self.fmgr_instance.login()
+            return self.fmgr_instance.login()
 
     def logout(self):
         if self.fmgr_instance.sid is not None:

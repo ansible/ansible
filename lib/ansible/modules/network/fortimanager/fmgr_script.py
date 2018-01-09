@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+import sys
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -208,53 +209,58 @@ def main():
 
     module = AnsibleModule(argument_spec, supports_check_mode=True,)
 
-    fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
-    fmg.login()
-
-    adom = module.params["adom"]
-    if adom is None:
-        adom = "root"
-    vdom = module.params["vdom"]
-    if vdom is None:
-        vdom = "root"
-    host = module.params["host"]
-    password = module.params["password"]
-    state = module.params["state"]
-    if state is None:
-        state = "present"
-    username = module.params["username"]
-
-    script_name = module.params["script_name"]
-    script_type = module.params["script_type"]
-    script_target = module.params["script_target"]
-    script_description = module.params["script_description"]
-    script_content = module.params["script_content"]
-    script_scope = module.params["script_scope"]
-    script_package = module.params["script_package"]
-
     # check if params are set
-    if host is None or username is None:
-        module.fail_json(msg="Host and username are required")
+    if module.params["host"] is None or module.params["username"] is None:
+        module.fail_json(msg="Host and username are required for connection")
 
-    # if state is present (default), then add the script
-    if state == "present":
-        results = set_script(fmg, script_name, script_type, script_content, script_description, script_target, adom)
-        if not results[0] == 0:
-            module.fail_json(msg="Setting Script Failed", **results)
+    fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
+    response = fmg.login()
 
-    elif state == "execute":
-        results = execute_script(fmg, script_name, script_scope, script_package, adom, vdom)
-        if not results[0] == 0:
-            module.fail_json(msg="Script Execution Failed", **results)
 
-    elif state == "delete":
-        results = delete_script(fmg, script_name, adom)
-        if not results[0] == 0:
-            module.fail_json(msg="Script Deletion Failed", **results)
 
-    fmg.logout()
+    if "FortiManager instance connnected" not in str(response):
+        module.fail_json(msg="Connection to FortiManager Failed")
+    else:
+        adom = module.params["adom"]
+        if adom is None:
+            adom = "root"
+        vdom = module.params["vdom"]
+        if vdom is None:
+            vdom = "root"
+        state = module.params["state"]
+        if state is None:
+            state = "present"
 
-    return module.exit_json(**results[1])
+        script_name = module.params["script_name"]
+        script_type = module.params["script_type"]
+        script_target = module.params["script_target"]
+        script_description = module.params["script_description"]
+        script_content = module.params["script_content"]
+        script_scope = module.params["script_scope"]
+        script_package = module.params["script_package"]
+
+        # if state is present (default), then add the script
+        if state == "present":
+            results = set_script(fmg, script_name, script_type, script_content, script_description, script_target, adom)
+            if not results[0] == 0:
+                if isinstance(results[1], list):
+                    module.fail_json(msg="Adding Script Failed", **results)
+                else:
+                    module.fail_json(msg="Adding Script Failed")
+
+        elif state == "execute":
+            results = execute_script(fmg, script_name, script_scope, script_package, adom, vdom)
+            if not results[0] == 0:
+                module.fail_json(msg="Script Execution Failed", **results)
+
+        elif state == "delete":
+            results = delete_script(fmg, script_name, adom)
+            if not results[0] == 0:
+                module.fail_json(msg="Script Deletion Failed", **results)
+
+        fmg.logout()
+
+        return module.exit_json(**results[1])
 
 
 if __name__ == "__main__":
