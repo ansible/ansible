@@ -27,27 +27,39 @@ options:
     default: present
   name:
     description:
-    - Name of the VSAN
+    - The name assigned to the VSAN.
+    - This name can be between 1 and 32 alphanumeric characters.
+    - "You cannot use spaces or any special characters other than - (hyphen), \"_\" (underscore), : (colon), and . (period)."
+    - You cannot change this name after the VSAN is created.
     required: yes
   vsan_id:
     description:
-    - VSAN ID
-    - Optional for state absent
+    - The unique identifier assigned to the VSAN.
+    - The ID can be a string between '1' and '4078', or between '4080' and '4093'. '4079' is a reserved VSAN ID.
+    - In addition, if you plan to use FC end-host mode, the range between '3840' to '4079' is also a reserved VSAN ID range.
+    - Optional if state is absent.
     required: yes
   vlan_id:
     description:
-    - VLAN ID (for FCoE traffic)
-    - Optional for state absent
+    - The unique string identifier assigned to the VLAN used for Fibre Channel connections.
+    - Note that Cisco UCS Manager uses VLAN '4048'.  See the UCS Manager configuration guide if you want to assign '4048' to a VLAN.
+    - Optional if state is absent.
     required: yes
   fc_zoning:
     description:
-    - Enable/Disable FC Zoning
-    - Do not enable local zoning if FI is connected to an upstream FC/FCoE switch
+    - Fibre Channel zoning configuration for the Cisco UCS domain.
+    - "Fibre Channel zoning can be set to one of the following values:"
+    - "disabled — The upstream switch handles Fibre Channel zoning, or Fibre Channel zoning is not implemented for the Cisco UCS domain."
+    - "enabled — Cisco UCS Manager configures and controls Fibre Channel zoning for the Cisco UCS domain."
+    - If you enable Fibre Channel zoning, do not configure the upstream switch with any VSANs that are being used for Fibre Channel zoning.
     choices: [disabled, enabled]
     default: disabled
   fabric:
     description:
-    - Which fabric
+    - "The fabric configuration of the VSAN.  This can be one of the following:"
+    - "common - The VSAN maps to the same VSAN ID in all available fabrics."
+    - "A - The VSAN maps to the a VSAN ID that exists only in fabric A."
+    - "B - The VSAN maps to the a VSAN ID that exists only in fabric B."
     choices: [common, A, B]
     default: common
 requirements:
@@ -155,8 +167,7 @@ def main():
             else:
                 if mo_exists:
                     # check top-level mo props
-                    kwargs = {}
-                    kwargs['id'] = vsan['vsan_id']
+                    kwargs = dict(id=vsan['vsan_id'])
                     kwargs['fcoe_vlan'] = vsan['vlan_id']
                     kwargs['zoning_state'] = vsan['fc_zoning']
                     if (mo.check_prop_match(**kwargs)):
