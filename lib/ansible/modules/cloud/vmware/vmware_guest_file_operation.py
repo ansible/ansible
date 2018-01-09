@@ -330,23 +330,20 @@ def main():
                                       operation=dict(required=True, type='str',
                                                      choices=['create', 'delete']),
                                       recurse=dict(required=False, type='bool', default=False)
-                                  )
-                              ),
+                                  )),
                               copy=dict(
                                   type='dict',
                                   default=None,
                                   options=dict(
                                       src=dict(required=True, type='str'), dest=dict(required=True, type='str'),
                                       overwrite=dict(required=False, type='bool', default=False)
-                                  )
-                              ),
+                                  )),
                               fetch=dict(
                                   type='dict',
                                   default=None,
-                                  options=dict(
-                                      src=dict(required=True, type='str'), dest=dict(required=True, type='str'),
-                                  )
-                              )
+                                  options=dict(src=dict(required=True, type='str'),
+                                               dest=dict(required=True, type='str'),
+                                               ))
                               ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
