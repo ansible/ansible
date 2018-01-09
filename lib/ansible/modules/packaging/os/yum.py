@@ -614,6 +614,8 @@ def local_envra(path):
     fd = os.open(path, os.O_RDONLY)
     try:
         header = ts.hdrFromFdno(fd)
+    except rpm.error as e:
+        return None
     finally:
         os.close(fd)
 
@@ -752,6 +754,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
             # most common case is the pkg is already installed
             envra = local_envra(package)
+            if envra is None:
+                module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
             installed_pkgs = is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
             if installed_pkgs:
                 res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], package))
@@ -1046,6 +1050,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                 # get the pkg e:name-v-r.arch
                 envra = local_envra(spec)
 
+                if envra is None:
+                    module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
+
                 # local rpm files can't be updated
                 if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     pkgs['install'].append(spec)
@@ -1056,6 +1063,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                 # download package so that we can check if it's already installed
                 package = fetch_rpm_from_url(spec, module=module)
                 envra = local_envra(package)
+
+                if envra is None:
+                    module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                 # local rpm files can't be updated
                 if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
