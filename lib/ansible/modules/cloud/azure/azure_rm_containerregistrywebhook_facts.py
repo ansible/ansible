@@ -63,7 +63,8 @@ RETURN = '''
             - The resource ID.
         returned: always
         type: str
-        sample: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/webhooks/myWebhook
+        sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/webh
+                 ooks/myWebhook"
     name:
         description:
             - The name of the resource.
