@@ -235,7 +235,7 @@ from ansible.module_utils.ec2 import compare_aws_tags, AWSRetry
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSMpdule
+    pass  # handled by AnsibleAWSModule
 
 
 CIDR_RE = re.compile(r'^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$')
@@ -312,6 +312,8 @@ def find_igw(connection, module, vpc_id):
         module.fail_json_aws(e, msg='No IGW found for VPC {0}'.format(vpc_id))
     if len(igw) == 1:
         return igw[0]['InternetGatewayId']
+    elif len(igw) == 0:
+        module.fail_json(msg='No IGWs found for VPC {0}'.format(vpc_id))
     else:
         module.fail_json(msg='Multiple IGWs found for VPC {0}'.format(vpc_id))
 
@@ -329,7 +331,7 @@ def tags_match(match_tags, candidate_tags):
                 for k, v in match_tags.items()))
 
 
-def ensure_tags(module, connection, resource_id, tags, purge_tags, check_mode):
+def ensure_tags(connection=None, module=None, resource_id=None, tags=None, purge_tags=None, check_mode=None):
     try:
         cur_tags = describe_tags_with_backoff(connection, resource_id)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -429,8 +431,8 @@ def index_of_matching_route(route_spec, routes_to_match):
             return "replace", i
 
 
-def ensure_routes(connection, module, route_table, route_specs, propagating_vgw_ids,
-                  check_mode, purge_routes):
+def ensure_routes(connection=None, module=None, route_table=None, route_specs=None,
+                  propagating_vgw_ids=None, check_mode=None, purge_routes=None):
     routes_to_match = [route for route in route_table['Routes']]
     route_specs_to_create = []
     route_specs_to_recreate = []
@@ -474,8 +476,8 @@ def ensure_routes(connection, module, route_table, route_specs, propagating_vgw_
     return {'changed': bool(changed)}
 
 
-def ensure_subnet_association(connection, module, vpc_id, route_table_id, subnet_id,
-                              check_mode):
+def ensure_subnet_association(connection=None, module=None, vpc_id=None, route_table_id=None, subnet_id=None,
+                              check_mode=None):
     filters = ansible_dict_to_boto3_filter_list({'association.subnet-id': subnet_id, 'vpc-id': vpc_id})
     try:
         route_tables = describe_route_tables_with_backoff(connection, Filters=filters)
@@ -505,14 +507,14 @@ def ensure_subnet_association(connection, module, vpc_id, route_table_id, subnet
     return {'changed': True, 'association_id': association_id}
 
 
-def ensure_subnet_associations(connection, module, route_table, subnets,
-                               check_mode, purge_subnets):
+def ensure_subnet_associations(connection=None, module=None, route_table=None, subnets=None,
+                               check_mode=None, purge_subnets=None):
     current_association_ids = [a['RouteTableAssociationId'] for a in route_table['Associations'] if not a['Main']]
     new_association_ids = []
     changed = False
     for subnet in subnets:
-        result = ensure_subnet_association(connection, module, route_table['VpcId'], route_table['RouteTableId'],
-                                           subnet['SubnetId'], check_mode)
+        result = ensure_subnet_association(connection=connection, module=module, vpc_id=route_table['VpcId'],
+                                           route_table_id=route_table['RouteTableId'], subnet_id=subnet['SubnetId'], check_mode=check_mode)
         changed = changed or result['changed']
         if changed and check_mode:
             return {'changed': True}
@@ -533,8 +535,8 @@ def ensure_subnet_associations(connection, module, route_table, subnets,
     return {'changed': changed}
 
 
-def ensure_propagation(connection, module, route_table, propagating_vgw_ids,
-                       check_mode):
+def ensure_propagation(connection=None, module=None, route_table=None, propagating_vgw_ids=None,
+                       check_mode=None):
     changed = False
     gateways = [gateway['GatewayId'] for gateway in route_table['PropagatingVgws']]
     to_add = set(propagating_vgw_ids) - set(gateways)
@@ -572,7 +574,8 @@ def ensure_route_table_absent(connection, module):
 
     # disassociate subnets before deleting route table
     if not module.check_mode:
-        ensure_subnet_associations(connection, module, route_table, [], False, purge_subnets)
+        ensure_subnet_associations(connection=connection, module=module, route_table=route_table,
+                                   routes=[], check_mode=False, purge_subnets=purge_subnets)
         try:
             connection.delete_route_table(RouteTableId=route_table['RouteTableId'])
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -648,30 +651,28 @@ def ensure_route_table_present(connection, module):
                 module.fail_json_aws(e, msg="Error creating route table")
 
     if routes is not None:
-        result = ensure_routes(connection, module, route_table, routes,
-                               propagating_vgw_ids, module.check_mode,
-                               purge_routes)
+        result = ensure_routes(connection=connection, module=module, route_table=route_table,
+                               route_specs=routes, propagating_vgw_ids=propagating_vgw_ids,
+                               check_mode=module.check_mode, purge_routes=purge_routes)
         changed = changed or result['changed']
 
     if propagating_vgw_ids is not None:
-        result = ensure_propagation(connection, module, route_table,
-                                    propagating_vgw_ids,
-                                    check_mode=module.check_mode)
+        result = ensure_propagation(connection=connection, module=module, route_table=route_table,
+                                    propagating_vgw_ids=propagating_vgw_ids, check_mode=module.check_mode)
         changed = changed or result['changed']
 
     if not tags_valid and tags is not None:
-        result = ensure_tags(module, connection, route_table['RouteTableId'], tags,
-                             purge_tags, check_mode=module.check_mode)
+        result = ensure_tags(connection=connection, module=module, route_table_id=route_table['RouteTableId'], tags=tags,
+                             purge_tags=purge_tags, check_mode=module.check_mode)
         route_table['Tags'] = result['tags']
         changed = changed or result['changed']
 
     if subnets is not None:
         associated_subnets = find_subnets(connection, module, vpc_id, subnets)
 
-        result = ensure_subnet_associations(connection, module, route_table,
-                                            associated_subnets,
-                                            module.check_mode,
-                                            purge_subnets)
+        result = ensure_subnet_associations(connection=connection, module=module, route_table=route_table,
+                                            associated_subnets=associated_subnets, check_mode=module.check_mode,
+                                            purge_subnets=purge_subnets)
         changed = changed or result['changed']
 
     module.exit_json(changed=changed, route_table=get_route_table_info(connection, module, route_table))

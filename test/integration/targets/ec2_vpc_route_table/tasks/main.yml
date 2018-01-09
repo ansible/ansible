@@ -42,19 +42,16 @@
         public: "False"
     register: subnets
 
-
   - ec2_vpc_subnet_facts:
       filters:
         vpc-id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
     register: vpc_subnets
 
-
   - name: create IGW
     ec2_vpc_igw:
       vpc_id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
-
 
   - name: create NAT GW
     ec2_vpc_nat_gateway:
@@ -82,7 +79,6 @@
         - create_public_table.route_table.routes|length == 1
         - create_public_table.route_table.associations|length == 0
 
-
   - name: recreate public route table
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
@@ -96,7 +92,6 @@
     assert:
       that:
         - not recreate_public_route_table.changed
-
 
   - name: add a route to public route table
     ec2_vpc_route_table:
@@ -115,7 +110,6 @@
       that:
         - add_routes.changed
         - add_routes.route_table.routes|length == 2
-
 
   - name: add subnets to public route table
     ec2_vpc_route_table:
@@ -166,7 +160,6 @@
         - no_purge_routes.route_table.routes|length == 2
         - no_purge_routes.route_table.associations|length == 2
 
-
   - name: rerun with purge_subnets set to false
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
@@ -187,11 +180,9 @@
         - no_purge_subnets.route_table.routes|length == 2
         - no_purge_subnets.route_table.associations|length == 2
 
-
   - name: rerun with purge_tags not set (implicitly false)
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
-      region: "{{ aws_region }}"
       routes:
       - dest: 0.0.0.0/0
         gateway_id: igw
@@ -206,7 +197,6 @@
       that:
         - not no_purge_tags.changed
         - "'Public' in no_purge_tags.route_table.tags and no_purge_tags.route_table.tags['Public'] == 'true'"
-
 
   - name: purge subnets
     ec2_vpc_route_table:
@@ -228,7 +218,6 @@
         - purge_subnets.route_table.associations|length == 0
         - purge_subnets.route_table.id == create_public_table.route_table.id
 
-
   - name: purge routes
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
@@ -245,7 +234,6 @@
         - purge_routes.changed
         - purge_routes.route_table.routes|length == 1
         - purge_routes.route_table.id == create_public_table.route_table.id
-
 
   - name: update tags
     ec2_vpc_route_table:
@@ -266,7 +254,6 @@
         - "'Updated' in update_tags.route_table.tags and update_tags.route_table.tags['Updated'] == 'new_tag'"
         - "'Public' not in update_tags.route_table.tags"
 
-
   - name: create NAT GW
     ec2_vpc_nat_gateway:
       if_exist_do_not_create: yes
@@ -274,7 +261,6 @@
       subnet_id: "{{ subnets.results[0].subnet.id }}"
       <<: *aws_connection_info
     register: nat_gateway
-
 
   - name: create private route table
     ec2_vpc_route_table:
@@ -295,7 +281,6 @@
         - create_private_table.changed
         - create_private_table.route_table.id != create_public_table.route_table.id
         - "'Public' in create_private_table.route_table.tags"
-
 
   - name: destroy public route table by tags
     ec2_vpc_route_table:
@@ -358,7 +343,6 @@
   - name: recreate private route table with new NAT GW
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id }}"
-      region: "{{ aws_region }}"
       tags:
         Public: "false"
         Name: "Private route table"
