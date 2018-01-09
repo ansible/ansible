@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2016, Ben Doherty <bendohmv@gmail.com>
-# Sponsored by Oomph, Inc. http://www.oomphinc.com
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -129,6 +128,10 @@ expanded_exclude_paths:
     description: The list of matching exclude paths from the exclude_path argument.
     type: list
     returned: always
+excluded:
+    description: The list of files that were excluded from the archive.
+    type: list
+    returned: always
 '''
 
 import bz2
@@ -187,6 +190,7 @@ def main():
     globby = False
     changed = False
     state = 'absent'
+    excluded = []
 
     # Simple or archive file compression (inapplicable with 'zip' since it's always an archive)
     archive = False
@@ -264,7 +268,9 @@ def main():
         if remove and os.path.isdir(path) and dest.startswith(path):
             module.fail_json(path=', '.join(paths), msg='Error, created archive can not be contained in source paths when remove=True')
 
-        if os.path.lexists(path) and path not in expanded_exclude_paths:
+        if path in expanded_exclude_paths:
+            excluded.append(path)
+        elif os.path.lexists(path):
             archive_paths.append(path)
         else:
             missing.append(path)
@@ -330,6 +336,9 @@ def main():
                                     fullpath = dirpath + dirname
                                     arcname = match_root.sub('', fullpath)
 
+                                    if dirname in expanded_exclude_paths:
+                                        continue
+
                                     try:
                                         if format == 'zip':
                                             arcfile.write(fullpath, arcname)
@@ -342,6 +351,9 @@ def main():
                                 for filename in filenames:
                                     fullpath = dirpath + filename
                                     arcname = match_root.sub('', fullpath)
+
+                                    if filename in expanded_exclude_paths:
+                                        continue
 
                                     if not filecmp.cmp(fullpath, dest):
                                         try:
@@ -479,7 +491,8 @@ def main():
                      arcroot=arcroot,
                      missing=missing,
                      expanded_paths=expanded_paths,
-                     expanded_exclude_paths=expanded_exclude_paths)
+                     expanded_exclude_paths=expanded_exclude_paths,
+                     excluded=excluded)
 
 
 if __name__ == '__main__':
