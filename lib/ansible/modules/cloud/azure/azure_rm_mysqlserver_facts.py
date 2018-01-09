@@ -74,14 +74,6 @@ location:
     returned: always
     type: str
     sample: onebox
-tags:
-    description:
-        - Application-specific metadata in the form of key-value pairs.
-    returned: always
-    type: complex
-    sample: {
-  "elasticServer": "1"
-}
 sku:
     description:
         - The SKU (pricing tier) of the server.
