@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: vmware_guest_file_operation
 short_description: Files operation in a VMware guest operating system without network
 description:
-    - Module allows user to copy and fetch file and create,delete directory in the guest operating system.
+    - Module to copy a file to a VM, fetch a file from a VM and create or delete a directory in the guest OS.
 version_added: "2.5"
 author:
   - Stéphane Travassac (@stravassac)
@@ -168,23 +168,15 @@ from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, f
 
 
 def directory(module, content, vm):
-    operations_permit = ['create', 'delete']
+    result = {}
+    result['changed'] = True
+    result['uuid'] = vm.summary.config.uuid
     vm_username = module.params['vm_username']
     vm_password = module.params['vm_password']
 
-    if "path" not in module.params["directory"]:
-        module.fail_json(msg="directory.path is mandatory")
-    if "operation" not in module.params["directory"]:
-        module.fail_json(msg="directory.operation is mandatory")
-    if "recurse" not in module.params["directory"]:
-        recurse = False
-    else:
-        recurse = bool(module.params['directory']['recurse'])
+    recurse = bool(module.params['directory']['recurse'])
     operation = module.params["directory"]['operation']
     path = module.params["directory"]['path']
-    if operation not in operations_permit:
-        module.fail_json(msg="directory.operation valid values are create, delete")
-
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     file_manager = content.guestOperationsManager.fileManager
     if operation == "create":
@@ -192,84 +184,96 @@ def directory(module, content, vm):
             file_manager.MakeDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
                                               createParentDirectories=recurse)
         except vim.fault.FileAlreadyExists:
-            module.fail_json(msg="Directory %s already exist" % path)
+            result['changed'] = False
+            result['msg'] = "Guest directory %s already exist" % path
+            pass
         except vim.fault.GuestPermissionDenied:
-            module.fail_json(msg="Permission denied for path %s" % path)
+            module.fail_json(msg="Permission denied for path %s" % path, uuid=vm.summary.config.uuid)
         except vim.fault.InvalidGuestLogin:
-            module.fail_json(msg="Invalid guest login for user %s" % vm_username)
+            module.fail_json(msg="Invalid guest login for user %s" % vm_username, uuid=vm.summary.config.uuid)
         # other exceptions
         except Exception as e:
-            module.fail_json(msg="Failed to Create directory into Vm VMware exception:%s" % e)
+            module.fail_json(msg="Failed to Create directory into Vm VMware exception:%s" % e,
+                             uuid=vm.summary.config.uuid)
 
     if operation == "delete":
         try:
             file_manager.DeleteDirectoryInGuest(vm=vm, auth=creds, directoryPath=path,
                                                 recursive=recurse)
+        except vim.fault.FileNotFound:
+            result['changed'] = False
+            result['msg'] = "Guest directory %s not exists" % path
+            pass
         except vim.fault.FileFault as e:
-            module.fail_json(msg="FileFault:%s" % e.msg)
+            module.fail_json(msg="FileFault:%s" % e.msg, uuid=vm.summary.config.uuid)
         except vim.fault.GuestPermissionDenied:
-            module.fail_json(msg="Permission denied for path %s" % path)
+            module.fail_json(msg="Permission denied for path %s" % path, uuid=vm.summary.config.uuid)
         except vim.fault.InvalidGuestLogin:
-            module.fail_json(msg="Invalid guest login for user %s" % vm_username)
+            module.fail_json(msg="Invalid guest login for user %s" % vm_username, uuid=vm.summary.config.uuid)
         # other exceptions
         except Exception as e:
-            module.fail_json(changed=False, msg="Failed to Delete directory into Vm VMware exception:%s" % e)
+            module.fail_json(msg="Failed to Delete directory into Vm VMware exception:%s" % e,
+                             uuid=vm.summary.config.uuid)
 
-    return True
+    return result
 
 
 def fetch(module, content, vm):
+    result = {}
+    result['changed'] = True
+    result['uuid'] = vm.summary.config.uuid
     vm_username = module.params['vm_username']
     vm_password = module.params['vm_password']
-
-    if "src" not in module.params["fetch"]:
-        module.fail_json(msg="fetch.src is mandatory")
-    if "dest" not in module.params["fetch"]:
-        module.fail_json(msg="fetch.dest is mandatory")
-
     dest = module.params["fetch"]['dest']
     src = module.params['fetch']['src']
-
     creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
     file_manager = content.guestOperationsManager.fileManager
 
     try:
         fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
                                                                       guestFilePath=src)
+    except vim.fault.FileNotFound:
+        result['changed'] = False
+        result['msg'] = "Guest file %s not exists" % src
+        return result
+        pass
     except vim.fault.FileFault as e:
-        module.fail_json(msg="FileFault:%s" % e.msg)
+        module.fail_json(msg="FileFault:%s" % e.msg, uuid=vm.summary.config.uuid)
     except vim.fault.GuestPermissionDenied:
-        module.fail_json(msg="Permission denied to fetch file %s" % src)
+        module.fail_json(msg="Permission denied to fetch file %s" % src, uuid=vm.summary.config.uuid)
     except vim.fault.InvalidGuestLogin:
-        module.fail_json(msg="Invalid guest login for user %s" % vm_username)
+        module.fail_json(msg="Invalid guest login for user %s" % vm_username, uuid=vm.summary.config.uuid)
     # other exceptions
     except Exception as e:
-        module.fail_json(changed=False, msg="Failed to Fetch file from Vm VMware exception:%s" % e)
+        module.fail_json(msg="Failed to Fetch file from Vm VMware exception:%s" % e, uuid=vm.summary.config.uuid)
 
     url = fileTransferInfo.url
-    resp, info = urls.fetch_url(module, url, method="GET")
-    with open(dest, "wb") as local_file:
-        local_file.write(resp.read())
+    try:
+        resp, info = urls.fetch_url(module, url, method="GET")
+    except Exception as e:
+        module.fail_json(msg="Failed to Fetch file from Vm VMware exception:%s" % e,
+                         uuid=vm.summary.config.uuid)
 
-    return True
+    try:
+        with open(dest, "wb") as local_file:
+            local_file.write(resp.read())
+    except Exception as e:
+        module.fail_json(msg="local file write exception:%s" % e, uuid=vm.summary.config.uuid)
+
+    return result
 
 
 def copy(module, content, vm):
+    result = {}
+    result['changed'] = True
+    result['uuid'] = vm.summary.config.uuid
     vm_username = module.params['vm_username']
     vm_password = module.params['vm_password']
-
-    if "src" not in module.params["copy"]:
-        module.fail_json(msg="copy.src is mandatory")
-    if "dest" not in module.params["copy"]:
-        module.fail_json(msg="copy.dest is mandatory")
-    if "overwrite" in module.params["copy"]:
-        overwrite = module.params["copy"]["overwrite"]
-    else:
-        overwrite = False
-
+    overwrite = module.params["copy"]["overwrite"]
     dest = module.params["copy"]['dest']
     src = module.params['copy']['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
+
     if not os.path.exists(b_src):
         module.fail_json(msg="Source %s not found" % (src))
     if not os.access(b_src, os.R_OK):
@@ -289,22 +293,27 @@ def copy(module, content, vm):
         url = file_manager.InitiateFileTransferToGuest(vm=vm, auth=creds, guestFilePath=dest,
                                                        fileAttributes=file_attributes, overwrite=overwrite,
                                                        fileSize=file_size)
+    except vim.fault.FileAlreadyExists:
+        result['changed'] = False
+        result['msg'] = "Guest file %s already exists" % dest
+        return result
+        pass
     except vim.fault.FileFault as e:
-        module.fail_json(msg="FileFault:%s" % e.msg)
+        module.fail_json(msg="FileFault:%s" % e, uuid=vm.summary.config.uuid)
     except vim.fault.GuestPermissionDenied:
-        module.fail_json(msg="Permission denied to copy file into destination %s" % dest)
+        module.fail_json(msg="Permission denied to copy file into destination %s" % dest, uuid=vm.summary.config.uuid)
     except vim.fault.InvalidGuestLogin:
         module.fail_json(msg="Invalid guest login for user %s" % vm_username)
     # other exceptions
     except Exception as e:
-        module.fail_json(changed=False, msg="Failed to Copy file to Vm VMware exception:%s" % e)
+        module.fail_json(msg="Failed to Copy file to Vm VMware exception:%s" % e, uuid=vm.summary.config.uuid)
 
     resp, info = urls.fetch_url(module, url, data=data, method="PUT")
 
     status_code = info["status"]
     if status_code != 200:
-        raise Exception('initiateFileTransferToGuest : problem during file transfer')
-    return True
+        module.fail_json(msg='initiateFileTransferToGuest : problem during file transfer', uuid=vm.summary.config.uuid)
+    return result
 
 
 def main():
@@ -317,21 +326,53 @@ def main():
                                               choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
                               vm_username=dict(type='str', required=True),
                               vm_password=dict(type='str', no_log=True, required=True),
-                              directory=dict(type='dict', default={}),
-                              copy=dict(type='dict', default={}),
-                              fetch=dict(type='dict', default={})
+                              directory=dict(
+                                  type='dict',
+                                  default=None,
+                                  options=dict(
+                                      path=dict(required=True, type='str'),
+                                      operation=dict(required=True, type='str',
+                                                     choices=['create', 'delete']),
+                                      recurse=dict(required=False, type='bool', default=False)
+                                  )
+                              ),
+                              copy=dict(
+                                  type='dict',
+                                  default=None,
+                                  options=dict(
+                                      src=dict(required=True, type='str'),
+                                      dest=dict(required=True, type='str'),
+                                      overwrite=dict(required=False, type='bool', default=False)
+                                  )
+                              ),
+                              fetch=dict(
+                                  type='dict',
+                                  default=None,
+                                  options=dict(
+                                      src=dict(required=True, type='str'),
+                                      dest=dict(required=True, type='str'),
+                                  )
+                              )
                               ))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
-                           required_if=[['vm_id_type', 'inventory_path', ['folder']]],
+                           required_if=[
+                               ['vm_id_type', 'inventory_path', ['folder']]
+                           ],
+                           mutually_exclusive=[
+                               ['directory', 'copy', 'fetch']
+                           ],
+                           required_one_of=[
+                               ['directory', 'copy', 'fetch']
+                           ],
                            )
 
     if not HAS_PYVMOMI:
-        module.fail_json(changed=False, msg='pyvmomi is required for this module')
+        module.fail_json(msg='pyvmomi is required for this module')
 
     if module.params['vm_id_type'] == 'vm_name' and not module.params['folder']:
-        raise Exception('Folder is required parameter when vm_id_type is inventory_path')
+        module.fail_json(msg='Folder is required parameter when vm_id_type is inventory_path')
 
     datacenter_name = module.params['datacenter']
     cluster_name = module.params['cluster']
@@ -342,13 +383,13 @@ def main():
     if datacenter_name:
         datacenter = find_datacenter_by_name(content, datacenter_name)
         if not datacenter:
-            module.fail_json(changed=False, msg="Unable to find %(datacenter)s datacenter" % module.params)
+            module.fail_json(msg="Unable to find %(datacenter)s datacenter" % module.params)
 
     cluster = None
     if cluster_name:
         cluster = find_cluster_by_name(content, cluster_name, datacenter)
         if not cluster:
-            module.fail_json(changed=False, msg="Unable to find %(cluster)s cluster" % module.params)
+            module.fail_json(msg="Unable to find %(cluster)s cluster" % module.params)
 
     if module.params['vm_id_type'] == 'inventory_path':
         vm = find_vm_by_id(content, vm_id=module.params['vm_id'], vm_id_type="inventory_path", folder=folder)
@@ -360,19 +401,19 @@ def main():
         module.fail_json(msg='Unable to find virtual machine.')
 
     try:
-        if len(module.params['directory']) > 0:
-            msg = directory(module, content, vm)
-        if len(module.params['copy']) > 0:
-            msg = copy(module, content, vm)
-        if len(module.params['fetch']) > 0:
-            msg = fetch(module, content, vm)
-        module.exit_json(changed=True, uuid=vm.summary.config.uuid, msg=msg)
+        if module.params['directory']:
+            result = directory(module, content, vm)
+        if module.params['copy']:
+            result = copy(module, content, vm)
+        if module.params['fetch']:
+            result = fetch(module, content, vm)
+        module.exit_json(**result)
     except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(changed=False, msg=runtime_fault.msg)
+        module.fail_json(msg=runtime_fault.msg)
     except vmodl.MethodFault as method_fault:
-        module.fail_json(changed=False, msg=method_fault.msg)
+        module.fail_json(msg=method_fault.msg)
     except Exception as e:
-        module.fail_json(changed=False, msg=to_native(e))
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == '__main__':
