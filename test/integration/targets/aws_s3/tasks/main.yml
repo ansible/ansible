@@ -252,76 +252,89 @@
     that:
       - result.changed == False
 # ============================================================
-- name: create a tempfile for multipart test
-  tempfile:
-  register: tmp1
+- name: test multipart download - platform specific
+  block:
 
-- name: make tempfile 4 GB
-  command:
-    _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
+    - name: create a tempfile for multipart test
+      tempfile:
+      register: tmp1
 
-- name: make a bucket to upload the file
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: create
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    - name: make tempfile 4 GB
+      command:
+        _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
 
-- name: upload the file to the bucket
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: put
-    src: "{{ tmp1.path }}"
-    object: multipart.txt
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    - name: make a bucket to upload the file
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: create
+        security_token: "{{security_token}}"
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
 
-- name: download file once
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: get
-    dest: /tmp/multipart_download.txt
-    object: multipart.txt
-    overwrite: different
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-  retries: 3
-  delay: 3
-  until: "result.msg == 'GET operation complete'"
-  register: result
+    - name: upload the file to the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: put
+        src: "{{ tmp1.path }}"
+        object: multipart.txt
+        security_token: "{{security_token}}"
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
 
-- name: assert the file was downloaded once
-  assert:
-    that:
-      - result.changed
+    - name: download file once
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: /tmp/multipart_download.txt
+        object: multipart.txt
+        overwrite: different
+        security_token: "{{security_token}}"
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+      retries: 3
+      delay: 3
+      until: "result.msg == 'GET operation complete'"
+      register: result
 
-- name: download file again
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: get
-    dest: /tmp/multipart_download.txt
-    object: multipart.txt
-    overwrite: different
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-  register: result
+    - name: assert the file was downloaded once
+      assert:
+        that:
+          - result.changed
 
-- name: assert the file was not redownloaded
-  assert:
-    that:
-      - not result.changed
+    - name: download file again
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: /tmp/multipart_download.txt
+        object: multipart.txt
+        overwrite: different
+        security_token: "{{security_token}}"
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+      register: result
 
-- name: delete file used for upload
-  file:
-    state: absent
-    path: "{{ tmp1.path }}"
+    - name: assert the file was not redownloaded
+      assert:
+        that:
+          - not result.changed
 
-- name: delete downloaded file
-  file:
-    state: absent
-    path: /tmp/multipart_download.txt
+    - name: delete file used for upload
+      file:
+        state: absent
+        path: "{{ tmp1.path }}"
+
+    - name: delete downloaded file
+      file:
+        state: absent
+        path: /tmp/multipart_download.txt
+
+    - name: delete the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delete
+        security_token: "{{security_token}}"
+        aws_access_key: "{{ ec2_access_key }}"
+        aws_secret_key: "{{ ec2_secret_key }}"
+
+  when: ansible_distribution == 'MacOSX'
 # ============================================================
