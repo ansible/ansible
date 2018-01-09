@@ -17,7 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-import sys
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -215,8 +215,6 @@ def main():
 
     fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
     response = fmg.login()
-
-
 
     if "FortiManager instance connnected" not in str(response):
         module.fail_json(msg="Connection to FortiManager Failed")

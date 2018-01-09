@@ -34,6 +34,7 @@ try:
 except ImportError:
     HAS_PYFMGR = False
 
+
 class AnsibleFortiManager(object):
 
     def __init__(self, module, ip=None, username=None, passwd=None, use_ssl=True, verify_ssl=False, timeout=300):
