@@ -44,8 +44,12 @@ $LogMaxSizeKilobytes = Get-AnsibleParam -obj $params -name "logmaxsizekilobytes"
 $LogAllowed = Get-AnsibleParam -obj $params -name "logallowed" -validateset 'true','false','notconfigured' -failifempty $false
 $LogBlocked = Get-AnsibleParam -obj $params -name "logblocked" -validateset 'true','false','notconfigured' -failifempty $false
 $LogIgnored = Get-AnsibleParam -obj $params -name "logignored" -validateset 'true','false','notconfigured' -failifempty $false
-#$DisabledInterfaceAliases = $null
-#$PolicyStore = $null
+
+# Check Windows Management Framework 5 or higher is installed
+if ($PSVersionTable.PSVersion -lt [Version]"5.0") {
+    Fail-Json $result "win_firewall requires Windows Management Framework 5 or higher."
+}
+
 
 # Firewall Options hashtable
 $NetFirewallProfile =
@@ -97,10 +101,6 @@ $result = @{
     changed = $false
     profiles = $profiles
     state = $state
-}
-
-if ($PSVersionTable.PSVersion -lt [Version]"5.0") {
-     "win_firewall requires Windows Management Framework 5 or higher."
 }
 
 Try {
