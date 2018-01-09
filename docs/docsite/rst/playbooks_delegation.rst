@@ -253,7 +253,8 @@ use the default remote connection type::
       connection: local
 
 .. note::
-    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not       under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in            
+    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not  
+    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in           
     host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
 
 
