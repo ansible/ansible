@@ -557,3 +557,27 @@
         - "'msg' in yum_result"
         - "'rc' in yum_result"
         - "'results' in yum_result"
+
+- name: Create a temp RPM file which does not contain nevra information
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: touch
+
+- name: Try installing RPM file which does not contain nevra information
+  yum:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: present
+  register: no_nevra_info_result
+  ignore_errors: yes
+
+- name: Verify RPM failed to install
+  assert:
+    that:
+      - "'changed' in no_nevra_info_result"
+      - "'msg' in no_nevra_info_result"
+      - "'Failed to get nevra information from RPM package' in no_nevra_info_result.msg"
+
+- name: Delete a temp RPM file
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: absent
