@@ -168,6 +168,11 @@ name:
   returned: success
   type: string
   sample: my vpn customer gateway
+cidrs:
+  description: List of CIDRs of this customer gateway.
+  returned: success
+  type: list
+  sample: [ 10.10.10.0/24 ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
