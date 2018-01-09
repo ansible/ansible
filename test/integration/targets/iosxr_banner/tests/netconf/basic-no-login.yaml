@@ -1,11 +1,4 @@
 ---
-- name: Enable Netconf service
-  iosxr_netconf:
-    netconf_port: 830
-    netconf_vrf: 'default'
-    state: present
-  register: result
-
 - name: Setup
   iosxr_banner:
     banner: login
