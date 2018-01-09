@@ -25,7 +25,7 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
 requirements:
-- The C(pool) must exist in order to add or delete a range.
+- The C(pool) must exist in order to add or delete a encap block.
 options:
   allocation_mode:
     description:
@@ -34,15 +34,15 @@ options:
     choices: [ dynamic, inherit, static]
   description:
     description:
-    - Description for the pool range.
+    - Description for the pool encap block.
     aliases: [ descr ]
   pool:
     description:
-    - The name of the pool that the range should be assigned to.
+    - The name of the pool that the encap block should be assigned to.
     aliases: [ pool_name ]
   block_end:
     description:
-    - The end of encap block range.
+    - The end of encap block.
     aliases: [ end ]
   block_name:
     description:
@@ -50,7 +50,7 @@ options:
     aliases: [ name, range ]
   block_start:
     description:
-    - The start of the encap block range.
+    - The start of the encap block.
     aliases: [ start ]
   state:
     description:
@@ -123,7 +123,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['pool_name']),
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
-        block_name=dict(type='str', aliases=["name", "range"]),
+        block_name=dict(type='str', aliases=["name"]),
         block_end=dict(type='int', aliases=['end']),
         block_start=dict(type='int', aliases=["start"]),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -174,26 +174,26 @@ def main():
             module.fail_json(msg="The 'block_start' must be less than or equal to the 'block_end'")
 
         if block_name is None:
-            block_filter_target = 'and(eq(fvnsEncapBlk.from, "{0}"),eq(fvnsEncapBlk.to, "{1}"))'.format(encap_start, encap_end)
+            block_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"))'.format('fvnsEncapBlk', encap_start, encap_end)
         else:
-            block_filter_target = 'and(eq(fvnsEncapBlk.from, "{0}"),eq(fvnsEncapBlk.to, "{1}"),eq(fvnsEncapBlk.name, "{2}"))'.format(encap_start, encap_end, block_name)
+            block_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"),eq({0}.name, "{3}"))'.format('fvnsEncapBlk', encap_start, encap_end, block_name)
     elif block_end is None and block_start is None:
         if block_name is None:
             # Reset range managed object to None for aci util to properly handle query
             aci_block_mo = None
             block_filter_target = ''
         else:
-            block_filter_target = 'eq(fvnsEncapBlk.name, "{0}")'.format(block_name)
+            block_filter_target = 'eq({0}.name, "{1}")'.format('fvnsEncapBlk', block_name)
     elif block_start is not None:
         if block_name is None:
-            block_filter_target = 'eq(fvnsEncapBlk.from, "{0}")'.format(encap_start)
+            block_filter_target = 'eq({0}.from, "{1}")'.format('fvnsEncapBlk', encap_start)
         else:
-            block_filter_target = 'and(eq(fvnsEncapBlk.from, "{0}"),eq(fvnsEncapBlk.name, "{1}"))'.format(encap_start, block_name)
+            block_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.name, "{2}"))'.format('fvnsEncapBlk', encap_start, block_name)
     else:
         if block_name is None:
-            block_filter_target = 'eq(fvnsEncapBlk.to, "{0}")'.format(encap_end)
+            block_filter_target = 'eq({0}.to, "{1}")'.format('fvnsEncapBlk', encap_end)
         else:
-            block_filter_target = 'and(eq(fvnsEncapBlk.to, "{0}"),eq(fvnsEncapBlk.name, "{1}"))'.format(encap_end, block_name)
+            block_filter_target = 'and(eq({0}.to, "{1}"),eq({0}.name, "{2}"))'.format('fvnsEncapBlk', encap_end, block_name)
 
     # ACI Pool URL requires the allocation mode (ex: uni/infra/vlanns-[poolname]-static)
     if pool is not None:
