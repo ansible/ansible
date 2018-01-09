@@ -10,6 +10,7 @@
           aws_secret_key: "{{ aws_secret_key }}"
           security_token: "{{ security_token }}"
           region: "{{ aws_region }}"
+      no_log: yes
 
     - name: ensure IAM instance role exists
       iam_role:
