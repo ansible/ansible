@@ -11,6 +11,8 @@ There are multiple ways to invoke the debugger.
 Using the debugger keyword
 ++++++++++++++++++++++++++
 
+.. versionadded:: 2.5
+
 The ``debugger`` keyword can be used on any block where you provide a ``name`` attribute, such as a play, role, block or task.
 
 The ``debugger`` keyword accepts several values:
@@ -67,6 +69,8 @@ When provided at a generic level and a more specific level, the more specific wi
 
 Configuration or environment variable
 +++++++++++++++++++++++++++++++++++++
+
+.. versionadded:: 2.5
 
 In ansible.cfg::
 
@@ -232,6 +236,9 @@ Let's use the same playbook above, but fix ``task_vars`` instead of args::
     [192.0.2.10] TASK: install package (debug)> redo
 
 Then the task runs again with new ``task_vars``.
+
+.. note::
+    In 2.5 this was updated from ``vars`` to ``task_vars`` to not conflict with the ``vars()`` python function.
 
 .. _redo_command:
 
