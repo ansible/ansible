@@ -6,6 +6,7 @@
     http_port: 81
     https_port: 4443
     enable_local_http: yes
+    enable_https: yes
     local_http_port: 8181
     provider: "{{ cli }}"
   become: yes

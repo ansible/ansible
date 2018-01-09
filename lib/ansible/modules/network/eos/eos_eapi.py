@@ -69,7 +69,7 @@ options:
     required: false
     default: yes
     choices: ['yes', 'no']
-    aliases: ['enable_http']
+    aliases: ['enable_https']
   https_port:
     description:
       - Configures the HTTP port that will listen for connections when
