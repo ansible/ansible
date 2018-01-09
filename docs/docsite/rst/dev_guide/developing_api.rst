@@ -68,7 +68,7 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check', 'diff'])
     # initialize needed objects
     loader = DataLoader()
-    options = Options(connection='local', module_path='/path/to/mymodules', forks=100, become=None, become_method=None, become_user=None, check=False,
+    options = Options(connection='local', module_path=['/path/to/mymodules'], forks=100, become=None, become_method=None, become_user=None, check=False,
                       diff=False)
     passwords = dict(vault_pass='secret')
 
