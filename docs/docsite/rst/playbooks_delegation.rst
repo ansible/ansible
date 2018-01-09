@@ -252,8 +252,11 @@ use the default remote connection type::
     - hosts: 127.0.0.1
       connection: local
 
-Be aware that changing the connection is not a 'full delegation' so other settings like ``ansible_python_interpreter`` might also need to be overriden.
-Most of the time it is better to use ``local_action`` or ``delegate_to: localhost``.
+.. note::
+    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not       under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in            
+    host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
+
+
 
 .. _interrupt_execution_on_any_error:
 
