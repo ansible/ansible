@@ -49,6 +49,65 @@ EXAMPLES = '''
       resource_group: resource_group_name
 '''
 
+RETURN = '''
+    id:
+        description:
+            - Resource ID.
+        returned: always
+        type: str
+        sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+    name:
+        description:
+            - Resource name.
+        returned: always
+        type: str
+        sample: sqlcrudtest-4645
+    type:
+        description:
+            - Resource type.
+        returned: always
+        type: str
+        sample: Microsoft.Sql/servers
+    tags:
+        description:
+            - Resource tags.
+        returned: always
+        type: complex
+        sample: {
+      "tagKey1": "TagValue1"
+    }
+    location:
+        description:
+            - Resource location.
+        returned: always
+        type: str
+        sample: japaneast
+    kind:
+        description:
+            - Kind of sql server. This is metadata used for the Azure portal experience.
+        returned: always
+        type: str
+        sample: v12.0
+    version:
+        description:
+            - The version of the server.
+        returned: always
+        type: str
+        sample: 12.0
+    state:
+        description:
+            - The state of the server.
+        returned: always
+        type: str
+        sample: Ready
+    fully_qualified_domain_name:
+        description:
+            - The fully qualified domain name of the server.
+        returned: always
+        type: str
+        sample: fully_qualified_domain_name
+'''
+
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
