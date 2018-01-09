@@ -30,6 +30,18 @@ except ImportError:
     display = Display()
 
 
+def check_if_plugin_is_reserved_name(func):
+    def inner(self, name, *args, **kwargs):
+        from ansible.vars.reserved import is_reserved_name
+        plugin = func(self, name, *args, **kwargs)
+        if plugin and is_reserved_name(name):
+            raise AnsibleError(
+                'Module "%s" shadows the name of a reserved keyword. Please rename or remove this module. Found at %s' % (name, plugin)
+            )
+        return plugin
+    return inner
+
+
 def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
 
@@ -234,6 +246,7 @@ class PluginLoader:
                 self._paths = None
                 display.debug('Added %s to loader search path' % (directory))
 
+    @check_if_plugin_is_reserved_name
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''
 
