@@ -183,7 +183,13 @@ import os
 import time
 import traceback
 
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     # Imported as a dependency for dopy
@@ -196,7 +202,7 @@ HAS_DOPY = False
 try:
     import dopy
     from dopy.manager import DoError, DoManager
-    if LooseVersion(dopy.__version__) >= LooseVersion('0.3.2'):
+    if Version(dopy.__version__) >= Version('0.3.2'):
         HAS_DOPY = True
 except ImportError:
     pass

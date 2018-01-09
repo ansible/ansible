@@ -266,7 +266,13 @@ import stat
 import sys
 import shutil
 import tempfile
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
 from ansible.module_utils.six import b, string_types
@@ -734,7 +740,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
             refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         else:
             # ensure all tags are fetched
-            if git_version_used >= LooseVersion('1.9'):
+            if git_version_used >= Version('1.9'):
                 fetch_cmd.append('--tags')
             else:
                 # old git versions have a bug in --tags that prevents updating existing tags
@@ -899,7 +905,7 @@ def git_version(git_path, module):
     rematch = re.search('git version (.*)$', to_native(out))
     if not rematch:
         return None
-    return LooseVersion(rematch.groups()[0])
+    return Version(rematch.groups()[0])
 
 
 def git_archive(git_path, module, dest, archive, archive_fmt, version):
@@ -1058,7 +1064,7 @@ def main():
 
     git_version_used = git_version(git_path, module)
 
-    if depth is not None and git_version_used < LooseVersion('1.9.1'):
+    if depth is not None and git_version_used < Version('1.9.1'):
         result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 

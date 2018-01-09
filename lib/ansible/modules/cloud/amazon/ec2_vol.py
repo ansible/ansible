@@ -244,7 +244,13 @@ volume:
 
 import time
 
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     import boto
@@ -328,7 +334,7 @@ def boto_supports_volume_encryption():
     Returns:
         True if boto library has the named param as an argument on the request_spot_instances method, else False
     """
-    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
+    return hasattr(boto, 'Version') and Version(boto.Version) >= Version('2.29.0')
 
 
 def boto_supports_kms_key_id():
@@ -338,7 +344,7 @@ def boto_supports_kms_key_id():
     Returns:
         True if version is equal to or higher then the version needed, else False
     """
-    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
+    return hasattr(boto, 'Version') and Version(boto.Version) >= Version('2.39.0')
 
 
 def create_volume(module, ec2, zone):

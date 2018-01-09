@@ -261,8 +261,15 @@ import re
 import traceback
 
 from collections import MutableMapping
-from distutils.version import LooseVersion
 from io import BytesIO
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from lxml import etree, objectify
@@ -777,9 +784,9 @@ def main():
     # Check if we have lxml 2.3.0 or newer installed
     if not HAS_LXML:
         module.fail_json(msg='The xml ansible module requires the lxml python library installed on the managed machine')
-    elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('2.3.0'):
+    elif Version('.'.join(to_native(f) for f in etree.LXML_VERSION)) < Version('2.3.0'):
         module.fail_json(msg='The xml ansible module requires lxml 2.3.0 or newer installed on the managed machine')
-    elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('3.0.0'):
+    elif Version('.'.join(to_native(f) for f in etree.LXML_VERSION)) < Version('3.0.0'):
         module.warn('Using lxml version lower than 3.0.0 does not guarantee predictable element attribute order.')
 
     # Check if the file exists

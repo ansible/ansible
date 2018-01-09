@@ -22,6 +22,18 @@ __metaclass__ = type
 import re
 import operator as py_operator
 from collections import MutableMapping, MutableSequence
+
+HAS_PACKAGING = False
+try:
+    from packaging.version import Version
+    HAS_PACKAGING = True
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+        HAS_PACKAGING = True
+    except ImportError:
+        pass
+
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
@@ -103,9 +115,12 @@ def version_compare(value, version, operator='eq', strict=False):
     }
 
     if strict:
-        Version = StrictVersion
+        VersionClass = StrictVersion
     else:
-        Version = LooseVersion
+        if HAS_PACKAGING:
+            VersionClass = Version
+        else:
+            VersionClass = LooseVersion
 
     if operator in op_map:
         operator = op_map[operator]
@@ -114,7 +129,7 @@ def version_compare(value, version, operator='eq', strict=False):
 
     try:
         method = getattr(py_operator, operator)
-        return method(Version(str(value)), Version(str(version)))
+        return method(VersionClass(str(value)), VersionClass(str(version)))
     except Exception as e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 

@@ -134,7 +134,13 @@ except ImportError:
 # that don't belong on production boxes.  Since our Solaris code doesn't
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
-    from distutils.version import LooseVersion
+    try:
+        from packaging.version import Version
+    except ImportError:
+        try:
+            from pip._vendor.packaging.version import Version
+        except ImportError:
+            from distutils.version import LooseVersion as Version
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils.service import fail_if_missing
@@ -469,14 +475,14 @@ class LinuxService(Service):
             # service is managed by upstart
             self.enable_cmd = location['initctl']
             # set the upstart version based on the output of 'initctl version'
-            self.upstart_version = LooseVersion('0.0.0')
+            self.upstart_version = Version('0.0.0')
             try:
                 version_re = re.compile(r'\(upstart (.*)\)')
                 rc, stdout, stderr = self.module.run_command('%s version' % location['initctl'])
                 if rc == 0:
                     res = version_re.search(stdout)
                     if res:
-                        self.upstart_version = LooseVersion(res.groups()[0])
+                        self.upstart_version = Version(res.groups()[0])
             except:
                 pass  # we'll use the default of 0.0.0
 
@@ -671,7 +677,7 @@ class LinuxService(Service):
                 override_file.close()
 
             initpath = '/etc/init'
-            if self.upstart_version >= LooseVersion('0.6.7'):
+            if self.upstart_version >= Version('0.6.7'):
                 manreg = re.compile(r'^manual\s*$', re.M | re.I)
                 config_line = 'manual\n'
             else:

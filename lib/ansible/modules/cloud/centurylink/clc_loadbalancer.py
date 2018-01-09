@@ -214,7 +214,14 @@ __version__ = '${version}'
 import json
 import os
 from time import sleep
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     import requests
@@ -257,8 +264,7 @@ class ClcLoadBalancer:
         if not REQUESTS_FOUND:
             self.module.fail_json(
                 msg='requests library is required for this module')
-        if requests.__version__ and LooseVersion(
-                requests.__version__) < LooseVersion('2.5.0'):
+        if requests.__version__ and Version(requests.__version__) < Version('2.5.0'):
             self.module.fail_json(
                 msg='requests library  version should be >= 2.5.0')
 

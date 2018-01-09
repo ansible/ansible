@@ -202,12 +202,18 @@ template_json:
     }
 '''
 
-from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import json
 import traceback
 
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPIException
@@ -417,7 +423,7 @@ class Template(object):
             # old api version support here
             api_version = self._zapi.api_version()
             # updateExisting for application removed from zabbix api after 3.2
-            if LooseVersion(api_version) <= LooseVersion('3.2.x'):
+            if Version(api_version) <= Version('3.2.x'):
                 update_rules['applications']['updateExisting'] = True
 
             self._zapi.configuration.import_({

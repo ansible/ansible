@@ -195,7 +195,14 @@ user:
 import os
 import ssl as ssl_lib
 import traceback
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from pymongo.errors import ConnectionFailure
@@ -231,19 +238,19 @@ def check_compatibility(module, client):
         module: Ansible module.
         client (cursor): Mongodb cursor on admin database.
     """
-    loose_srv_version = LooseVersion(client.server_info()['version'])
-    loose_driver_version = LooseVersion(PyMongoVersion)
+    loose_srv_version = Version(client.server_info()['version'])
+    loose_driver_version = Version(PyMongoVersion)
 
-    if loose_srv_version >= LooseVersion('3.2') and loose_driver_version < LooseVersion('3.2'):
+    if loose_srv_version >= Version('3.2') and loose_driver_version < Version('3.2'):
         module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
 
-    elif loose_srv_version >= LooseVersion('3.0') and loose_driver_version <= LooseVersion('2.8'):
+    elif loose_srv_version >= Version('3.0') and loose_driver_version <= Version('2.8'):
         module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
 
-    elif loose_srv_version >= LooseVersion('2.6') and loose_driver_version <= LooseVersion('2.7'):
+    elif loose_srv_version >= Version('2.6') and loose_driver_version <= Version('2.7'):
         module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
 
-    elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
+    elif Version(PyMongoVersion) <= Version('2.5'):
         module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
 
 
@@ -414,7 +421,7 @@ def main():
 
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password, source=login_database)
-        elif LooseVersion(PyMongoVersion) >= LooseVersion('3.0'):
+        elif Version(PyMongoVersion) >= Version('3.0'):
             if db_name != "admin":
                 module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
             # else: this has to be the first admin user added

@@ -36,11 +36,18 @@ import re
 import sys
 from time import time
 from collections import defaultdict
-from distutils.version import LooseVersion, StrictVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 # 3rd party imports
 import requests
-if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
+if Version(requests.__version__) < Version('1.1.0'):
     print('This script requires python-requests 1.1 as a minimum version')
     sys.exit(1)
 

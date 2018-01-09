@@ -38,7 +38,13 @@ from ansible.module_utils.network.aos.aos import (check_aos_version, get_aos_ses
 """
 import json
 
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     import yaml
@@ -69,7 +75,7 @@ def check_aos_version(module, min=False):
         import apstra.aosom
         AOS_PYEZ_VERSION = apstra.aosom.__version__
 
-        if not LooseVersion(AOS_PYEZ_VERSION) >= LooseVersion(min):
+        if not Version(AOS_PYEZ_VERSION) >= Version(min):
             module.fail_json(msg='aos-pyez >= %s is required for this module' % min)
 
     return True

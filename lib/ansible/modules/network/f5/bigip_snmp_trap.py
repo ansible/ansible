@@ -132,7 +132,14 @@ from ansible.module_utils.f5_utils import AnsibleF5Client
 from ansible.module_utils.f5_utils import AnsibleF5Parameters
 from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
@@ -242,7 +249,7 @@ class ModuleManager(object):
         :return: Bool
         """
         version = self.client.api.tmos_version
-        if LooseVersion(version) < LooseVersion('12.1.0'):
+        if Version(version) < Version('12.1.0'):
             return True
         else:
             return False

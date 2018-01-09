@@ -309,7 +309,14 @@ zone_id:
 ################################################################################
 
 import socket
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from libcloud import __version__ as LIBCLOUD_VERSION
@@ -542,7 +549,7 @@ def _sanity_check(module):
             msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
             changed=False
         )
-    elif LooseVersion(LIBCLOUD_VERSION) < MINIMUM_LIBCLOUD_VERSION:
+    elif Version(LIBCLOUD_VERSION) < Version(MINIMUM_LIBCLOUD_VERSION):
         module.fail_json(
             msg='This module requires Apache libcloud %s or greater' % MINIMUM_LIBCLOUD_VERSION,
             changed=False
