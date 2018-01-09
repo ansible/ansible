@@ -232,6 +232,18 @@ PERM_BITS = 0o7777       # file mode permission bits
 EXEC_PERM_BITS = 0o0111  # execute permission bits
 DEFAULT_PERM = 0o0666    # default file permission bits
 
+# Used for determining if the system is running a new enough python version
+# and should only restrict on our documented minimum versions
+_PY3_MIN = sys.version_info[:2] >= (3, 5)
+_PY2_MIN = (2, 6) <= sys.version_info[:2] < (3,)
+_PY_MIN = _PY3_MIN or _PY2_MIN
+if not _PY_MIN:
+    print(
+        '\n{"failed": true, '
+        '"msg": "Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
+    )
+    sys.exit(1)
+
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
