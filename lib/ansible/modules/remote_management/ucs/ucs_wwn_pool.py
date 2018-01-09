@@ -27,27 +27,43 @@ options:
     default: present
   name:
     description:
-    - Name of the WWNN/WWPN
+    - The name of the World Wide Node Name (WWNN) or World Wide Port Name (WWPN) pool.
+    - This name can be between 1 and 32 alphanumeric characters.
+    - "You cannot use spaces or any special characters other than - (hyphen), \"_\" (underscore), : (colon), and . (period)."
+    - You cannot change this name after the WWNN or WWPN pool is created.
     required: yes
   purpose:
     description:
-    - Specify node (WWNN) or port (WWPN)
-    - Optional if state absent
+    - Specify whether this is a node (WWNN) or port (WWPN) pool.
+    - Optional if state is absent.
     choices: [node, port]
     required: yes
   descrption:
     description:
-    - Description for the WWNN/WWPN pool
+    - A description of the WWNN or WWPN pool.
+    - Enter up to 256 characters.
+    - "You can use any characters or spaces except the following:"
+    - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
     aliases: [ descr ]
   order:
     description:
-    - Assignment order
+    - The Assignment Order field.
+    - "This can be one of the following:"
+    - "default - Cisco UCS Manager selects a random identity from the pool."
+    - "sequential - Cisco UCS Manager selects the lowest available identity from the pool."
     choices: [default, sequential]
     default: default
   first_addr:
-    description: First WWNN/WWPN address in the WWN addresses block
+    description:
+    - The first initiator in the World Wide Name (WWN) block.
+    - This is the From field in the UCS Manager Add WWN Blocks menu.
   last_addr:
-    description: Last WWNN/WWPN address in the WWN addresses block
+    description:
+    - The last initiator in the Worlde Wide Name (WWN) block.
+    - This is the To field in the UCS Manager Add WWN Blocks menu.
+    - For WWxN pools, the pool size must be a multiple of ports-per-node + 1.
+    - For example, if there are 7 ports per node, the pool size must be a multiple of 8.
+    - If there are 63 ports per node, the pool size must be a multiple of 64.
   org_dn:
     description:
     - Org dn (distinguished name)
@@ -175,8 +191,7 @@ def main():
                 purpose_param = wwn['purpose'] + '-wwn-assignment'
                 if mo_exists:
                     # check top-level mo props
-                    kwargs = {}
-                    kwargs['assignment_order'] = wwn['order']
+                    kwargs = dict(assignment_order=wwn['order'])
                     kwargs['descr'] = wwn['descr']
                     kwargs['purpose'] = purpose_param
                     if (mo.check_prop_match(**kwargs)):
