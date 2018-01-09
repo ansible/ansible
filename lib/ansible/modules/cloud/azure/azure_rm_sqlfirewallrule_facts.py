@@ -56,37 +56,37 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    id:
-        description:
-            - Resource ID.
-        returned: always
-        type: str
-        sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/firewallrulecrudtest-12/providers/Microsoft.Sql/servers/firewallrulecrudtest-628
-                 5/firewallRules/firewallrulecrudtest-2304"
-    name:
-        description:
-            - Resource name.
-        returned: always
-        type: str
-        sample: firewallrulecrudtest-2304
-    type:
-        description:
-            - Resource type.
-        returned: always
-        type: str
-        sample: Microsoft.Sql/servers/firewallRules
-    kind:
-        description:
-            - Kind of server that contains this firewall rule.
-        returned: always
-        type: str
-        sample: v12.0
-    location:
-        description:
-            - Location of the server that contains this firewall rule.
-        returned: always
-        type: str
-        sample: Japan East
+id:
+    description:
+        - Resource ID.
+    returned: always
+    type: str
+    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/firewallrulecrudtest-12/providers/Microsoft.Sql/servers/firewallrulecrudtest-628
+             5/firewallRules/firewallrulecrudtest-2304"
+name:
+    description:
+        - Resource name.
+    returned: always
+    type: str
+    sample: firewallrulecrudtest-2304
+type:
+    description:
+        - Resource type.
+    returned: always
+    type: str
+    sample: Microsoft.Sql/servers/firewallRules
+kind:
+    description:
+        - Kind of server that contains this firewall rule.
+    returned: always
+    type: str
+    sample: v12.0
+location:
+    description:
+        - Location of the server that contains this firewall rule.
+    returned: always
+    type: str
+    sample: Japan East
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
