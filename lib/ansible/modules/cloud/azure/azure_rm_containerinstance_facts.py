@@ -50,37 +50,37 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    id:
-        description:
-            - The resource id.
-        returned: always
-        type: str
-        sample: /subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/mycontainers
-    name:
-        description:
-            - The resource name.
-        returned: always
-        type: str
-        sample: mycontainers
-    type:
-        description:
-            - The resource type.
-        returned: always
-        type: str
-        sample: Microsoft.ContainerInstance/containerGroups
-    location:
-        description:
-            - The resource location.
-        returned: always
-        type: str
-        sample: westus
-    containers:
-        description:
-            - The containers within the container group.
-        returned: always
-        type: complex
-        sample: containers
-        suboptions:
+id:
+    description:
+        - The resource id.
+    returned: always
+    type: str
+    sample: /subscriptions/ae43b1e3-c35d-4c8c-bc0d-f148b4c52b78/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/mycontainers
+name:
+    description:
+        - The resource name.
+    returned: always
+    type: str
+    sample: mycontainers
+type:
+    description:
+        - The resource type.
+    returned: always
+    type: str
+    sample: Microsoft.ContainerInstance/containerGroups
+location:
+    description:
+        - The resource location.
+    returned: always
+    type: str
+    sample: westus
+containers:
+    description:
+        - The containers within the container group.
+    returned: always
+    type: complex
+    sample: containers
+    contains:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
