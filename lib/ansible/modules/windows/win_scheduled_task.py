@@ -195,22 +195,12 @@ options:
         - Optional when C(type=weekly).
       repetition:
         description:
-        - This controls how often the task is run and how long it is repeated
-          after the task is started.
-        suboptions:
-          duration:
-            description:
-            - How long the pattern is repeated.
-            - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-          interval:
-            description:
-            - Amount of time between earch restart of the task.
-            - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-          stop_at_duration_end:
-            description:
-            - Boolean value that indicates if a running instance of the task
-              is stopped at the end of the repetition pattern.
-            type: bool
+        - duration
+          How long the pattern is repeated. Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - interval
+          Amount of time between earch restart of the task. Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - stop_at_duration_end
+          Boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
     version_added: '2.5'
   days_of_week:
     description:
@@ -506,6 +496,20 @@ EXAMPLES = r'''
   win_scheduled_task:
     name: TaskToDisable
     enabled: no
+
+- name: create a task that will be repeated every minute for five minutes
+  win_scheduled_task:
+    name: RepeatedTask
+    description: open command prompt
+    actions:
+    - path: cmd.exe
+      arguments: /c hostname
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
 '''
 
 RETURN = r'''

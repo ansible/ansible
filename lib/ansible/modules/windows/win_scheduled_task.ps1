@@ -276,31 +276,27 @@ Function Compare-PropertyList {
             # properties list
             $properties = $new_property.Keys | Where-Object { $total_args -contains $_ }
             if ($properties -ne $null) {
-                [void]$changes.Add("+$property_name[$i] = {`n  +Type=$type")
+                $diff_list = [System.Collections.ArrayList]@()
 
                 foreach ($property_arg in $properties) {
                     if ($new_property.ContainsKey($property_arg)) {
                         $com_name = Convert-SnakeToPascalCase -snake $property_arg
                         $property_value = $new_property.$property_arg
-    
+
                         if ($property_value -is [Hashtable]) {
-                            if ($property_value.Keys.Count -gt 0) {
-                                [void]$changes.Add("  +$com_name = {")
-                                foreach ($key in $property_value.Keys) {
-                                    $sub_com_name = Convert-SnakeToPascalCase -snake $key
-                                    $sub_property_value = $property_value.$key
-                                    [void]$changes.Add("    +$sub_com_name=$sub_property_value")
-                                }
-                                [void]$changes.Add("  +}")
+                            foreach ($sub_property_arg in $property_value.Keys) {
+                                $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                                $sub_property_value = $property_value.$sub_property_arg
+                                [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
                             }
                         }
                         else {
-                            [void]$changes.Add("  +$com_name=$property_value")
+                            [void]$diff_list.Add("+$com_name=$property_value")
                         }
                     }
                 }
 
-                [void]$changes.Add("+}")
+                [void]$changes.Add("+$property_name[$i] = {`n  +Type=$type`n  $($diff_list -join ",`n  ")`n+}")
             }
         } elseif ([Enum]::ToObject($enum, $existing_property.Type) -ne $type) {
             # the types are different so we need to change
@@ -312,7 +308,17 @@ Function Compare-PropertyList {
                     if ($new_property.ContainsKey($property_arg)) {
                         $com_name = Convert-SnakeToPascalCase -snake $property_arg
                         $property_value = $new_property.$property_arg
-                        [void]$diff_list.Add("+$com_name=$property_value")
+
+                        if ($property_value -is [Hashtable]) {
+                            foreach ($sub_property_arg in $property_value.Keys) {
+                                $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                                $sub_property_value = $property_value.$sub_property_arg
+                                [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
+                            }
+                        }
+                        else {
+                            [void]$diff_list.Add("+$com_name=$property_value")
+                        }
                     }
                 }
             } else {
@@ -322,14 +328,32 @@ Function Compare-PropertyList {
                 [void]$diff_list.Add("+Type=$type")
                 foreach ($property_arg in $total_args) {
                     $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                    $property_value = $new_property.$property_arg
                     $existing_value = $existing_property.$com_name
-                    $new_value = $new_property.$property_arg
 
-                    if ($existing_value -ne $null) {
-                        [void]$diff_list.Add("-$com_name=$existing_value")
+                    if ($property_value -is [Hashtable]) {
+                        foreach ($sub_property_arg in $property_value.Keys) {
+                            $sub_property_value = $property_value.$sub_property_arg
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                            $sub_existing_value = $existing_property.$com_name.$sub_com_name
+
+                            if ($sub_property_value -ne $null) {
+                                [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
+                            }
+
+                            if ($sub_existing_value -ne $null) {
+                                [void]$diff_list.Add("-$sub_com_name=$sub_existing_value")
+                            }
+                        }
                     }
-                    if ($new_value -ne $null) {
-                        [void]$diff_list.Add("+$com_name=$new_value")
+                    else {
+                        if ($property_value -ne $null) {
+                            [void]$diff_list.Add("+$com_name=$property_value")
+                        }
+
+                        if ($existing_value -ne $null) {
+                            [void]$diff_list.Add("-$com_name=$existing_value")
+                        }
                     }
                 }
             }
@@ -339,42 +363,41 @@ Function Compare-PropertyList {
             # compare the properties of existing and new
             $properties = $new_property.Keys | Where-Object { $total_args -contains $_ }
             if ($properties -ne $null) {
-                [void]$changes.Add("$property_name[$i] = {")
+                $diff_list = [System.Collections.ArrayList]@()
 
                 foreach ($property_arg in $properties) {
                     $com_name = Convert-SnakeToPascalCase -snake $property_arg
                     $property_value = $new_property.$property_arg
                     $existing_value = $existing_property.$com_name
-
+                    
                     if ($property_value -is [Hashtable]) {
-                        if ($property_value.Keys.Count -gt 0) {
-                            [void]$changes.Add("  $com_name = {")
-                            foreach ($key in $property_value.Keys) {
-                                $sub_com_name = Convert-SnakeToPascalCase -snake $key
-                                $sub_property_value = $property_value.$key
+                        foreach ($sub_property_arg in $property_value.Keys) {
+                            $sub_property_value = $property_value.$sub_property_arg
+                            
+                            if ($sub_property_value -ne $null) {
+                                $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
                                 $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
-                                if ($sub_property_value -ne $null) {
-                                    if ($sub_property_value -cne $sub_existing_value) {
-                                        [void]$changes.Add("    -$sub_com_name=$sub_existing_value")
-                                        [void]$changes.Add("    +$sub_com_name=$sub_property_value")
-                                    }
+                                if ($sub_property_value -cne $sub_existing_value) {
+                                    [void]$diff_list.Add("-$sub_com_name=$sub_existing_value")
+                                    [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
                                 }
                             }
-                            [void]$changes.Add("  }")
                         }
                     }
                     else {
                         if ($property_value -ne $null) {
                             if ($property_value -cne $existing_value) {
-                                [void]$changes.Add("-$com_name=$existing_value")
-                                [void]$changes.Add("+$com_name=$property_value")
+                                [void]$diff_list.Add("-$com_name=$existing_value")
+                                [void]$diff_list.Add("+$com_name=$property_value")
                             }
                         }
                     }
                 }
 
-                [void]$changes.Add("}")
+                if ($diff_list.Count -gt 0) {
+                    [void]$changes.Add("$property_name[$i] = {`n  $($diff_list -join ",`n  ")`n}")
+                }
             }
         }
 
