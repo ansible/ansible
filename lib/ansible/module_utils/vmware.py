@@ -446,7 +446,7 @@ def connect_to_api(module, disconnect_atexit=True):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
-    port = module.params['port'] or 443
+    port = module.params.get('port', 443)
     validate_certs = module.params['validate_certs']
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
