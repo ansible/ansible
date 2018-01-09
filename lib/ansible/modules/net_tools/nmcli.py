@@ -500,6 +500,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class Nmcli(object):
@@ -643,8 +644,14 @@ class Nmcli(object):
         bus = dbus.SystemBus()
 
         service_name = "org.freedesktop.NetworkManager"
-        proxy = bus.get_object(service_name, "/org/freedesktop/NetworkManager/Settings")
-        settings = dbus.Interface(proxy, "org.freedesktop.NetworkManager.Settings")
+        settings = None
+        try:
+            proxy = bus.get_object(service_name, "/org/freedesktop/NetworkManager/Settings")
+            settings = dbus.Interface(proxy, "org.freedesktop.NetworkManager.Settings")
+        except dbus.Exceptions.DBusException as e:
+            self.module.fail_json(msg="Unable to read Network Manager settings from DBus system bus: %s" % to_native(e),
+                                  details="Please check if NetworkManager is installed and"
+                                          " service network-manager is started.")
         connection_paths = settings.ListConnections()
         connection_list = []
         # List each connection's name, UUID, and type
