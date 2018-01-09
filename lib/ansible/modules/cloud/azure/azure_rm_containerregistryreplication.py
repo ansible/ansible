@@ -65,7 +65,8 @@ id:
         - The resource ID.
     returned: always
     type: str
-    sample: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/replications/myReplication
+    sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry/repl
+             ications/myReplication"
 status:
     description:
         - The status of the replication at the time the operation was called.
@@ -151,8 +152,8 @@ class AzureRMReplications(AzureRMModuleBase):
 
         resource_group = self.get_resource_group(self.resource_group)
 
-        if "location" not in self.parameters:
-            self.parameters["location"] = resource_group.location
+        #if "location" not in self.parameters:
+        #    self.parameters["location"] = resource_group.location
 
         old_response = self.get_replication()
 
