@@ -296,24 +296,6 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import VirtualMachineScaleSet, \
-        VirtualMachineScaleSetStorageProfile, \
-        VirtualMachineScaleSetOSProfile, \
-        VirtualMachineScaleSetOSDisk, VirtualMachineScaleSetDataDisk, \
-        VirtualMachineScaleSetManagedDiskParameters, \
-        VirtualMachineScaleSetNetworkProfile, LinuxConfiguration, \
-        SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
-        DiskCreateOptionTypes, CachingTypes, \
-        VirtualMachineScaleSetVMProfile, VirtualMachineScaleSetIdentity, \
-        VirtualMachineScaleSetIPConfiguration, \
-        VirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings, \
-        VirtualMachineScaleSetPublicIPAddressConfiguration, Sku, \
-        UpgradePolicy, VirtualMachineScaleSetNetworkConfiguration, \
-        ApiEntityReference, ImageReference
-
-    from azure.mgmt.network.models import PublicIPAddress, \
-        NetworkSecurityGroup, NetworkInterface, \
-        NetworkInterfaceIPConfiguration, Subnet, VirtualNetwork
 
 except ImportError:
     # This is handled in azure_rm_common
@@ -521,46 +503,46 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     if not self.short_hostname:
                         self.short_hostname = self.name
 
-                    managed_disk = VirtualMachineScaleSetManagedDiskParameters(storage_account_type=self.managed_disk_type)
+                    managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(storage_account_type=self.managed_disk_type)
 
-                    vmss_resource = VirtualMachineScaleSet(
+                    vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         self.location,
                         tags=self.tags,
-                        upgrade_policy=UpgradePolicy(
+                        upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
                         ),
-                        sku=Sku(
+                        sku=self.compute_models.Sku(
                             name=self.vm_size,
                             capacity=self.capacity,
                             tier=self.tier,
                         ),
-                        virtual_machine_profile=VirtualMachineScaleSetVMProfile(
-                            os_profile=VirtualMachineScaleSetOSProfile(
+                        virtual_machine_profile=self.compute_models.VirtualMachineScaleSetVMProfile(
+                            os_profile=self.compute_models.VirtualMachineScaleSetOSProfile(
                                 admin_username=self.admin_username,
                                 computer_name_prefix=self.short_hostname,
                             ),
-                            storage_profile=VirtualMachineScaleSetStorageProfile(
-                                os_disk=VirtualMachineScaleSetOSDisk(
+                            storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
+                                os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
                                     managed_disk=managed_disk,
-                                    create_option=DiskCreateOptionTypes.from_image,
+                                    create_option=self.compute_models.DiskCreateOptionTypes.from_image,
                                     caching=self.os_disk_caching,
                                 ),
-                                image_reference=ImageReference(
+                                image_reference=self.compute_models.ImageReference(
                                     publisher=self.image['publisher'],
                                     offer=self.image['offer'],
                                     sku=self.image['sku'],
                                     version=self.image['version'],
                                 ),
                             ),
-                            network_profile=VirtualMachineScaleSetNetworkProfile(
+                            network_profile=self.compute_models.VirtualMachineScaleSetNetworkProfile(
                                 network_interface_configurations=[
-                                    VirtualMachineScaleSetNetworkConfiguration(
+                                    self.compute_models.VirtualMachineScaleSetNetworkConfiguration(
                                         name=self.name,
                                         primary=True,
                                         ip_configurations=[
-                                            VirtualMachineScaleSetIPConfiguration(
+                                            self.compute_models.VirtualMachineScaleSetIPConfiguration(
                                                 name='default',
-                                                subnet=ApiEntityReference(
+                                                subnet=self.compute_models.ApiEntityReference(
                                                     id=subnet.id
                                                 )
                                             )
@@ -575,33 +557,33 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         vmss_resource.virtual_machine_profile.os_profile.admin_password = self.admin_password
 
                     if self.os_type == 'Linux':
-                        vmss_resource.virtual_machine_profile.os_profile.linux_configuration = LinuxConfiguration(
+                        vmss_resource.virtual_machine_profile.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
                             disable_password_authentication=disable_ssh_password
                         )
 
                     if self.ssh_public_keys:
-                        ssh_config = SshConfiguration()
+                        ssh_config = self.compute_models.SshConfiguration()
                         ssh_config.public_keys = \
-                            [SshPublicKey(path=key['path'], key_data=key['key_data']) for key in self.ssh_public_keys]
+                            [self.compute_models.SshPublicKey(path=key['path'], key_data=key['key_data']) for key in self.ssh_public_keys]
                         vmss_resource.virtual_machine_profile.os_profile.linux_configuration.ssh = ssh_config
 
                     if self.data_disks:
                         data_disks = []
 
                         for data_disk in self.data_disks:
-                            data_disk_managed_disk = VirtualMachineScaleSetManagedDiskParameters(
+                            data_disk_managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
                                 storage_account_type=data_disk['managed_disk_type']
                             )
 
                             data_disk['caching'] = data_disk.get(
                                 'caching',
-                                CachingTypes.read_only
+                                self.compute_models.CachingTypes.read_only
                             )
 
-                            data_disks.append(VirtualMachineScaleSetDataDisk(
+                            data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
                                 lun=data_disk['lun'],
                                 caching=data_disk['caching'],
-                                create_option=DiskCreateOptionTypes.empty,
+                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
                                 disk_size_gb=data_disk['disk_size_gb'],
                                 managed_disk=data_disk_managed_disk,
                             ))
@@ -621,12 +603,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     data_disks = []
                     for data_disk in self.data_disks:
-                        data_disks.append(VirtualMachineScaleSetDataDisk(
+                        data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
                             lun=data_disk['lun'],
                             caching=data_disk['caching'],
-                            create_option=DiskCreateOptionTypes.empty,
+                            create_option=self.compute_models.DiskCreateOptionTypes.empty,
                             disk_size_gb=data_disk['disk_size_gb'],
-                            managed_disk=VirtualMachineScaleSetManagedDiskParameters(
+                            managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
                                 storage_account_type=data_disk['managed_disk_type']
                             ),
                         ))
