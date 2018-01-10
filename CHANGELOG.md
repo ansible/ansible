@@ -96,12 +96,15 @@ Ansible Changes By Release
 - azure
   * azure_rm_containerregistry
   * azure_rm_image
+  * azure_rm_mysqlserver
+  * azure_rm_postgresqlserver
   * azure_rm_sqlserver
 - cloudscale
   * cloudscale_floating_ip
 - cloudstack
   * cs_network_offering
   * cs_service_offering
+  * cs_vpn_connection
   * cs_vpn_customer_gateway
 - digital_ocean
   * digital_ocean_certificate
