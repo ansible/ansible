@@ -173,7 +173,7 @@ class Cli:
             try:
                 out = to_text(out, errors='surrogate_or_strict')
             except UnicodeError:
-                module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+                self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
             try:
                 out = self._module.from_json(out)
