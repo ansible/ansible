@@ -80,7 +80,7 @@ class DimensionDataModule(object):
 
         # Region and location are common to all Dimension Data modules.
         region = self.module.params['region']
-        self.region = 'dd-{}'.format(region)
+        self.region = 'dd-{0}'.format(region)
         self.location = self.module.params['location']
 
         libcloud.security.VERIFY_SSL_CERT = self.module.params['validate_certs']

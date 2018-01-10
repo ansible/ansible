@@ -48,6 +48,6 @@ if __name__ == '__main__':
         finally:
             os.chdir(orig_dir)
     except:
-        print("Problem occurred.  Patch saved in: {}".format(patchfilename))
+        print("Problem occurred.  Patch saved in: {0}".format(patchfilename))
     else:
         os.remove(patchfilename)
