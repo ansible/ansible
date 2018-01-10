@@ -198,7 +198,7 @@ class Cli:
             elif command == 'EOF' and multiline:
                 multiline = False
 
-            conn.get(command, sendonly=multiline)
+            conn.get(command, None, None, multiline)
 
         return (rc, 'ok', '')
 
