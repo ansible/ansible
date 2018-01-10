@@ -12,12 +12,12 @@ from units.modules.utils import set_module_args
 from .mlnxos_module import TestMlnxosModule, load_fixture
 
 
-class TestMlnxosMagpModule(TestMlnxosModule):
+class TestMlnxosOspfModule(TestMlnxosModule):
 
     module = mlnxos_ospf
 
     def setUp(self):
-        super(TestMlnxosMagpModule, self).setUp()
+        super(TestMlnxosOspfModule, self).setUp()
         self._ospf_exists = True
         self.mock_get_config = patch.object(
             mlnxos_ospf.MlnxosOspfModule,
@@ -34,7 +34,7 @@ class TestMlnxosMagpModule(TestMlnxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
-        super(TestMlnxosMagpModule, self).tearDown()
+        super(TestMlnxosOspfModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

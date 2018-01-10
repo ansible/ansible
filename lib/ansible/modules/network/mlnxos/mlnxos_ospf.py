@@ -25,7 +25,7 @@ options:
   ospf:
     description:
       - "OSPF instance number 1-65535"
-    default: 1
+    required: true
   router_id:
     description:
       - OSPF router ID. Required if I(state=present).
