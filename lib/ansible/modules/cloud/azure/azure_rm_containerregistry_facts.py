@@ -93,13 +93,14 @@ sku:
     contains:
         name:
             description:
-                - The SKU name of the container registry. Required for registry creation. Possible values include: C(Classic), C(Basic), C(Standard), C(Premium)
+                - "The SKU name of the container registry. Required for registry creation. Possible values include: C(Classic), C(Basic), C(Standard), C(Prem
+                   ium)"
             returned: always
             type: str
             sample: Standard
         tier:
             description:
-                - The SKU tier based on the SKU name. Possible values include: C(Classic), C(Basic), C(Standard), C(Premium)
+                - "The SKU tier based on the SKU name. Possible values include: C(Classic), C(Basic), C(Standard), C(Premium)"
             returned: always
             type: str
             sample: Standard
