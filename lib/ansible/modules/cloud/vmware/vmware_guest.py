@@ -944,18 +944,15 @@ class PyVmomiHelper(PyVmomi):
                 # VDS switch
                 pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if (nic.device.backing and not hasattr(nic.device.backing, 'port')):
+                if (nic.device.backing and not hasattr(nic.device.backing, 'port')) or \
+                   (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
+                                            nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
+                    dvs_port_connection = vim.dvs.PortConnection()
+                    dvs_port_connection.portgroupKey = pg_obj.key
+                    dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
+                    nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                    nic.device.backing.port = dvs_port_connection
                     nic_change_detected = True
-                elif (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
-                                              nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
-                    nic_change_detected = True
-
-                dvs_port_connection = vim.dvs.PortConnection()
-                dvs_port_connection.portgroupKey = pg_obj.key
-                dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                nic.device.backing.port = dvs_port_connection
-                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
