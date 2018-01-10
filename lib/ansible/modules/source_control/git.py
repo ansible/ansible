@@ -902,7 +902,7 @@ def git_version(git_path, module):
         # one could fail_json here, but the version info is not that important,
         # so let's try to fail only on actual git commands
         return None
-    rematch = re.search('git version (.*)$', to_native(out))
+    rematch = re.search(r'git version (\S*)', to_native(out))
     if not rematch:
         return None
     return Version(rematch.groups()[0])

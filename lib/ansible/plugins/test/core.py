@@ -25,11 +25,11 @@ from collections import MutableMapping, MutableSequence
 
 HAS_PACKAGING = False
 try:
-    from packaging.version import Version
+    from packaging.version import LegacyVersion, Version
     HAS_PACKAGING = True
 except ImportError:
     try:
-        from pip._vendor.packaging.version import Version
+        from pip._vendor.packaging.version import LegacyVersion, Version
         HAS_PACKAGING = True
     except ImportError:
         pass
@@ -115,10 +115,13 @@ def version_compare(value, version, operator='eq', strict=False):
     }
 
     if strict:
-        VersionClass = StrictVersion
-    else:
         if HAS_PACKAGING:
             VersionClass = Version
+        else:
+            VersionClass = StrictVersion
+    else:
+        if HAS_PACKAGING:
+            VersionClass = LegacyVersion
         else:
             VersionClass = LooseVersion
 
