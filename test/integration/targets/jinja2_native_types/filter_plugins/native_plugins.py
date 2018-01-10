@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from ansible.module_utils._text import to_text
 
 
