@@ -40,6 +40,7 @@ options:
         description:
             - Destination folder, absolute or relative path to find an existing guest or create the new guest.
             - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+            - use only if vm_id_type is inventory_path
             - 'Examples:'
             - '   folder: /ha-datacenter/vm'
             - '   folder: ha-datacenter/vm'
@@ -81,7 +82,7 @@ options:
             - '  operation: Valid values are create, delete'
             - '  recurse (boolean): Not required, default (false)'
         required: False
-    file_copy:
+    copy:
         description:
             - Copy file to vm networkless
             - 'Valid attributes are:'
@@ -89,7 +90,7 @@ options:
             - '  dest: file destination, path must be exist'
             - '  overwrite: False or True (not required, default False)'
         required: False
-    fetch_file:
+    file:
         description:
             - Get file from vm networkless
             - 'Valid attributes are:'
@@ -107,7 +108,6 @@ EXAMPLES = '''
     password: mySecret
     datacenter: myDatacenter
     validate_certs: True
-    folder: /vm
     vm_id: NameOfVM
     vm_username: root
     vm_password: superSecret
@@ -124,7 +124,6 @@ EXAMPLES = '''
     password: mySecret
     datacenter: myDatacenter
     validate_certs: True
-    folder: /vm
     vm_id: NameOfVM
     vm_username: root
     vm_password: superSecret
@@ -141,7 +140,6 @@ EXAMPLES = '''
     password: mySecret
     datacenter: myDatacenter
     validate_certs: True
-    folder: /vm
     vm_id: NameOfVM
     vm_username: root
     vm_password: superSecret
@@ -231,9 +229,7 @@ def fetch(module, content, vm):
         fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
                                                                       guestFilePath=src)
     except vim.fault.FileNotFound:
-        result['changed'] = False
-        result['msg'] = "Guest file %s not exists" % src
-        return result
+        module.fail_json(msg="Guest file %s not exists" % src, uuid=vm.summary.config.uuid)
     except vim.fault.FileFault as e:
         module.fail_json(msg="FileFault:%s" % e.msg, uuid=vm.summary.config.uuid)
     except vim.fault.GuestPermissionDenied:
@@ -295,7 +291,7 @@ def copy(module, content, vm):
         result['msg'] = "Guest file %s already exists" % dest
         return result
     except vim.fault.FileFault as e:
-        module.fail_json(msg="FileFault:%s" % e, uuid=vm.summary.config.uuid)
+        module.fail_json(msg="FileFault:%s" % e.msg, uuid=vm.summary.config.uuid)
     except vim.fault.GuestPermissionDenied:
         module.fail_json(msg="Permission denied to copy file into destination %s" % dest, uuid=vm.summary.config.uuid)
     except vim.fault.InvalidGuestLogin:
@@ -335,7 +331,8 @@ def main():
                                   type='dict',
                                   default=None,
                                   options=dict(
-                                      src=dict(required=True, type='str'), dest=dict(required=True, type='str'),
+                                      src=dict(required=True, type='str'),
+                                      dest=dict(required=True, type='str'),
                                       overwrite=dict(required=False, type='bool', default=False)
                                   )),
                               fetch=dict(
@@ -355,7 +352,7 @@ def main():
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
 
-    if module.params['vm_id_type'] == 'vm_name' and not module.params['folder']:
+    if module.params['vm_id_type'] == 'inventory_path' and not module.params['folder']:
         module.fail_json(msg='Folder is required parameter when vm_id_type is inventory_path')
 
     datacenter_name = module.params['datacenter']
