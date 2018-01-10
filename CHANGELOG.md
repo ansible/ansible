@@ -121,6 +121,8 @@ Ansible Changes By Release
   * ovirt_disk_facts
 - spotinst
   * spotinst_aws_elastigroup
+- terraform
+  * terraform
 - vmware
   * vmware_cfg_backup
   * vmware_datastore_facts
