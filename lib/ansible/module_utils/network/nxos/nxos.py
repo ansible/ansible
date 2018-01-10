@@ -201,6 +201,13 @@ class Cli:
             if opts.get('ignore_timeout') and code:
                 msgs.append(code)
                 return msgs
+            elif code and 'no graceful-restart' in err:
+                if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
+                    msg = ['']
+                    msgs.extend(msg)
+                    return msgs
+                else:
+                    self._module.fail_json(msg=err)
             elif code:
                 self._module.fail_json(msg=err)
 
