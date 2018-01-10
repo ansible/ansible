@@ -40,7 +40,7 @@ options:
         description:
             - Destination folder, absolute or relative path to find an existing guest or create the new guest.
             - The folder should include the datacenter. ESX's datacenter is ha-datacenter
-            - use only if vm_id_type is inventory_path
+            - Used only if C(vm_id_type) is C(inventory_path).
             - 'Examples:'
             - '   folder: /ha-datacenter/vm'
             - '   folder: ha-datacenter/vm'
@@ -229,7 +229,7 @@ def fetch(module, content, vm):
         fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=vm, auth=creds,
                                                                       guestFilePath=src)
     except vim.fault.FileNotFound:
-        module.fail_json(msg="Guest file %s not exists" % src, uuid=vm.summary.config.uuid)
+        module.fail_json(msg="Guest file %s does not exist" % src, uuid=vm.summary.config.uuid)
     except vim.fault.FileFault as e:
         module.fail_json(msg="FileFault:%s" % e.msg, uuid=vm.summary.config.uuid)
     except vim.fault.GuestPermissionDenied:
