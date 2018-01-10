@@ -531,43 +531,41 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _remote_expand_user(self, path, sudoable=True, pathsep=None):
         ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
 
-        expanded = path
-        m = self._connection._shell.HOMES_RE.match(path)
+        # We only expand ~/path and ~username/path
+        if not path.startswith('~'):
+            return path
 
-        if m is not None:
-            quote, expand_path, rest = m.groups()
+        # Per Jborean, we don't have to worry about Windows as we don't have a notion of user's home
+        # dir there.
+        split_path = path.split(os.path.sep, 1)
+        expand_path = split_path[0]
 
-            # if not become empty username assumes connection user
-            if sudoable and self._play_context.become and self._play_context.become_user:
-                username = self._play_context.become_user
+        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
+            expand_path = '~%s' % self._play_context.become_user
+
+        # use shell to construct appropriate command and execute
+        cmd = self._connection._shell.expand_user(expand_path)
+        data = self._low_level_execute_command(cmd, sudoable=False)
+
+        try:
+            initial_fragment = data['stdout'].strip().splitlines()[-1]
+        except IndexError:
+            initial_fragment = None
+
+        if not initial_fragment:
+            # Something went wrong trying to expand the path remotely. Try using pwd, if not, return
+            # the original string
+            cmd = self._connection._shell.pwd()
+            pwd = self._low_level_execute_command(cmd, sudoable=False).strip()
+            if pwd:
+                expanded = pwd
             else:
-                username = ''
+                expanded = path
 
-            # use shell to construct appropriate command and execute
-            data = self._low_level_execute_command(self._connection._shell.expand_user(expand_path, username), sudoable=False)
-            try:
-                # returns 'translation attempt' and pwd as fallback \0 separated
-                pdata = data['stdout'].splitlines()[-1].rstrip()
-                initial_fragment, pwd = [x.strip() for x in pdata.split('\0')]
-            except (IndexError, ValueError):
-                initial_fragment = None
-                pwd = None
-
-            if not initial_fragment:
-                # Something went wrong trying to expand the path remotely. Try using pwd, if not, return the original string
-                if pwd:
-                    expanded = pwd
-                    quote = None
-            elif len(expand_path) > 1:
-                expanded = self._connection._shell.join_path(initial_fragment, *expand_path[1:])
-            else:
-                expanded = initial_fragment
-
-            if rest:
-                expanded = ''.join([expanded, rest])
-
-            if quote:
-                expanded = ''.join([quote, expanded, quote])
+        elif len(split_path) > 1:
+            expanded = self._connection._shell.join_path(initial_fragment, *split_path[1:])
+        else:
+            expanded = initial_fragment
 
         return expanded
 

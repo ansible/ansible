@@ -18,9 +18,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import os.path
+import random
 import re
 import time
-import random
 
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
@@ -30,9 +31,6 @@ _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 
 class ShellBase(AnsiblePlugin):
-
-    HOMES_RE = re.compile(r'(\'|\")?(~|\$HOME[^A-Z,a-z,0-9,-,_,\.]?)(.*)')
-
     def __init__(self):
 
         super(ShellBase, self).__init__()
@@ -161,7 +159,11 @@ class ShellBase(AnsiblePlugin):
             # if present the user name is appended to resolve "that user's home"
             user_home_path += username
 
-        return 'echo %s\0%spwd%s' % (user_home_path, self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
+        return 'echo %s' % user_home_path
+
+    def pwd(self):
+        """Return the working directory after connecting"""
+        return 'echo %spwd%s' % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
