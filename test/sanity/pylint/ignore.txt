@@ -1,15 +1,6 @@
-contrib/inventory/proxmox.py ansible-format-automatic-specification
-contrib/inventory/stacki.py ansible-format-automatic-specification
-contrib/vault/vault-keyring.py ansible-format-automatic-specification
-examples/scripts/uptime.py ansible-format-automatic-specification
-hacking/cherrypick.py ansible-format-automatic-specification
-hacking/metadata-tool.py ansible-format-automatic-specification
 lib/ansible/cli/adhoc.py syntax-error 3.7
-lib/ansible/module_utils/dimensiondata.py ansible-format-automatic-specification
 lib/ansible/module_utils/network/aci/aci.py ansible-format-automatic-specification
 lib/ansible/module_utils/network/iosxr/iosxr.py ansible-format-automatic-specification
-lib/ansible/module_utils/ovirt.py ansible-format-automatic-specification
-lib/ansible/module_utils/univention_umc.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/aws_kms.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/ec2_eip.py ansible-format-automatic-specification
@@ -111,17 +102,8 @@ lib/ansible/modules/storage/infinidat/infini_vol.py ansible-format-automatic-spe
 lib/ansible/modules/storage/purestorage/purefa_host.py ansible-format-automatic-specification
 lib/ansible/modules/storage/purestorage/purefa_pg.py ansible-format-automatic-specification
 lib/ansible/modules/system/firewalld.py ansible-format-automatic-specification
-lib/ansible/plugins/callback/context_demo.py ansible-format-automatic-specification
-lib/ansible/plugins/callback/hipchat.py ansible-format-automatic-specification
-lib/ansible/plugins/callback/logentries.py ansible-format-automatic-specification
-lib/ansible/plugins/callback/selective.py ansible-format-automatic-specification
 lib/ansible/plugins/cliconf/junos.py ansible-no-format-on-bytestring 3
 lib/ansible/plugins/cliconf/nxos.py ansible-format-automatic-specification
-lib/ansible/plugins/connection/iocage.py ansible-format-automatic-specification
-lib/ansible/plugins/lookup/chef_databag.py ansible-format-automatic-specification
-lib/ansible/plugins/lookup/hiera.py ansible-format-automatic-specification
-lib/ansible/plugins/lookup/mongodb.py ansible-format-automatic-specification
-lib/ansible/plugins/lookup/passwordstore.py ansible-format-automatic-specification
 test/runner/importer.py missing-docstring 3.7
 test/runner/injector/importer.py missing-docstring 3.7
 test/runner/injector/injector.py missing-docstring 3.7
@@ -167,4 +149,3 @@ test/runner/shippable.py missing-docstring 3.7
 test/runner/test.py missing-docstring 3.7
 test/runner/units/test_diff.py missing-docstring 3.7
 test/units/modules/network/nuage/test_nuage_vspk.py syntax-error 3.7
-test/units/modules/remote_management/oneview/hpe_test_utils.py ansible-format-automatic-specification

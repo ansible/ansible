@@ -121,7 +121,7 @@ class LookupModule(LookupBase):
             return sort_parameter
 
         if not isinstance(sort_parameter, list):
-            raise AnsibleError(u"Error. Sort parameters must be a list, not [ {} ]".format(sort_parameter))
+            raise AnsibleError(u"Error. Sort parameters must be a list, not [ {0} ]".format(sort_parameter))
 
         for item in sort_parameter:
             self._convert_sort_string_to_constant(item)
@@ -160,7 +160,7 @@ class LookupModule(LookupBase):
             return (result - datetime.datetime(1970, 1, 1)). total_seconds()
         else:
             # failsafe
-            return u"{}".format(result)
+            return u"{0}".format(result)
 
     def run(self, terms, variables, **kwargs):
 
