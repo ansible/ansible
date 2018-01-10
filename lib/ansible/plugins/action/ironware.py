@@ -64,7 +64,7 @@ class ActionModule(_ActionModule):
             pc.become_method = 'enable'
         pc.become_pass = provider['auth_pass']
 
-        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+        display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = connection.run()
