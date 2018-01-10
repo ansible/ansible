@@ -92,11 +92,10 @@ meta:
 '''
 
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 from ansible.module_utils.basic import AnsibleModule
 from pyVim import connect
 from pyVmomi import vim
+__metaclass__ = type
 
 
 def get_all_vm_under_folder(vm_folder_child_entity):
@@ -133,7 +132,7 @@ def is_vm(data):
 
     target_vm = [vm for vm in vms if vm.name == data['name']]
     if len(target_vm) != 1:
-        return (False, False, 'VM "{}" not found.'.format(data['name']))
+        return (False, False, 'VM "{0}" not found.'.format(data['name']))
     target_vm = target_vm[0]
 
     # if target_vm has resourcePool, that will be a VM
@@ -142,7 +141,7 @@ def is_vm(data):
 
     destination = [cluster for cluster in clusters if cluster.name == data['cluster']]
     if len(destination) != 1:
-        return (False, False, 'Cluster "{}" not found.'.format(data['cluster']))
+        return (False, False, 'Cluster "{0}" not found.'.format(data['cluster']))
     destination = destination[0].resourcePool
 
     if 'resource_pool' in data and data['resource_pool']:
@@ -159,7 +158,7 @@ def is_template(data):
 
     target_vm = [vm for vm in vms if vm.name == data['name']]
     if len(target_vm) != 1:
-        return (False, False, 'VM name {} not found.'.format(data['name']))
+        return (False, False, 'VM name {0} not found.'.format(data['name']))
 
     target_vm = target_vm[0]
 
