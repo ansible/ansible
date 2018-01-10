@@ -27,8 +27,7 @@
     - vcg is successful
 
 - name: setup remove vpn connection
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -50,8 +49,7 @@
     - vpn_gateway is successful
 
 - name: test fail create vpn connection without gateway and force
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
@@ -64,8 +62,7 @@
     - vpn_conn.msg == "VPN gateway not found and not forced to create one"
 
 - name: test create vpn connection with force in check mode
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     force: yes
@@ -78,8 +75,7 @@
     - vpn_conn is changed
 
 - name: test create vpn connection with force
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     force: yes
@@ -93,8 +89,7 @@
     - vpn_conn.vpc == "my_vpc"
 
 - name: test create vpn connection with force idempotence
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     force: yes
@@ -108,8 +103,7 @@
     - vpn_conn.vpc == "my_vpc"
 
 - name: test remove vpn connection in check mode
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -123,8 +117,7 @@
     - vpn_conn.vpc == "my_vpc"
 
 - name: test remove vpn connection
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -137,8 +130,7 @@
     - vpn_conn.vpc == "my_vpc"
 
 - name: test remove vpn connection idempotence
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -159,8 +151,7 @@
     - vpn_gateway is success
 
 - name: test create vpn connection without force in check mode
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
@@ -172,8 +163,7 @@
     - vpn_conn is changed
 
 - name: test create vpn connection without force
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
@@ -186,8 +176,7 @@
     - vpn_conn.vpc == "my_vpc"
 
 - name: test create vpn connection without force
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
@@ -200,8 +189,7 @@
     - vpn_conn.vpc == "my_vpc"
 
 - name: cleanup remove vpn connection
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
