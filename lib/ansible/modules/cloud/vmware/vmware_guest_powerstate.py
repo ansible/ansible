@@ -59,6 +59,11 @@ options:
     - '   folder: vm/folder2'
     - '   folder: folder2'
     default: /vm
+  scheduled_at:
+    description:
+    - Date and time in string format at which specificed task needs to be performed.
+    - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
+    - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -74,12 +79,32 @@ EXAMPLES = r'''
     state: powered-off
   delegate_to: localhost
   register: deploy
+
+- name: Set the state of a virtual machine to poweroff at given scheduled time
+  vmware_guest_powerstate:
+    hostname: 192.0.2.44
+    username: administrator@vsphere.local
+    password: vmware
+    validate_certs: no
+    folder: /datacenter-1/vm/my_folder
+    name: testvm_2
+    state: powered-off
+    scheduled_at: "09/01/2018 10:18"
+  delegate_to: localhost
+  register: deploy_at_schedule_datetime
 '''
 
 RETURN = r''' # '''
 
+try:
+    from pyVmomi import vim, vmodl
+except ImportError:
+    pass
+
+from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, set_vm_power_state, vmware_argument_spec
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -92,6 +117,7 @@ def main():
         uuid=dict(type='str'),
         folder=dict(type='str', default='/vm'),
         force=dict(type='bool', default=False),
+        scheduled_at=dict(type='str'),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -110,7 +136,53 @@ def main():
 
     if vm:
         # VM already exists, so set power state
-        result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
+        scheduled_at = module.params.get('scheduled_at', None)
+        if scheduled_at:
+            if not pyv.is_vcenter():
+                module.fail_json(msg="Scheduling task requires vCenter, hostname %s "
+                                     "is an ESXi server." % module.params.get('hostname'))
+            powerstate = {
+                'powered-off': vim.VirtualMachine.PowerOff,
+                'powered-on': vim.VirtualMachine.PowerOn,
+                'reboot-guest': vim.VirtualMachine.RebootGuest,
+                'restarted': vim.VirtualMachine.Reset,
+                'shutdown-guest': vim.VirtualMachine.ShutdownGuest,
+                'suspended': vim.VirtualMachine.Suspend,
+            }
+            dt = ''
+            try:
+                dt = datetime.strptime(scheduled_at, '%d/%m/%Y %H:%M')
+            except ValueError as e:
+                module.fail_json(msg="Failed to convert given date and time string to Python datetime object,"
+                                     "please specify string in 'dd/mm/yyyy hh:mm' format: %s" % to_native(e))
+            schedule_task_spec = vim.scheduler.ScheduledTaskSpec()
+            schedule_task_desc = 'Schedule task for vm %s for operation %s at %s' % (vm.name,
+                                                                                     module.params.get('state'),
+                                                                                     scheduled_at)
+            schedule_task_spec.name = schedule_task_desc
+            schedule_task_spec.description = schedule_task_desc
+            schedule_task_spec.scheduler = vim.scheduler.OnceTaskScheduler()
+            schedule_task_spec.scheduler.runAt = dt
+            schedule_task_spec.action = vim.action.MethodAction()
+            schedule_task_spec.action.name = powerstate[module.params.get('state')]
+            schedule_task_spec.enabled = True
+
+            try:
+                pyv.content.scheduledTaskManager.CreateScheduledTask(vm, schedule_task_spec)
+                # As this is async task, we create scheduled task and mark state to changed.
+                module.exit_json(changed=True)
+            except vim.fault.InvalidName as e:
+                module.fail_json(msg="Failed to create scheduled task %s for %s : %s" % (module.params.get('state'),
+                                                                                         vm.name,
+                                                                                         to_native(e.msg)))
+            except vim.fault.DuplicateName as e:
+                module.exit_json(chanaged=False, details=to_native(e.msg))
+            except vmodl.fault.InvalidArgument as e:
+                module.fail_json(msg="Failed to create scheduled task %s as specifications "
+                                     "given are invalid: %s" % (module.params.get('state'),
+                                                                to_native(e.msg)))
+        else:
+            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
     else:
         module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % (module.params.get('uuid') or module.params.get('name')))
 
