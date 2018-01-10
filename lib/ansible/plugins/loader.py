@@ -16,6 +16,8 @@ import warnings
 
 from collections import defaultdict
 
+from functools import wraps
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
@@ -31,6 +33,7 @@ except ImportError:
 
 
 def check_if_plugin_is_reserved_name(func):
+    @wraps(func)
     def inner(self, name, *args, **kwargs):
         from ansible.vars.reserved import is_reserved_name
         plugin = func(self, name, *args, **kwargs)
