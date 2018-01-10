@@ -81,7 +81,7 @@ meta:
     description: Message of result or error resason
     returned: always
     type: string
-    sample: 
+    sample:
         - Ordered VM convert to template.
         - Ordered template convert to VM.
         - Already is VM.
@@ -91,9 +91,13 @@ meta:
         - Cluster is required on "is_vm" state.
 '''
 
-from ansible.module_utils.basic import *
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+from ansible.module_utils.basic import AnsibleModule
 from pyVim import connect
 from pyVmomi import vim
+
 
 def get_all_vm_under_folder(vm_folder_child_entity):
     vm_list = []
@@ -131,7 +135,7 @@ def is_vm(data):
     if len(target_vm) != 1:
         return (False, False, 'VM "{}" not found.'.format(data['name']))
     target_vm = target_vm[0]
-        
+
     # if target_vm has resourcePool, that will be a VM
     if target_vm.resourcePool is not None:
         return (True, False, 'Already is VM.')
@@ -164,7 +168,7 @@ def is_template(data):
         return (True, False, 'Already is template.')
 
     target_vm.MarkAsTemplate()
-    return (True, True, "Ordered VM convert to template.")    
+    return (True, True, "Ordered VM convert to template.")
 
 
 def main():
@@ -184,7 +188,7 @@ def main():
     }
 
     module = AnsibleModule(argument_spec=fields)
-    
+
     success, changed, result = state_map.get(module.params['state'])(module.params)
 
     if success:
