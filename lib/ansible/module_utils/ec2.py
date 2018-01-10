@@ -373,7 +373,7 @@ def _camel_to_snake(name, reversible=False):
     return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
 
 
-def camel_dict_to_snake_dict(camel_dict, reversible=False):
+def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
     """
     reversible allows two way conversion of a camelized dict
     such that snake_dict_to_camel_dict(camel_dict_to_snake_dict(x)) == x
@@ -381,6 +381,10 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False):
     This is achieved through mapping e.g. HTTPEndpoint to h_t_t_p_endpoint
     where the default would be simply http_endpoint, which gets turned into
     HttpEndpoint if recamelized.
+
+    ignore_list is used to avoid converting a sub-tree of a dict. This is
+    particularly important for tags, where keys are case-sensitive. We convert
+    the 'Tags' key but nothing below.
     """
 
     def value_is_list(camel_list):
@@ -398,9 +402,9 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False):
 
     snake_dict = {}
     for k, v in camel_dict.items():
-        if isinstance(v, dict):
+        if isinstance(v, dict) and k not in ignore_list:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
-        elif isinstance(v, list):
+        elif isinstance(v, list) and k not in ignore_list:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
         else:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = v
