@@ -1,0 +1,46 @@
+---
+- debug: msg="START junos netconf/net_static_route.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove static route
+  net_static_route:
+    address: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Confgiure static route using platform agnostic module
+  net_static_route:
+    address: 1.1.1.0/24
+    next_hop: 3.3.3.3
+    preference: 10
+    qualified_next_hop: 5.5.5.5
+    qualified_preference: 30
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>1.1.1.0/24</name>' in config.xml"
+      - "'<next-hop>3.3.3.3</next-hop>' in config.xml"
+      - "'<qualified-next-hop>' in config.xml"
+      - "'<name>5.5.5.5</name>' in config.xml"
+      - "'<preference>30</preference>' in config.xml"
+      - "'<metric-value>10</metric-value>' in config.xml"
+
+- name: setup - remove static route
+  net_static_route:
+    address: 1.1.1.0/24
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_static_route.yaml on connection={{ ansible_connection }}"
