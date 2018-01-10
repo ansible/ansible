@@ -173,8 +173,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         for deprecated in C.config.DEPRECATED:
             name = deprecated[0]
             why = deprecated[1]['why']
-            if 'alternative' in deprecated[1]:
-                alt = ', use %s instead' % deprecated[1]['alternative']
+            if 'alternatives' in deprecated[1]:
+                alt = ', use %s instead' % deprecated[1]['alternatives']
             else:
                 alt = ''
             ver = deprecated[1]['version']
