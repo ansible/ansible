@@ -69,6 +69,15 @@ class TestJunosCommandModule(TestJunosModule):
         self.assertEqual(args[0], 'test.txt')
         self.assertEqual(result['changed'], True)
 
+    def test_junos_scp_all(self):
+        set_module_args(dict(src='test', remote_src=True, dest="tmp", recursive=True))
+        result = self.execute_module(changed=True)
+        args, kwargs = scp_mock.get.call_args
+        self.assertEqual(args[0], 'test')
+        self.assertEqual(kwargs['local_path'], 'tmp')
+        self.assertEqual(kwargs['recursive'], True)
+        self.assertEqual(result['changed'], True)
+
     def test_junos_scp_device_param(self):
         set_module_args(dict(src='test.txt',
                              provider={'username': 'unit', 'host': 'test', 'ssh_keyfile': 'path',
