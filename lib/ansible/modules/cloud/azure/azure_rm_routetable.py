@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
-#                    Chris Houseknecht, <house@redhat.com>
+# Copyright (c) 2018 Tom Vachon, <github@thomasvachon.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -13,35 +12,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'certified'}
 
-#TODO: Update this
-
 DOCUMENTATION = '''
 ---
 module: azure_rm_routetable
 version_added: ""
 short_description: Manage Azure route tables.
 description:
-    - Create, update or delete a route tables. Allows setting and updating the available IPv4 address ranges
-      and setting custom DNS servers. Use the azure_rm_subnet module to associate subnets with a virtual network.
+    - Create, update or delete a route tables. Allows setting and updating the available routes with cidr, type, and destination
 options:
     resource_group:
         description:
             - name of resource group.
         required: true
-    address_prefixes_cidr:
+    routes:
         description:
-            - List of IPv4 address ranges where each is formatted using CIDR notation. Required when creating
-              a new virtual network or using purge_address_prefixes.
-        aliases:
-            - address_prefixes
-        default: null
-        required: false
-    dns_servers:
-        description:
-            - Custom list of DNS servers. Maximum length of two. The first server in the list will be treated
-              as the Primary server. This is an explicit list. Existing DNS servers will be replaced with the
-              specified list. Use the purge_dns_servers option to remove all custom DNS servers and revert to
-              default Azure servers.
+            - A list of hashes which has address_prefix, next_hop_type, and next_hop_ip_address set to populate the
+              routes in the route table
         default: null
         required: false
     location:
@@ -53,16 +39,10 @@ options:
         description:
             - name of the virtual network.
         required: true
-    purge_address_prefixes:
+    purge_routes:
         description:
-            - Use with state present to remove any existing address_prefixes.
+            - Use with state present to remove any existing routes and replace with defined routes
         default: false
-    purge_dns_servers:
-        description:
-            - Use with state present to remove existing DNS servers, reverting to default Azure servers. Mutually
-              exclusive with dns_servers.
-        default: false
-        required: false
     state:
         description:
             - Assert the state of the virtual network. Use 'present' to create or update and
@@ -78,53 +58,55 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - "Thomas Vachon (@TomVachon)"
 
 '''
 
 EXAMPLES = '''
     - name: Create a virtual network
-      azure_rm_virtualnetwork:
+      azure_rm_routetable:
         name: foobar
         resource_group: Testing
-        address_prefixes_cidr:
-            - "10.1.0.0/16"
-            - "172.100.0.0/16"
-        dns_servers:
-            - "127.0.0.1"
-            - "127.0.0.2"
+        routes:
+            -
+                name: "My Route Table"
+                address_prefix: "10.0.0.0/16"
+                next_hop_type: "VirtualAppliance"
+                next_hop_ip_address: "1.2.3.4"
         tags:
             testing: testing
             delete: on-exit
 
-    - name: Delete a virtual network
-      azure_rm_virtualnetwork:
+    - name: Delete a route table
+      azure_rm_routetable:
         name: foobar
         resource_group: Testing
         state: absent
 '''
+
 RETURN = '''
 state:
-    description: Current state of the virtual network.
+    description: Current state of the route table
     returned: always
     type: dict
     sample: {
-        "address_prefixes": [
-            "10.1.0.0/16",
-            "172.100.0.0/16"
-        ],
-        "dns_servers": [
-            "127.0.0.1",
-            "127.0.0.3"
-        ],
+      "routes": [
+        {
+            "name": "myrt",
+            "address_prefix": "10.0.0.0/16",
+            "next_hop_type": "VirtualAppliance",
+            "next_hop_ip_address": "1.2.3.4",
+            "provisioning_state": "Succeeded",
+            "etag": 'W/"0712e87c-f02f-4bb3-8b9e-2da0390a3886"',
+            "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/myrt/routes/my_route_name"
+        }],
         "etag": 'W/"0712e87c-f02f-4bb3-8b9e-2da0390a3886"',
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/my_test_network",
+        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/routet/Testing/providers/Microsoft.Network/routeTables/myrt",
         "location": "eastus",
-        "name": "my_test_network",
+        "name": "my_route_table",
         "provisioning_state": "Succeeded",
         "tags": null,
-        "type": "Microsoft.Network/virtualNetworks"
+        "type": "Microsoft.Network/routeTables"
     }
 '''
 
@@ -136,6 +118,8 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, NEXT_HOP_TYPE
+
+# NEXT_HOP_TYPE = ['VirtualNetworkGateway', 'VnetLocal', 'Internet', 'VirtualAppliance']
 
 
 def route_table_to_dict(routetable):
@@ -153,10 +137,19 @@ def route_table_to_dict(routetable):
         provisioning_state=routetable.provisioning_state,
         etag=routetable.etag
     )
-    if routetable.routes and len(routetable.routes.route) > 0:
+    if routetable.routes and len(routetable.routes) > 0:
         results['routes'] = []
-        for route in routetable.routes.route:
-            results['routes'].append(route)
+        for route in routetable.routes:
+            route_to_dict = dict(
+                name=route.name,
+                next_hop_type=route.next_hop_type,
+                address_prefix=route.address_prefix,
+                next_hop_ip_address=route.next_hop_ip_address,
+                provisioning_state=route.provisioning_state,
+                etag=route.etag,
+                id=route.id
+            )
+            results['routes'].append(route_to_dict)
     return results
 
 
@@ -173,8 +166,8 @@ class AzureRMRouteTable(AzureRMModuleBase):
             purge_routes=dict(type='bool', default=False, aliases=['purge'])
         )
 
-        mutually_exclusive = [
-            ('routes', 'purge_routes')
+        required_if = [
+            ('purge_routes', True, ['routes'])
         ]
 
         self.resource_group = None
@@ -190,8 +183,8 @@ class AzureRMRouteTable(AzureRMModuleBase):
         )
 
         super(AzureRMRouteTable, self).__init__(self.module_arg_spec,
-                                                    mutually_exclusive=mutually_exclusive,
-                                                    supports_check_mode=True)
+                                                required_if=required_if,
+                                                supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -205,13 +198,15 @@ class AzureRMRouteTable(AzureRMModuleBase):
             # Set default location
             self.location = resource_group.location
 
-        if self.state == 'present' and self.purge_routes:
+        if self.state == 'present':
             for route in self.routes:
-                if not CIDR_PATTERN.match(route.address_prefix):
-                    self.fail("Parameter error: invalid address prefix value {0}".format(route.address_prefix))
-                if not route.next_hop_type in NEXT_HOP_TYPE:
-                    self.fail("Parameter error: invalid next hop value {0}".format(route.next_hop_type))
-                if not route.next_hop_type == 'VirtualAppliance' and not route.next_hop_ip_address:
+                if not CIDR_PATTERN.match(route.get('address_prefix')):
+                    self.fail("Parameter error: invalid address prefix value {0}".format(route['address_prefix']))
+                if not route.get('next_hop_type') in NEXT_HOP_TYPE:
+                    self.fail("Parameter error: invalid next hop value {0}".format(route['next_hop_type']))
+                if not route.get('name'):
+                    self.fail("Parameter error: invalid name value {0}".format(route['name']))
+                if route['next_hop_type'] == 'VirtualAppliance' and not route.get('next_hop_ip_address'):
                     self.fail("Parameter error: Next Hop Required for VirtualAppliance")
 
         changed = False
@@ -220,7 +215,6 @@ class AzureRMRouteTable(AzureRMModuleBase):
         try:
             self.log('Fetching route table {0}'.format(self.name))
             routetable = self.network_client.route_tables.get(self.resource_group, self.name)
-
             results = route_table_to_dict(routetable)
             self.log('Route Table exists {0}'.format(self.name))
             self.log(results, pretty_print=True)
@@ -228,17 +222,26 @@ class AzureRMRouteTable(AzureRMModuleBase):
 
             if self.state == 'present':
                 if self.routes:
-                    existing_route_entries = set(routetable.routes)
-                    requested_routing_entries = set(self.routes)
+                    requested_routing_entries = self.routes
 
-                    missing_routes = dict(requested_routing_entries - existing_route_entries)
-                    extra_routes = dict(existing_route_entries - requested_routing_entries)
+                    existing_route_entries = []
+                    for existing_route in routetable.routes:
+                        existing_route_entries.append(dict(
+                            address_prefix=existing_route.address_prefix,
+                            next_hop_type=existing_route.next_hop_type,
+                            next_hop_ip_address=existing_route.next_hop_ip_address,
+                            name=existing_route.name))
+
+                    missing_routes = [x for x in requested_routing_entries if x not in existing_route_entries]
+                    extra_routes = [x for x in existing_route_entries if x not in requested_routing_entries]
+
                     if len(missing_routes) > 0:
                         self.log('CHANGED: there are missing routes')
                         changed = True
                         if not self.purge_routes:
                             # add the missing routes
                             for route in missing_routes:
+                                results['routes'] + extra_routes
                                 results['routes'].append(route)
 
                     if len(extra_routes) > 0 and self.purge_routes:
@@ -247,9 +250,9 @@ class AzureRMRouteTable(AzureRMModuleBase):
                         # replace existing routes with requested set
                         results['routes'] = self.routes
 
-                update_tags, results['tags'] = self.update_tags(results['tags'])
-                if update_tags:
-                    changed = True
+            update_tags, results['tags'] = self.update_tags(results['tags'])
+            if update_tags:
+                changed = True
 
             elif self.state == 'absent':
                 self.log("CHANGED: routes exists but requested state is 'absent'")
@@ -277,14 +280,14 @@ class AzureRMRouteTable(AzureRMModuleBase):
                     if self.routes:
                         route_entries = []
                         for route in self.routes:
-                            route_entries.append(Route(
-                              address_prefix = route.address_prefix,
-                              next_hop_type = route.next_hop_type,
-                              next_hop_ip_address = route.next_hop_ip_address
+                            routing_entry = Route(
+                                name=route['name'],
+                                next_hop_type=route['next_hop_type'],
+                                address_prefix=route['address_prefix'],
+                                next_hop_ip_address=route.get('next_hop_ip_address')
                             )
-                          )
-                        routetable.routes = route_entries
-                    
+                            route_entries.append(routing_entry)
+                    routetable.routes = route_entries
                     if self.tags:
                         routetable.tags = self.tags
                     self.results['state'] = self.create_or_update_routetable(routetable)
@@ -295,20 +298,21 @@ class AzureRMRouteTable(AzureRMModuleBase):
                         location=results['location'],
                         tags=results['tags']
                     )
-                    route_entries = []
-                    for route in self.routes:
-                        route_entries.append(Route(
-                            address_prefix = route.address_prefix,
-                            next_hop_type = route.next_hop_type,
-                            next_hop_ip_address = route.next_hop_ip_address
-                          )
-                        )
+                    if results['routes']:
+                        route_entries = []
+                        for route in results['routes']:
+                            routing_entry = Route(
+                                name=route['name'],
+                                next_hop_type=route['next_hop_type'],
+                                address_prefix=route['address_prefix'],
+                                next_hop_ip_address=route.get('next_hop_ip_address')
+                            )
+                            route_entries.append(routing_entry)
                     routetable.routes = route_entries
-                        
                     self.results['state'] = self.create_or_update_routetable(routetable)
+
             elif self.state == 'absent':
                 self.delete_route_table()
-                self.results['state']['status'] = 'Deleted'
 
         return self.results
 
