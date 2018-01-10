@@ -56,11 +56,11 @@ ANSIBLE_NOCOWS:
   - {key: nocows, section: defaults}
   type: boolean
   yaml: {key: display.i_am_no_fun}
-ANSIBLE_COWPATH:
+ANSIBLE_COW_PATH:
   name: Set path to cowsay command
   default: null
   description: Specify a custom cowsay path or swap in your cowsay implementation of choice
-  env: [{name: ANSIBLE_COWPATH}]
+  env: [{name: ANSIBLE_COW_PATH}]
   ini:
   - {key: cowpath, section: defaults}
   type: string
