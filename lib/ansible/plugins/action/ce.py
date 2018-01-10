@@ -67,7 +67,7 @@ class ActionModule(_ActionModule):
                 username=pc.remote_user,
                 password=pc.password
             )
-            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+            display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             socket_path = connection.run()
