@@ -1,0 +1,4 @@
+---
+vr_startup_script_name: ansible_test_script
+vr_startup_script: "#!/bin/bash echo Hello World > /root/hello"
+vr_startup_script2: "#!/bin/bash echo Hello2 World > /root/hello"

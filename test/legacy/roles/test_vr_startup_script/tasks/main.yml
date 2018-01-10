@@ -1,0 +1,150 @@
+---
+- name: setup
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result is success
+
+- name: test fail if missing name
+  local_action:
+    module: vr_startup_script
+  register: result
+  ignore_errors: yes
+- name: verify test fail if missing name
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test fail if missing params for state=present
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+  register: result
+  ignore_errors: yes
+- name: verify fail if missing params for state=present
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "state is present but all of the following are missing: script"'
+
+- name: test create startup script in check mode
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    script: "{{ vr_startup_script }}"
+  register: result
+  check_mode: yes
+- name: verify test create startup script in check mode
+  assert:
+    that:
+    - result is changed
+
+- name: test create startup script
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    script: "{{ vr_startup_script }}"
+  register: result
+- name: verify test create startup script
+  assert:
+    that:
+    - result is changed
+    - result.vultr_startup_script.name == '{{ vr_startup_script_name }}'
+    - result.vultr_startup_script.script == '{{ vr_startup_script }}'
+
+- name: test create startup script idempotence
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    script: "{{ vr_startup_script }}"
+  register: result
+- name: verify test create startup script idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_startup_script.name == '{{ vr_startup_script_name }}'
+    - result.vultr_startup_script.script == '{{ vr_startup_script }}'
+
+- name: test update startup script in check mode
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    script: "{{ vr_startup_script2 }}"
+  register: result
+  check_mode: yes
+- name: verify test update startup script in check mode
+  assert:
+    that:
+    - result is changed
+    - result.vultr_startup_script.name == '{{ vr_startup_script_name }}'
+    - result.vultr_startup_script.script == '{{ vr_startup_script }}'
+
+- name: test update startup script
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    script: "{{ vr_startup_script2 }}"
+  register: result
+- name: verify test update startup script
+  assert:
+    that:
+    - result is changed
+    - result.vultr_startup_script.name == '{{ vr_startup_script_name }}'
+    - result.vultr_startup_script.script == '{{ vr_startup_script2 }}'
+
+- name: test update startup script idempotence
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    script: "{{ vr_startup_script2 }}"
+  register: result
+- name: verify test update startup script idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_startup_script.name == '{{ vr_startup_script_name }}'
+    - result.vultr_startup_script.script == '{{ vr_startup_script2 }}'
+
+- name: test absent startup script in check mode
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    state: absent
+  register: result
+  check_mode: yes
+- name: verify test absent startup script in check mode
+  assert:
+    that:
+    - result is changed
+    - result.vultr_startup_script.name == '{{ vr_startup_script_name }}'
+    - result.vultr_startup_script.script == '{{ vr_startup_script2 }}'
+
+- name: test absent startup script
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    state: absent
+  register: result
+- name: verify test absent startup script
+  assert:
+    that:
+    - result is changed
+    - result.vultr_startup_script.name == '{{ vr_startup_script_name }}'
+    - result.vultr_startup_script.script == '{{ vr_startup_script2 }}'
+
+- name: test absent startup script idempotence
+  local_action:
+    module: vr_startup_script
+    name: "{{ vr_startup_script_name }}"
+    state: absent
+  register: result
+- name: verify test absent startup script idempotence
+  assert:
+    that:
+    - result is not changed
