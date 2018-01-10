@@ -146,7 +146,7 @@ def main():
         ng.organization(params)
         module.exit_json(changed=True, result="%s updated" % entity)
     else:
-        module.fail_json(changed=False, result="Unsupported entity supplied")
+        module.fail_json(changed=False, msg="Unsupported entity (%s) supplied" % entity)
 
 
 if __name__ == '__main__':
