@@ -41,11 +41,7 @@ class ActionModule(_ActionModule):
     def run(self, tmp=None, task_vars=None):
         socket_path = None
 
-        if self._play_context.connection == 'network_cli':
-            provider = self._task.args.get('provider', {})
-            if any(provider.values()):
-                display.warning('provider is unnecessary when using network_cli and will be ignored')
-        elif self._play_context.connection == 'local':
+        if self._play_context.connection == 'local':
             provider = load_provider(iosxr_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             if self._task.action in ['iosxr_netconf', 'iosxr_config', 'iosxr_command'] or \
@@ -77,6 +73,10 @@ class ActionModule(_ActionModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
+        else:
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using {0} and will be ignored'.format(self._play_context.connection))
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
