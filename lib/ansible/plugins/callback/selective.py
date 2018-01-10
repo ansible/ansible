@@ -71,7 +71,7 @@ def colorize(msg, color):
     if DONT_COLORIZE:
         return msg
     else:
-        return '{}{}{}'.format(COLORS[color], msg, COLORS['endc'])
+        return '{0}{1}{2}'.format(COLORS[color], msg, COLORS['endc'])
 
 
 class CallbackModule(CallbackBase):
@@ -104,15 +104,15 @@ class CallbackModule(CallbackBase):
             line_length = 120
             if self.last_skipped:
                 print()
-            msg = colorize("# {} {}".format(task_name,
-                                            '*' * (line_length - len(task_name))), 'bold')
+            msg = colorize("# {0} {1}".format(task_name,
+                                              '*' * (line_length - len(task_name))), 'bold')
             print(msg)
 
     def _indent_text(self, text, indent_level):
         lines = text.splitlines()
         result_lines = []
         for l in lines:
-            result_lines.append("{}{}".format(' ' * indent_level, l))
+            result_lines.append("{0}{1}".format(' ' * indent_level, l))
         return '\n'.join(result_lines)
 
     def _print_diff(self, diff, indent_level):

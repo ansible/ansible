@@ -77,15 +77,15 @@ def main():
 
     print("UP ***********")
     for host, result in callback.host_ok.items():
-        print('{} >>> {}'.format(host, result._result['stdout']))
+        print('{0} >>> {1}'.format(host, result._result['stdout']))
 
     print("FAILED *******")
     for host, result in callback.host_failed.items():
-        print('{} >>> {}'.format(host, result._result['msg']))
+        print('{0} >>> {1}'.format(host, result._result['msg']))
 
     print("DOWN *********")
     for host, result in callback.host_unreachable.items():
-        print('{} >>> {}'.format(host, result._result['msg']))
+        print('{0} >>> {1}'.format(host, result._result['msg']))
 
 if __name__ == '__main__':
     main()

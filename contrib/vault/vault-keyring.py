@@ -91,8 +91,8 @@ def main():
             sys.stderr.write('Passwords do not match\n')
             sys.exit(1)
     else:
-        sys.stdout.write('{}\n'.format(keyring.get_password(keyname,
-                                                            username)))
+        sys.stdout.write('{0}\n'.format(keyring.get_password(keyname,
+                                                             username)))
 
     sys.exit(0)
 

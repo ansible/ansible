@@ -282,7 +282,7 @@ class CallbackModule(CallbackBase):
 
     def emit(self, record):
         msg = record.rstrip('\n')
-        msg = "{} {}".format(self.token, msg)
+        msg = "{0} {1}".format(self.token, msg)
         self._appender.put(msg)
         self._display.vvvv("Sent event to logentries")
 
