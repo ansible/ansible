@@ -227,6 +227,16 @@ EXAMPLES = '''
   yum:
     list: ansible
   register: result
+
+- name: Install package with multiple repos enabled
+  yum:
+    name: sos
+    enablerepo: "epel,ol7_latest"
+
+- name: Install package with multiple repos disabled
+  yum:
+    name: sos
+    disablerepo: "epel,ol7_latest"
 '''
 
 import os
