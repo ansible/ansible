@@ -213,6 +213,7 @@ def main():
     if module.params["host"] is None or module.params["username"] is None:
         module.fail_json(msg="Host and username are required for connection")
 
+    # check if login failed
     fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
     response = fmg.login()
 
