@@ -1,0 +1,35 @@
+---
+- debug: msg="START junos net_banner netconf/net_banner.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove login banner
+  net_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create login banner
+  net_banner:
+    banner: login
+    text: this is my login banner configured by net_banner
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<message>this is my login banner configured by net_banner</message>' in config.xml"
+
+- name: teardown - remove login banner
+  net_banner:
+    banner: login
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos net_banner netconf/net_banner.yaml on connection={{ ansible_connection }}"

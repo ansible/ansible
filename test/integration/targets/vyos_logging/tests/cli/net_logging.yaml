@@ -1,0 +1,39 @@
+---
+- debug: msg="START vyos cli/net_logging.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: delete logging - setup
+  net_logging:
+    dest: file
+    name: test
+    facility: all
+    level: notice
+    state: absent
+  register: result
+
+- name: file logging using platform agnostic module
+  net_logging:
+    dest: file
+    name: test
+    facility: all
+    level: notice
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set system syslog file test facility all level notice" in result.commands'
+
+- name: delete logging - teardown
+  net_logging:
+    dest: file
+    name: test
+    facility: all
+    level: notice
+    state: absent
+  register: result
+
+- debug: msg="END vyos cli/net_logging.yaml on connection={{ ansible_connection }}"
