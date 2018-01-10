@@ -15,3 +15,5 @@ azure-mgmt-sql>=0.7.1,<0.8
 azure-mgmt-web>=0.32.0,<0.33
 azure-mgmt-containerservice>=2.0.0,<3.0.0
 azure-mgmt-containerregistry>=1.0.1
+azure-mgmt-rdbms>=0.2.0rc1,<0.3.0
+
