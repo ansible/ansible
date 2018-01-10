@@ -292,11 +292,11 @@ class VMwareDeployOvf:
         joined_errors = '. '.join(to_native(e.msg) for e in getattr(self.import_spec, 'error', []))
         if joined_errors:
             self.module.fail_json(
-                msg='Failure validating import spec: %s' % joined_errors
+                msg='Failure validating OVF import spec: %s' % joined_errors
             )
 
         for warning in getattr(self.import_spec, 'warning', []):
-            self.module.warn(to_native(warning.msg))
+            self.module.warn('Problem validating OVF import spec: %s' % to_native(warning.msg))
 
         try:
             self.lease = resource_pool.ImportVApp(
