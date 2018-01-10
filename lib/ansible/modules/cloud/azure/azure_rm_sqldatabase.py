@@ -233,7 +233,14 @@ class AzureRMDatabases(AzureRMModuleBase):
             ),
             create_mode=dict(
                 type='str',
-                choices=['copy', 'default', 'non_readable_secondary', 'online_secondary', 'point_in_time_restore', 'recovery', 'restore', 'restore_long_term_retention_backup']
+                choices=['copy',
+                         'default',
+                         'non_readable_secondary',
+                         'online_secondary',
+                         'point_in_time_restore',
+                         'recovery',
+                         'restore',
+                         'restore_long_term_retention_backup']
             ),
             source_database_id=dict(
                 type='str'
@@ -249,7 +256,16 @@ class AzureRMDatabases(AzureRMModuleBase):
             ),
             edition=dict(
                 type='str',
-                choices=['web', 'business', 'basic', 'standard', 'premium', 'free', 'stretch', 'data_warehouse', 'system', 'system2']
+                choices=['web',
+                         'business',
+                         'basic',
+                         'standard',
+                         'premium',
+                         'free',
+                         'stretch',
+                         'data_warehouse',
+                         'system',
+                         'system2']
             ),
             max_size_bytes=dict(
                 type='str'
@@ -259,14 +275,29 @@ class AzureRMDatabases(AzureRMModuleBase):
             ),
             requested_service_objective_name=dict(
                 type='str',
-                choices=['basic', 's0', 's1', 's2', 's3', 'p1', 'p2', 'p3', 'p4', 'p6', 'p11', 'p15', 'system', 'system2', 'elastic_pool']
+                choices=['basic',
+                         's0',
+                         's1',
+                         's2',
+                         's3',
+                         'p1',
+                         'p2',
+                         'p3',
+                         'p4',
+                         'p6',
+                         'p11',
+                         'p15',
+                         'system',
+                         'system2',
+                         'elastic_pool']
             ),
             elastic_pool_name=dict(
                 type='str'
             ),
             read_scale=dict(
                 type='str',
-                choices=['enabled', 'disabled']
+                choices=['enabled',
+                         'disabled']
             ),
             sample_name=dict(
                 type='str',
