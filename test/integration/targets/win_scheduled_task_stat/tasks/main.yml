@@ -114,11 +114,17 @@
     - stat_task_present.triggers|count == 2
     - stat_task_present.triggers[0].delay == "PT15M"
     - stat_task_present.triggers[0].type == "TASK_TRIGGER_BOOT"
+    - stat_task_present.triggers[0].repetition.stop_at_duration_end == False
+    - stat_task_present.triggers[0].repetition.duration == None
+    - stat_task_present.triggers[0].repetition.interval == None
     - stat_task_present.triggers[1].days_of_month == "5,15,30"
     - stat_task_present.triggers[1].months_of_year == "june,december"
     - stat_task_present.triggers[1].run_on_last_day_of_month == True
     - stat_task_present.triggers[1].start_boundary == "2017-09-20T03:44:38"
     - stat_task_present.triggers[1].type == "TASK_TRIGGER_MONTHLY"
+    - stat_task_present.triggers[1].repetition.stop_at_duration_end == False
+    - stat_task_present.triggers[1].repetition.duration == None
+    - stat_task_present.triggers[1].repetition.interval == None
 
 - name: change principal to system account so it will run in the next step
   win_scheduled_task:

@@ -219,7 +219,10 @@ settings:
       returned: ''
       type: dictionary
       sample: {
-          "idle_settings": "PT1H"
+          "idle_duration": "PT10M",
+          "restart_on_idle": false,
+          "stop_on_idle_end": true,
+          "wait_timeout": "PT1H"
       }
     maintenance_settings:
       description: The maintenance settings of the task.
@@ -237,7 +240,8 @@ settings:
       returned: ''
       type: dictionary
       sample: {
-          "network_settings": null
+          "id": null,
+          "name": null
       }
     priority:
       description: The priority level of the task.
@@ -343,7 +347,9 @@ triggers:
           "execution_time_limit": null,
           "id": null,
           "repetition": {
-              "repetition": false
+              "duration": null,
+              "interval": null,
+              "stop_at_duration_end": false
           },
           "start_boundary": null,
           "type": "TASK_TRIGGER_BOOT"
@@ -357,7 +363,9 @@ triggers:
           "months_of_year": "june,december",
           "random_delay": null,
           "repetition": {
-              "repetition": false
+              "duration": null,
+              "interval": null,
+              "stop_at_duration_end": false
           },
           "run_on_last_day_of_month": true,
           "start_boundary": "2017-09-20T03:44:38",
