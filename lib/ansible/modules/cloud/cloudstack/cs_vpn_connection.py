@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: cs_vpn_connecion
+module: cs_vpn_connection
 short_description: Manages site-to-site VPN connections on Apache CloudStack based clouds.
 description:
     - Create and remove VPN connections.
@@ -65,20 +65,20 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = r'''
 - name: Create a VPN connection with activated VPN gateway
   local_action:
-    module: cs_vpn_connecion
+    module: cs_vpn_connection
     vpn_customer_gateway: my vpn connection
     vpc: my vpc
 
 - name: Create a VPN connection and force VPN gateway activation
   local_action:
-    module: cs_vpn_connecion
+    module: cs_vpn_connection
     vpn_customer_gateway: my vpn connection
     vpc: my vpc
     force: yes
 
 - name: Remove a vpn connection
   local_action:
-    module: cs_vpn_connecion
+    module: cs_vpn_connection
     vpc: my vpc
     state: absent
 '''
