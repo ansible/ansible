@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# (c) 2018, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -43,9 +43,9 @@ options:
     required: false
     default: false
     choices: ['true', 'false']
-  download:
+  remote_src:
     description:
-      - The C(download) argument enables the download of files (I(scp get)) from
+      - The C(remote_src) argument enables the download of files (I(scp get)) from
         the remote device. The default behavior is to upload files (I(scp put))
         to the remote device.
     required: false
@@ -75,7 +75,7 @@ EXAMPLES = """
 - name: download file from remote device
   junos_scp:
     src: test.tgz
-    download: true
+    remote_src: true
 """
 
 RETURN = """
@@ -131,7 +131,7 @@ def transfer_files(module, device):
 
     with SCP(device) as scp:
         for src in module.params['src']:
-            if module.params['download']:
+            if module.params['remote_src']:
                 scp.get(src.strip(), local_path=dest, recursive=recursive)
             else:
                 scp.put(src.strip(), remote_path=dest, recursive=recursive)
@@ -144,7 +144,7 @@ def main():
         src=dict(type='list', required=True),
         dest=dict(type='path', required=False, default="."),
         recursive=dict(type='bool', default=False),
-        download=dict(type='bool', default=False),
+        remote_src=dict(type='bool', default=False),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
@@ -166,13 +166,19 @@ def main():
 
     if not module.check_mode:
         # open pyez connection and transfer files via SCP
-        device = connect(module)
-        transfer_files(module, device)
         try:
-            # close pyez connection and ignore exceptions
-            device.close()
-        except:
-            pass
+            device = connect(module)
+            transfer_files(module, device)
+        except Exception as ex:
+            module.fail_json(
+                msg=str(ex)
+            )
+        finally:
+            try:
+                # close pyez connection and ignore exceptions
+                device.close()
+            except Exception:
+                pass
 
     module.exit_json(**result)
 
