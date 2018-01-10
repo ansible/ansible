@@ -76,7 +76,7 @@ Function Get-PropertyValue($task_property, $com, $property) {
         $com_values = @{}
         $properties = Get-Member -InputObject $raw_value -MemberType Property | % {
             $com_value = Get-PropertyValue -task_property $property -com $raw_value -property $_.Name
-            $com_values.$property = $com_value
+            $com_values.$($_.Name) = $com_value
         }
 
         return ,$com_values
@@ -318,3 +318,4 @@ if ($name -ne $null) {
 $result = Convert-DictToSnakeCase -dict $result
 
 Exit-Json -obj $result
+
