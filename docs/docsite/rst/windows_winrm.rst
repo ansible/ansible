@@ -17,7 +17,7 @@ Ansible uses the `pywinrm <https://github.com/diyan/pywinrm>`_ package to
 communicate with Windows servers over WinRM. It is not installed by default
 with the Ansible package, but can be installed by running the following::
 
-   pip install "pywinrm>=0.2.2"
+   pip install "pywinrm>=0.3.0"
 
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x,
     where x matches the python minor version Ansible is running under.
@@ -25,7 +25,7 @@ with the Ansible package, but can be installed by running the following::
 Authentication Options
 ``````````````````````
 When connecting to a Windows host, there are several different options that can be used
-when authentication with an account. The authentication type may be set on inventory 
+when authenticating with an account. The authentication type may be set on inventory
 hosts or groups with the ``ansible_winrm_transport`` variable.
 
 The following matrix is a high level overview of the options:
@@ -97,7 +97,7 @@ This can be done using one of the following methods:
 * Active Directory Certificate Services
 
 Active Directory Certificate Services is beyond of scope in this documentation but may be
-the best option to use when running in a domain environment. For more information, 
+the best option to use when running in a domain environment. For more information,
 see the `Active Directory Certificate Services documentation <https://technet.microsoft.com/en-us/library/cc732625(v=ws.11).aspx>`_.
 
 .. Note:: Using the PowerShell cmdlet ``New-SelfSignedCertificate`` to generate
@@ -142,7 +142,7 @@ To generate a certificate with ``New-SelfSignedCertificate``:
         -KeyUsage DigitalSignature,KeyEncipherment `
         -KeyAlgorithm RSA `
         -KeyLength 2048
-    
+
     # export the public key
     $pem_output = @()
     $pem_output += "-----BEGIN CERTIFICATE-----"
@@ -236,7 +236,7 @@ service, so no setup is required before using it.
 
 NTLM is the easiest authentication protocol to use and is more secure than
 ``Basic`` authentication. If running in a domain environment, ``Kerberos`` should be used
-instead of NTLM. 
+instead of NTLM.
 
 Kerberos has several advantages over using NTLM:
 
@@ -271,7 +271,7 @@ The following example shows host vars configured for Kerberos authentication::
     ansible_winrm_transport: kerberos
 
 As of Ansible version 2.3, the Kerberos ticket will be created based on
-``ansible_user`` and ``ansible_password``. If running on an older version of 
+``ansible_user`` and ``ansible_password``. If running on an older version of
 Ansible or when ``ansible_winrm_kinit_mode`` is ``manual``, a Kerberos
 ticket must already be obtained. See below for more details.
 
@@ -279,7 +279,7 @@ There are some extra host variables that can be set::
 
     ansible_winrm_kinit_mode: managed/manual (manual means Ansible will not obtain a ticket)
     ansible_winrm_kinit_cmd: the kinit binary to use to obtain a Kerberos ticket (default to kinit)
-    ansible_winrm_keytab: the path to the keytab file
+    ansible_winrm_service: overrides the SPN prefix that is used, the default is ``HTTP`` and should rarely ever need changing
     ansible_winrm_kerberos_delegation: allows the credentials to traverse multiple hops
     ansible_winrm_kerberos_hostname_override: the hostname to be used for the kerberos exchange
 
@@ -471,7 +471,7 @@ CredSSP and TLS 1.2
 +++++++++++++++++++
 By default the ``requests-credssp`` library is configured to authenticate over
 the TLS 1.2 protocol. TLS 1.2 is installed and enabled by default for Windows Server 2012
-and Windows 8 and more recent releases. 
+and Windows 8 and more recent releases.
 
 There are two ways that older hosts can be used with CredSSP:
 
@@ -479,12 +479,12 @@ There are two ways that older hosts can be used with CredSSP:
   for Server 2008 R2 and Windows 7).
 
 * Set ``ansible_winrm_credssp_disable_tlsv1_2=True`` in the inventory to run
-  over TLS 1.0. This is the only option when connecting to Windows Server 2008, which 
+  over TLS 1.0. This is the only option when connecting to Windows Server 2008, which
   has no way of supporting TLS 1.2
 
 To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
 `KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2>`_
-needs to be installed. 
+needs to be installed.
 
 Once the update has been applied and the Windows host rebooted, run the following
 PowerShell commands to enable TLS 1.2:
@@ -507,7 +507,7 @@ CredSSP works by encrypting the credentials through the TLS protocol and uses a 
 another certificate.
 
 .. Note:: This certificate configuration is independent of the WinRM listener
-    certificate. With CredSSP, message transport still occurs over the WinRM listener, 
+    certificate. With CredSSP, message transport still occurs over the WinRM listener,
     but the TLS-encrypted messages inside the channel use the service-level certificate.
 
 To explicitly set the certificate to use for CredSSP:
@@ -531,7 +531,7 @@ WinRM is configured by default to only allow connections from accounts in the lo
     winrm configSDDL default
 
 This will display an ACL editor, where new users or groups may be added. To run commands
-over WinRM, users and groups must have at least the ``Read`` and ``Execute`` permissions 
+over WinRM, users and groups must have at least the ``Read`` and ``Execute`` permissions
 enabled.
 
 While non-administrative accounts can be used with WinRM, most typical server administration
@@ -581,12 +581,11 @@ When setting up the inventory, the following variables are required::
 
     # it is suggested that these be encrypted with ansible-vault:
     # ansible-vault edit group_vars/windows.yml
-    
     ansible_connection: winrm
 
     # may also be passed on the command-line via --user
     ansible_user: Administrator
-    
+
     # may also be supplied at runtime with --ask-pass
     ansible_password: SecretPasswordGoesHere
 
@@ -640,10 +639,19 @@ for additional configuration of WinRM connections:
   message encryption. ``always`` means message encryption will always be used
   and ``never`` means message encryption will never be used
 
+* ``ansible_winrm_ca_trust_path``: Used to specify a different cacert container
+  than the one used in the ``certifi`` module. See the HTTPS Certificate
+  Validation section for more details.
+
+* ``ansible_winrm_send_cbt``: When using ``ntlm`` or ``kerberos`` over HTTPS,
+  the authentication library will try to send channel binding tokens to
+  mitigate against man in the middle attacks. This flag controls whether these
+  bindings will be sent or not (default: ``True``).
+
 * ``ansible_winrm_*``: Any additional keyword arguments supported by
   ``winrm.Protocol`` may be provided in place of ``*``
 
-In addtion, there are also specific variables that need to be set
+In addition, there are also specific variables that need to be set
 for each authentication option. See the section on authentication above for more information.
 
 .. Note:: Ansible 2.0 has deprecated the "ssh" from ``ansible_ssh_user``,
@@ -656,6 +664,63 @@ for each authentication option. See the section on authentication above for more
 .. Note:: ``ansible_winrm_message_encryption`` is different from transport
     encryption done over TLS. The WinRM payload is still encrypted with TLS
     when run over HTTPS, even if ``ansible_winrm_message_encryption=never``.
+
+IPv6 Addresses
+``````````````
+IPv6 addresses can be used instead of IPv4 addresses or hostnames. This option
+is normally set in an inventory. Ansible will attempt to parse the address
+using the `ipaddress <https://docs.python.org/3/library/ipaddress.html>`_
+package and pass to pywinrm correctly.
+
+When defining a host using an IPv6 address, just add the IPv6 address as you
+would an IPv4 address or hostname::
+
+    [windows-server]
+    2001:db8::1
+
+    [windows-server:vars]
+    ansible_user=username
+    ansible_password=password
+    ansible_connection=winrm
+
+
+.. Note:: The ipaddress library is only included by default in Python 3.x. To
+    use IPv6 addresses in Python 2.6 and 2.7, make sure to run
+    ``pip install ipaddress`` which installs a backported package.
+
+HTTPS Certificate Validation
+````````````````````````````
+As part of the TLS protocol, the certificate is validated to ensure the host
+matches the subject and the client trusts the issuer of the server certificate.
+When using a self-signed certificate or setting
+``ansible_winrm_server_cert_validation: ignore`` these security mechanisms are
+bypassed. While self signed certificates will always need the ``ignore`` flag,
+certificates that have been issued from a certificate authority can still be
+validated.
+
+One of the more common ways of setting up a HTTPS listener in a domain
+environment is to use Active Directory Certificate Service (AD CS). AD CS is
+used to generate signed certificates from a Certificate Signing Request (CSR).
+If the WinRM HTTPS listener is using a certificate that has been signed by
+another authority, like AD CS, then Ansible can be set up to trust that
+issuer as part of the TLS handshake.
+
+To get Ansible to trust a Certificate Authority (CA) like AD CS, the issuer
+certificate of the CA can be exported as a PEM encoded certificate. This
+certificate can then be copied locally to the Ansible controller and used as a
+source of certificate validation, otherwise known as a CA chain.
+
+The CA chain can contain a single or multiple issuer certificates and each
+entry is contained on a new line. To then use the custom CA chain as part of
+the validation process, set ``ansible_winrm_ca_trust_path`` to the path of the
+file. If this variable is not set, the default CA chain is used instead which
+is located in the install path of the Python package
+`certifi <https://github.com/certifi/python-certifi>`_.
+
+.. Note:: Each HTTP call is done by the Python requests library which does not
+    use the systems built-in certificate store as a trust authority.
+    Certificate validation will fail if the server's certificate issuer is
+    only added to the system's truststore.
 
 Limitations
 ```````````
@@ -675,9 +740,9 @@ These include:
 * Commands under WinRM are done under a non-interactive session, which can prevent
   certain commands or executables from running.
 
-* You cannot run a process that interacts with ``DPAPI``, which is used by some 
+* You cannot run a process that interacts with ``DPAPI``, which is used by some
   installers (like Microsoft SQL Server).
-  
+
 Some of these limitations can be mitigated by doing one of the following:
 
 * Set ``ansible_winrm_transport`` to ``credssp`` or ``kerberos`` (with

@@ -1,30 +1,13 @@
 #
-# (c) 2016 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.mlnxos import mlnxos_interface
-from ansible.module_utils.network.mlnxos import mlnxos as mlnxos_utils
 from units.modules.utils import set_module_args
 from .mlnxos_module import TestMlnxosModule, load_fixture
 
@@ -94,11 +77,34 @@ class TestMlnxosInterfaceModule(TestMlnxosModule):
         commands = ['interface ethernet 1/1', 'shutdown', 'exit']
         self.execute_module(changed=True, commands=commands)
 
+    def test_add_loopback_if(self):
+        set_module_args(dict(name='Loopback 1', description='Loopback test'))
+        commands = ['interface loopback 1', 'description Loopback test',
+                    'exit']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_add_vlan_if(self):
+        set_module_args(dict(name='Vlan 101', description='Vlan test',
+                             enabled=True))
+        commands = ['interface vlan 101', 'description Vlan test',
+                    'no shutdown', 'exit']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_remove_vlan_if(self):
+        set_module_args(dict(name='Vlan 1002', state='absent'))
+        commands = ['no interface vlan 1002']
+        self.execute_module(changed=True, commands=commands)
+
     def test_oper_state_check(self):
         set_module_args(dict(name='Eth1/1', enabled=True, state='down'))
         config_file = 'mlnxos_interfaces_status.cfg'
         self.get_interfaces_status.return_value = load_fixture(config_file)
-        commands = ['interface ethernet 1/1', 'shutdown', 'exit']
+        self.execute_module(changed=False)
+
+    def test_vlan_oper_state_check(self):
+        set_module_args(dict(name='Vlan 1002', state='down'))
+        config_file = 'mlnxos_interfaces_status.cfg'
+        self.get_interfaces_status.return_value = load_fixture(config_file)
         self.execute_module(changed=False)
 
     def test_rx_rate_check(self):

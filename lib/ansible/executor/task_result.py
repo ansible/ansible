@@ -64,6 +64,26 @@ class TaskResult:
     def is_unreachable(self):
         return self._check_key('unreachable')
 
+    def needs_debugger(self, globally_enabled=False):
+        _debugger = self._task_fields.get('debugger')
+
+        ret = False
+        if globally_enabled and (self.is_failed() or self.is_unreachable()):
+            ret = True
+
+        if _debugger in ('always',):
+            ret = True
+        elif _debugger in ('never',):
+            ret = False
+        elif _debugger in ('on_failed',) and self.is_failed():
+            ret = True
+        elif _debugger in ('on_unreachable',) and self.is_unreachable():
+            ret = True
+        elif _debugger in('on_skipped',) and self.is_skipped():
+            ret = True
+
+        return ret
+
     def _check_key(self, key):
         '''get a specific key from the result or its items'''
 

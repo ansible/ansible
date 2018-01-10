@@ -1,20 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -148,10 +137,35 @@ options:
         if you specify a path on an existing user, the user's path will not
         be updated - you must delete (e.g., state=absent) the user and
         then re-add the user with the appropriate path.
+  attributes:
+    description:
+      - A dict of custom LDAP attributes to set on the user.
+      - This can be used to set custom attributes that are not exposed as module
+        parameters, e.g. C(telephoneNumber).
+      - See the examples on how to format this parameter.
+    version_added: "2.5"
+  domain_username:
+    description:
+    - The username to use when interacting with AD.
+    - If this is not set then the user Ansible used to log in with will be
+      used instead when using CredSSP or Kerberos with credential delegation.
+    version_added: '2.5'
+  domain_password:
+    description:
+    - The password for C(username).
+    version_added: '2.5'
+  domain_server:
+    description:
+    - Specifies the Active Directory Domain Services instance to connect to.
+    - Can be in the form of an FQDN or NetBIOS name.
+    - If not specified then the value is based on the domain of the computer
+      running PowerShell.
+    version_added: '2.5'
 notes:
   - Works with Windows 2012R2 and newer.
   - If running on a server that is not a Domain Controller, credential
-    delegation through CredSSP or Kerberos with delegation must be used.
+    delegation through CredSSP or Kerberos with delegation must be used or the
+    I(domain_username), I(domain_password) must be set.
   - Note that some individuals have confirmed successful operation on Windows
     2008R2 servers with AD and AD Web Services enabled, but this has not
     received the same degree of testing as Windows 2012R2.
@@ -175,6 +189,19 @@ EXAMPLES = r'''
     state_province: IN
     postal_code: 12345
     country: US
+    attributes:
+      telephoneNumber: 555-123456
+
+- name: Ensure user bob is created and use custom credentials to create the user
+  win_domain_user:
+    name: bob
+    firstname: Bob
+    surname: Smith
+    password: B0bP4ssw0rd
+    state: present
+    domain_username: DOMAIN\admin-account
+    domain_password: SomePas2w0rd
+    domain_server: domain@DOMAIN.COM
 
 - name: Ensure user bob is present in OU ou=test,dc=domain,dc=local
   win_domain_user:

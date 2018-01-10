@@ -255,7 +255,7 @@ class ConsulInventory(object):
             self.load_data_for_datacenter(datacenter)
 
     def load_availability_groups(self, node, datacenter):
-        '''check the health of each service on a node and add add the node to either
+        '''check the health of each service on a node and add the node to either
         an 'available' or 'unavailable' grouping. The suffix for each group can be
         controlled from the config'''
         if self.config.has_config('availability'):
@@ -292,7 +292,7 @@ class ConsulInventory(object):
             self.load_data_for_node(node['Node'], datacenter)
 
     def load_data_for_node(self, node, datacenter):
-        '''loads the data for a sinle node adding it to various groups based on
+        '''loads the data for a single node adding it to various groups based on
         metadata retrieved from the kv store and service availability'''
 
         if self.config.suffixes == 'true':

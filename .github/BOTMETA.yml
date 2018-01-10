@@ -224,6 +224,7 @@ files:
   $modules/cloud/docker/docker_network.py: keitwb olsaki
   $modules/cloud/docker/docker_secret.py:
   $modules/cloud/docker/docker_service.py: $team_ansible
+  $modules/cloud/google/: rambleraptor erjohnso
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/google/gcdns_record.py: walbert947
   $modules/cloud/google/gcdns_zone.py: walbert947
@@ -362,7 +363,7 @@ files:
   $modules/database/postgresql/postgresql_user.py: $team_ansible matburt nerzhul
   $modules/database/proxysql/: bmildren
   $modules/database/vertica/: dareko
-  $modules/files/acl.py: $team_ansible astorije bcoca
+  $modules/files/acl.py: $team_ansible bcoca
   $modules/files/archive.py: bendoh
   $modules/files/assemble.py: $team_ansible sfromm
   $modules/files/blockinfile.py: yaegashi
@@ -469,7 +470,7 @@ files:
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: privateip trishnaguha
   $modules/network/f5/:
-    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806
+    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806 JoeReifel
     maintainers: caphrim007
   $modules/network/fortios/: bjolivot
   $modules/network/illumos/: xen0l
@@ -480,7 +481,7 @@ files:
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
-  $modules/network/mlnxos/: samerd
+  $modules/network/mlnxos/: $team_mlnxos
   $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
@@ -989,7 +990,7 @@ files:
     maintainers: paulquack
     labels: networking
   $module_utils/network/mlnxos:
-    maintainers: samerd
+    maintainers: $team_mlnxos
     labels: networking
   $module_utils/k8s_common.py:
     maintainers: chouseknecht sdoran maxamillion fabianvf flaper87
@@ -1068,6 +1069,9 @@ files:
   lib/ansible/plugins/action/junos:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/action/mlnxos_config.py:
+    maintainers: $team_mlnxos
+    labels: networking
   lib/ansible/plugins/action/net:
     maintainers: $team_networking
     labels: networking
@@ -1091,6 +1095,9 @@ files:
   lib/ansible/plugins/cliconf/ironware.py:
     maintainers: paulquack
     labels: networking
+  lib/ansible/plugins/cliconf/mlnxos.py:
+    maintainers: $team_mlnxos
+    labels: networking
   lib/ansible/plugins/cliconf/nxos.py:
     maintainers: $team_nxos
     labels:
@@ -1113,6 +1120,10 @@ files:
     labels:
     - cloud
     - openstack
+  lib/ansible/plugins/connection/winrm.py:
+    maintainers: $team_windows_core
+    labels:
+    - windows
   lib/ansible/plugins/inventory/ovirt4.py:
     maintainers: machacekondra
     labels:
@@ -1127,6 +1138,10 @@ files:
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/shell/powershell.py:
+    maintainers: $team_windows_core
+    labels:
+    - windows
   lib/ansible/plugins/terminal/aireos.py:
     maintainers: jmighion
     labels: networking
@@ -1153,6 +1168,9 @@ files:
     labels: networking
   lib/ansible/plugins/terminal/junos.py:
     maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/terminal/mlnxos.py:
+    maintainers: $team_mlnxos
     labels: networking
   lib/ansible/plugins/terminal/nxos.py:
     maintainers: $team_networking
@@ -1204,6 +1222,7 @@ macros:
   team_azure: haroldwongms nitzmahone tstringer yuwzho xscript zikalino
   team_cumulus: isharacomix jrrivers privateip
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
+  team_mlnxos: samerd
   team_netapp: hulquest lmprice broncofan gouthampacha
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
@@ -1215,7 +1234,8 @@ macros:
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
-  team_ucs: dsoper2 johnamcdonough vallard vvb
+  team_ucs: dsoper2 johnamcdonough vallard vvb dagwieers
   team_vmware: dav1x jctanner nerzhul akasurde
-  team_windows: dagwieers jborean93 jhawkesworth
+  team_windows: dagwieers jborean93 jhawkesworth nitzmahone
+  team_windows_core: nitzmahone jborean93
   team_ipa: Nosmoht akasurde

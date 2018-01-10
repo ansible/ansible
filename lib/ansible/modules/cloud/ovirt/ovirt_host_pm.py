@@ -75,6 +75,7 @@ options:
     order:
         description:
             - "Integer value specifying, by default it's added at the end."
+        version_added: "2.5"
 extends_documentation_fragment: ovirt
 '''
 
@@ -171,7 +172,8 @@ class HostPmModule(BaseModule):
             equal(self._module.params.get('password'), entity.password) and
             equal(self._module.params.get('username'), entity.username) and
             equal(self._module.params.get('port'), entity.port) and
-            equal(self._module.params.get('type'), entity.type)
+            equal(self._module.params.get('type'), entity.type) and
+            equal(self._module.params.get('order'), entity.order)
         )
 
 
@@ -187,6 +189,7 @@ def main():
         password=dict(default=None, no_log=True),
         type=dict(default=None),
         port=dict(default=None, type='int'),
+        order=dict(default=None, type='int'),
         slot=dict(default=None),
         options=dict(default=None, type='dict'),
         encrypt_options=dict(default=None, type='bool', aliases=['encrypt']),

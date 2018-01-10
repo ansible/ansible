@@ -108,7 +108,7 @@
           - "result.failed == true"
           - "'host dummy_host' in result.failed_conditions"
           - "'port dummy_port' in result.failed_conditions"
-  when: '"netdev" in show_lldp_neighbors_result.stdout'
+  when: '"netdev" in show_lldp_neighbors_result.stdout[0]'
 
 - name: Aggregate config + intent (pass)
   ios_interface:
@@ -158,4 +158,4 @@
           - "result.failed == true"
           - "'host dummy_host' in result.failed_conditions"
           - "'port dummy_port' in result.failed_conditions"
-  when: "'netdev' in show_lldp_neighbors_result.stdout"
+  when: "'netdev' in show_lldp_neighbors_result.stdout[0]"

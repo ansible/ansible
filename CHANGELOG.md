@@ -34,6 +34,7 @@ Ansible Changes By Release
   check_invalid_arguments will be removed in Ansible-2.9.
 * nxos_ip_interface module is deprecated in Ansible 2.5. Use nxos_l3_interface module instead.
 * nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
+* nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -52,6 +53,8 @@ Ansible Changes By Release
   2.9. use `get_checksum: True` with `checksum_algorithm: md5` to return an md5 hash of the file
   under the `checksum` return value.
 * `osx_say` module was renamed into `say`.
+* Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
+  The `debug` strategy is still functional, and is now just a trigger to enable this functionality
 
 #### Deprecated Modules (to be removed in 2.9):
 * ec2_ami_find: replaced by ec2_ami_facts
@@ -85,6 +88,7 @@ Ansible Changes By Release
   * aws_kms_facts
   * aws_s3_cors
   * aws_ssm_parameter_store
+  * ec2_asg_lifecycle_hook
   * ec2_ami_facts
   * ec2_placement_group
   * ec2_placement_group_facts
@@ -98,7 +102,7 @@ Ansible Changes By Release
 - cloudscale
   * cloudscale_floating_ip
 - cloudstack
-  * cs_serviceoffer
+  * cs_service_offering
 - digital_ocean
   * digital_ocean_certificate
   * digital_ocean_sshkey_facts
@@ -123,8 +127,15 @@ Ansible Changes By Release
   * vr_ssh_key
 
 #### Clustering
-  * k8s
-  * openshift
+- k8s
+  * k8s_raw
+- openshift
+  * openshift_raw
+
+#### Database
+- influxdb
+  * influxdb_query
+  * influxdb_write
 
 #### Identity
 - ipa
@@ -148,6 +159,7 @@ Ansible Changes By Release
   * enos_config
   * enos_facts
 - eos
+  * eos_linkagg
   * eos_static_route
 - f5
   * bigip_asm_policy
@@ -185,7 +197,12 @@ Ansible Changes By Release
 - nso
   * nso_action
   * nso_config
+  * nso_query
+  * nso_show
   * nso_verify
+- nxos
+  * nxos_l3_interface
+  * nxos_linkagg
 - radware
   * vdirect_commit
   * vdirect_runnable
@@ -212,6 +229,10 @@ Ansible Changes By Release
   * oneview_san_manager_facts
 - ucs
   * ucs_macpool
+  * ucs_san_connectivity
+  * ucs_vhba_template
+  * ucs_vsans
+  * ucs_wwn_pool
 
 #### System
   * mksysb
@@ -220,9 +241,10 @@ Ansible Changes By Release
 #### Windows
   * win_audit_policy_system
   * win_audit_rule
+  * win_certificate_store
+  * win_disk_facts
   * win_scheduled_task_stat
   * win_whoami
-  * win_disk_facts
 
 <a id="2.4.1"></a>
 

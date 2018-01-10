@@ -1145,6 +1145,9 @@ def replace(connection):
     replace_instances = module.params.get('replace_instances')
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
+    if desired_capacity is None:
+        desired_capacity = as_group['DesiredCapacity']
+
     wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
     props = get_properties(as_group)
     instances = props['instances']
@@ -1178,8 +1181,7 @@ def replace(connection):
         min_size = as_group['MinSize']
     if max_size is None:
         max_size = as_group['MaxSize']
-    if desired_capacity is None:
-        desired_capacity = as_group['DesiredCapacity']
+
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
 
@@ -1265,6 +1267,9 @@ def terminate_batch(connection, replace_instances, initial_instances, leftovers=
     break_loop = False
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
+    if desired_capacity is None:
+        desired_capacity = as_group['DesiredCapacity']
+
     props = get_properties(as_group)
     desired_size = as_group['MinSize']
 
@@ -1411,16 +1416,12 @@ def main():
     replace_instances = module.params.get('replace_instances')
     replace_all_instances = module.params.get('replace_all_instances')
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    try:
-        connection = boto3_conn(module,
-                                conn_type='client',
-                                resource='autoscaling',
-                                region=region,
-                                endpoint=ec2_url,
-                                **aws_connect_params)
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
-                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    connection = boto3_conn(module,
+                            conn_type='client',
+                            resource='autoscaling',
+                            region=region,
+                            endpoint=ec2_url,
+                            **aws_connect_params)
     changed = create_changed = replace_changed = False
 
     if state == 'present':
@@ -1433,6 +1434,7 @@ def main():
     if create_changed or replace_changed:
         changed = True
     module.exit_json(changed=changed, **asg_properties)
+
 
 if __name__ == '__main__':
     main()
