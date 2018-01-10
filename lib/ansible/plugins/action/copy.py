@@ -258,7 +258,7 @@ class ActionModule(ActionBase):
                 return result
 
             # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(tmp, 'source')
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tempdir, 'source')
 
             remote_path = None
 
@@ -273,7 +273,7 @@ class ActionModule(ActionBase):
 
             # fix file permissions when the copy is done as a different user
             if remote_path:
-                self._fixup_perms2((tmp, remote_path))
+                self._fixup_perms2((self._connection._shell.tempdir, remote_path))
 
             if raw:
                 # Continue to next iteration if raw is defined.

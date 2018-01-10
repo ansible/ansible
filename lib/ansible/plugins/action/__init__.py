@@ -229,12 +229,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user is None:
             remote_user = self._play_context.remote_user
 
-        admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
+        try:
+            admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
+        except KeyError:
+            admin_users = ['root', remote_user]  # plugin does not support admin_users
+        try:
+            remote_tmp = self._connection._shell.get_option('remote_temp')
+        except KeyError:
+            remote_tmp = '~/ansible'
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
-        tmpdir = self._remote_expand_user(self._connection._shell.get_option('remote_temp'), sudoable=False)
+        tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
         cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
@@ -386,7 +393,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        admin_users = self._connection._shell.get_option('admin_users')
+        try:
+            admin_users = self._connection._shell.get_option('admin_users')
+        except KeyError:
+            admin_users = ['root']  # plugin does not support admin users
+
         if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
@@ -556,7 +567,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Something went wrong trying to expand the path remotely. Try using pwd, if not, return
             # the original string
             cmd = self._connection._shell.pwd()
-            pwd = self._low_level_execute_command(cmd, sudoable=False).strip()
+            pwd = self._low_level_execute_command(cmd, sudoable=False).get('stdout', '').strip()
             if pwd:
                 expanded = pwd
             else:

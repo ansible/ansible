@@ -146,11 +146,11 @@ class ActionModule(ActionBase):
                 if self._play_context.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
-                remote_path = self._connection._shell.join_path(tmp, 'src')
+                remote_path = self._connection._shell.join_path(self._connection._shell.tempdir, 'src')
                 xfered = self._transfer_file(path, remote_path)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((tmp, remote_path))
+                self._fixup_perms2((self._connection._shell.tempdir, remote_path))
 
                 new_module_args.update(dict(src=xfered,))
 

@@ -82,9 +82,12 @@ class ActionModule(ActionBase):
             except AnsibleError as e:
                 raise AnsibleActionFail(to_native(e))
 
+            # now we execute script, always assume changed.
+            result['changed'] = True
+
             if not self._play_context.check_mode:
                 # transfer the file to a remote tmp location
-                tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
+                tmp_src = self._connection._shell.join_path(self._connection._shell.tempdir, os.path.basename(source))
 
                 # Convert raw_params to text for the purpose of replacing the script since
                 # parts and tmp_src are both unicode strings and raw_params will be different
@@ -116,8 +119,6 @@ class ActionModule(ActionBase):
                 exec_data = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
 
             result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
-
-            result['changed'] = True
 
             if 'rc' in result and result['rc'] != 0:
                 raise AnsibleActionFail('non-zero return code')
