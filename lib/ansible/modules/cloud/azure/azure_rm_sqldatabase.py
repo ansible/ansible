@@ -54,7 +54,15 @@ options:
                onBackup: Creates a database by restoring from a long term retention vault. recoveryServicesRecoveryPointResourceId must be specified as the r
                ecovery point resource ID.\n\nCopy, NonReadableSecondary, OnlineSecondary and RestoreLongTermRetentionBackup are not supported for DataWarehou
                se edition."
-        choices: ['copy', 'default', 'non_readable_secondary', 'online_secondary', 'point_in_time_restore', 'recovery', 'restore', 'restore_long_term_retention_backup']
+        choices:
+            - 'copy'
+            - 'default'
+            - 'non_readable_secondary'
+            - 'online_secondary'
+            - 'point_in_time_restore'
+            - 'recovery'
+            - 'restore'
+            - 'restore_long_term_retention_backup'
     source_database_id:
         description:
             - "Conditional. If createMode is Copy, NonReadableSecondary, OnlineSecondary, PointInTimeRestore, Recovery, or Restore, then this value is requir
@@ -78,7 +86,17 @@ options:
             - "The edition of the database. The DatabaseEditions enumeration contains all the valid editions. If createMode is NonReadableSecondary or Online
                Secondary, this value is ignored. To see possible values, query the capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/
                locations/{locationID}/capabilities) referred to by operationId: 'Capabilities_ListByLocation.'."
-        choices: ['web', 'business', 'basic', 'standard', 'premium', 'free', 'stretch', 'data_warehouse', 'system', 'system2']
+        choices:
+            - 'web'
+            - 'business'
+            - 'basic'
+            - 'standard'
+            - 'premium'
+            - 'free'
+            - 'stretch'
+            - 'data_warehouse'
+            - 'system'
+            - 'system2'
     max_size_bytes:
         description:
             - "The max size of the database expressed in bytes. If createMode is not Default, this value is ignored. To see possible values, query the capabi
@@ -97,7 +115,22 @@ options:
                d to the database. Once successfully updated, it will match the value of serviceLevelObjective property. To see possible values, query the cap
                abilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 'Capab
                ilities_ListByLocation.'."
-        choices: ['basic', 's0', 's1', 's2', 's3', 'p1', 'p2', 'p3', 'p4', 'p6', 'p11', 'p15', 'system', 'system2', 'elastic_pool']
+        choices:
+            - 'basic'
+            - 's0'
+            - 's1'
+            - 's2'
+            - 's3'
+            - 'p1'
+            - 'p2'
+            - 'p3'
+            - 'p4'
+            - 'p6'
+            - 'p11'
+            - 'p15'
+            - 'system'
+            - 'system2'
+            - 'elastic_pool'
     elastic_pool_name:
         description:
             - "The name of the elastic pool the database is in. If elasticPoolName and requestedServiceObjectiveName are both updated, the value of requested
@@ -106,12 +139,15 @@ options:
         description:
             - "Conditional. If the database is a geo-secondary, readScale indicates whether read-only connections are allowed to this database or not. Not su
                pported for DataWarehouse edition."
-        choices: ['enabled', 'disabled']
+        choices:
+            - 'enabled'
+            - 'disabled'
     sample_name:
         description:
             - "Indicates the name of the sample schema to apply when creating this database. If createMode is not Default, this value is ignored. Not support
                ed for DataWarehouse edition."
-        choices: ['adventure_works_lt']
+        choices:
+            - 'adventure_works_lt'
     zone_redundant:
         description:
             - Whether or not this database is zone redundant, which means the replicas of this database will be spread across multiple availability zones.
