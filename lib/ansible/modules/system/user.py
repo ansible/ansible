@@ -861,6 +861,10 @@ class FreeBsdUser(User):
             cmd.append('-d')
             cmd.append(self.home)
 
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
+
         if self.group is not None:
             if not self.group_exists(self.group):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
