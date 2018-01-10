@@ -101,8 +101,8 @@ class Display:
         if C.ANSIBLE_NOCOWS:
             return
 
-        if C.ANSIBLE_COWPATH:
-            self.b_cowsay = C.ANSIBLE_COWPATH
+        if C.ANSIBLE_COW_PATH:
+            self.b_cowsay = C.ANSIBLE_COW_PATH
         else:
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
