@@ -85,7 +85,7 @@ location:
     sample: westus
 status:
     description:
-        - The status of the webhook at the time the operation was called. Possible values include: C(enabled), C(disabled)
+        - "The status of the webhook at the time the operation was called. Possible values include: C(enabled), C(disabled)"
     returned: always
     type: str
     sample: enabled
