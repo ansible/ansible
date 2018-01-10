@@ -42,7 +42,7 @@ options:
     required: false
   cleanup:
     description:
-      - Use with I(detach) to remove the container after successful execution.
+      - Use with I(detach=false) to remove the container after successful execution.
     default: false
     required: false
     version_added: "2.2"
