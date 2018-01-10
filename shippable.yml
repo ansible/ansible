@@ -14,6 +14,7 @@ matrix:
     - env: T=units/2.7
     - env: T=units/3.5
     - env: T=units/3.6
+    - env: T=units/3.7
 
     - env: T=windows/1
     - env: T=windows/2
