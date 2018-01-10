@@ -1,4 +1,3 @@
-lib/ansible/cli/adhoc.py syntax-error 3.7
 lib/ansible/module_utils/network/aci/aci.py ansible-format-automatic-specification
 lib/ansible/module_utils/network/iosxr/iosxr.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py ansible-format-automatic-specification
@@ -89,7 +88,6 @@ lib/ansible/modules/network/nxos/nxos_snapshot.py ansible-format-automatic-speci
 lib/ansible/modules/network/vyos/vyos_vlan.py ansible-format-automatic-specification
 lib/ansible/modules/notification/cisco_spark.py ansible-format-automatic-specification
 lib/ansible/modules/notification/logentries_msg.py ansible-format-automatic-specification
-lib/ansible/modules/packaging/os/yum_repository.py syntax-error 3.7
 lib/ansible/modules/remote_management/foreman/foreman.py ansible-format-automatic-specification
 lib/ansible/modules/remote_management/foreman/katello.py ansible-format-automatic-specification
 lib/ansible/modules/source_control/github_deploy_key.py ansible-format-automatic-specification
@@ -148,4 +146,3 @@ test/runner/retry.py missing-docstring 3.7
 test/runner/shippable.py missing-docstring 3.7
 test/runner/test.py missing-docstring 3.7
 test/runner/units/test_diff.py missing-docstring 3.7
-test/units/modules/network/nuage/test_nuage_vspk.py syntax-error 3.7
