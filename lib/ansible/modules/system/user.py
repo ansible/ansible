@@ -855,8 +855,8 @@ class FreeBsdUser(User):
             cmd.append('-c')
             cmd.append(self.comment)
 
-        if self.home is not None and info[5] != self.home:
-            if self.move_home:
+        if self.home is not None:
+            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.createhome):
                 cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
