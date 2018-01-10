@@ -16,6 +16,11 @@ description:
 module: vmware_deploy_ovf
 notes: []
 options:
+    allow_duplicates:
+        default: "yes"
+        description:
+          - 'Whether or not to allow duplicate VM names. ESXi allows duplicates, vCenter may not'
+        type: bool
     datacenter:
         default: ha-datacenter
         description:
@@ -112,7 +117,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
-                                         find_network_by_name, find_resource_pool_by_name, gather_vm_facts,
+                                         find_network_by_name, find_resource_pool_by_name, find_vm_by_name, gather_vm_facts,
                                          vmware_argument_spec, wait_for_task, wait_for_vm_ip)
 try:
     from ansible.module_utils.vmware import vim
@@ -298,6 +303,12 @@ class VMwareDeployOvf:
         for warning in getattr(self.import_spec, 'warning', []):
             self.module.warn('Problem validating OVF import spec: %s' % to_native(warning.msg))
 
+        if not self.params['allow_duplicates']:
+            name = self.import_spec.importSpec.configSpec.name
+            match = find_vm_by_name(self.si, name, folder=datacenter.vmFolder)
+            if match:
+                self.module.exit_json(instance=gather_vm_facts(self.si, match), changed=False)
+
         try:
             self.lease = resource_pool.ImportVApp(
                 self.import_spec.importSpec,
@@ -457,6 +468,10 @@ def main():
         'wait_for_ip_address': {
             'type': 'bool',
             'default': False,
+        },
+        'allow_duplicates': {
+            'type': 'bool',
+            'default': True,
         },
     })
     module = AnsibleModule(
