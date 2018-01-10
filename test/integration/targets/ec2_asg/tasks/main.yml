@@ -41,8 +41,6 @@
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
         cidr_block: 10.55.77.0/24
-        tags:
-          Name: Ansible Testing VPC
         tenancy: default
         <<: *aws_connection_info
       register: testing_vpc
@@ -56,13 +54,12 @@
 
     - name: Create subnet for use in testing
       ec2_vpc_subnet:
-        tags: "{{ resource_prefix }}-subnet"
         state: present
         vpc_id: "{{ testing_vpc.vpc.id }}"
         cidr: 10.55.77.0/24
         az: "{{ aws_region }}a"
         resource_tags:
-          Name: Ansible Testing Subnet
+          Name: "{{ resource_prefix }}-subnet"
         <<: *aws_connection_info
       register: testing_subnet
 
@@ -412,13 +409,9 @@
 
     - name: remove the subnet
       ec2_vpc_subnet:
-        tags: "{{ resource_prefix }}-subnet"
         state: absent
         vpc_id: "{{ testing_vpc.vpc.id }}"
         cidr: 10.55.77.0/24
-        az: "{{ aws_region }}a"
-        resource_tags:
-          Name: Ansible Testing Subnet
         <<: *aws_connection_info
       register: removed
       until: removed is not failed
@@ -430,9 +423,6 @@
         name: "{{ resource_prefix }}-vpc"
         cidr_block: 10.55.77.0/24
         state: absent
-        tags:
-          Name: Ansible Testing VPC
-        tenancy: default
         <<: *aws_connection_info
       register: removed
       until: removed is not failed
