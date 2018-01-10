@@ -1,0 +1,32 @@
+---
+- debug: msg="START ios cli/net_banner.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove login
+  net_banner:
+    banner: login
+    state: absent
+    authorize: yes
+
+- name: Set login
+  net_banner:
+    banner: login
+    text: this is my login banner confgiured by net_banner
+    state: present
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'banner login @\nthis is my login banner confgiured by net_banner\n@' in result.commands"
+
+- name: teardown - remove login
+  net_banner:
+    banner: login
+    state: absent
+    authorize: yes
+
+- debug: msg="END ios cli/net_banner.yaml on connection={{ ansible_connection }}"

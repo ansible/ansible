@@ -1,0 +1,34 @@
+---
+- debug: msg="START nxos common/net_user.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Remove old entries of user - setup
+  net_user:
+  - name: ansibletest1
+    state: absent
+    provider: "{{ connection }}"
+
+# Start tests
+- name: Create user with platform agnostic module
+  net_user:
+    name: ansibletest1
+    roles: network-operator
+    state: present
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"role network-operator" in result.commands[1]'
+
+- name: teardown
+  net_user:
+  - name: ansibletest1
+    state: absent
+    provider: "{{ connection }}"
+
+- debug: msg="END nxos common/net_user.yaml on connection={{ ansible_connection }}"
