@@ -59,7 +59,7 @@ class ActionModule(_ActionModule):
         pc.password = provider['password'] or self._play_context.password
         pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
-        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+        display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = connection.run()

@@ -129,7 +129,7 @@ class ActionModule(ActionBase):
 
     def _start_connection(self, play_context):
 
-        display.vvv('using connection plugin %s' % play_context.connection, play_context.remote_addr)
+        display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
 
