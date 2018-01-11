@@ -153,12 +153,12 @@ def main():
         encap_end = None
 
     if block_start is not None:
-        encap_start = 'block-{0}'.format(block_start)
+        encap_start = 'vlan-{0}'.format(block_start)
     else:
         encap_start = None
 
     # Collect proper mo information
-    aci_block_mo = 'from-[{0}]-to-[{1}]'.format(encap_start, encap_end),
+    aci_block_mo = 'from-[{0}]-to-[{1}]'.format(encap_start, encap_end)
     pool_name = pool
 
     # Validate block_end and block_start are valid for its respective encap type
@@ -200,7 +200,7 @@ def main():
         if pool_allocation_mode is not None:
             pool_name = '[{0}]-{1}'.format(pool, pool_allocation_mode)
         else:
-            module.fail_json(msg="ACI requires the 'pool_allocation_mode' when the 'pool' is provided")
+            module.fail_json(msg="ACI requires the 'pool_allocation_mode' when 'pool' is provided")
 
     aci = ACIModule(module)
     aci.construct_url(
