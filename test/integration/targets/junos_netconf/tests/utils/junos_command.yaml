@@ -1,0 +1,8 @@
+---
+- name: run junos_command to check netconf connectivity
+  junos_command:
+    rpcs: get-software-information
+    provider: "{{ netconf }}"
+    port: "{{ ansible_port }}"
+  register: result
+  ignore_errors: "{{ is_ignore_errors }}"
