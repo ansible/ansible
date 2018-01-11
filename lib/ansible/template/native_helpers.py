@@ -39,18 +39,13 @@ def ansible_native_concat(nodes):
     if not head:
         return None
 
-    # force to list so we can check length
-    if not isinstance(nodes, list):
-        nodes = list(nodes)
-
     if len(head) == 1:
         out = head[0]
+        # short circuit literal_eval when possible
+        if not isinstance(out, list): # FIXME is this needed?
+            return out
     else:
         out = u''.join([text_type(v) for v in chain(head, nodes)])
-
-    #  short circuit literal_eval when possible
-    if len(head) >= len(nodes) and not isinstance(out, list):
-        return out
 
     try:
         return literal_eval(out)
