@@ -50,6 +50,7 @@ class ActionModule(ActionBase):
         if verbosity <= self._display.verbosity:
             if 'msg' in self._task.args:
                 result['msg'] = self._task.args['msg']
+
             elif 'var' in self._task.args:
                 try:
                     results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
