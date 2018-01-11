@@ -203,7 +203,7 @@ class Vultr:
                 })
                 return r_data
 
-        self.module.fail_json(msg="Could not find %s %s: %s" % (resource, key, value))
+        self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
     def get_result(self, resource):
         if resource:
