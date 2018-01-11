@@ -3,7 +3,7 @@
   win_updates:
     state: invalid
   register: invalid_state
-  failed_when: "invalid_state.msg != 'Get-AnsibleParam: Argument state needs to be one of installed,searched but was invalid.'"
+  failed_when: invalid_state.msg != 'state must be either installed or searched'
 
 - name: expect failure with invalid category name
   win_updates:
