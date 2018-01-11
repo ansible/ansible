@@ -26,6 +26,8 @@ from lib.config import (
     SanityConfig,
 )
 
+VALIDATE_SKIP_PATH = 'test/sanity/validate-modules/skip.txt'
+
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
@@ -49,7 +51,7 @@ class ValidateModulesTest(SanitySingleVersion):
             '--format', 'json',
         ] + paths
 
-        with open('test/sanity/validate-modules/skip.txt', 'r') as skip_fd:
+        with open(VALIDATE_SKIP_PATH, 'r') as skip_fd:
             skip_paths = skip_fd.read().splitlines()
 
         skip_paths += [e.path for e in targets.exclude_external]
@@ -80,13 +82,13 @@ class ValidateModulesTest(SanitySingleVersion):
 
         messages = json.loads(stdout)
 
-        results = []
+        errors = []
 
         for filename in messages:
             output = messages[filename]
 
             for item in output['errors']:
-                results.append(SanityMessage(
+                errors.append(SanityMessage(
                     path=filename,
                     line=int(item['line']) if 'line' in item else 0,
                     column=int(item['column']) if 'column' in item else 0,
@@ -95,7 +97,7 @@ class ValidateModulesTest(SanitySingleVersion):
                     message=item['msg'],
                 ))
 
-        if results:
-            return SanityFailure(self.name, messages=results)
+        if errors:
+            return SanityFailure(self.name, messages=errors)
 
         return SanitySuccess(self.name)
