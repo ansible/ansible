@@ -37,7 +37,7 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware']
+    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure']
   zone:
     description: The ManageIQ zone name that will manage the provider.
     required: false
@@ -55,6 +55,19 @@ options:
     required: false
     default: null
     description: The last port in the host VNC range. defaults to None.
+    version_added: "2.5"
+  subscription:
+    required: false
+    default: null
+    description: Microsoft Azure subscription ID. defaults to None.
+    version_added: "2.5"
+# There doesn't currently appear to be an entry point for azure_tenant_id and
+# tenant_id is already in use. Therefore we use uid_ems until this has been created.
+# See discussion in https://gitter.im/ManageIQ/manageiq/providers
+  uid_ems:
+    required: false
+    default: null
+    description: Tenant ID. defaults to None.
     version_added: "2.5"
 
   provider:
@@ -401,6 +414,24 @@ EXAMPLES = '''
       url: 'https://127.0.0.1'
       token: 'VeryLongToken'
       verify_ssl: true
+
+- name: Create a new Azure provider in ManageIQ
+  manageiq_provider:
+    name: 'EngAzure'
+    type: 'Azure'
+    provider_region: 'northeurope'
+    subscription: 'e272bd74-f661-484f-b223-88dd128a4049'
+    uid_ems: 'e272bd74-f661-484f-b223-88dd128a4048'
+    state: 'present'
+    provider:
+      hostname: 'azure.example.com'
+      userid: 'e272bd74-f661-484f-b223-88dd128a4049'
+      password: 'password'
+    manageiq_connection:
+      url: 'https://cf-6af0.rhpds.opentlc.com'
+      username: 'admin'
+      password: 'password'
+      verify_ssl: false
 '''
 
 RETURN = '''
@@ -430,6 +461,9 @@ def supported_providers():
         VMware=dict(
             class_name='ManageIQ::Providers::Vmware::InfraManager',
         ),
+        Azure=dict(
+            class_name='ManageIQ::Providers::Azure::CloudManager',
+        ),
     )
 
 
@@ -458,6 +492,8 @@ def endpoint_argument_spec():
         userid=dict(),
         password=dict(no_log=True),
         auth_key=dict(no_log=True),
+        subscription=dict(no_log=True),
+        uid_ems=dict(),
         path=dict(),
     )
 
@@ -583,7 +619,8 @@ class ManageIQProvider(object):
         return dict(changed=True, msg=result['message'])
 
     def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
-                      host_default_vnc_port_start, host_default_vnc_port_end):
+                      host_default_vnc_port_start, host_default_vnc_port_end,
+                      subscription, uid_ems):
         """ Edit a user from manageiq.
 
         Returns:
@@ -598,6 +635,8 @@ class ManageIQProvider(object):
             connection_configurations=endpoints,
             host_default_vnc_port_start=host_default_vnc_port_start,
             host_default_vnc_port_end=host_default_vnc_port_end,
+            subscription=subscription,
+            uid_ems=uid_ems,
         )
 
         # NOTE: we do not check for diff's between requested and current
@@ -620,7 +659,8 @@ class ManageIQProvider(object):
             msg="successfully updated the provider %s: %s" % (provider['name'], result))
 
     def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
-                        host_default_vnc_port_start, host_default_vnc_port_end):
+                        host_default_vnc_port_start, host_default_vnc_port_end,
+                        subscription, uid_ems):
         """ Creates the user in manageiq.
 
         Returns:
@@ -641,6 +681,8 @@ class ManageIQProvider(object):
                 provider_region=provider_region,
                 host_default_vnc_port_start=host_default_vnc_port_start,
                 host_default_vnc_port_end=host_default_vnc_port_end,
+                subscription=subscription,
+                uid_ems=uid_ems,
                 connection_configurations=endpoints,
             )
         except Exception as e:
@@ -661,6 +703,8 @@ def main():
         provider_region=dict(),
         host_default_vnc_port_start=dict(),
         host_default_vnc_port_end=dict(),
+        subscription=dict(),
+        uid_ems=dict(),
         type=dict(choices=supported_providers().keys()),
     )
     # add the manageiq connection arguments to the arguments
@@ -684,6 +728,8 @@ def main():
     provider_region = module.params['provider_region']
     host_default_vnc_port_start = module.params['host_default_vnc_port_start']
     host_default_vnc_port_end = module.params['host_default_vnc_port_end']
+    subscription = module.params['subscription']
+    uid_ems = module.params['uid_ems']
     state = module.params['state']
 
     manageiq = ManageIQ(module)
@@ -730,11 +776,13 @@ def main():
         # if we have a provider, edit it
         if provider:
             res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region,
-                                                       host_default_vnc_port_start, host_default_vnc_port_end)
+                                                       host_default_vnc_port_start, host_default_vnc_port_end,
+                                                       subscription, uid_ems)
         # if we do not have a provider, create it
         else:
             res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region,
-                                                         host_default_vnc_port_start, host_default_vnc_port_end)
+                                                         host_default_vnc_port_start, host_default_vnc_port_end,
+                                                         subscription, uid_ems)
 
     module.exit_json(**res_args)
 
