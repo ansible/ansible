@@ -1,2 +1,0 @@
-hacking/unify_repos.sh
-test/sanity/code-smell/boilerplate.sh
