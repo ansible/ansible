@@ -25,10 +25,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection
 
 _DEVICE_CONFIGS = {}
 
@@ -63,12 +64,36 @@ def get_provider_argspec():
     return ios_provider_spec
 
 
+def get_connection(module):
+    if hasattr(module, '_ios_connection'):
+        return module._ios_connection
+
+    capabilities = get_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
+        module._ios_connection = Connection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type %s' % network_api)
+
+    return module._ios_connection
+
+
+def get_capabilities(module):
+    if hasattr(module, '_ios_capabilities'):
+        return module._ios_capabilities
+
+    capabilities = Connection(module._socket_path).get_capabilities()
+    module._ios_capabilities = json.loads(capabilities)
+    return module._ios_capabilities
+
+
 def check_args(module, warnings):
     pass
 
 
 def get_defaults_flag(module):
-    rc, out, err = exec_command(module, 'show running-config ?')
+    connection = get_connection(module)
+    out = connection.get('show running-config ?')
     out = to_text(out, errors='surrogate_then_replace')
 
     commands = set()
@@ -83,20 +108,15 @@ def get_defaults_flag(module):
 
 
 def get_config(module, flags=None):
-    flags = [] if flags is None else flags
+    global _DEVICE_CONFIGS
 
-    cmd = 'show running-config '
-    cmd += ' '.join(flags)
-    cmd = cmd.strip()
-
-    try:
-        return _DEVICE_CONFIGS[cmd]
-    except KeyError:
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=to_text(err, errors='surrogate_then_replace'))
+    if _DEVICE_CONFIGS != {}:
+        return _DEVICE_CONFIGS
+    else:
+        connection = get_connection(module)
+        out = connection.get_config()
         cfg = to_text(out, errors='surrogate_then_replace').strip()
-        _DEVICE_CONFIGS[cmd] = cfg
+        _DEVICE_CONFIGS = cfg
         return cfg
 
 
@@ -112,31 +132,31 @@ def to_commands(module, commands):
 
 def run_commands(module, commands, check_rc=True):
     responses = list()
-    commands = to_commands(module, to_list(commands))
-    for cmd in commands:
-        cmd = module.jsonify(cmd)
-        rc, out, err = exec_command(module, cmd)
-        if check_rc and rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
-        responses.append(to_text(out, errors='surrogate_then_replace'))
+    connection = get_connection(module)
+
+    for cmd in to_list(commands):
+        if isinstance(cmd, dict):
+            command = cmd['command']
+            prompt = cmd['prompt']
+            answer = cmd['answer']
+        else:
+            command = cmd
+            prompt = None
+            answer = None
+
+        out = connection.get(command, prompt, answer)
+
+        try:
+            out = to_text(out, errors='surrogate_or_strict')
+        except UnicodeError:
+            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+
+        responses.append(out)
+
     return responses
 
 
 def load_config(module, commands):
-    response = []
-    rc, out, err = exec_command(module, 'configure terminal')
-    if rc != 0:
-        module.fail_json(msg='unable to enter configuration mode', err=to_text(out, errors='surrogate_then_replace'))
+    connection = get_connection(module)
 
-    for command in to_list(commands):
-        if command == 'end':
-            continue
-        rc, out, err = exec_command(module, command)
-        if rc != 0:
-            exec_command(module, 'end')
-            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
-        response.append({command: out})
-
-    exec_command(module, 'end')
-
-    return response
+    out = connection.edit_config(commands)

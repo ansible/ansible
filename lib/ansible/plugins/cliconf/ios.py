@@ -65,10 +65,21 @@ class Cliconf(CliconfBase):
     @enable_mode
     def edit_config(self, command):
         for cmd in chain(['configure terminal'], to_list(command), ['end']):
-            self.send_command(to_bytes(cmd))
+            try:
+                cmd = json.loads(cmd)
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+            except:
+                command = cmd
+                prompt = None
+                answer = None
+
+            self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer))
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(to_bytes(command), prompt=to_bytes(prompt),
+                                 answer=to_bytes(answer), sendonly=sendonly)
 
     def get_capabilities(self):
         result = {}
