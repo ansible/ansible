@@ -46,7 +46,7 @@ options:
     default: 'yes'
   creates:
     description:
-      - A filename, when it already exists, this step will B(not) be run.
+      - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
     version_added: "1.6"
   list_files:
     description:
