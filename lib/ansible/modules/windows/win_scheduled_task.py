@@ -195,7 +195,8 @@ options:
         - Optional when C(type=weekly).
       repetition:
         description:
-        - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated after the task is started.
+        - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
+          after the task is started.
         - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
         - C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
         - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
