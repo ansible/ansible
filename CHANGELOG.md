@@ -57,6 +57,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/34443)
 * Fix win_iis_website to properly check attributes before setting
   (https://github.com/ansible/ansible/pull/34501)
+* Fixed the removal date for ios_config save and force parameters
+  (https://github.com/ansible/ansible/pull/33885)
 
 
 <a id="2.4.2"></a>
