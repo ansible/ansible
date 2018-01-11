@@ -111,9 +111,9 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        changes are made.  The running configuration will be embedded
+        in the results under variable __backup__. The running-config
+        can be streamed to a file using copy command of Ansible.
     required: false
     default: no
     choices: ['yes', 'no']
@@ -149,6 +149,9 @@ EXAMPLES = """
   enos_config:
     src: config.cfg
     backup: yes
+    register: result
+
+- copy: content="{{ result.__backup__ }}" dest="{{ role_path }}/backup/running_config"
 """
 
 RETURN = """
@@ -273,6 +276,7 @@ def main():
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)
+        result.update({'changed': True})
 
     run(module, result)
 
