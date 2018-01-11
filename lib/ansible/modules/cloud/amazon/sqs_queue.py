@@ -7,8 +7,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -19,7 +19,7 @@ description:
   - Create or delete AWS SQS queues.
   - Update attributes on existing queues.
   - FIFO queues supported
-version_added: "2.5"
+version_added: "2.0"
 author:
   - Nathan Webster (@nathanwebsterdotme)
   - Alan Loi (@loia)
@@ -200,12 +200,7 @@ EXAMPLES = '''
 import json
 import traceback
 
-try:
-    import botocore
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+from botocore.exceptions import ClientError
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AnsibleAWSError, get_aws_connection_info, ec2_argument_spec, boto3_conn, camel_dict_to_snake_dict, compare_aws_tags
@@ -232,7 +227,7 @@ def create_or_update_sqs_queue(connection, module):
         queue_name = queue_name + '.fifo'
         try:
             queue_attributes.update({'fifo_content_based_deduplication': module.params.get('fifo_content_based_deduplication')})
-        except botocore.exceptions.ClientError:
+        except ClientError:
             result['msg'] = 'Failed to create/update sqs queue due to error: ' + traceback.format_exc()
             module.fail_json(**result)
 
@@ -290,7 +285,7 @@ def create_or_update_sqs_queue(connection, module):
             if queue_type == 'fifo':
                 result['fifo_content_based_deduplication'] = queue_attributes['Attributes']['ContentBasedDeduplication']
 
-    except botocore.exceptions.ClientError:
+    except ClientError:
         result['msg'] = 'Failed to create/update sqs queue due to error: ' + traceback.format_exc()
         module.fail_json(**result)
     else:
@@ -381,7 +376,7 @@ def delete_sqs_queue(connection, module):
         else:
             result['changed'] = False
 
-    except botocore.exceptions.ClientError:
+    except ClientError:
         result['msg'] = 'Failed to delete sqs queue due to error: ' + traceback.format_exc()
         module.fail_json(**result)
     else:
@@ -398,26 +393,27 @@ def modify_tags(queue_url, connection, module, result, tags, purge_tags):
     except:
         tags_need_modify = tags
 
-    # Modify current tags
-    if current_tags:
-        tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
+    if not module.check_mode:
+        # Modify current tags
+        if current_tags:
+            tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
 
-        if tags_to_delete:
+            if tags_to_delete:
+                try:
+                    connection.untag_queue(QueueUrl=queue_url, TagKeys=tags_to_delete)
+                    changed = True
+                except ClientError as e:
+                    result['msg'] = 'Failed to remove tags: ' + traceback.format_exc()
+                    module.fail_json(**result)
+
+        # Add/update tags
+        if tags_need_modify:
             try:
-                connection.untag_queue(QueueUrl=queue_url, TagKeys=tags_to_delete)
+                connection.tag_queue(QueueUrl=queue_url, Tags=tags_need_modify)
                 changed = True
-            except botocore.exceptions.ClientError as e:
-                result['msg'] = 'Failed to remove tags: ' + traceback.format_exc()
+            except ClientError as e:
+                result['msg'] = 'Failed to add tags: ' + traceback.format_exc()
                 module.fail_json(**result)
-
-    # Add/update tags
-    if tags_need_modify:
-        try:
-            connection.tag_queue(QueueUrl=queue_url, Tags=tags_need_modify)
-            changed = True
-        except botocore.exceptions.ClientError as e:
-            result['msg'] = 'Failed to add tags: ' + traceback.format_exc()
-            module.fail_json(**result)
 
     return changed
 
@@ -444,14 +440,13 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required for this module')
-
-    try:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-        connection = boto3_conn(module, conn_type='client', resource='sqs', region=region, endpoint=ec2_url, **aws_connect_params)
-    except botocore.exceptions.NoRegionError:
-        module.fail_json(msg=("Region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file."))
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    connection = boto3_conn(module,
+                            conn_type='client',
+                            resource='sqs',
+                            region=region,
+                            endpoint=ec2_url,
+                            **aws_connect_params)
 
     state = module.params.get('state')
     if state == 'present':
