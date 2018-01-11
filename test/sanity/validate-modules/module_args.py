@@ -18,11 +18,12 @@
 
 import imp
 import sys
-import traceback
 
 from contextlib import contextmanager
 
 import mock
+
+from ansible.module_utils.six import reraise
 
 
 MODULE_CLASSES = [
@@ -30,48 +31,11 @@ MODULE_CLASSES = [
 ]
 
 
-# This can be removed once we replace ``raise Exception`` with ``module.fail_json``
-HAS_HACKS = [
-    'ansible.module_utils.k8s.common.HAS_K8S_MODULE_HELPER',
-    'ansible.module_utils.k8s.common.HAS_STRING_UTILS',
-]
-
-# Some of these can be removed once we replace ``raise Exception`` with ``module.fail_json``
-# Others are related to using info from imports before ``AnsibleModule`` is executed
-IMPORT_MODULE_HACKS = [
-    # f5
-    'netaddr.IPAddress',
-    'netaddr.AddrFormatError',
-    'objectpath.Tree',
-    'f5.utils.iapp_parser.NonextantTemplateNameException',
-    'f5.sdk_exception.LazyAttributesRequired',
-    'f5.utils.responses.handlers.Stats'
-    'f5.bigip.ManagementRoot',
-    'f5.bigip.contexts.TransactionContextManager',
-    'f5.bigiq.ManagementRoot',
-    'f5.iworkflow.ManagementRoot',
-    'icontrol.exceptions.iControlUnexpectedHTTPError',
-    # radware
-    'vdirect_client.rest_client',
-    # webfaction
-    'xmlrpclib',
-    # azure
-    'msrestazure.azure_exceptions.CloudError',
-    'azure.storage.cloudstorageaccount.CloudStorageAccount',
-    'azure.common.AzureMissingResourceHttpError',
-    'azure.mgmt.storage.models.ProvisioningState',
-    'azure.mgmt.storage.models.SkuName',
-    'azure.mgmt.dns.models.ARecord',
-    # google
-    'libcloud',
-    'libcloud.common.google',
-    'libcloud.dns.types.Provider',
-    # dimensiondata
-    'libcloud.common.dimensiondata',
-]
-
-
 class AnsibleModuleCallError(RuntimeError):
+    pass
+
+
+class AnsibleModuleImportError(ImportError):
     pass
 
 
@@ -93,35 +57,10 @@ def add_mocks(filename):
         mock.patch('ansible.module_utils.basic._load_params').start()
     )
 
-    for has in HAS_HACKS:
-        mock.patch(has, True).start()
-
-    sys_mock = mock.MagicMock()
-    sys_mock.__version__ = '0.0.0'
-    sys_mocks = []
-    for module in IMPORT_MODULE_HACKS:
-        if module in sys.modules:
-            continue
-        parts = module.split('.')
-        for i in range(len(parts)):
-            dotted = '.'.join(parts[:i + 1])
-            # Never mock out ansible or ansible.module_utils
-            # we may get here if a specific module_utils file needed mocked
-            if dotted in ('ansible', 'ansible.module_utils',):
-                continue
-            sys.modules[dotted] = sys_mock
-            sys_mocks.append(dotted)
-
     yield module_mock
 
     for m in mocks:
         m.stop()
-
-    for m in sys_mocks:
-        try:
-            del sys.modules[m]
-        except KeyError:
-            pass
 
 
 def get_argument_spec(filename):
@@ -132,8 +71,8 @@ def get_argument_spec(filename):
                 mod.main()
         except AnsibleModuleCallError:
             pass
-        except Exception:
-            sys.stderr.write('%s\n' % traceback.format_exc())
+        except Exception as e:
+            reraise(AnsibleModuleImportError, AnsibleModuleImportError('%s' % e), sys.exc_info()[2])
 
     try:
         args, kwargs = module_mock.call_args
