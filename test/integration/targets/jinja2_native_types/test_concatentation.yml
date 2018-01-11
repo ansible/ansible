@@ -2,7 +2,6 @@
   set_fact:
       integer_sum: "{{ i_one + i_two }}"
 
-- debug: var=integer_sum
 - assert:
     that:
         - 'integer_sum == 3'
@@ -12,7 +11,6 @@
   set_fact:
       integer_sum2: "{{ s_one|int + i_two }}"
 
-- debug: var=integer_sum2
 - assert:
     that:
         - 'integer_sum2 == 3'
@@ -22,9 +20,42 @@
   set_fact:
       string_sum: "{{ [(i_one|to_text), s_two]|join('') }}"
 
-- debug:
-    msg: "{{ string_sum }}"
 - assert:
     that:
         - 'string_sum == "12"'
         - 'string_sum|type_debug in ["string", "unicode"]'
+
+- name: add two lists
+  set_fact:
+      list_sum: "{{ list_one + list_two }}"
+
+- assert:
+    that:
+        - 'list_sum == ["one", "two", "three", "four"]'
+        - 'list_sum|type_debug == "list"'
+
+- name: add two lists, multi expression
+  set_fact:
+      list_sum_multi: "{{ list_one }} + {{ list_two }}"
+
+- assert:
+    that:
+        - 'list_sum_multi|type_debug in ["string", "unicode"]'
+
+- name: loop through list with strings
+  set_fact:
+      list_for_strings: "{% for x in list_one %}{{ x }}{% endfor %}"
+
+- assert:
+    that:
+        - 'list_for_strings == "onetwo"'
+        - 'list_for_strings|type_debug in ["string", "unicode"]'
+
+- name: loop through list with int
+  set_fact:
+      list_for_int: "{% for x in list_one_int %}{{ x }}{% endfor %}"
+
+- assert:
+    that:
+        - 'list_for_int == 1'
+        - 'list_for_int|type_debug == "int"'

@@ -1,6 +1,6 @@
-- name: concatenate strings and numbers
+- name: Test jinja2 native types
   hosts: localhost
-  gather_facts: False
+  gather_facts: no
   vars:
       i_one: 1
       i_two: 2
@@ -11,8 +11,22 @@
       a_dict:
           foo: bar
           baz: bang
+      list_one:
+          - one
+          - two
+      list_two:
+          - three
+          - four
+      list_ints:
+          - 4
+          - 2
+      list_one_int:
+          - 1
+      b_true: True
+      b_false: False
+      s_true: "True"
+      s_false: "False"
   tasks:
-
       - name: check jinja version
         shell: python -c 'import jinja2; print(jinja2.__version__)'
         register: jinja2_version
@@ -21,8 +35,14 @@
         set_fact:
             is_native: "{{ jinja2_version.stdout is version('2.10', '>=') }}"
 
-      - include: test_casting.yml
+      - import_tasks: test_casting.yml
         when: is_native
 
-      - include: test_concatentation.yml
+      - import_tasks: test_concatentation.yml
+        when: is_native
+
+      - import_tasks: test_bool.yml
+        when: is_native
+
+      - import_tasks: test_dunder.yml
         when: is_native
