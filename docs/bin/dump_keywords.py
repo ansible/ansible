@@ -2,7 +2,6 @@
 
 import optparse
 import re
-from distutils.version import LooseVersion
 
 import jinja2
 import yaml
@@ -12,6 +11,14 @@ from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 template_file = 'playbooks_keywords.rst.j2'
 oblist = {}
@@ -70,7 +77,7 @@ outputname = options.output_dir + template_file.replace('.j2', '')
 tempvars = {'oblist': oblist, 'clist': clist}
 
 keyword_page = template.render(tempvars)
-if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
+if Version(jinja2.__version__) < Version('2.10'):
     # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
     keyword_page = re.sub(' +\n', '\n', keyword_page)
 

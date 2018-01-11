@@ -95,7 +95,14 @@ EXAMPLES = """
 
 import os
 import tempfile
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from passlib.apache import HtpasswdFile, htpasswd_context
@@ -129,7 +136,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         if check_mode:
             return ("Create %s" % dest, True)
         create_missing_directories(dest)
-        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
+        if Version(passlib.__version__) >= Version('1.6'):
             ht = HtpasswdFile(dest, new=True, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, autoload=False, default=crypt_scheme, context=context)
@@ -140,7 +147,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         ht.save()
         return ("Created %s and added %s" % (dest, username), True)
     else:
-        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
+        if Version(passlib.__version__) >= Version('1.6'):
             ht = HtpasswdFile(dest, new=False, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, default=crypt_scheme, context=context)
@@ -167,7 +174,7 @@ def absent(dest, username, check_mode):
     """ Ensures user is absent
 
     Returns (msg, changed) """
-    if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
+    if Version(passlib.__version__) >= Version('1.6'):
         ht = HtpasswdFile(dest, new=False)
     else:
         ht = HtpasswdFile(dest)

@@ -444,7 +444,14 @@ import re
 import sys
 import tempfile
 from contextlib import contextmanager
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     import yaml
@@ -614,7 +621,7 @@ class ContainerManager(DockerBaseClass):
             self.client.fail("Unable to load docker-compose. Try `pip install docker-compose`. Error: %s" %
                              HAS_COMPOSE_EXC)
 
-        if LooseVersion(compose_version) < LooseVersion(MINIMUM_COMPOSE_VERSION):
+        if Version(compose_version) < Version(MINIMUM_COMPOSE_VERSION):
             self.client.fail("Found docker-compose version %s. Minimum required version is %s. "
                              "Upgrade docker-compose to a min version of %s." %
                              (compose_version, MINIMUM_COMPOSE_VERSION, MINIMUM_COMPOSE_VERSION))

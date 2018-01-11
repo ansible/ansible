@@ -623,8 +623,15 @@ from ansible.module_utils.six import get_function_code, string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
-from distutils.version import LooseVersion
 from ansible.module_utils.six import string_types
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     import boto.ec2
@@ -820,7 +827,7 @@ def boto_supports_volume_encryption():
     Returns:
         True if boto library has the named param as an argument on the request_spot_instances method, else False
     """
-    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
+    return hasattr(boto, 'Version') and Version(boto.Version) >= Version('2.29.0')
 
 
 def create_block_device(module, ec2, volume):

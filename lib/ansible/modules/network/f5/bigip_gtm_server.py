@@ -194,7 +194,14 @@ from ansible.module_utils.f5_utils import HAS_F5SDK
 from ansible.module_utils.f5_utils import F5ModuleError
 from ansible.module_utils.six import iteritems
 from collections import defaultdict
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from collections import OrderedDict
@@ -529,7 +536,7 @@ class Difference(object):
         if not devices_change and not server_change:
             return None
         tmos_version = self.client.api.tmos_version
-        if LooseVersion(tmos_version) >= LooseVersion('13.0.0'):
+        if Version(tmos_version) >= Version('13.0.0'):
             result = self._handle_current_server_type_and_devices(
                 devices_change, server_change
             )
@@ -571,7 +578,7 @@ class ModuleManager(object):
 
     def version_is_less_than(self, version):
         tmos_version = self.client.api.tmos_version
-        if LooseVersion(tmos_version) < LooseVersion(version):
+        if Version(tmos_version) < Version(version):
             return True
         else:
             return False

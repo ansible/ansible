@@ -30,8 +30,15 @@ import re
 import sys
 import warnings
 from collections import defaultdict
-from distutils.version import LooseVersion
 from pprint import PrettyPrinter
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from html import escape as html_escape
@@ -447,7 +454,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         display.v('about to template %s' % module)
         display.vvvvv(pp.pformat(doc))
         text = templates['plugin'].render(doc)
-        if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
+        if Version(jinja2.__version__) < Version('2.10'):
             # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
             text = re.sub(' +\n', '\n', text)
 

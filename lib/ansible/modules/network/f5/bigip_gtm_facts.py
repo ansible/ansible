@@ -185,7 +185,14 @@ from ansible.module_utils.f5_utils import F5ModuleError
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.six import iteritems
 from collections import defaultdict
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from f5.utils.responses.handlers import Stats
@@ -221,7 +228,7 @@ class BaseManager(object):
 
     def version_is_less_than_12(self):
         version = self.client.api.tmos_version
-        if LooseVersion(version) < LooseVersion('12.0.0'):
+        if Version(version) < Version('12.0.0'):
             return True
         else:
             return False

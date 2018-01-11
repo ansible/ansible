@@ -170,7 +170,14 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY2
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 
 def _ensure_dnf(module):
@@ -502,7 +509,7 @@ def main():
 
     # Check if autoremove is called correctly
     if params['autoremove'] is not None:
-        if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
+        if Version(dnf.__version__) < Version('2.0.1'):
             module.fail_json(msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__)
         if params['state'] not in ["absent", None]:
             module.fail_json(msg="Autoremove should be used alone or with state=absent")

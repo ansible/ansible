@@ -140,7 +140,14 @@ annotation:
 import json
 import time
 import traceback
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     import requests
@@ -159,7 +166,7 @@ def check_requests_dep(module):
         module.fail_json(msg='requests is required for this module')
     else:
         required_version = '2.0.0' if PY3 else '1.0.0'
-        if LooseVersion(requests.__version__) < LooseVersion(required_version):
+        if Version(requests.__version__) < Version(required_version):
             module.fail_json(msg="'requests' library version should be >= %s, found: %s." % (required_version, requests.__version__))
 
 

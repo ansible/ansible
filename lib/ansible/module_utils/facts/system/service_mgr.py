@@ -32,7 +32,13 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 # that don't belong on production boxes.  Since our Solaris code doesn't
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
-    from distutils.version import LooseVersion
+    try:
+        from packaging.version import Version
+    except ImportError:
+        try:
+            from pip._vendor.packaging.version import Version
+        except ImportError:
+            from distutils.version import LooseVersion as Version
 
 
 class ServiceMgrFactCollector(BaseFactCollector):
@@ -107,7 +113,7 @@ class ServiceMgrFactCollector(BaseFactCollector):
         # start with the easy ones
         elif collected_facts.get('ansible_distribution', None) == 'MacOSX':
             # FIXME: find way to query executable, version matching is not ideal
-            if LooseVersion(platform.mac_ver()[0]) >= LooseVersion('10.4'):
+            if Version(platform.mac_ver()[0]) >= Version('10.4'):
                 service_mgr_name = 'launchd'
             else:
                 service_mgr_name = 'systemstarter'

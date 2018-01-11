@@ -31,7 +31,14 @@ import json
 import os
 import time
 import traceback
-from distutils.version import LooseVersion
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 # libcloud
 try:
@@ -254,7 +261,7 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
             # If the credentials are proper JSON and we do not have the minimum
             # required libcloud version, bail out and return a descriptive
             # error
-            if check_libcloud and LooseVersion(libcloud.__version__) < '0.17.0':
+            if check_libcloud and Version(libcloud.__version__) < Version('0.17.0'):
                 module.fail_json(msg='Using JSON credentials but libcloud minimum version not met. '
                                      'Upgrade to libcloud>=0.17.0.')
             return True
@@ -432,7 +439,7 @@ def check_min_pkg_version(pkg_name, minimum_version):
     from pkg_resources import get_distribution
     try:
         installed_version = get_distribution(pkg_name).version
-        return LooseVersion(installed_version) >= minimum_version
+        return Version(installed_version) >= Version(minimum_version)
     except Exception as e:
         return False
 

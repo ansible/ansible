@@ -28,13 +28,20 @@ import os
 import tarfile
 import tempfile
 import yaml
-from distutils.version import LooseVersion
 from shutil import rmtree
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.galaxy.api import GalaxyAPI
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     from __main__ import display
@@ -233,9 +240,9 @@ class GalaxyRole(object):
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
-                        loose_versions.sort()
-                        self.version = str(loose_versions[-1])
+                        _versions = [Version(a.get('name', '')) for a in role_versions]
+                        _versions.sort()
+                        self.version = str(_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
                     else:

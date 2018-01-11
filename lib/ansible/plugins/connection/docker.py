@@ -45,7 +45,13 @@ import os.path
 import subprocess
 import re
 
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
@@ -88,7 +94,7 @@ class Connection(ConnectionBase):
                 raise AnsibleError("docker command not found in PATH")
 
         docker_version = self._get_docker_version()
-        if LooseVersion(docker_version) < LooseVersion(u'1.3'):
+        if Version(docker_version) < Version(u'1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
 
         # The remote user we will request from docker (if supported)
@@ -97,7 +103,7 @@ class Connection(ConnectionBase):
         self.actual_user = None
 
         if self._play_context.remote_user is not None:
-            if LooseVersion(docker_version) >= LooseVersion(u'1.7'):
+            if Version(docker_version) >= Version(u'1.7'):
                 # Support for specifying the exec user was added in docker 1.7
                 self.remote_user = self._play_context.remote_user
                 self.actual_user = self.remote_user

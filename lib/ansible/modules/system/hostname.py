@@ -39,7 +39,6 @@ EXAMPLES = '''
 import os
 import socket
 import traceback
-from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import (
     AnsibleModule,
@@ -50,6 +49,14 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_native
+
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 
 class UnimplementedStrategy(object):
@@ -568,7 +575,7 @@ class SLESHostname(Hostname):
     platform = 'Linux'
     distribution = 'Suse linux enterprise server '
     distribution_version = get_distribution_version()
-    if distribution_version and LooseVersion("10") <= LooseVersion(distribution_version) <= LooseVersion("12"):
+    if distribution_version and Version("10") <= Version(distribution_version) <= Version("12"):
         strategy_class = SLESStrategy
     else:
         strategy_class = UnimplementedStrategy

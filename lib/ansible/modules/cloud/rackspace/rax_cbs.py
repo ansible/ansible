@@ -102,7 +102,13 @@ EXAMPLES = '''
       register: my_volume
 '''
 
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 try:
     import pyrax
@@ -132,7 +138,7 @@ def cloud_block_storage(module, state, name, description, meta, size,
     if image:
         # pyrax<1.9.3 did not have support for specifying an image when
         # creating a volume which is required for bootable volumes
-        if LooseVersion(pyrax.version.version) < LooseVersion('1.9.3'):
+        if Version(pyrax.version.version) < Version('1.9.3'):
             module.fail_json(msg='Creating a bootable volume requires '
                                  'pyrax>=1.9.3')
         image = rax_find_image(module, pyrax, image)

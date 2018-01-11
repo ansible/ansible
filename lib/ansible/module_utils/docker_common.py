@@ -21,7 +21,13 @@ import re
 import json
 import sys
 import copy
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    try:
+        from pip._vendor.packaging.version import Version
+    except ImportError:
+        from distutils.version import LooseVersion as Version
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlparse
@@ -38,7 +44,7 @@ try:
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
     from docker import auth
-    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+    if Version(docker_version) >= Version('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
         from docker.types import Ulimit, LogConfig
@@ -141,7 +147,7 @@ class AnsibleDockerClient(Client):
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
 
-        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
+        if Version(docker_version) < Version(MIN_DOCKER_VERSION):
             self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
                                                                                            MIN_DOCKER_VERSION))
 
