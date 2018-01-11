@@ -82,7 +82,6 @@ lib/ansible/modules/network/ios/ios_l3_interface.py ansible-format-automatic-spe
 lib/ansible/modules/network/ios/ios_vlan.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_banner.py ansible-format-automatic-specification
 lib/ansible/modules/network/iosxr/iosxr_interface.py ansible-format-automatic-specification
-lib/ansible/modules/network/iosxr/iosxr_logging.py ansible-format-automatic-specification
 lib/ansible/modules/network/nxos/nxos_logging.py ansible-format-automatic-specification
 lib/ansible/modules/network/nxos/nxos_snapshot.py ansible-format-automatic-specification
 lib/ansible/modules/network/vyos/vyos_vlan.py ansible-format-automatic-specification
