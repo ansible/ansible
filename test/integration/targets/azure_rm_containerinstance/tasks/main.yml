@@ -25,6 +25,61 @@
       - output.changed
       - output.state.provisioning_state == 'Creating'
 
+- name: Create sample container instance
+  azure_rm_containerinstance:
+    resource_group: "{{ resource_group }}"
+    name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    os_type: linux
+    ip_address: public
+    location: eastus
+    ports:
+      - 80
+    containers:
+      - name: mycontainer1
+        image: httpd
+        memory: 1.5
+        ports:
+          - 80
+          - 81
+      - name: mycontainer2
+        image: httpd
+        memory: 1.5
+  register: output
+
+- name: Assert the container instance is well created
+  assert:
+    that:
+      - output.changed == False
+      - output.state.provisioning_state == 'Creating'
+
+- name: Create sample container instance
+  azure_rm_containerinstance:
+    resource_group: "{{ resource_group }}"
+    name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    os_type: linux
+    ip_address: public
+    location: eastus
+    ports:
+      - 80
+    containers:
+      - name: mycontainer1
+        image: httpd
+        memory: 1.5
+        ports:
+          - 80
+          - 81
+      - name: mycontainer2
+        image: httpd
+        memory: 1.5
+    force_update: yes
+  register: output
+
+- name: Assert the container instance is well created
+  assert:
+    that:
+      - output.changed == False
+      - output.state.provisioning_state == 'Creating'
+
 - name: Remove container instance instance
   azure_rm_containerinstance:
     resource_group: "{{ resource_group }}"

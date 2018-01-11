@@ -185,37 +185,6 @@ def create_container_dict_from_obj(container):
     return results
 
 
-def create_containerinstance_dict(containerinstance):
-    '''
-    Helper method to deserialize a ContainerService to a dict
-    :param: containerinstance: Container
-    :return: dict with the state on Azure
-    '''
-    results = dict(
-        id=containerinstance.id,
-        name=containerinstance.name,
-        tags=containerinstance.tags,
-        location=containerinstance.location,
-        type=containerinstance.type,
-        restart_policy=containerinstance.restart_policy,
-        provisioning_state=containerinstance.provisioning_state,
-        volumes=containerinstance.volumes,
-        os_type=containerinstance.os_type
-    )
-
-    if containerinstance.ip_address:
-        results['ip_address'] = dict(type=containerinstance.ip_address.type,
-                                     ip=containerinstance.ip_address.ip,
-                                     ports=[])
-
-    results['containers'] = []
-    if containerinstance.containers:
-        for container in containerinstance.containers:
-            results['containers'].append(create_container_dict_from_obj(container))
-
-    return results
-
-
 class AzureRMContainerInstance(AzureRMModuleBase):
     """Configuration class for an Azure RM container instance resource"""
 
@@ -231,19 +200,16 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             os_type=dict(
                 type='str',
-                required=False,
                 default='linux',
                 choices=['linux', 'windows']
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
                 type='str',
-                required=False
             ),
             ip_address=dict(
                 type='str',
@@ -252,28 +218,28 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             ports=dict(
                 type='list',
-                required=False,
                 default=[]
             ),
             registry_login_server=dict(
                 type='str',
-                required=False,
                 default=None
             ),
             registry_username=dict(
                 type='str',
-                required=False,
                 default=None
             ),
             registry_password=dict(
                 type='str',
-                required=False,
                 default=None
             ),
             containers=dict(
                 type='list',
                 required=True
-            )
+            ),
+            force_update=dict(
+                type='bool',
+                default=False
+            ),
         )
 
         self.resource_group = None
@@ -331,7 +297,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.log("Container instance deleted")
             elif self.state == 'present':
                 self.log("Need to check if container group has to be deleted or may be updated")
-                to_be_updated = True
+                to_be_updated = self.force_update
                 if to_be_updated:
                     self.log('Deleting container instance before update')
                     if not self.check_mode:
@@ -345,10 +311,12 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 return self.results
 
             if to_be_updated:
-                self.results['state'] = self.create_update_containerinstance()
+                response = self.create_update_containerinstance()
                 self.results['changed'] = True
-            else:
-                self.results['state'] = response
+
+            self.results['id'] = response['id']
+            self.results['provisioning_state'] = response['provisioning_state'] 
+            self.results['ip_address'] = response.get('ip_address', None) 
 
             self.log("Creation / Update done")
 
@@ -410,7 +378,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         except CloudError as exc:
             self.log('Error attempting to create the container instance.')
             self.fail("Error creating the container instance: {0}".format(str(exc)))
-        return create_containerinstance_dict(response)
+        return response.as_dict()
 
     def delete_containerinstance(self):
         '''
@@ -443,7 +411,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         except CloudError as e:
             self.log('Did not find the container instance.')
         if found is True:
-            return create_containerinstance_dict(response)
+            return response.as_dict()
 
         return False
 
