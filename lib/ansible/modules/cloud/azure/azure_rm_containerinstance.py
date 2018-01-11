@@ -90,6 +90,11 @@ options:
             ports:
                 description:
                     - List of ports exposed within the container group.
+    force_update:
+        description:
+            - Force update of existing container instance.
+        type: bool
+        default: False
 
 extends_documentation_fragment:
     - azure
