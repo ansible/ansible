@@ -79,7 +79,7 @@ options:
         the NXAPI feature is configured for the first time.  When the
         C(sandbox) argument is set to True, the developer sandbox URL
         will accept requests and when the value is set to False, the
-        sandbox URL is unavailable.
+        sandbox URL is unavailable. This is supported on NX-OS 7K series.
     required: false
     default: no
     choices: ['yes', 'no']
@@ -133,9 +133,14 @@ from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
     device_info = get_capabilities(module)
+
     network_api = device_info.get('network_api', 'nxapi')
     if network_api == 'nxapi':
         module.fail_json(msg='module not supported over nxapi transport')
+
+    os_platform = device_info['device_info']['network_os_platform']
+    if '7K' not in os_platform and module.params['sandbox']:
+        module.fail_json(msg='sandbox or enable_sandbox is supported on NX-OS 7K series of switches')
 
     state = module.params['state']
 
