@@ -73,10 +73,12 @@ class ActionModule(_ActionModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
-        else:
+        elif self._play_context.connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using {0} and will be ignored'.format(self._play_context.connection))
+        else:
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
