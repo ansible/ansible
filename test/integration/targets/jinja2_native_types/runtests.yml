@@ -19,7 +19,7 @@
 
       - name: make sure jinja is the right version
         set_fact:
-            is_native: "{{ jinja2_version.stdout | version_compare('2.10', '>=') }}"
+            is_native: "{{ jinja2_version.stdout is version('2.10', '>=') }}"
 
       - include: test_casting.yml
         when: is_native
