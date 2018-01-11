@@ -7,15 +7,12 @@
 # as a reference and starting point.
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -191,7 +188,6 @@ def split_pre_existing_dir(dirname):
     '''
     Return the first pre-existing directory and a list of the new directories that will be created.
     '''
-
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
     if not os.path.exists(b_head):
@@ -206,7 +202,6 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     '''
     Walk the new directories list and make sure that permissions are as we would expect
     '''
-
     if new_directory_list:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
@@ -358,7 +353,6 @@ class MavenDownloader:
         if not artifact.version or artifact.version == "latest":
             artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact),
                                 artifact.classifier, artifact.extension)
-
         url = self.find_uri_for_artifact(artifact)
         error = None
         response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
@@ -384,7 +378,6 @@ class MavenDownloader:
         percent = round(percent * 100, 2)
         sys.stdout.write("Downloaded %d of %d bytes (%0.2f%%)\r" %
                          (bytes_so_far, total_size, percent))
-
         if bytes_so_far >= total_size:
             sys.stdout.write('\n')
 
@@ -424,7 +417,6 @@ class MavenDownloader:
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
             group_id=dict(default=None),
@@ -470,10 +462,8 @@ def main():
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     keep_name = module.params["keep_name"]
     verify_checksum = module.params["verify_checksum"]
-
     verify_download = verify_checksum in ['download', 'always']
     verify_change = verify_checksum in ['change', 'always']
-
 
     downloader = MavenDownloader(module, repository_url)
 
@@ -530,7 +520,6 @@ def main():
                          extension=extension, repository_url=repository_url, changed=changed)
     else:
         module.exit_json(state=state, dest=dest, changed=changed)
-
 
 if __name__ == '__main__':
     main()
