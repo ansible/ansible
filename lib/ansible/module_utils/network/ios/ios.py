@@ -155,6 +155,7 @@ def run_commands(module, commands, check_rc=True):
 
     return responses
 
+
 def load_config(module, commands):
     connection = get_connection(module)
 
