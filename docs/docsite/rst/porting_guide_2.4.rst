@@ -43,7 +43,7 @@ Initial playbook relative group_vars and host_vars
 In Ansible versions prior to 2.4, the inventory system would maintain context of the initial playbook that was executed. This allowed successively included playbooks to inherit playbook file-relative ``group_vars`` and ``host_vars``.
 
 Due to some behavioral inconsistencies, this functionality will not be included in the new
-inventory system starting with Ansible version 2.4.3.  
+inventory system starting with Ansible version 2.4.  
 
 Similar functionality can still be achieved by using inventory file relative ``group_vars`` and ``host_vars``, ``vars_files``, or ``include_vars``.
 
