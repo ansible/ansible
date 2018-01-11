@@ -65,6 +65,8 @@ NS_DICT = {
     'INTERFACE-CONFIGURATIONS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"},
     'INFRA-STATISTICS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-statsd-oper"},
     'INTERFACE-PROPERTIES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-oper"},
+    'IP-DOMAIN_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ip-domain-cfg"},
+    'SYSLOG_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-syslog-cfg"},
 }
 
 iosxr_provider_spec = {
@@ -181,11 +183,17 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
                     child = etree.SubElement(parent, candidates[-1])
                 child.text = text
 
+                if meta.get('attrib', None) and opcode in ('delete', 'merge'):
+                    child.set(BASE_1_0 + meta.get('attrib'), opcode)
+
     if len(meta_subtree) > 1:
         for item in meta_subtree:
             container_ele.append(item)
 
-    return sub_root
+    if sub_root == container_ele:
+        return None
+    else:
+        return sub_root
 
 
 def build_xml(container, xmap=None, params=None, opcode=None):
@@ -246,7 +254,9 @@ def build_xml(container, xmap=None, params=None, opcode=None):
             subtree_list = list()
 
             for param in to_list(params):
-                subtree_list.append(build_xml_subtree(container_ele, xmap, param, opcode=opcode))
+                subtree_ele = build_xml_subtree(container_ele, xmap, param, opcode=opcode)
+                if subtree_ele is not None:
+                    subtree_list.append(subtree_ele)
 
             for item in subtree_list:
                 container_ele.append(item)

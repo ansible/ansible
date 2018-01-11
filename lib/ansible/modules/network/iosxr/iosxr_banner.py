@@ -242,7 +242,9 @@ def main():
     elif is_netconf(module):
         config_object = NCConfiguration(module)
 
-    result = config_object.run()
+    result = None
+    if config_object is not None:
+        result = config_object.run()
     module.exit_json(**result)
 
 
