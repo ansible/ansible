@@ -57,6 +57,7 @@ class ValidateModulesTest(SanitySingleVersion):
             'python%s' % args.python_version,
             'test/sanity/validate-modules/validate-modules',
             '--format', 'json',
+            '--arg-spec',
         ] + paths
 
         with open(VALIDATE_SKIP_PATH, 'r') as skip_fd:
