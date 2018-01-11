@@ -241,10 +241,23 @@ def package_present(names, pkg_spec, module):
                         # It turns out we were able to install the package.
                         module.debug("package_present(): we were able to install package for name '%s'" % name)
                     else:
-                        # We really did fail, fake the return code.
-                        module.debug("package_present(): we really did fail for name '%s'" % name)
-                        pkg_spec[name]['rc'] = 1
-                        pkg_spec[name]['changed'] = False
+                        match = re.search("^Ambiguous*", pkg_spec[name]['stderr'])
+                        # There are multiple versions available of this package.
+                        # If state is 'latest' install the latest package
+                        if match and module.params['state'] == 'latest':
+                            info_cmd = "pkg_info -Iq"
+                            (pkg_spec[name]['rc'], pkg_spec[name]['stdout'], pkg_spec[name]['stderr']) = execute_command("%s %s" % (info_cmd, name), module)
+                            if len(pkg_spec[name]['stdout'].splitlines()) > 1:
+                                latest_package = pkg_spec[name]['stdout'].splitlines()[-1]
+                                (pkg_spec[name]['rc'], pkg_spec[name]['stdout'], pkg_spec[name]['stderr']) = execute_command(
+                                    "%s %s" % (install_cmd, latest_package),
+                                    module)
+                                pkg_spec[name]['changed'] = True
+                        else:
+                            # We really did fail, fake the return code.
+                            module.debug("package_present(): we really did fail for name '%s'" % name)
+                            pkg_spec[name]['rc'] = 1
+                            pkg_spec[name]['changed'] = False
                 else:
                     module.debug("package_present(): stderr was not set for name '%s'" % name)
 
