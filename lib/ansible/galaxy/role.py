@@ -233,7 +233,14 @@ class GalaxyRole(object):
                     # of the master branch
                     if len(role_versions) > 0:
                         loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
-                        loose_versions.sort()
+                        try:
+                            loose_versions.sort()
+                        except TypeError:
+                            raise AnsibleError(
+                                'Unable to compare role versions (%s) to determine the most recent version due to incompatible version formats. '
+                                'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
+                                'install.' % ', '.join([v.vstring for v in loose_versions])
+                            )
                         self.version = str(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
