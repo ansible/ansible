@@ -231,7 +231,7 @@ import os
 import re
 import shutil
 import tempfile
-import types
+import functools
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -314,7 +314,7 @@ class Rhsm(RegistrationBase):
             else:
                 return default
 
-        cp.get_option = types.MethodType(get_option_default, cp, configparser.ConfigParser)
+        cp.get_option = functools.partial(get_option_default, cp)
 
         return cp
 
