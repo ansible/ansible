@@ -169,11 +169,7 @@ class Cli:
                 answer = None
 
             out = connection.get(command, prompt, answer)
-
-            try:
-                out = to_text(out, errors='surrogate_or_strict')
-            except UnicodeError:
-                self._module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+            out = to_text(out, errors='surrogate_or_strict')
 
             try:
                 out = self._module.from_json(out)
@@ -200,23 +196,19 @@ class Cli:
 
             conn.get(command, None, None, multiline)
 
-        return (rc, 'ok', '')
-
     def configure(self, commands):
         """Sends configuration commands to the remote device
         """
         conn = get_connection(self)
 
-        rc, out, err = self.exec_command('configure')
-        if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+        out = conn.get('configure')
 
-        rc, out, err = self.send_config(commands)
-        if rc != 0:
-            self.exec_command('abort')
-            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+        try:
+            self.send_config(commands)
+        except:
+            conn.get('abort')
 
-        self.exec_command('end')
+        conn.get('end')
         return {}
 
     def load_config(self, commands, commit=False, replace=False):
@@ -240,10 +232,10 @@ class Cli:
         if replace:
             out = conn.get('rollback clean-config')
 
-        rc, out, err = self.send_config(commands)
-        if rc != 0:
-            self.exec_command('abort')
-            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), commands=commands)
+        try:
+            self.send_config(commands)
+        except:
+            conn.get('abort')
 
         out = conn.get('show session-config diffs')
         if out:
