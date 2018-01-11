@@ -45,10 +45,10 @@ class TestJunosCommandModule(TestJunosModule):
     module = junos_scp
 
     def setUp(self):
-        pass
+        super(TestJunosCommandModule, self).setUp()
 
     def tearDown(self):
-        pass
+        super(TestJunosCommandModule, self).tearDown()
 
     def test_junos_scp_src(self):
         set_module_args(dict(src='test.txt'))
