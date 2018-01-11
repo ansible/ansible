@@ -276,7 +276,6 @@ def main():
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)
-        result.update({'changed': True})
 
     run(module, result)
 
