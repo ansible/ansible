@@ -37,6 +37,20 @@ Since there is no longer a single inventory, the 'implicit localhost' doesn't ge
 
 A bug was fixed with the inventory path/directory, which was defaulting to the current working directory. This caused ``group_vars`` and ``host_vars`` to be picked up from the current working directory instead of just adjacent to the playbook or inventory directory when a host list (comma separated host names) was provided as inventory.
 
+Initial playbook relative group_vars and host_vars
+--------------------------------------------------
+
+In Ansible versions prior to 2.4, the inventory system would maintain context of the initial playbook that was executed. This allowed successively
+included playbooks to inherit playbook file relative ``group_vars`` and ``host_vars``.
+
+After reviewing the history of this code, and comparing the outcome with expectations, we decided to not port this functionality into the new
+inventory system. This decision was made to reduce unexpected behavior, supporting a system of least surprise.
+
+The reasons this conclusion was met, was due to the intial playbook being considered part of the inventory and due to giving special treatment and
+meaning to the initial playbook and not successive included playbooks.
+
+Alternatives to this behavior in 2.4 can be achieved by using inventory file relative ``group_vars`` and ``host_vars``, ``vars_files``, or ``include_vars``.
+
 Deprecated
 ==========
 
