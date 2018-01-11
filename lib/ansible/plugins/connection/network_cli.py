@@ -393,12 +393,9 @@ class Connection(ConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            display.debug("CLI-PROMPT: looking for prompts in | %s" % self._escape_crnl(window))
+
             if prompts and not handled:
-                # This is useful to see, but because our reads are essentially char by char it is not
-                # all that clean to show.  The CLI-PROMPT response comes before the CLI-RECV
-                # is printed, which appears out-of-order
-                #
-                # display.debug("CLI-PROMPT-WINDOW: %s" % self._escape_crnl(window))
                 handled = self._handle_prompt(window, prompts, answer, newline)
 
             # XXX Should it be a warning here if recv.getvalue()[:len(command)] != command
