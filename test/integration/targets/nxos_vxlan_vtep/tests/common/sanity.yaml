@@ -1,5 +1,5 @@
 ---
-- - debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
@@ -19,11 +19,11 @@
     - name: configure vxlan_vtep
       nxos_vxlan_vtep: &configure9
         interface: nve1
-        description: default
+        description: "abcd"
         host_reachability: true
         source_interface: Loopback0
         source_interface_hold_down_time: 30
-        shutdown: true
+        shutdown: false
         provider: "{{ connection }}"
       register: result
   
@@ -39,6 +39,25 @@
         that:
           - "result.changed == false"
 
+    - name: reset vxlan_vtep
+      nxos_vxlan_vtep: &def9
+        interface: nve1
+        description: default
+        host_reachability: false
+        source_interface_hold_down_time: default
+        source_interface: default
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+  
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *def9
+      register: result
+
+    - assert: *false
+
     when: (platform is search('N9K'))
 
   - block:
@@ -48,7 +67,7 @@
         description: default
         host_reachability: true
         source_interface: Loopback0
-        shutdown: true
+        shutdown: false
         provider: "{{ connection }}"
       register: result
   
@@ -63,6 +82,24 @@
     - assert:
         that:
           - "result.changed == false"
+
+    - name: reset vxlan_vtep
+      nxos_vxlan_vtep: &def7
+        interface: nve1
+        description: default
+        host_reachability: false
+        source_interface: default
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+  
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *def7
+      register: result
+
+    - assert: *false
 
     when: (platform is search('N7K'))
 
