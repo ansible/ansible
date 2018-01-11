@@ -738,7 +738,8 @@ class AzureRMModuleBase(object):
             client.config.add_user_agent(os.environ[CLOUDSHELL_USER_AGENT_KEY])
         # Add user agent when running from VSCode extension
         if VSCODEEXT_USER_AGENT_KEY in os.environ:
-            client.config.add_user_agent(os.environ[VSCODEEXT_USER_AGENT_KEY])
+            client.config.add_user_agent(os.environ[VSCODEEXT_USER_AGENT_KEY])\
+
         return client
 
     @property
