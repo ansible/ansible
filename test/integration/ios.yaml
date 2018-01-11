@@ -121,14 +121,24 @@
             failed_modules: "{{ failed_modules }} + [ 'ios_lldp' ]"
             test_failed: true
 
-#    - block:
-#      - include_role:
-#          name: ios_vlan
-#        when: "limit_to in ['*', 'ios_vlan']"
-#      rescue:
-#        - set_fact:
-#            failed_modules: "{{ failed_modules }} + [ 'ios_vlan' ]"
-#            test_failed: true
+    - block:
+      - include_role:
+          name: ios_vlan
+        when: "limit_to in ['*', 'ios_vlan']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_vlan' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: ios_linkagg
+        when: "limit_to in ['*', 'ios_linkagg']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'ios_linkagg' ]"
+            test_failed: true
+
 
 ###########
     - debug: var=failed_modules
