@@ -14,8 +14,3 @@
   when: include_next_playbook
 
 - import_playbook: validate34.yml
-
-
-# Test play group_vars inheritance
-# https://github.com/ansible/ansible/issues/33177
-- import_playbook: dir/playbook_in_subdir.yml
