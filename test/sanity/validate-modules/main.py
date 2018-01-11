@@ -40,7 +40,7 @@ from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
-from module_args import get_argument_spec
+from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import doc_schema, metadata_1_1_schema, return_schema
 
@@ -247,7 +247,7 @@ class ModuleValidator(Validator):
         self.length = len(self.text.splitlines())
         try:
             self.ast = ast.parse(self.text)
-        except:
+        except Exception:
             self.ast = None
 
         if base_branch:
@@ -264,7 +264,7 @@ class ModuleValidator(Validator):
 
         try:
             os.remove(self.base_module)
-        except:
+        except Exception:
             pass
 
     @property
@@ -971,7 +971,21 @@ class ModuleValidator(Validator):
     def _validate_argument_spec(self):
         if not self.analyze_arg_spec:
             return
-        spec = get_argument_spec(self.path)
+
+        try:
+            spec = get_argument_spec(self.path)
+        except AnsibleModuleImportError:
+            self.reporter.error(
+                path=self.object_path,
+                code=321,
+                msg='Exception attempting to import module for argument_spec introspection'
+            )
+            self.reporter.trace(
+                path=self.object_path,
+                tracebk=traceback.format_exc()
+            )
+            return
+
         for arg, data in spec.items():
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
@@ -1048,7 +1062,7 @@ class ModuleValidator(Validator):
                          (option, version_added))
                 )
                 continue
-            except:
+            except Exception:
                 # If there is any other exception it should have been caught
                 # in schema validation, so we won't duplicate errors by
                 # listing it again

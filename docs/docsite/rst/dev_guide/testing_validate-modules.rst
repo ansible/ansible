@@ -106,6 +106,7 @@ Errors
   318       Module deprecated, but DOCUMENTATION.deprecated is missing
   319       ``RETURN`` fragments missing  or invalid
   320       ``DOCUMENTATION.options`` must be a dictionary/hash when used
+  321       ``Exception`` attempting to import module for ``argument_spec`` introspection
   ..
 ---------   -------------------
   **4xx**   **Syntax**
