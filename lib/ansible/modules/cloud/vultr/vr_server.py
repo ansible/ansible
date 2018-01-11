@@ -67,6 +67,10 @@ options:
   user_data:
     description:
       - User data to be passed to the server.
+  startup_script:
+    description:
+      - Name of the startup script to execute on boot.
+      - Only considered while creating the server.
   ssh_keys:
     description:
       - List of SSH keys passed to the server on creation.
@@ -351,61 +355,49 @@ class AnsibleVultrServer(Vultr):
         }
         self.server_power_state = None
 
-    def get_os(self):
-        name = self.module.params.get('os')
-        if not name:
-            return {}
-
+    def get_startup_script(self):
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('startup_script'),
+            resource='startupscript',
+        )
+
+    def get_os(self):
+        return self.query_resource_by_key(
+            key='name',
+            value=self.module.params.get('os'),
             resource='os',
             use_cache=True
         )
 
     def get_ssh_key(self):
-        name = self.module.params.get('ssh_key')
-        if not name:
-            return {}
-
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('ssh_key'),
             resource='sshkey',
             use_cache=True
         )
 
     def get_region(self):
-        name = self.module.params.get('region')
-        if not name:
-            return {}
-
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('region'),
             resource='regions',
             use_cache=True
         )
 
     def get_plan(self):
-        name = self.module.params.get('plan')
-        if not name:
-            return {}
-
         return self.query_resource_by_key(
             key='name',
-            value=name,
+            value=self.module.params.get('plan'),
             resource='plans',
             use_cache=True
         )
 
     def get_firewall_group(self):
-        name = self.module.params.get('firewall_group')
-        if not name:
-            return {}
         return self.query_resource_by_key(
             key='description',
-            value=name,
+            value=self.module.params.get('firewall_group'),
             resource='firewall',
             query_by='group_list'
         )
@@ -492,6 +484,7 @@ class AnsibleVultrServer(Vultr):
                 'tag': self.module.params.get('tag'),
                 'reserved_ip_v4': self.module.params.get('reserved_ip_v4'),
                 'user_data': self.get_user_data(),
+                'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
             self.api_query(
                 path="/v1/server/create",
@@ -835,6 +828,7 @@ def main():
         tag=dict(),
         reserved_ip_v4=dict(),
         firewall_group=dict(),
+        startup_script=dict(),
         user_data=dict(),
         ssh_keys=dict(type='list', aliases=['ssh_key']),
         region=dict(),
