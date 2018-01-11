@@ -30,4 +30,5 @@
 - include: network_negative_test.yml
 # Currently, VCSIM doesn't support DVPG (as portkeys are not available) so commenting this test
 #- include: network_with_dvpg.yml
+- include: modify_d1_c1_f0.yml
 #- include: template_d1_c1_f0.yml
