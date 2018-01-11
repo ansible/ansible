@@ -182,7 +182,7 @@ Network Roadmap
 ---------------
 - Refactor common network shared code into package **(done)**
 - Convert various nxos modules to leverage declarative intent 
-- Refactor various modules to leverage the cliconf plugin
+- Refactor various modules to leverage the cliconf plugin **(done)**
 - Add various missing declarative modules for supported platforms and functions
 - Implement a feature that handles platform differences and feature unavailability
 - netconf-config.py should provide control for deployment strategy
