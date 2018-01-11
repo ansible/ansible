@@ -1,5 +1,5 @@
-# (c) 2017, Jason Vanderhoof <jason.vanderhoof@cyberark.com>, Oren Ben Meir <oren.benmeir@cyberark.com>
-# (c) 2017 Ansible Project
+# (c) 2018, Jason Vanderhoof <jason.vanderhoof@cyberark.com>, Oren Ben Meir <oren.benmeir@cyberark.com>
+# (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -16,6 +16,24 @@ DOCUMENTATION = """
       _term:
         description: Variable path
         required: True
+      identity_file:
+        description: Path to the Conjur identity file. The identity file follows the netrc file format convention.
+        default: /etc/conjur.identity
+        required: False
+        ini:
+          - section: conjur,
+            key: identity_file_path
+        env:
+          - name: CONJUR_IDENTITY_FILE
+      config_file:
+        description: Path to the Conjur configuration file. The configuration file is a YAML file.
+        default: /etc/conjur.conf
+        require: False
+        ini:
+          - section: conjur,
+            key: config_file_path
+        env:
+          - name: CONJUR_CONFIG_FILE
 """
 
 EXAMPLES = """
@@ -49,58 +67,43 @@ except ImportError:
     display = Display()
 
 
-# Load Conjur configuration from either `/etc/conjur.conf` or `~/.conjurrc`
-def _load_configuration():
-    for location in ['~/.conjurrc', '/etc/conjur.conf']:
-        conf = _load_conf_from_file(location)
-        if conf:
-            display.vvvv('configuration: {0}'.format(conf))
-            return conf
-
-    raise AnsibleError('Conjur configuration should be in one of the following files: \'~/.conjurrc\', \'/etc/conjur.conf\'')
-
-
-# Load Conjur identity from either `/etc/conjur.identity`, or `~/.netrc`
-def _load_identity(appliance_url):
-    for location in ['~/.netrc', '/etc/conjur.identity']:
-        identity = _load_identity_from_file(location, appliance_url)
-        if identity:
-            display.vvvv('configuration: {0}'.format(identity))
-            return identity
-
-    raise AnsibleError('Conjur identity should be in environment variables or in one of the following paths: \'~/.netrc\', \'/etc/conjur.identity\'')
-
-
 # Load configuration and return as dictionary if file is present on file system
 def _load_conf_from_file(conf_path):
     conf_path = os.path.expanduser(conf_path)
+    display.vvv('conf file: {}'.format(conf_path))
 
     if os.path.exists(conf_path):
         display.vvvv('Loading configuration from: {0}'.format(conf_path))
         with open(conf_path) as f:
-            return yaml.safe_load(f.read())
-    return {}
+            config = yaml.safe_load(f.read())
+            if 'account' not in config or 'appliance_url' not in config:
+                raise AnsibleError('{} must contain an `account` and `appliance_url` entry'.format(conf_path))
+            return config
+
+    raise AnsibleError('Conjur configuration file `{}` was not found'.format(conf_path))
 
 
 # Load identity and return as dictionary if file is present on file system
 def _load_identity_from_file(identity_path, appliance_url):
     identity_path = os.path.expanduser(identity_path)
+    display.vvvv('identity file: {}'.format(identity_path))
 
     if os.path.exists(identity_path):
         display.vvvv('Loading identity from: {0} for {1}'.format(identity_path, appliance_url))
 
         conjur_authn_url = '{0}/authn'.format(appliance_url)
         identity = netrc(identity_path)
+
         if identity.authenticators(conjur_authn_url) is None:
             raise AnsibleError('The netrc file does not contain an entry for: {0}'.format(conjur_authn_url))
 
         id, account, api_key = identity.authenticators(conjur_authn_url)
         if not id or not api_key:
-            return {}
+            raise AnsibleError('{} must contain a `login` and `password` entry for {}'.format(identity_path, appliance_url))
 
         return {'id': id, 'api_key': api_key}
 
-    return {}
+    raise AnsibleError('Conjur identity file `{}` was not found'.format(identity_path))
 
 
 # Use credentials to retrieve temporary authorization token
@@ -141,8 +144,11 @@ def _fetch_conjur_variable(conjur_variable, token, conjur_url, account):
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-        conf = _load_configuration()
-        identity = _load_identity(conf['appliance_url'])
+        conf_file = self.get_option('config_file')
+        conf = _load_conf_from_file(conf_file)
+
+        identity_file = self.get_option('identity_file')
+        identity = _load_identity_from_file(identity_file, conf['appliance_url'])
 
         token = _fetch_conjur_token(conf['appliance_url'], conf['account'], identity['id'], identity['api_key'])
         return _fetch_conjur_variable(terms[0], token, conf['appliance_url'], conf['account'])
