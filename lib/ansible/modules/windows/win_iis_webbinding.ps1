@@ -223,6 +223,7 @@ If ($current_bindings -and $state -eq 'absent')
         $index = Foreach ($item in $bindings) {
             If ( $protocol -eq $item.protocol -and $current_bindings.bindingInformation -eq $item.bindingInformation ) {
                 $bindings.indexof($item)
+                break
             }
         }
 
