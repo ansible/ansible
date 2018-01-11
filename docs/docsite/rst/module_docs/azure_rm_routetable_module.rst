@@ -4,6 +4,9 @@
 azure_rm_routetable - Manage Azure route tables.
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
+.. versionadded:: 2.5
+
+
 
 
 .. contents::
@@ -340,7 +343,7 @@ Options
                 </td>
                                                                 <td>
                     <div class="cell-border">
-                                                                                    <div>A list of hashes which has address_prefix, next_hop_type, and next_hop_ip_address set to populate the routes in the route table</div>
+                                                                                    <div>A list of mappings which has name, address_prefix, next_hop_type, and next_hop_ip_address set to populate the routes in the route table. Required if <em>state=present</em></div>
                                                                                                 </div>
                 </td>
             </tr>

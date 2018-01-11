@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_routetable
-version_added: "2.3"
+version_added: "2.5"
 short_description: Manage Azure route tables.
 description:
     - Create, update or delete a route tables. Allows setting and updating the available routes with cidr, type, and destination
@@ -26,10 +26,9 @@ options:
         required: true
     routes:
         description:
-            - A list of hashes which has address_prefix, next_hop_type, and next_hop_ip_address set to populate the
-              routes in the route table
+            - A list of mappings which has name, address_prefix, next_hop_type, and next_hop_ip_address set to populate the
+              routes in the route table. Required if I(state=present) 
         default: null
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
@@ -167,7 +166,8 @@ class AzureRMRouteTable(AzureRMModuleBase):
         )
 
         required_if = [
-            ('purge_routes', True, ['routes'])
+            ['purge_routes', True, ['routes']],
+            ["state", "present", ['routes']]
         ]
 
         self.resource_group = None
@@ -199,6 +199,12 @@ class AzureRMRouteTable(AzureRMModuleBase):
             self.location = resource_group.location
 
         if self.state == 'present':
+            
+
+
+            if self.purge_routes and not self.routes:
+                self.fail("Purge routes requires routes to be set")
+            
             for route in self.routes:
                 if not CIDR_PATTERN.match(route.get('address_prefix')):
                     self.fail("Parameter error: invalid address prefix value {0}".format(route['address_prefix']))
@@ -208,6 +214,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
                     self.fail("Parameter error: invalid name value {0}".format(route['name']))
                 if route['next_hop_type'] == 'VirtualAppliance' and not route.get('next_hop_ip_address'):
                     self.fail("Parameter error: Next Hop Required for VirtualAppliance")
+
 
         changed = False
         results = dict()
@@ -233,7 +240,12 @@ class AzureRMRouteTable(AzureRMModuleBase):
                             name=existing_route.name))
 
                     missing_routes = [x for x in requested_routing_entries if x not in existing_route_entries]
-                    extra_routes = [x for x in existing_route_entries if x not in requested_routing_entries]
+                    extra_routes = [x for x in existing_route_entries if x not in requested_routing_entries]                    
+
+                    for route in self.routes:
+                        for extra_route in extra_routes:
+                            if route['name'] in extra_route['name'] and not self.purge_routes:
+                                self.fail('Duplicate route entry name detected, purge routes required')
 
                     if len(missing_routes) > 0:
                         self.log('CHANGED: there are missing routes')
@@ -287,7 +299,7 @@ class AzureRMRouteTable(AzureRMModuleBase):
                                 next_hop_ip_address=route.get('next_hop_ip_address')
                             )
                             route_entries.append(routing_entry)
-                    routetable.routes = route_entries
+                        routetable.routes = route_entries
                     if self.tags:
                         routetable.tags = self.tags
                     self.results['state'] = self.create_or_update_routetable(routetable)
