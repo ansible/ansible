@@ -106,7 +106,6 @@ def _load_identity_from_file(identity_path, appliance_url):
     return {'id': id, 'api_key': api_key}
 
 
-
 # Use credentials to retrieve temporary authorization token
 def _fetch_conjur_token(conjur_url, account, username, api_key):
     conjur_url = '{0}/authn/{1}/{2}/authenticate'.format(conjur_url, account, username)
