@@ -22,12 +22,13 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
     - lvm support was added in 2.5.
     - since 2.5, I(dev) can be an image file.
+    - vfat support was added in 2.5
     required: yes
   dev:
     description:
@@ -215,6 +216,43 @@ class Btrfs(Filesystem):
             self.module.warn('Unable to identify mkfs.btrfs version (%r, %r)' % (stdout, stderr))
 
 
+class VFAT(Filesystem):
+    MKFS = 'mkfs.vfat'
+
+    def get_fs_size(self, dev):
+        cmd = self.module.get_bin_path(self.GROW, required=True)
+        _, output, _ = self.module.run_command([cmd, '--info', dev], check_rc=True)
+        for line in output.splitlines()[1:]:
+            param, value = line.split(':', 1)
+            if param.strip() == 'Size':
+                return int(value.strip())
+        self.module.fail_json(msg="fatresize failed to provide filesystem size for %s" % dev)
+
+    def grow(self, dev):
+        """Get dev and fs size and compare. Returns stdout of used command."""
+        statinfo = os.stat(dev)
+        if stat.S_ISBLK(statinfo.st_mode):
+            devsize_in_bytes = self.get_dev_size(dev)
+        elif os.path.isfile(dev):
+            devsize_in_bytes = os.path.getsize(dev)
+        else:
+            self.module.fail_json(changed=False, msg="Target device not supported: %r." % dev)
+
+        try:
+            fssize_in_bytes = self.get_fs_size(dev)
+        except NotImplementedError:
+            self.module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % self.fstype)
+
+        if not fssize_in_bytes < devsize_in_bytes:
+            self.module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (self.fstype, dev))
+        elif self.module.check_mode:
+            self.module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (self.fstype, dev))
+        else:
+            cmd = self.module.get_bin_path(self.GROW, required=True)
+            _, out, _ = self.module.run_command([cmd, "--size", devsize_in_bytes, dev], check_rc=True)
+            return out
+
+
 class LVM(Filesystem):
     MKFS = 'pvcreate'
     MKFS_FORCE_FLAGS = '-f'
@@ -235,6 +273,7 @@ FILESYSTEMS = {
     'reiserfs': Reiserfs,
     'xfs': XFS,
     'btrfs': Btrfs,
+    'vfat': VFAT,
     'LVM2_member': LVM,
 }
 

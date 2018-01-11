@@ -3,11 +3,19 @@
 
 - name: 'Create a vfat filesystem'
   command: 'mkfs.vfat {{ dev }}'
-  when: ansible_system != 'FreeBSD'
+  when: ansible_system != 'FreeBSD' and fstype != 'vfat'
 
 - name: 'Create a vfat filesystem'
   command: 'newfs_msdos -F12 {{ dev }}'
-  when: ansible_system == 'FreeBSD'
+  when: ansible_system == 'FreeBSD' and fstype != 'vfat'
+
+- name: 'Create a ext2 filesystem'
+  command: 'mkfs.ext2 {{ dev }}'
+  when: ansible_system != 'FreeBSD' and fstype == 'vfat'
+
+- name: 'Create a UFS filesystem'
+  command: 'newfs {{ dev }}'
+  when: ansible_system == 'FreeBSD' and fstype == 'vfat'
 
 - command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
   register: uuid
