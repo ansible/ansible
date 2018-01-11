@@ -195,12 +195,11 @@ options:
         - Optional when C(type=weekly).
       repetition:
         description:
-        - duration
-          How long the pattern is repeated. Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-        - interval
-          Amount of time between earch restart of the task. Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-        - stop_at_duration_end
-          Boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
+        - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated after the task is started.
+        - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
+        - C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
     version_added: '2.5'
   days_of_week:
     description:

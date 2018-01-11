@@ -343,7 +343,9 @@
     - trigger_repetition_result.triggers|count == 1
     - trigger_repetition_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
     - trigger_repetition_result.triggers[0].enabled == True
-    - trigger_repetition_result.triggers[0].repetition.repetition == True
+    - trigger_repetition_result.triggers[0].repetition.interval == "PT1M"
+    - trigger_repetition_result.triggers[0].repetition.duration == "PT5M"
+    - trigger_repetition_result.triggers[0].repetition.stop_at_duration_end == True
 
 - name: create trigger repetition (idempotent)
   win_scheduled_task:

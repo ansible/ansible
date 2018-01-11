@@ -274,30 +274,26 @@ Function Compare-PropertyList {
         if ($existing_property -eq $null) {
             # we have more properties than before,just add to the new
             # properties list
-            $properties = $new_property.Keys | Where-Object { $total_args -contains $_ }
-            if ($properties -ne $null) {
-                $diff_list = [System.Collections.ArrayList]@()
+            $diff_list = [System.Collections.ArrayList]@()
 
-                foreach ($property_arg in $properties) {
-                    if ($new_property.ContainsKey($property_arg)) {
-                        $com_name = Convert-SnakeToPascalCase -snake $property_arg
-                        $property_value = $new_property.$property_arg
+            foreach ($property_arg in $total_args) {
+                if ($new_property.ContainsKey($property_arg)) {
+                    $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                    $property_value = $new_property.$property_arg
 
-                        if ($property_value -is [Hashtable]) {
-                            foreach ($sub_property_arg in $property_value.Keys) {
-                                $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
-                                $sub_property_value = $property_value.$sub_property_arg
-                                [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
-                            }
+                    if ($property_value -is [Hashtable]) {
+                        foreach ($sub_property_arg in $property_value.Keys) {
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                            $sub_property_value = $property_value.$sub_property_arg
+                            [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
                         }
-                        else {
-                            [void]$diff_list.Add("+$com_name=$property_value")
-                        }
+                    } else {
+                        [void]$diff_list.Add("+$com_name=$property_value")
                     }
                 }
-
-                [void]$changes.Add("+$property_name[$i] = {`n  +Type=$type`n  $($diff_list -join ",`n  ")`n+}")
             }
+
+            [void]$changes.Add("+$property_name[$i] = {`n  +Type=$type`n  $($diff_list -join ",`n  ")`n+}")
         } elseif ([Enum]::ToObject($enum, $existing_property.Type) -ne $type) {
             # the types are different so we need to change
             $diff_list = [System.Collections.ArrayList]@()
@@ -313,10 +309,9 @@ Function Compare-PropertyList {
                             foreach ($sub_property_arg in $property_value.Keys) {
                                 $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
                                 $sub_property_value = $property_value.$sub_property_arg
-                                [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
                             }
-                        }
-                        else {
+                        } else {
                             [void]$diff_list.Add("+$com_name=$property_value")
                         }
                     }
@@ -338,15 +333,14 @@ Function Compare-PropertyList {
                             $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
                             if ($sub_property_value -ne $null) {
-                                [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
                             }
 
                             if ($sub_existing_value -ne $null) {
-                                [void]$diff_list.Add("-$sub_com_name=$sub_existing_value")
+                                [void]$diff_list.Add("-$com_name.$sub_com_name=$sub_existing_value")
                             }
                         }
-                    }
-                    else {
+                    } else {
                         if ($property_value -ne $null) {
                             [void]$diff_list.Add("+$com_name=$property_value")
                         }
@@ -361,43 +355,35 @@ Function Compare-PropertyList {
             [void]$changes.Add("$property_name[$i] = {`n  $($diff_list -join ",`n  ")`n}")
         } else {
             # compare the properties of existing and new
-            $properties = $new_property.Keys | Where-Object { $total_args -contains $_ }
-            if ($properties -ne $null) {
-                $diff_list = [System.Collections.ArrayList]@()
+            $diff_list = [System.Collections.ArrayList]@()
 
-                foreach ($property_arg in $properties) {
-                    $com_name = Convert-SnakeToPascalCase -snake $property_arg
-                    $property_value = $new_property.$property_arg
-                    $existing_value = $existing_property.$com_name
-                    
-                    if ($property_value -is [Hashtable]) {
-                        foreach ($sub_property_arg in $property_value.Keys) {
-                            $sub_property_value = $property_value.$sub_property_arg
-                            
-                            if ($sub_property_value -ne $null) {
-                                $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
-                                $sub_existing_value = $existing_property.$com_name.$sub_com_name
+            foreach ($property_arg in $total_args) {
+                $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                $property_value = $new_property.$property_arg
+                $existing_value = $existing_property.$com_name
+                
+                if ($property_value -is [Hashtable]) {
+                    foreach ($sub_property_arg in $property_value.Keys) {
+                        $sub_property_value = $property_value.$sub_property_arg
+                        
+                        if ($sub_property_value -ne $null) {
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                            $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
-                                if ($sub_property_value -cne $sub_existing_value) {
-                                    [void]$diff_list.Add("-$sub_com_name=$sub_existing_value")
-                                    [void]$diff_list.Add("+$sub_com_name=$sub_property_value")
-                                }
+                            if ($sub_property_value -cne $sub_existing_value) {
+                                [void]$diff_list.Add("-$com_name.$sub_com_name=$sub_existing_value")
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
                             }
                         }
                     }
-                    else {
-                        if ($property_value -ne $null) {
-                            if ($property_value -cne $existing_value) {
-                                [void]$diff_list.Add("-$com_name=$existing_value")
-                                [void]$diff_list.Add("+$com_name=$property_value")
-                            }
-                        }
-                    }
+                } elseif ($property_value -ne $null -and $property_value -cne $existing_value) {
+                    [void]$diff_list.Add("-$com_name=$existing_value")
+                    [void]$diff_list.Add("+$com_name=$property_value")
                 }
+            }
 
-                if ($diff_list.Count -gt 0) {
-                    [void]$changes.Add("$property_name[$i] = {`n  $($diff_list -join ",`n  ")`n}")
-                }
+            if ($diff_list.Count -gt 0) {
+                [void]$changes.Add("$property_name[$i] = {`n  $($diff_list -join ",`n  ")`n}")
             }
         }
 
@@ -415,11 +401,8 @@ Function Compare-PropertyList {
                         Set-PropertyForComObject -com_object $new_object_property -name $property_name -arg $key -value $value
                     }
                 }
-            }
-            else {
-                if ($new_value -ne $null) {
-                    Set-PropertyForComObject -com_object $new_object -name $property_name -arg $property_arg -value $new_value
-                }
+            } elseif ($new_value -ne $null) {
+                Set-PropertyForComObject -com_object $new_object -name $property_name -arg $property_arg -value $new_value
             }
         }
     }
@@ -622,7 +605,6 @@ Function Compare-Triggers($task_definition) {
         $task_triggers.Clear()
     }
 
-    # TODO: solve repetition, takes in a COM object
     $map = @{
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_BOOT = @{
             mandatory = @()
@@ -871,27 +853,20 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
     }
 
     if ($trigger.ContainsKey("repetition")) {
-        $repetition = ConvertTo-HashtableFromPsCustomObject -object $trigger.repetition
-        $trigger.repetition = $repetition
+        $trigger.repetition = ConvertTo-HashtableFromPsCustomObject -object $trigger.repetition
 
-        $interval_key = "interval"
-        $interval_value = $null
         $interval_timespan = $null
-        if ($repetition.ContainsKey($interval_key)) {
-            $interval_value = $repetition.$interval_key
-            $interval_timespan = Test-XmlDurationFormat -key $interval_key -value $interval_value
+        if ($trigger.repetition.ContainsKey("interval") -and $trigger.repetition.interval -ne $null) {
+            $interval_timespan = Test-XmlDurationFormat -key "interval" -value $trigger.repetition.interval
         }
 
-        $duration_key = "duration"
-        $duration_value = $null
         $duration_timespan = $null
-        if ($repetition.ContainsKey($duration_key)) {
-            $duration_value = $repetition.$duration_key
-            $duration_timespan = Test-XmlDurationFormat -key $duration_key -value $duration_value
+        if ($trigger.repetition.ContainsKey("duration") -and $trigger.repetition.duration -ne $null) {
+            $duration_timespan = Test-XmlDurationFormat -key "duration" -value $trigger.repetition.duration
         }
 
         if ($interval_timespan -ne $null -and $duration_timespan -ne $null -and $interval_timespan -gt $duration_timespan) {
-            Fail-Json -obj $result -message "trigger repetition option '$interval_key' value '$interval_value' must be less than or equal to '$duration_key' value '$duration_value'"
+            Fail-Json -obj $result -message "trigger repetition option 'interval' value '$($trigger.repetition.interval)' must be less than or equal to 'duration' value '$($trigger.repetition.duration)'"
         }
     }
 
