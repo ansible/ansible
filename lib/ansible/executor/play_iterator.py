@@ -153,8 +153,6 @@ class PlayIterator:
         self._blocks = []
         self._variable_manager = variable_manager
 
-        self._task_uuid_cache = dict()
-
         # Default options to gather
         gather_subset = play_context.gather_subset
         gather_timeout = play_context.gather_timeout
