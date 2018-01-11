@@ -41,6 +41,9 @@ options:
         description:
           - Neighbor IP address.
         required: true
+  networks:
+    description:
+      - List of advertised networks.
   state:
     description:
       - BGP state.
@@ -57,6 +60,8 @@ EXAMPLES = """
       - remote_as: 321
         neighbor: 10.3.3.4
     state: present
+    networks:
+      - 172.16.1.0/24
 """
 
 RETURN = """
@@ -69,6 +74,7 @@ commands:
     - exit
     - router bgp 172 router-id 2.3.4.5 force
     - router bgp 172 neighbor 2.3.4.6 remote-as 173
+    - router bgp 172 network 172.16.1.0 /24
 """
 
 import re
@@ -80,10 +86,13 @@ from ansible.module_utils.network.mlnxos.mlnxos import BaseMlnxosModule
 
 
 class MlnxosBgpModule(BaseMlnxosModule):
-    LOCAL_AS_REGEX = \
-        r"BGP router identifier ([0-9\.]+), local AS number (\d+)"
-    NEIGHBOR_REGEX = \
-        r"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+\d+\s+(\d+)"
+    LOCAL_AS_REGEX = re.compile(r'^\s+router bgp\s+(\d+).*')
+    ROUTER_ID_REGEX = re.compile(
+        r'^\s+router bgp\s+(\d+).*router-id\s+(\S+)\s+.*')
+    NEIGHBOR_REGEX = re.compile(
+        r'^\s+router bgp\s+(\d+).*neighbor\s+(\S+)\s+remote\-as\s+(\S+).*')
+    NETWORK_REGEX = re.compile(
+        r'^\s+router bgp\s+(\d+).*network\s+(\S+)\s+(\S+).*')
 
     def init_module(self):
         """ initialize module
@@ -97,6 +106,7 @@ class MlnxosBgpModule(BaseMlnxosModule):
             router_id=dict(),
             neighbors=dict(type='list', elements='dict',
                            options=neighbor_spec),
+            networks=dict(type='list', elements='str'),
             state=dict(choices=['present', 'absent'], default='present'),
         )
         argument_spec = dict()
@@ -108,28 +118,47 @@ class MlnxosBgpModule(BaseMlnxosModule):
 
     def get_required_config(self):
         module_params = self._module.params
-        bgp_params = {
-            'as_number': module_params['as_number'],
-            'router_id': module_params['router_id'],
-            'state': module_params['state'],
-        }
-        neighbors = module_params['neighbors'] or []
-        req_neighbors = bgp_params['neighbors'] = []
+        req_neighbors = list()
+        self._required_config = dict(
+            as_number=module_params['as_number'],
+            router_id=module_params['router_id'],
+            state=module_params['state'],
+            neighbors=req_neighbors,
+            networks=module_params['networks'])
+        neighbors = module_params['neighbors'] or list()
         for neighbor_data in neighbors:
             req_neighbors.append(
                 (neighbor_data['neighbor'], neighbor_data['remote_as']))
-        self.validate_param_values(bgp_params)
-        self._required_config = bgp_params
+        self.validate_param_values(self._required_config)
 
     def _set_bgp_config(self, bgp_config):
-        match = re.search(self.LOCAL_AS_REGEX, bgp_config, re.M)
-        if match:
-            self._current_config['router_id'] = match.group(1)
-            self._current_config['as_number'] = int(match.group(2))
-        matches = re.findall(self.NEIGHBOR_REGEX, bgp_config, re.M) or []
+        lines = bgp_config.split('\n')
+        self._current_config['router_id'] = None
+        self._current_config['as_number'] = None
         neighbors = self._current_config['neighbors'] = []
-        for match in matches:
-            neighbors.append((match[0], int(match[1])))
+        networks = self._current_config['networks'] = []
+        for line in lines:
+            if line.startswith('#'):
+                continue
+            if not self._current_config['as_number']:
+                match = self.LOCAL_AS_REGEX.match(line)
+                if match:
+                    self._current_config['as_number'] = int(match.group(1))
+                    continue
+            if not self._current_config['router_id']:
+                match = self.ROUTER_ID_REGEX.match(line)
+                if match:
+                    self._current_config['router_id'] = match.group(2)
+                    continue
+            match = self.NEIGHBOR_REGEX.match(line)
+            if match:
+                neighbors.append((match.group(2), int(match.group(3))))
+                continue
+            match = self.NETWORK_REGEX.match(line)
+            if match:
+                network = match.group(2) + match.group(3)
+                networks.append(network)
+                continue
 
     def _get_bgp_summary(self):
         return get_bgp_summary(self._module)
@@ -162,7 +191,10 @@ class MlnxosBgpModule(BaseMlnxosModule):
         if req_router_id and req_router_id != curr_route_id or bgp_removed:
             self._commands.append('router bgp %d router-id %s force' %
                                   (as_number, req_router_id))
+        self._generate_neighbors_cmds(as_number, bgp_removed)
+        self._generate_networks_cmds(as_number, bgp_removed)
 
+    def _generate_neighbors_cmds(self, as_number, bgp_removed):
         req_neighbors = self._required_config['neighbors']
         curr_neighbors = self._current_config.get('neighbors', [])
         if not bgp_removed:
@@ -179,6 +211,33 @@ class MlnxosBgpModule(BaseMlnxosModule):
                 self._commands.append(
                     'router bgp %s neighbor %s remote-as %s' %
                     (as_number, neighbor, remote_as))
+
+    def _generate_networks_cmds(self, as_number, bgp_removed):
+        req_networks = self._required_config['networks'] or []
+        curr_networks = self._current_config.get('networks', [])
+        if not bgp_removed:
+            for network in curr_networks:
+                if network not in req_networks:
+                    net_attrs = network.split('/')
+                    if len(net_attrs) != 2:
+                        self._module.fail_json(
+                            msg='Invalid network %s' % network)
+
+                    net_address, netmask = net_attrs
+                    cmd = 'router bgp %s no network %s /%s' % (
+                        as_number, net_address, netmask)
+                    self._commands.append(cmd)
+
+        for network in req_networks:
+            if bgp_removed or network not in curr_networks:
+                net_attrs = network.split('/')
+                if len(net_attrs) != 2:
+                    self._module.fail_json(
+                        msg='Invalid network %s' % network)
+                net_address, netmask = net_attrs
+                cmd = 'router bgp %s network %s /%s' % (
+                    as_number, net_address, netmask)
+                self._commands.append(cmd)
 
     def _generate_no_bgp_cmds(self):
         as_number = self._required_config['as_number']

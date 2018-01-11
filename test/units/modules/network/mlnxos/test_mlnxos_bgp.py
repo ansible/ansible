@@ -39,7 +39,8 @@ class TestMlnxosBgpModule(TestMlnxosModule):
     def test_bgp_no_change(self):
         neighbor = dict(remote_as=173, neighbor='10.2.3.4')
         set_module_args(dict(as_number=172, router_id='1.2.3.4',
-                             neighbors=[neighbor]))
+                             neighbors=[neighbor],
+                             networks=['172.16.1.0/24']))
         self.execute_module(changed=False)
 
     def test_bgp_remove(self):
@@ -60,11 +61,27 @@ class TestMlnxosBgpModule(TestMlnxosModule):
         neighbors = [dict(remote_as=173, neighbor='10.2.3.4'),
                      dict(remote_as=175, neighbor='10.2.3.5')]
         set_module_args(dict(as_number=172, router_id='1.2.3.4',
-                             neighbors=neighbors))
+                             neighbors=neighbors,
+                             networks=['172.16.1.0/24']))
         commands = ['router bgp 172 neighbor 10.2.3.5 remote-as 175']
         self.execute_module(changed=True, commands=commands)
 
     def test_bgp_del_neighbor(self):
-        set_module_args(dict(as_number=172))
+        set_module_args(dict(as_number=172,
+                             networks=['172.16.1.0/24']))
         commands = ['router bgp 172 no neighbor 10.2.3.4 remote-as 173']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_bgp_add_network(self):
+        neighbors = [dict(remote_as=173, neighbor='10.2.3.4')]
+        set_module_args(dict(as_number=172, router_id='1.2.3.4',
+                             neighbors=neighbors,
+                             networks=['172.16.1.0/24', '172.16.2.0/24']))
+        commands = ['router bgp 172 network 172.16.2.0 /24']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_bgp_del_network(self):
+        neighbors = [dict(remote_as=173, neighbor='10.2.3.4')]
+        set_module_args(dict(as_number=172, neighbors=neighbors))
+        commands = ['router bgp 172 no network 172.16.1.0 /24']
         self.execute_module(changed=True, commands=commands)
