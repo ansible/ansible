@@ -70,40 +70,41 @@ except ImportError:
 # Load configuration and return as dictionary if file is present on file system
 def _load_conf_from_file(conf_path):
     conf_path = os.path.expanduser(conf_path)
-    display.vvv('conf file: {}'.format(conf_path))
+    display.vvv('conf file: {0}'.format(conf_path))
 
-    if os.path.exists(conf_path):
-        display.vvvv('Loading configuration from: {0}'.format(conf_path))
-        with open(conf_path) as f:
-            config = yaml.safe_load(f.read())
-            if 'account' not in config or 'appliance_url' not in config:
-                raise AnsibleError('{} must contain an `account` and `appliance_url` entry'.format(conf_path))
-            return config
+    if not os.path.exists(conf_path):
+        raise AnsibleError('Conjur configuration file `{0}` was not found'.format(conf_path))
 
-    raise AnsibleError('Conjur configuration file `{}` was not found'.format(conf_path))
+    display.vvvv('Loading configuration from: {0}'.format(conf_path))
+    with open(conf_path) as f:
+        config = yaml.safe_load(f.read())
+        if 'account' not in config or 'appliance_url' not in config:
+            raise AnsibleError('{0} must contain an `account` and `appliance_url` entry'.format(conf_path))
+        return config
 
 
 # Load identity and return as dictionary if file is present on file system
 def _load_identity_from_file(identity_path, appliance_url):
     identity_path = os.path.expanduser(identity_path)
-    display.vvvv('identity file: {}'.format(identity_path))
+    display.vvvv('identity file: {0}'.format(identity_path))
 
-    if os.path.exists(identity_path):
-        display.vvvv('Loading identity from: {0} for {1}'.format(identity_path, appliance_url))
+    if not os.path.exists(identity_path):
+        raise AnsibleError('Conjur identity file `{0}` was not found'.format(identity_path))
 
-        conjur_authn_url = '{0}/authn'.format(appliance_url)
-        identity = netrc(identity_path)
+    display.vvvv('Loading identity from: {0} for {1}'.format(identity_path, appliance_url))
 
-        if identity.authenticators(conjur_authn_url) is None:
-            raise AnsibleError('The netrc file does not contain an entry for: {0}'.format(conjur_authn_url))
+    conjur_authn_url = '{0}/authn'.format(appliance_url)
+    identity = netrc(identity_path)
 
-        id, account, api_key = identity.authenticators(conjur_authn_url)
-        if not id or not api_key:
-            raise AnsibleError('{} must contain a `login` and `password` entry for {}'.format(identity_path, appliance_url))
+    if identity.authenticators(conjur_authn_url) is None:
+        raise AnsibleError('The netrc file does not contain an entry for: {0}'.format(conjur_authn_url))
 
-        return {'id': id, 'api_key': api_key}
+    id, account, api_key = identity.authenticators(conjur_authn_url)
+    if not id or not api_key:
+        raise AnsibleError('{0} must contain a `login` and `password` entry for {1}'.format(identity_path, appliance_url))
 
-    raise AnsibleError('Conjur identity file `{}` was not found'.format(identity_path))
+    return {'id': id, 'api_key': api_key}
+
 
 
 # Use credentials to retrieve temporary authorization token
@@ -139,6 +140,8 @@ def _fetch_conjur_variable(conjur_variable, token, conjur_url, account):
         raise AnsibleError('Conjur host does not have authorization to retrieve {0}'.format(conjur_variable))
     if response.getcode() == 404:
         raise AnsibleError('The variable {0} does not exist'.format(conjur_variable))
+
+    return {}
 
 
 class LookupModule(LookupBase):
