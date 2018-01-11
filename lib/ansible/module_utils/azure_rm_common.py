@@ -736,7 +736,9 @@ class AzureRMModuleBase(object):
         # Add user agent when running from Cloud Shell
         if CLOUDSHELL_USER_AGENT_KEY in os.environ:
             client.config.add_user_agent(os.environ[CLOUDSHELL_USER_AGENT_KEY])
-
+        # Add user agent when running from VSCode extension
+        if VSCODEEXT_USER_AGENT_KEY in os.environ:
+            client.config.add_user_agent(os.environ[VSCODEEXT_USER_AGENT_KEY])
         return client
 
     @property
@@ -745,7 +747,7 @@ class AzureRMModuleBase(object):
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-06-01')
+                                                            api_version='2017-10-01')
         return self._storage_client
 
     @property
