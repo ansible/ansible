@@ -481,13 +481,13 @@ files:
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
-  $modules/network/mlnxos/: $team_mlnxos
   $modules/network/netconf/netconf_config.py: ganeshrn lpenz userlerueda
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
   $modules/network/nso/: $team_nso
+  $modules/network/onyx/: $team_onyx
   $modules/network/openvswitch/:
     ignored: stygstra
     maintainers: $team_networking
@@ -989,9 +989,6 @@ files:
   $module_utils/network/ironware:
     maintainers: paulquack
     labels: networking
-  $module_utils/network/mlnxos:
-    maintainers: $team_mlnxos
-    labels: networking
   $module_utils/k8s_common.py:
     maintainers: chouseknecht sdoran maxamillion fabianvf flaper87
     labels: clustering
@@ -1002,6 +999,9 @@ files:
     labels: networking
   $module_utils/network/nso:
     maintainers: $team_nso
+    labels: networking
+  $module_utils/network/onyx:
+    maintainers: $team_onyx
     labels: networking
   $module_utils/openstack.py:
     maintainers: $team_openstack
@@ -1069,9 +1069,6 @@ files:
   lib/ansible/plugins/action/junos:
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/mlnxos_config.py:
-    maintainers: $team_mlnxos
-    labels: networking
   lib/ansible/plugins/action/net:
     maintainers: $team_networking
     labels: networking
@@ -1080,6 +1077,9 @@ files:
     labels:
     - networking
     - nxos
+  lib/ansible/plugins/action/onyx_config.py:
+    maintainers: $team_onyx
+    labels: networking
   lib/ansible/plugins/action/sros:
     maintainers: $team_networking
     labels: networking
@@ -1095,14 +1095,14 @@ files:
   lib/ansible/plugins/cliconf/ironware.py:
     maintainers: paulquack
     labels: networking
-  lib/ansible/plugins/cliconf/mlnxos.py:
-    maintainers: $team_mlnxos
-    labels: networking
   lib/ansible/plugins/cliconf/nxos.py:
     maintainers: $team_nxos
     labels:
     - networking
     - nxos
+  lib/ansible/plugins/cliconf/onyx.py:
+    maintainers: $team_onyx
+    labels: networking
   lib/ansible/plugins/connection/netconf.py:
     maintainers: $team_networking
     labels: networking
@@ -1169,14 +1169,14 @@ files:
   lib/ansible/plugins/terminal/junos.py:
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/terminal/mlnxos.py:
-    maintainers: $team_mlnxos
-    labels: networking
   lib/ansible/plugins/terminal/nxos.py:
     maintainers: $team_networking
     labels:
     - networking
     - nxos
+  lib/ansible/plugins/terminal/onyx.py:
+    maintainers: $team_onyx
+    labels: networking
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1222,13 +1222,13 @@ macros:
   team_azure: haroldwongms nitzmahone tstringer yuwzho xscript zikalino
   team_cumulus: isharacomix jrrivers privateip
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
-  team_mlnxos: samerd
   team_netapp: hulquest lmprice broncofan gouthampacha
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
   team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha kedarX
   team_nso: cmoberg pekdon
   team_nxos: mikewiebe privateip rahushen rcarrillocruz trishnaguha kedarX
+  team_onyx: samerd
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
   team_openswitch: Qalthos gundalow privateip
   team_rabbitmq: chrishoffman manuel-sousa hyperized
