@@ -38,7 +38,11 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
-        if self._play_context.connection == 'local':
+        if self._play_context.connection == 'network_cli':
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using network_cli and will be ignored')
+        elif self._play_context.connection == 'local':
             provider = load_provider(sros_provider_spec, self._task.args)
 
             pc = copy.deepcopy(self._play_context)
@@ -62,6 +66,8 @@ class ActionModule(_ActionModule):
                         'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
+        else:
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
