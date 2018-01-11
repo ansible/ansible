@@ -43,15 +43,14 @@ code.
 
     #!/usr/bin/python
     
-    # Copyright: (c) 2017, Ansible Project
+    # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Every file should have a copyright line with the original copyright holder.
-Major additions to the module (for instance, rewrites)  may add additional
-copyright lines. Code from the Ansible community should typically be assigned
-as "Copyright (c) 2017 Ansible Project" which covers all contributors. Any
-legal questions need to review the source control history, so an exhaustive
-copyright header is not necessary.
+Every file should have a copyright line (see `The copyright notice <https://www.gnu.org/licenses/gpl-howto.en.html>`_)
+with the original copyright holder. Major additions to the module (for
+instance, rewrites) may add additional copyright lines. Any legal questions
+need to review the source control history, so an exhaustive copyright header is
+not necessary.
 
 The license declaration should be ONLY one line, not the full GPL prefix. If
 you notice a module with the full prefix, feel free to switch it to the
