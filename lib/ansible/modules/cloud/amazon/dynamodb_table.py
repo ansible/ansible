@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -192,7 +184,7 @@ INDEX_OPTIONS = INDEX_REQUIRED_OPTIONS + ['hash_key_type', 'range_key_name', 'ra
 INDEX_TYPE_OPTIONS = ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
 
 
-def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None):
+def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None, region=None):
     table_name = module.params.get('name')
     hash_key_name = module.params.get('hash_key_name')
     hash_key_type = module.params.get('hash_key_type')
@@ -201,7 +193,6 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
     read_capacity = module.params.get('read_capacity')
     write_capacity = module.params.get('write_capacity')
     all_indexes = module.params.get('indexes')
-    region = module.params.get('region')
     tags = module.params.get('tags')
     wait_for_active_timeout = module.params.get('wait_for_active_timeout')
 
@@ -231,7 +222,6 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
 
     try:
         table = Table(table_name, connection=connection)
-
 
         if dynamo_table_exists(table):
             result['changed'] = update_dynamo_table(table, throughput=throughput, check_mode=module.check_mode, global_indexes=global_indexes)
@@ -358,7 +348,7 @@ def has_throughput_changed(table, new_throughput):
         return False
 
     return new_throughput['read'] != table.throughput['read'] or \
-           new_throughput['write'] != table.throughput['write']
+        new_throughput['write'] != table.throughput['write']
 
 
 def get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type):
@@ -406,6 +396,7 @@ def validate_index(index, module):
     if index['type'] not in INDEX_TYPE_OPTIONS:
         module.fail_json(msg='%s is not a valid index type, must be one of %s' % (index['type'], INDEX_TYPE_OPTIONS))
 
+
 def get_indexes(all_indexes):
     indexes = []
     global_indexes = []
@@ -438,7 +429,6 @@ def get_indexes(all_indexes):
     return indexes, global_indexes
 
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -451,8 +441,8 @@ def main():
         read_capacity=dict(default=1, type='int'),
         write_capacity=dict(default=1, type='int'),
         indexes=dict(default=[], type='list'),
-        tags = dict(type='dict'),
-        wait_for_active_timeout = dict(default=60, type='int'),
+        tags=dict(type='dict'),
+        wait_for_active_timeout=dict(default=60, type='int'),
     ))
 
     module = AnsibleModule(
@@ -489,7 +479,7 @@ def main():
 
     state = module.params.get('state')
     if state == 'present':
-        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts)
+        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts, region)
     elif state == 'absent':
         delete_dynamo_table(connection, module)
 

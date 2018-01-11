@@ -1,0 +1,11 @@
+---
+- hosts: nuage
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+  - { role: nuage_vspk, when: "limit_to in ['*', 'nuage_vspk']" }

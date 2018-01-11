@@ -19,8 +19,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     mariadb \
     mercurial \
     openssh \
+    password-store \
     postgresql-server \
-    python-coverage \
     python-cryptography \
     python-devel \
     python-httplib2 \
@@ -39,6 +39,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     python-virtualenv \
     rpm-build \
     ruby \
+    sshpass \
     subversion \
     sudo \
     tar \
@@ -72,6 +73,6 @@ RUN ssh-keygen -q -t rsa1 -N '' -f /etc/ssh/ssh_host_key && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
 # explicitly enable the service, opensuse default to disabled services
 RUN systemctl enable sshd.service
-RUN pip install junit-xml
+RUN pip install coverage junit-xml
 ENV container=docker
 CMD ["/sbin/init"]

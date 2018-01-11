@@ -4,12 +4,14 @@
 - name: setup
   eos_config:
     lines: no ip domain-name
+    timeout: 30
     match: none
     provider: "{{ eapi }}"
 
 - name: configure domain_name
   eos_system:
     domain_name: eng.ansible.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -20,6 +22,7 @@
 - name: verify domain_name
   eos_system:
     domain_name: eng.ansible.com
+    timeout: 30
     provider: "{{ eapi }}"
   register: result
 
@@ -30,6 +33,7 @@
 - name: teardown
   eos_config:
     lines: no ip domain-name
+    timeout: 30
     match: none
     provider: "{{ eapi }}"
 

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -140,22 +140,26 @@ import json
 import traceback
 
 try:
-    import boto3
+    import botocore
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name                 = dict(),
-        function_arn         = dict(),
-        wait                 = dict(choices=BOOLEANS, default=True, type='bool'),
-        tail_log             = dict(choices=BOOLEANS, default=False, type='bool'),
-        dry_run              = dict(choices=BOOLEANS, default=False, type='bool'),
-        version_qualifier    = dict(),
-        payload              = dict(default={}, type='dict'),
+        name=dict(),
+        function_arn=dict(),
+        wait=dict(default=True, type='bool'),
+        tail_log=dict(default=False, type='bool'),
+        dry_run=dict(default=False, type='bool'),
+        version_qualifier=dict(),
+        payload=dict(default={}, type='dict'),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -168,13 +172,13 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
-    name                 = module.params.get('name')
-    function_arn         = module.params.get('function_arn')
-    await_return         = module.params.get('wait')
-    dry_run              = module.params.get('dry_run')
-    tail_log             = module.params.get('tail_log')
-    version_qualifier    = module.params.get('version_qualifier')
-    payload              = module.params.get('payload')
+    name = module.params.get('name')
+    function_arn = module.params.get('function_arn')
+    await_return = module.params.get('wait')
+    dry_run = module.params.get('dry_run')
+    tail_log = module.params.get('tail_log')
+    version_qualifier = module.params.get('version_qualifier')
+    payload = module.params.get('payload')
 
     if not HAS_BOTO3:
         module.fail_json(msg='Python module "boto3" is missing, please install it')
@@ -192,7 +196,7 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='lambda',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg="Failure connecting boto3 to AWS", exception=traceback.format_exc())
+        module.fail_json(msg="Failure connecting boto3 to AWS: %s" % to_native(e), exception=traceback.format_exc())
 
     invoke_params = {}
 
@@ -243,7 +247,7 @@ def main():
         module.fail_json(msg="Unexpected failure while invoking Lambda function",
                          exception=traceback.format_exc())
 
-    results ={
+    results = {
         'logs': '',
         'status': response['StatusCode'],
         'output': '',
@@ -258,7 +262,7 @@ def main():
 
     if invoke_params['InvocationType'] == 'RequestResponse':
         try:
-            results['output'] = json.loads(response['Payload'].read())
+            results['output'] = json.loads(response['Payload'].read().decode('utf8'))
         except Exception as e:
             module.fail_json(msg="Failed while decoding function return value", exception=traceback.format_exc())
 
@@ -272,7 +276,7 @@ def main():
                 # format the stacktrace sent back as an array into a multiline string
                 'trace': '\n'.join(
                     [' '.join([
-                        str(x) for x in line # cast line numbers to strings
+                        str(x) for x in line  # cast line numbers to strings
                     ]) for line in results.get('output', {}).get('stackTrace', [])]
                 ),
                 'errmsg': results['output'].get('errorMessage'),
@@ -282,9 +286,6 @@ def main():
 
     module.exit_json(changed=True, result=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

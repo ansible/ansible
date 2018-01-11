@@ -115,9 +115,9 @@ From this, we'll use the add_host module to dynamically create a host group cons
     
        - name: Add all instance public IPs to host group
          add_host: hostname={{ item.public_ip }} groups=ec2hosts
-         with_items: "{{ ec2.instances }}"
+         loop: "{{ ec2.instances }}"
 
-With the host group now created, a second play at the bottom of the the same provisioning playbook file might now have some configuration steps::
+With the host group now created, a second play at the bottom of the same provisioning playbook file might now have some configuration steps::
 
     # demo_setup.yml
 

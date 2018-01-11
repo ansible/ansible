@@ -1,0 +1,76 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_ntp_options sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: "Apply default ntp config" 
+  nxos_ntp_options: &default
+    state: absent
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure ntp with master and default stratum
+    nxos_ntp_options: &configure_master_default_stratum
+      master: true
+      logging: true
+      state: present
+      provider: "{{ connection }}"      
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Configure ntp with master and default stratum"
+    nxos_ntp_options: *configure_master_default_stratum
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove ntp with master and default stratum
+    nxos_ntp_options: &remove_master_default_stratum
+      logging: true
+      master: true
+      state: absent
+      provider: "{{ connection }}"      
+    register: result
+
+  - assert: *true
+
+  - name: Configure ntp with master and non-default stratum
+    nxos_ntp_options: &configure_master_non_default_stratum
+      master: true
+      logging: true
+      stratum: 10
+      state: present
+      provider: "{{ connection }}"      
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure ntp with master and non-default stratum"
+    nxos_ntp_options: *configure_master_non_default_stratum
+    register: result
+
+  - assert: *false
+
+  - name: Remove ntp with master and non-default stratum
+    nxos_ntp_options: &remove_master_non_default_stratum
+      logging: true
+      master: true
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  always:
+  - name: Cleanup ntp config
+    nxos_ntp_options: *default
+    register: result
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_ntp_options sanity test"

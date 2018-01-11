@@ -1,28 +1,15 @@
 #!/usr/bin/python
 #
-# Create Webfaction domains and subdomains using Ansible and the Webfaction API
-#
-# ------------------------------------------
-#
 # (c) Quentin Stafford-Fraser 2015
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Create Webfaction domains and subdomains using Ansible and the Webfaction API
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -95,24 +82,27 @@ EXAMPLES = '''
 
 '''
 
-import socket
 import xmlrpclib
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
-            subdomains = dict(required=False, default=[]),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            subdomains=dict(required=False, default=[]),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
         ),
         supports_check_mode=True
     )
-    domain_name  = module.params['name']
+    domain_name = module.params['name']
     domain_state = module.params['state']
     domain_subdomains = module.params['subdomains']
 
@@ -137,7 +127,7 @@ def main():
             if set(existing_domain['subdomains']) >= set(domain_subdomains):
                 # If it exists with the right subdomains, we don't change anything.
                 module.exit_json(
-                    changed = False,
+                    changed=False,
                 )
 
         positional_args = [session_id, domain_name] + domain_subdomains
@@ -156,7 +146,7 @@ def main():
         # If the app's already not there, nothing changed.
         if not existing_domain:
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         positional_args = [session_id, domain_name] + domain_subdomains
@@ -171,11 +161,10 @@ def main():
         module.fail_json(msg="Unknown state specified: {}".format(domain_state))
 
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

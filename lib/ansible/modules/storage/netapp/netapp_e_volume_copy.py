@@ -1,23 +1,13 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -30,6 +20,8 @@ description:
     - Create and delete snapshots images on volume groups for NetApp E-series storage arrays.
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
+extends_documentation_fragment:
+    - netapp.eseries
 options:
     api_username:
         required: true
@@ -50,17 +42,17 @@ options:
         - Should https certificates be validated?
     source_volume_id:
         description:
-            - The the id of the volume copy source.
+            - The id of the volume copy source.
             - If used, must be paired with destination_volume_id
             - Mutually exclusive with volume_copy_pair_id, and search_volume_id
     destination_volume_id:
         description:
-            - The the id of the volume copy destination.
+            - The id of the volume copy destination.
             - If used, must be paired with source_volume_id
             - Mutually exclusive with volume_copy_pair_id, and search_volume_id
     volume_copy_pair_id:
         description:
-            - The the id of a given volume copy pair
+            - The id of a given volume copy pair
             - Mutually exclusive with destination_volume_id, source_volume_id, and search_volume_id
             - Can use to delete or check presence of volume pairs
             - Must specify this or (destination_volume_id and source_volume_id)
@@ -107,45 +99,12 @@ import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.netapp import request
 
 HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
-
-
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            raw_data = None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
 
 
 def find_volume_copy_pair_id_from_source_volume_id_and_destination_volume_id(params):

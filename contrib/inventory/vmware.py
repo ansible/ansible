@@ -38,9 +38,9 @@ import os
 import ssl
 import sys
 import time
-import ConfigParser
 
-from six import text_type, string_types
+from six import integer_types, text_type, string_types
+from six.moves import configparser
 
 # Disable logging message trigged by pSphere/suds.
 try:
@@ -64,7 +64,7 @@ from suds.sudsobject import Object as SudsObject
 class VMwareInventory(object):
 
     def __init__(self, guests_only=None):
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = configparser.SafeConfigParser()
         if os.environ.get('VMWARE_INI', ''):
             config_files = [os.environ['VMWARE_INI']]
         else:
@@ -210,7 +210,7 @@ class VMwareInventory(object):
                 if obj_info != ():
                     l.append(obj_info)
             return l
-        elif isinstance(obj, (type(None), bool, int, long, float, string_types)):
+        elif isinstance(obj, (type(None), bool, float) + string_types + integer_types):
             return obj
         else:
             return ()

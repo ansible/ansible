@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -33,13 +23,16 @@ options:
         version_added: "2.1"
         description:
             - "if supplied, restrict the additional facts collected to the given subset.
-              Possible values: all, hardware, network, virtual, ohai, and
+              Possible values: all, min, hardware, network, virtual, ohai, and
               facter Can specify a list of values to specify a larger subset.
               Values can also be used with an initial C(!) to specify that
               that specific subset should not be collected.  For instance:
-              !hardware, !network, !virtual, !ohai, !facter.  Note that a few
-              facts are always collected.  Use the filter parameter if you do
-              not want to display those."
+              !hardware, !network, !virtual, !ohai, !facter. If !all is specified
+              then only the min subset is collected. To avoid collecting even the
+              min subset, specify !all and !min subsets. To collect only specific facts,
+              use !all, !min, and specify the particular fact subsets.
+              Use the filter parameter if you do not want to display some collected
+              facts."
         required: false
         default: 'all'
     gather_timeout:
@@ -69,6 +62,7 @@ description:
        executed directly by C(/usr/bin/ansible) to check what variables are
        available to a host. Ansible provides many I(facts) about the system,
        automatically.
+     - This module is also supported for Windows targets.
 notes:
     - More ansible facts will be added with successive releases. If I(facter) or
       I(ohai) are installed, variables from these programs will also be snapshotted
@@ -85,6 +79,7 @@ notes:
       their output must be formattable in JSON (Ansible will take care of this). Test the
       output of your scripts.
       This option was added in Ansible 2.1.
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -101,106 +96,38 @@ EXAMPLES = """
 # Display only facts returned by facter.
 # ansible all -m setup -a 'filter=facter_*'
 
+# Collect only facts returned by facter.
+# ansible all -m setup -a 'gather_subset=!all,!any,facter'
+
 # Display only facts about certain interfaces.
 # ansible all -m setup -a 'filter=ansible_eth[0-2]'
 
-# Restrict additional gathered facts to network and virtual.
+# Restrict additional gathered facts to network and virtual (includes default minimum facts)
 # ansible all -m setup -a 'gather_subset=network,virtual'
+
+# Collect only network and virtual (excludes default minimum facts)
+# ansible all -m setup -a 'gather_subset=!all,!any,network,virtual'
 
 # Do not call puppet facter or ohai even if present.
 # ansible all -m setup -a 'gather_subset=!facter,!ohai'
 
-# Only collect the minimum amount of facts:
+# Only collect the default minimum amount of facts:
 # ansible all -m setup -a 'gather_subset=!all'
+
+# Collect no facts, even the default minimum subset of facts:
+# ansible all -m setup -a 'gather_subset=!all,!min'
 
 # Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
 # ansible windows -m setup -a "fact_path='c:\\custom_facts'"
 """
-import fnmatch
-import sys
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible.module_utils.facts import collector
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
+from ansible.module_utils.facts import ansible_collector
 
 from ansible.module_utils.facts import default_collectors
-
-
-# This is the main entry point for setup.py facts.py.
-# FIXME: This is coupled to AnsibleModule (it assumes module.params has keys 'gather_subset',
-#        'gather_timeout', 'filter' instead of passing those are args or oblique ds
-#        module is passed in and self.module.misc_AnsibleModule_methods
-#        are used, so hard to decouple.
-
-class AnsibleFactCollector(collector.BaseFactCollector):
-    '''A FactCollector that returns results under 'ansible_facts' top level key.
-
-       Has a 'from_gather_subset() constructor that populates collectors based on a
-       gather_subset specifier.'''
-
-    def __init__(self, collectors=None, namespace=None, filter_spec=None):
-
-        super(AnsibleFactCollector, self).__init__(collectors=collectors,
-                                                   namespace=namespace)
-
-        self.filter_spec = filter_spec
-
-    def _filter(self, facts_dict, filter_spec):
-        # assume a filter_spec='' is equilv to filter_spec='*'
-        if not filter_spec or filter_spec == '*':
-            return facts_dict
-
-        return [(x, y) for x, y in facts_dict.items() if fnmatch.fnmatch(x, filter_spec)]
-
-    def collect(self, module=None, collected_facts=None):
-        collected_facts = collected_facts or {}
-
-        facts_dict = {}
-        facts_dict['ansible_facts'] = {}
-
-        for collector_obj in self.collectors:
-            info_dict = {}
-
-            # shallow copy of the accumulated collected facts to pass to each collector
-            # for reference.
-            collected_facts.update(facts_dict['ansible_facts'].copy())
-
-            try:
-
-                # Note: this collects with namespaces, so collected_facts also includes namespaces
-                info_dict = collector_obj.collect_with_namespace(module=module,
-                                                                 collected_facts=collected_facts)
-            except Exception as e:
-                sys.stderr.write(repr(e))
-                sys.stderr.write('\n')
-
-            # filtered_info_dict = self._filter(info_dict, self.filter_spec)
-            # NOTE: If we want complicated fact dict merging, this is where it would hook in
-            facts_dict['ansible_facts'].update(self._filter(info_dict, self.filter_spec))
-
-        # TODO: this may be best place to apply fact 'filters' as well. They
-        #       are currently ignored -akl
-        return facts_dict
-
-
-class CollectorMetaDataCollector(collector.BaseFactCollector):
-    '''Collector that provides a facts with the gather_subset metadata.'''
-
-    name = 'gather_subset'
-    _fact_ids = set([])
-
-    def __init__(self, collectors=None, namespace=None, gather_subset=None, module_setup=None):
-        super(CollectorMetaDataCollector, self).__init__(collectors, namespace)
-        self.gather_subset = gather_subset
-        self.module_setup = module_setup
-
-    def collect(self, module=None, collected_facts=None):
-        meta_facts = {'gather_subset': self.gather_subset}
-        if self.module_setup:
-            meta_facts['module_setup'] = self.module_setup
-        return meta_facts
 
 
 def main():
@@ -229,38 +156,21 @@ def main():
 
     all_collector_classes = default_collectors.collectors
 
-    collector_classes = \
-        collector.collector_classes_from_gather_subset(
-            all_collector_classes=all_collector_classes,
-            minimal_gather_subset=minimal_gather_subset,
-            gather_subset=gather_subset,
-            gather_timeout=gather_timeout)
-
-    # print('collector_classes: %s' % pprint.pformat(collector_classes))
-
+    # rename namespace_name to root_key?
     namespace = PrefixFactNamespace(namespace_name='ansible',
                                     prefix='ansible_')
 
-    collectors = []
-    for collector_class in collector_classes:
-        collector_obj = collector_class(namespace=namespace)
-        collectors.append(collector_obj)
-
-    # Add a collector that knows what gather_subset we used so it it can provide a fact
-    collector_meta_data_collector = \
-        CollectorMetaDataCollector(gather_subset=gather_subset,
-                                   module_setup=True)
-    collectors.append(collector_meta_data_collector)
-
-    # print('collectors: %s' % pprint.pformat(collectors))
-
     fact_collector = \
-        AnsibleFactCollector(collectors=collectors,
-                             filter_spec=filter_spec)
+        ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,
+                                                namespace=namespace,
+                                                filter_spec=filter_spec,
+                                                gather_subset=gather_subset,
+                                                gather_timeout=gather_timeout,
+                                                minimal_gather_subset=minimal_gather_subset)
 
     facts_dict = fact_collector.collect(module=module)
 
-    module.exit_json(**facts_dict)
+    module.exit_json(ansible_facts=facts_dict)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,50 @@
+- name: "Install package"
+  apt:
+    name: pass
+    state: present
+  when: ansible_pkg_mgr == 'apt'
+- name: "Install package"
+  yum:
+    name: pass
+    state: present
+  when: ansible_pkg_mgr == 'yum'
+- name: "Install package"
+  dnf:
+    name: pass
+    state: present
+  when: ansible_pkg_mgr == 'dnf'
+- name: "Install package"
+  zypper:
+    name: password-store
+    state: present
+  when: ansible_pkg_mgr == 'zypper'
+- name: "Install package"
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "gnupg"
+    - "password-store"
+  when: ansible_pkg_mgr == 'pkgng'
+
+
+- name: Find brew binary
+  command: which brew
+  register: brew_which
+  when: ansible_distribution in ['MacOSX']
+- name: Get owner of brew binary
+  stat:
+    path: "{{ brew_which.stdout }}"
+  register: brew_stat
+  when: ansible_distribution in ['MacOSX']
+- name: "Install package"
+  homebrew:
+    name: "{{ item }}"
+    state: present
+    update_homebrew: no
+  with_items:
+    - "gnupg2"
+    - "pass"
+  become: yes
+  become_user: "{{ brew_stat.stat.pw_name }}"
+  when: ansible_pkg_mgr == 'homebrew'

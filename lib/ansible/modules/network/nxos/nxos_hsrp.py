@@ -17,11 +17,9 @@
 #
 
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
@@ -35,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - HSRP feature needs to be enabled first on the system.
   - SVIs must exist before using this module.
   - Interface must be a L3 port before using this module.
@@ -124,17 +123,20 @@ commands:
     sample: ["interface vlan10", "hsrp version 2", "hsrp 30", "ip 10.30.1.1"]
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -374,10 +376,7 @@ def main():
         vip=dict(type='str', required=False),
         auth_type=dict(choices=['text', 'md5'], required=False),
         auth_string=dict(type='str', required=False),
-        state=dict(choices=['absent', 'present'], required=False, default='present'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -385,7 +384,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
 
     interface = module.params['interface'].lower()
@@ -398,7 +396,8 @@ def main():
     auth_type = module.params['auth_type']
     auth_string = module.params['auth_string']
 
-    transport = module.params['transport']
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
@@ -408,7 +407,7 @@ def main():
             validate_params(param, module)
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and transport == 'cli'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)
@@ -464,11 +463,15 @@ def main():
             module.exit_json(**results)
         else:
             load_config(module, commands)
-            if transport == 'cli':
+
+            # validate IP
+            if network_api == 'cliconf' and state == 'present':
+                commands.insert(0, 'config t')
                 body = run_commands(module, commands)
                 validate_config(body, vip, module)
+
             results['changed'] = True
-            end_state = get_hsrp_group(group, interface, module)
+
             if 'configure' in commands:
                 commands.pop(0)
 

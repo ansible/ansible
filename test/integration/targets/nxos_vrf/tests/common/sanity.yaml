@@ -1,0 +1,65 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  - name: 'Setup: Delete VRF before test'
+    nxos_config:
+      lines:
+        - no vrf context ntc
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Ensure ntc VRF exists on switch
+    nxos_vrf: &configure
+      vrf: ntc
+      admin_state: down
+      description: testing
+      #vni: 5000
+      #rd: auto
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vrf: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Ensure ntc VRF does not exist on switch
+    nxos_vrf: &remove
+      vrf: ntc
+      admin_state: down
+      description: testing
+      #vni: 5000
+      #rd: auto
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 30
+
+  - name: "Remove Idempotence"
+    nxos_vrf: *remove
+    register: result
+
+  - assert: *false
+
+  - name: 'Teardown: Delete VRF after test'
+    nxos_config:
+      lines:
+        - no vrf context ntc
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vrf sanity test"

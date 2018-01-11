@@ -175,6 +175,7 @@ class PacketInventory(object):
         # Configure which groups should be created.
         group_by_options = [
             'group_by_device_id',
+            'group_by_hostname',
             'group_by_facility',
             'group_by_project',
             'group_by_operating_system',
@@ -327,6 +328,12 @@ class PacketInventory(object):
             if self.nested_groups:
                 self.push_group(self.inventory, 'devices', device.id)
 
+        # Inventory: Group by device name (hopefully a group of 1)
+        if self.group_by_hostname:
+            self.push(self.inventory, device.hostname, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'hostnames', project.name)
+
         # Inventory: Group by project
         if self.group_by_project:
             self.push(self.inventory, project.name, dest)
@@ -473,9 +480,9 @@ class PacketInventory(object):
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        regex = "[^A-Za-z0-9\_"
+        regex = r"[^A-Za-z0-9\_"
         if not self.replace_dash_in_groups:
-            regex += "\-"
+            regex += r"\-"
         return re.sub(regex + "]", "_", word)
 
     def json_format_dict(self, data, pretty=False):

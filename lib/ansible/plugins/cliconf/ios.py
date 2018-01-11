@@ -25,7 +25,7 @@ import json
 from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
@@ -64,11 +64,22 @@ class Cliconf(CliconfBase):
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
-            self.send_command(cmd)
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
+            try:
+                cmd = json.loads(cmd)
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+            except:
+                command = cmd
+                prompt = None
+                answer = None
 
-    def get(self, *args, **kwargs):
-        return self.send_command(*args, **kwargs)
+            self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer))
+
+    def get(self, command, prompt=None, answer=None, sendonly=False):
+        return self.send_command(to_bytes(command), prompt=to_bytes(prompt),
+                                 answer=to_bytes(answer), sendonly=sendonly)
 
     def get_capabilities(self):
         result = {}

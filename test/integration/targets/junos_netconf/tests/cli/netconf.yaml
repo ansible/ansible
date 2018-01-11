@@ -1,17 +1,15 @@
 ---
-- debug: msg="START netconf/netconf.yaml"
+- debug: msg="START netconf/netconf.yaml on connection={{ ansible_connection }}"
 
 
 - name: Ensure netconf is enabled
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - name: idempotent tests
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -20,17 +18,21 @@
 
 ###################################
 
+- name: wait for netconf server to come up
+  pause:
+    seconds: 10
+
 - name: Ensure we can communicate over netconf
   junos_command:
     rpcs: get-software-information
     provider: "{{ netconf }}"
+  connection: netconf
 
 # Disable netconf
 
 - name: Disable netconf
   junos_netconf:
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -40,7 +42,6 @@
 - name: idempotent tests
   junos_netconf:
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -49,25 +50,24 @@
 
 - name: wait for persistent socket to timeout
   pause:
-    seconds: 30
+    seconds: 120
 
 - name: Ensure we can NOT talk via netconf
   junos_command:
     rpcs: get-software-information
     provider: "{{ netconf }}"
   register: result
+  connection: netconf
   ignore_errors: true
 
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to connect to' in result.msg"
 
 - name: re-enable netconf
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 
-- debug: msg="END netconf/netconfg.yaml"
+- debug: msg="END netconf/netconfg.yaml on connection={{ ansible_connection }}"

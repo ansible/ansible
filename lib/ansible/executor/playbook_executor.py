@@ -27,6 +27,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
 
@@ -67,7 +68,6 @@ class PlaybookExecutor:
         check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE)
 
     def run(self):
-
         '''
         Run the given playbook, based on the settings in the play which
         may limit the runs to serialized groups, etc.
@@ -102,13 +102,21 @@ class PlaybookExecutor:
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
+                    # Create a temporary copy of the play here, so we can run post_validate
+                    # on it without the templating changes affecting the original object.
+                    # Doing this before vars_prompt to allow for using variables in prompt.
+                    all_vars = self._variable_manager.get_vars(play=play)
+                    templar = Templar(loader=self._loader, variables=all_vars)
+                    new_play = play.copy()
+                    new_play.post_validate(templar)
+
                     if play.vars_prompt:
-                        for var in play.vars_prompt:
+                        for var in new_play.vars_prompt:
                             vname = var['name']
                             prompt = var.get("prompt", vname)
                             default = var.get("default", None)
-                            private = var.get("private", True)
-                            confirm = var.get("confirm", False)
+                            private = boolean(var.get("private", True))
+                            confirm = boolean(var.get("confirm", False))
                             encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
@@ -120,12 +128,10 @@ class PlaybookExecutor:
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
-                    # Create a temporary copy of the play here, so we can run post_validate
-                    # on it without the templating changes affecting the original object.
-                    all_vars = self._variable_manager.get_vars(play=play)
-                    templar = Templar(loader=self._loader, variables=all_vars)
-                    new_play = play.copy()
-                    new_play.post_validate(templar)
+                        # Post validating again in case variables were entered in the prompt.
+                        all_vars = self._variable_manager.get_vars(play=play)
+                        templar = Templar(loader=self._loader, variables=all_vars)
+                        new_play.post_validate(templar)
 
                     if self._options.syntax:
                         continue

@@ -421,7 +421,7 @@ If ($state -eq "present") {
 	}
 
 	If ($insertbefore -and $insertafter) {
-		Add-Warning('Both insertbefore and insertafter parameters found, ignoring "insertafter=$insertafter"');
+		Add-Warning $result "Both insertbefore and insertafter parameters found, ignoring `"insertafter=$insertafter`""
 	}
 
 	If (-not $insertbefore -and -not $insertafter) {

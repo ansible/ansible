@@ -1,29 +1,18 @@
 #!/usr/bin/python
 
-"""
-Ansible module to manage DNS records using dnspython
-(c) 2016, Marcin Skarbek <github@skarbek.name>
-(c) 2016, Andreas Olsson <andreas@arrakis.se>
-(c) 2017, Loic Blot <loic.blot@unix-experience.fr>
+# (c) 2016, Marcin Skarbek <github@skarbek.name>
+# (c) 2016, Andreas Olsson <andreas@arrakis.se>
+# (c) 2017, Loic Blot <loic.blot@unix-experience.fr>
+#
+# This module was ported from https://github.com/mskarbek/ansible-nsupdate
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This module was ported from https://github.com/mskarbek/ansible-nsupdate
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-This file is part of Ansible
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,6 +39,11 @@ options:
         description:
             - Apply DNS modification on this server.
         required: true
+    port:
+        description:
+            - Use this TCP port when connecting to C(server).
+        default: 53
+        version_added: 2.5
     key_name:
         description:
             - Use TSIG key name to authenticate against DNS C(server)
@@ -95,6 +89,15 @@ EXAMPLES = '''
     record: "ansible"
     value: "192.168.1.1"
 
+- name: Add or modify ansible.example.org A to 192.168.1.1, 192.168.1.2 and 192.168.1.3"
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    zone: "example.org"
+    record: "ansible"
+    value: ["192.168.1.1", "192.168.1.2", "192.168.1.3"]
+
 - name: Remove puppet.example.org CNAME
   nsupdate:
     key_name: "nsupdate"
@@ -127,9 +130,9 @@ type:
     type: string
     sample: 'CNAME'
 value:
-    description: DNS record value
+    description: DNS record value(s)
     returned: success
-    type: string
+    type: list
     sample: '192.168.1.1'
 zone:
     description: DNS record zone
@@ -151,9 +154,6 @@ dns_rc_str:
 from binascii import Error as binascii_error
 from socket import error as socket_error
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-
 try:
     import dns.update
     import dns.query
@@ -164,6 +164,9 @@ try:
     HAVE_DNSPYTHON = True
 except ImportError:
     HAVE_DNSPYTHON = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 class RecordManager(object):
@@ -182,9 +185,8 @@ class RecordManager(object):
                 })
             except TypeError:
                 module.fail_json(msg='Missing key_secret')
-            except binascii_error:
-                e = get_exception()
-                module.fail_json(msg='TSIG key error: %s' % str(e))
+            except binascii_error as e:
+                module.fail_json(msg='TSIG key error: %s' % to_native(e))
         else:
             self.keyring = None
 
@@ -198,13 +200,11 @@ class RecordManager(object):
     def __do_update(self, update):
         response = None
         try:
-            response = dns.query.tcp(update, self.module.params['server'], timeout=10)
-        except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature):
-            e = get_exception()
-            self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, str(e)))
-        except (socket_error, dns.exception.Timeout):
-            e = get_exception()
-            self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, str(e)))
+            response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
+        except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
+            self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
+        except (socket_error, dns.exception.Timeout) as e:
+            self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
         return response
 
     def create_or_update_record(self):
@@ -237,27 +237,35 @@ class RecordManager(object):
 
     def create_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        try:
-            update.add(self.module.params['record'],
-                       self.module.params['ttl'],
-                       self.module.params['type'],
-                       self.module.params['value'])
-        except AttributeError:
-            self.module.fail_json(msg='value needed when state=present')
-        except dns.exception.SyntaxError:
-            self.module.fail_json(msg='Invalid/malformed value')
+        for entry in self.module.params['value']:
+            try:
+                update.add(self.module.params['record'],
+                           self.module.params['ttl'],
+                           self.module.params['type'],
+                           entry)
+            except AttributeError:
+                self.module.fail_json(msg='value needed when state=present')
+            except dns.exception.SyntaxError:
+                self.module.fail_json(msg='Invalid/malformed value')
 
         response = self.__do_update(update)
         return dns.message.Message.rcode(response)
 
     def modify_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        update.replace(self.module.params['record'],
-                       self.module.params['ttl'],
-                       self.module.params['type'],
-                       self.module.params['value'])
-
+        update.delete(self.module.params['record'], self.module.params['type'])
+        for entry in self.module.params['value']:
+            try:
+                update.add(self.module.params['record'],
+                           self.module.params['ttl'],
+                           self.module.params['type'],
+                           entry)
+            except AttributeError:
+                self.module.fail_json(msg='value needed when state=present')
+            except dns.exception.SyntaxError:
+                self.module.fail_json(msg='Invalid/malformed value')
         response = self.__do_update(update)
+
         return dns.message.Message.rcode(response)
 
     def remove_record(self):
@@ -288,21 +296,21 @@ class RecordManager(object):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
         try:
             update.present(self.module.params['record'], self.module.params['type'])
-        except dns.rdatatype.UnknownRdatatype:
-            e = get_exception()
-            self.module.fail_json(msg='Record error: {}'.format(str(e)))
+        except dns.rdatatype.UnknownRdatatype as e:
+            self.module.fail_json(msg='Record error: {0}'.format(to_native(e)))
 
         response = self.__do_update(update)
         self.dns_rc = dns.message.Message.rcode(response)
         if self.dns_rc == 0:
             if self.module.params['state'] == 'absent':
                 return 1
-            try:
-                update.present(self.module.params['record'], self.module.params['type'], self.module.params['value'])
-            except AttributeError:
-                self.module.fail_json(msg='value needed when state=present')
-            except dns.exception.SyntaxError:
-                self.module.fail_json(msg='Invalid/malformed value')
+            for entry in self.module.params['value']:
+                try:
+                    update.present(self.module.params['record'], self.module.params['type'], entry)
+                except AttributeError:
+                    self.module.fail_json(msg='value needed when state=present')
+                except dns.exception.SyntaxError:
+                    self.module.fail_json(msg='Invalid/malformed value')
             response = self.__do_update(update)
             self.dns_rc = dns.message.Message.rcode(response)
             if self.dns_rc == 0:
@@ -321,6 +329,7 @@ def main():
         argument_spec=dict(
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             server=dict(required=True, type='str'),
+            port=dict(required=False, default=53, type='int'),
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
             key_algorithm=dict(required=False, default='hmac-md5', choices=tsig_algs, type='str'),
@@ -328,7 +337,7 @@ def main():
             record=dict(required=True, type='str'),
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False, default=None, type='str')
+            value=dict(required=False, default=None, type='list')
         ),
         supports_check_mode=True
     )

@@ -1,28 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2017, Abhijeet Kasurde (akasurde@redhat.com)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Abhijeet Kasurde (akasurde@redhat.com)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -31,7 +17,7 @@ module: ipa_dnsrecord
 author: Abhijeet Kasurde (@akasurde)
 short_description: Manage FreeIPA DNS records
 description:
-- Add, modify and delete an IPA DNS Record using IPA API
+- Add, modify and delete an IPA DNS Record using IPA API.
 options:
   zone_name:
     description:
@@ -44,47 +30,28 @@ options:
     aliases: ["name"]
   record_type:
     description:
-    - The type of DNS record name
-    - Currently, 'A', 'AAAA' is supported
+    - The type of DNS record name.
+    - Currently, 'A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR' and 'TXT' are supported.
+    - "'A6', 'CNAME', 'DNAME' and 'TXT' are added in version 2.5."
     required: false
     default: 'A'
-    choices: ['A', 'AAAA']
-  record_ip:
+    choices: ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT']
+  record_value:
     description:
-    - Manage DNS record name with this IP address.
+    - Manage DNS record name with this value.
+    - In the case of 'A' or 'AAAA' record types, this will be the IP address.
+    - In the case of 'A6' record type, this will be the A6 Record data.
+    - In the case of 'CNAME' record type, this will be the hostname.
+    - In the case of 'DNAME' record type, this will be the DNAME target.
+    - In the case of 'PTR' record type, this will be the hostname.
+    - In the case of 'TXT' record type, this will be a text.
     required: true
   state:
     description: State to ensure
     required: false
     default: present
     choices: ["present", "absent"]
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: ipa.example.com
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: admin
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: https
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
+extends_documentation_fragment: ipa.documentation
 version_added: "2.4"
 '''
 
@@ -97,14 +64,34 @@ EXAMPLES = '''
     zone_name: example.com
     record_name: vm-001
     record_type: 'AAAA'
-    record_ip: '::1'
+    record_value: '::1'
+
+# Ensure a PTR record is present
+- ipa_dnsrecord:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: 2.168.192.in-addr.arpa
+    record_name: 5
+    record_type: 'PTR'
+    record_value: 'internal.ipa.example.com'
+
+# Ensure a TXT record is present
+- ipa_dnsrecord:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: example.com
+    record_name: _kerberos
+    record_type: 'TXT'
+    record_value: 'EXAMPLE.COM'
 
 # Ensure that dns record is removed
 - ipa_dnsrecord:
     name: host01
     zone_name: example.com
     record_type: 'AAAA'
-    record_ip: '::1'
+    record_value: '::1'
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
@@ -118,9 +105,11 @@ dnsrecord:
   type: dict
 '''
 
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
+from ansible.module_utils._text import to_native
 
 
 class DNSRecordIPAClient(IPAClient):
@@ -133,9 +122,19 @@ class DNSRecordIPAClient(IPAClient):
     def dnsrecord_add(self, zone_name=None, record_name=None, details=None):
         item = dict(idnsname=record_name)
         if details['record_type'] == 'A':
-            item.update(a_part_ip_address=details['record_ip'])
+            item.update(a_part_ip_address=details['record_value'])
         elif details['record_type'] == 'AAAA':
-            item.update(aaaa_part_ip_address=details['record_ip'])
+            item.update(aaaa_part_ip_address=details['record_value'])
+        elif details['record_type'] == 'A6':
+            item.update(a6_part_data=details['record_value'])
+        elif details['record_type'] == 'CNAME':
+            item.update(cname_part_hostname=details['record_value'])
+        elif details['record_type'] == 'DNAME':
+            item.update(dname_part_target=details['record_value'])
+        elif details['record_type'] == 'PTR':
+            item.update(ptr_part_hostname=details['record_value'])
+        elif details['record_type'] == 'TXT':
+            item.update(txtrecord=details['record_value'])
 
         return self._post_json(method='dnsrecord_add', name=zone_name, item=item)
 
@@ -152,10 +151,20 @@ class DNSRecordIPAClient(IPAClient):
 
 def get_dnsrecord_dict(details=None):
     module_dnsrecord = dict()
-    if details['record_type'] == 'A' and details['record_ip']:
-        module_dnsrecord.update(arecord=details['record_ip'])
-    elif details['record_type'] == 'AAAA' and details['record_ip']:
-        module_dnsrecord.update(aaaarecord=details['record_ip'])
+    if details['record_type'] == 'A' and details['record_value']:
+        module_dnsrecord.update(arecord=details['record_value'])
+    elif details['record_type'] == 'AAAA' and details['record_value']:
+        module_dnsrecord.update(aaaarecord=details['record_value'])
+    elif details['record_type'] == 'A6' and details['record_value']:
+        module_dnsrecord.update(a6record=details['record_value'])
+    elif details['record_type'] == 'CNAME' and details['record_value']:
+        module_dnsrecord.update(cnamerecord=details['record_value'])
+    elif details['record_type'] == 'DNAME' and details['record_value']:
+        module_dnsrecord.update(dnamerecord=details['record_value'])
+    elif details['record_type'] == 'PTR' and details['record_value']:
+        module_dnsrecord.update(ptrrecord=details['record_value'])
+    elif details['record_type'] == 'TXT' and details['record_value']:
+        module_dnsrecord.update(txtrecord=details['record_value'])
     return module_dnsrecord
 
 
@@ -171,7 +180,7 @@ def ensure(module, client):
 
     ipa_dnsrecord = client.dnsrecord_find(zone_name, record_name)
     module_dnsrecord = dict(record_type=module.params['record_type'],
-                            record_ip=module.params['record_ip'])
+                            record_value=module.params['record_value'])
 
     changed = False
     if state == 'present':
@@ -201,23 +210,18 @@ def ensure(module, client):
 
 
 def main():
-    record_types = ['A', 'AAAA']
-    module = AnsibleModule(
-        argument_spec=dict(
-            zone_name=dict(type='str', required=True),
-            record_name=dict(type='str', required=True, aliases=['name']),
-            record_type=dict(type='str', required=False, default='A', choices=record_types),
-            record_ip=dict(type='str', required=True),
-            state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        supports_check_mode=True,
-    )
+    record_types = ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT']
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(zone_name=dict(type='str', required=True),
+                         record_name=dict(type='str', aliases=['name'], required=True),
+                         record_type=dict(type='str', default='A', choices=record_types),
+                         record_value=dict(type='str', required=True),
+                         state=dict(type='str', default='present', choices=['present', 'absent']),
+                         )
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True
+                           )
 
     client = DNSRecordIPAClient(module=module,
                                 host=module.params['ipa_host'],
@@ -229,9 +233,8 @@ def main():
                      password=module.params['ipa_pass'])
         changed, record = ensure(module, client)
         module.exit_json(changed=changed, record=record)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

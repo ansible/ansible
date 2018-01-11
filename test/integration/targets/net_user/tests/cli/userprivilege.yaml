@@ -1,3 +1,0 @@
----
-- include: "{{ role_path }}/tests/eos/userprivilege.yaml"
-  when: hostvars[inventory_hostname]['ansible_network_os'] == 'eos'

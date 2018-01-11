@@ -11,6 +11,7 @@ ansible*.xml
 .buildinfo
 objects.inv
 .doctrees
+rst/dev_guide/testing/sanity/index.rst
 rst/modules/*.rst
 rst/playbooks_keywords.rst
 *.min.css

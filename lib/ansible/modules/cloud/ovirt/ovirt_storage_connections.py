@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -34,7 +34,7 @@ description:
 options:
     id:
         description:
-            - "Id of the the storage connection to manage."
+            - "Id of the storage connection to manage."
     state:
         description:
             - "Should the storage connection be present or absent."
@@ -42,7 +42,7 @@ options:
         default: present
     storage:
         description:
-            - "Name of the the storage domain to be used with storage connection."
+            - "Name of the storage domain to be used with storage connection."
     address:
         description:
             - "Address of the storage server. E.g.: myserver.mydomain.com"
@@ -232,7 +232,7 @@ def main():
         nfs_timeout=dict(default=None, type='int'),
         nfs_retrans=dict(default=None, type='int'),
         mount_options=dict(default=None),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         username=dict(default=None),
         port=dict(default=None, type='int'),
         target=dict(default=None),

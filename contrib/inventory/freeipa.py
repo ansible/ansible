@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import argparse
 from ipalib import api
@@ -31,13 +33,13 @@ def list_groups(api):
 
     inventory = {}
     hostvars = {}
-    meta = {}
 
-    result = api.Command.hostgroup_find()['result']
+    result = api.Command.hostgroup_find(all=True)['result']
 
     for hostgroup in result:
         # Get direct and indirect members (nested hostgroups) of hostgroup
         members = []
+
         if 'member_host' in hostgroup:
             members = [host for host in hostgroup['member_host']]
         if 'memberindirect_host' in hostgroup:

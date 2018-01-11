@@ -21,8 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_config
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -33,6 +31,8 @@ class TestNxosConfigModule(TestNxosModule):
     module = nxos_config
 
     def setUp(self):
+        super(TestNxosConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_config.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -40,11 +40,12 @@ class TestNxosConfigModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_config/config.cfg')
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('nxos_config', 'config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_config_no_change(self):
@@ -53,7 +54,7 @@ class TestNxosConfigModule(TestNxosModule):
         result = self.execute_module()
 
     def test_nxos_config_src(self):
-        args = dict(src=load_fixture('nxos_config/candidate.cfg'))
+        args = dict(src=load_fixture('nxos_config', 'candidate.cfg'))
         set_module_args(args)
 
         result = self.execute_module(changed=True)
@@ -106,6 +107,11 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_src_and_lines_fails(self):
         args = dict(src='foo', lines='foo')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_nxos_config_src_and_parents_fails(self):
+        args = dict(src='foo', parents='foo')
         set_module_args(args)
         result = self.execute_module(failed=True)
 

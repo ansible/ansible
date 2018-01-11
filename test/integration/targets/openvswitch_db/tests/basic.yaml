@@ -1,6 +1,11 @@
 ---
 
-- command: ovs-vsctl add-br br-test
+- name: Make sure test bridge does not exist before tests
+  command: ovs-vsctl del-br br-test
+  ignore_errors: yes
+
+- name: Create test bridge
+  command: ovs-vsctl add-br br-test
 
 - name: Create bridge
   openvswitch_db:
@@ -81,3 +86,6 @@
 - assert:
     that:
       - "result.changed == false"
+
+- name: Tear down test bridge
+  command: ovs-vsctl del-br br-test

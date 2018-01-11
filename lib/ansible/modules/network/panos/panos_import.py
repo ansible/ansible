@@ -73,11 +73,11 @@ EXAMPLES = '''
     category: software
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -118,7 +118,7 @@ def import_file(xapi, module, ip_address, file_, category):
     )
 
     r = requests.post(
-        'https://'+ip_address+'/api/',
+        'https://' + ip_address + '/api/',
         verify=False,
         params=params,
         headers={'Content-Type': mef.content_type},

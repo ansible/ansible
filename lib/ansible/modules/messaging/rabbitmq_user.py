@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Chatham Financial <oss@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -134,6 +124,9 @@ EXAMPLES = '''
     state: present
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 class RabbitMqUser(object):
     def __init__(self, module, username, password, tags, permissions,
                  node, bulk_permissions=False):
@@ -172,7 +165,7 @@ class RabbitMqUser(object):
             user, tags = user_tag.split('\t')
 
             if user == self.username:
-                for c in ['[',']',' ']:
+                for c in ['[', ']', ' ']:
                     tags = tags.replace(c, '')
 
                 if tags != '':
@@ -234,7 +227,8 @@ class RabbitMqUser(object):
         return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
-        return self._permissions != self.permissions
+        return sorted(self._permissions) != sorted(self.permissions)
+
 
 def main():
     arg_spec = dict(
@@ -268,7 +262,7 @@ def main():
     node = module.params['node']
 
     bulk_permissions = True
-    if permissions == []:
+    if not permissions:
         perm = {
             'vhost': vhost,
             'configure_priv': configure_priv,
@@ -281,35 +275,33 @@ def main():
     rabbitmq_user = RabbitMqUser(module, username, password, tags, permissions,
                                  node, bulk_permissions=bulk_permissions)
 
-    changed = False
+    result = dict(changed=False, user=username, state=state)
+
     if rabbitmq_user.get():
         if state == 'absent':
             rabbitmq_user.delete()
-            changed = True
+            result['changed'] = True
         else:
             if force:
                 rabbitmq_user.delete()
                 rabbitmq_user.add()
                 rabbitmq_user.get()
-                changed = True
+                result['changed'] = True
 
             if rabbitmq_user.has_tags_modifications():
                 rabbitmq_user.set_tags()
-                changed = True
+                result['changed'] = True
 
             if rabbitmq_user.has_permissions_modifications():
                 rabbitmq_user.set_permissions()
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_user.add()
         rabbitmq_user.set_tags()
         rabbitmq_user.set_permissions()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, user=username, state=state)
-
-# import module snippets
-from ansible.module_utils.basic import *
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

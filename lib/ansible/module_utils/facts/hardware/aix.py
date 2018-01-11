@@ -146,7 +146,7 @@ class AIXHardware(Hardware):
         vgs_facts = {}
         lsvg_path = self.module.get_bin_path("lsvg")
         xargs_path = self.module.get_bin_path("xargs")
-        cmd = "%s | %s %s -p" % (lsvg_path, xargs_path, lsvg_path)
+        cmd = "%s -o | %s %s -p" % (lsvg_path, xargs_path, lsvg_path)
         if lsvg_path and xargs_path:
             rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
             if rc == 0 and out:

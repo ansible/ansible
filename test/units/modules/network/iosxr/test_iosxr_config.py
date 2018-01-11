@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.iosxr import iosxr_config
-from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .iosxr_module import TestIosxrModule, load_fixture
 
 
 class TestIosxrConfigModule(TestIosxrModule):
@@ -32,12 +31,16 @@ class TestIosxrConfigModule(TestIosxrModule):
     module = iosxr_config
 
     def setUp(self):
+        super(TestIosxrConfigModule, self).setUp()
+
         self.patcher_get_config = patch('ansible.modules.network.iosxr.iosxr_config.get_config')
         self.mock_get_config = self.patcher_get_config.start()
         self.patcher_exec_command = patch('ansible.modules.network.iosxr.iosxr_config.load_config')
         self.mock_exec_command = self.patcher_exec_command.start()
 
     def tearDown(self):
+        super(TestIosxrConfigModule, self).tearDown()
+
         self.patcher_get_config.stop()
         self.patcher_exec_command.stop()
 
@@ -107,6 +110,11 @@ class TestIosxrConfigModule(TestIosxrModule):
         set_module_args(dict(lines=lines, force=True))
         self.execute_module(changed=True, commands=lines)
 
+    def test_iosxr_config_admin(self):
+        lines = ['username admin', 'group root-system', 'secret P@ssw0rd']
+        set_module_args(dict(lines=lines, admin=True))
+        self.execute_module(changed=True, commands=lines)
+
     def test_iosxr_config_match_none(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string']
         parents = ['interface GigabitEthernet0/0']
@@ -129,3 +137,33 @@ class TestIosxrConfigModule(TestIosxrModule):
         set_module_args(dict(lines=lines, parents=parents, match='exact'))
         commands = parents + lines
         self.execute_module(changed=True, commands=commands, sort=False)
+
+    def test_iosxr_config_src_and_lines_fails(self):
+        args = dict(src='foo', lines='foo')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_src_and_parents_fails(self):
+        args = dict(src='foo', parents='foo')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_match_exact_requires_lines(self):
+        args = dict(match='exact')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_match_strict_requires_lines(self):
+        args = dict(match='strict')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_replace_block_requires_lines(self):
+        args = dict(replace='block')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_iosxr_config_replace_config_requires_src(self):
+        args = dict(replace='config')
+        set_module_args(args)
+        result = self.execute_module(failed=True)

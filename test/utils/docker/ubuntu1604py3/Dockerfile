@@ -13,6 +13,7 @@ RUN apt-get update -y && \
     dpkg-dev \
     fakeroot \
     gawk \
+    gcc \
     git \
     iproute2 \
     libffi-dev \
@@ -22,9 +23,11 @@ RUN apt-get update -y && \
     lsb-release \
     make \
     mysql-server \
+    pass \
     openssh-client \
     openssh-server \
-    python3-coverage \
+    python3-cryptography \
+    python3-dev \
     python3-dbus \
     python3-httplib2 \
     python3-jinja2 \
@@ -42,6 +45,7 @@ RUN apt-get update -y && \
     reprepro \
     rsync \
     ruby \
+    sshpass \
     subversion \
     sudo \
     tzdata \
@@ -60,6 +64,6 @@ RUN ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
     cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
 VOLUME /sys/fs/cgroup /run/lock /run /tmp
-RUN pip3 install junit-xml python3-keyczar
+RUN pip3 install coverage junit-xml python3-keyczar
 ENV container=docker
 CMD ["/sbin/init"]

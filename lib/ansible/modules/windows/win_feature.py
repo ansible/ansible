@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -99,9 +99,13 @@ EXAMPLES = r'''
   win_feature:
     name: Web-Server
     state: present
-    restart: True
     include_sub_features: True
     include_management_tools: True
+  register: win_feature
+
+- name: reboot if installing Web-Server feature requires it
+  win_reboot:
+  when: win_feature.reboot_required
 '''
 
 RETURN = r'''

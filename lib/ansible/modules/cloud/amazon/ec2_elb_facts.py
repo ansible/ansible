@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -208,13 +208,12 @@ class ElbInformation(object):
                 elb_info['instances_inservice_percent'] = 0.
         return elb_info
 
-
     def list_elbs(self):
         elb_array, token = [], None
         get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
         while True:
             all_elbs = get_elb_with_backoff(marker=token)
-            token = all_elbs.next_token
+            token = all_elbs.next_marker
 
             if all_elbs:
                 if self.names:

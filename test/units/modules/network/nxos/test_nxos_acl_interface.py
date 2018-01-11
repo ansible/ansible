@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metacl_interfaceass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_acl_interface
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosAclInterfaceModule(TestNxosModule):
     module = nxos_acl_interface
 
     def setUp(self):
+        super(TestNxosAclInterfaceModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_acl_interface.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -38,23 +38,22 @@ class TestNxosAclInterfaceModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosAclInterfaceModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
 
             for item in commands:
                 try:
-                    obj = json.loads(item)
-                    command = obj['command']
+                    command = item['command']
                 except ValueError:
                     command = item
-                filename = str(command).split(' | ')[0].replace(' ', '_')
-                filename = 'nxos_acl_interface/%s.txt' % filename
-                output.append(load_fixture(filename))
+                filename = '%s.txt' % str(command).split(' | ')[0].replace(' ', '_')
+                output.append(load_fixture('nxos_acl_interface', filename))
             return output
 
         self.run_commands.side_effect = load_from_file

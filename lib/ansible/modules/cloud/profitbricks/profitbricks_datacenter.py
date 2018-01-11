@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -87,23 +79,23 @@ EXAMPLES = '''
 '''
 
 import re
-import uuid
 import time
-import sys
 
 HAS_PB_SDK = True
-
 try:
     from profitbricks.client import ProfitBricksService, Datacenter
 except ImportError:
     HAS_PB_SDK = False
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 LOCATIONS = ['us/las',
              'de/fra',
              'de/fkb']
 
 uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
@@ -126,13 +118,15 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
+
 
 def _remove_datacenter(module, profitbricks, datacenter):
     try:
         profitbricks.delete_datacenter(datacenter)
     except Exception as e:
         module.fail_json(msg="failed to remove the datacenter: %s" % str(e))
+
 
 def create_datacenter(module, profitbricks):
     """
@@ -151,14 +145,12 @@ def create_datacenter(module, profitbricks):
     description = module.params.get('description')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
-    virtual_datacenters = []
-
 
     i = Datacenter(
         name=name,
         location=location,
         description=description
-        )
+    )
 
     try:
         datacenter_response = profitbricks.create_datacenter(datacenter=i)
@@ -175,6 +167,7 @@ def create_datacenter(module, profitbricks):
 
     except Exception as e:
         module.fail_json(msg="failed to create the new datacenter: %s" % str(e))
+
 
 def remove_datacenter(module, profitbricks):
     """
@@ -206,6 +199,7 @@ def remove_datacenter(module, profitbricks):
                 changed = True
 
     return changed
+
 
 def main():
     module = AnsibleModule(
@@ -260,7 +254,6 @@ def main():
         except Exception as e:
             module.fail_json(msg='failed to set datacenter state: %s' % str(e))
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

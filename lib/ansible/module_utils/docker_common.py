@@ -23,8 +23,9 @@ import sys
 import copy
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_PY_2 = False
@@ -78,7 +79,7 @@ DOCKER_REQUIRED_TOGETHER = [
 ]
 
 DEFAULT_DOCKER_REGISTRY = 'https://index.docker.io/v1/'
-EMAIL_REGEX = '[^@]+@[^@]+\.[^@]+'
+EMAIL_REGEX = r'[^@]+@[^@]+\.[^@]+'
 BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 
@@ -88,6 +89,9 @@ if not HAS_DOCKER_PY:
     class Client(object):
         def __init__(self, **kwargs):
             pass
+
+    class APIError(Exception):
+        pass
 
 
 class DockerBaseClass(object):

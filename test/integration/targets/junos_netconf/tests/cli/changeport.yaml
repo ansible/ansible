@@ -1,20 +1,17 @@
 ---
-- debug: msg="START netconf/changeport.yaml"
+- debug: msg="START netconf/changeport.yaml on connection={{ ansible_connection }}"
 
 
 - name: Setup
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
-
 
 ###################################
 - name: Change port
   junos_netconf:
     state: present
-    netconf_port: 8080
-    provider: "{{ cli }}"
+    netconf_port: 8022
   register: result
 
 - assert:
@@ -24,19 +21,28 @@
 - name: idempotent tests
   junos_netconf:
     state: present
-    netconf_port: 8080
-    provider: "{{ cli }}"
+    netconf_port: 8022
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- name: Ensure we can communicate over 8080
+- name: wait for netconf server to come up
+  pause:
+    seconds: 10
+
+- name: Ensure we can communicate over 8022
   junos_command:
-    rpcs: get-software-information
+    rpcs:
+    - get-software-information
     provider: "{{ netconf }}"
-    port: 8080
+    port: 8022
+  connection: netconf
+
+- name: wait for persistent socket to timeout
+  pause:
+    seconds: 120
 
 # This protects against the port override above not being honoured and a bug setting the port
 - name: Ensure we can NOT communicate over default port
@@ -44,22 +50,27 @@
     rpcs: get-software-information
     provider: "{{ netconf }}"
   register: result
+  connection: netconf
   ignore_errors: true
 
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to connect to' in result.msg"
 
 - name: Set back netconf to default port
   junos_netconf:
     state: present
-    provider: "{{ cli }}"
   register: result
+
+- name: wait for persistent socket to timeout
+  pause:
+    seconds: 120
 
 - name: Ensure we can communicate over netconf
   junos_command:
-    rpcs: get-software-information
+    rpcs:
+    - get-software-information
     provider: "{{ netconf }}"
+  connection: netconf
 
-- debug: msg="END netconf/changeport.yaml"
+- debug: msg="END netconf/changeport.yaml on connection={{ ansible_connection }}"
