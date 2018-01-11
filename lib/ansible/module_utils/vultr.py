@@ -126,10 +126,14 @@ class Vultr:
 
         if data:
             data_encoded = dict()
+            data_list = ""
             for k, v in data.items():
-                if v is not None:
+                if isinstance(v, list):
+                    for s in v:
+                        data_list += '&%s[]=%s' % (k, urllib.quote(s))
+                elif v is not None:
                     data_encoded[k] = v
-            data = urllib.urlencode(data_encoded)
+            data = urllib.urlencode(data_encoded) + data_list
 
         for s in range(0, self.api_config['api_retries']):
             response, info = fetch_url(
