@@ -117,6 +117,8 @@ def map_config_to_obj(module):
 
     if isinstance(output, dict):
         output = list(output.values())[0]
+        if isinstance(output, dict):
+            output = list(output.values())[0]
 
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
