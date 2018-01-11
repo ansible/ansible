@@ -193,6 +193,14 @@ options:
         - The interval of weeks to run on, e.g. C(1) means every week while
           C(2) means every other week.
         - Optional when C(type=weekly).
+      repetition:
+        description:
+        - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
+          after the task is started.
+        - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
+        - C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
     version_added: '2.5'
   days_of_week:
     description:
@@ -488,6 +496,20 @@ EXAMPLES = r'''
   win_scheduled_task:
     name: TaskToDisable
     enabled: no
+
+- name: create a task that will be repeated every minute for five minutes
+  win_scheduled_task:
+    name: RepeatedTask
+    description: open command prompt
+    actions:
+    - path: cmd.exe
+      arguments: /c hostname
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
 '''
 
 RETURN = r'''
