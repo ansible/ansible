@@ -11,3 +11,15 @@
 # http://jinja.pocoo.org/docs/2.9/templates/#truncate
 - set_fact:
     shorter_hostname: '{{ inventory_hostname_short| truncate(10, True, "") }}'
+
+- name: "Discover IOS L2/L3 switch type"
+  ios_command:
+    commands: ['show version']
+  connection: network_cli
+  become: yes
+  register: result
+
+- set_fact: switch_type=""
+
+- set_fact: switch_type="L2"
+  when: '"l2" in result.stdout[0]'
