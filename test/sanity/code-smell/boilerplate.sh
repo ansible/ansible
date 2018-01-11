@@ -71,13 +71,13 @@ printf "\n== Missing __metaclass__ = type ==\n"
 fi
 
 if test -n "$metaclass1" ; then
-  printf "$metaclass1\n"
+  printf "%s\n" "$metaclass1"
 fi
 if test -n "$metaclass2" ; then
-  printf "$metaclass2\n"
+  printf "%s\n" "$metaclass2"
 fi
 if test -n "$metaclass3" ; then
-  printf "$metaclass3\n"
+  printf "%s\n" "$metaclass3"
 fi
 
 if test -n "$future1" -o -n "$future2" -o -n "$future3" ; then
@@ -85,18 +85,16 @@ if test -n "$future1" -o -n "$future2" -o -n "$future3" ; then
 fi
 
 if test -n "$future1" ; then
-  printf "$future1\n"
+  printf "%s\n" "$future1"
 fi
 if test -n "$future2" ; then
-  printf "$future2\n"
+  printf "%s\n" "$future2"
 fi
 if test -n "$future3" ; then
-  printf "$future3\n"
+  printf "%s\n" "$future3"
 fi
 
 if test -n "$future1$future2$future3$metaclass1$metaclass2$metaclass3" ; then
-  failures=$(printf "$future1$future2$future3$metaclass1$metaclass2$metaclass3"| wc -l)
-  failures=$(expr $failures + 2)
-  exit $failures
+  exit 2
 fi
 exit 0
