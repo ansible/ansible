@@ -85,6 +85,11 @@ vultr_startup_script:
   returned: success
   type: complex
   contains:
+    id:
+      description: ID of the startup script.
+      returned: success
+      type: string
+      sample: 249395
     name:
       description: Name of the startup script.
       returned: success
@@ -94,7 +99,7 @@ vultr_startup_script:
       description: The source code of the startup script.
       returned: success
       type: string
-      sample: "#!/bin/bash echo Hello World > /root/hello"
+      sample: "#!/bin/bash\necho Hello World > /root/hello"
     script_type:
       description: The type of the startup script.
       returned: success
@@ -110,11 +115,6 @@ vultr_startup_script:
       returned: success
       type: string
       sample: "2017-08-26 12:47:48"
-    script_type:
-      description: The type of the startup script.
-      returned: success
-      type: string
-      sample: boot
 '''
 
 from ansible.module_utils.basic import AnsibleModule
