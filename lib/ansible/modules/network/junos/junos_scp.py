@@ -84,9 +84,8 @@ changed:
   returned: always
   type: bool
 """
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, get_param
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
 from ansible.module_utils.pycompat24 import get_exception
 
 try:
