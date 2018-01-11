@@ -141,7 +141,7 @@ def get_interfaces_config(module, interface_type, flags=None, json_fmt=True):
 
 
 def get_bgp_summary(module):
-    cmd = "show ip bgp summary"
+    cmd = "show running-config protocol bgp"
     return show_cmd(module, cmd, json_fmt=False, fail_on_error=False)
 
 
