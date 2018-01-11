@@ -627,7 +627,7 @@ files:
   $modules/system/dconf.py: azaghal
   $modules/system/debconf.py: bcoca
   $modules/system/facter.py: $team_ansible
-  $modules/system/filesystem.py: abulimov
+  $modules/system/filesystem.py: abulimov pilou-
   $modules/system/firewalld.py: maxamillion
   $modules/system/gconftool2.py: akasurde kevensen
   $modules/system/getent.py: bcoca
