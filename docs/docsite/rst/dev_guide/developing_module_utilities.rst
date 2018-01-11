@@ -48,10 +48,10 @@ The following is a list of module_utils files and a general description. The mod
 - network/iosxr/iosxr.py - Definitions and helper functions for modules that manage Cisco IOS-XR networking devices.
 - network/ironware/ironware.py - Module support utilities for managing Brocade IronWare devices.
 - network/junos/junos.py -  Definitions and helper functions for modules that manage Junos networking devices.
-- network/mlnxos/mlnxos.py - Definitions and helper functions for modules that manage Mellanox MLNX-OS networking devices.
 - network/netscaler/netscaler.py - Utilities specifically for the netscaler network modules.
 - network/nso/nso.py - Utilities for modules that work with Cisco NSO.
 - network/nxos/nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices.
+- network/onyx/onyx.py - Definitions and helper functions for modules that manage Mellanox ONYX networking devices.
 - network/ordance/ordance.py - Module support utilities for managing Ordnance devices.
 - network/sros/sros.py - Helper functions for modules working with Open vSwitch bridges.
 - network/vyos/vyos.py - Definitions and functions for working with VyOS networking
