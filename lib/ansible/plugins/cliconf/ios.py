@@ -64,7 +64,7 @@ class Cliconf(CliconfBase):
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
             try:
                 cmd = json.loads(cmd)
                 command = cmd['command']

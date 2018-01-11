@@ -159,4 +159,3 @@ def load_config(module, commands):
     connection = get_connection(module)
 
     out = connection.edit_config(commands)
-    connection.get('end')
