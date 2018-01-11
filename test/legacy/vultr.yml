@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - { role: test_vr_account_facts, tags: test_vr_account_facts }
+    - { role: test_vr_user, tags: test_vr_user }
+    - { role: test_vr_ssh_key, tags: test_vr_ssh_key }
+    - { role: test_vr_firewall_group, tags: test_vr_firewall_group }
+    - { role: test_vr_firewall_rule, tags: test_vr_firewall_rule }
+    - { role: test_vr_startup_script, tags: test_vr_startup_script }
+    - { role: test_vr_dns_domain, tags: test_vr_dns_domain }
+#    - { role: test_vr_dns_record, tags: test_vr_dns_record }
+    - { role: test_vr_server, tags: test_vr_server }

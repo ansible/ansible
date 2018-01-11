@@ -1,0 +1,25 @@
+---
+- name: test gather vultr account facts in check mode
+  local_action:
+    module: vr_account_facts
+  check_mode: yes
+
+- name: verify test gather vultr account facts in check mode
+  assert:
+    that:
+    - ansible_facts.vultr_account_facts.balance is defined
+    - ansible_facts.vultr_account_facts.last_payment_amount is defined
+    - ansible_facts.vultr_account_facts.last_payment_date is defined
+    - ansible_facts.vultr_account_facts.last_payment_amount is defined
+
+- name: test gather vultr account fact
+  local_action:
+    module: vr_account_facts
+
+- name: verify test gather vultr account facts
+  assert:
+    that:
+    - ansible_facts.vultr_account_facts.balance is defined
+    - ansible_facts.vultr_account_facts.last_payment_amount is defined
+    - ansible_facts.vultr_account_facts.last_payment_date is defined
+    - ansible_facts.vultr_account_facts.last_payment_amount is defined
