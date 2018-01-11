@@ -974,14 +974,13 @@ class PyVmomiHelper(PyVmomi):
                                       % (len(network_devices), len(current_net_devices)))
 
         for key in range(0, len(network_devices)):
+            nic_edit = key < len(current_net_devices) and (vm_obj or self.params['template'])
             nic_change_detected = False
             network_name = network_devices[key]['name']
-            if key < len(current_net_devices) and (vm_obj or self.params['template']):
-                # We are editing existing network devices, this is either when
-                # are cloning from VM or Template
+
+            if nic_edit:
                 nic = vim.vm.device.VirtualDeviceSpec()
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-
                 nic.device = current_net_devices[key]
                 if ('wake_on_lan' in network_devices[key] and
                         nic.device.wakeOnLanEnabled != network_devices[key].get('wake_on_lan')):
@@ -999,15 +998,22 @@ class PyVmomiHelper(PyVmomi):
                 if nic.device.deviceInfo.summary != network_name:
                     nic.device.deviceInfo.summary = network_name
                     nic_change_detected = True
+
                 if 'device_type' in network_devices[key]:
                     device = self.device_helper.get_device(network_devices[key]['device_type'], network_name)
                     if nic.device != device:
                         self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
                                                   "The failing device type is %s" % network_devices[key]['device_type'])
-                # Changing mac address has no effect when editing interface
-                if 'mac' in network_devices[key] and nic.device.macAddress != current_net_devices[key].macAddress:
-                    self.module.fail_json(msg="Changing MAC address has not effect when interface is already present. "
-                                              "The failing new MAC address is %s" % nic.device.macAddress)
+
+                if 'mac' in network_devices[key]:
+                    if nic.device.addressType != 'manual' or nic.device.macAddress != network_devices[key]['mac']:
+                        nic.device.addressType = 'manual'
+                        nic.device.macAddress = network_devices[key]['mac']
+                        nic_change_detected = True
+                else:
+                    if nic.device.addressType != 'generated':
+                        nic.device.addressType = 'generated'
+                        nic_change_detected = True
 
             else:
                 # Default device type is vmxnet3, VMWare best practice
@@ -1630,7 +1636,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan'):
+                if key not in ('device_type', 'name', 'vlan'):
                     network_changes = True
                     break
 
