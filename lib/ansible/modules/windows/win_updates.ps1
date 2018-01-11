@@ -267,14 +267,14 @@ foreach ($update in $updates_to_install) {
     }
 }
 
-if ($update_fail_count -gt 0) {
-    Fail-Json -obj $result -msg "Failed to install one or more updates"
-}
-
 Write-DebugLog -msg "Performing post-install reboot requirement check..."
 $result.reboot_required = Get-RebootStatus
 $result.installed_update_count = $update_success_count
 $result.failed_update_count = $update_fail_count
+
+if ($update_fail_count -gt 0) {
+    Fail-Json -obj $result -msg "Failed to install one or more updates"
+}
 
 Write-DebugLog -msg "Return value:`r`n$(ConvertTo-Json -InputObject $result -Depth 99)"
 
