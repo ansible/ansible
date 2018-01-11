@@ -444,25 +444,6 @@ class Templar:
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
-        if USE_JINJA2_NATIVE:
-            if not isinstance(variable, string_types) or not variable:
-                return variable
-            try:
-                result = self.do_template(
-                    variable,
-                    preserve_trailing_newlines=preserve_trailing_newlines,
-                    escape_backslashes=escape_backslashes,
-                    fail_on_undefined=fail_on_undefined,
-                    overrides=overrides,
-                    disable_lookups=disable_lookups,
-                )
-                return result
-            except AnsibleFilterError as e:
-                if self._fail_on_filter_errors:
-                    raise
-                else:
-                    return variable
-
         try:
             if convert_bare:
                 variable = self._convert_bare_variable(variable, bare_deprecated=bare_deprecated)
@@ -508,6 +489,9 @@ class Templar:
                             overrides=overrides,
                             disable_lookups=disable_lookups,
                         )
+
+                        if USE_JINJA2_NATIVE:
+                            return result
 
                         unsafe = hasattr(result, '__UNSAFE__')
                         if convert_data and not self._no_type_regex.match(variable):
