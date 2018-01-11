@@ -393,7 +393,7 @@ class Connection(ConnectionBase):
 
             except Exception as ex:
                 from traceback import format_exc
-                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % format_exc(ex))
+                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % format_exc())
                 stdin_push_failed = True
 
             if stdin_push_failed:
