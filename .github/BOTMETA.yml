@@ -438,7 +438,7 @@ files:
   $modules/net_tools/basics/get_url.py: jpmens
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py: $team_ansible
-  $modules/net_tools/cloudflare_dns.py: mgruener
+  $modules/net_tools/cloudflare_dns.py: mgruener andreaso
   $modules/net_tools/dnsimple.py: drcapulet
   $modules/net_tools/dnsmadeeasy.py: briceburg
   $modules/net_tools/exoscale/: resmo
