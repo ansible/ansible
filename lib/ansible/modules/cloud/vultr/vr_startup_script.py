@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2017, René Moser <mail@renemoser.net>
+# Copyright (c) 2018, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vr_startup_script
 short_description: Manages startup scripts on Vultr.
@@ -42,7 +42,7 @@ options:
 extends_documentation_fragment: vultr
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: ensure a pxe script exists, source from a file
   local_action:
     module: vr_startup_script
@@ -54,7 +54,7 @@ EXAMPLES = '''
   local_action:
     module: vr_startup_script
     name: vr_startup_script
-    script: "#!/bin/bash echo Hello World > /root/hello"
+    script: "#!/bin/bash\necho Hello World > /root/hello"
 
 - name: ensure a script is absent
   local_action:
@@ -63,7 +63,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 vultr_api:
   description: Response from Vultr API with a few additions/modification
