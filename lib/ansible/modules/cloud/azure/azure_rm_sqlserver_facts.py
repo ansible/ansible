@@ -50,54 +50,63 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-id:
-    description:
-        - Resource ID.
+servers:
+    description: A list of dict results where the key is the name of the SQL Server and the values are the facts for that SQL Server.
     returned: always
-    type: str
-    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
-name:
-    description:
-        - Resource name.
-    returned: always
-    type: str
-    sample: sqlcrudtest-4645
-type:
-    description:
-        - Resource type.
-    returned: always
-    type: str
-    sample: Microsoft.Sql/servers
-location:
-    description:
-        - Resource location.
-    returned: always
-    type: str
-    sample: japaneast
-kind:
-    description:
-        - Kind of sql server. This is metadata used for the Azure portal experience.
-    returned: always
-    type: str
-    sample: v12.0
-version:
-    description:
-        - The version of the server.
-    returned: always
-    type: str
-    sample: 12.0
-state:
-    description:
-        - The state of the server.
-    returned: always
-    type: str
-    sample: Ready
-fully_qualified_domain_name:
-    description:
-        - The fully qualified domain name of the server.
-    returned: always
-    type: str
-    sample: fully_qualified_domain_name
+    type: complex
+    contains:
+        sqlserver_name:
+            description: The key is the name of the server that the values relate to.
+            type: complex
+            contains:
+                id:
+                    description:
+                        - Resource ID.
+                    returned: always
+                    type: str
+                    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+                name:
+                    description:
+                        - Resource name.
+                    returned: always
+                    type: str
+                    sample: sqlcrudtest-4645
+                type:
+                    description:
+                        - Resource type.
+                    returned: always
+                    type: str
+                    sample: Microsoft.Sql/servers
+                location:
+                    description:
+                        - Resource location.
+                    returned: always
+                    type: str
+                    sample: japaneast
+                kind:
+                    description:
+                        - Kind of sql server. This is metadata used for the Azure portal experience.
+                    returned: always
+                    type: str
+                    sample: v12.0
+                version:
+                    description:
+                        - The version of the server.
+                    returned: always
+                    type: str
+                    sample: 12.0
+                state:
+                    description:
+                        - The state of the server.
+                    returned: always
+                    type: str
+                    sample: Ready
+                fully_qualified_domain_name:
+                    description:
+                        - The fully qualified domain name of the server.
+                    returned: always
+                    type: str
+                    sample: fully_qualified_domain_name
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -142,9 +151,9 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
         if (self.resource_group is not None and
                 self.server_name is not None):
-            self.results['ansible_facts']['get'] = self.get()
+            self.results['sqlservers'] = self.get()
         elif (self.resource_group is not None):
-            self.results['ansible_facts']['list_by_resource_group'] = self.list_by_resource_group()
+            self.results['sqlservers'] = self.list_by_resource_group()
         return self.results
 
     def get(self):
@@ -163,7 +172,8 @@ class AzureRMServersFacts(AzureRMModuleBase):
             self.log('Could not get facts for Servers.')
 
         if response is not None:
-            results = response.as_dict()
+            results = {}
+            results[response.name] = response.as_dict()
 
         return results
 
@@ -182,9 +192,9 @@ class AzureRMServersFacts(AzureRMModuleBase):
             self.log('Could not get facts for Servers.')
 
         if response is not None:
-            results = []
+            results = {}
             for item in response:
-                results.append(item.as_dict())
+                results[item.name] = item.as_dict()
 
         return results
 
