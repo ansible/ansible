@@ -33,12 +33,7 @@ options:
       - Perform regex filter of response. Filtering is done on the name of
         the resource. Valid filters are anything that can be provided to
         Python's C(re) module.
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -173,18 +168,45 @@ virtual_server:
 
 import re
 
+from ansible.module_utils.basic import AnsibleModule
+
+HAS_DEVEL_IMPORTS = False
+
+try:
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
+except ImportError:
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+
 try:
     import json
 except ImportError:
     import simplejson as json
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.six import iteritems
-from collections import defaultdict
 from distutils.version import LooseVersion
 
 try:
@@ -195,8 +217,11 @@ except ImportError:
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
+
         self.types = dict(
             a_s='a',
             aaaas='aaaa',
@@ -269,10 +294,6 @@ class TypedManager(BaseManager):
 
 
 class Parameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        super(Parameters, self).__init__(params)
-        self._values['__warnings'] = []
-
     @property
     def include(self):
         requested = self._values['include']
@@ -296,36 +317,7 @@ class Parameters(AnsibleF5Parameters):
             return requested
 
 
-class BaseParameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-        self._values['__warnings'] = []
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
+class BaseParameters(Parameters):
     @property
     def enabled(self):
         if self._values['enabled'] is None:
@@ -697,6 +689,12 @@ class ServerParameters(BaseParameters):
 
 
 class PoolFactManager(BaseManager):
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        super(PoolFactManager, self).__init__(**kwargs)
+        self.kwargs = kwargs
+
     def exec_module(self):
         if self.version_is_less_than_12():
             manager = self.get_manager('untyped')
@@ -708,15 +706,17 @@ class PoolFactManager(BaseManager):
 
     def get_manager(self, type):
         if type == 'typed':
-            return TypedPoolFactManager(self.client)
+            return TypedPoolFactManager(**self.kwargs)
         elif type == 'untyped':
-            return UntypedPoolFactManager(self.client)
+            return UntypedPoolFactManager(**self.kwargs)
 
 
 class TypedPoolFactManager(TypedManager):
-    def __init__(self, client):
-        super(TypedPoolFactManager, self).__init__(client)
-        self.want = PoolParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        super(TypedPoolFactManager, self).__init__(**kwargs)
+        self.want = PoolParameters(params=self.module.params)
 
     def read_facts(self, collection):
         results = []
@@ -740,9 +740,11 @@ class TypedPoolFactManager(TypedManager):
 
 
 class UntypedPoolFactManager(UntypedManager):
-    def __init__(self, client):
-        super(UntypedPoolFactManager, self).__init__(client)
-        self.want = PoolParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(UntypedPoolFactManager, self).__init__(**kwargs)
+        self.want = PoolParameters(params=self.module.params)
 
     def read_facts(self):
         results = []
@@ -775,15 +777,17 @@ class WideIpFactManager(BaseManager):
 
     def get_manager(self, type):
         if type == 'typed':
-            return TypedWideIpFactManager(self.client)
+            return TypedWideIpFactManager(**self.kwargs)
         elif type == 'untyped':
-            return UntypedWideIpFactManager(self.client)
+            return UntypedWideIpFactManager(**self.kwargs)
 
 
 class TypedWideIpFactManager(TypedManager):
-    def __init__(self, client):
-        super(TypedWideIpFactManager, self).__init__(client)
-        self.want = WideIpParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(TypedWideIpFactManager, self).__init__(**kwargs)
+        self.want = WideIpParameters(params=self.module.params)
 
     def read_facts(self, collection):
         results = []
@@ -806,9 +810,11 @@ class TypedWideIpFactManager(TypedManager):
 
 
 class UntypedWideIpFactManager(UntypedManager):
-    def __init__(self, client):
-        super(UntypedWideIpFactManager, self).__init__(client)
-        self.want = WideIpParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(UntypedWideIpFactManager, self).__init__(**kwargs)
+        self.want = WideIpParameters(params=self.module.params)
 
     def read_facts(self):
         results = []
@@ -829,9 +835,11 @@ class UntypedWideIpFactManager(UntypedManager):
 
 
 class ServerFactManager(UntypedManager):
-    def __init__(self, client):
-        super(ServerFactManager, self).__init__(client)
-        self.want = ServerParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(ServerFactManager, self).__init__(**kwargs)
+        self.want = ServerParameters(params=self.module.params)
 
     def exec_module(self):
         facts = super(ServerFactManager, self).exec_module()
@@ -857,9 +865,11 @@ class ServerFactManager(UntypedManager):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
+        self.want = Parameters(params=self.module.params)
 
     def exec_module(self):
         if not self.gtm_provisioned():
@@ -889,7 +899,7 @@ class ModuleManager(object):
         if self.want:
             warnings += self.want._values.get('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -903,11 +913,11 @@ class ModuleManager(object):
 
     def get_manager(self, which):
         if 'pool' == which:
-            return PoolFactManager(self.client)
+            return PoolFactManager(**self.kwargs)
         if 'wide_ip' == which:
-            return WideIpFactManager(self.client)
+            return WideIpFactManager(**self.kwargs)
         if 'server' == which:
-            return ServerFactManager(self.client)
+            return ServerFactManager(**self.kwargs)
 
     def gtm_provisioned(self):
         resource = self.client.api.tm.sys.dbs.db.load(
@@ -921,43 +931,34 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = False
-        self.argument_spec = dict(
+        argument_spec = dict(
             include=dict(type='list', required=True),
-            filter=dict(type='str', required=False)
+            filter=dict()
         )
-        self.f5_product_name = 'bigip'
-
-
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
+        module.exit_json(**results)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
