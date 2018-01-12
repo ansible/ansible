@@ -1013,10 +1013,16 @@ class ModuleValidator(Validator):
             )
             return
 
+        provider_args = set()
         args_from_argspec = set()
         for arg, data in spec.items():
             args_from_argspec.add(arg)
             args_from_argspec.update(data.get('aliases', []))
+            if arg == 'provider':
+                # Record provider options from network modules, for later comparison
+                for provider_arg, provider_data in data.get('options', {}).items():
+                    provider_args.add(provider_arg)
+                    provider_args.update(provider_data.get('aliases', []))
 
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
@@ -1049,6 +1055,11 @@ class ModuleValidator(Validator):
             for arg in args_missing_from_docs:
                 # args_from_argspec contains undocumented argument
                 if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
+                    continue
+                if arg in provider_args:
+                    # Provider args are being removed from network module top level
+                    # So they are likely not documented on purpose
                     continue
                 self.reporter.error(
                     path=self.object_path,
@@ -1058,6 +1069,7 @@ class ModuleValidator(Validator):
             for arg in docs_missing_from_args:
                 # args_from_docs contains argument not in the argument_spec
                 if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
                 self.reporter.error(
                     path=self.object_path,
