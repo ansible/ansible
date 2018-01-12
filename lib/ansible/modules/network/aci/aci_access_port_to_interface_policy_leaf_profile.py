@@ -50,7 +50,8 @@ options:
     aliases: [ to_port_range ]
   policy_group:
     description:
-    - The name of the Fabric access policy group  to be associated with the leaf interface profile interface selector.
+    - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
+    required: no
     aliases: [ policy_group_name ]
   state:
     description:
@@ -61,7 +62,7 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Associate an interface access port selector to an Interface policy Leaf Profile
+- name: Associate an Interface Access Port Selector to an Interface Policy Leaf Profile with a Policy Group
   aci_access_port_to_interface_policy_leaf_profile:
     hostname: apic
     username: admin
@@ -73,6 +74,36 @@ EXAMPLES = r'''
     toPort: 16
     policy_group: policygroupname
     state: present
+
+- name: Associate an interface access port selector to an Interface Policy Leaf Profile (w/o policy group) (check if this works)
+  aci_access_port_to_interface_policy_leaf_profile:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    leaf_interface_profile: leafintprfname
+    access_port_selector: accessportselectorname
+    leaf_port_blk: leafportblkname
+    fromPort: 13
+    toPort: 16
+    state: present
+
+- name: Remove an interface access port selector associated with an Interface Policy Leaf Profile
+  aci_access_port_to_interface_policy_leaf_profile:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    leaf_interface_profile: leafintprfname
+    access_port_selector: accessportselectorname
+    state: absent
+
+- name: Query Specific access_port_selector under given leaf_interface_profile
+  aci_access_port_to_interface_policy_leaf_profile:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    leaf_interface_profile: leafintprfname
+    access_port_selector: accessportselectorname
+    state: query
 '''
 
 RETURN = r'''
