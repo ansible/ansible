@@ -72,12 +72,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_vpc_offering
     name: "my_vpc_offering"
-    display_text: "vpc offering description"
     state: absent
-    supported_services: [ Dns, Dhcp ]
-    service_providers:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
 '''
 
 RETURN = '''
