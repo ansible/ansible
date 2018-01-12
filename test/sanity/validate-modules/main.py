@@ -539,7 +539,7 @@ class ModuleValidator(Validator):
                     if child.test.comparators[0].s != '__main__':
                         self.reporter.error(
                             path=self.object_path,
-                            code=104,
+                            code=111,
                             msg='Right test for "if __name__ ==" should be "__main__"',
                             line=child.lineno
                         )
