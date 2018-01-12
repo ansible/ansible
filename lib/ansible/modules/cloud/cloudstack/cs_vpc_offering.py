@@ -60,7 +60,7 @@ EXAMPLES = '''
 # Create a vpc offering and enable it
 - local_action:
     module: cs_vpc_offering
-    name: "my_vpc_offering
+    name: "my_vpc_offering"
     display_text: "vpc offering description"
     state: enabled
     supported_services: [ Dns, Dhcp ]
@@ -71,7 +71,7 @@ EXAMPLES = '''
 # Remove a vpc offering
 - local_action:
     module: cs_vpc_offering
-    name: "my_vpc_offering
+    name: "my_vpc_offering"
     display_text: "vpc offering description"
     state: absent
     supported_services: [ Dns, Dhcp ]
