@@ -107,8 +107,8 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='infraAccPortP',
-            aci_rn='infra/accportprof-{}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{}")'.format(leaf_interface_profile),
+            aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
+            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
             module_object=leaf_interface_profile
         ),
     )
