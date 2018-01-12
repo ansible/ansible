@@ -30,10 +30,10 @@ version_added: "2.5"
 
 description:
     netact_cm_command can be used to run various configuration management operations.
-    This ansible module requires that target host have Nokia NetAct Configurator.
+    This ansible module requires that target host have Nokia NetAct Configuration Management.
     This module requires that the target hosts have Nokia NetAct network management system installed.
-    Module will access the Configurator command line interface in NetAct to run plan upload and provision operations 
-    in the network.
+    Module will access the Configurator command line interface in NetAct to upload network configuration to NetAct, 
+    run configuration export, plan import and configuration provision operations
     To set the scope of the operation, define Distinguished Name (DN) or Working Set (WS) or 
     Maintenance Region (MR) as input.
 options:
@@ -46,7 +46,8 @@ options:
             - upload
             - provision
             - import
-            - export and Provision_Mass_Modification
+            - export
+            - Provision_Mass_Modification
         aliases: 
             - op
     opsName:
@@ -60,7 +61,7 @@ options:
             A single DN or a list of DNs can be given (comma separated list without spaces).
             Alternatively, if DN or a list of DNs is not given, working set (WS) or Maintenance Region (MR)
             must be provided as parameter to set the scope of operation.
-        required: false    <welcome-file-list>
+        required: false
 
     WS:
         description:            
@@ -88,7 +89,7 @@ options:
     type:
         description:
              Specifies the type of the export operation.             
-        required: true
+        required: false
         choices:
           - plan
           - actual
@@ -102,6 +103,7 @@ options:
         choices:
             - RAML2
             - CSV
+            - XLSX
     fileName:
         description:
             - Specifies a file name.
@@ -122,9 +124,10 @@ options:
         required: false
     extra_opts:
         description:
-            Extra options to be set for operations. Check Configuration Management Operating Procedures > 
-            Command Line Operations in Nokia NetAct user documentation for further information for extra options. 
-        required: true
+            Extra options to be set for operations. Check Configuration Management > Configuration Management 
+            Operating Procedures > Command Line Operations in Nokia NetAct user documentation for further 
+            information for extra options.
+        required: false
 
 author:
     - Harri Tuominen (@hatuomin)
@@ -137,13 +140,17 @@ EXAMPLES = '''
     operation: "Upload"
     opsname: 'Uploading_test'
     dn: "PLMN-PLMN/MRBTS-746"
-    extra_opts: '-btsContentInUse true -bssHwContentInUse true'
+    extra_opts: '-btsContentInUse true'
 
 - name: Provision
   netact_cm_command:
     operation: "Provision"
     opsname: 'Provision_test'
-    dn: "PLMN-PLMN/MRBTS-746"    
+    dn: "PLMN-PLMN/MRBTS-746"
+    planName: 'mySiteTemplate'
+    type: 'actual' 
+    createBackupPlan: true   
+    backupPlanName: 'myBackupPlanName'    
 
 - name: Export and fetching data from target
   netact_cm_command:
@@ -160,7 +167,12 @@ EXAMPLES = '''
   netact_cm_command:
     operation: "Import"
     opsname: 'Import_test'
-    
+    fileFormat: 'CSV'
+    type: 'plan'
+    fileName: 'myCSVFile'
+    planName: 'myPlanName'
+    extra_ops: 'enablePolicyPlans true'
+                 
 # fail the module
 - name: Test failure of the module
   netact_cm_command:
@@ -200,7 +212,7 @@ def run_module():
         planname=dict(type='str', required=False, aliases=['planName']),
         typeoption=dict(type='str', required=False, aliases=['type'],
                         choices=['plan', 'actual', 'reference', 'template', 'siteTemplate']),
-        fileformat=dict(type='str', required=False, choices=['CSV', 'RAML2','XLSX'],
+        fileformat=dict(type='str', required=False, choices=['CSV', 'RAML2', 'XLSX'],
                         aliases=['fileFormat']),
         filename=dict(type='str', required=False, aliases=['fileName']),
 
@@ -258,7 +270,7 @@ def run_module():
 
     createBackupPlan = module.params.get('createBackupPlan')
     backupPlanName = module.params.get('backupPlanName')
-    inputfile = module.params.get('imputFile')
+    inputfile = module.params.get('inputFile')
 
     extra_opts = module.params.get('extra_opts')
     verbose = module.params.get('verbose')
