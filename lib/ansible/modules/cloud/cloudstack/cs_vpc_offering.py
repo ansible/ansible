@@ -112,12 +112,12 @@ is_default:
   returned: success
   type: bool
   sample: false
-supportsregionLevelvpc:
+region_level:
   description: Indicated if the offering can support region level vpc.
   returned: success
   type: bool
   sample: false
-distributedvpcrouter:
+distributed:
   description: Indicates if the vpc offering supports distributed router for one-hop forwarding.
   returned: success
   type: bool
