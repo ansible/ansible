@@ -177,11 +177,11 @@ def main():
         domain_class = 'fcDomP'
         domain_mo = 'uni/fc-{0}'.format(domain)
         domain_rn = 'fc-{0}'.format(domain)
-    elif domain_type == 'l2ext':
+    elif domain_type == 'l2dom':
         domain_class = 'l2extDomP'
         domain_mo = 'uni/l2dom-{0}'.format(domain)
         domain_rn = 'l2dom-{0}'.format(domain)
-    elif domain_type == 'l3ext':
+    elif domain_type == 'l3dom':
         domain_class = 'l3extDomP'
         domain_mo = 'uni/l3dom-{0}'.format(domain)
         domain_rn = 'l3dom-{0}'.format(domain)
