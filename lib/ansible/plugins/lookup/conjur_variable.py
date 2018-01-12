@@ -104,18 +104,12 @@ def _load_identity_from_file(identity_path, appliance_url):
 
     return {'id': id, 'api_key': api_key}
 
-def _open_url_token_retrival(url, api_key):
-    return open_url(url, data=api_key, method='POST')
-
-
 # Use credentials to retrieve temporary authorization token
 def _fetch_conjur_token(conjur_url, account, username, api_key):
     conjur_url = '{0}/authn/{1}/{2}/authenticate'.format(conjur_url, account, username)
     display.vvvv('Authentication request to Conjur at: {0}, with user: {1}'.format(conjur_url, username))
 
-    response = _open_url_token_retrival(conjur_url, api_key)
-    # print('response: {0}'.format(response))
-    # print('response code: {0}'.format(response))
+    response = open_url(conjur_url, data=api_key, method='POST')
     if response.getcode() != 200:
         raise AnsibleError('Failed to authenticate as \'{0}\''.format(username))
 

@@ -21,11 +21,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-# from ansible.module_utils.basic import AnsibleModule
 import pytest
-from ansible.compat.tests.mock import patch, Mock
+from ansible.compat.tests.mock import MagicMock
 from ansible.errors import AnsibleError
-# from ansible.plugins.loader import PluginLoader
+from ansible.module_utils.six.moves import http_client
 from ansible.plugins.lookup import conjur_variable
 import tempfile
 
@@ -65,54 +64,25 @@ class TestLookupModule:
             assert results['account'] == 'demo-policy'
             assert results['appliance_url'] == 'http://localhost:8080'
 
-    # @pytest.fixture
-    # def valid_token_request(self):
-    #     a = Mock()
-    #     a.read.return_value = 'foo-bar-token'
-    #     a.getcode.return_value = 200
-    #     return a
+    def mock_open_url_response(self, mocker, response_code, value):
+        mock_response = MagicMock(spec_set=http_client.HTTPResponse)
+        mock_response.read.return_value = value
+        mock_response.getcode.return_value = response_code
+        mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
 
-        # print('Fixture request: {}'.format(response))
-        # response.getcode.return_value=200
-
-        # return mock.MagicMock(getcode=200, read='foo-bar-token')
-        # response = Mock()
-        # response.read.return_value
-        # a = Mock()
-        # response.read.return_value = 'foo-bar-token'
-        # response.getcode.return_value = 200
-        # mock_open_url.return_value = a
-        # response.return_value = a
-        # return response
-
-    @patch('ansible.plugins.lookup.conjur_variable._open_url_token_retrival')
-    def test_valid_token_retrieval(self, valid_token_response):
-        a = Mock()
-        a.read.return_value = 'foo-bar-token'
-        a.getcode.return_value = 200
-        valid_token_response.return_value = a
+    def test_valid_token_retrieval(self, mocker):
+        self.mock_open_url_response(mocker, 200, 'foo-bar-token')
 
         response = conjur_variable._fetch_conjur_token('http://conjur', 'account', 'username', 'api_key')
         assert response == 'foo-bar-token'
 
-    # @pytest.fixture
-    # def valid_variable_request():
-    #     a = Mock()
-    #     a.read.return_value = 'foo-bar'
-    #     a.getcode.return_value = 200
-    #     return a
-    #
-    # @patch('ansible.plugins.lookup.conjur_variable.open_url')
-    # def test_valid_fetch_conjur_variable(self, valid_variable_request):
-    #     response = conjur_variable._fetch_conjur_token('super-secret', 'token', 'http://conjur', 'account')
-    #     assert response == 'foo-bar-token'
+    def test_valid_fetch_conjur_variable(self, mocker):
+        self.mock_open_url_response(mocker, 200, 'foo-bar')
+        response = conjur_variable._fetch_conjur_token('super-secret', 'token', 'http://conjur', 'account')
+        assert response == 'foo-bar'
 
-    # @patch('ansible.plugins.lookup.conjur_variable.open_url')
-    # def test_invalid_fetch_conjur_variable(self, mock_open_url):
-    #     for code in [401, 403, 404]:
-    #         a = Mock()
-    #         a.getcode.return_value = code
-    #         mock_open_url.return_value = a
-    #
-    #         with pytest.raises(AnsibleError):
-    #             response = conjur_variable._fetch_conjur_token('super-secret', 'token', 'http://conjur', 'account')
+    def test_invalid_fetch_conjur_variable(self, mocker):
+        for code in [401, 403, 404]:
+            self.mock_open_url_response(mocker, code, '')
+            with pytest.raises(AnsibleError):
+                response = conjur_variable._fetch_conjur_token('super-secret', 'token', 'http://conjur', 'account')
