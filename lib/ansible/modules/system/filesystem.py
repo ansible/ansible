@@ -78,6 +78,27 @@ import stat
 from ansible.module_utils.basic import AnsibleModule, get_platform
 
 
+class Device(object):
+    def __init__(self, module, path):
+        self.module = module
+        self.path = path
+
+    def size(self):
+        """ Return size in bytes of device. Returns int """
+        statinfo = os.stat(self.path)
+        if stat.S_ISBLK(statinfo.st_mode):
+            blockdev_cmd = self.module.get_bin_path("blockdev", required=True)
+            _, devsize_in_bytes, _ = self.module.run_command([blockdev_cmd, "--getsize64", self.path], check_rc=True)
+            return int(devsize_in_bytes)
+        elif os.path.isfile(self.path):
+            return os.path.getsize(self.path)
+        else:
+            self.module.fail_json(changed=False, msg="Target device not supported: %r." % self.path)
+
+    def __str__(self):
+        return self.path
+
+
 class Filesystem(object):
 
     GROW = None
@@ -91,18 +112,6 @@ class Filesystem(object):
     def fstype(self):
         return type(self).__name__
 
-    def get_dev_size(self, dev):
-        """ Return size in bytes of device. Returns int """
-        statinfo = os.stat(dev)
-        if stat.S_ISBLK(statinfo.st_mode):
-            blockdev_cmd = self.module.get_bin_path("blockdev", required=True)
-            _, devsize_in_bytes, _ = self.module.run_command("%s %s %s" % (blockdev_cmd, "--getsize64", dev), check_rc=True)
-            return int(devsize_in_bytes)
-        elif os.path.isfile(dev):
-            return os.path.getsize(dev)
-        else:
-            self.module.fail_json(changed=False, msg="Target device not supported: %r." % dev)
-
     def get_fs_size(self, dev):
         """ Return size in bytes of filesystem on device. Returns int """
         raise NotImplementedError()
@@ -113,14 +122,18 @@ class Filesystem(object):
 
         mkfs = self.module.get_bin_path(self.MKFS, required=True)
         if opts is None:
-            cmd = "%s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, dev)
+            cmd = "%s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, dev.path)
         else:
-            cmd = "%s %s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, opts, dev)
+            cmd = "%s %s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, opts, dev.path)
         self.module.run_command(cmd, check_rc=True)
+
+    def grow_cmd(self, dev):
+        cmd = self.module.get_bin_path(self.GROW, required=True)
+        return [cmd, dev.path]
 
     def grow(self, dev):
         """Get dev and fs size and compare. Returns stdout of used command."""
-        devsize_in_bytes = self.get_dev_size(dev)
+        devsize_in_bytes = dev.size()
 
         try:
             fssize_in_bytes = self.get_fs_size(dev)
@@ -132,8 +145,7 @@ class Filesystem(object):
         elif self.module.check_mode:
             self.module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (self.fstype, dev))
         else:
-            cmd = self.module.get_bin_path(self.GROW, required=True)
-            _, out, _ = self.module.run_command("%s %s" % (cmd, dev), check_rc=True)
+            _, out, _ = self.module.run_command(self.grow_cmd(dev), check_rc=True)
             return out
 
 
@@ -144,7 +156,7 @@ class Ext(Filesystem):
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path('tune2fs', required=True)
         # Get Block count and Block size
-        _, size, _ = self.module.run_command([cmd, '-l', dev], check_rc=True)
+        _, size, _ = self.module.run_command([cmd, '-l', dev.path], check_rc=True)
         for line in size.splitlines():
             if 'Block count:' in line:
                 block_count = int(line.split(':')[1].strip())
@@ -172,7 +184,7 @@ class XFS(Filesystem):
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path('xfs_growfs', required=True)
-        _, size, _ = self.module.run_command([cmd, '-n', dev], check_rc=True)
+        _, size, _ = self.module.run_command([cmd, '-n', dev.path], check_rc=True)
         for line in size.splitlines():
             col = line.split('=')
             if col[0].strip() == 'data':
@@ -220,30 +232,16 @@ class VFAT(Filesystem):
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path(self.GROW, required=True)
-        _, output, _ = self.module.run_command([cmd, '--info', dev], check_rc=True)
+        _, output, _ = self.module.run_command([cmd, '--info', dev.path], check_rc=True)
         for line in output.splitlines()[1:]:
             param, value = line.split(':', 1)
             if param.strip() == 'Size':
                 return int(value.strip())
         self.module.fail_json(msg="fatresize failed to provide filesystem size for %s" % dev)
 
-    def grow(self, dev):
-        """Get dev and fs size and compare. Returns stdout of used command."""
-        devsize_in_bytes = self.get_dev_size(dev)
-
-        try:
-            fssize_in_bytes = self.get_fs_size(dev)
-        except NotImplementedError:
-            self.module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % self.fstype)
-
-        if not fssize_in_bytes < devsize_in_bytes:
-            self.module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (self.fstype, dev))
-        elif self.module.check_mode:
-            self.module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (self.fstype, dev))
-        else:
-            cmd = self.module.get_bin_path(self.GROW, required=True)
-            _, out, _ = self.module.run_command([cmd, "--size", devsize_in_bytes, dev], check_rc=True)
-            return out
+    def grow_cmd(self, dev):
+        cmd = self.module.get_bin_path(self.GROW)
+        return [cmd, "-s", str(dev.size()), dev.path]
 
 
 class LVM(Filesystem):
@@ -253,7 +251,7 @@ class LVM(Filesystem):
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path('pvs', required=True)
-        _, size, _ = self.module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', dev], check_rc=True)
+        _, size, _ = self.module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', dev.path], check_rc=True)
         block_count = int(size[:-1])  # block size is 1
         return block_count
 
@@ -307,6 +305,7 @@ def main():
 
     if not os.path.exists(dev):
         module.fail_json(msg="Device %s not found." % dev)
+    dev = Device(module, dev)
 
     cmd = module.get_bin_path('blkid', required=True)
     rc, raw_fs, err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
