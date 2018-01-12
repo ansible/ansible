@@ -155,7 +155,7 @@ To encrypt a string read from stdin and name it 'db_password':
 
 .. code-block:: bash
 
-    echo 'letmein' | ansible-vault encrypt_string --vault-id dev@password --stdin-name 'db_password'
+    echo -n 'letmein' | ansible-vault encrypt_string --vault-id dev@password --stdin-name 'db_password'
 
 Result::
 
