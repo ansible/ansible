@@ -147,15 +147,15 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='infraAccPortP',
-            aci_rn='infra/accportprof-{}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{}")'.format(leaf_interface_profile),
+            aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
+            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
             module_object=leaf_interface_profile
         ),
         subclass_1=dict(
             aci_class='infraHPortS',
             # NOTE: normal rn: hports-{name}-typ-{type}, hence here hardcoded to range for purposes of module
-            aci_rn='hports-{}-typ-range'.format(access_port_selector),
-            filter_target='eq(infraHPortS.name, "{}")'.format(access_port_selector),
+            aci_rn='hports-{0}-typ-range'.format(access_port_selector),
+            filter_target='eq(infraHPortS.name, "{0}")'.format(access_port_selector),
             module_object=access_port_selector,
         ),
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp']
@@ -171,7 +171,7 @@ def main():
             ),
             child_configs=[
                 dict(infraPortBlk=dict(attributes=dict(name=leaf_port_blk, fromPort=fromPort, toPort=toPort))),
-                dict(infraRsAccBaseGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accportgrp-{}'.format(policy_group)))),
+                dict(infraRsAccBaseGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group)))),
             ],
         )
 
