@@ -37,7 +37,6 @@ lib/ansible/modules/monitoring/grafana_plugin.py ansible-format-automatic-specif
 lib/ansible/modules/net_tools/dnsmadeeasy.py ansible-format-automatic-specification
 lib/ansible/modules/net_tools/ipinfoio_facts.py ansible-format-automatic-specification
 lib/ansible/modules/network/a10/a10_server_axapi3.py ansible-format-automatic-specification
-lib/ansible/modules/network/aci/aci_aep.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_ap.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_bd.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_bd_subnet.py ansible-format-automatic-specification
