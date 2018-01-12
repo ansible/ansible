@@ -136,9 +136,11 @@ class F5BaseClient(object):
 
 
 class AnsibleF5Parameters(object):
-    def __init__(self, params=None):
+    def __init__(self, *args, **kwargs):
         self._values = defaultdict(lambda: None)
         self._values['__warnings'] = []
+        self.client = kwargs.pop('client', None)
+        params = kwargs.pop('params', None)
         if params:
             self.update(params=params)
 
