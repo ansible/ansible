@@ -26,7 +26,7 @@
 - name: Check if changed works correctly
   assert:
     that:
-      - not dhparam_changed|changed
-      - not dhparam_changed_512|changed
-      - dhparam_changed_to_512|changed
-      - dhparam_changed_force|changed
+      - dhparam_changed is not changed
+      - dhparam_changed_512 is not changed
+      - dhparam_changed_to_512 is changed
+      - dhparam_changed_force is changed
