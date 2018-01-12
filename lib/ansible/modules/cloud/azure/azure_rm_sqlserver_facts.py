@@ -151,9 +151,9 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
         if (self.resource_group is not None and
                 self.server_name is not None):
-            self.results['sqlservers'] = self.get()
+            self.results['servers'] = self.get()
         elif (self.resource_group is not None):
-            self.results['sqlservers'] = self.list_by_resource_group()
+            self.results['servers'] = self.list_by_resource_group()
         return self.results
 
     def get(self):
