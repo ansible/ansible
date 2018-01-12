@@ -41,9 +41,6 @@ lib/ansible/modules/net_tools/cloudflare_dns.py E317
 lib/ansible/modules/net_tools/haproxy.py E317
 lib/ansible/modules/net_tools/omapi_host.py E317
 lib/ansible/modules/network/cloudengine/ce_reboot.py E317
-lib/ansible/modules/network/f5/bigip_partition.py E321
-lib/ansible/modules/network/f5/bigip_policy.py E321
-lib/ansible/modules/network/f5/bigip_policy_rule.py E321
 lib/ansible/modules/network/f5/bigip_pool.py E321
 lib/ansible/modules/network/f5/bigip_profile_client_ssl.py E321
 lib/ansible/modules/network/f5/bigip_provision.py E321
