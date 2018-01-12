@@ -94,19 +94,19 @@ def main():
 
     # Report when vm_provider is set when type is not virtual
     if domain_type != 'vmm' and vm_provider is not None:
-        module.fail_json(msg="Domain type '{}' cannot have a 'vm_provider'".format(domain_type))
+        module.fail_json(msg="Domain type '{0}' cannot have a 'vm_provider'".format(domain_type))
 
     # Compile the full domain for URL building
     if domain_type == 'fc':
-        domain_mo = 'uni/fc-{}'.format(domain)
+        domain_mo = 'uni/fc-{0}'.format(domain)
     elif domain_type == 'l2dom':
-        domain_mo = 'uni/l2dom-{}'.format(domain)
+        domain_mo = 'uni/l2dom-{0}'.format(domain)
     elif domain_type == 'l3dom':
-        domain_mo = 'uni/l3dom-{}'.format(domain)
+        domain_mo = 'uni/l3dom-{0}'.format(domain)
     elif domain_type == 'phys':
-        domain_mo = 'uni/phys-{}'.format(domain)
+        domain_mo = 'uni/phys-{0}'.format(domain)
     elif domain_type == 'vmm':
-        domain_mo = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     else:
         aci_domain = None
 
@@ -114,14 +114,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='infraAttEntityP',
-            aci_rn='infra/attentp-{}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{}")'.format(aep),
+            aci_rn='infra/attentp-{0}'.format(aep),
+            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
         ),
         subclass_1=dict(
             aci_class='infraRsDomP',
-            aci_rn='rsdomP-[{}]'.format(domain_mo),
-            filter_target='eq(infraRsDomP.tDn, "{}")'.format(domain_mo),
+            aci_rn='rsdomP-[{0}]'.format(domain_mo),
+            filter_target='eq(infraRsDomP.tDn, "{0}")'.format(domain_mo),
             module_object=domain_mo,
         ),
     )
