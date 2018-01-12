@@ -41,16 +41,6 @@ lib/ansible/modules/net_tools/cloudflare_dns.py E317
 lib/ansible/modules/net_tools/haproxy.py E317
 lib/ansible/modules/net_tools/omapi_host.py E317
 lib/ansible/modules/network/cloudengine/ce_reboot.py E317
-lib/ansible/modules/network/f5/bigip_asm_policy.py E321
-lib/ansible/modules/network/f5/bigip_config.py E321
-lib/ansible/modules/network/f5/bigip_configsync_action.py E321
-lib/ansible/modules/network/f5/bigip_configsync_actions.py E321
-lib/ansible/modules/network/f5/bigip_device_connectivity.py E321
-lib/ansible/modules/network/f5/bigip_device_dns.py E321
-lib/ansible/modules/network/f5/bigip_device_httpd.py E321
-lib/ansible/modules/network/f5/bigip_device_ntp.py E321
-lib/ansible/modules/network/f5/bigip_device_sshd.py E321
-lib/ansible/modules/network/f5/bigip_device_trust.py E321
 lib/ansible/modules/network/f5/bigip_gtm_datacenter.py E321
 lib/ansible/modules/network/f5/bigip_gtm_facts.py E321
 lib/ansible/modules/network/f5/bigip_gtm_pool.py E321

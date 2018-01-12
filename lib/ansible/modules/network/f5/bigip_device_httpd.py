@@ -38,18 +38,18 @@ options:
   auth_pam_validate_ip:
     description:
       - Sets the authPamValidateIp setting.
-    choices: ['on', 'off']
+    type: bool
   auth_pam_dashboard_timeout:
     description:
       - Sets whether or not the BIG-IP dashboard will timeout.
-    choices: ['on', 'off']
+    type: bool
   fast_cgi_timeout:
     description:
       - Sets the timeout of FastCGI.
   hostname_lookup:
     description:
       - Sets whether or not to display the hostname, if possible.
-    choices: ['on', 'off']
+    type: bool
   log_level:
     description:
       - Sets the minimum httpd log level.
@@ -60,17 +60,14 @@ options:
   redirect_http_to_https:
     description:
       - Whether or not to redirect http requests to the GUI to https.
-    choices: ['yes', 'no']
+    type: bool
   ssl_port:
     description:
       - The HTTPS port to listen on.
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires the requests Python package on the host. This is as easy as
-    pip install requests.
+    C(pip install requests).
 requirements:
-  - f5-sdk >= 3.0.4
   - requests
 extends_documentation_fragment: f5
 author:
@@ -159,17 +156,37 @@ ssl_port:
 
 import time
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+
+HAS_DEVEL_IMPORTS = False
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 try:
     from requests.exceptions import ConnectionError
@@ -211,46 +228,6 @@ class Parameters(AnsibleF5Parameters):
         'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port',
         'allow'
     ]
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        self._values['__warnings'] = []
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
 
     @property
     def auth_pam_idle_timeout(self):
@@ -395,9 +372,10 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = ModuleParameters(params=self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
 
@@ -407,7 +385,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(changed)
+            self.changes = Changes(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -423,7 +401,7 @@ class ModuleManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = UsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -441,7 +419,7 @@ class ModuleManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        reportable = ReportableChanges(self.changes.to_return())
+        reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
@@ -451,7 +429,7 @@ class ModuleManager(object):
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -463,7 +441,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -494,7 +472,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             allow=dict(
                 type='list'
             ),
@@ -530,42 +508,32 @@ class ArgumentSpec(object):
                 type='bool'
             )
         )
-        self.f5_product_name = 'bigip'
-
-
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
-    if not HAS_REQUESTS:
-        raise F5ModuleError("The python requests module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
+    if not HAS_REQUESTS:
+        module.fail_json(msg="The python requests module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
+        module.exit_json(**results)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
