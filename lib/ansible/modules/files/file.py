@@ -57,7 +57,7 @@ options:
         relative and nonexisting paths. Relative paths are not expanded.
   recurse:
     description:
-      - recursively set the specified file attributes (applies only to state=directory)
+      - recursively set the specified file attributes (applies only to directories)
     type: bool
     default: 'no'
     version_added: "1.1"
