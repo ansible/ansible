@@ -23,13 +23,9 @@
     seconds: 10
 
 - name: Ensure we can communicate over netconf
-  junos_command:
-    rpcs: get-software-information
-    provider: "{{ netconf }}"
-  connection: netconf
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=false"
 
 # Disable netconf
-
 - name: Disable netconf
   junos_netconf:
     state: absent
@@ -53,12 +49,7 @@
     seconds: 120
 
 - name: Ensure we can NOT talk via netconf
-  junos_command:
-    rpcs: get-software-information
-    provider: "{{ netconf }}"
-  register: result
-  connection: netconf
-  ignore_errors: true
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=true"
 
 - assert:
     that:
@@ -68,6 +59,5 @@
   junos_netconf:
     state: present
   register: result
-
 
 - debug: msg="END netconf/netconfg.yaml on connection={{ ansible_connection }}"
