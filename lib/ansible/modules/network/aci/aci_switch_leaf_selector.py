@@ -169,7 +169,7 @@ def main():
             ),
             child_configs=[
                 dict(infraNodeBlk=dict(attributes=dict(name=leaf_node_blk, from_=from_, to_=to_))),
-                dict(infraRsAccNodePGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accnodepgrp-{}'.format(policy_group)))),
+                dict(infraRsAccNodePGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group)))),
             ],
         )
 
