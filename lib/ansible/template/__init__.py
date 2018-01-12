@@ -490,22 +490,20 @@ class Templar:
                             disable_lookups=disable_lookups,
                         )
 
-                        if USE_JINJA2_NATIVE:
-                            return result
-
-                        unsafe = hasattr(result, '__UNSAFE__')
-                        if convert_data and not self._no_type_regex.match(variable):
-                            # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                            if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                                    result.startswith("[") or result in ("True", "False"):
-                                eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                                if eval_results[1] is None:
-                                    result = eval_results[0]
-                                    if unsafe:
-                                        result = wrap_var(result)
-                                else:
-                                    # FIXME: if the safe_eval raised an error, should we do something with it?
-                                    pass
+                        if not USE_JINJA2_NATIVE:
+                            unsafe = hasattr(result, '__UNSAFE__')
+                            if convert_data and not self._no_type_regex.match(variable):
+                                # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                                if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                                        result.startswith("[") or result in ("True", "False"):
+                                    eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                                    if eval_results[1] is None:
+                                        result = eval_results[0]
+                                        if unsafe:
+                                            result = wrap_var(result)
+                                    else:
+                                        # FIXME: if the safe_eval raised an error, should we do something with it?
+                                        pass
 
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
