@@ -10,7 +10,8 @@
   when: ansible_system == 'FreeBSD' and fstype != 'vfat'
 
 - name: 'Create a ext2 filesystem'
-  command: 'mkfs.ext2 {{ dev }}'
+  # -F flag may not be necessary on mke2fs >= 1.43.6
+  command: 'mkfs.ext2 -F {{ dev }}'
   when: ansible_system != 'FreeBSD' and fstype == 'vfat'
 
 - name: 'Create a UFS filesystem'
