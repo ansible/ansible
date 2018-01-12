@@ -77,8 +77,8 @@ def get_argument_spec(filename):
     try:
         args, kwargs = module_mock.call_args
         try:
-            return kwargs['argument_spec']
+            return kwargs['argument_spec'], args, kwargs
         except KeyError:
-            return args[0]
+            return args[0], args, kwargs
     except TypeError:
-        return {}
+        return {}, (), {}
