@@ -47,7 +47,6 @@ lib/ansible/modules/network/aci/aci_config_snapshot.py ansible-format-automatic-
 lib/ansible/modules/network/aci/aci_contract.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_contract_subject.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_contract_subject_to_filter.py ansible-format-automatic-specification
-lib/ansible/modules/network/aci/aci_domain.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_domain_to_encap_pool.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_domain_to_vlan_pool.py ansible-format-automatic-specification
 lib/ansible/modules/network/aci/aci_epg.py ansible-format-automatic-specification
