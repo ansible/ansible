@@ -16,15 +16,11 @@ module: aci_bd_subnet
 short_description: Manage Subnets on Cisco ACI fabrics (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:Subnet) at U(https://developer.cisco.com/media/mim-ref/MO-fvSubnet.html).
+- More information from the internal APIC class I(fv:Subnet) at
+  U(https://developer.cisco.com/media/mim-ref/MO-fvSubnet.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
   is required when the state is C(absent) or C(present).
@@ -248,7 +244,7 @@ def main():
         # TODO: split checkes between IPv4 and IPv6 Addresses
         module.fail_json(msg='Valid Subnet Masks are 0 to 32 for IPv4 Addresses and 0 to 128 for IPv6 addresses')
     if gateway is not None:
-        gateway = '{}/{}'.format(gateway, str(mask))
+        gateway = '{0}/{1}'.format(gateway, str(mask))
     subnet_name = module.params['subnet_name']
     nd_prefix_policy = module.params['nd_prefix_policy']
     preferred = module.params['preferred']
@@ -271,20 +267,20 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, \"{}\")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvBD',
-            aci_rn='BD-{}'.format(bd),
-            filter_target='eq(fvBD.name, \"{}\")'.format(bd),
+            aci_rn='BD-{0}'.format(bd),
+            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
         ),
         subclass_2=dict(
             aci_class='fvSubnet',
-            aci_rn='subnet-[{}]'.format(gateway),
-            filter_target='eq(fvSubnet.ip, \"{}\")'.format(gateway),
+            aci_rn='subnet-[{0}]'.format(gateway),
+            filter_target='eq(fvSubnet.ip, "{0}")'.format(gateway),
             module_object=gateway,
         ),
         child_classes=['fvRsBDSubnetToProfile', 'fvRsNdPfxPol'],
