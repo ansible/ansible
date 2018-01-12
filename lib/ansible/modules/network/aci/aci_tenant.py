@@ -16,15 +16,11 @@ module: aci_tenant
 short_description: Manage tenants on Cisco ACI fabrics (fv:Tenant)
 description:
 - Manage tenants on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:Tenant) at U(https://developer.cisco.com/media/mim-ref/MO-fvTenant.html).
+- More information from the internal APIC class I(fv:Tenant) at
+  U(https://developer.cisco.com/media/mim-ref/MO-fvTenant.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   tenant:
     description:
@@ -112,8 +108,8 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
     )

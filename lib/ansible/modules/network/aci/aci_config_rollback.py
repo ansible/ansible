@@ -20,12 +20,8 @@ description:
 - More information from the internal APIC class
   I(config:ImportP) at U(https://developer.cisco.com/media/mim-ref/MO-configImportP.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   compare_export_policy:
     description:
@@ -199,8 +195,8 @@ def main():
         aci.construct_url(
             root_class=dict(
                 aci_class='configImportP',
-                aci_rn='fabric/configimp-{}'.format(import_policy),
-                filter_target='eq(configImportP.name, "{}")'.format(import_policy),
+                aci_rn='fabric/configimp-{0}'.format(import_policy),
+                filter_target='eq(configImportP.name, "{0}")'.format(import_policy),
                 module_object=import_policy,
             ),
         )

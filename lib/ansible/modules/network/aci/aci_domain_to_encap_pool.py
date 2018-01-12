@@ -120,7 +120,7 @@ def main():
 
     # Report when vm_provider is set when type is not virtual
     if domain_type != 'vmm' and vm_provider is not None:
-        module.fail_json(msg="Domain type '{}' cannot have a 'vm_provider'".format(domain_type))
+        module.fail_json(msg="Domain type '{0}' cannot have a 'vm_provider'".format(domain_type))
 
     # ACI Pool URL requires the allocation mode for vlan and vsan pools (ex: uni/infra/vlanns-[poolname]-static)
     pool_name = pool
@@ -128,7 +128,7 @@ def main():
         if pool_allocation_mode is not None:
             pool_name = '[{0}]-{1}'.format(pool, pool_allocation_mode)
         else:
-            module.fail_json(msg='ACI requires the "pool_allocation_mode" for "pool_type" of "vlan" and "vsan" when the "pool" is provided')
+            module.fail_json(msg="ACI requires the 'pool_allocation_mode' for 'pool_type' of 'vlan' and 'vsan' when 'pool' is provided")
 
     # Vxlan pools do not support allocation modes
     if pool_type == 'vxlan' and pool_allocation_mode is not None:
@@ -137,24 +137,24 @@ def main():
     # Compile the full domain for URL building
     if domain_type == 'fc':
         domain_class = 'fcDomP'
-        domain_mo = 'uni/fc-{}'.format(domain)
-        domain_rn = 'fc-{}'.format(domain)
+        domain_mo = 'uni/fc-{0}'.format(domain)
+        domain_rn = 'fc-{0}'.format(domain)
     elif domain_type == 'l2ext':
         domain_class = 'l2extDomP'
-        domain_mo = 'uni/l2dom-{}'.format(domain)
-        domain_rn = 'l2dom-{}'.format(domain)
+        domain_mo = 'uni/l2dom-{0}'.format(domain)
+        domain_rn = 'l2dom-{0}'.format(domain)
     elif domain_type == 'l3ext':
         domain_class = 'l3extDomP'
-        domain_mo = 'uni/l3dom-{}'.format(domain)
-        domain_rn = 'l3dom-{}'.format(domain)
+        domain_mo = 'uni/l3dom-{0}'.format(domain)
+        domain_rn = 'l3dom-{0}'.format(domain)
     elif domain_type == 'phys':
         domain_class = 'physDomP'
-        domain_mo = 'uni/phys-{}'.format(domain)
-        domain_rn = 'phys-{}'.format(domain)
+        domain_mo = 'uni/phys-{0}'.format(domain)
+        domain_rn = 'phys-{0}'.format(domain)
     elif domain_type == 'vmm':
         domain_class = 'vmmDomP'
-        domain_mo = 'uni/vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-        domain_rn = 'vmmp-{}/dom-{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
 
     pool_mo = POOL_MAPPING[pool_type]["aci_mo"] + pool_name
 
@@ -163,7 +163,7 @@ def main():
         root_class=dict(
             aci_class=domain_class,
             aci_rn=domain_rn,
-            filter_target='eq({}.name, "{}")'.format(domain_class, domain),
+            filter_target='eq({0}.name, "{1}")'.format(domain_class, domain),
             module_object=domain_mo,
         ),
         child_classes=['infraRsVlanNs'],

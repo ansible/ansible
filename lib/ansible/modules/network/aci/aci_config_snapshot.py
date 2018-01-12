@@ -18,16 +18,13 @@ description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
-- More information from the internal APIC classes
-  I(config:Snapshot) at U(https://developer.cisco.com/media/mim-ref/MO-configSnapshot.html) and
-  I(config:ExportP) at U(https://developer.cisco.com/media/mim-ref/MO-configExportP.html).
+- More information from the internal APIC classes I(config:Snapshot) at
+  U(https://developer.cisco.com/media/mim-ref/MO-configSnapshot.html)
+  and I(config:ExportP) at
+  U(https://developer.cisco.com/media/mim-ref/MO-configExportP.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- Tested with ACI Fabric 1.0(3f)+
 notes:
 - The APIC does not provide a mechanism for naming the snapshots.
 - 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
@@ -155,8 +152,8 @@ def main():
         aci.construct_url(
             root_class=dict(
                 aci_class='configExportP',
-                aci_rn='fabric/configexp-{}'.format(export_policy),
-                filter_target='eq(configExportP.name, "{}")'.format(export_policy),
+                aci_rn='fabric/configexp-{0}'.format(export_policy),
+                filter_target='eq(configExportP.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
             ),
         )
@@ -185,19 +182,19 @@ def main():
     else:
         # Prefix the proper url to export_policy
         if export_policy is not None:
-            export_policy = 'uni/fabric/configexp-{}'.format(export_policy)
+            export_policy = 'uni/fabric/configexp-{0}'.format(export_policy)
 
         aci.construct_url(
             root_class=dict(
                 aci_class='configSnapshotCont',
-                aci_rn='backupst/snapshots-[{}]'.format(export_policy),
-                filter_target='(configSnapshotCont.name, "{}")'.format(export_policy),
+                aci_rn='backupst/snapshots-[{0}]'.format(export_policy),
+                filter_target='(configSnapshotCont.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
             ),
             subclass_1=dict(
                 aci_class='configSnapshot',
-                aci_rn='snapshot-{}'.format(snapshot),
-                filter_target='(configSnapshot.name, "{}")'.format(snapshot),
+                aci_rn='snapshot-{0}'.format(snapshot),
+                filter_target='(configSnapshot.name, "{0}")'.format(snapshot),
                 module_object=snapshot,
             ),
         )
