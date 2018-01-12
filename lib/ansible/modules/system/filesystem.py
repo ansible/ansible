@@ -94,9 +94,15 @@ class Filesystem(object):
 
     def get_dev_size(self, dev):
         """ Return size in bytes of device. Returns int """
-        blockdev_cmd = self.module.get_bin_path("blockdev", required=True)
-        _, devsize_in_bytes, _ = self.module.run_command("%s %s %s" % (blockdev_cmd, "--getsize64", dev), check_rc=True)
-        return int(devsize_in_bytes)
+        statinfo = os.stat(dev)
+        if stat.S_ISBLK(statinfo.st_mode):
+            blockdev_cmd = self.module.get_bin_path("blockdev", required=True)
+            _, devsize_in_bytes, _ = self.module.run_command("%s %s %s" % (blockdev_cmd, "--getsize64", dev), check_rc=True)
+            return int(devsize_in_bytes)
+        elif os.path.isfile(dev):
+            return os.path.getsize(dev)
+        else:
+            self.module.fail_json(changed=False, msg="Target device not supported: %r." % dev)
 
     def get_fs_size(self, dev):
         """ Return size in bytes of filesystem on device. Returns int """
@@ -115,30 +121,21 @@ class Filesystem(object):
 
     def grow(self, dev):
         """Get dev and fs size and compare. Returns stdout of used command."""
-        statinfo = os.stat(dev)
-        if stat.S_ISBLK(statinfo.st_mode):
-            devsize_in_bytes = self.get_dev_size(dev)
-        elif os.path.isfile(dev):
-            devsize_in_bytes = os.path.getsize(dev)
-        else:
-            self.module.fail_json(changed=False, msg="Target device not supported: %r." % dev)
+        devsize_in_bytes = self.get_dev_size(dev)
 
         try:
             fssize_in_bytes = self.get_fs_size(dev)
         except NotImplementedError:
             self.module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % self.fstype)
-        fs_smaller = fssize_in_bytes < devsize_in_bytes
 
-        if self.module.check_mode and fs_smaller:
-            self.module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (self.fstype, dev))
-        elif self.module.check_mode and not fs_smaller:
+        if not fssize_in_bytes < devsize_in_bytes:
             self.module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (self.fstype, dev))
-        elif fs_smaller:
+        elif self.module.check_mode:
+            self.module.exit_json(changed=True, msg="Resizing filesystem %s on device %s" % (self.fstype, dev))
+        else:
             cmd = self.module.get_bin_path(self.GROW, required=True)
             _, out, _ = self.module.run_command("%s %s" % (cmd, dev), check_rc=True)
             return out
-        else:
-            self.module.exit_json(changed=False, msg="%s filesystem is using the whole device %s" % (self.fstype, dev))
 
 
 class Ext(Filesystem):
@@ -230,13 +227,7 @@ class VFAT(Filesystem):
 
     def grow(self, dev):
         """Get dev and fs size and compare. Returns stdout of used command."""
-        statinfo = os.stat(dev)
-        if stat.S_ISBLK(statinfo.st_mode):
-            devsize_in_bytes = self.get_dev_size(dev)
-        elif os.path.isfile(dev):
-            devsize_in_bytes = os.path.getsize(dev)
-        else:
-            self.module.fail_json(changed=False, msg="Target device not supported: %r." % dev)
+        devsize_in_bytes = self.get_dev_size(dev)
 
         try:
             fssize_in_bytes = self.get_fs_size(dev)
