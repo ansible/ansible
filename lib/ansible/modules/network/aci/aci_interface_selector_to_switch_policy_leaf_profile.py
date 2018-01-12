@@ -17,8 +17,8 @@ module: aci_interface_selector_to_switch_policy_leaf_profile
 short_description: Associates an Interface Selector Profile to a Switch Policy Leaf Profile (infra:RsAccPortP)
 description:
 - Associates an Interface Profile (Selector) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(infra:RsAccPortP) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information from the internal APIC class I(infra:RsAccPortP) at 
+  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -101,20 +101,20 @@ def main():
     state = module.params['state']
 
     # Defining the interface profile tDn for clarity
-    interface_selector_tDn = 'uni/infra/accportprof-{}'.format(interface_selector)
+    interface_selector_tDn = 'uni/infra/accportprof-{0}'.format(interface_selector)
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='infraNodeP',
-            aci_rn='infra/nprof-{}'.format(leaf_profile),
-            filter_target='eq(infraNodeP.name, "{}")'.format(leaf_profile),
+            aci_rn='infra/nprof-{0}'.format(leaf_profile),
+            filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
             module_object=leaf_profile
         ),
         subclass_1=dict(
             aci_class='infraRsAccPortP',
-            aci_rn='rsaccPortP-[{}]'.format(interface_selector_tDn),
-            filter_target='eq(infraRsAccPortP.name, "{}")'.format(interface_selector),
+            aci_rn='rsaccPortP-[{0}]'.format(interface_selector_tDn),
+            filter_target='eq(infraRsAccPortP.name, "{0}")'.format(interface_selector),
             module_object=interface_selector,
         )
     )
