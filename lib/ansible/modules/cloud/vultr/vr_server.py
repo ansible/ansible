@@ -163,7 +163,7 @@ vultr_server:
     id:
       description: ID of the server
       returned: success
-      type: int
+      type: string
       sample: 10194376
     name:
       description: Name (label) of the server
@@ -323,7 +323,7 @@ class AnsibleVultrServer(Vultr):
 
         self.server = None
         self.returns = {
-            'SUBID': dict(key='id', convert_to='int'),
+            'SUBID': dict(key='id'),
             'label': dict(key='name'),
             'date_created': dict(),
             'allowed_bandwidth_gb': dict(convert_to='int'),
