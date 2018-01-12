@@ -64,16 +64,16 @@ class TestLookupModule:
             assert results['account'] == 'demo-policy'
             assert results['appliance_url'] == 'http://localhost:8080'
 
-    # def mock_open_url_response(self, mocker, response_code, value):
-    #     mock_response = MagicMock(spec_set=http_client.HTTPResponse)
-    #     mock_response.read.return_value = value
-    #     mock_response.getcode.return_value = response_code
-    #     mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
-
     def test_valid_token_retrieval(self, mocker):
         mock_response = MagicMock(spec_set=http_client.HTTPResponse)
+        try:
+            mock_response.getcode.return_value = 200
+        except:
+            # HTTPResponse is a Python 3 only feature. This uses a generic mock for python 2.6
+            mock_response = MagicMock()
+            mock_response.getcode.return_value = 200
+
         mock_response.read.return_value = 'foo-bar-token'
-        mock_response.getcode.return_value = 200
         mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
 
         response = conjur_variable._fetch_conjur_token('http://conjur', 'account', 'username', 'api_key')
@@ -81,8 +81,14 @@ class TestLookupModule:
 
     def test_valid_fetch_conjur_variable(self, mocker):
         mock_response = MagicMock(spec_set=http_client.HTTPResponse)
+        try:
+            mock_response.getcode.return_value = 200
+        except:
+            # HTTPResponse is a Python 3 only feature. This uses a generic mock for python 2.6
+            mock_response = MagicMock()
+            mock_response.getcode.return_value = 200
+
         mock_response.read.return_value = 'foo-bar'
-        mock_response.getcode.return_value = 200
         mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
 
         response = conjur_variable._fetch_conjur_token('super-secret', 'token', 'http://conjur', 'account')
@@ -91,7 +97,13 @@ class TestLookupModule:
     def test_invalid_fetch_conjur_variable(self, mocker):
         for code in [401, 403, 404]:
             mock_response = MagicMock(spec_set=http_client.HTTPResponse)
-            mock_response.getcode.return_value = code
+            try:
+                mock_response.getcode.return_value = code
+            except:
+                # HTTPResponse is a Python 3 only feature. This uses a generic mock for python 2.6
+                mock_response = MagicMock()
+                mock_response.getcode.return_value = code
+
             mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
 
             with pytest.raises(AnsibleError):
