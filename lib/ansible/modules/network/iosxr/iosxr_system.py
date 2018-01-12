@@ -210,18 +210,20 @@ class CliConfiguration(ConfigBase):
 
         elif state == 'present':
             if needs_update('hostname'):
-                commands.append('hostname {!s}'.format(self._want['hostname']))
+                commands.append('hostname {0!s}'.format(self._want['hostname']))
 
             if needs_update('domain_name'):
-                commands.append('domain name {!s}'.format(self._want['domain_name']))
+                commands.append('domain name {0!s}'.format(self._want['domain_name']))
 
             if needs_update('lookup_source'):
-                commands.append('domain lookup source-interface {!s}'.format(self._want['lookup_source']))
+                commands.append('domain lookup source-interface {0!s}'.format(self._want['lookup_source']))
 
-            if needs_update('lookup_enabled'):
+            cmd = None
+            if not self._want['lookup_enabled'] and self._have['lookup_enabled']:
                 cmd = 'domain lookup disable'
-                if self._want['lookup_enabled']:
-                    cmd = 'no {!s}'.format(cmd)
+            elif self._want['lookup_enabled'] and not self._have['lookup_enabled']:
+                cmd = 'no domain lookup disable'
+            if cmd is not None:
                 commands.append(cmd)
 
             if self._want['name_servers'] is not None:
