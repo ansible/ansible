@@ -92,9 +92,9 @@ class IncludedFile:
                             if original_task._parent:
                                 # handle relative includes by walking up the list of parent include
                                 # tasks and checking the relative result to see if it exists
-                                parent_include = original_task._parent
+                                parent_include = original_task
                                 cumulative_path = None
-                                while parent_include is not None:
+                                while parent_include._parent is not None:
                                     if not isinstance(parent_include, TaskInclude):
                                         parent_include = parent_include._parent
                                         continue
@@ -108,7 +108,7 @@ class IncludedFile:
                                         cumulative_path = parent_include_dir
                                     include_target = templar.template(include_result['include'])
                                     if original_task._role:
-                                        new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
+                                        new_basedir = os.path.join(original_task._role._role_path, cumulative_path)
                                         include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
                                     else:
                                         include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
@@ -117,6 +117,10 @@ class IncludedFile:
                                         break
                                     else:
                                         parent_include = parent_include._parent
+                                else:
+                                    cumulative_path = os.path.join(parent_include._role._role_path, "tasks")
+                                    include_target = templar.template(include_result['include'])
+                                    include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
                         if include_file is None:
                             if original_task._role:
