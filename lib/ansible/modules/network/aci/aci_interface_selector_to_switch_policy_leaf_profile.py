@@ -17,7 +17,7 @@ module: aci_interface_selector_to_switch_policy_leaf_profile
 short_description: Associates an Interface Selector Profile to a Switch Policy Leaf Profile (infra:RsAccPortP)
 description:
 - Associates an Interface Profile (Selector) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:RsAccPortP) at 
+- More information from the internal APIC class I(infra:RsAccPortP) at
   U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
