@@ -53,12 +53,8 @@ options:
       - yes
       - no
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-  - Requires the objectpath Python package on the host. This is as easy as pip
-    install objectpath.
-requirements:
-  - f5-sdk >= 2.2.3
+  - Requires the objectpath Python package on the host. This is as easy as
+    C(pip install objectpath).
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -100,8 +96,8 @@ RETURN = r'''
 # only common fields returned
 '''
 
-import time
 import re
+import time
 
 try:
     from objectpath import Tree
@@ -109,16 +105,38 @@ try:
 except ImportError:
     HAS_OBJPATH = False
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import BOOLEANS_TRUE
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+
+HAS_DEVEL_IMPORTS = False
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -184,9 +202,11 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(params=self.module.params)
+        self.changes = Parameters()
 
     def exec_module(self):
         result = dict()
@@ -319,8 +339,9 @@ class ModuleManager(object):
 
 class ArgumentSpec(object):
     def __init__(self):
-        self.supports_check_mode = True
-        self.argument_spec = dict(
+        self.supports_check_mode = False
+
+        argument_spec = dict(
             sync_device_to_group=dict(
                 type='bool'
             ),
@@ -335,7 +356,10 @@ class ArgumentSpec(object):
                 required=True
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
+
         self.required_one_of = [
             ['sync_device_to_group', 'sync_most_recent_to_device']
         ]
@@ -347,45 +371,27 @@ class ArgumentSpec(object):
         ]
 
 
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
-
-
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError(
-            "The python 'f5-sdk' module is required. This can be done with 'pip install f5-sdk'"
-        )
-
-    if not HAS_OBJPATH:
-        raise F5ModuleError(
-            "The python 'objectpath' module is required. This can be done with 'pip install objectpath'"
-        )
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
         mutually_exclusive=spec.mutually_exclusive,
-        required_one_of=spec.required_one_of,
-        f5_product_name=spec.f5_product_name
+        required_one_of=spec.required_one_of
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
+        module.exit_json(**results)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
