@@ -485,7 +485,7 @@ def main():
     if module.params['cloudwatch_logs_log_group_arn']:
         ct_params['CloudWatchLogsLogGroupArn'] = module.params['cloudwatch_logs_log_group_arn']
 
-    if module.params['enable_log_file_validation']:
+    if module.params['enable_log_file_validation'] is not None:
         ct_params['EnableLogFileValidation'] = module.params['enable_log_file_validation']
 
     if module.params['kms_key_id']:
@@ -595,7 +595,9 @@ def main():
                 pass
             trail = dict()
             trail.update(ct_params)
-            trail['LogFileValidationEnabled'] = ct_params['EnableLogFileValidation']
+            if 'EnableLogFileValidation' not in ct_params:
+                ct_params['EnableLogFileValidation'] = False
+            trail['EnableLogFileValidation'] = ct_params['EnableLogFileValidation']
             trail.pop('EnableLogFileValidation')
             fake_arn = 'arn:aws:cloudtrail:' + region + ':' + acct_id + ':trail/' + ct_params['Name']
             trail['HasCustomEventSelectors'] = False
