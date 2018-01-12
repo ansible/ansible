@@ -108,7 +108,7 @@ version_added: '2.5'
 '''
 
 EXAMPLES = r'''
-- name: Configure IPv4 and IPv6 address pools
+- name: Configure IPv4 address pools
   ucs_ip_pool:
     hostname: 172.16.143.150
     username: admin
@@ -120,6 +120,7 @@ EXAMPLES = r'''
     subnet_mask: 255.255.255.0
     default_gw: 192.168.0.1
     primary_dns: 172.16.143.136
+- name: Configure IPv6 address pools
   ucs_ip_pool:
     hostname: 172.16.143.150
     username: admin
@@ -129,13 +130,14 @@ EXAMPLES = r'''
     ipv6_last_addr: fe80::1cae:7992:d7a1:edfe
     ipv6_default_gw: fe80::1cae:7992:d7a1:ecff
 
-- name: Remove IPv4 and IPv6 address pools
+- name: Remove IPv4 address pools
   ucs_ip_pool:
     hostname: 172.16.143.150
     username: admin
     password: password
     name: ip-A
     state: absent
+- name: Remove IPv6 address pools
   ucs_ip_pool:
     hostname: 172.16.143.150
     username: admin
@@ -150,6 +152,9 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
+from ucsmsdk.mometa.ippool.IppoolPool import IppoolPool
+from ucsmsdk.mometa.ippool.IppoolBlock import IppoolBlock
+from ucsmsdk.mometa.ippool.IppoolIpV6Block import IppoolIpV6Block
 
 
 def main():
@@ -181,10 +186,6 @@ def main():
     ucs = UCSModule(module)
 
     err = False
-
-    from ucsmsdk.mometa.ippool.IppoolPool import IppoolPool
-    from ucsmsdk.mometa.ippool.IppoolBlock import IppoolBlock
-    from ucsmsdk.mometa.ippool.IppoolIpV6Block import IppoolIpV6Block
 
     changed = False
     try:
