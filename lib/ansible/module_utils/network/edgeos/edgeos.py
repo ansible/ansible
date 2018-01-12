@@ -30,22 +30,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import Connection
 
-_DEVICE_CONFIGS = {}
-
-edgeos_argument_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-
-    'timeout': dict(removed_in_version=2.9, type='int'),
-}
-
-
-def get_argspec():
-    return edgeos_argument_spec
+_DEVICE_CONFIGS = None
 
 
 def get_connection(module):
@@ -74,7 +59,7 @@ def get_capabilities(module):
 def get_config(module):
     global _DEVICE_CONFIGS
 
-    if _DEVICE_CONFIGS != {}:
+    if _DEVICE_CONFIGS is not None:
         return _DEVICE_CONFIGS
     else:
         connection = get_connection(module)
@@ -89,12 +74,11 @@ def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
 
     for cmd in to_list(commands):
-        try:
-            cmd = json.loads(cmd)
+        if isinstance(cmd, dict):
             command = cmd['command']
             prompt = cmd['prompt']
             answer = cmd['answer']
-        except:
+        else:
             command = cmd
             prompt = None
             answer = None
@@ -104,7 +88,8 @@ def run_commands(module, commands, check_rc=True):
         try:
             out = to_text(out, errors='surrogate_or_strict')
         except UnicodeError:
-            module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+            module.fail_json(msg=u'Failed to decode output from %s: %s' %
+                             (cmd, to_text(out)))
 
         responses.append(out)
 

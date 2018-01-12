@@ -20,6 +20,7 @@ short_description: Run one or more commands on EdgeOS devices
 description:
   - This command module allows running one or more commands on a remote
     device running the EdgeOS, such as the Ubiquiti EdgeRouter.
+  - This module does not support running commands in configuration mode.
 options:
   commands:
     description:
@@ -57,12 +58,10 @@ stdout_lines:
 
 import time
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.edgeos.edgeos import run_commands
-from ansible.module_utils.network.edgeos.edgeos import edgeos_argument_spec
 from ansible.module_utils.six import string_types
 
 
@@ -74,35 +73,37 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
+    spec = dict(
         command=dict(key=True),
         prompt=dict(),
         answer=dict(),
-    ), module)
-    commands = command(module.params['commands'])
-    items = []
+    )
 
-    for item in commands:
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append('only \'show\' commands are supported when using '
-                            'check mode, not executing \'%s\'' % item['command'])
-        else:
-            items.append(module.jsonify(item))
+    transform = ComplexList(spec, module)
+    commands = transform(module.params['commands'])
 
-    return items
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check_mode, '
+                    'not executing %s' % item['command'])
+                commands.remove(item)
+
+    return commands
 
 
 def main():
-    argument_spec = dict(
-        commands=dict(required=True),
+    spec = dict(
+        commands=dict(type='list', required=True),
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(edgeos_argument_spec)
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
+
     warnings = list()
     result = {'changed': False}
     commands = parse_commands(module, warnings)
@@ -110,29 +111,28 @@ def main():
 
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError as exc:
-        module.fail_json(msg=to_text(exc))
+    except AttributeError as e:
+        module.fail_json(msg=str(e))
 
     retries = module.params['retries']
     interval = module.params['interval']
     match = module.params['match']
 
-    for attempt in range(retries):
+    while retries > 0:
         responses = run_commands(module, commands)
 
-        for item in conditionals:
+        for item in list(conditionals):
             if item(responses):
-
                 if match == 'any':
                     conditionals = list()
                     break
-
                 conditionals.remove(item)
 
-            if not conditionals:
-                break
+        if not conditionals:
+            break
 
-            time.sleep(interval)
+        time.sleep(interval)
+        retries -= 1
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
@@ -143,7 +143,7 @@ def main():
         'changed': False,
         'stdout': responses,
         'warnings': warnings,
-        'stdout_lines': list(to_lines(responses)),
+        'stdout_lines': list(to_lines(responses))
     }
 
     module.exit_json(**result)
