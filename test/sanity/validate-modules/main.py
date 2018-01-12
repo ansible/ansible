@@ -527,8 +527,8 @@ class ModuleValidator(Validator):
                     if isinstance(child, ast.If) and \
                             child.test.left.id == '__name__' and \
                             len(child.test.ops) == 1 and \
-                            not isinstance(child.test.ops[0], ast.Eq) and \
-                            child.test.comparators[0].s != '__main__':
+                            isinstance(child.test.ops[0], ast.Eq) and \
+                            child.test.comparators[0].s == '__main__':
                         mainchecked = True
                 except Exception:
                     pass
