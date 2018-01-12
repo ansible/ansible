@@ -75,8 +75,7 @@ import os
 import re
 import stat
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import viewkeys
+from ansible.module_utils.basic import AnsibleModule, get_platform
 
 
 class Filesystem(object):
@@ -214,7 +213,10 @@ class Btrfs(Filesystem):
 
 
 class VFAT(Filesystem):
-    MKFS = 'mkfs.vfat'
+    if get_platform() == 'FreeBSD':
+        MKFS = "newfs_msdos"
+    else:
+        MKFS = 'mkfs.vfat'
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path(self.GROW, required=True)

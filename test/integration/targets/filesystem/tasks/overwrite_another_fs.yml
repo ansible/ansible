@@ -12,11 +12,7 @@
 - name: 'Create a ext2 filesystem'
   # -F flag may not be necessary on mke2fs >= 1.43.6
   command: 'mkfs.ext2 -F {{ dev }}'
-  when: ansible_system != 'FreeBSD' and fstype == 'vfat'
-
-- name: 'Create a UFS filesystem'
-  command: 'newfs {{ dev }}'
-  when: ansible_system == 'FreeBSD' and fstype == 'vfat'
+  when: fstype == 'vfat'
 
 - command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
   register: uuid
