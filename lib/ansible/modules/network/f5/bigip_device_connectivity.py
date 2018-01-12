@@ -70,13 +70,9 @@ options:
         provided, a default of C(62960) will be used. This value must be between
         0 and 65535.
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - This module is primarily used as a component of configuring HA pairs of
     BIG-IP devices.
   - Requires BIG-IP >= 12.0.0
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -142,11 +138,38 @@ multicast_port:
   sample: 1026
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
+
+HAS_DEVEL_IMPORTS = False
+
+try:
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
+except ImportError:
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 try:
     from netaddr import IPAddress, AddrFormatError
@@ -154,14 +177,10 @@ try:
 except ImportError:
     HAS_NETADDR = False
 
-try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-except ImportError:
-    HAS_F5SDK = False
-
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
+        'unicastAddress': 'unicast_failover',
         'configsyncIp': 'config_sync_ip',
         'multicastInterface': 'multicast_interface',
         'multicastIp': 'multicast_address',
@@ -234,44 +253,6 @@ class Parameters(AnsibleF5Parameters):
         result = self._get_validated_ip_address('config_sync_ip')
         return result
 
-    @property
-    def unicastAddress(self):
-        return self.unicast_failover
-
-    @unicastAddress.setter
-    def unicastAddress(self, value):
-        result = []
-        for item in value:
-            item['address'] = item.pop('ip')
-            result.append(item)
-        if result:
-            self._values['unicast_failover'] = result
-
-    @property
-    def unicast_failover(self):
-        if self._values['unicast_failover'] is None:
-            return None
-        if self._values['unicast_failover'] == ['none']:
-            return []
-        result = []
-        for item in self._values['unicast_failover']:
-            address = item.get('address', None)
-            port = item.get('port', None)
-            address = self._validate_unicast_failover_address(address)
-            port = self._validate_unicast_failover_port(port)
-            result.append(
-                dict(
-                    effectiveIp=address,
-                    effectivePort=port,
-                    ip=address,
-                    port=port
-                )
-            )
-        if result:
-            return result
-        else:
-            return None
-
     def _validate_unicast_failover_port(self, port):
         try:
             result = int(port)
@@ -310,15 +291,36 @@ class Parameters(AnsibleF5Parameters):
                 )
             )
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    @property
+    def unicast_failover(self):
+        if self._values['unicast_failover'] is None:
+            return None
+        if self._values['unicast_failover'] == ['none']:
+            return []
+        result = []
+        for item in self._values['unicast_failover']:
+            address = item.get('address', None)
+            port = item.get('port', None)
+            address = self._validate_unicast_failover_address(address)
+            port = self._validate_unicast_failover_port(port)
+            result.append(
+                dict(
+                    effectiveIp=address,
+                    effectivePort=port,
+                    ip=address,
+                    port=port
+                )
+            )
+        if result:
+            return result
+        else:
+            return None
 
 
 class Changes(Parameters):
@@ -459,9 +461,10 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
 
     def _update_changed_options(self):
@@ -478,7 +481,7 @@ class ModuleManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = UsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -499,7 +502,7 @@ class ModuleManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        reportable = ReportableChanges(self.changes.to_return())
+        reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
@@ -509,7 +512,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -530,7 +533,7 @@ class ModuleManager(object):
         for resource in collection:
             if resource.selfDevice == 'true':
                 result = resource.attrs
-                return Parameters(result)
+                return ApiParameters(params=result)
         raise F5ModuleError(
             "The host device was not found."
         )
@@ -539,7 +542,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             multicast_port=dict(
                 type='int'
             ),
@@ -559,45 +562,37 @@ class ArgumentSpec(object):
                 choices=['present']
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.required_together = [
             ['multicast_address', 'multicast_interface', 'multicast_port']
         ]
 
 
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
-
-
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
-    if not HAS_NETADDR:
-        raise F5ModuleError("The python netaddr module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        required_together=spec.required_together
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
+
+    if not HAS_NETADDR:
+        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
+        module.exit_json(**results)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

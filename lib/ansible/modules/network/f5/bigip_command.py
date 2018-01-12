@@ -162,65 +162,54 @@ failed_conditions:
 import re
 import time
 
-from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-
 try:
     from ansible.module_utils.f5_utils import run_commands
     HAS_CLI_TRANSPORT = True
 except ImportError:
     HAS_CLI_TRANSPORT = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import string_types
 from ansible.module_utils.network.common.parsing import FailedConditionsError
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
 from collections import deque
 
+HAS_DEVEL_IMPORTS = False
+
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
     returnables = ['stdout', 'stdout_lines', 'warnings']
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        self._values['__warnings'] = []
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
 
     def to_return(self):
         result = {}
@@ -260,9 +249,10 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def _to_lines(self, stdout):
@@ -278,7 +268,7 @@ class ModuleManager(object):
             'list', 'show',
             'modify cli preference pager disabled'
         ]
-        if self.client.module.params['transport'] != 'cli':
+        if self.module.params['transport'] != 'cli':
             valid_configs = list(map(self.want._ensure_tmsh_prefix, valid_configs))
         if any(cmd.startswith(x) for x in valid_configs):
             return True
@@ -308,12 +298,12 @@ class ModuleManager(object):
 
         conditionals = [Conditional(c) for c in wait_for]
 
-        if self.client.check_mode:
+        if self.module.check_mode:
             return
 
         while retries > 0:
-            if self.client.module.params['transport'] == 'cli' and HAS_CLI_TRANSPORT:
-                responses = self._run_commands(self.client.module, commands)
+            if self.module.params['transport'] == 'cli' and HAS_CLI_TRANSPORT:
+                responses = self._run_commands(self.module, commands)
             else:
                 responses = self.execute_on_device(commands)
 
@@ -334,11 +324,12 @@ class ModuleManager(object):
             errmsg = 'One or more conditional statements have not been satisfied'
             raise FailedConditionsError(errmsg, failed_conditions)
 
-        self.changes = Parameters({
+        changes = {
             'stdout': responses,
             'stdout_lines': self._to_lines(responses),
             'warnings': warnings
-        })
+        }
+        self.changes = Parameters(params=changes)
         if any(x for x in self.want.user_commands if x.startswith(changed)):
             return True
         return False
@@ -354,11 +345,11 @@ class ModuleManager(object):
             ),
         )
 
-        transform = ComplexList(spec, self.client.module)
+        transform = ComplexList(spec, self.module)
         commands = transform(commands)
 
         for index, item in enumerate(commands):
-            if not self._is_valid_mode(item['command']) and self.client.module.params['transport'] != 'cli':
+            if not self._is_valid_mode(item['command']) and self.module.params['transport'] != 'cli':
                 warnings.append(
                     'Using "write" commands is not idempotent. You should use '
                     'a module that is specifically made for that. If such a '
@@ -394,7 +385,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             commands=dict(
                 type='raw',
                 required=True
@@ -421,44 +412,38 @@ class ArgumentSpec(object):
                 choices=['cli', 'rest']
             ),
             password=dict(
-                required=False,
                 fallback=(env_fallback, ['F5_PASSWORD']),
                 no_log=True
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
-        self.f5_product_name = 'bigip'
-
-
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
-
-    if client.module.params['transport'] != 'cli' and not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required to use the rest api")
+    if module.params['transport'] != 'cli' and not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required to use the rest api")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
+        module.exit_json(**results)
     except F5ModuleError as e:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':
