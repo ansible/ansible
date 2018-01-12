@@ -103,7 +103,7 @@ class ConnectionProcess(object):
                     if not data:
                         break
 
-                    signal.alarm(self.connection._play_context.timeout)
+                    signal.alarm(C.PERSISTENT_COMMAND_TIMEOUT)
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
@@ -129,7 +129,7 @@ class ConnectionProcess(object):
         self.shutdown()
 
     def command_timeout(self, signum, frame):
-        display.display('command timeout triggered, timeout value is %s secs' % self.play_context.timeout, log_only=True)
+        display.display('command timeout triggered, timeout value is %s secs' % C.PERSISTENT_COMMAND_TIMEOUT, log_only=True)
         self.shutdown()
 
     def handler(self, signum, frame):

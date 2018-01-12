@@ -108,7 +108,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
 
         if not signal.getsignal(signal.SIGALRM):
             signal.signal(signal.SIGALRM, self._alarm_handler)
-        signal.alarm(self._connection._play_context.timeout)
+            signal.alarm(self._connection._play_context.timeout)
         resp = self._connection.send(**kwargs)
         signal.alarm(0)
         return resp
