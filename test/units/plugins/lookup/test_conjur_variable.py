@@ -64,25 +64,35 @@ class TestLookupModule:
             assert results['account'] == 'demo-policy'
             assert results['appliance_url'] == 'http://localhost:8080'
 
-    def mock_open_url_response(self, mocker, response_code, value):
-        mock_response = MagicMock(spec_set=http_client.HTTPResponse)
-        mock_response.read.return_value = value
-        mock_response.getcode.return_value = response_code
-        mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
+    # def mock_open_url_response(self, mocker, response_code, value):
+    #     mock_response = MagicMock(spec_set=http_client.HTTPResponse)
+    #     mock_response.read.return_value = value
+    #     mock_response.getcode.return_value = response_code
+    #     mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
 
     def test_valid_token_retrieval(self, mocker):
-        self.mock_open_url_response(mocker, 200, 'foo-bar-token')
+        mock_response = MagicMock(spec_set=http_client.HTTPResponse)
+        mock_response.read.return_value = 'foo-bar-token'
+        mock_response.getcode.return_value = 200
+        mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
 
         response = conjur_variable._fetch_conjur_token('http://conjur', 'account', 'username', 'api_key')
         assert response == 'foo-bar-token'
 
     def test_valid_fetch_conjur_variable(self, mocker):
-        self.mock_open_url_response(mocker, 200, 'foo-bar')
+        mock_response = MagicMock(spec_set=http_client.HTTPResponse)
+        mock_response.read.return_value = 'foo-bar'
+        mock_response.getcode.return_value = 200
+        mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
+
         response = conjur_variable._fetch_conjur_token('super-secret', 'token', 'http://conjur', 'account')
         assert response == 'foo-bar'
 
     def test_invalid_fetch_conjur_variable(self, mocker):
         for code in [401, 403, 404]:
-            self.mock_open_url_response(mocker, code, '')
+            mock_response = MagicMock(spec_set=http_client.HTTPResponse)
+            mock_response.getcode.return_value = code
+            mocker.patch.object(conjur_variable, 'open_url', return_value=mock_response)
+
             with pytest.raises(AnsibleError):
                 response = conjur_variable._fetch_conjur_token('super-secret', 'token', 'http://conjur', 'account')
