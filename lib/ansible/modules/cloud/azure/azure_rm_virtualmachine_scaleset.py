@@ -183,6 +183,19 @@ options:
             - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']."
             - Any other input will be ignored.
         default: ['all']
+    enable_accelerated_networking:
+        description:
+            - Indicates whether user wants to allow accelerated networking for virtual machines in scaleset.
+        version_added: "2.6"
+        default: false
+    network_security_group_resource_group:
+        description:
+            - When creating a virtual machine, if a specific network security group from another resource group should be
+              used, use this parameter to specify the resource group to use.
+        version_added: "2.6"
+    network_security_group:
+        description: Name of network security group to be attached to VMs in scaleset.
+        version_added: "2.6"
 
 extends_documentation_fragment:
     - azure
@@ -388,6 +401,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
+            enable_accelerated_networking=dict(type='bool', default=False),
+            network_security_group_resource_group=dict(type='str'),
+            network_security_group=dict(type='str')
         )
 
         self.resource_group = None
@@ -414,6 +430,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.tags = None
         self.differences = None
         self.load_balancer = None
+        self.enable_accelerated_networking = None
+        self.network_security_group_resource_group = None
+        self.network_security_group = None
 
         self.results = dict(
             changed=False,
@@ -437,6 +456,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         # default virtual_network_resource_group to resource_group
         if not self.virtual_network_resource_group:
             self.virtual_network_resource_group = self.resource_group
+
+        if not self.network_security_group_resource_group:
+            self.network_security_group_resource_group = self.resource_group
 
         changed = False
         results = dict()
@@ -597,6 +619,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(storage_account_type=self.managed_disk_type)
 
+                    network_security_group = None
+                    if self.network_security_group:
+                        network_security_group = self.get_network_security_group(self.network_security_group)
+
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         self.location,
                         tags=self.tags,
@@ -636,7 +662,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 load_balancer_backend_address_pools=load_balancer_backend_address_pools,
                                                 load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools
                                             )
-                                        ]
+                                        ],
+                                        enable_accelerated_networking=self.enable_accelerated_networking,
+                                        network_security_group=network_security_group
                                     )
                                 ]
                             )
@@ -846,6 +874,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             if size.name == self.vm_size:
                 return True
         return False
+
+    def get_network_security_group(self, name):
+        try:
+            nsg = self.network_client.network_security_groups.get(self.network_security_group_resource_group, name)
+            return nsg
+        except CloudError as exc:
+            self.fail("Error fetching network security group {0} - {1}".format(name, str(exc)))
 
 
 def main():
