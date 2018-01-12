@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_selector_to_switch_policy_leaf_profile
-short_description: Associates an Interface Profile to a Switch Policy Leaf Profile (infra:RsAccPortP)
+short_description: Associates an Interface Selector Profile to a Switch Policy Leaf Profile (infra:RsAccPortP)
 description:
 - Associates an Interface Profile (Selector) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
 - More information from the internal APIC class
@@ -44,7 +44,7 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Associating an interface profile to a switch policy leaf profile
+- name: Associating an interface selector profile to a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
     hostname: apic
     username: someusername
@@ -52,6 +52,24 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: present
+
+- name: Remove an interface selector profile associated with a switch policy leaf profile
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    hostname: apic
+    username: someusername
+    password: somepassword
+    leaf_profile: sw_name
+    interface_selector: interface_profile_name
+    state: absent
+
+- name: Query an interface selector profile associated with a switch policy leaf profile
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    hostname: apic
+    username: someusername
+    password: somepassword
+    leaf_profile: sw_name
+    interface_selector: interface_profile_name
+    state: query
 '''
 
 RETURN = ''' # '''
