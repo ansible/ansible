@@ -21,8 +21,6 @@ description:
   I(infra:AttEntityP) at U(https://developer.cisco.com/media/mim-ref/MO-infraAttEntityP.html).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
@@ -111,8 +109,8 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='infraAttEntityP',
-            aci_rn='infra/attentp-{}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{}")'.format(aep),
+            aci_rn='infra/attentp-{0}'.format(aep),
+            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
         ),
     )
