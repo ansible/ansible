@@ -20,6 +20,7 @@
   assert:
     that:
       - output.changed == False
+      - output.servers.sqlsrv{{ rpfx }}.id != None
 
 - name: Gather facts SQL Server
   azure_rm_sqlserver_facts:
@@ -29,6 +30,7 @@
   assert:
     that:
       - output.changed == False
+      - output.servers.sqlsrv{{ rpfx }}.id != None
 
 - name: Delete instance of SQL Server
   azure_rm_sqlserver:
