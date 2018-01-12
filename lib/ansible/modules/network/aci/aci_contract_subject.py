@@ -16,15 +16,11 @@ module: aci_contract_subject
 short_description: Manage initial Contract Subjects on Cisco ACI fabrics (vz:Subj)
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:Subj) at U(https://developer.cisco.com/media/mim-ref/MO-vzSubj.html).
+- More information from the internal APIC class I(vz:Subj) at
+  U(https://developer.cisco.com/media/mim-ref/MO-vzSubj.html).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) and C(contract) used must exist before using this module in your playbook.
 - The M(aci_tenant) and M(aci_contract) modules can be used for this.
@@ -184,26 +180,26 @@ def main():
     tenant = module.params['tenant']
 
     if directive is not None or filter_name is not None:
-        module.fail_json(msg='Managing Contract Subjects to Filter bindings has been moved to M(aci_subject_bind_filter)')
+        module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to module 'aci_subject_bind_filter'")
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
-            aci_rn='brc-{}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{}")'.format(contract),
+            aci_rn='brc-{0}'.format(contract),
+            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
         ),
         subclass_2=dict(
             aci_class='vzSubj',
-            aci_rn='subj-{}'.format(subject),
-            filter_target='eq(vzSubj.name, "{}")'.format(subject),
+            aci_rn='subj-{0}'.format(subject),
+            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
             module_object=subject,
         ),
     )

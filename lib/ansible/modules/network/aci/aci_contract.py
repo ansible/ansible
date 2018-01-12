@@ -16,15 +16,11 @@ module: aci_contract
 short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:BrCP) at U(https://developer.cisco.com/media/mim-ref/MO-vzBrCP.html).
+- More information from the internal APIC class I(vz:BrCP) at
+  U(https://developer.cisco.com/media/mim-ref/MO-vzBrCP.html).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - This module does not manage Contract Subjects, see M(aci_contract_subject) to do this.
   Contract Subjects can still be removed using this module.
@@ -129,14 +125,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
-            aci_rn='brc-{}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{}")'.format(contract),
+            aci_rn='brc-{0}'.format(contract),
+            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
         ),
     )

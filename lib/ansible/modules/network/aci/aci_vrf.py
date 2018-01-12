@@ -17,15 +17,11 @@ short_description: Manage VRF (private networks aka. contexts) on Cisco ACI fabr
 description:
 - Manage VRF (private networks aka. contexts) on Cisco ACI fabrics.
 - Each context is a private network associated to a tenant, i.e. VRF.
-- More information from the internal APIC class
-  I(fv:Ctx) at U(https://developer.cisco.com/media/mim-ref/MO-fvCtx.html).
+- More information from the internal APIC class I(fv:Ctx) at
+  U(https://developer.cisco.com/media/mim-ref/MO-fvCtx.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- Tested with ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -135,14 +131,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvCtx',
-            aci_rn='ctx-{}'.format(vrf),
-            filter_target='eq(fvCtx.name, "{}")'.format(vrf),
+            aci_rn='ctx-{0}'.format(vrf),
+            filter_target='eq(fvCtx.name, "{0}")'.format(vrf),
             module_object=vrf,
         ),
     )

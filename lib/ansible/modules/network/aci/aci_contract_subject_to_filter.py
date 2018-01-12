@@ -16,11 +16,9 @@ module: aci_contract_subject_to_filter
 short_description: Bind Contract Subjects to Filters on Cisco ACI fabrics (vz:RsSubjFiltAtt)
 description:
 - Bind Contract Subjects to Filters on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:RsSubjFiltAtt) at U(https://developer.cisco.com/media/mim-ref/MO-vzRsSubjFiltAtt.html).
+- More information from the internal APIC class I(vz:RsSubjFiltAtt) at
+  U(https://developer.cisco.com/media/mim-ref/MO-vzRsSubjFiltAtt.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
@@ -121,26 +119,26 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
-            aci_rn='brc-{}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{}")'.format(contract),
+            aci_rn='brc-{0}'.format(contract),
+            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
         ),
         subclass_2=dict(
             aci_class='vzSubj',
-            aci_rn='subj-{}'.format(subject),
-            filter_target='eq(vzSubj.name, "{}")'.format(subject),
+            aci_rn='subj-{0}'.format(subject),
+            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
             module_object=subject,
         ),
         subclass_3=dict(
             aci_class='vzRsSubjFiltAtt',
-            aci_rn='rssubjFiltAtt-{}'.format(filter_name),
-            filter_target='eq(vzRsSubjFiltAtt.tnVzFilterName, "{}")'.format(filter_name),
+            aci_rn='rssubjFiltAtt-{0}'.format(filter_name),
+            filter_target='eq(vzRsSubjFiltAtt.tnVzFilterName, "{0}")'.format(filter_name),
             module_object=filter_name,
         ),
     )

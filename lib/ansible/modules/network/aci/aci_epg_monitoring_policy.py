@@ -16,12 +16,10 @@ module: aci_epg_monitoring_policy
 short_description: Manage monitoring policies on Cisco ACI fabrics (mon:EPGPol)
 description:
 - Manage monitoring policies on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(mon:EPGPol) at U(https://developer.cisco.com/media/mim-ref/MO-monEPGPol.html).
+- More information from the internal APIC class I(mon:EPGPol) at
+  U(https://developer.cisco.com/media/mim-ref/MO-monEPGPol.html).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
@@ -99,14 +97,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='monEPGPol',
-            aci_rn='monepg-{}'.format(monitoring_policy),
-            filter_target='eq(monEPGPol.name, "{}")'.format(monitoring_policy),
+            aci_rn='monepg-{0}'.format(monitoring_policy),
+            filter_target='eq(monEPGPol.name, "{0}")'.format(monitoring_policy),
             module_object=monitoring_policy,
         ),
     )
