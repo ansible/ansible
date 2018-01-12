@@ -41,7 +41,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: creating a leaf Leaf Profile
+- name: creating a Leaf Profile with description
   aci_switch_policy_leaf_profile:
     hostname: apic
     username: someusername
@@ -49,6 +49,22 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     description: sw_description
     state: present
+
+- name: Deleting a Leaf Profile
+  aci_switch_policy_leaf_profile:
+    hostname: apic
+    username: someusername
+    password: somepassword
+    leaf_profile: sw_name
+    state: absent
+
+- name: Query a Leaf Profile
+  aci_switch_policy_leaf_profile:
+    hostname: apic
+    username: someusername
+    password: somepassword
+    leaf_profile: sw_name
+    state: query
 '''
 
 RETURN = r'''
