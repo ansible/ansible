@@ -19,6 +19,7 @@ matrix:
     - env: T=windows/1
     - env: T=windows/2
     - env: T=windows/3
+    - env: T=windows/4
 
     - env: T=network
 
