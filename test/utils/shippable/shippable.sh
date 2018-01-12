@@ -95,6 +95,7 @@ function cleanup
 
     rmdir shippable/testresults/
     cp -a test/results/junit/ shippable/testresults/
+    cp -a test/results/data/ shippable/testresults/
     cp -aT test/results/bot/ shippable/testresults/
 }
 
