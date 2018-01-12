@@ -17,20 +17,22 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 from ansible.compat.tests.mock import Mock
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.bigip_command import Parameters
     from library.bigip_command import ModuleManager
     from library.bigip_command import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_command import Parameters
         from ansible.modules.network.f5.bigip_command import ModuleManager
         from ansible.modules.network.f5.bigip_command import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -61,12 +63,10 @@ class TestParameters(unittest.TestCase):
             user='admin',
             password='password'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert len(p.commands) == 2
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -82,12 +82,12 @@ class TestManager(unittest.TestCase):
             password='password'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+
+        mm = ModuleManager(module=module)
         mm._run_commands = Mock(return_value=[])
         mm.execute_on_device = Mock(return_value=[])
 
@@ -107,12 +107,11 @@ class TestManager(unittest.TestCase):
             password='password'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm._run_commands = Mock(return_value=[])
         mm.execute_on_device = Mock(return_value=[])
 
@@ -132,12 +131,12 @@ class TestManager(unittest.TestCase):
             password='password',
             transport='cli'
         ))
-        client = AnsibleF5Client(
+
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm._run_commands = Mock(return_value=[])
         mm.execute_on_device = Mock(return_value=[])
 
@@ -159,12 +158,11 @@ class TestManager(unittest.TestCase):
             user='admin',
             password='password'
         ))
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm._run_commands = Mock(return_value=[])
         mm.execute_on_device = Mock(return_value=[])
 
