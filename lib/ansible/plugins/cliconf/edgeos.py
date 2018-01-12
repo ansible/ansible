@@ -53,9 +53,9 @@ class Cliconf(CliconfBase):
 
     def commit(self, comment=None):
         if comment:
-            command = b'commit comment "{0}"'.format(comment)
+            command = 'commit comment "{0}"'.format(comment)
         else:
-            command = b'commit'
+            command = 'commit'
         self.send_command(command)
 
     def discard_changes(self, *args, **kwargs):
