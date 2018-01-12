@@ -103,7 +103,6 @@ class ConnectionProcess(object):
                     if not data:
                         break
 
-                    import q;q(self.connection._play_context.timeout)
                     signal.alarm(self.connection._play_context.timeout)
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
