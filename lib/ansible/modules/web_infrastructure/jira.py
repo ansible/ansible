@@ -118,6 +118,13 @@ options:
       - Set timeout, in seconds, on requests to JIRA API.
     default: 10
 
+  validate_certs:
+    required: false
+    version_added: 2.5
+    description:
+      - Require valid SSL certificates (set to `false` if you'd like to use self-signed certificates)
+    default: true
+
 notes:
   - "Currently this only works with basic-auth."
 
@@ -391,6 +398,7 @@ def main():
             inwardissue=dict(),
             outwardissue=dict(),
             timeout=dict(type='float', default=10),
+            validate_certs=dict(default=True, type='bool'),
         ),
         supports_check_mode=False
     )
