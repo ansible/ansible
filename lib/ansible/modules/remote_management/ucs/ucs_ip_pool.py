@@ -152,9 +152,6 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
-from ucsmsdk.mometa.ippool.IppoolPool import IppoolPool
-from ucsmsdk.mometa.ippool.IppoolBlock import IppoolBlock
-from ucsmsdk.mometa.ippool.IppoolIpV6Block import IppoolIpV6Block
 
 
 def main():
@@ -186,6 +183,10 @@ def main():
     ucs = UCSModule(module)
 
     err = False
+
+    from ucsmsdk.mometa.ippool.IppoolPool import IppoolPool
+    from ucsmsdk.mometa.ippool.IppoolBlock import IppoolBlock
+    from ucsmsdk.mometa.ippool.IppoolIpV6Block import IppoolIpV6Block
 
     changed = False
     try:
