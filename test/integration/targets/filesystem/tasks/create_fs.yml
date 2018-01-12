@@ -81,6 +81,7 @@
           - 'fs5_result is successful'
 
   - import_tasks: overwrite_another_fs.yml
+    when: ansible_system != 'FreeBSD'
 
   always:
     - file:
