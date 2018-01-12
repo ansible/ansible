@@ -36,10 +36,10 @@ options:
         required: True
     charset:
         description:
-            - The charset of the database.
+            - The charset of the database. Refer to PostgreSQL documentation for possible values.
     collation:
         description:
-            - The collation of the database.
+            - The collation of the database. Refer to PostgreSQL documentation for possible values.
 
 extends_documentation_fragment:
     - azure
@@ -167,11 +167,12 @@ class AzureRMDatabases(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if PostgreSQL Database instance has to be deleted or may be updated")
-                if (self.collation is not None) and (self.collation != old_response['collation']):
+                if ('collation' in self.parameters) and (self.parameters['collation'] != old_response['collation']):
                     self.to_do = Actions.Update
-                if (self.charset is not None) and (self.charset != old_response['charset']):
+                if ('charset' in self.parameters) and (self.parameters['charset'] != old_response['charset']):
                     self.to_do = Actions.Update
-                self.delete_postgresqldatabase()
+                if self.to_do == Actions.Update:
+                    self.delete_postgresqldatabase()
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the PostgreSQL Database instance")
