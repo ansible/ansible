@@ -194,6 +194,51 @@ Result::
 See also :ref:`single_encrypted_variable`
 
 
+.. _decrypt_string:
+
+Use decrypt_string to read encrypted variables from stdin
+`````````````````````````````````````````````````````````
+
+To view a string encrypted by :ref:`ansible-vault encrypt_string <ansible_vault_encrypt_string>`,
+use :ref:`ansible-vault decrypt_string <ansible_vault_decrypt_string>`. This command always
+takes input from standard input, and can decrypt either just the vaulted block, or the yaml dictionary.
+
+.. code-block:: bash
+
+    ansible-vault decrypt_string --vault-id dev@./password
+
+Output::
+
+    Reading plaintext input from stdin. (ctrl-d to end input)
+
+Input::
+
+    new_user_password: !vault |
+              $ANSIBLE_VAULT;1.2;AES256;dev
+              37636561366636643464376336303466613062633537323632306566653533383833366462366662
+              6565353063303065303831323539656138653863353230620a653638643639333133306331336365
+              62373737623337616130386137373461306535383538373162316263386165376131623631323434
+              3866363862363335620a376466656164383032633338306162326639643635663936623939666238
+              3161
+
+Result::
+
+    new_user_password: hunter42
+
+Input::
+
+              $ANSIBLE_VAULT;1.2;AES256;dev
+              37636561366636643464376336303466613062633537323632306566653533383833366462366662
+              6565353063303065303831323539656138653863353230620a653638643639333133306331336365
+              62373737623337616130386137373461306535383538373162316263386165376131623631323434
+              3866363862363335620a376466656164383032633338306162326639643635663936623939666238
+              3161
+
+Result::
+
+    hunter42
+
+
 .. _vault_ids:
 
 Vault Ids and Multiple Vault Passwords

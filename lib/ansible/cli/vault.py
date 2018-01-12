@@ -24,10 +24,10 @@ import sys
 
 from ansible.cli import CLI
 from ansible import constants as C
-from ansible.errors import AnsibleOptionsError
+from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
+from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret, is_encrypted
 
 try:
     from __main__ import display
@@ -49,7 +49,7 @@ class VaultCLI(CLI):
     The password used with vault currently must be the same for all files you wish to use together at the same time.
     '''
 
-    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view")
+    VALID_ACTIONS = ("create", "decrypt", "decrypt_string", "edit", "encrypt", "encrypt_string", "rekey", "view")
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -66,7 +66,7 @@ class VaultCLI(CLI):
         self.new_encrypt_secret = None
         self.new_encrypt_vault_id = None
 
-        self.can_output = ['encrypt', 'decrypt', 'encrypt_string']
+        self.can_output = ['encrypt', 'decrypt', 'encrypt_string', 'decrypt_string']
 
         super(VaultCLI, self).__init__(args)
 
@@ -103,6 +103,8 @@ class VaultCLI(CLI):
                                    default=None,
                                    help="Specify the variable name for stdin")
             self.parser.set_usage("usage: %prog encrypt_string [--prompt] [options] string_to_encrypt")
+        elif self.action == "decrypt_string":
+            self.parser.set_usage("usage: %prog decrypt_string [options]")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
@@ -156,7 +158,7 @@ class VaultCLI(CLI):
 
     def run(self):
         super(VaultCLI, self).run()
-        loader = DataLoader()
+        self.loader = DataLoader()
 
         # set default restrictive umask
         old_umask = os.umask(0o077)
@@ -173,8 +175,8 @@ class VaultCLI(CLI):
 
         # TODO: instead of prompting for these before, we could let VaultEditor
         #       call a callback when it needs it.
-        if self.action in ['decrypt', 'view', 'rekey', 'edit']:
-            vault_secrets = self.setup_vault_secrets(loader,
+        if self.action in ['decrypt', 'decrypt_string', 'view', 'rekey', 'edit']:
+            vault_secrets = self.setup_vault_secrets(self.loader,
                                                      vault_ids=vault_ids,
                                                      vault_password_files=self.options.vault_password_files,
                                                      ask_vault_pass=self.options.ask_vault_pass)
@@ -190,7 +192,7 @@ class VaultCLI(CLI):
 
             vault_secrets = None
             vault_secrets = \
-                self.setup_vault_secrets(loader,
+                self.setup_vault_secrets(self.loader,
                                          vault_ids=vault_ids,
                                          vault_password_files=self.options.vault_password_files,
                                          ask_vault_pass=self.options.ask_vault_pass,
@@ -229,7 +231,7 @@ class VaultCLI(CLI):
                 new_vault_password_files.append(self.options.new_vault_password_file)
 
             new_vault_secrets = \
-                self.setup_vault_secrets(loader,
+                self.setup_vault_secrets(self.loader,
                                          vault_ids=new_vault_ids,
                                          vault_password_files=new_vault_password_files,
                                          ask_vault_pass=self.options.ask_vault_pass,
@@ -246,7 +248,7 @@ class VaultCLI(CLI):
             self.new_encrypt_vault_id = new_encrypt_secret[0]
             self.new_encrypt_secret = new_encrypt_secret[1]
 
-        loader.set_vault_secrets(vault_secrets)
+        self.loader.set_vault_secrets(vault_secrets)
 
         # FIXME: do we need to create VaultEditor here? its not reused
         vault = VaultLib(vault_secrets)
@@ -444,6 +446,25 @@ class VaultCLI(CLI):
         ''' open and decrypt an existing vaulted file in an editor, that will be encryped again when closed'''
         for f in self.args:
             self.editor.edit_file(f)
+
+    def execute_decrypt_string(self):
+        ''' decrypt an ansible_vault encrypted string passed to stdin '''
+        if sys.stdout.isatty():
+            display.display("Reading encrypted data from stdin. (ctrl-d to end input)", stderr=True)
+
+        stdin_text = sys.stdin.read()
+        if stdin_text == '':
+            raise AnsibleOptionsError('stdin was empty, not decrypting')
+        if is_encrypted(stdin_text.strip()):
+            # copying and pasting from a YAML block can cause leading whitespace
+            plaintext = self.editor.vault.decrypt('\n'.join([line.strip() for line in stdin_text.split('\n')]))
+        else:
+            data = self.loader.load(stdin_text)
+            lines = []
+            for (k, v) in data.items():
+                lines.append("%s: %s" % (k, v))
+            plaintext = '\n'.join(lines)
+        print(plaintext)
 
     def execute_view(self):
         ''' open, decrypt and view an existing vaulted file using a pager using the supplied vault secret '''
