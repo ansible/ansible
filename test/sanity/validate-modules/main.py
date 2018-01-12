@@ -518,6 +518,33 @@ class ModuleValidator(Validator):
         bodies.extend(if_bodies)
 
         for child in bodies:
+
+            # validate that the next to last line is 'if __name__ == "__main__"'
+            if child.lineno == (self.length - 1):
+                if not isinstance(child, ast.If):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=109,
+                        msg='Next to last line is not checking __name__',
+                        line=child.lineno
+                    )
+                else:
+                    if child.test.left.id != '__name__':
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=110,
+                            msg='Left test for "if __name__ ==" should be __name__',
+                            line=child.lineno
+                        )
+                    if child.test.comparators[0].s != '__main__':
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=104,
+                            msg='Right test for "if __name__ ==" should be "__main__"',
+                            line=child.lineno
+                        )
+
+            # validate that the final line is a call to main()
             if isinstance(child, ast.Expr):
                 if isinstance(child.value, ast.Call):
                     if (isinstance(child.value.func, ast.Name) and
