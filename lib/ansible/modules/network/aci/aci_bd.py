@@ -16,14 +16,10 @@ module: aci_bd
 short_description: Manage Bridge Domains (BD) on Cisco ACI Fabrics (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI Fabrics.
-- More information from the internal APIC class
-  I(fv:BD) at U(https://developer.cisco.com/media/mim-ref/MO-fvBD.html).
+- More information from the internal APIC class I(fv:BD) at
+  U(https://developer.cisco.com/media/mim-ref/MO-fvBD.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
-requirements:
-- ACI Fabric 1.0(3f)+
 version_added: '2.4'
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
@@ -282,14 +278,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvBD',
-            aci_rn='BD-{}'.format(bd),
-            filter_target='eq(fvBD.name, "{}")'.format(bd),
+            aci_rn='BD-{0}'.format(bd),
+            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
         ),
         child_classes=['fvRsCtx', 'fvRsIgmpsn', 'fvRsBDToNdP', 'fvRsBdToEpRet'],

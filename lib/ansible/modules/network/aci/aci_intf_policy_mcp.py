@@ -19,12 +19,8 @@ description:
 - More information from the internal APIC class
   I(mcp:IfPol) at U(https://developer.cisco.com/media/mim-ref/MO-mcpIfPol.html).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   mcp:
     description:
@@ -96,8 +92,8 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='mcpIfPol',
-            aci_rn='infra/mcpIfP-{}'.format(mcp),
-            filter_target='eq(mcpIfPol.name, "{}")'.format(mcp),
+            aci_rn='infra/mcpIfP-{0}'.format(mcp),
+            filter_target='eq(mcpIfPol.name, "{0}")'.format(mcp),
             module_object=mcp,
         ),
     )

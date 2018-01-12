@@ -20,7 +20,6 @@ description:
   U(http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).
 author:
 - Dag Wieers (@dagwieers)
-- Swetha Chunduri (@schunduri)
 version_added: '2.4'
 requirements:
 - lxml (when using XML content)

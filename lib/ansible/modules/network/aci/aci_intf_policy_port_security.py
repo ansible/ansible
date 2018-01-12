@@ -16,15 +16,11 @@ module: aci_intf_policy_port_security
 short_description: Manage port security on Cisco ACI fabrics (l2:PortSecurityPol)
 description:
 - Manage port security on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(l2:PortSecurityPol) at U(https://developer.cisco.com/media/mim-ref/MO-l2PortSecurityPol.html).
+- More information from the internal APIC class I(l2:PortSecurityPol) at
+  U(https://developer.cisco.com/media/mim-ref/MO-l2PortSecurityPol.html).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   port_security:
     description:
@@ -97,8 +93,8 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='l2PortSecurityPol',
-            aci_rn='infra/portsecurityP-{}'.format(port_security),
-            filter_target='eq(l2PortSecurityPol.name, "{}")'.format(port_security),
+            aci_rn='infra/portsecurityP-{0}'.format(port_security),
+            filter_target='eq(l2PortSecurityPol.name, "{0}")'.format(port_security),
             module_object=port_security,
         ),
     )

@@ -16,15 +16,11 @@ module: aci_epg
 short_description: Manage End Point Groups (EPG) on Cisco ACI fabrics (fv:AEPg)
 description:
 - Manage End Point Groups (EPG) on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:AEPg) at U(https://developer.cisco.com/media/mim-ref/MO-fvAEPg.html).
+- More information from the internal APIC class I(fv:AEPg) at
+  U(https://developer.cisco.com/media/mim-ref/MO-fvAEPg.html).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob Mcgill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_ap) modules can be used for this.
@@ -200,20 +196,20 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvAp',
-            aci_rn='ap-{}'.format(ap),
-            filter_target='eq(fvAp.name, "{}")'.format(ap),
+            aci_rn='ap-{0}'.format(ap),
+            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
-            aci_rn='epg-{}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{}")'.format(epg),
+            aci_rn='epg-{0}'.format(epg),
+            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
         ),
         child_classes=['fvRsBd'],

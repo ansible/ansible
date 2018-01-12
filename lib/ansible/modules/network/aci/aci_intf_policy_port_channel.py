@@ -16,15 +16,11 @@ module: aci_intf_policy_port_channel
 short_description: Manage port channel interface policies on Cisco ACI fabrics (lacp:LagPol)
 description:
 - Manage port channel interface policies on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(lacp:LagPol) at U(https://developer.cisco.com/media/mim-ref/MO-lacpLagPol.html).
+- More information from the internal APIC class I(lacp:LagPol) at
+  U(https://developer.cisco.com/media/mim-ref/MO-lacpLagPol.html).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   port_channel:
     description:
@@ -181,8 +177,8 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='lacpLagPol',
-            aci_rn='infra/lacplagp-{}'.format(port_channel),
-            filter_target='eq(lacpLagPol.name, "{}")'.format(port_channel),
+            aci_rn='infra/lacplagp-{0}'.format(port_channel),
+            filter_target='eq(lacpLagPol.name, "{0}")'.format(port_channel),
             module_object=port_channel,
         ),
     )
