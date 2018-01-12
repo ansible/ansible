@@ -17,8 +17,8 @@ module: aci_switch_leaf_selector
 short_description: Add a leaf Selector with Node Block Range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics
 description:
 - Add a leaf Selector with Node Block range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(infra:LeafS, infra:NodeBlk, infra:RsAccNodePGrp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information from the internal APIC class I(infra:LeafS), I(infra:NodeBlk), I(infra:RsAccNodePGrp) at 
+  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -142,15 +142,15 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='infraNodeP',
-            aci_rn='infra/nprof-{}'.format(leaf_profile),
-            filter_target='eq(infraNodeP.name, "{}")'.format(leaf_profile),
+            aci_rn='infra/nprof-{0}'.format(leaf_profile),
+            filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
             module_object=leaf_profile
         ),
         subclass_1=dict(
             aci_class='infraLeafS',
             # NOTE: normal rn: leaves-{name}-typ-{type}, hence here hardcoded to range for purposes of module
-            aci_rn='leaves-{}-typ-range'.format(leaf),
-            filter_target='eq(infraLeafS.name, "{}")'.format(leaf),
+            aci_rn='leaves-{0}-typ-range'.format(leaf),
+            filter_target='eq(infraLeafS.name, "{0}")'.format(leaf),
             module_object=leaf,
         ),
         # NOTE: infraNodeBlk is not made into a subclass because there is a 1-1 mapping between node block and leaf selector name
