@@ -198,6 +198,7 @@ class Connection(ConnectionBase):
         self._last_response = None
         self._history = list()
         self._play_context = play_context
+        self._play_context.timeout = C.PERSISTENT_COMMAND_TIMEOUT
 
         self._local = connection_loader.get('local', play_context, '/dev/null')
         self._local.set_options()
