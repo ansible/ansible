@@ -58,6 +58,13 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     state: absent
 
+- name: Remove all leaf_interface_profiles
+  aci_interface_policy_leaf_profile:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: absent
+
 - name: Query a leaf_interface_profile
   aci_interface_policy_leaf_profile:
     hostname: apic
@@ -78,7 +85,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        leaf_interface_profile=dict(type='str', required=False, aliases=['name', 'leaf_interface_profile_name']),  # Not required for querying all objects
+        leaf_interface_profile=dict(type='str', aliases=['name', 'leaf_interface_profile_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
