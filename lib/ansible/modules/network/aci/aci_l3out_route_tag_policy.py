@@ -16,15 +16,11 @@ module: aci_l3out_route_tag_policy
 short_description: Manage route tag policies on Cisco ACI fabrics (l3ext:RouteTagPol)
 description:
 - Manage route tag policies on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(l3ext:RouteTagPol) at U(https://developer.cisco.com/media/mim-ref/MO-l3extRouteTagPol.html).
+- More information from the internal APIC class I(l3ext:RouteTagPol) at
+  U(https://developer.cisco.com/media/mim-ref/MO-l3extRouteTagPol.html).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -106,14 +102,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='l3extRouteTagPol',
-            aci_rn='rttag-{}'.format(rtp),
-            filter_target='eq(l3extRouteTagPol.name, "{}")'.format(rtp),
+            aci_rn='rttag-{0}'.format(rtp),
+            filter_target='eq(l3extRouteTagPol.name, "{0}")'.format(rtp),
             module_object=rtp,
         ),
     )

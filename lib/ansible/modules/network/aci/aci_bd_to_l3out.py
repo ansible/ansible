@@ -16,15 +16,11 @@ module: aci_bd_to_l3out
 short_description: Bind Bridge Domain to L3 Out on Cisco ACI fabrics (fv:RsBDToOut)
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:RsBDToOut) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsBDToOut.html).
+- More information from the internal APIC class I(fv:RsBDToOut) at
+  U(https://developer.cisco.com/media/mim-ref/MO-fvRsBDToOut.html).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(bd) and C(l3out) parameters should exist before using this module.
   The M(aci_bd) and M(aci_l3out) can be used for these.
@@ -88,20 +84,20 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvBD',
-            aci_rn='BD-{}'.format(bd),
-            filter_target='eq(fvBD.name, "{}")'.format(bd),
+            aci_rn='BD-{0}'.format(bd),
+            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
         ),
         subclass_2=dict(
             aci_class='fvRsBDToOut',
-            aci_rn='rsBDToOut-{}'.format(l3out),
-            filter_target='eq(fvRsBDToOut.tnL3extOutName, "{}")'.format(l3out),
+            aci_rn='rsBDToOut-{0}'.format(l3out),
+            filter_target='eq(fvRsBDToOut.tnL3extOutName, "{0}")'.format(l3out),
             module_object=l3out,
         ),
     )
