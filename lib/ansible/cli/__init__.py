@@ -320,14 +320,16 @@ class CLI(with_metaclass(ABCMeta, object)):
         becomepass = None
         become_prompt = ''
 
+        become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op.become_method.upper()
+
         try:
             if op.ask_pass:
                 sshpass = getpass.getpass(prompt="SSH password: ")
-                become_prompt = "BECOME password[defaults to SSH password]: "
+                become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
                 if sshpass:
                     sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
             else:
-                become_prompt = "BECOME password: "
+                become_prompt = "%s password: " % become_prompt_method
 
             if op.become_ask_pass:
                 becomepass = getpass.getpass(prompt=become_prompt)
