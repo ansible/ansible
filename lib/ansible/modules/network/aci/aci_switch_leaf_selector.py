@@ -59,7 +59,7 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: adding a switch policy leaf profile selector associated Node Block range
+- name: adding a switch policy leaf profile selector associated Node Block range (w/ policy group)
   aci_switch_leaf_selector:
     hostname: apic
     username: someusername
@@ -71,6 +71,36 @@ EXAMPLES = r'''
     to: 1011
     policy_group: somepolicygroupname
     state: present
+
+- name: adding a switch policy leaf profile selector associated Node Block range (w/o policy group)
+  aci_switch_leaf_selector:
+    hostname: apic
+    username: someusername
+    password: somepassword
+    leaf_profile: sw_name
+    leaf: leaf_selector_name
+    leaf_node_blk: node_blk_name
+    from: 1011
+    to: 1011
+    state: present
+
+- name: Removing a switch policy leaf profile selector
+  aci_switch_leaf_selector:
+    hostname: apic
+    username: someusername
+    password: somepassword
+    leaf_profile: sw_name
+    leaf: leaf_selector_name
+    state: absent
+
+- name: Querying a switch policy leaf profile selector
+  aci_switch_leaf_selector:
+    hostname: apic
+    username: someusername
+    password: somepassword
+    leaf_profile: sw_name
+    leaf: leaf_selector_name
+    state: query
 '''
 
 RETURN = ''' # '''
