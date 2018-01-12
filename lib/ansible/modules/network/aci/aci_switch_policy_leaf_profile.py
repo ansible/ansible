@@ -17,7 +17,7 @@ module: aci_switch_policy_leaf_profile
 short_description: Create switch policy leaf profiles on Cisco ACI fabrics (infra:NodeP)
 description:
 - Create switch policy leaf profiles on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:NodeP) at 
+- More information from the internal APIC class I(infra:NodeP) at
   U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
