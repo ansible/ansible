@@ -10,95 +10,138 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: profitbricks
-short_description: Create, destroy, start, stop, and reboot a ProfitBricks virtual machine.
+short_description: Create, update, destroy, start, stop, and reboot a ProfitBricks virtual machine.
 description:
-     - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait
-       for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
+     - Create, update, destroy, update, start, stop, and reboot a ProfitBricks virtual machine.
+       When the virtual machine is created it can optionally wait for it to be 'running' before returning.
 version_added: "2.0"
 options:
   auto_increment:
     description:
       - Whether or not to increment a single number in the name for created virtual machines.
-    type: bool
-    default: 'yes'
+    default: yes
+    choices: ["yes", "no"]
   name:
     description:
       - The name of the virtual machine.
     required: true
   image:
     description:
-      - The system image ID for creating the virtual machine, e.g. a3eae284-a2fe-11e4-b187-5f1f641608c8.
+      - The image alias or ID for creating the virtual machine.
     required: true
   image_password:
     description:
       - Password set for the administrative user.
-    version_added: '2.2'
+    required: false
+    version_added: "2.2"
   ssh_keys:
     description:
       - Public SSH keys allowing access to the virtual machine.
-    version_added: '2.2'
+    required: false
+    version_added: "2.2"
+  volume_availability_zone:
+    description:
+      - The storage availability zone assigned to the volume.
+    required: false
+    default: None
+    choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
+    version_added: "2.3"
   datacenter:
     description:
       - The datacenter to provision this virtual machine.
+    required: false
+    default: null
   cores:
     description:
       - The number of CPU cores to allocate to the virtual machine.
+    required: false
     default: 2
   ram:
     description:
       - The amount of memory to allocate to the virtual machine.
+    required: false
     default: 2048
   cpu_family:
     description:
       - The CPU family type to allocate to the virtual machine.
+    required: false
     default: AMD_OPTERON
     choices: [ "AMD_OPTERON", "INTEL_XEON" ]
-    version_added: '2.2'
+    version_added: "2.2"
+  availability_zone:
+    description:
+      - The availability zone assigned to the server.
+    required: false
+    default: AUTO
+    choices: [ "AUTO", "ZONE_1", "ZONE_2" ]
+    version_added: "2.3"
   volume_size:
     description:
       - The size in GB of the boot volume.
+    required: false
     default: 10
   bus:
     description:
       - The bus type for the volume.
+    required: false
     default: VIRTIO
     choices: [ "IDE", "VIRTIO"]
   instance_ids:
     description:
       - list of instance ids, currently only used when state='absent' to remove instances.
+    required: false
   count:
     description:
       - The number of virtual machines to create.
+    required: false
     default: 1
   location:
     description:
       - The datacenter location. Use only if you want to create the Datacenter or else this value is ignored.
+    required: false
     default: us/las
-    choices: [ "us/las", "de/fra", "de/fkb" ]
+    choices: [ "us/las", "us/ewr", "de/fra", "de/fkb" ]
   assign_public_ip:
     description:
       - This will assign the machine to the public LAN. If no LAN exists with public Internet access it is created.
-    type: bool
-    default: 'no'
+    required: false
+    default: false
   lan:
     description:
       - The ID of the LAN you wish to add the servers to.
+    required: false
     default: 1
-  subscription_user:
+  nat:
     description:
-      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environment variable.
-  subscription_password:
+      - Boolean value indicating if the private IP address has outbound access to the public Internet.
+    required: false
+    default: false
+    version_added: "2.3"
+  api_url:
     description:
-      - THe ProfitBricks password. Overrides the PB_PASSWORD environment variable.
+      - The ProfitBricks API base URL.
+    required: false
+    default: The value specified by API_HOST variable in ProfitBricks SDK for Python dependency.
+    version_added: "2.4"
+  username:
+    description:
+      - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
+    required: false
+    aliases: subscription_user
+  password:
+    description:
+      - The ProfitBricks password. Overrides the PROFITBRICKS_PASSWORD environment variable.
+    required: false
+    aliases: subscription_password
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
-    type: bool
-    default: 'yes'
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -106,23 +149,25 @@ options:
   remove_boot_volume:
     description:
       - remove the bootVolume of the virtual machine you're destroying.
-    type: bool
-    default: 'yes'
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
   state:
     description:
-      - create or terminate instances
-    default: 'present'
-    choices: [ "running", "stopped", "absent", "present" ]
+      - Indicate desired state of the resource
+    required: false
+    default: "present"
+    choices: [ "running", "stopped", "absent", "present", "update" ]
 
 requirements:
-     - "profitbricks"
-     - "python >= 2.6"
-author: Matt Baldwin (baldwin@stackpointcloud.com)
+    - "python >= 2.6"
+    - "profitbricks >= 4.0.0"
+author:
+    - "Matt Baldwin (baldwin@stackpointcloud.com)"
+    - "Ethan Devenport (@edevenport)"
 '''
 
 EXAMPLES = '''
-
-# Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Provisioning example. This will create three servers and enumerate their names.
 
@@ -133,10 +178,23 @@ EXAMPLES = '''
     ram: 2048
     volume_size: 50
     cpu_family: INTEL_XEON
-    image: a3eae284-a2fe-11e4-b187-5f1f641608c8
+    image: ubuntu:latest
     location: us/las
     count: 3
     assign_public_ip: true
+
+# Update Virtual machines
+
+- profitbricks:
+    datacenter: Tardis One
+    instance_ids:
+      - web001.stackpointcloud.com
+      - web002.stackpointcloud.com
+    cores: 4
+    ram: 4096
+    cpu_family: INTEL_XEON
+    availability_zone: ZONE_1
+    state: update
 
 # Removing Virtual machines
 
@@ -173,52 +231,34 @@ EXAMPLES = '''
 
 '''
 
-import re
-import uuid
 import time
 import traceback
+
+from uuid import (uuid4, UUID)
 
 HAS_PB_SDK = True
 
 try:
-    from profitbricks.client import ProfitBricksService, Volume, Server, Datacenter, NIC, LAN
+    from profitbricks import API_HOST
+    from profitbricks import __version__ as sdk_version
+    from profitbricks.client import (ProfitBricksService, Volume, Server,
+                                     Datacenter, NIC, LAN)
 except ImportError:
     HAS_PB_SDK = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible import __version__
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_native
-
-
-LOCATIONS = ['us/las',
-             'de/fra',
-             'de/fkb']
-
-uuid_match = re.compile(
-    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
-
-
-def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
-    if not promise:
-        return
-    wait_timeout = time.time() + wait_timeout
-    while wait_timeout > time.time():
-        time.sleep(5)
-        operation_result = profitbricks.get_request(
-            request_id=promise['requestId'],
-            status=True)
-
-        if operation_result['metadata']['status'] == "DONE":
-            return
-        elif operation_result['metadata']['status'] == "FAILED":
-            raise Exception(
-                'Request failed to complete ' + msg + ' "' + str(
-                    promise['requestId']) + '" to complete.')
-
-    raise Exception(
-        'Timed out waiting for async operation ' + msg + ' "' + str(
-            promise['requestId']
-        ) + '" to complete.')
+from ansible.module_utils.profitbricks import (
+    AVAILABILITY_ZONES,
+    BUS_TYPES,
+    CPU_FAMILIES,
+    DISK_TYPES,
+    LOCATIONS,
+    get_resource_id,
+    wait_for_completion
+)
 
 
 def _create_machine(module, profitbricks, datacenter, name):
@@ -227,14 +267,13 @@ def _create_machine(module, profitbricks, datacenter, name):
     cpu_family = module.params.get('cpu_family')
     volume_size = module.params.get('volume_size')
     disk_type = module.params.get('disk_type')
+    availability_zone = module.params.get('availability_zone')
+    volume_availability_zone = module.params.get('volume_availability_zone')
     image_password = module.params.get('image_password')
     ssh_keys = module.params.get('ssh_keys')
     bus = module.params.get('bus')
     lan = module.params.get('lan')
-    assign_public_ip = module.params.get('assign_public_ip')
-    subscription_user = module.params.get('subscription_user')
-    subscription_password = module.params.get('subscription_password')
-    location = module.params.get('location')
+    nat = module.params.get('nat')
     image = module.params.get('image')
     assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
     wait = module.params.get('wait')
@@ -255,20 +294,30 @@ def _create_machine(module, profitbricks, datacenter, name):
                 public=True)
 
             lan_response = profitbricks.create_lan(datacenter, i)
-            _wait_for_completion(profitbricks, lan_response,
-                                 wait_timeout, "_create_machine")
+            wait_for_completion(profitbricks, lan_response,
+                                wait_timeout, "_create_machine")
             lan = lan_response['id']
 
     v = Volume(
-        name=str(uuid.uuid4()).replace('-', '')[:10],
+        name=str(uuid4()).replace('-', '')[:10],
         size=volume_size,
-        image=image,
         image_password=image_password,
         ssh_keys=ssh_keys,
         disk_type=disk_type,
-        bus=bus)
+        availability_zone=volume_availability_zone,
+        bus=bus
+    )
+
+    try:
+        UUID(image)
+    except Exception:
+        v.image_alias = image
+    else:
+        v.image = image
 
     n = NIC(
+        name=str(uuid4()).replace('-', '')[:10],
+        nat=nat,
         lan=int(lan)
     )
 
@@ -277,6 +326,7 @@ def _create_machine(module, profitbricks, datacenter, name):
         ram=ram,
         cores=cores,
         cpu_family=cpu_family,
+        availability_zone=availability_zone,
         create_volumes=[v],
         nics=[n],
     )
@@ -285,8 +335,8 @@ def _create_machine(module, profitbricks, datacenter, name):
         create_server_response = profitbricks.create_server(
             datacenter_id=datacenter, server=s)
 
-        _wait_for_completion(profitbricks, create_server_response,
-                             wait_timeout, "create_virtual_machine")
+        wait_for_completion(profitbricks, create_server_response,
+                            wait_timeout, "create_virtual_machine")
 
         server_response = profitbricks.get_server(
             datacenter_id=datacenter,
@@ -294,8 +344,9 @@ def _create_machine(module, profitbricks, datacenter, name):
             depth=3
         )
     except Exception as e:
-        module.fail_json(msg="failed to create the new server: %s" % str(e))
+        module.fail_json(msg="failed to create the new server: %s" % to_native(e))
     else:
+        server_response['nic'] = server_response['entities']['nics']['items'][0]
         return server_response
 
 
@@ -310,7 +361,8 @@ def _startstop_machine(module, profitbricks, datacenter_id, server_id):
 
         return True
     except Exception as e:
-        module.fail_json(msg="failed to start or stop the virtual machine %s at %s: %s" % (server_id, datacenter_id, str(e)))
+        module.fail_json(
+            msg="failed to start or stop the virtual machine %s at %s: %s" % (server_id, datacenter_id, to_native(e)))
 
 
 def _create_datacenter(module, profitbricks):
@@ -326,12 +378,12 @@ def _create_datacenter(module, profitbricks):
     try:
         datacenter_response = profitbricks.create_datacenter(datacenter=i)
 
-        _wait_for_completion(profitbricks, datacenter_response,
-                             wait_timeout, "_create_datacenter")
+        wait_for_completion(profitbricks, datacenter_response,
+                            wait_timeout, "_create_datacenter")
 
         return datacenter_response
     except Exception as e:
-        module.fail_json(msg="failed to create the new server(s): %s" % str(e))
+        module.fail_json(msg="failed to create the new server(s): %s" % to_native(e))
 
 
 def create_virtual_machine(module, profitbricks):
@@ -350,15 +402,13 @@ def create_virtual_machine(module, profitbricks):
     count = module.params.get('count')
     lan = module.params.get('lan')
     wait_timeout = module.params.get('wait_timeout')
-    failed = True
     datacenter_found = False
 
     virtual_machines = []
-    virtual_machine_ids = []
 
     # Locate UUID for datacenter if referenced by name.
     datacenter_list = profitbricks.list_datacenters()
-    datacenter_id = _get_datacenter_id(datacenter_list, datacenter)
+    datacenter_id = get_resource_id(datacenter_list, datacenter)
     if datacenter_id:
         datacenter_found = True
 
@@ -366,8 +416,8 @@ def create_virtual_machine(module, profitbricks):
         datacenter_response = _create_datacenter(module, profitbricks)
         datacenter_id = datacenter_response['id']
 
-        _wait_for_completion(profitbricks, datacenter_response,
-                             wait_timeout, "create_virtual_machine")
+        wait_for_completion(profitbricks, datacenter_response,
+                            wait_timeout, "create_virtual_machine")
 
     if auto_increment:
         numbers = set()
@@ -376,7 +426,7 @@ def create_virtual_machine(module, profitbricks):
         try:
             name % 0
         except TypeError as e:
-            if e.message.startswith('not all'):
+            if e.message and e.message.startswith('not all'):
                 name = '%s%%d' % name
             else:
                 module.fail_json(msg=e.message, exception=traceback.format_exc())
@@ -394,7 +444,7 @@ def create_virtual_machine(module, profitbricks):
     server_list = profitbricks.list_servers(datacenter_id)
     for name in names:
         # Skip server creation if the server already exists.
-        if _get_server_id(server_list, name):
+        if get_resource_id(server_list, name):
             continue
 
         create_response = _create_machine(module, profitbricks, str(datacenter_id), name)
@@ -405,14 +455,88 @@ def create_virtual_machine(module, profitbricks):
 
         virtual_machines.append(create_response)
 
-    failed = False
-
     results = {
-        'failed': failed,
+        'failed': False,
         'machines': virtual_machines,
         'action': 'create',
         'instance_ids': {
             'instances': [i['id'] for i in virtual_machines],
+        }
+    }
+
+    return results
+
+
+def update_server(module, profitbricks):
+    """
+    Update servers.
+
+    This will update one or more servers.
+
+    module : AnsibleModule object
+    profitbricks: authenticated profitbricks object.
+
+    Returns:
+        dict of updated servers
+    """
+    datacenter = module.params.get('datacenter')
+    instance_ids = module.params.get('instance_ids')
+
+    if not isinstance(module.params.get('instance_ids'), list) or len(module.params.get('instance_ids')) < 1:
+        module.fail_json(msg='instance_ids should be a list of virtual machine ids or names, aborting')
+
+    # Locate UUID for datacenter if referenced by name.
+    datacenter_list = profitbricks.list_datacenters()
+    datacenter_id = get_resource_id(datacenter_list, datacenter)
+    if not datacenter_id:
+        module.fail_json(msg='Virtual data center \'%s\' not found.' % str(datacenter))
+
+    updated_servers = []
+
+    cores = module.params.get('cores')
+    ram = module.params.get('ram')
+    cpu_family = module.params.get('cpu_family')
+    availability_zone = module.params.get('availability_zone')
+    allow_reboot = None
+
+    server_list = profitbricks.list_servers(datacenter_id)
+    for instance in instance_ids:
+        server = None
+        for s in server_list['items']:
+            if instance in (s['properties']['name'], s['id']):
+                server = s
+                break
+
+        if not server:
+            module.fail_json(msg='Server \'%s\' not found.' % str(instance))
+
+        if cpu_family != server['properties']['cpuFamily']:
+            allow_reboot = True
+
+        if module.check_mode:
+            module.exit_json(changed=True)
+
+        try:
+            update_response = profitbricks.update_server(
+                datacenter_id,
+                server['id'],
+                cores=cores,
+                ram=ram,
+                cpu_family=cpu_family,
+                availability_zone=availability_zone,
+                allow_reboot=allow_reboot
+            )
+        except Exception as e:
+            module.fail_json(msg="failed to update the server: %s" % to_native(e), exception=traceback.format_exc())
+        else:
+            updated_servers.append(update_response)
+
+    results = {
+        'failed': False,
+        'machines': updated_servers,
+        'action': 'update',
+        'instance_ids': {
+            'instances': [i['id'] for i in updated_servers],
         }
     }
 
@@ -443,7 +567,7 @@ def remove_virtual_machine(module, profitbricks):
 
     # Locate UUID for datacenter if referenced by name.
     datacenter_list = profitbricks.list_datacenters()
-    datacenter_id = _get_datacenter_id(datacenter_list, datacenter)
+    datacenter_id = get_resource_id(datacenter_list, datacenter)
     if not datacenter_id:
         module.fail_json(msg='Virtual data center \'%s\' not found.' % str(datacenter))
 
@@ -451,15 +575,18 @@ def remove_virtual_machine(module, profitbricks):
     server_list = profitbricks.list_servers(datacenter_id)
     for instance in instance_ids:
         # Locate UUID for server if referenced by name.
-        server_id = _get_server_id(server_list, instance)
+        server_id = get_resource_id(server_list, instance)
         if server_id:
+            if module.check_mode:
+                module.exit_json(changed=True)
+
             # Remove the server's boot volume
             if remove_boot_volume:
                 _remove_boot_volume(module, profitbricks, datacenter_id, server_id)
 
             # Remove the server
             try:
-                server_response = profitbricks.delete_server(datacenter_id, server_id)
+                profitbricks.delete_server(datacenter_id, server_id)
             except Exception as e:
                 module.fail_json(msg="failed to terminate the virtual server: %s" % to_native(e), exception=traceback.format_exc())
             else:
@@ -475,7 +602,7 @@ def _remove_boot_volume(module, profitbricks, datacenter_id, server_id):
     try:
         server = profitbricks.get_server(datacenter_id, server_id)
         volume_id = server['properties']['bootVolume']['id']
-        volume_response = profitbricks.delete_volume(datacenter_id, volume_id)
+        profitbricks.delete_volume(datacenter_id, volume_id)
     except Exception as e:
         module.fail_json(msg="failed to remove the server's boot volume: %s" % to_native(e), exception=traceback.format_exc())
 
@@ -502,7 +629,7 @@ def startstop_machine(module, profitbricks, state):
 
     # Locate UUID for datacenter if referenced by name.
     datacenter_list = profitbricks.list_datacenters()
-    datacenter_id = _get_datacenter_id(datacenter_list, datacenter)
+    datacenter_id = get_resource_id(datacenter_list, datacenter)
     if not datacenter_id:
         module.fail_json(msg='Virtual data center \'%s\' not found.' % str(datacenter))
 
@@ -510,8 +637,11 @@ def startstop_machine(module, profitbricks, state):
     server_list = profitbricks.list_servers(datacenter_id)
     for instance in instance_ids:
         # Locate UUID of server if referenced by name.
-        server_id = _get_server_id(server_list, instance)
+        server_id = get_resource_id(server_list, instance)
         if server_id:
+            if module.check_mode:
+                module.exit_json(changed=True)
+
             _startstop_machine(module, profitbricks, datacenter_id, server_id)
             changed = True
 
@@ -524,7 +654,7 @@ def startstop_machine(module, profitbricks, state):
                     if res['properties']['vmState'].lower() == state:
                         matched_instances.append(res)
                 elif state == 'stopped':
-                    if res['properties']['vmState'].lower() == 'shutoff':
+                    if res['properties']['vmState'].lower() in ['shutoff', 'shutdown', 'inactive']:
                         matched_instances.append(res)
 
             if len(matched_instances) < len(instance_ids):
@@ -539,72 +669,72 @@ def startstop_machine(module, profitbricks, state):
     return (changed)
 
 
-def _get_datacenter_id(datacenters, identity):
-    """
-    Fetch and return datacenter UUID by datacenter name if found.
-    """
-    for datacenter in datacenters['items']:
-        if identity in (datacenter['properties']['name'], datacenter['id']):
-            return datacenter['id']
-    return None
-
-
-def _get_server_id(servers, identity):
-    """
-    Fetch and return server UUID by server name if found.
-    """
-    for server in servers['items']:
-        if identity in (server['properties']['name'], server['id']):
-            return server['id']
-    return None
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            datacenter=dict(),
-            name=dict(),
-            image=dict(),
+            datacenter=dict(type='str'),
+            name=dict(type='str'),
+            image=dict(type='str'),
             cores=dict(type='int', default=2),
             ram=dict(type='int', default=2048),
-            cpu_family=dict(choices=['AMD_OPTERON', 'INTEL_XEON'],
-                            default='AMD_OPTERON'),
+            cpu_family=dict(type='str', choices=CPU_FAMILIES, default='AMD_OPTERON'),
             volume_size=dict(type='int', default=10),
-            disk_type=dict(choices=['HDD', 'SSD'], default='HDD'),
-            image_password=dict(default=None, no_log=True),
+            disk_type=dict(type='str', choices=DISK_TYPES, default='HDD'),
+            availability_zone=dict(type='str', choices=AVAILABILITY_ZONES, default='AUTO'),
+            volume_availability_zone=dict(type='str', choices=AVAILABILITY_ZONES, default=None),
+            image_password=dict(type='str', default=None, no_log=True),
             ssh_keys=dict(type='list', default=[]),
-            bus=dict(choices=['VIRTIO', 'IDE'], default='VIRTIO'),
+            bus=dict(type='str', choices=BUS_TYPES, default='VIRTIO'),
             lan=dict(type='int', default=1),
+            nat=dict(type='bool', default=None),
             count=dict(type='int', default=1),
             auto_increment=dict(type='bool', default=True),
             instance_ids=dict(type='list', default=[]),
-            subscription_user=dict(),
-            subscription_password=dict(no_log=True),
-            location=dict(choices=LOCATIONS, default='us/las'),
+            api_url=dict(type='str', default=API_HOST),
+            username=dict(
+                type='str',
+                required=True,
+                aliases=['subscription_user'],
+                fallback=(env_fallback, ['PROFITBRICKS_USERNAME'])
+            ),
+            password=dict(
+                type='str',
+                required=True,
+                aliases=['subscription_password'],
+                fallback=(env_fallback, ['PROFITBRICKS_PASSWORD']),
+                no_log=True
+            ),
+            location=dict(type='str', choices=LOCATIONS, default='us/las'),
             assign_public_ip=dict(type='bool', default=False),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             remove_boot_volume=dict(type='bool', default=True),
-            state=dict(default='present'),
-        )
+            state=dict(type='str', default='present'),
+        ),
+        supports_check_mode=True
     )
 
     if not HAS_PB_SDK:
         module.fail_json(msg='profitbricks required for this module')
 
-    subscription_user = module.params.get('subscription_user')
-    subscription_password = module.params.get('subscription_password')
+    username = module.params.get('username')
+    password = module.params.get('password')
+    api_url = module.params.get('api_url')
 
     profitbricks = ProfitBricksService(
-        username=subscription_user,
-        password=subscription_password)
+        username=username,
+        password=password,
+        host_base=api_url
+    )
+
+    user_agent = 'profitbricks-sdk-python/%s Ansible/%s' % (sdk_version, __version__)
+    profitbricks.headers = {'User-Agent': user_agent}
 
     state = module.params.get('state')
 
     if state == 'absent':
         if not module.params.get('datacenter'):
-            module.fail_json(msg='datacenter parameter is required ' +
-                             'for running or stopping machines.')
+            module.fail_json(msg='datacenter parameter is required for running or stopping machines.')
 
         try:
             (changed) = remove_virtual_machine(module, profitbricks)
@@ -614,8 +744,7 @@ def main():
 
     elif state in ('running', 'stopped'):
         if not module.params.get('datacenter'):
-            module.fail_json(msg='datacenter parameter is required for ' +
-                             'running or stopping machines.')
+            module.fail_json(msg='datacenter parameter is required for running or stopping machines.')
         try:
             (changed) = startstop_machine(module, profitbricks, state)
             module.exit_json(changed=changed)
@@ -627,18 +756,22 @@ def main():
             module.fail_json(msg='name parameter is required for new instance')
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
-        if not module.params.get('subscription_user'):
-            module.fail_json(msg='subscription_user parameter is ' +
-                             'required for new instance')
-        if not module.params.get('subscription_password'):
-            module.fail_json(msg='subscription_password parameter is ' +
-                             'required for new instance')
+
+        if module.check_mode:
+            module.exit_json(changed=True)
 
         try:
             (machine_dict_array) = create_virtual_machine(module, profitbricks)
             module.exit_json(**machine_dict_array)
         except Exception as e:
             module.fail_json(msg='failed to set instance state: %s' % to_native(e), exception=traceback.format_exc())
+
+    elif state == 'update':
+        try:
+            (machine_dict_array) = update_server(module, profitbricks)
+            module.exit_json(**machine_dict_array)
+        except Exception as e:
+            module.fail_json(msg='failed to update server: %s' % to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
