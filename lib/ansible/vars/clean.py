@@ -102,19 +102,6 @@ def clean_facts(facts):
     return strip_internal_keys(data)
 
 
-def inject_facts(facts):
-    ''' return clean facts inside with an ansible_ prefix '''
-    injected = {}
-    for k in facts:
-        if k.startswith('ansible_') or k == 'module_setup':
-            new = k
-        else:
-            new = 'ansilbe_%s' % k
-        injected[new] = deepcopy(facts[k])
-
-    return clean_facts(injected)
-
-
 def namespace_facts(facts):
     ''' return all facts inside 'ansible_facts' w/o an ansible_ prefix '''
     deprefixed = {}
