@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -36,7 +35,7 @@ LICENCE_TYPES = ['LINUX',
                  'OTHER',
                  'WINDOWS2016']
 
-uuid_match = re.compile('[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+uuid_match = re.compile(r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def wait_for_completion(profitbricks, promise, wait_timeout, msg):
