@@ -66,6 +66,7 @@ requirements:
     - boto3
 extends_documentation_fragment:
     - aws
+    - ec2
 
 '''
 

@@ -36,7 +36,7 @@ options:
         description:
             - Identifies a network flow by the local IP address.
         required: false
-    remove_ip:
+    remote_ip:
         description:
             - Identifies a network flow by the remote IP address.
         required: false

@@ -94,7 +94,7 @@ options:
               If this value is not specified, certificate will stop being valid 10 years from now.
         aliases: [ selfsigned_notAfter ]
 
-    acme_accountkey:
+    acme_accountkey_path:
         description:
             - Path to the accountkey for the C(acme) provider
 
@@ -219,7 +219,7 @@ EXAMPLES = '''
     path: /etc/ssl/crt/ansible.com.crt
     csr_path: /etc/ssl/csr/ansible.com.csr
     provider: acme
-    acme_accountkey: /etc/ssl/private/ansible.com.pem
+    acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
 
 - name: Force (re-)generate a new Let's Encrypt Certificate
@@ -227,7 +227,7 @@ EXAMPLES = '''
     path: /etc/ssl/crt/ansible.com.crt
     csr_path: /etc/ssl/csr/ansible.com.csr
     provider: acme
-    acme_accountkey: /etc/ssl/private/ansible.com.pem
+    acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
     force: True
 

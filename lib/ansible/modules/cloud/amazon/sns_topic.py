@@ -63,7 +63,9 @@ options:
         Blame Amazon."
     required: False
     default: True
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements: [ "boto" ]
 """
 

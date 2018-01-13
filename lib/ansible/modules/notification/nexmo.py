@@ -51,6 +51,8 @@ options:
     choices:
       - 'yes'
       - 'no'
+extends_documentation_fragment:
+  - url
 """
 
 EXAMPLES = """

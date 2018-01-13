@@ -45,7 +45,7 @@ options:
   virtualenv:
     description:
       - An optional path to a I(virtualenv) installation to use while running the manage application.
-    required: false
+    aliases: [virtualenv]
   apps:
     description:
       - A list of space-delimited apps to target. Used by the 'test' command.

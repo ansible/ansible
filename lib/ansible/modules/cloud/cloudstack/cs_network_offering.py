@@ -83,10 +83,11 @@ options:
   service_offering:
     description:
       - The service offering name or ID used by virtual router provider.
-  service_provider_list:
+  service_provider:
     description:
       - Provider to service mapping.
       - If not specified, the provider for the service will be mapped to the default provider on the physical network.
+    aliases: [service_provider]
   specify_ip_ranges:
     description:
       - Wheter the network offering supports specifying IP ranges.

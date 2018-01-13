@@ -40,14 +40,15 @@ options:
       - The set of username objects to be configured on the remote
         Cisco Nexus device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
-        exclusive with the C(name) argument. alias C(users).
+        exclusive with the C(name) argument.
+    aliases: ['users', 'collection']
     version_added: "2.4"
     required: false
     default: null
   name:
     description:
       - The username to be configured on the remote Cisco Nexus
-        device.  This argument accepts a stringv value and is mutually
+        device.  This argument accepts a string value and is mutually
         exclusive with the C(aggregate) argument.
     required: false
     default: null
@@ -76,6 +77,7 @@ options:
         has been configured on the device.
     required: false
     default: null
+    aliases: ['roles']
   sshkey:
     description:
       - The C(sshkey) argument defines the SSH public key to configure

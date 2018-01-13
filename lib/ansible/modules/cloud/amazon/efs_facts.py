@@ -45,7 +45,8 @@ options:
         required: false
         default: None
 extends_documentation_fragment:
-    - aws
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

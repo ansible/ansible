@@ -158,6 +158,8 @@ options:
     choices: ['success', 'fail']
     default: 'success'
     required: false
+extends_documentation_fragment:
+    - aws
 requirements:
   - "python >= 2.6"
   - boto

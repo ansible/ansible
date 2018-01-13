@@ -21,6 +21,9 @@ description:
   - Deletes AWS Direct Connect Gateway
   - Attaches Virtual Gateways to Direct Connect Gateway
   - Detaches Virtual Gateways to Direct Connect Gateway
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements: [ boto3 ]
 options:
   state:
