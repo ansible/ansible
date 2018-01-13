@@ -137,14 +137,6 @@ options:
       - Default Profile which manages the session persistence.
       - If you want to remove the existing default persistence profile, specify an
         empty value; C(""). See the documentation for an example.
-  route_advertisement_state:
-    description:
-      - Enable route advertisement for destination.
-      - Deprecated in 2.4. Use the C(bigip_virtual_address) module instead.
-    choices:
-      - enabled
-      - disabled
-    version_added: "2.3"
   description:
     description:
       - Virtual server description.
@@ -171,12 +163,9 @@ options:
     version_added: 2.5
 notes:
   - Requires BIG-IP software version >= 11
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires the netaddr Python package on the host. This is as easy as pip
     install netaddr.
 requirements:
-  - f5-sdk
   - netaddr
 extends_documentation_fragment: f5
 author:
@@ -381,18 +370,38 @@ metadata:
 
 import re
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
-from collections import defaultdict
 from collections import namedtuple
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 try:
     import netaddr
@@ -402,100 +411,6 @@ except ImportError:
 
 
 class Parameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
-    def to_return(self):
-        result = {}
-        for returnable in self.returnables:
-            try:
-                result[returnable] = getattr(self, returnable)
-            except Exception as ex:
-                pass
-        result = self._filter_params(result)
-        return result
-
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
-
-class VirtualAddressParameters(Parameters):
-    api_map = {
-        'routeAdvertisement': 'route_advertisement_state'
-    }
-    returnables = [
-        'route_advertisement_state'
-    ]
-
-    updatables = [
-        'route_advertisement_state'
-    ]
-
-    api_attributes = [
-        'routeAdvertisement'
-    ]
-
-
-class VirtualAddressModuleParameters(VirtualAddressParameters):
-    @property
-    def route_advertisement_state(self):
-        # TODO: Remove in 2.5
-        if self._values['route_advertisement_state'] is None:
-            return None
-        if self._values['__warnings'] is None:
-            self._values['__warnings'] = []
-        self._values['__warnings'].append(
-            dict(
-                msg="Usage of the 'route_advertisement_state' parameter is deprecated. Use the bigip_virtual_address module instead",
-                version='2.4'
-            )
-        )
-        return str(self._values['route_advertisement_state'])
-
-
-class VirtualAddressApiParameters(VirtualAddressParameters):
-    pass
-
-
-class VirtualServerParameters(Parameters):
     api_map = {
         'sourceAddressTranslation': 'snat',
         'fallbackPersistence': 'fallback_persistence_profile',
@@ -566,12 +481,25 @@ class VirtualServerParameters(Parameters):
         'vlans_disabled'
     ]
 
-    def __init__(self, params=None):
-        super(VirtualServerParameters, self).__init__(params)
-        self.profiles_mutex = [
-            'sip', 'sipsession', 'iiop', 'rtsp', 'http', 'diameter',
-            'diametersession', 'radius', 'ftp', 'tftp', 'dns', 'pptp', 'fix'
-        ]
+    profiles_mutex = [
+        'sip', 'sipsession', 'iiop', 'rtsp', 'http', 'diameter',
+        'diametersession', 'radius', 'ftp', 'tftp', 'dns', 'pptp', 'fix'
+    ]
+
+    def to_return(self):
+        result = {}
+        for returnable in self.returnables:
+            try:
+                result[returnable] = getattr(self, returnable)
+            except Exception as ex:
+                pass
+        result = self._filter_params(result)
+        return result
+
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
+        return value
 
     def is_valid_ip(self, value):
         try:
@@ -618,7 +546,7 @@ class VirtualServerParameters(Parameters):
         return result
 
 
-class VirtualServerApiParameters(VirtualServerParameters):
+class ApiParameters(Parameters):
     @property
     def destination(self):
         if self._values['destination'] is None:
@@ -648,7 +576,7 @@ class VirtualServerApiParameters(VirtualServerParameters):
         if self._values['destination'] is None:
             result = Destination(ip=None, port=None, route_domain=None)
             return result
-        destination = re.sub(r'^/[a-zA-Z_.-]+/', '', self._values['destination'])
+        destination = re.sub(r'^/[a-zA-Z0-9_.-]+/', '', self._values['destination'])
 
         if self.is_valid_ip(destination):
             result = Destination(
@@ -816,7 +744,7 @@ class VirtualServerApiParameters(VirtualServerParameters):
         return result
 
 
-class VirtualServerModuleParameters(VirtualServerParameters):
+class ModuleParameters(Parameters):
     def _handle_profile_context(self, tmp):
         if 'context' not in tmp:
             tmp['context'] = 'all'
@@ -1106,7 +1034,11 @@ class VirtualServerModuleParameters(VirtualServerParameters):
         return result
 
 
-class VirtualServerUsableChanges(VirtualServerParameters):
+class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Changes):
     @property
     def vlans(self):
         if self._values['vlans'] is None:
@@ -1118,11 +1050,7 @@ class VirtualServerUsableChanges(VirtualServerParameters):
         return self._values['vlans']
 
 
-class VirtualAddressUsableChanges(VirtualAddressParameters):
-    pass
-
-
-class VirtualServerReportableChanges(VirtualServerParameters):
+class ReportableChanges(Changes):
     @property
     def snat(self):
         if self._values['snat'] is None:
@@ -1137,13 +1065,13 @@ class VirtualServerReportableChanges(VirtualServerParameters):
 
     @property
     def destination(self):
-        params = VirtualServerApiParameters(dict(destination=self._values['destination']))
+        params = ApiParameters(params=dict(destination=self._values['destination']))
         result = params.destination_tuple.ip
         return result
 
     @property
     def port(self):
-        params = VirtualServerApiParameters(dict(destination=self._values['destination']))
+        params = ApiParameters(params=dict(destination=self._values['destination']))
         result = params.destination_tuple.port
         return result
 
@@ -1173,10 +1101,6 @@ class VirtualServerReportableChanges(VirtualServerParameters):
     def disabled_vlans(self):
         if len(self._values['vlans']) > 0 and self._values['vlans_disabled'] is True:
             return self._values['vlans']
-
-
-class VirtualAddressReportableChanges(VirtualAddressParameters):
-    pass
 
 
 class Difference(object):
@@ -1461,49 +1385,12 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-
-    def exec_module(self):
-        managers = list()
-        managers.append(self.get_manager('virtual_server'))
-        if self.client.module.params['route_advertisement_state'] is not None:
-            managers.append(self.get_manager('virtual_address'))
-        result = self.execute_managers(managers)
-        return result
-
-    def execute_managers(self, managers):
-        results = dict(changed=False)
-        for manager in managers:
-            result = manager.exec_module()
-            for k, v in iteritems(result):
-                if k == 'changed':
-                    if v is True:
-                        results['changed'] = True
-                else:
-                    results[k] = v
-        return results
-
-    def get_manager(self, type):
-        vsm = VirtualServerManager(self.client)
-        if type == 'virtual_server':
-            return vsm
-        elif type == 'virtual_address':
-            self.set_name_of_virtual_address()
-            result = VirtualAddressManager(self.client)
-            return result
-
-    def set_name_of_virtual_address(self):
-        mgr = VirtualServerManager(self.client)
-        params = mgr.read_current_from_device()
-        destination = params.destination_tuple
-        self.client.module.params['name'] = destination.ip
-
-
-class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.have = None
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.have = ApiParameters()
+        self.want = ModuleParameters(client=self.client, params=self.module.params)
+        self.changes = UsableChanges()
 
     def exec_module(self):
         changed = False
@@ -1518,7 +1405,7 @@ class BaseManager(object):
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
-        reportable = self.get_reportable_changes()
+        reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
@@ -1528,7 +1415,7 @@ class BaseManager(object):
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -1548,21 +1435,9 @@ class BaseManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
-        return True
-
-    def create(self):
-        if self.client.check_mode:
-            return True
-
-        # This must be changed back to a list to make a valid REST API
-        # value. The module manipulates this as a normal dictionary
-        if self.want.default_persistence_profile is not None:
-            self.want.update({'default_persistence_profile': [self.want.default_persistence_profile]})
-
-        self.create_on_device()
         return True
 
     def should_update(self):
@@ -1572,36 +1447,28 @@ class BaseManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
             raise F5ModuleError("Failed to delete the resource")
         return True
 
-
-class VirtualServerManager(BaseManager):
-    def __init__(self, client):
-        super(VirtualServerManager, self).__init__(client)
-        self.have = None
-        self.want = VirtualServerModuleParameters(self.client.module.params)
-        self.changes = VirtualServerUsableChanges()
-
     def get_reportable_changes(self):
-        result = VirtualServerReportableChanges(self.changes.to_return())
+        result = ReportableChanges(params=self.changes.to_return())
         return result
 
     def _set_changed_options(self):
         changed = {}
-        for key in VirtualServerParameters.returnables:
+        for key in Parameters.returnables:
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = VirtualServerUsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
-        updatables = VirtualServerParameters.updatables
+        updatables = Parameters.updatables
         changed = dict()
         for k in updatables:
             change = diff.compare(k)
@@ -1613,7 +1480,7 @@ class VirtualServerManager(BaseManager):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = VirtualServerUsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -1628,6 +1495,11 @@ class VirtualServerManager(BaseManager):
         required_resources = ['destination', 'port']
 
         self._set_changed_options()
+        # This must be changed back to a list to make a valid REST API
+        # value. The module manipulates this as a normal dictionary
+        if self.want.default_persistence_profile is not None:
+            self.want.update({'default_persistence_profile': [self.want.default_persistence_profile]})
+
         if self.want.destination is None:
             raise F5ModuleError(
                 "'destination' must be specified when creating a virtual server"
@@ -1652,7 +1524,10 @@ class VirtualServerManager(BaseManager):
                 raise F5ModuleError(
                     "The source and destination addresses for the virtual server must be be the same type (IPv4 or IPv6)."
                 )
-        return super(VirtualServerManager, self).create()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        return True
 
     def update_on_device(self):
         params = self.changes.api_params()
@@ -1674,7 +1549,7 @@ class VirtualServerManager(BaseManager):
         )
         params = result.attrs
         params.update(dict(kind=result.to_dict().get('kind', None)))
-        result = VirtualServerApiParameters(params)
+        result = ApiParameters(params=params)
         return result
 
     def create_on_device(self):
@@ -1694,71 +1569,10 @@ class VirtualServerManager(BaseManager):
             resource.delete()
 
 
-class VirtualAddressManager(BaseManager):
-    def __init__(self, client):
-        super(VirtualAddressManager, self).__init__(client)
-        self.want = VirtualAddressModuleParameters(self.client.module.params)
-        self.have = VirtualAddressApiParameters()
-        self.changes = VirtualAddressUsableChanges()
-
-    def get_reportable_changes(self):
-        result = VirtualAddressReportableChanges(self.changes.to_return())
-        return result
-
-    def _set_changed_options(self):
-        changed = {}
-        for key in VirtualAddressParameters.returnables:
-            if getattr(self.want, key) is not None:
-                changed[key] = getattr(self.want, key)
-        if changed:
-            self.changes = VirtualAddressUsableChanges(changed)
-
-    def _update_changed_options(self):
-        diff = Difference(self.want, self.have)
-        updatables = VirtualAddressParameters.updatables
-        changed = dict()
-        for k in updatables:
-            change = diff.compare(k)
-            if change is None:
-                continue
-            else:
-                if isinstance(change, dict):
-                    changed.update(change)
-                else:
-                    changed[k] = change
-        if changed:
-            self.changes = VirtualAddressUsableChanges(changed)
-            return True
-        return False
-
-    def read_current_from_device(self):
-        result = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result = VirtualAddressParameters(result.attrs)
-        return result
-
-    def update_on_device(self):
-        params = self.want.api_params()
-        resource = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        resource.modify(**params)
-
-    def exists(self):
-        result = self.client.api.tm.ltm.virtual_address_s.virtual_address.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
-
-
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             state=dict(
                 default='present',
                 choices=['present', 'absent', 'disabled', 'enabled']
@@ -1798,54 +1612,45 @@ class ArgumentSpec(object):
             pool=dict(),
             description=dict(),
             snat=dict(),
-            route_advertisement_state=dict(
-                choices=['enabled', 'disabled']
-            ),
             default_persistence_profile=dict(),
             fallback_persistence_profile=dict(),
             source=dict(),
-            metadata=dict(type='raw')
+            metadata=dict(type='raw'),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.mutually_exclusive = [
             ['enabled_vlans', 'disabled_vlans']
         ]
 
 
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
-
-
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
-    if not HAS_NETADDR:
-        raise F5ModuleError("The python netaddr module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
         mutually_exclusive=spec.mutually_exclusive
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
+    if not HAS_NETADDR:
+        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
+        module.exit_json(**results)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
