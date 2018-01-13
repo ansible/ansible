@@ -106,7 +106,7 @@ def enforce_state(module, params):
     if key is None and state != "absent":
         module.fail_json(msg="No key specified when adding a host")
 
-    sanity_check(module, host, key, sshkeygen)
+    sanity_check(module, key, sshkeygen)
 
     found, replace_or_add, found_line, key = search_for_host_key(module, host, key, hash_host, path, sshkeygen)
 
@@ -164,23 +164,21 @@ def enforce_state(module, params):
     return params
 
 
-def sanity_check(module, host, key, sshkeygen):
+def sanity_check(module, key, sshkeygen):
     '''Check supplied key is sensible
 
-    host and key are parameters provided by the user; If the host
-    provided is inconsistent with the key supplied, then this function
-    quits, providing an error to the user.
+    a key is provided by the user; If the key provided is unacceptable,
+    then this function quits, providing an error to the user.
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     '''
     # If no key supplied, we're doing a removal, and have nothing to check here.
     if key is None:
         return
     # Rather than parsing the key ourselves, get ssh-keygen to do it
-    # (this is essential for hashed keys, but otherwise useful, as the
-    # key question is whether ssh-keygen thinks the key matches the host).
+    # main question is whether ssh-keygen thinks this is a valid key.
 
     # The approach is to write the key to a temporary file,
-    # and then attempt to look up the specified host in that file.
+    # and then attempt to show the fingerprint
     try:
         outf = tempfile.NamedTemporaryFile(mode='w+')
         outf.write(key)
@@ -190,15 +188,16 @@ def sanity_check(module, host, key, sshkeygen):
         module.fail_json(msg="Failed to write to temporary file %s: %s" %
                              (outf.name, str(e)))
 
-    sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
-    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=True)
+    sshkeygen_command = [sshkeygen, '-l', '-f', outf.name]
+    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=False)
     try:
         outf.close()
     except:
         pass
 
-    if stdout == '':  # host not found
-        module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
+    if rc != 0:
+        module.fail_json(msg="%s is not an acceptable public key file." %
+                         (key))
 
 
 def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
