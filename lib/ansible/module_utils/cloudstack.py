@@ -92,7 +92,7 @@ class AnsibleCloudStack:
         ]
 
         self.module = module
-        self._connect()
+        self._cs = None
 
         # Helper for VPCs
         self._vpc_networks_ids = None
@@ -111,7 +111,14 @@ class AnsibleCloudStack:
         self.capabilities = None
         self.network_acl = None
 
-    def _connect(self):
+    @property
+    def cs(self):
+        if self._cs is None:
+            api_config = self.get_api_config()
+            self._cs = CloudStack(**api_config)
+        return self._cs
+
+    def get_api_config(self):
         api_region = self.module.params.get('api_region') or os.environ.get('CLOUDSTACK_REGION')
         try:
             config = read_config(api_region)
@@ -134,7 +141,7 @@ class AnsibleCloudStack:
         })
         if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
             self.fail_json(msg="Missing api credentials: can not authenticate")
-        self.cs = CloudStack(**api_config)
+        return api_config
 
     def fail_json(self, **kwargs):
         self.result.update(kwargs)
