@@ -18,15 +18,15 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.bigip_pool import ApiParameters
     from library.bigip_pool import ModuleParameters
     from library.bigip_pool import ModuleManager
     from library.bigip_pool import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
@@ -34,7 +34,8 @@ except ImportError:
         from ansible.modules.network.f5.bigip_pool import ModuleParameters
         from ansible.modules.network.f5.bigip_pool import ModuleManager
         from ansible.modules.network.f5.bigip_pool import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -72,7 +73,7 @@ class TestParameters(unittest.TestCase):
             service_down_action='drop'
         )
 
-        p = ModuleParameters(args)
+        p = ModuleParameters(params=args)
         assert p.monitor_type == 'm_of_n'
         assert p.quorum == 1
         assert p.monitors == 'min 1 of { /Common/Fake /Common/Fake2 }'
@@ -88,7 +89,7 @@ class TestParameters(unittest.TestCase):
             serviceDownAction='drop'
         )
 
-        p = ApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.monitors == '/Common/Fake and /Common/Fake2'
         assert p.slow_ramp_time == 200
         assert p.reselect_tries == 5
@@ -99,7 +100,7 @@ class TestParameters(unittest.TestCase):
             lb_method='obscure_hyphenated_fake_method',
         )
         with pytest.raises(F5ModuleError):
-            p = ModuleParameters(args)
+            p = ModuleParameters(params=args)
             assert p.lb_method == 'foo'
 
     def test_unknown_api_lb_method(self):
@@ -107,12 +108,10 @@ class TestParameters(unittest.TestCase):
             loadBalancingMode='obscure_hypenated_fake_method'
         )
         with pytest.raises(F5ModuleError):
-            p = ApiParameters(args)
+            p = ApiParameters(params=args)
             assert p.lb_method == 'foo'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -132,13 +131,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -163,13 +161,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -191,13 +188,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -220,13 +216,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -247,13 +242,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -276,13 +270,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -304,14 +297,13 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
-        current = ApiParameters(load_fixture('load_ltm_pool.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_pool.json'))
 
         mm.update_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=True)
@@ -332,13 +324,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -360,13 +351,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -388,13 +378,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -417,13 +406,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
@@ -443,13 +431,12 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.create_on_device = Mock(return_value=True)
         mm.exists = Mock(return_value=False)
 
