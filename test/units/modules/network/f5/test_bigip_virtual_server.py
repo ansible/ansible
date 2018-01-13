@@ -17,28 +17,24 @@ if sys.version_info < (2, 7):
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_virtual_server import VirtualAddressParameters
-    from library.bigip_virtual_server import VirtualServerModuleParameters
-    from library.bigip_virtual_server import VirtualServerApiParameters
+    from library.bigip_virtual_server import ModuleParameters
+    from library.bigip_virtual_server import ApiParameters
     from library.bigip_virtual_server import ModuleManager
-    from library.bigip_virtual_server import VirtualServerManager
-    from library.bigip_virtual_server import VirtualAddressManager
     from library.bigip_virtual_server import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_virtual_server import VirtualAddressParameters
-        from ansible.modules.network.f5.bigip_virtual_server import VirtualServerApiParameters
-        from ansible.modules.network.f5.bigip_virtual_server import VirtualServerModuleParameters
+        from ansible.modules.network.f5.bigip_virtual_server import ApiParameters
+        from ansible.modules.network.f5.bigip_virtual_server import ModuleParameters
         from ansible.modules.network.f5.bigip_virtual_server import ModuleManager
-        from ansible.modules.network.f5.bigip_virtual_server import VirtualServerManager
-        from ansible.modules.network.f5.bigip_virtual_server import VirtualAddressManager
         from ansible.modules.network.f5.bigip_virtual_server import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -70,14 +66,14 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='1.1.1.1'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
 
     def test_destination_mutex_2(self):
         args = dict(
             destination='1.1.1.1%2'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
         assert p.destination_tuple.route_domain == 2
 
@@ -85,7 +81,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='1.1.1.1:80'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
         assert p.destination_tuple.port == 80
 
@@ -93,7 +89,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='1.1.1.1%2:80'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
         assert p.destination_tuple.port == 80
         assert p.destination_tuple.route_domain == 2
@@ -102,14 +98,14 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='/Common/1.1.1.1'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
 
     def test_api_destination_mutex_6(self):
         args = dict(
             destination='/Common/1.1.1.1%2'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
         assert p.destination_tuple.route_domain == 2
 
@@ -117,7 +113,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='/Common/1.1.1.1:80'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
         assert p.destination_tuple.port == 80
 
@@ -125,7 +121,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='/Common/1.1.1.1%2:80'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '1.1.1.1'
         assert p.destination_tuple.port == 80
         assert p.destination_tuple.route_domain == 2
@@ -134,14 +130,14 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='2700:bc00:1f10:101::6'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '2700:bc00:1f10:101::6'
 
     def test_destination_mutex_10(self):
         args = dict(
             destination='2700:bc00:1f10:101::6%2'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '2700:bc00:1f10:101::6'
         assert p.destination_tuple.route_domain == 2
 
@@ -149,7 +145,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='2700:bc00:1f10:101::6.80'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '2700:bc00:1f10:101::6'
         assert p.destination_tuple.port == 80
 
@@ -157,25 +153,10 @@ class TestParameters(unittest.TestCase):
         args = dict(
             destination='2700:bc00:1f10:101::6%2.80'
         )
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.destination_tuple.ip == '2700:bc00:1f10:101::6'
         assert p.destination_tuple.port == 80
         assert p.destination_tuple.route_domain == 2
-
-#
-#    def test_destination_mutex_6(self):
-#        args = dict(
-#            destination='/Common/2700:bc00:1f10:101::6'
-#        )
-#        p = VirtualServerParameters(args)
-#        assert p.destination_tuple.ip == '2700:bc00:1f10:101::6'
-#
-#    def test_destination_mutex_5(self):
-#        args = dict(
-#            destination='/Common/2700:bc00:1f10:101::6'
-#        )
-#        p = VirtualServerParameters(args)
-#        assert p.destination_tuple.ip == '2700:bc00:1f10:101::6'
 
     def test_module_no_partition_prefix_parameters(self):
         args = dict(
@@ -198,7 +179,7 @@ class TestParameters(unittest.TestCase):
             ],
             enabled_vlans=['vlan2']
         )
-        p = VirtualServerModuleParameters(args)
+        p = ModuleParameters(params=args)
         assert p.name == 'my-virtual-server'
         assert p.partition == 'Common'
         assert p.port == 443
@@ -235,7 +216,7 @@ class TestParameters(unittest.TestCase):
             ],
             enabled_vlans=['/Common/vlan2']
         )
-        p = VirtualServerModuleParameters(args)
+        p = ModuleParameters(params=args)
         assert p.name == 'my-virtual-server'
         assert p.partition == 'Common'
         assert p.port == 443
@@ -342,7 +323,7 @@ class TestParameters(unittest.TestCase):
                 ]
             }
         }
-        p = VirtualServerApiParameters(args)
+        p = ApiParameters(params=args)
         assert p.name == 'my-virtual-server'
         assert p.partition == 'Common'
         assert p.port == 443
@@ -358,8 +339,6 @@ class TestParameters(unittest.TestCase):
         assert '/Common/net1' in p.vlans
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -388,19 +367,15 @@ class TestManager(unittest.TestCase):
             validate_certs="no"
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=False)
-        vsm.create_on_device = Mock(return_value=True)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=False)
+        mm.create_on_device = Mock(return_value=True)
         results = mm.exec_module()
 
         assert results['changed'] is True
@@ -423,18 +398,14 @@ class TestManager(unittest.TestCase):
             validate_certs="no"
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=False)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=False)
 
         results = mm.exec_module()
 
@@ -460,26 +431,22 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = VirtualServerApiParameters(
+        current = ApiParameters(
             dict(
                 agent_status_traps='disabled'
             )
         )
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=False)
-        vsm.update_on_device = Mock(return_value=True)
-        vsm.read_current_from_device = Mock(return_value=current)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=False)
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
         results = mm.exec_module()
 
         assert results['changed'] is False
@@ -498,22 +465,18 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = VirtualServerApiParameters(load_fixture('load_ltm_virtual_1.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_virtual_1.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=True)
-        vsm.read_current_from_device = Mock(return_value=current)
-        vsm.update_on_device = Mock(return_value=True)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+        mm.update_on_device = Mock(return_value=True)
         results = mm.exec_module()
 
         assert results['changed'] is True
@@ -532,21 +495,17 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = VirtualServerApiParameters(load_fixture('load_ltm_virtual_1.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_virtual_1.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=True)
-        vsm.read_current_from_device = Mock(return_value=current)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
         results = mm.exec_module()
 
         assert results['changed'] is False
@@ -567,21 +526,17 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = VirtualServerApiParameters(load_fixture('load_ltm_virtual_2.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_virtual_2.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=True)
-        vsm.read_current_from_device = Mock(return_value=current)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
 
         results = mm.exec_module()
 
@@ -603,22 +558,18 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = VirtualServerApiParameters(load_fixture('load_ltm_virtual_2.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_virtual_2.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=True)
-        vsm.read_current_from_device = Mock(return_value=current)
-        vsm.update_on_device = Mock(return_value=True)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+        mm.update_on_device = Mock(return_value=True)
 
         results = mm.exec_module()
 
@@ -674,22 +625,18 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = VirtualServerApiParameters(load_fixture('load_ltm_virtual_3.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_virtual_3.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=True)
-        vsm.read_current_from_device = Mock(return_value=current)
-        vsm.update_on_device = Mock(return_value=True)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(return_value=vsm)
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+        mm.update_on_device = Mock(return_value=True)
 
         results = mm.exec_module()
 
@@ -727,47 +674,3 @@ class TestManager(unittest.TestCase):
         assert 'context' in results['profiles'][1]
         assert results['profiles'][1]['name'] == 'clientssl'
         assert results['profiles'][1]['context'] == 'clientside'
-
-
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
-class TestDeprecatedAnsible24Manager(unittest.TestCase):
-    def setUp(self):
-        self.spec = ArgumentSpec()
-
-    def test_modify_port_idempotent(self, *args):
-        set_module_args(dict(
-            destination="10.10.10.10",
-            name="my-virtual-server",
-            route_advertisement_state="enabled",
-            partition="Common",
-            password="secret",
-            port="443",
-            server="localhost",
-            state="present",
-            user="admin",
-            validate_certs="no"
-        ))
-
-        client = AnsibleF5Client(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
-        )
-
-        vsm_current = VirtualServerApiParameters(load_fixture('load_ltm_virtual_1.json'))
-        vam_current = VirtualAddressParameters(load_fixture('load_ltm_virtual_1_address.json'))
-
-        vsm = VirtualServerManager(client)
-        vsm.exists = Mock(return_value=True)
-        vsm.read_current_from_device = Mock(return_value=vsm_current)
-        vam = VirtualAddressManager(client)
-        vam.exists = Mock(return_value=True)
-        vam.read_current_from_device = Mock(return_value=vam_current)
-
-        mm = ModuleManager(client)
-        mm.get_manager = Mock(side_effect=[vsm, vam])
-
-        results = mm.exec_module()
-
-        assert results['changed'] is False
