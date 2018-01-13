@@ -291,6 +291,7 @@ def main():
                     elif format == 'tar':
                         arcfile = tarfile.open(dest, 'w')
 
+                    realdest = os.path.realpath(os.path.expanduser(dest))
                     match_root = re.compile('^%s' % re.escape(arcroot))
                     for path in archive_paths:
                         if os.path.isdir(path):
@@ -316,7 +317,7 @@ def main():
                                     fullpath = dirpath + filename
                                     arcname = match_root.sub('', fullpath)
 
-                                    if not filecmp.cmp(fullpath, dest):
+                                    if not os.path.realpath(os.path.expanduser(fullpath)) == realdest:
                                         try:
                                             if format == 'zip':
                                                 arcfile.write(fullpath, arcname)
