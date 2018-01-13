@@ -39,8 +39,8 @@ def cs_argument_spec():
         api_key=dict(default=os.environ.get('CLOUDSTACK_KEY')),
         api_secret=dict(default=os.environ.get('CLOUDSTACK_SECRET'), no_log=True),
         api_url=dict(default=os.environ.get('CLOUDSTACK_ENDPOINT')),
-        api_http_method=dict(choices=['get', 'post'], default=os.environ.get('CLOUDSTACK_METHOD') or 'get'),
-        api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT') or 10),
+        api_http_method=dict(choices=['get', 'post'], default=os.environ.get('CLOUDSTACK_METHOD')),
+        api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT')),
         api_region=dict(default=os.environ.get('CLOUDSTACK_REGION') or 'cloudstack'),
     )
 
@@ -92,7 +92,7 @@ class AnsibleCloudStack:
         ]
 
         self.module = module
-        self._connect()
+        self._cs = None
 
         # Helper for VPCs
         self._vpc_networks_ids = None
@@ -111,7 +111,14 @@ class AnsibleCloudStack:
         self.capabilities = None
         self.network_acl = None
 
-    def _connect(self):
+    @property
+    def cs(self):
+        if self._cs is None:
+            api_config = self.get_api_config()
+            self._cs = CloudStack(**api_config)
+        return self._cs
+
+    def get_api_config(self):
         api_region = self.module.params.get('api_region') or os.environ.get('CLOUDSTACK_REGION')
         try:
             config = read_config(api_region)
@@ -122,8 +129,8 @@ class AnsibleCloudStack:
             'endpoint': self.module.params.get('api_url') or config.get('endpoint'),
             'key': self.module.params.get('api_key') or config.get('key'),
             'secret': self.module.params.get('api_secret') or config.get('secret'),
-            'timeout': self.module.params.get('api_timeout') or config.get('timeout'),
-            'method': self.module.params.get('api_http_method') or config.get('method'),
+            'timeout': self.module.params.get('api_timeout') or config.get('timeout') or 10,
+            'method': self.module.params.get('api_http_method') or config.get('method') or 'get',
         }
         self.result.update({
             'api_region': api_region,
@@ -134,7 +141,7 @@ class AnsibleCloudStack:
         })
         if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
             self.fail_json(msg="Missing api credentials: can not authenticate")
-        self.cs = CloudStack(**api_config)
+        return api_config
 
     def fail_json(self, **kwargs):
         self.result.update(kwargs)
