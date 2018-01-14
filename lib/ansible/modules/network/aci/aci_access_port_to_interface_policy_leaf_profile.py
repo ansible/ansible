@@ -38,16 +38,16 @@ options:
     - The name of the Fabric access policy leaf interface profile access port block.
     required: yes
     aliases: [ leaf_port_blk_name ]
-  fromPort:
+  from:
     description:
     - The beggining (from range) of the port range block for the leaf access port block.
     required: yes
-    aliases: [ from_port_range ]
-  toPort:
+    aliases: [ fromPort, from_port_range ]
+  to:
     description:
     - The end (to range) of the port range block for the leaf access port block.
     required: yes
-    aliases: [ to_port_range ]
+    aliases: [ toPort, to_port_range ]
   policy_group:
     description:
     - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
@@ -70,8 +70,8 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     leaf_port_blk: leafportblkname
-    fromPort: 13
-    toPort: 16
+    from: 13
+    to: 16
     policy_group: policygroupname
     state: present
 
@@ -83,8 +83,8 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     leaf_port_blk: leafportblkname
-    fromPort: 13
-    toPort: 16
+    from: 13
+    to: 16
     state: present
 
 - name: Remove an interface access port selector associated with an Interface Policy Leaf Profile
@@ -116,15 +116,15 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     argument_spec = aci_argument_spec
-    argument_spec.update(
-        leaf_interface_profile=dict(type='str', aliases=['leaf_interface_profile_name']),
-        access_port_selector=dict(type='str', aliases=['name', 'access_port_selector_name']),
-        leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']),
-        fromPort=dict(type='str', aliases=['from_port_range']),
-        toPort=dict(type='str', aliases=['to_port_range']),
-        policy_group=dict(type='str', aliases=['policy_group_name']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-    )
+    argument_spec.update({
+        'leaf_interface_profile': dict(type='str', aliases=['leaf_interface_profile_name']),
+        'access_port_selector': dict(type='str', aliases=['name', 'access_port_selector_name']),
+        'leaf_port_blk': dict(type='str', aliases=['leaf_port_blk_name']),
+        'from': dict(type='str', aliases=['fromPort', 'from_port_range']),
+        'to': dict(type='str', aliases=['toPort', 'to_port_range']),
+        'policy_group': dict(type='str', aliases=['policy_group_name']),
+        'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
+    })
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -138,8 +138,8 @@ def main():
     leaf_interface_profile = module.params['leaf_interface_profile']
     access_port_selector = module.params['access_port_selector']
     leaf_port_blk = module.params['leaf_port_blk']
-    fromPort = module.params['fromPort']
-    toPort = module.params['toPort']
+    from_ = module.params['from']
+    to_ = module.params['to']
     policy_group = module.params['policy_group']
     state = module.params['state']
 
@@ -170,7 +170,7 @@ def main():
                 name=access_port_selector,
             ),
             child_configs=[
-                dict(infraPortBlk=dict(attributes=dict(name=leaf_port_blk, fromPort=fromPort, toPort=toPort))),
+                dict(infraPortBlk=dict(attributes=dict(name=leaf_port_blk, fromPort=from_, toPort=to_))),
                 dict(infraRsAccBaseGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group)))),
             ],
         )
