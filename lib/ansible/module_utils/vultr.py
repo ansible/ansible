@@ -9,7 +9,7 @@ import os
 import time
 import urllib
 from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.urls import fetch_url
 
 
@@ -49,12 +49,17 @@ class Vultr:
         except KeyError:
             config = {}
 
-        self.api_config = {
-            'api_key': self.module.params.get('api_key') or config.get('key'),
-            'api_timeout': self.module.params.get('api_timeout') or config.get('timeout') or 60,
-            'api_retries': self.module.params.get('api_retries') or config.get('retries') or 5,
-            'api_endpoint': self.module.params.get('api_endpoint') or config.get('endpoint') or VULTR_API_ENDPOINT,
-        }
+        try:
+            self.api_config = {
+                'api_key': self.module.params.get('api_key') or config.get('key'),
+                'api_timeout': self.module.params.get('api_timeout') or int(config.get('timeout') or 60),
+                'api_retries': self.module.params.get('api_retries') or int(config.get('retries') or 5),
+                'api_endpoint': self.module.params.get('api_endpoint') or config.get('endpoint') or VULTR_API_ENDPOINT,
+            }
+        except ValueError as e:
+            self.fail_json(msg="One of the following settings, "
+                               "in section '%s' in the ini config file has not an int value: timeout, retries. "
+                               "Error was %s" % (self.module.params.get('api_account'), to_native(e)))
 
         # Common vultr returns
         self.result['vultr_api'] = {
