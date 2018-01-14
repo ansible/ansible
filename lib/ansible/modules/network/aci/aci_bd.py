@@ -115,6 +115,7 @@ options:
     - The MAC Address to assign to the C(bd) instead of using the default.
     choices: [ mac ]
     default: 00:22:BD:F8:19:FF
+    version_added: '2.5'
   multi_dest:
     description:
     - Determines the forwarding method for L2 multicast, broadcast, and link layer traffic.
