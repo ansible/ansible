@@ -27,6 +27,11 @@ options:
       - Name of the ini section in the C(vultr.ini) file.
       - The ENV variable C(VULTR_API_ACCOUNT) is used as default, when defined.
     default: default
+  api_endpoint:
+    description:
+      - URL to API endpint (without trailing slash).
+      - The ENV variable C(VULTR_API_ENDPOINT) is used as default, when defined.
+    default: "https://api.vultr.com"
   validate_certs:
     description:
       - Validate SSL certs of the Vultr API.
