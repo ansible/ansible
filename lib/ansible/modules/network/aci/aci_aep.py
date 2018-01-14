@@ -37,6 +37,7 @@ options:
     description:
     - Enable infrastructure VLAN.
     - The hypervisor functions of the AEP.
+    - C(no) will disable the infrastructure vlan if it is enabled.
     type: bool
     default: 'no'
     aliases: [ infrastructure_vlan ]
@@ -97,7 +98,7 @@ def main():
     argument_spec.update(
         aep=dict(type='str', aliases=['name', 'aep_name']),  # not required for querying all AEPs
         description=dict(type='str', aliases=['descr']),
-        infra_vlan=dict(type='bool', default=False, aliases=['infrastructure_vlan']),
+        infra_vlan=dict(type='bool', aliases=['infrastructure_vlan']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -117,6 +118,8 @@ def main():
 
     if infra_vlan:
         child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc')))]
+    elif infra_vlan is False:
+        child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc', status='deleted')))]
     else:
         child_configs = []
 
