@@ -228,6 +228,11 @@ EXAMPLES = '''
 try:
     import consul
     from requests.exceptions import ConnectionError
+
+    class PatchedConsulAgentService(consul.Consul.Agent.Service):
+        def deregister(self, service_id):
+            return self.agent.http.put(consul.base.CB.bool(), '/v1/agent/service/deregister/%s' % service_id)
+
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
@@ -344,11 +349,13 @@ def remove_service(module, service_id):
 
 
 def get_consul_api(module, token=None):
-    return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'),
-                         scheme=module.params.get('scheme'),
-                         verify=module.params.get('validate_certs'),
-                         token=module.params.get('token'))
+    consulClient = consul.Consul(host=module.params.get('host'),
+                                 port=module.params.get('port'),
+                                 scheme=module.params.get('scheme'),
+                                 verify=module.params.get('validate_certs'),
+                                 token=module.params.get('token'))
+    consulClient.agent.service = PatchedConsulAgentService(consulClient)
+    return consulClient
 
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
