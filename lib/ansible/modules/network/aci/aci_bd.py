@@ -17,7 +17,7 @@ short_description: Manage Bridge Domains (BD) on Cisco ACI Fabrics (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI Fabrics.
 - More information from the internal APIC class I(fv:BD) at
-  U(https://developer.cisco.com/media/mim-ref/MO-fvBD.html).
+  U(https://developer.cisco.com/docs/apic-mim-ref/.
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -110,6 +110,11 @@ options:
     - The APIC defaults new Bridge Domains to C(yes).
     choices: [ no, yes ]
     default: yes
+  mac_address:
+    description:
+    - The MAC Address to assign to the C(bd) instead of using the default.
+    choices: [ mac ]
+    default: 00:22:BD:F8:19:FF
   multi_dest:
     description:
     - Determines the forwarding method for L2 multicast, broadcast, and link layer traffic.
@@ -142,6 +147,7 @@ EXAMPLES = r'''
     state: present
     tenant: prod
     bd: web_servers
+    mac_address: 00:22:BD:F8:19:FE
     vrf: prod_vrf
 
 - name: Add an FC Bridge Domain
@@ -223,6 +229,7 @@ def main():
         l2_unknown_unicast=dict(choices=['proxy', 'flood']),
         l3_unknown_multicast=dict(choices=['flood', 'opt-flood']),
         limit_ip_learn=dict(type='str', choices=['no', 'yes']),
+        mac_address=dict(type='str', aliases=['mac']),
         multi_dest=dict(choices=['bd-flood', 'drop', 'encap-flood']),
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
         tenant=dict(type='str', aliases=['tenant_name']),
@@ -264,6 +271,7 @@ def main():
     l2_unknown_unicast = module.params['l2_unknown_unicast']
     l3_unknown_multicast = module.params['l3_unknown_multicast']
     limit_ip_learn = module.params['limit_ip_learn']
+    mac_address = module.params['mac_address']
     multi_dest = module.params['multi_dest']
     state = module.params['state']
     tenant = module.params['tenant']
@@ -304,6 +312,7 @@ def main():
                 epMoveDetectMode=endpoint_move_detect,
                 ipLearning=ip_learning,
                 limitIpLearnToSubnets=limit_ip_learn,
+                mac=mac_address,
                 mcastAllow=enable_multicast,
                 multiDstPktAct=multi_dest,
                 name=bd,
