@@ -46,7 +46,7 @@ options:
     local:
         version_added: "2.5"
         required: false
-        default: "False"
+        default: 'no'
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
               This is useful in environments that use centralized authentification when you want to manipulate the local groups.
@@ -94,7 +94,7 @@ class Group(object):
         self.name = module.params['name']
         self.gid = module.params['gid']
         self.system = module.params['system']
-        self.system = module.params['local']
+        self.local = module.params['local']
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
