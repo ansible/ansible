@@ -116,7 +116,7 @@ def main():
     infra_vlan = module.params['infra_vlan']
     state = module.params['state']
 
-    if infa_vlan:
+    if infra_vlan:
         child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc')))]
     elif infra_vlan is False:
         child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc', status='deleted')))]
