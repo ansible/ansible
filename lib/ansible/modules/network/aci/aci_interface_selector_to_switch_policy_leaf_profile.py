@@ -18,7 +18,7 @@ short_description: Associates an Interface Selector Profile to a Switch Policy L
 description:
 - Associates an Interface Profile (Selector) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
 - More information from the internal APIC class I(infra:RsAccPortP) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
