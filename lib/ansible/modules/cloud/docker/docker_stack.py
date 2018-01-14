@@ -212,4 +212,5 @@ def main():
 
         module.exit_json(changed=True, msg=out, err=err)
 
-main()
+if __name__ == "__main__":
+    main()
