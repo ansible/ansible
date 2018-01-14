@@ -33,11 +33,19 @@ options:
     -  The name of the Fabric access policy leaf interface profile access port selector.
     required: yes
     aliases: [ name, access_port_selector_name ]
+  description:
+    description:
+    - The description to assign to the C(access_port_selector)
+    required: no
   leaf_port_blk:
     description:
     - The name of the Fabric access policy leaf interface profile access port block.
     required: yes
     aliases: [ leaf_port_blk_name ]
+  leaf_port_blk_description:
+    description:
+    - The description to assign to the C(leaf_port_blk)
+    required: no
   from:
     description:
     - The beggining (from range) of the port range block for the leaf access port block.
@@ -119,7 +127,9 @@ def main():
     argument_spec.update({
         'leaf_interface_profile': dict(type='str', aliases=['leaf_interface_profile_name']),
         'access_port_selector': dict(type='str', aliases=['name', 'access_port_selector_name']),
+        'description': dict(typ='str'),
         'leaf_port_blk': dict(type='str', aliases=['leaf_port_blk_name']),
+        'leaf_port_blk_description': dict(type='str'),
         'from': dict(type='str', aliases=['fromPort', 'from_port_range']),
         'to': dict(type='str', aliases=['toPort', 'to_port_range']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
@@ -137,7 +147,9 @@ def main():
 
     leaf_interface_profile = module.params['leaf_interface_profile']
     access_port_selector = module.params['access_port_selector']
+    description = module.params['description']
     leaf_port_blk = module.params['leaf_port_blk']
+    leaf_port_blk_description = module.params['leaf_port_blk_description']
     from_ = module.params['from']
     to_ = module.params['to']
     policy_group = module.params['policy_group']
@@ -167,11 +179,27 @@ def main():
         aci.payload(
             aci_class='infraHPortS',
             class_config=dict(
+                descr=description,
                 name=access_port_selector,
             ),
             child_configs=[
-                dict(infraPortBlk=dict(attributes=dict(name=leaf_port_blk, fromPort=from_, toPort=to_))),
-                dict(infraRsAccBaseGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group)))),
+                dict(
+                    infraPortBlk=dict(
+                        attributes=dict(
+                            descr=leaf_port_blk_description,
+                            name=leaf_port_blk,
+                            fromPort=from_,
+                            toPort=to_
+                        )
+                    )
+                ),
+                dict(
+                    infraRsAccBaseGrp=dict(
+                        attributes=dict(
+                            tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group)
+                        )
+                    )
+                ),
             ],
         )
 
