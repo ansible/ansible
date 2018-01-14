@@ -26,36 +26,42 @@ notes:
 - This module is to be used with M(aci_switch_policy_leaf_profile)
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
 options:
- leaf_profile:
-   description:
-   - Name of the Leaf Profile to which we add a Selector.
-   aliases: [ leaf_profile_name ]
- leaf:
-   description:
-   - Name of Leaf Selector.
-   aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
- leaf_node_blk:
-   description:
-   - Name of Node Block range to be added to Leaf Selector of given Leaf Profile
-   aliases: [ leaf_node_blk_name, node_blk_name ]
- from:
-   description:
-   - Start of Node Block Range
-   aliases: [ node_blk_range_from, from_range, range_from ]
- to:
-   description:
-   - Start of Node Block Range
-   aliases: [ node_blk_range_to, to_range, range_to ]
- policy_group:
-   description:
-   - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile
-   aliases: [ name, policy_group_name ]
- state:
-   description:
-   - Use C(present) or C(absent) for adding or removing.
-   - Use C(query) for listing an object or multiple objects.
-   choices: [ absent, present, query ]
-   default: present
+  description:
+    description:
+    - The description to assign to the C(leaf)
+  leaf_profile:
+    description:
+    - Name of the Leaf Profile to which we add a Selector.
+    aliases: [ leaf_profile_name ]
+  leaf:
+    description:
+    - Name of Leaf Selector.
+    aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
+  leaf_node_blk:
+    description:
+    - Name of Node Block range to be added to Leaf Selector of given Leaf Profile
+    aliases: [ leaf_node_blk_name, node_blk_name ]
+  leaf_node_blk_description:
+    description:
+    - The description to assign to the C(leaf_node_blk)
+  from:
+    description:
+    - Start of Node Block Range
+    aliases: [ node_blk_range_from, from_range, range_from ]
+  to:
+    description:
+    - Start of Node Block Range
+    aliases: [ node_blk_range_to, to_range, range_to ]
+  policy_group:
+    description:
+    - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile
+    aliases: [ name, policy_group_name ]
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
 '''
 
 EXAMPLES = r'''
@@ -112,13 +118,15 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update({
+        'description': dict(type='str'),
         'leaf_profile': dict(type='str', aliases=['leaf_profile_name']),
         'leaf': dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
         'leaf_node_blk': dict(type='str', aliases=['leaf_node_blk_name', 'node_blk_name']),
+        'leaf_node_blk_description': dict(type='str'),
         'from': dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
         'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
-        'state': dict(type='str', default='present', choices=['absent', 'present', 'query'])
+        'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
     })
 
     module = AnsibleModule(
@@ -130,9 +138,11 @@ def main():
         ]
     )
 
+    description = module.params['description']
     leaf_profile = module.params['leaf_profile']
     leaf = module.params['leaf']
     leaf_node_blk = module.params['leaf_node_blk']
+    leaf_node_blk_description = module.params['leaf_node_blk_description']
     from_ = module.params['from']
     to_ = module.params['to']
     policy_group = module.params['policy_group']
@@ -165,11 +175,27 @@ def main():
         aci.payload(
             aci_class='infraLeafS',
             class_config=dict(
-                name=leaf
+                descr=description,
+                name=leaf,
             ),
             child_configs=[
-                dict(infraNodeBlk=dict(attributes=dict(name=leaf_node_blk, from_=from_, to_=to_))),
-                dict(infraRsAccNodePGrp=dict(attributes=dict(tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group)))),
+                dict(
+                    infraNodeBlk=dict(
+                        attributes=dict(
+                            descr=leaf_node_blk_description,
+                            name=leaf_node_blk,
+                            from_=from_,
+                            to_=to_,
+                        )
+                    )
+                ),
+                dict(
+                    infraRsAccNodePGrp=dict(
+                        attributes=dict(
+                            tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
+                        )
+                    )
+                ),
             ],
         )
 
