@@ -18,7 +18,7 @@ short_description: Bind Domain to VLAN Pools on Cisco ACI fabrics (infra:RsVlanN
 description:
 - Bind Domain to VLAN Pools on Cisco ACI fabrics.
 - More information from the internal APIC class I(infra:RsVlanNs) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'

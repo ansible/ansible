@@ -18,7 +18,7 @@ description:
 - Connect to external virtual and physical domains by using
   attachable Access Entity Profiles (AEP) on Cisco ACI fabrics.
 - More information from the internal APIC classes I(infra:AttEntityP) and I(infra:ProvAcc)
-  at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  at U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'

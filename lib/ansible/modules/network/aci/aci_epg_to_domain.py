@@ -17,7 +17,7 @@ short_description: Bind EPGs to Domains on Cisco ACI fabrics (fv:RsDomAtt)
 description:
 - Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
 - More information from the internal APIC class I(fv:RsDomAtt) at
-  U(https://developer.cisco.com/media/mim-ref/MO-fvRsDomAtt.html).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

@@ -18,7 +18,7 @@ short_description: Manage AAA user certificates (aaa:UserCert)
 description:
 - Manage AAA user and appuser certificates.
 - More information from the internal APIC class I(aaa:UserCert) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'

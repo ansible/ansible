@@ -19,7 +19,7 @@ short_description: Manage VLAN pools on Cisco ACI fabrics (fvns:VlanInstP)
 description:
 - Manage VLAN pools on Cisco ACI fabrics.
 - More information from the internal APIC class I(fvns:VlanInstP) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 - Dag Wieers (@dagwieers)

@@ -17,7 +17,7 @@ short_description: Manage monitoring policies on Cisco ACI fabrics (mon:EPGPol)
 description:
 - Manage monitoring policies on Cisco ACI fabrics.
 - More information from the internal APIC class I(mon:EPGPol) at
-  U(https://developer.cisco.com/media/mim-ref/MO-monEPGPol.html).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'

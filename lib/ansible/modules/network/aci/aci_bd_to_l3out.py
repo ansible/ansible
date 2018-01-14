@@ -17,7 +17,7 @@ short_description: Bind Bridge Domain to L3 Out on Cisco ACI fabrics (fv:RsBDToO
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
 - More information from the internal APIC class I(fv:RsBDToOut) at
-  U(https://developer.cisco.com/media/mim-ref/MO-fvRsBDToOut.html).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

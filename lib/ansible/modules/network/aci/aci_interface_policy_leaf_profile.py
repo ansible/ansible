@@ -18,7 +18,7 @@ short_description: Manage Fabric interface policy leaf profiles on Cisco ACI fab
 description:
 - Manage Fabric interface policy leaf profiles on Cisco ACI fabrics.
 - More information from the internal APIC class
-  I(infra:AccPortP) at U(https://developer.cisco.com/media/mim-ref).
+  I(infra:AccPortP) at U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

@@ -18,7 +18,7 @@ description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
 - More information from the internal APIC class
   I(fvns:VlanInstP), I(fvns:VxlanInstP), and I(fvns:VsanInstP) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
