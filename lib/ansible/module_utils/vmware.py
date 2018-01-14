@@ -934,32 +934,16 @@ class PyVmomi(object):
                     self.module.fail_json(msg="vmware_guest found multiple virtual machines with same "
                                               "name [%s], please specify folder path other than blank "
                                               "or '/'" % self.params['name'])
-                elif user_folder == '/vm' or user_folder.startswith('/vm/'):
-                    # User provided VMware default vm folder with / or
+                elif user_folder.startswith('/vm/'):
                     # User provided nested folder under VMware default vm folder i.e. folder = /vm/india/finance
                     user_desired_path = "%s%s%s" % (dcpath, user_defined_dc, user_folder)
-                elif user_folder == 'vm':
-                    # User provided VMware default vm folder
-                    user_desired_path = "%s%s/vm" % (dcpath, user_defined_dc)
-                elif user_folder.startswith("%s%s/vm" % (dcpath, user_defined_dc)) or \
-                        user_folder.startswith("/%s" % user_defined_dc):
+                else:
                     # User defined datacenter is not nested i.e. dcpath = '/' , or
                     # User defined datacenter is nested i.e. dcpath = '/F0/DC0' or
-                    # User provided folder starts with / and datacenter i.e. folder = /ha-datacenter/
-                    user_desired_path = user_folder
-                elif user_folder.startswith('/'):
-                    # User defined folder is under VMware default vm folder i.e. folder = /india/finance
-                    user_desired_path = "%s%s/vm%s" % (dcpath, user_defined_dc, user_folder)
-                elif user_folder.startswith("%s/vm" % user_defined_dc):
+                    # User provided folder starts with / and datacenter i.e. folder = /ha-datacenter/ or
                     # User defined folder starts with datacenter without '/' i.e.
                     # folder = DC0/vm/india/finance or
                     # folder = DC0/vm
-                    user_desired_path = user_folder
-                elif user_folder == '%s' % user_defined_dc:
-                    # User defined folder is datacenter i.e. folder = 'DC0'
-                    user_desired_path = "%s%s/vm" % (dcpath, user_defined_dc)
-                else:
-                    # get_vm is not super cow !!!
                     user_desired_path = user_folder
 
                 for vm in vms:
