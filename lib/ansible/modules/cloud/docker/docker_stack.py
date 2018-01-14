@@ -96,7 +96,8 @@ from jsondiff import diff as json_diff
 
 
 def docker_stack_services(module, stack_name):
-    rc, out, err = module.run_command(["docker",
+    docker_bin = module.get_bin_path('docker', required=True)
+    rc, out, err = module.run_command([docker_bin,
                                        "stack",
                                        "services",
                                        stack_name,
@@ -108,7 +109,8 @@ def docker_stack_services(module, stack_name):
 
 
 def docker_service_inspect(module, service_name):
-    rc, out, err = module.run_command(["docker",
+    docker_bin = module.get_bin_path('docker', required=True)
+    rc, out, err = module.run_command([docker_bin,
                                        "service",
                                        "inspect",
                                        service_name])
@@ -120,7 +122,8 @@ def docker_service_inspect(module, service_name):
 
 
 def docker_stack_deploy(module, stack_name, compose_file):
-    command = ["docker", "stack", "deploy"]
+    docker_bin = module.get_bin_path('docker', required=True)
+    command = [docker_bin, "stack", "deploy"]
     if module.params["prune"]:
         command += ["--prune"]
     command += ["--compose-file",
@@ -195,7 +198,8 @@ def main():
                 docker_stack_spec_diff=str(before_after_differences))
 
     else:
-        rc, out, err = module.run_command(["docker",
+        docker_bin = module.get_bin_path('docker', required=True)
+        rc, out, err = module.run_command([docker_bin,
                                            "stack",
                                            "down",
                                            name])
