@@ -111,6 +111,16 @@ vultr_api:
       returned: success
       type: int
       sample: 60
+    api_retries:
+      description: Amount of max retries for the API requests
+      returned: success
+      type: int
+      sample: 5
+    api_endpoint:
+      description: Endpoint used for the API requests
+      returned: success
+      type: string
+      sample: "https://api.vultr.com"
 vultr_firewall_rule:
   description: Response from Vultr API
   returned: success
