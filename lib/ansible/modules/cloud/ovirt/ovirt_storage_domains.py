@@ -127,6 +127,9 @@ options:
     critical_space_action_blocker:
         description:
             - "Inidcates what is the minimum free space the storage domain should contain."
+    warning_low_space:
+        description:
+            - "Inidcates the minimum percentage of a free space in a storage domain to present a warning."
     destroy:
         description:
             - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
@@ -189,6 +192,7 @@ EXAMPLES = '''
     discard_after_delete: True
     backup: False
     critical_space_action_blocker: 5
+    warning_low_space: 10
 
 # Add data glusterfs storage domain
 -  ovirt_storage_domains:
@@ -211,6 +215,7 @@ EXAMPLES = '''
     wipe_after_delete: False
     backup: True
     critical_space_action_blocker: 2
+    warning_low_space: 5
 
 # Import export NFS storage domain:
 - ovirt_storage_domains:
@@ -322,6 +327,8 @@ class StorageDomainModule(BaseModule):
             backup=self._module.params['backup'],
             critical_space_action_blocker=self._module.params['critical_space_action_blocker']
             if self._module.params['critical_space_action_blocker'] else None,
+            warning_low_space_indicator=self._module.params['warning_low_space']
+            if self._module.params['warning_low_space'] else None,
             import_=(
                 True
                 if self._module.params['state'] == 'imported' else None
@@ -572,6 +579,7 @@ def main():
         wipe_after_delete=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
         critical_space_action_blocker=dict(type='int'),
+        warning_low_space=dict(type='int'),
         destroy=dict(type='bool', default=False),
         format=dict(type='bool', default=False),
         discard_after_delete=dict(type='bool', default=True)
