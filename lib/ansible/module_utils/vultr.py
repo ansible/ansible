@@ -19,8 +19,8 @@ VULTR_API_ENDPOINT = "https://api.vultr.com"
 def vultr_argument_spec():
     return dict(
         api_key=dict(default=os.environ.get('VULTR_API_KEY'), no_log=True),
-        api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT') or 60),
-        api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES') or 5),
+        api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT')),
+        api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES')),
         api_account=dict(default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
         validate_certs=dict(default=True, type='bool'),
     )
@@ -50,8 +50,8 @@ class Vultr:
 
         self.api_config = {
             'api_key': self.module.params.get('api_key') or config.get('key'),
-            'api_timeout': self.module.params.get('api_timeout') or config.get('timeout'),
-            'api_retries': self.module.params.get('api_retries') or config.get('retries'),
+            'api_timeout': self.module.params.get('api_timeout') or config.get('timeout') or 60,
+            'api_retries': self.module.params.get('api_retries') or config.get('retries') or 5,
         }
 
         # Common vultr returns
