@@ -18,7 +18,7 @@ short_description: Manage firmware image sources on Cisco ACI fabrics (firmware:
 description:
 - Manage firmware image sources on Cisco ACI fabrics.
 - More information from the internal APIC class I(firmware:OSource) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'

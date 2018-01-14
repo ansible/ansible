@@ -18,7 +18,7 @@ short_description: Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics
 description:
 - Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics.
 - More information from the internal APIC class I(infra:RsDomP) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
