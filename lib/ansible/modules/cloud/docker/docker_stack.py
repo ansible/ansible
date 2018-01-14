@@ -4,7 +4,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -15,7 +15,7 @@ description: |
     Manage docker stacks using the 'docker stack' command
     on the target node
     (see examples)
-version_added: "2.4"
+version_added: "2.5"
 options:
     name:
         required: true
