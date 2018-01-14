@@ -189,14 +189,14 @@ def main():
                             descr=leaf_port_blk_description,
                             name=leaf_port_blk,
                             fromPort=from_,
-                            toPort=to_
+                            toPort=to_,
                         )
                     )
                 ),
                 dict(
                     infraRsAccBaseGrp=dict(
                         attributes=dict(
-                            tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group)
+                            tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
                         )
                     )
                 ),
