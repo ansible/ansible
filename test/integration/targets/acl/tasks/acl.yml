@@ -15,12 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact:
-    test_user: ansible_user
-    test_group: ansible_group
-    test_file: /tmp/ansible_file
-    test_dir: /tmp/ansible_dir
-
 - name: Create ansible user
   user:
     name: "{{ test_user }}"
