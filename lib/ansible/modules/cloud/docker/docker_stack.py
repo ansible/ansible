@@ -32,8 +32,8 @@ options:
         required: false
         default: ""
         description:
-        -   String containing the yaml definition of the stack
-        -   Must be in compose format
+        -   String containing the yaml definition of the stack.
+        -   Must be in compose format.
     compose_file:
         required: false
         default: ""
@@ -57,7 +57,7 @@ docker_stack_spec_diff:
     description: |
         dictionary containing the differences between the 'Spec' field
         of the stack services before and after applying the new stack
-        definition
+        definition.
     sample: >
         "docker_stack_specs_diff":
         {'test_stack_test_service': {u'TaskTemplate': {u'ContainerSpec': {delete: [u'Env']}}}}
