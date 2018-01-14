@@ -17,7 +17,7 @@ short_description: Manage SPAN source groups on Cisco ACI fabrics (span:SrcGrp)
 description:
 - Manage SPAN source groups on Cisco ACI fabrics.
 - More information from the internal APIC class I(span:SrcGrp) at
-  U(https://developer.cisco.com/media/mim-ref/MO-spanSrcGrp.html).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

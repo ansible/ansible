@@ -18,7 +18,7 @@ description:
 - Manage physical, virtual, bridged, routed or FC domain profiles.
 - More information from the internal APIC classes I(phys:DomP),
   I(vmm:DomP), I(l2ext:DomP), I(l3ext:DomP), I(fc:DomP) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'

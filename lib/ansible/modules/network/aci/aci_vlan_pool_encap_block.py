@@ -19,7 +19,7 @@ short_description: Manage encap blocks assigned to VLAN pools on Cisco ACI fabri
 description:
 - Manage VLAN encap blocks that are assigned to VLAN pools on Cisco ACI fabrics.
 - More information from the internal APIC class I(fvns:EncapBlk) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 - Dag Wieers (@dagwieers)

@@ -18,10 +18,8 @@ description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
-- More information from the internal APIC classes I(config:Snapshot) at
-  U(https://developer.cisco.com/media/mim-ref/MO-configSnapshot.html)
-  and I(config:ExportP) at
-  U(https://developer.cisco.com/media/mim-ref/MO-configExportP.html).
+- More information from the internal APIC classes I(config:Snapshot) and I(config:ExportP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
