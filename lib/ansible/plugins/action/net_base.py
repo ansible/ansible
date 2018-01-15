@@ -25,6 +25,8 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
+from ansible.plugins.action.nxos import ActionModule as _NxosActionModule
+from ansible.plugins.action.eos import ActionModule as _EosActionModule
 from ansible.module_utils.network.common.utils import load_provider
 
 from imp import find_module, load_module
@@ -58,6 +60,9 @@ class ActionModule(ActionBase):
             if play_context.network_os == 'junos':
                 play_context.connection = 'netconf'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 830)
+            elif self.provider['transport'] in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
+                play_context.connection = play_context.connection
+                play_context.port = int(self.provider['port'] or self._play_context.port or 22)
             else:
                 play_context.connection = 'network_cli'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 22)
@@ -73,8 +78,14 @@ class ActionModule(ActionBase):
                 play_context.become_method = 'enable'
 
             if self._play_context.connection == 'local':
-                socket_path = self._start_connection(play_context)
-                task_vars['ansible_socket'] = socket_path
+                if self.provider['transport'] == 'nxapi' and play_context.network_os == 'nxos':
+                    self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
+                elif self.provider['transport'] == 'eapi' and play_context.network_os == 'eos':
+                    self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
+                else:
+                    socket_path = self._start_connection(play_context)
+                    task_vars['ansible_socket'] = socket_path
+
         else:
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
