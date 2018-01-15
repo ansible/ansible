@@ -97,6 +97,7 @@ lib/ansible/modules/cloud/azure/azure_rm_resourcegroup_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_securitygroup.py E322
 lib/ansible/modules/cloud/azure/azure_rm_securitygroup_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver.py E322
+lib/ansible/modules/cloud/azure/azure_rm_sqlserver_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E322
 lib/ansible/modules/cloud/azure/azure_rm_storageaccount_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_storageblob.py E322
@@ -529,6 +530,7 @@ lib/ansible/modules/network/f5/bigip_snmp_trap.py E322
 lib/ansible/modules/network/f5/bigip_software_update.py E322
 lib/ansible/modules/network/f5/bigip_ssl_certificate.py E322
 lib/ansible/modules/network/f5/bigip_ssl_key.py E322
+lib/ansible/modules/network/f5/bigip_static_route.py E322
 lib/ansible/modules/network/f5/bigip_sys_db.py E322
 lib/ansible/modules/network/f5/bigip_sys_global.py E322
 lib/ansible/modules/network/f5/bigip_traffic_group.py E322
@@ -686,7 +688,6 @@ lib/ansible/modules/network/nxos/nxos_vrrp.py E323
 lib/ansible/modules/network/nxos/nxos_vtp_domain.py E323
 lib/ansible/modules/network/nxos/nxos_vtp_password.py E323
 lib/ansible/modules/network/nxos/nxos_vtp_version.py E323
-lib/ansible/modules/network/nxos/nxos_vxlan_vtep.py E322
 lib/ansible/modules/network/nxos/nxos_vxlan_vtep.py E323
 lib/ansible/modules/network/nxos/nxos_vxlan_vtep_vni.py E323
 lib/ansible/modules/network/onyx/onyx_command.py E323
