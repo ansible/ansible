@@ -770,7 +770,8 @@ lib/ansible/modules/remote_management/oneview/oneview_san_manager.py E322
 lib/ansible/modules/remote_management/oneview/oneview_san_manager_facts.py E322
 lib/ansible/modules/remote_management/stacki/stacki_host.py E317
 lib/ansible/modules/remote_management/stacki/stacki_host.py E322
-lib/ansible/modules/remote_management/ucs/ucs_macpool.py E322
+lib/ansible/modules/remote_management/ucs/ucs_mac_pool.py E322
+lib/ansible/modules/remote_management/ucs/ucs_mac_pool.py E323
 lib/ansible/modules/remote_management/ucs/ucs_san_connectivity.py E322
 lib/ansible/modules/remote_management/ucs/ucs_san_connectivity.py E323
 lib/ansible/modules/remote_management/ucs/ucs_vhba_template.py E322
