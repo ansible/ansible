@@ -67,6 +67,9 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/34656
 * Fix for the nxos_banner module where some nxos images nest the output inside of an additional dict:
   https://github.com/ansible/ansible/pull/34695
+* Fix failure message "got multiple values for keyword argument id" in the
+  azure_rm_securitygroup module (caused by changes to the azure python API):
+  https://github.com/ansible/ansible/pull/34810
 
 
 <a id="2.4.2"></a>
