@@ -77,12 +77,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-elb_classic_facts:
-  description: a
+elbs:
+  description: a list of load balancers
   returned: always
   type: list
   sample:
-    elb_classic_facts:
+    elbs:
       - attributes:
           access_log:
             enabled: false
@@ -207,25 +207,14 @@ def main():
                               supports_check_mode=True)
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg="region must be specified")
-
-    try:
-        connection = boto3_conn(module,
-                                conn_type='client',
-                                resource='elb',
-                                region=region,
-                                endpoint=ec2_url,
-                                **aws_connect_params)
-    except (botocore.exceptions.PartialCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json_aws(e, msg="Can't authorize connection. Check your credentials and profile.")
+    connection = boto3_conn(module, conn_type='client', resource='elb', region=region, endpoint=ec2_url, **aws_connect_params)
 
     try:
         elbs = list_elbs(connection, module.params.get('names'))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to get load balancer facts.")
 
-    module.exit_json(elb_classic_facts=elbs)
+    module.exit_json(elbs=elbs)
 
 
 if __name__ == '__main__':
