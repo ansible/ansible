@@ -44,7 +44,7 @@ DOCUMENTATION = """
         - Use to specify an object model. If I(resource definition) is provided, the I(kind) from a
           I(resource_definition) will override this option.
         required: true
-      name:
+      resource_name:
         description:
         - Fetch a specific object by name. If I(resource definition) is provided, the I(metadata.name) value
           from the I(resource_definition) will override this option.
