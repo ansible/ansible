@@ -390,12 +390,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                     os_type=self.os_type,
                                     volumes=None)
 
-        try:
-            response = self.mgmt_client.container_groups.create_or_update(self.resource_group, self.name, parameters)
+        response = self.mgmt_client.container_groups.create_or_update(self.resource_group, self.name, parameters)
 
-        except CloudError as exc:
-            self.log('Error attempting to create the container instance.')
-            self.fail("Error creating the container instance: {0}".format(str(exc)))
         return response.as_dict()
 
     def delete_containerinstance(self):
@@ -405,12 +401,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         :return: True
         '''
         self.log("Deleting the container instance {0}".format(self.name))
-        try:
-            response = self.mgmt_client.container_groups.delete(self.resource_group, self.name)
-        except CloudError as e:
-            self.log('Error attempting to delete the container instance.')
-            self.fail("Error deleting the container instance: {0}".format(str(e)))
-
+        response = self.mgmt_client.container_groups.delete(self.resource_group, self.name)
         return True
 
     def get_containerinstance(self):
