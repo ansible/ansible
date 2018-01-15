@@ -198,6 +198,12 @@ AZURE_PKG_VERSIONS = {
         'client_name': 'SqlManagementClient',
         'expected_version': '0.7.1'
     },
+    'mysql': {
+        'pkg_name': 'rdbms',
+        'sub_pkg': 'mysql',
+        'client_name': 'MySQLManagementClient',
+        'expected_version': '0.2.0rc1'
+    },
     'postgre_sql': {
         'pkg_name': 'rdbms',
         'sub_pkg': 'postgresql',
@@ -309,6 +315,7 @@ class AzureRMModuleBase(object):
         self._containerservice_client = None
         self._containerregistry_mgmt_client = None
         self._sql_client = None
+        self._mysql_client = None
         self._postgre_sql_client = None
 
         self.check_mode = self.module.check_mode
@@ -882,6 +889,14 @@ class AzureRMModuleBase(object):
             self._sql_client = self.get_mgmt_svc_client('sql',
                                                         base_url=self._cloud_environment.endpoints.resource_manager)
         return self._sql_client
+
+    @property
+    def mysql_client(self):
+        self.log('Getting mysql client')
+        if not self._mysql_client:
+            self._mysql_client = self.get_mgmt_svc_client('mysql',
+                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._mysql_client
 
     @property
     def postgre_sql_client(self):
