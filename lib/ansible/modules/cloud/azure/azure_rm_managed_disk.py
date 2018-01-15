@@ -145,20 +145,16 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-(
-    DiskCreateOption,
-    DiskCreateOptionTypes,
-    ManagedDiskParameters,
-    DiskSku,
-    DataDisk
-    ) = load_sdk_model(
-    'compute',
-    'DiskCreateOption',
-    'DiskCreateOptionTypes',
-    'ManagedDiskParameters',
-    'DiskSku',
-    'DataDisk'
-    )
+(DiskCreateOption,
+ DiskCreateOptionTypes,
+ ManagedDiskParameters,
+ DiskSku,
+ DataDisk) = load_sdk_model('compute',
+                            'DiskCreateOption',
+                            'DiskCreateOptionTypes',
+                            'ManagedDiskParameters',
+                            'DiskSku',
+                            'DataDisk')
 
 
 

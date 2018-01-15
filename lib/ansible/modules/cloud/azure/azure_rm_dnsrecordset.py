@@ -183,32 +183,28 @@ except ImportError:
     pass
 
 
-(
-    Zone,
-    RecordSet,
-    ARecord,
-    AaaaRecord,
-    MxRecord,
-    NsRecord,
-    PtrRecord,
-    SrvRecord,
-    TxtRecord,
-    CnameRecord,
-    SoaRecord
-    ) = load_sdk_model(
-    'dns',
-    'Zone',
-    'RecordSet',
-    'ARecord',
-    'AaaaRecord',
-    'MxRecord',
-    'NsRecord',
-    'PtrRecord',
-    'SrvRecord',
-    'TxtRecord',
-    'CnameRecord',
-    'SoaRecord'
-    )
+(Zone,
+ RecordSet,
+ ARecord,
+ AaaaRecord,
+ MxRecord,
+ NsRecord,
+ PtrRecord,
+ SrvRecord,
+ TxtRecord,
+ CnameRecord,
+ SoaRecord) = load_sdk_model('dns',
+                             'Zone',
+                             'RecordSet',
+                             'ARecord',
+                             'AaaaRecord',
+                             'MxRecord',
+                             'NsRecord',
+                             'PtrRecord',
+                             'SrvRecord',
+                             'TxtRecord',
+                             'CnameRecord',
+                             'SoaRecord')
 
 
 base_record = dict(

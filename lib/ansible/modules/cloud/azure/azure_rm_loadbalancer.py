@@ -189,26 +189,22 @@ except ImportError:
     pass
 
 
-(
-    LoadBalancer,
-    FrontendIPConfiguration,
-    BackendAddressPool,
-    Probe,
-    LoadBalancingRule,
-    SubResource,
-    InboundNatPool,
-    Subnet
-    ) = load_sdk_model(
-    'network',
-    'LoadBalancer',
-    'FrontendIPConfiguration',
-    'BackendAddressPool',
-    'Probe',
-    'LoadBalancingRule',
-    'SubResource',
-    'InboundNatPool',
-    'Subnet'
-    )
+(LoadBalancer,
+ FrontendIPConfiguration,
+ BackendAddressPool,
+ Probe,
+ LoadBalancingRule,
+ SubResource,
+ InboundNatPool,
+ Subnet) = load_sdk_model('network',
+                          'LoadBalancer',
+                          'FrontendIPConfiguration',
+                          'BackendAddressPool',
+                          'Probe',
+                          'LoadBalancingRule',
+                          'SubResource',
+                          'InboundNatPool',
+                          'Subnet')
 
 
 class AzureRMLoadBalancer(AzureRMModuleBase):

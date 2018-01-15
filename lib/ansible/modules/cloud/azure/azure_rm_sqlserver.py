@@ -256,8 +256,8 @@ class AzureRMServers(AzureRMModuleBase):
 
         try:
             response = self.sql_client.servers.create_or_update(self.resource_group,
-                                                                 self.name,
-                                                                 self.parameters)
+                                                                self.name,
+                                                                self.parameters)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -275,7 +275,7 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Deleting the SQL Server instance {0}".format(self.name))
         try:
             response = self.sql_client.servers.delete(self.resource_group,
-                                                       self.name)
+                                                      self.name)
         except CloudError as e:
             self.log('Error attempting to delete the SQL Server instance.')
             self.fail("Error deleting the SQL Server instance: {0}".format(str(e)))
@@ -292,7 +292,7 @@ class AzureRMServers(AzureRMModuleBase):
         found = False
         try:
             response = self.sql_client.servers.get(self.resource_group,
-                                                    self.name)
+                                                   self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("SQL Server instance : {0} found".format(response.name))

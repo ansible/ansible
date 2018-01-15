@@ -213,6 +213,7 @@ def _get_full_pkg_path(resource_type):
     pkg = '{0}.{1}'.format(pkg_name, sub_path) if sub_path else pkg_name
     return 'azure.mgmt.{0}'.format(pkg)
 
+
 def _get_sdk_attr(path, attr):
     sdk = import_module(path)
     if attr:
@@ -243,22 +244,18 @@ def load_sdk_model(resource_type, *attr_args):
 AZURE_MIN_RELEASE = '2.0.0'
 
 
-(
-    PublicIPAddress,
-    NetworkSecurityGroup,
-    SecurityRule,
-    NetworkInterface,
-    NetworkInterfaceIPConfiguration,
-    Subnet,
-    ) = load_sdk_model(
-    'network',
-    'PublicIPAddress',
-    'NetworkSecurityGroup',
-    'SecurityRule',
-    'NetworkInterface',
-    'NetworkInterfaceIPConfiguration',
-    'Subnet',
-    )
+(PublicIPAddress,
+ NetworkSecurityGroup,
+ SecurityRule,
+ NetworkInterface,
+ NetworkInterfaceIPConfiguration,
+ Subnet) = load_sdk_model('network',
+                          'PublicIPAddress',
+                          'NetworkSecurityGroup',
+                          'SecurityRule',
+                          'NetworkInterface',
+                          'NetworkInterfaceIPConfiguration',
+                          'Subnet')
 
 
 class AzureRMModuleBase(object):
@@ -753,16 +750,16 @@ class AzureRMModuleBase(object):
                 # add an inbound SSH rule
                 parameters.security_rules = [
                     SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow SSH Access',
-                                                     source_port_range='*', destination_port_range='22', priority=100, name='SSH')
+                                 source_port_range='*', destination_port_range='22', priority=100, name='SSH')
                 ]
                 parameters.location = location
             else:
                 # for windows add inbound RDP and WinRM rules
                 parameters.security_rules = [
                     SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
-                                                     source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
+                                 source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
                     SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
-                                                     source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
+                                 source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
                 ]
         else:
             # Open custom ports
@@ -773,7 +770,7 @@ class AzureRMModuleBase(object):
                 rule_name = "Rule_{0}".format(priority)
                 parameters.security_rules.append(
                     SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
-                                                     destination_port_range=str(port), priority=priority, name=rule_name)
+                                 destination_port_range=str(port), priority=priority, name=rule_name)
                 )
 
         self.log('Creating default security group {0}'.format(security_group_name))
@@ -790,18 +787,18 @@ class AzureRMModuleBase(object):
         self.log('Getting management service client {0}'.format(client_type))
         self.check_client_version(client_type)
         api_version = AZURE_PKG_VERSIONS.get(client_type).get('api_version')
-        client_name = AZURE_PKG_VERSIONS.get(client_type).get('client_name')        
+        client_name = AZURE_PKG_VERSIONS.get(client_type).get('client_name')
         pkg_path = _get_full_pkg_path(client_type)
         client_model = _get_sdk_attr(pkg_path, client_name)
         if api_version:
             client = client_model(self.azure_credentials,
-                                 self.subscription_id,
-                                 api_version=api_version,
-                                 base_url=base_url)
+                                  self.subscription_id,
+                                  api_version=api_version,
+                                  base_url=base_url)
         else:
             client = client_model(self.azure_credentials,
-                                 self.subscription_id,
-                                 base_url=base_url)
+                                  self.subscription_id,
+                                  base_url=base_url)
 
         # Add user agent for Ansible
         client.config.add_user_agent(ANSIBLE_USER_AGENT)
