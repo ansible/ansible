@@ -53,6 +53,14 @@ options:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
         with Ceph in order to provide the same module behaviour where possible.
     version_added: "2.2"
+  walrus:
+    description:
+      - Enable API compatibility with Walrus (Eucalyptus cloud-computing platform). If enabled the module won't be
+        able to connect to anything but Walrus. For backward compatibility with previsous Ansible versions the default
+        value defaults to true which is likely not what you expect. The option is ignored if ceph is true or s3_url is not set
+        or ends with amazonaws.com or the protocol is fakes3 or fakes3s.
+    default: true
+    version_added: "2.5"
   requester_pays:
     description:
       - With Requester Pays buckets, the requester instead of the bucket owner pays the cost
@@ -339,13 +347,11 @@ def is_fakes3(s3_url):
         return False
 
 
-def is_walrus(s3_url):
-    """ Return True if it's Walrus endpoint, not S3
-
-    We assume anything other than *.amazonaws.com is Walrus"""
+def is_amazonaws(s3_url):
+    """ Return True if it's an AWS endpoint """
     if s3_url is not None:
         o = urlparse.urlparse(s3_url)
-        return not o.hostname.endswith('amazonaws.com')
+        return o.hostname.endswith('amazonaws.com')
     else:
         return False
 
@@ -362,7 +368,8 @@ def main():
             state=dict(default='present', type='str', choices=['present', 'absent']),
             tags=dict(required=False, default=None, type='dict'),
             versioning=dict(default=None, type='bool'),
-            ceph=dict(default='no', type='bool')
+            ceph=dict(default='no', type='bool'),
+            walrus=dict(default='true', type='bool')
         )
     )
 
@@ -419,15 +426,23 @@ def main():
                 port=fakes3.port,
                 **aws_connect_params
             )
-        elif is_walrus(s3_url):
-            del aws_connect_params['calling_format']
-            walrus = urlparse.urlparse(s3_url).hostname
-            connection = boto.connect_walrus(walrus, **aws_connect_params)
-        else:
+        elif is_amazonaws(s3_url):
             connection = boto.s3.connect_to_region(location, is_secure=True, **aws_connect_params)
             # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
             if connection is None:
                 connection = boto.connect_s3(**aws_connect_params)
+        elif module.params.get('walrus'):
+            del aws_connect_params['calling_format']
+            walrus = urlparse.urlparse(s3_url).hostname
+            connection = boto.connect_walrus(walrus, **aws_connect_params)
+        else:
+            parsed_url = urlparse.urlparse(s3_url)
+            connection = boto.s3.connection.S3Connection(
+                host=parsed_url.hostname,
+                port=parsed_url.port,
+                is_secure=parsed_url.scheme == 'https',
+                **aws_connect_params
+            )
 
     except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg='No Authentication Handler found: %s ' % str(e))
