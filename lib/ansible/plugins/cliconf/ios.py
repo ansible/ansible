@@ -75,12 +75,15 @@ class Cliconf(CliconfBase):
                 command = cmd['command']
                 prompt = cmd['prompt']
                 answer = cmd['answer']
+                newline = cmd.get('newline', True)
             except:
                 command = cmd
                 prompt = None
                 answer = None
+                newline = True
 
-            self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer))
+            self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer),
+                              False, newline)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(to_bytes(command), prompt=to_bytes(prompt),
