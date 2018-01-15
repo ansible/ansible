@@ -70,6 +70,7 @@ Errors
             ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   107       Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   108       GPLv3 license header should be the :ref:`short form <copyright>` for new modules
+  109       Next to last line is not ``if __name__ == "__main__":``
   ..
 ---------   -------------------
   **2xx**   **Imports**
