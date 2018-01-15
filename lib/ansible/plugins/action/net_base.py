@@ -25,6 +25,8 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
+from ansible.plugins.action.nxos import ActionModule as _NxosActionModule
+from ansible.plugins.action.eos import ActionModule as _EosActionModule
 from ansible.module_utils.network.common.utils import load_provider
 
 from imp import find_module, load_module
@@ -77,9 +79,18 @@ class ActionModule(ActionBase):
 
             if self._play_context.connection == 'local':
                 if self.provider['transport'] == 'nxapi' and play_context.network_os == 'nxos':
-                    self._task.args['provider'] = self._nxapi_implementation()
+                    obj = {}
+                    obj['remote_addr'] = self._play_context.remote_addr
+                    obj['connection_user'] = self._play_context.connection_user
+                    obj['password'] = self._play_context.password
+                    self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, obj)
                 elif self.provider['transport'] == 'eapi' and play_context.network_os == 'eos':
-                    self._task.args['provider'] = self._eapi_implementation()
+                    obj = {}
+                    obj['remote_addr'] = self._play_context.remote_addr
+                    obj['port'] = self._play_context.port
+                    obj['connection_user'] = self._play_context.connection_user
+                    obj['password'] = self._play_context.password
+                    self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, obj)
                 else:
                     socket_path = self._start_connection(play_context)
                     task_vars['ansible_socket'] = socket_path
@@ -135,55 +146,6 @@ class ActionModule(ActionBase):
             result['ansible_facts'] = {'network_os': play_context.network_os}
 
         return result
-
-    def _nxapi_implementation(self):
-        if self.provider.get('host') is None:
-            self.provider['host'] = self._play_context.remote_addr
-
-        if self.provider.get('port') is None:
-            if self.provider.get('use_ssl'):
-                self.provider['port'] = 443
-            else:
-                self.provider['port'] = 80
-
-        if self.provider.get('timeout') is None:
-            self.provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
-
-        if self.provider.get('username') is None:
-            self.provider['username'] = self._play_context.connection_user
-
-        if self.provider.get('password') is None:
-            self.provider['password'] = self._play_context.password
-
-        if self.provider.get('use_ssl') is None:
-            self.provider['use_ssl'] = False
-
-        if self.provider.get('validate_certs') is None:
-            self.provider['validate_certs'] = True
-
-        return self.provider
-
-    def _eapi_implementation(self):
-        if self.provider.get('host') is None:
-            self.provider['host'] = self._play_context.remote_addr
-
-        if self.provider.get('port') is None:
-            default_port = 443 if self.provider['use_ssl'] else 80
-            self.provider['port'] = int(self._play_context.port or default_port)
-
-        if self.provider.get('timeout') is None:
-            self.provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
-
-        if self.provider.get('username') is None:
-            self.provider['username'] = self._play_context.connection_user
-
-        if self.provider.get('password') is None:
-            self.provider['password'] = self._play_context.password
-
-        if self.provider.get('authorize') is None:
-            self.provider['authorize'] = False
-
-        return self.provider
 
     def _start_connection(self, play_context):
 
