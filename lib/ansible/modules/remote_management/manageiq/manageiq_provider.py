@@ -61,10 +61,7 @@ options:
     default: null
     description: Microsoft Azure subscription ID. defaults to None.
     version_added: "2.5"
-# There doesn't currently appear to be an entry point for azure_tenant_id and
-# tenant_id is already in use. Therefore we use uid_ems until this has been created.
-# See discussion in https://gitter.im/ManageIQ/manageiq/providers
-  uid_ems:
+  azure_tenant_id:
     required: false
     default: null
     description: Tenant ID. defaults to None.
@@ -421,7 +418,7 @@ EXAMPLES = '''
     type: 'Azure'
     provider_region: 'northeurope'
     subscription: 'e272bd74-f661-484f-b223-88dd128a4049'
-    uid_ems: 'e272bd74-f661-484f-b223-88dd128a4048'
+    azure_tenant_id: 'e272bd74-f661-484f-b223-88dd128a4048'
     state: 'present'
     provider:
       hostname: 'azure.example.com'
@@ -704,7 +701,7 @@ def main():
         host_default_vnc_port_start=dict(),
         host_default_vnc_port_end=dict(),
         subscription=dict(),
-        uid_ems=dict(),
+        azure_tenant_id=dict(),
         type=dict(choices=supported_providers().keys()),
     )
     # add the manageiq connection arguments to the arguments
@@ -729,7 +726,7 @@ def main():
     host_default_vnc_port_start = module.params['host_default_vnc_port_start']
     host_default_vnc_port_end = module.params['host_default_vnc_port_end']
     subscription = module.params['subscription']
-    uid_ems = module.params['uid_ems']
+    uid_ems = module.params['azure_tenant_id']
     state = module.params['state']
 
     manageiq = ManageIQ(module)

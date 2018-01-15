@@ -53,13 +53,18 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running'):
+    def get_config(self, source='running', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
             cmd = b'show running-config all'
         else:
             cmd = b'show startup-config'
+
+        flags = [] if flags is None else flags
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
         return self.send_command(cmd)
 
     @enable_mode
@@ -70,12 +75,15 @@ class Cliconf(CliconfBase):
                 command = cmd['command']
                 prompt = cmd['prompt']
                 answer = cmd['answer']
+                newline = cmd.get('newline', True)
             except:
                 command = cmd
                 prompt = None
                 answer = None
+                newline = True
 
-            self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer))
+            self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer),
+                              False, newline)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(to_bytes(command), prompt=to_bytes(prompt),
