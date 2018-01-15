@@ -67,6 +67,8 @@ NS_DICT = {
     'INTERFACE-PROPERTIES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-oper"},
     'IP-DOMAIN_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ip-domain-cfg"},
     'SYSLOG_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-syslog-cfg"},
+    'AAA_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-lib-cfg"},
+    'AAA_LOCALD_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-locald-cfg"},
 }
 
 iosxr_provider_spec = {
@@ -148,21 +150,21 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
         if ((opcode in ('delete', 'merge') and meta.get('operation', 'unknown') == 'edit') or
                 meta.get('operation', None) is None):
 
-            if meta.get('tag', False):
+            if meta.get('tag', False) is True:
                 if parent.tag == container_ele.tag:
-                    if meta.get('ns', None) is True:
+                    if meta.get('ns', False) is True:
                         child = etree.Element(candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                     else:
                         child = etree.Element(candidates[-1])
                     meta_subtree.append(child)
                     sub_root = child
                 else:
-                    if meta.get('ns', None) is True:
+                    if meta.get('ns', False) is True:
                         child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                     else:
                         child = etree.SubElement(parent, candidates[-1])
 
-                if meta.get('attrib', None) and opcode in ('delete', 'merge'):
+                if meta.get('attrib', None) is not None and opcode in ('delete', 'merge'):
                     child.set(BASE_1_0 + meta.get('attrib'), opcode)
 
                 continue
@@ -170,20 +172,20 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
             text = None
             param_key = key.split(":")
             if param_key[0] == 'a':
-                if param.get(param_key[1], None):
+                if param is not None and param.get(param_key[1], None) is not None:
                     text = param.get(param_key[1])
             elif param_key[0] == 'm':
-                if meta.get('value', None):
+                if meta.get('value', None) is not None:
                     text = meta.get('value')
 
             if text:
-                if meta.get('ns', None) is True:
+                if meta.get('ns', False) is True:
                     child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                 else:
                     child = etree.SubElement(parent, candidates[-1])
                 child.text = text
 
-                if meta.get('attrib', None) and opcode in ('delete', 'merge'):
+                if meta.get('attrib', None) is not None and opcode in ('delete', 'merge'):
                     child.set(BASE_1_0 + meta.get('attrib'), opcode)
 
     if len(meta_subtree) > 1:
