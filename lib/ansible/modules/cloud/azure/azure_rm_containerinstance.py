@@ -97,7 +97,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -260,7 +259,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
-        self.tags = None
         self.state = None
         self.ip_address = None
 
@@ -276,7 +274,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
 
         resource_group = None
@@ -382,7 +380,6 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                         ports=ports))
 
         parameters = ContainerGroup(location=self.location,
-                                    tags=self.tags,
                                     containers=containers,
                                     image_registry_credentials=registry_credentials,
                                     restart_policy=None,
