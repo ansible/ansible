@@ -19,3 +19,12 @@
       assert:
         that:
           - ansible_foobar_not_cached is undefined
+
+    - name: show fact_not_cached fact
+      debug:
+        var: fact_not_cached
+
+    - name: assert fact_not_cached is not cached
+      assert:
+        that:
+          - fact_not_cached is undefined
