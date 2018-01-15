@@ -60,7 +60,7 @@ class ActionModule(ActionBase):
             if play_context.network_os == 'junos':
                 play_context.connection = 'netconf'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 830)
-            elif self.provider['transport'] in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
+            elif self.provider.get('transport') in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
                 play_context.connection = play_context.connection
                 play_context.port = int(self.provider['port'] or self._play_context.port or 22)
             else:
@@ -78,9 +78,9 @@ class ActionModule(ActionBase):
                 play_context.become_method = 'enable'
 
             if self._play_context.connection == 'local':
-                if self.provider['transport'] == 'nxapi' and play_context.network_os == 'nxos':
+                if self.provider.get('transport') == 'nxapi' and play_context.network_os == 'nxos':
                     self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
-                elif self.provider['transport'] == 'eapi' and play_context.network_os == 'eos':
+                elif self.provider.get('transport') == 'eapi' and play_context.network_os == 'eos':
                     self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
                 else:
                     socket_path = self._start_connection(play_context)
