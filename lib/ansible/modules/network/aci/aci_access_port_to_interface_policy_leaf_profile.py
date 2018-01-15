@@ -17,8 +17,8 @@ module: aci_access_port_to_interface_policy_leaf_profile
 short_description: Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics (infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk)
 description:
 - Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk) at U(https://developer.cisco.com/media/mim-ref).
+- More information from the internal APIC class I(infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk) at
+  U(https://developer.cisco.com/media/mim-ref).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
