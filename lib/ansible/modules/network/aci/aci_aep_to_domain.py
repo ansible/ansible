@@ -48,7 +48,7 @@ options:
   vm_provider:
     description:
     - The VM platform for VMM Domains.
-    choices: [ microsoft, openstack, vmware ]
+    choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
@@ -60,7 +60,10 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 VM_PROVIDER_MAPPING = dict(
+    cloudfoundry='CloudFoundry',
+    kubernetes='Kubernetes',
     microsoft='Microsoft',
+    openshift='OpenShift',
     openstack='OpenStack',
     redhat='Redhat',
     vmware='VMware',

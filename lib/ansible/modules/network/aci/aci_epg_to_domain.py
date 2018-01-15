@@ -94,7 +94,7 @@ options:
   vm_provider:
     description:
     - The VM platform for VMM Domains.
-    choices: [ microsoft, openstack, vmware ]
+    choices: [ microsoft, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
@@ -108,6 +108,7 @@ from ansible.module_utils.basic import AnsibleModule
 VM_PROVIDER_MAPPING = dict(
     microsoft="uni/vmmp-Microsoft/dom-",
     openstack="uni/vmmp-OpenStack/dom-",
+    redhat="uni/vmmp-Redhat/dom-",
     vmware="uni/vmmp-VMware/dom-",
 )
 
