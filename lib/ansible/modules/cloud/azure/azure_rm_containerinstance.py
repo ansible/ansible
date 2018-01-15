@@ -324,12 +324,11 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.log("Need to Create / Update the container instance")
 
-            if self.check_mode:
-                return self.results
-
             if to_be_updated:
-                response = self.create_update_containerinstance()
                 self.results['changed'] = True
+                if self.check_mode:
+                    return self.results
+                response = self.create_update_containerinstance()
 
             self.results['id'] = response['id']
             self.results['provisioning_state'] = response['provisioning_state']
