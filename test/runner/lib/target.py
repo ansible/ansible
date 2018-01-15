@@ -291,14 +291,17 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
     :type extra_dirs: tuple[str] | None
     :rtype: collections.Iterable[TestTarget]
     """
+
+    # track the pwd for short circuiting some of internal links
+    startpath = os.path.realpath('.') + '/'
+
     # walk and follow symlinks to allow testing external directories
     for root, _, file_names in os.walk(path or '.', topdown=False, followlinks=True):
 
-        # This is a workaround to ignore symmlinks pointing back at the checkout
+        # This is a workaround to ignore symlinks pointing back at the checkout
         if os.path.islink(root):
-            startpath = os.path.realpath('.')
             real = os.path.realpath(root)
-            if real.startswith(startpath + '/'):
+            if real.startswith(startpath):
                 continue
 
         if root.endswith('/__pycache__'):
