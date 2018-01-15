@@ -1,4 +1,8 @@
 ---
+- debug: msg="START connection={{ ansible_connection }} nxos_user basic test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
 - name: Remove old entries of user
   nxos_user:
     aggregate:
@@ -51,3 +55,5 @@
     that:
       - 'result.changed == true'
       - '"no username" in result.commands[0]'
+
+- debug: msg="END connection={{ ansible_connection }} nxos_user basic test"

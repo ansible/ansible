@@ -1,4 +1,8 @@
 ---
+- debug: msg="START connection={{ ansible_connection }} nxos_logging basic test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
 - name: Set up console logging
   nxos_logging:
     dest: console
@@ -88,3 +92,5 @@
       - 'result.changed == true'
       - '"no logging logfile" in result.commands'
       - '"no logging level daemon" in result.commands'
+
+- debug: msg="END connection={{ ansible_connection }} nxos_logging basic test"
