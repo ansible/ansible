@@ -67,9 +67,6 @@
         ports:
           - 80
           - 81
-      - name: mycontainer2
-        image: httpd
-        memory: 1.5
     force_update: yes
   register: output
 
@@ -79,7 +76,7 @@
       - output.changed
       - output.provisioning_state == 'Creating'
 
-- name: Remove container instance instance
+- name: Remove container instance
   azure_rm_containerinstance:
     resource_group: "{{ resource_group }}"
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
@@ -95,7 +92,32 @@
         ports:
           - 80
           - 81
-      - name: mycontainer2
+    state: absent
+
+- name: Assert the container instance is deleted
+  assert:
+    that:
+      - output.changed
+
+- name: Remove container instance again
+  azure_rm_containerinstance:
+    resource_group: "{{ resource_group }}"
+    name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    os_type: linux
+    ip_address: public
+    location: eastus
+    ports:
+      - 80
+    containers:
+      - name: mycontainer1
         image: httpd
         memory: 1.5
+        ports:
+          - 80
+          - 81
     state: absent
+
+- name: Assert the changed is false
+  assert:
+    that:
+      - output.changed == False

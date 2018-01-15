@@ -57,7 +57,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     registry_login_server:
         description:
             - The container image registry login server.
@@ -92,7 +91,7 @@ options:
                     - List of ports exposed within the container group.
     force_update:
         description:
-            - Force update of existing container instance.
+            - Force update of existing container instance. Any update will result in deletion and recreation of existing containers.
         type: bool
         default: False
 
@@ -108,24 +107,19 @@ author:
 EXAMPLES = '''
   - name: Create sample container group
     azure_rm_containerinstance:
-    resource_group: testrg
-    name: mynewcontainergroup
-    os_type: linux
-    ip_address: public
-    ports:
-      - 80
-      - 81
-    containers:
-      - name: mycontainer1
-        image: httpd
-        memory: 1.5
-        ports:
-          - 80
-      - name: mycontainer2
-        image: httpd
-        memory: 1.5
-        ports:
-          - 81
+      resource_group: testrg
+      name: mynewcontainergroup
+      os_type: linux
+      ip_address: public
+      ports:
+        - 80
+        - 81
+      containers:
+        - name: mycontainer1
+          image: httpd
+          memory: 1.5
+          ports:
+            - 80
 '''
 RETURN = '''
 state:
@@ -235,7 +229,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             registry_password=dict(
                 type='str',
-                default=None
+                default=None,
+                no_log = True
             ),
             containers=dict(
                 type='list',
@@ -261,7 +256,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                        supports_check_mode=True,
-                                                       supports_tags=True)
+                                                       supports_tags=False,
+                                                       api_version='2017-10-preview')
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -297,7 +293,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             self.log("Container instance already exists")
 
             if self.state == 'absent':
-                self.delete_containerinstance()
+                if not self.check_mode:
+                    self.delete_containerinstance()
                 self.results['changed'] = True
                 self.log("Container instance deleted")
             elif self.state == 'present':
@@ -349,8 +346,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if self.ports:
                 ports = []
                 for port in self.ports:
-                    ports.append(Port(port, "TCP"))
-                ip_address = IpAddress(ports, self.ip_address)
+                    ports.append(Port(port=port, protocol="TCP"))
+                ip_address = IpAddress(ports=ports, ip=self.ip_address)
 
         containers = []
 
@@ -366,7 +363,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 for port in port_list:
                     ports.append(ContainerPort(port))
 
-            containers.append(Container(name, image, ResourceRequirements(ResourceRequests(memory, cpu)), None, ports))
+            containers.append(Container(name=name,
+                                        image=image,
+                                        resources=ResourceRequirements(ResourceRequests(memory_in_gb=memory, cpu=cpu)),
+                                        ports=ports))
 
         parameters = ContainerGroup(location=self.location,
                                     tags=self.tags,
