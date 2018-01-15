@@ -287,7 +287,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         try:
             resource_group = self.get_resource_group(self.resource_group)
         except CloudError:
-            self.fail('resource group {} not found'.format(self.resource_group))
+            self.fail('resource group {0} not found'.format(self.resource_group))
         if not self.location:
             self.location = resource_group.location
 

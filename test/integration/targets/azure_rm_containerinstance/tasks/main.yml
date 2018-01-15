@@ -93,6 +93,7 @@
           - 80
           - 81
     state: absent
+  register: output
 
 - name: Assert the container instance is deleted
   assert:
@@ -116,6 +117,7 @@
           - 80
           - 81
     state: absent
+  register: output
 
 - name: Assert the changed is false
   assert:
