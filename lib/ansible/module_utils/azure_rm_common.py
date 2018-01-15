@@ -86,11 +86,11 @@ HAS_MSRESTAZURE = True
 HAS_MSRESTAZURE_EXC = None
 
 try:
-    import importlib
+    from importlib import import_module
 except ImportError:
     # This passes the sanity import test, but does not provide a user friendly error message.
     # Doing so would require catching Exception for all imports of Azure dependencies in modules and module_utils.
-    importlib = None
+    import_module = None
 
 try:
     from packaging.version import Version
@@ -114,19 +114,6 @@ try:
     from msrestazure.tools import resource_id, is_valid_resource_id
     from msrestazure import azure_cloud
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
-    from azure.mgmt.network.version import VERSION as network_client_version
-    from azure.mgmt.storage.version import VERSION as storage_client_version
-    from azure.mgmt.compute.version import VERSION as compute_client_version
-    from azure.mgmt.resource.version import VERSION as resource_client_version
-    from azure.mgmt.dns.version import VERSION as dns_client_version
-    from azure.mgmt.web.version import VERSION as web_client_version
-    from azure.mgmt.network import NetworkManagementClient
-    from azure.mgmt.resource.resources import ResourceManagementClient
-    from azure.mgmt.storage import StorageManagementClient
-    from azure.mgmt.compute import ComputeManagementClient
-    from azure.mgmt.dns import DnsManagementClient
-    from azure.mgmt.web import WebSiteManagementClient
-    from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -158,41 +145,120 @@ def format_resource_id(val, subscription_id, namespace, types, resource_group):
                        type=types,
                        subscription=subscription_id) if not is_valid_resource_id(val) else val
 
+
 AZURE_PKG_VERSIONS = {
-    StorageManagementClient.__name__: {
-        'package_name': 'storage',
+    'storage': {
+        'pkg_name': 'storage',
+        'client_name': 'StorageManagementClient',
         'expected_version': '1.0.0',
-        'installed_version': storage_client_version
+        'api_version': '2017-10-01'
     },
-    ComputeManagementClient.__name__: {
-        'package_name': 'compute',
+    'compute': {
+        'pkg_name': 'compute',
+        'client_name': 'ComputeManagementClient',
         'expected_version': '1.0.0',
-        'installed_version': compute_client_version
+        'api_version': '2017-03-30'
     },
-    NetworkManagementClient.__name__: {
-        'package_name': 'network',
+    'network': {
+        'pkg_name': 'network',
+        'client_name': 'NetworkManagementClient',
         'expected_version': '1.0.0',
-        'installed_version': network_client_version
+        'api_version': '2017-06-01'
     },
-    ResourceManagementClient.__name__: {
-        'package_name': 'resource',
+    'resource': {
+        'pkg_name': 'resource',
+        'sub_pkg': 'resources',
+        'client_name': 'ResourceManagementClient',
         'expected_version': '1.1.0',
-        'installed_version': resource_client_version
+        'api_version': '2017-05-10'
     },
-    DnsManagementClient.__name__: {
-        'package_name': 'dns',
+    'dns': {
+        'pkg_name': 'dns',
+        'client_name': 'DnsManagementClient',
+        'expected_version': '1.0.1'
+    },
+    'web': {
+        'pkg_name': 'web',
+        'client_name': 'WebSiteManagementClient',
+        'expected_version': '0.32.0'
+    },
+    'containerservice': {
+        'pkg_name': 'containerservice',
+        'client_name': 'ContainerServiceClient',
+        'expected_version': '2.0.0'
+    },
+    'containerregistry': {
+        'pkg_name': 'containerregistry',
+        'client_name': 'ContainerRegistryManagementClient',
         'expected_version': '1.0.1',
-        'installed_version': dns_client_version
+        'api_version': '2017-10-01'
     },
-    WebSiteManagementClient.__name__: {
-        'package_name': 'web',
-        'expected_version': '0.32.0',
-        'installed_version': web_client_version
+    'sql': {
+        'pkg_name': 'sql',
+        'client_name': 'SqlManagementClient',
+        'expected_version': '0.7.1'
     },
+    'postgre_sql': {
+        'pkg_name': 'rdbms',
+        'sub_pkg': 'postgresql',
+        'client_name': 'PostgreSqlManagementClient',
+        'expected_version': '0.2.0'
+    }
 } if HAS_AZURE else {}
 
 
+def _get_full_pkg_path(resource_type):
+    pkg_name = AZURE_PKG_VERSIONS.get(resource_type).get('pkg_name')
+    sub_path = AZURE_PKG_VERSIONS.get(resource_type).get('sub_pkg')
+    pkg = '{0}.{1}'.format(pkg_name, sub_path) if sub_path else pkg_name
+    return 'azure.mgmt.{0}'.format(pkg)
+
+def _get_sdk_attr(path, attr):
+    sdk = import_module(path)
+    if attr:
+        for part in attr.split('.'):
+            sdk = getattr(sdk, part)
+    return sdk
+
+
+def _get_sdk_model_path(resource_type):
+    # azure.mgmt.<pkg_name>.<sub_path>.<api_version>.models
+    # azure.mgmt.<pkg_name>.<sub_path>.models
+    api_version = AZURE_PKG_VERSIONS.get(resource_type).get('api_version')
+    pkg_path = _get_full_pkg_path(resource_type)
+    if api_version:
+        api_version = api_version.replace('-', '_')
+        return '{0}.v{1}.models'.format(pkg_path, api_version)
+    return '{0}.models'.format(pkg_path)
+
+
+def load_sdk_model(resource_type, *attr_args):
+    sdk_path = _get_sdk_model_path(resource_type)
+    if not attr_args:
+        return import_module(sdk_path)
+    results = [_get_sdk_attr(sdk_path, attr_path) for attr_path in attr_args]
+    return results[0] if len(results) == 1 else results
+
+
 AZURE_MIN_RELEASE = '2.0.0'
+
+
+(
+    PublicIPAddress,
+    NetworkSecurityGroup,
+    SecurityRule,
+    NetworkInterface,
+    NetworkInterfaceIPConfiguration,
+    Subnet,
+    ) = load_sdk_model(
+    'network',
+    'PublicIPAddress',
+    'NetworkSecurityGroup',
+    'SecurityRule',
+    'NetworkInterface',
+    'NetworkInterfaceIPConfiguration',
+    'Subnet',
+    )
 
 
 class AzureRMModuleBase(object):
@@ -244,6 +310,9 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._containerregistry_mgmt_client = None
+        self._sql_client = None
+        self._postgre_sql_client = None
 
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
@@ -312,14 +381,13 @@ class AzureRMModuleBase(object):
 
     def check_client_version(self, client_type):
         # Ensure Azure modules are at least 2.0.0rc5.
-        package_version = AZURE_PKG_VERSIONS.get(client_type.__name__, None)
-        if package_version is not None:
-            client_name = package_version.get('package_name')
-            client_version = package_version.get('installed_version')
-            expected_version = package_version.get('expected_version')
-            if Version(client_version) < Version(expected_version):
+        expected_version = AZURE_PKG_VERSIONS.get(client_type).get('expected_version')
+        pkg_name = AZURE_PKG_VERSIONS.get(client_type).get('pkg_name')
+        if expected_version:
+            installed_version = _get_sdk_attr('azure.mgmt.{0}.version'.format(pkg_name), 'VERSION')
+            if Version(installed_version) < Version(expected_version):
                 self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
-                          "`pip install azure>={3} --upgrade`".format(client_name, client_version, expected_version,
+                          "`pip install azure>={3} --upgrade`".format(pkg_name, installed_version, expected_version,
                                                                       AZURE_MIN_RELEASE))
 
     def exec_module(self, **kwargs):
@@ -529,7 +597,7 @@ class AzureRMModuleBase(object):
         dependencies = dict()
         if enum_modules:
             for module_name in enum_modules:
-                mod = importlib.import_module(module_name)
+                mod = import_module(module_name)
                 for mod_class_name, mod_class_obj in inspect.getmembers(mod, predicate=inspect.isclass):
                     dependencies[mod_class_name] = mod_class_obj
             self.log("dependencies: ")
@@ -636,7 +704,7 @@ class AzureRMModuleBase(object):
             self.check_provisioning_state(pip)
             return pip
 
-        params = self.network_models.PublicIPAddress(
+        params = PublicIPAddress(
             location=location,
             public_ip_allocation_method=allocation_method,
         )
@@ -676,7 +744,7 @@ class AzureRMModuleBase(object):
             self.check_provisioning_state(group)
             return group
 
-        parameters = self.network_models.NetworkSecurityGroup()
+        parameters = NetworkSecurityGroup()
         parameters.location = location
 
         if not open_ports:
@@ -684,16 +752,16 @@ class AzureRMModuleBase(object):
             if os_type == 'Linux':
                 # add an inbound SSH rule
                 parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow SSH Access',
+                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow SSH Access',
                                                      source_port_range='*', destination_port_range='22', priority=100, name='SSH')
                 ]
                 parameters.location = location
             else:
                 # for windows add inbound RDP and WinRM rules
                 parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
+                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
                                                      source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
+                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
                                                      source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
                 ]
         else:
@@ -704,7 +772,7 @@ class AzureRMModuleBase(object):
                 priority += 1
                 rule_name = "Rule_{0}".format(priority)
                 parameters.security_rules.append(
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
+                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
                                                      destination_port_range=str(port), priority=priority, name=rule_name)
                 )
 
@@ -718,16 +786,20 @@ class AzureRMModuleBase(object):
 
         return self.get_poller_result(poller)
 
-    def get_mgmt_svc_client(self, client_type, base_url=None, api_version=None):
-        self.log('Getting management service client {0}'.format(client_type.__name__))
+    def get_mgmt_svc_client(self, client_type, base_url=None):
+        self.log('Getting management service client {0}'.format(client_type))
         self.check_client_version(client_type)
+        api_version = AZURE_PKG_VERSIONS.get(client_type).get('api_version')
+        client_name = AZURE_PKG_VERSIONS.get(client_type).get('client_name')        
+        pkg_path = _get_full_pkg_path(client_type)
+        client_model = _get_sdk_attr(pkg_path, client_name)
         if api_version:
-            client = client_type(self.azure_credentials,
+            client = client_model(self.azure_credentials,
                                  self.subscription_id,
                                  api_version=api_version,
                                  base_url=base_url)
         else:
-            client = client_type(self.azure_credentials,
+            client = client_model(self.azure_credentials,
                                  self.subscription_id,
                                  base_url=base_url)
 
@@ -744,65 +816,41 @@ class AzureRMModuleBase(object):
 
     @property
     def storage_client(self):
-        self.log('Getting storage client...')
+        self.log('Getting storage client')
         if not self._storage_client:
-            self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-10-01')
+            self._storage_client = self.get_mgmt_svc_client('storage',
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
         return self._storage_client
-
-    @property
-    def storage_models(self):
-        self.log('Getting storage models...')
-        return StorageManagementClient.models("2017-10-01")
 
     @property
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-06-01')
+            self._network_client = self.get_mgmt_svc_client('network',
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
         return self._network_client
-
-    @property
-    def network_models(self):
-        self.log("Getting network models...")
-        return NetworkManagementClient.models("2017-06-01")
 
     @property
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
-                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                             api_version='2017-05-10')
+            self._resource_client = self.get_mgmt_svc_client('resource',
+                                                             base_url=self._cloud_environment.endpoints.resource_manager)
         return self._resource_client
-
-    @property
-    def rm_models(self):
-        self.log("Getting resource manager models")
-        return ResourceManagementClient.models("2017-05-10")
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-03-30')
+            self._compute_client = self.get_mgmt_svc_client('compute',
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
         return self._compute_client
-
-    @property
-    def compute_models(self):
-        self.log("Getting compute models")
-        return ComputeManagementClient.models("2017-03-30")
 
     @property
     def dns_client(self):
         self.log('Getting dns client')
         if not self._dns_client:
-            self._dns_client = self.get_mgmt_svc_client(DnsManagementClient,
+            self._dns_client = self.get_mgmt_svc_client('dns',
                                                         base_url=self._cloud_environment.endpoints.resource_manager)
         return self._dns_client
 
@@ -810,7 +858,7 @@ class AzureRMModuleBase(object):
     def web_client(self):
         self.log('Getting web client')
         if not self._web_client:
-            self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
+            self._web_client = self.get_mgmt_svc_client('web',
                                                         base_url=self._cloud_environment.endpoints.resource_manager)
         return self._web_client
 
@@ -818,6 +866,30 @@ class AzureRMModuleBase(object):
     def containerservice_client(self):
         self.log('Getting container service client')
         if not self._containerservice_client:
-            self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
+            self._containerservice_client = self.get_mgmt_svc_client('containerservice',
                                                                      base_url=self._cloud_environment.endpoints.resource_manager)
         return self._containerservice_client
+
+    @property
+    def containerregistry_mgmt_client(self):
+        self.log('Getting container registry mgmt client')
+        if not self._containerregistry_mgmt_client:
+            self._containerregistry_mgmt_client = self.get_mgmt_svc_client('containerregistry',
+                                                                           base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._containerregistry_mgmt_client
+
+    @property
+    def sql_client(self):
+        self.log('Getting sql client')
+        if not self._sql_client:
+            self._sql_client = self.get_mgmt_svc_client('sql',
+                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._sql_client
+
+    @property
+    def postgre_sql_client(self):
+        self.log('Getting postgre sql client')
+        if not self._postgre_sql_client:
+            self._postgre_sql_client = self.get_mgmt_svc_client('postgre_sql',
+                                                                base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._postgre_sql_client

@@ -174,14 +174,42 @@ import sys
 
 from ansible.module_utils.basic import _load_params
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.dns.models import Zone, RecordSet, ARecord, AaaaRecord, MxRecord, NsRecord, PtrRecord, SrvRecord, TxtRecord, CnameRecord, SoaRecord
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+
+(
+    Zone,
+    RecordSet,
+    ARecord,
+    AaaaRecord,
+    MxRecord,
+    NsRecord,
+    PtrRecord,
+    SrvRecord,
+    TxtRecord,
+    CnameRecord,
+    SoaRecord
+    ) = load_sdk_model(
+    'dns',
+    'Zone',
+    'RecordSet',
+    'ARecord',
+    'AaaaRecord',
+    'MxRecord',
+    'NsRecord',
+    'PtrRecord',
+    'SrvRecord',
+    'TxtRecord',
+    'CnameRecord',
+    'SoaRecord'
+    )
+
 
 base_record = dict(
     entry=dict(type='str', required=True)
