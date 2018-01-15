@@ -293,6 +293,14 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
     """
     # walk and follow symlinks to allow testing external directories
     for root, _, file_names in os.walk(path or '.', topdown=False, followlinks=True):
+
+        # This is a workaround to ignore symmlinks pointing back at the checkout
+        if os.path.islink(root):
+            startpath = os.path.realpath('.')
+            real = os.path.realpath(root)
+            if real.startswith(startpath + '/'):
+                continue
+
         if root.endswith('/__pycache__'):
             continue
 
