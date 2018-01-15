@@ -342,20 +342,16 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_mod
 from ansible.module_utils.six import integer_types
 
 
-(
-    NetworkSecurityGroup,
-    SecurityRule,
-    SecurityRuleAccess,
-    SecurityRuleDirection,
-    SecurityRuleProtocol
-    ) = load_sdk_model(
-    'network',
-    'NetworkSecurityGroup',
-    'SecurityRule',
-    'SecurityRuleAccess',
-    'SecurityRuleDirection',
-    'SecurityRuleProtocol'    
-    )
+(NetworkSecurityGroup,
+ SecurityRule,
+ SecurityRuleAccess,
+ SecurityRuleDirection,
+ SecurityRuleProtocol) = load_sdk_model('network',
+                                        'NetworkSecurityGroup',
+                                        'SecurityRule',
+                                        'SecurityRuleAccess',
+                                        'SecurityRuleDirection',
+                                        'SecurityRuleProtocol')
 
 
 def validate_rule(self, rule, rule_type=None):

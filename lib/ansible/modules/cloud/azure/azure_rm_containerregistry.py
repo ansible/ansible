@@ -158,34 +158,30 @@ except ImportError as exc:
     pass
 
 
-(
-    Registry,
-    RegistryUpdateParameters,
-    StorageAccountProperties,
-    Sku,
-    SkuName,
-    SkuTier,
-    ProvisioningState,
-    PasswordName,
-    WebhookCreateParameters,
-    WebhookUpdateParameters,
-    WebhookAction,
-    WebhookStatus
-    ) = load_sdk_model(
-    'containerregistry',
-    'Registry',
-    'RegistryUpdateParameters',
-    'StorageAccountProperties',
-    'Sku',
-    'SkuName',
-    'SkuTier',
-    'ProvisioningState',
-    'PasswordName',
-    'WebhookCreateParameters',
-    'WebhookUpdateParameters',
-    'WebhookAction',
-    'WebhookStatus'
-    )
+(Registry,
+ RegistryUpdateParameters,
+ StorageAccountProperties,
+ Sku,
+ SkuName,
+ SkuTier,
+ ProvisioningState,
+ PasswordName,
+ WebhookCreateParameters,
+ WebhookUpdateParameters,
+ WebhookAction,
+ WebhookStatus) = load_sdk_model('containerregistry',
+                                 'Registry',
+                                 'RegistryUpdateParameters',
+                                 'StorageAccountProperties',
+                                 'Sku',
+                                 'SkuName',
+                                 'SkuTier',
+                                 'ProvisioningState',
+                                 'PasswordName',
+                                 'WebhookCreateParameters',
+                                 'WebhookUpdateParameters',
+                                 'WebhookAction',
+                                 'WebhookStatus')
 
 
 def create_containerregistry_dict(registry, credentials):

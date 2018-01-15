@@ -225,20 +225,16 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, load_sdk_model
 
 
-(
-    NetworkInterface,
-    NetworkInterfaceIPConfiguration,
-    Subnet,
-    PublicIPAddress,
-    NetworkSecurityGroup
-    ) = load_sdk_model(
-    'network',
-    'NetworkInterface',
-    'NetworkInterfaceIPConfiguration',
-    'Subnet',
-    'PublicIPAddress',
-    'NetworkSecurityGroup'
-    )
+(NetworkInterface,
+ NetworkInterfaceIPConfiguration,
+ Subnet,
+ PublicIPAddress,
+ NetworkSecurityGroup) = load_sdk_model('network',
+                                        'NetworkInterface',
+                                        'NetworkInterfaceIPConfiguration',
+                                        'Subnet',
+                                        'PublicIPAddress',
+                                        'NetworkSecurityGroup')
 
 
 def nic_to_dict(nic):

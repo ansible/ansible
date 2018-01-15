@@ -137,6 +137,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
 
 (VirtualNetwork, AddressSpace, DhcpOptions) = load_sdk_model('network', 'VirtualNetwork', 'AddressSpace', 'DhcpOptions')
 
+
 def virtual_network_to_dict(vnet):
     '''
     Convert a virtual network object to a dict.

@@ -604,78 +604,66 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, load_sdk_model
 
 
-(
-    NetworkInterfaceReference,
-    VirtualMachine,
-    HardwareProfile,
-    StorageProfile,
-    OSProfile,
-    OSDisk,
-    DataDisk,
-    VirtualHardDisk,
-    ManagedDiskParameters,
-    ImageReference,
-    NetworkProfile,
-    LinuxConfiguration,
-    SshConfiguration,
-    SshPublicKey,
-    VirtualMachineSizeTypes,
-    DiskCreateOptionTypes,
-    Plan,
-    SubResource
-    ) = load_sdk_model(
-    'compute',
-    'NetworkInterfaceReference',
-    'VirtualMachine',
-    'HardwareProfile',
-    'StorageProfile',
-    'OSProfile',
-    'OSDisk',
-    'DataDisk',
-    'VirtualHardDisk',
-    'ManagedDiskParameters',
-    'ImageReference',
-    'NetworkProfile',
-    'LinuxConfiguration',
-    'SshConfiguration',
-    'SshPublicKey',
-    'VirtualMachineSizeTypes',
-    'DiskCreateOptionTypes',
-    'Plan',
-    'SubResource'
-    )
+(NetworkInterfaceReference,
+ VirtualMachine,
+ HardwareProfile,
+ StorageProfile,
+ OSProfile,
+ OSDisk,
+ DataDisk,
+ VirtualHardDisk,
+ ManagedDiskParameters,
+ ImageReference,
+ NetworkProfile,
+ LinuxConfiguration,
+ SshConfiguration,
+ SshPublicKey,
+ VirtualMachineSizeTypes,
+ DiskCreateOptionTypes,
+ Plan,
+ SubResource) = load_sdk_model('compute',
+                               'NetworkInterfaceReference',
+                               'VirtualMachine',
+                               'HardwareProfile',
+                               'StorageProfile',
+                               'OSProfile',
+                               'OSDisk',
+                               'DataDisk',
+                               'VirtualHardDisk',
+                               'ManagedDiskParameters',
+                               'ImageReference',
+                               'NetworkProfile',
+                               'LinuxConfiguration',
+                               'SshConfiguration',
+                               'SshPublicKey',
+                               'VirtualMachineSizeTypes',
+                               'DiskCreateOptionTypes',
+                               'Plan',
+                               'SubResource')
 
 
-(
-    PublicIPAddress,
-    NetworkSecurityGroup,
-    NetworkInterface,
-    NetworkInterfaceIPConfiguration,
-    Subnet
-    ) = load_sdk_model(
-    'network',
-    'PublicIPAddress',
-    'NetworkSecurityGroup',
-    'NetworkInterface',
-    'NetworkInterfaceIPConfiguration',
-    'Subnet'
-    )
+(PublicIPAddress,
+ NetworkSecurityGroup,
+ NetworkInterface,
+ NetworkInterfaceIPConfiguration,
+ Subnet) = load_sdk_model('network',
+                          'PublicIPAddress',
+                          'NetworkSecurityGroup',
+                          'NetworkInterface',
+                          'NetworkInterfaceIPConfiguration',
+                          'Subnet')
 
 
-(
-    StorageAccountCreateParameters,
-    Sku,
-    Kind,
-    SkuTier,
-    SkuName
-    ) = load_sdk_model(
-    'storage',
-    'StorageAccountCreateParameters',
-    'Sku',
-    'Kind',
-    'SkuTier',
-    'SkuName'
-    )
+(StorageAccountCreateParameters,
+ Sku,
+ Kind,
+ SkuTier,
+ SkuName) = load_sdk_model('storage',
+                           'StorageAccountCreateParameters',
+                           'Sku',
+                           'Kind',
+                           'SkuTier',
+                           'SkuName')
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'

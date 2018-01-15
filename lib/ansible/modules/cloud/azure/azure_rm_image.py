@@ -105,22 +105,18 @@ except ImportError:
     pass
 
 
-(
-    SubResource,
-    OperatingSystemStateTypes,
-    ImageStorageProfile,
-    Image,
-    ImageOSDisk,
-    ImageDataDisk
-    ) = load_sdk_model(
-    'compute',
-    'SubResource',
-    'OperatingSystemStateTypes',
-    'ImageStorageProfile',
-    'Image',
-    'ImageOSDisk',
-    'ImageDataDisk'
-    )
+(SubResource,
+ OperatingSystemStateTypes,
+ ImageStorageProfile,
+ Image,
+ ImageOSDisk,
+ ImageDataDisk) = load_sdk_model('compute',
+                                 'SubResource',
+                                 'OperatingSystemStateTypes',
+                                 'ImageStorageProfile',
+                                 'Image',
+                                 'ImageOSDisk',
+                                 'ImageDataDisk')
 
 
 class AzureRMImage(AzureRMModuleBase):
@@ -254,10 +250,10 @@ class AzureRMImage(AzureRMModuleBase):
         snapshot_resource = SubResource(snapshot) if snapshot else None
         managed_disk = SubResource(disk) if disk else None
         return ImageOSDisk(os_type=self.os_type,
-                                               os_state=OperatingSystemStateTypes.generalized,
-                                               snapshot=snapshot_resource,
-                                               managed_disk=managed_disk,
-                                               blob_uri=blob_uri)
+                           os_state=OperatingSystemStateTypes.generalized,
+                           snapshot=snapshot_resource,
+                           managed_disk=managed_disk,
+                           blob_uri=blob_uri)
 
     def create_data_disk(self, lun, source):
         blob_uri, disk, snapshot = self.resolve_storage_source(source)
@@ -265,9 +261,9 @@ class AzureRMImage(AzureRMModuleBase):
             snapshot_resource = SubResource(snapshot) if snapshot else None
             managed_disk = SubResource(disk) if disk else None
             return ImageDataDisk(lun,
-                                                     blob_uri=blob_uri,
-                                                     snapshot=snapshot_resource,
-                                                     managed_disk=managed_disk)
+                                 blob_uri=blob_uri,
+                                 snapshot=snapshot_resource,
+                                 managed_disk=managed_disk)
 
     def create_data_disks(self):
         return list(filter(None, [self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources)]))

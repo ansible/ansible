@@ -160,26 +160,22 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, load_sdk_model
 
 
-(
-    ProvisioningState,
-    SkuName,
-    SkuTier,
-    Kind,
-    StorageAccountUpdateParameters,
-    CustomDomain,
-    StorageAccountCreateParameters,
-    Sku
-    ) = load_sdk_model(
-    'storage',
-    'ProvisioningState',
-    'SkuName',
-    'SkuTier',
-    'Kind',
-    'StorageAccountUpdateParameters',
-    'CustomDomain',
-    'StorageAccountCreateParameters',
-    'Sku'    
-    )
+(ProvisioningState,
+ SkuName,
+ SkuTier,
+ Kind,
+ StorageAccountUpdateParameters,
+ CustomDomain,
+ StorageAccountCreateParameters,
+ Sku) = load_sdk_model('storage',
+                       'ProvisioningState',
+                       'SkuName',
+                       'SkuTier',
+                       'Kind',
+                       'StorageAccountUpdateParameters',
+                       'CustomDomain',
+                       'StorageAccountCreateParameters',
+                       'Sku')
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):

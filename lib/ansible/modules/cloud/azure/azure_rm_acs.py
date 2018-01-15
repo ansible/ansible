@@ -242,34 +242,30 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-(
-    ContainerService,
-    ContainerServiceOrchestratorProfile,
-    ContainerServiceCustomProfile,
-    ContainerServiceServicePrincipalProfile,
-    ContainerServiceMasterProfile,
-    ContainerServiceAgentPoolProfile,
-    ContainerServiceWindowsProfile,
-    ContainerServiceLinuxProfile,
-    ContainerServiceSshConfiguration,
-    ContainerServiceDiagnosticsProfile,
-    ContainerServiceSshPublicKey,
-    ContainerServiceVMDiagnostics
-    ) = load_sdk_model(
-    'containerservice',
-    'ContainerService',
-    'ContainerServiceOrchestratorProfile',
-    'ContainerServiceCustomProfile',
-    'ContainerServiceServicePrincipalProfile',
-    'ContainerServiceMasterProfile',
-    'ContainerServiceAgentPoolProfile',
-    'ContainerServiceWindowsProfile',
-    'ContainerServiceLinuxProfile',
-    'ContainerServiceSshConfiguration',
-    'ContainerServiceDiagnosticsProfile',
-    'ContainerServiceSshPublicKey',
-    'ContainerServiceVMDiagnostics'
-    )
+(ContainerService,
+ ContainerServiceOrchestratorProfile,
+ ContainerServiceCustomProfile,
+ ContainerServiceServicePrincipalProfile,
+ ContainerServiceMasterProfile,
+ ContainerServiceAgentPoolProfile,
+ ContainerServiceWindowsProfile,
+ ContainerServiceLinuxProfile,
+ ContainerServiceSshConfiguration,
+ ContainerServiceDiagnosticsProfile,
+ ContainerServiceSshPublicKey,
+ ContainerServiceVMDiagnostics) = load_sdk_model('containerservice',
+                                                 'ContainerService',
+                                                 'ContainerServiceOrchestratorProfile',
+                                                 'ContainerServiceCustomProfile',
+                                                 'ContainerServiceServicePrincipalProfile',
+                                                 'ContainerServiceMasterProfile',
+                                                 'ContainerServiceAgentPoolProfile',
+                                                 'ContainerServiceWindowsProfile',
+                                                 'ContainerServiceLinuxProfile',
+                                                 'ContainerServiceSshConfiguration',
+                                                 'ContainerServiceDiagnosticsProfile',
+                                                 'ContainerServiceSshPublicKey',
+                                                 'ContainerServiceVMDiagnostics')
 
 
 def create_agent_pool_profile_instance(agentpoolprofile):

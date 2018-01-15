@@ -300,12 +300,12 @@ class AzureRMServers(AzureRMModuleBase):
         try:
             if self.to_do == Actions.Create:
                 response = self.postgre_sql_client.servers.create(resource_group_name=self.resource_group,
-                                                           server_name=self.name,
-                                                           parameters=self.parameters)
+                                                                  server_name=self.name,
+                                                                  parameters=self.parameters)
             else:
                 response = self.postgre_sql_client.servers.update(resource_group_name=self.resource_group,
-                                                           server_name=self.name,
-                                                           parameters=self.parameters)
+                                                                  server_name=self.name,
+                                                                  parameters=self.parameters)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -323,7 +323,7 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Deleting the PostgreSQL Server instance {0}".format(self.name))
         try:
             response = self.postgre_sql_client.servers.delete(resource_group_name=self.resource_group,
-                                                       server_name=self.name)
+                                                              server_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the PostgreSQL Server instance.')
             self.fail("Error deleting the PostgreSQL Server instance: {0}".format(str(e)))
@@ -340,7 +340,7 @@ class AzureRMServers(AzureRMModuleBase):
         found = False
         try:
             response = self.postgre_sql_client.servers.get(resource_group_name=self.resource_group,
-                                                    server_name=self.name)
+                                                           server_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("PostgreSQL Server instance : {0} found".format(response.name))

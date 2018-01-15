@@ -387,22 +387,18 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 
 
-(
-    DeploymentProperties,
-    ParametersLink,
-    TemplateLink,
-    Deployment,
-    ResourceGroup,
-    Dependency
-    ) = load_sdk_model(
-    'resource',
-    'DeploymentProperties',
-    'ParametersLink',
-    'TemplateLink',
-    'Deployment',
-    'ResourceGroup',
-    'Dependency'
-    )
+(DeploymentProperties,
+ ParametersLink,
+ TemplateLink,
+ Deployment,
+ ResourceGroup,
+ Dependency) = load_sdk_model('resource',
+                              'DeploymentProperties',
+                              'ParametersLink',
+                              'TemplateLink',
+                              'Deployment',
+                              'ResourceGroup',
+                              'Dependency')
 
 
 class AzureRMDeploymentManager(AzureRMModuleBase):
