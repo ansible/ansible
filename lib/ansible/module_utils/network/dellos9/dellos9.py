@@ -2,7 +2,7 @@
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 # (c) 2017 Red Hat, Inc
 #
-# Copyright (c) 2016 Dell Inc.
+# Copyright (c) 2017 Dell Inc.
 #
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
@@ -123,8 +123,7 @@ def load_config(module, commands):
     for command in to_list(commands):
         if command == 'end':
             continue
-        cmd = {'command': command, 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
-        rc, out, err = exec_command(module, module.jsonify(cmd))
+        rc, out, err = exec_command(module, command)
         if rc != 0:
             module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), command=command, rc=rc)
 
