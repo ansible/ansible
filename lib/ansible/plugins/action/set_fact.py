@@ -36,7 +36,7 @@ class ActionModule(ActionBase):
 
         facts = dict()
 
-        cacheable = bool(self._task.args.pop('cacheable', False))
+        cacheable = boolean(self._task.args.pop('cacheable', False))
 
         if self._task.args:
             for (k, v) in iteritems(self._task.args):
