@@ -688,10 +688,8 @@ class Ec2Inventory(object):
                         for tag in tags:
                             instance.tags[tag['Key']] = tag['Value']
                             
-                        # collect the VPC ID from the DB subnet group
+                        # collect the VPC ID from the DB subnet group and add it to the instance data
                         instance.vpc_id = db_instances['DBInstances'][index]['DBSubnetGroup']['VpcId']
-
-                        self.add_rds_instance(instance, region)
 
                         if self.tags_match_filters(instance.tags):
                             self.add_rds_instance(instance, region)
