@@ -29,7 +29,7 @@ options:
     description:
     - Determines if the Bridge Domain should flood ARP traffic.
     - The APIC defaults new Bridge Domains to C(no).
-    choices: [ no, yes ]
+    type: bool
     default: no
   bd:
     description:
@@ -48,20 +48,20 @@ options:
     description:
     - Determines if PIM is enabled
     - The APIC defaults new Bridge Domains to C(no).
-    choices: [ no, yes ]
+    type: bool
     default: no
   enable_routing:
     description:
     - Determines if IP forwarding should be allowed.
     - The APIC defaults new Bridge Domains to C(yes).
-    choices: [ no, yes ]
+    type: bool
     default: yes
   endpoint_clear:
     description:
     - Clears all End Points in all Leaves when C(yes).
     - The APIC defaults new Bridge Domains to C(no).
     - The value is not reset to disabled once End Points have been cleared; that requires a second task.
-    choices: [ no, yes ]
+    type: bool
     default: no
   endpoint_move_detect:
     description:
@@ -87,7 +87,7 @@ options:
     description:
     - Determines if the Bridge Domain should learn End Point IPs.
     - The APIC defaults new Bridge Domains to C(yes).
-    choices: [ no, yes ]
+    type: bool
   ipv6_nd_policy:
     description:
     - The name of the IPv6 Neighbor Discovery Policy the Bridge Domain should use when
@@ -108,7 +108,7 @@ options:
     description:
     - Determines if the BD should limit IP learning to only subnets owned by the Bridge Domain.
     - The APIC defaults new Bridge Domains to C(yes).
-    choices: [ no, yes ]
+    type: bool
     default: yes
   mac_address:
     description:
