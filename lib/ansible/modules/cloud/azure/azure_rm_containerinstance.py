@@ -122,10 +122,25 @@ EXAMPLES = '''
             - 80
 '''
 RETURN = '''
-state:
-    description: Current state of the azure instance
+id:
+    description:
+        - Resource ID
     returned: always
-    type: dict
+    type: str
+    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.ContainerInstance/containerGroups/aci1b6dd89
+provisioning_state:
+    description:
+        - Provisioning state of the container.
+    returned: always
+    type: str
+    sample: Creating
+ip_address:
+    description:
+        - Public IP Address of created container group.
+    returned: always
+    type: str
+    sample: 175.12.233.11
+    
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -317,8 +332,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.results['changed'] = True
 
             self.results['id'] = response['id']
-            self.results['provisioning_state'] = response['provisioning_state'] 
-            self.results['ip_address'] = response.get('ip_address', None) 
+            self.results['provisioning_state'] = response['provisioning_state']
+            self.results['ip_address'] = response['ip_address']['ip'] 
 
             self.log("Creation / Update done")
 
