@@ -252,13 +252,11 @@ def main():
             location=dict(type='str', choices=LOCATIONS, default='us/las'),
             api_url=dict(type='str', default=API_HOST),
             username=dict(
-                type='str',
                 required=True,
                 aliases=['subscription_user'],
                 fallback=(env_fallback, ['PROFITBRICKS_USERNAME'])
             ),
             password=dict(
-                type='str',
                 required=True,
                 aliases=['subscription_password'],
                 fallback=(env_fallback, ['PROFITBRICKS_PASSWORD']),

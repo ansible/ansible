@@ -490,13 +490,11 @@ def main():
             instance_ids=dict(type='list', default=[]),
             api_url=dict(type='str', default=API_HOST),
             username=dict(
-                type='str',
                 required=True,
                 aliases=['subscription_user'],
                 fallback=(env_fallback, ['PROFITBRICKS_USERNAME'])
             ),
             password=dict(
-                type='str',
                 required=True,
                 aliases=['subscription_password'],
                 fallback=(env_fallback, ['PROFITBRICKS_PASSWORD']),
