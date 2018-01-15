@@ -202,7 +202,7 @@ AZURE_PKG_VERSIONS = {
         'pkg_name': 'rdbms',
         'sub_pkg': 'postgresql',
         'client_name': 'PostgreSqlManagementClient',
-        'expected_version': '0.2.0'
+        'expected_version': '0.2.0rc1'
     }
 } if HAS_AZURE else {}
 
