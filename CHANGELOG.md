@@ -59,6 +59,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/34501)
 * Fixed the removal date for ios_config save and force parameters
   (https://github.com/ansible/ansible/pull/33885)
+* cloudstack: fix timeout from ini config file being ignored
+  https://github.com/ansible/ansible/pull/34854
 
 
 <a id="2.4.2"></a>
