@@ -75,11 +75,7 @@ class ActionModule(_ActionModule):
                 task_vars['ansible_socket'] = socket_path
 
             else:
-                obj = {}
-                obj['remote_addr'] = self._play_context.remote_addr
-                obj['connection_user'] = self._play_context.connection_user
-                obj['password'] = self._play_context.password
-                self._task.args['provider'] = ActionModule.nxapi_implementation(provider, obj)
+                self._task.args['provider'] = ActionModule.nxapi_implementation(provider, self._play_context)
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
@@ -100,10 +96,10 @@ class ActionModule(_ActionModule):
         return result
 
     @staticmethod
-    def nxapi_implementation(provider, obj):
+    def nxapi_implementation(provider, play_context):
         provider['transport'] = 'nxapi'
         if provider.get('host') is None:
-            provider['host'] = obj['remote_addr']
+            provider['host'] = play_context.remote_addr
 
         if provider.get('port') is None:
             if provider.get('use_ssl'):
@@ -115,10 +111,10 @@ class ActionModule(_ActionModule):
             provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
 
         if provider.get('username') is None:
-            provider['username'] = obj['connection_user']
+            provider['username'] = play_context.connection_user
 
         if provider.get('password') is None:
-            provider['password'] = obj['password']
+            provider['password'] = play_context.password
 
         if provider.get('use_ssl') is None:
             provider['use_ssl'] = False

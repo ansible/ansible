@@ -79,18 +79,9 @@ class ActionModule(ActionBase):
 
             if self._play_context.connection == 'local':
                 if self.provider['transport'] == 'nxapi' and play_context.network_os == 'nxos':
-                    obj = {}
-                    obj['remote_addr'] = self._play_context.remote_addr
-                    obj['connection_user'] = self._play_context.connection_user
-                    obj['password'] = self._play_context.password
-                    self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, obj)
+                    self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
                 elif self.provider['transport'] == 'eapi' and play_context.network_os == 'eos':
-                    obj = {}
-                    obj['remote_addr'] = self._play_context.remote_addr
-                    obj['port'] = self._play_context.port
-                    obj['connection_user'] = self._play_context.connection_user
-                    obj['password'] = self._play_context.password
-                    self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, obj)
+                    self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
                 else:
                     socket_path = self._start_connection(play_context)
                     task_vars['ansible_socket'] = socket_path
