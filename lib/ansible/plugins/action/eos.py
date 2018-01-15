@@ -79,28 +79,7 @@ class ActionModule(_ActionModule):
                 task_vars['ansible_socket'] = socket_path
 
             else:
-                provider['transport'] = 'eapi'
-
-                if provider.get('host') is None:
-                    provider['host'] = self._play_context.remote_addr
-
-                if provider.get('port') is None:
-                    default_port = 443 if provider['use_ssl'] else 80
-                    provider['port'] = int(self._play_context.port or default_port)
-
-                if provider.get('timeout') is None:
-                    provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
-
-                if provider.get('username') is None:
-                    provider['username'] = self._play_context.connection_user
-
-                if provider.get('password') is None:
-                    provider['password'] = self._play_context.password
-
-                if provider.get('authorize') is None:
-                    provider['authorize'] = False
-
-                self._task.args['provider'] = provider
+                self._task.args['provider'] = ActionModule.eapi_implementation(provider, self._play_context)
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
@@ -119,3 +98,28 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
+
+    @staticmethod
+    def eapi_implementation(provider, play_context):
+        provider['transport'] = 'eapi'
+
+        if provider.get('host') is None:
+            provider['host'] = play_context.remote_addr
+
+        if provider.get('port') is None:
+            default_port = 443 if provider['use_ssl'] else 80
+            provider['port'] = int(play_context.port or default_port)
+
+        if provider.get('timeout') is None:
+            provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
+
+        if provider.get('username') is None:
+            provider['username'] = play_context.connection_user
+
+        if provider.get('password') is None:
+            provider['password'] = play_context.password
+
+        if provider.get('authorize') is None:
+            provider['authorize'] = False
+
+        return provider

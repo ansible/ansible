@@ -1,12 +1,14 @@
 ---
-- debug: msg="START nxos common/net_user.yaml on connection={{ ansible_connection }}"
+- debug: msg="START connection={{ ansible_connection }} nxos common/net_user.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
 
-- name: Remove old entries of user - setup
+- name: "Remove old entries of user - setup"
   net_user:
-  - name: ansibletest1
+    name: ansibletest1
     state: absent
     provider: "{{ connection }}"
 
@@ -27,8 +29,8 @@
 
 - name: teardown
   net_user:
-  - name: ansibletest1
+    name: ansibletest1
     state: absent
     provider: "{{ connection }}"
 
-- debug: msg="END nxos common/net_user.yaml on connection={{ ansible_connection }}"
+- debug: msg="END connection={{ ansible_connection }} nxos common/net_user.yaml"
