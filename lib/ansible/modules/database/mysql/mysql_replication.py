@@ -359,7 +359,8 @@ def main():
         else:
             module.exit_json(msg="Slave already reset", changed=False)
 
+    warnings.simplefilter("ignore")
+
 
 if __name__ == '__main__':
     main()
-    warnings.simplefilter("ignore")
