@@ -130,12 +130,14 @@ options:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
     required: false
-    aliases: subscription_user
+    aliases:
+      - subscription_user
   password:
     description:
       - The ProfitBricks password. Overrides the PROFITBRICKS_PASSWORD environment variable.
     required: false
-    aliases: subscription_password
+    aliases:
+      - subscription_password
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
