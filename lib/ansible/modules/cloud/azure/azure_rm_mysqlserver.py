@@ -126,7 +126,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
-    from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -190,7 +189,6 @@ class AzureRMServers(AzureRMModuleBase):
         self.parameters = dict()
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
@@ -230,9 +228,6 @@ class AzureRMServers(AzureRMModuleBase):
 
         old_response = None
         response = None
-
-        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -303,9 +298,9 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Creating / Updating the MySQL Server instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.servers.create_or_update(resource_group_name=self.resource_group,
-                                                                 server_name=self.name,
-                                                                 parameters=self.parameters)
+            response = self.mysql_client.servers.create_or_update(resource_group_name=self.resource_group,
+                                                                  server_name=self.name,
+                                                                  parameters=self.parameters)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -322,8 +317,8 @@ class AzureRMServers(AzureRMModuleBase):
         '''
         self.log("Deleting the MySQL Server instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.servers.delete(resource_group_name=self.resource_group,
-                                                       server_name=self.name)
+            response = self.mysql_client.servers.delete(resource_group_name=self.resource_group,
+                                                        server_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the MySQL Server instance.')
             self.fail("Error deleting the MySQL Server instance: {0}".format(str(e)))
@@ -339,8 +334,8 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Checking if the MySQL Server instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.servers.get(resource_group_name=self.resource_group,
-                                                    server_name=self.name)
+            response = self.mysql_client.servers.get(resource_group_name=self.resource_group,
+                                                     server_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("MySQL Server instance : {0} found".format(response.name))
