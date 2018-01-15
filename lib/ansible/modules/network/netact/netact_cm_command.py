@@ -30,11 +30,11 @@ version_added: "2.5"
 
 description:
     netact_cm_command can be used to run various configuration management operations.
-    This ansible module requires that target host have Nokia NetAct Configurator.
+    This ansible module requires that target host have Nokia NetAct Configuration Management.
     This module requires that the target hosts have Nokia NetAct network management system installed.
-    Module will access the Configurator command line interface in NetAct to run plan upload and provision operations 
-    in the network.
-    To set the scope of the operation, define Distinguished Name (DN) or Working Set (WS) or 
+    Module will access the Configurator command line interface in NetAct to upload network configuration to NetAct,
+    run configuration export, plan import and configuration provision operations
+    To set the scope of the operation, define Distinguished Name (DN) or Working Set (WS) or
     Maintenance Region (MR) as input.
 options:
     operation:
@@ -46,13 +46,14 @@ options:
             - upload
             - provision
             - import
-            - export and Provision_Mass_Modification
-        aliases: 
+            - export
+            - Provision_Mass_Modification
+        aliases:
             - op
     opsName:
         description:
             - user specified operation name
-        required: false                
+        required: false
     DN:
         description:
             Sets the exact scope of the operation in form of a list of managed object Distinguished Names (DN)
@@ -63,21 +64,21 @@ options:
         required: false    <welcome-file-list>
 
     WS:
-        description:            
-            Sets the scope of the operation to use one or more pre-defined working sets (WS) in NetAct. 
+        description:
+            Sets the scope of the operation to use one or more pre-defined working sets (WS) in NetAct.
             A working set contains network elements selected by user according to defined criteria.
             A single WS name, or multiple WSs can be provided (comma-separated list without spaces).
-            Alternatively, if a WS name or a list of WSs is not given, Distinguished Name (DN) or 
+            Alternatively, if a WS name or a list of WSs is not given, Distinguished Name (DN) or
             Maintenance Region(MR) must be provided as parameter to set the scope of operation.
         required: false
     MR:
         description:
-            Sets the scope of the operation to network elements assigned to a Maintenance Region (MR)  
-            Value can be set as MR IDs including the Maintenance Region Collection (MRC) 
+            Sets the scope of the operation to network elements assigned to a Maintenance Region (MR)
+            Value can be set as MR IDs including the Maintenance Region Collection (MRC)
             information (for example MRC-FIN1/MR-Hel).
-            Multiple MRs can be given (comma-separated list without spaces) 
-            The value of this parameter is searched through MR IDs under given MRC. If there is no match, 
-            then it is searched from all MR names. 
+            Multiple MRs can be given (comma-separated list without spaces)
+            The value of this parameter is searched through MR IDs under given MRC. If there is no match,
+            then it is searched from all MR names.
             Alternatively, if MR ID or a list or MR IDs is not given, Distinguished Name (DN) or Working Set (WS)
             must be provided as parameter to set the scope of operation.
         required: false
@@ -87,7 +88,7 @@ options:
         required: false
     type:
         description:
-             Specifies the type of the export operation.             
+             Specifies the type of the export operation.
         required: true
         choices:
           - plan
@@ -102,14 +103,15 @@ options:
         choices:
             - RAML2
             - CSV
+            - XLSX
     fileName:
         description:
             - Specifies a file name.
         required: false
     inputFile:
         description:
-            Specifies full path to plan file location for the import operation. 
-            This parameter (inputFile) or the fileName parameter must be filled. If both are present then 
+            Specifies full path to plan file location for the import operation.
+            This parameter (inputFile) or the fileName parameter must be filled. If both are present then
             the inputFile is used.
         required: false
     createBackupPlan:
@@ -122,9 +124,10 @@ options:
         required: false
     extra_opts:
         description:
-            Extra options to be set for operations. Check Configuration Management Operating Procedures > 
-            Command Line Operations in Nokia NetAct user documentation for further information for extra options. 
-        required: true
+            Extra options to be set for operations. Check Configuration Management > Configuration Management
+            Operating Procedures > Command Line Operations in Nokia NetAct user documentation for further
+            information for extra options.
+        required: false
 
 author:
     - Harri Tuominen (@hatuomin)
@@ -137,13 +140,17 @@ EXAMPLES = '''
     operation: "Upload"
     opsname: 'Uploading_test'
     dn: "PLMN-PLMN/MRBTS-746"
-    extra_opts: '-btsContentInUse true -bssHwContentInUse true'
+    extra_opts: '-btsContentInUse true'
 
 - name: Provision
   netact_cm_command:
     operation: "Provision"
     opsname: 'Provision_test'
-    dn: "PLMN-PLMN/MRBTS-746"    
+    dn: "PLMN-PLMN/MRBTS-746"
+    planName: 'mySiteTemplate'
+    type: 'actual'
+    createBackupPlan: true
+    backupPlanName: 'myBackupPlanName'
 
 - name: Export and fetching data from target
   netact_cm_command:
@@ -155,12 +162,17 @@ EXAMPLES = '''
 - fetch:
     src: /var/opt/nokia/oss/global/racops/export/exportTest.xml
     dest: fetched
-       
+
 - name: Import
   netact_cm_command:
     operation: "Import"
     opsname: 'Import_test'
-    
+    fileFormat: 'CSV'
+    type: 'plan'
+    fileName: 'myCSVFile'
+    planName: 'myPlanName'
+    extra_ops: 'enablePolicyPlans true'
+
 # fail the module
 - name: Test failure of the module
   netact_cm_command:
@@ -200,7 +212,7 @@ def run_module():
         planname=dict(type='str', required=False, aliases=['planName']),
         typeoption=dict(type='str', required=False, aliases=['type'],
                         choices=['plan', 'actual', 'reference', 'template', 'siteTemplate']),
-        fileformat=dict(type='str', required=False, choices=['CSV', 'RAML2','XLSX'],
+        fileformat=dict(type='str', required=False, choices=['CSV', 'RAML2', 'XLSX'],
                         aliases=['fileFormat']),
         filename=dict(type='str', required=False, aliases=['fileName']),
 
@@ -258,7 +270,7 @@ def run_module():
 
     createBackupPlan = module.params.get('createBackupPlan')
     backupPlanName = module.params.get('backupPlanName')
-    inputfile = module.params.get('imputFile')
+    inputfile = module.params.get('inputFile')
 
     extra_opts = module.params.get('extra_opts')
     verbose = module.params.get('verbose')
