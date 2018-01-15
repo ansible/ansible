@@ -165,6 +165,11 @@ except ImportError:
     pass
 
 
+def _add_input_(module, param, results):
+    if module.params.get(param):
+        results[param] = module.params.get(param)
+
+
 def main():
 
     argument_spec = tower_argument_spec()
@@ -213,22 +218,57 @@ def main():
         tower_check_mode(module)
         credential = tower_cli.get_resource('credential')
         try:
-            params = module.params.copy()
+            params = {}
             params['create_on_missing'] = True
+            params['name'] = name
 
             if organization:
                 org_res = tower_cli.get_resource('organization')
                 org = org_res.get(name=organization)
                 params['organization'] = org['id']
 
-            if params['ssh_key_data']:
-                filename = params['ssh_key_data']
+            credential_type_res = tower_cli.get_resource('credential_type')
+            credential_type = credential_type_res.get(kind=module.params.get('kind'))
+            params['credential_type'] = credential_type['id']
+
+            if module.params.get('description'):
+                params['description'] = module.params.get('description')
+
+            if module.params.get('user'):
+                user_res = tower_cli.get_resource('user')
+                user = user_res.get(name=module.params.get('user'))
+                params['user'] = user['id']
+
+            if module.params.get('team'):
+                team_res = tower_cli.get_resource('team')
+                team = team_res.get(name=module.params.get('team'))
+                params['team'] = team['id']
+
+            params['inputs'] = {}
+            if module.params.get('ssh_key_data'):
+                filename = module.params.get('ssh_key_data')
                 if not os.path.exists(filename):
                     module.fail_json(msg='file not found: %s' % filename)
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    params['ssh_key_data'] = f.read()
+                    params['inputs']['ssh_key_data'] = f.read()
+
+            _add_input_(module, 'authorize', params['inputs'])
+            _add_input_(module, 'authorize_password', params['inputs'])
+            _add_input_(module, 'client', params['inputs'])
+            _add_input_(module, 'secret', params['inputs'])
+            _add_input_(module, 'tenant', params['inputs'])
+            _add_input_(module, 'subscription', params['inputs'])
+            _add_input_(module, 'domain', params['inputs'])
+            _add_input_(module, 'become_method', params['inputs'])
+            _add_input_(module, 'become_username', params['inputs'])
+            _add_input_(module, 'become_password', params['inputs'])
+            _add_input_(module, 'vault_password', params['inputs'])
+            _add_input_(module, 'project', params['inputs'])
+            _add_input_(module, 'host', params['inputs'])
+            _add_input_(module, 'username', params['inputs'])
+            _add_input_(module, 'password', params['inputs'])
 
             if state == 'present':
                 result = credential.modify(**params)
