@@ -17,8 +17,8 @@ short_description: Manage attachable Access Entity Profile (AEP) on Cisco ACI fa
 description:
 - Connect to external virtual and physical domains by using
   attachable Access Entity Profiles (AEP) on Cisco ACI fabrics.
-- More information from the internal APIC classes I(infra:AttEntityP) and I(infra:ProvAcc)
-  at U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information from the internal APIC classes I(infra:AttEntityP) and I(infra:ProvAcc) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
