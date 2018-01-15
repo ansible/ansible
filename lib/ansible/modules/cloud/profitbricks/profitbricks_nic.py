@@ -143,7 +143,6 @@ try:
 except ImportError:
     HAS_PB_SDK = False
 
-from ansible import __version__
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.profitbricks import uuid_match, wait_for_completion
@@ -411,7 +410,7 @@ def main():
         host_base=api_url
     )
 
-    user_agent = 'profitbricks-sdk-python/%s Ansible/%s' % (sdk_version, __version__)
+    user_agent = 'profitbricks-sdk-python/%s Ansible/%s' % (sdk_version, module.ansible_version)
     profitbricks.headers = {'User-Agent': user_agent}
 
     state = module.params.get('state')
