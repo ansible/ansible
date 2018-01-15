@@ -139,7 +139,6 @@ ip_address:
     returned: always
     type: str
     sample: 175.12.233.11
-    
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -244,7 +243,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             registry_password=dict(
                 type='str',
                 default=None,
-                no_log = True
+                no_log=True
             ),
             containers=dict(
                 type='list',
@@ -329,7 +328,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.results['id'] = response['id']
             self.results['provisioning_state'] = response['provisioning_state']
-            self.results['ip_address'] = response['ip_address']['ip'] 
+            self.results['ip_address'] = response['ip_address']['ip']
 
             self.log("Creation / Update done")
 
