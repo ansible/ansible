@@ -39,7 +39,7 @@ options:
       - The ProfitBricks API base URL.
     required: false
     default: The value specified by API_HOST variable in ProfitBricks SDK for Python dependency.
-    version_added: "2.4"
+    version_added: "2.5"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.

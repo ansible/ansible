@@ -40,31 +40,31 @@ options:
       - Boolean value indicating if the private IP address has outbound access to the public internet.
     required: false
     default: None
-    version_added: "2.3"
+    version_added: "2.5"
   dhcp:
     description:
       - Boolean value indicating if the NIC is using DHCP or not.
     required: false
     default: None
-    version_added: "2.4"
+    version_added: "2.5"
   firewall_active:
     description:
       - Boolean value indicating if the firewall is active.
     required: false
     default: None
-    version_added: "2.4"
+    version_added: "2.5"
   ips:
     description:
       - A list of IPs to be assigned to the NIC.
     required: false
     default: None
-    version_added: "2.4"
+    version_added: "2.5"
   api_url:
     description:
       - The ProfitBricks API base URL.
     required: false
     default: The value specified by API_HOST variable in ProfitBricks SDK for Python dependency.
-    version_added: "2.4"
+    version_added: "2.5"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.

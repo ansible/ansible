@@ -48,7 +48,7 @@ options:
     required: false
     default: None
     choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
-    version_added: "2.3"
+    version_added: "2.5"
   datacenter:
     description:
       - The datacenter to provision this virtual machine.
@@ -77,7 +77,7 @@ options:
     required: false
     default: AUTO
     choices: [ "AUTO", "ZONE_1", "ZONE_2" ]
-    version_added: "2.3"
+    version_added: "2.5"
   volume_size:
     description:
       - The size in GB of the boot volume.
@@ -119,13 +119,13 @@ options:
       - Boolean value indicating if the private IP address has outbound access to the public Internet.
     required: false
     default: false
-    version_added: "2.3"
+    version_added: "2.5"
   api_url:
     description:
       - The ProfitBricks API base URL.
     required: false
     default: The value specified by API_HOST variable in ProfitBricks SDK for Python dependency.
-    version_added: "2.4"
+    version_added: "2.5"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.

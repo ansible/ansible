@@ -69,7 +69,7 @@ options:
     required: false
     default: None
     choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
-    version_added: "2.3"
+    version_added: "2.5"
   count:
     description:
       - The number of volumes you wish to create.
@@ -89,7 +89,7 @@ options:
       - The ProfitBricks API base URL.
     required: false
     default: The value specified by API_HOST variable in ProfitBricks SDK for Python dependency.
-    version_added: "2.4"
+    version_added: "2.5"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
