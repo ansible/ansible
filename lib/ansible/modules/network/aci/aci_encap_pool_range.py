@@ -16,8 +16,8 @@ module: aci_encap_pool_range
 short_description: Manage encap ranges assigned to pools on Cisco ACI fabrics (fvns:EncapBlk, fvns:VsanEncapBlk)
 description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fvns:EncapBlk) and I(fvns:VsanEncapBlk) at U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information from the internal APIC class I(fvns:EncapBlk) and I(fvns:VsanEncapBlk) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
