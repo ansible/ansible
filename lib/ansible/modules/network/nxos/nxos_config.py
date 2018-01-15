@@ -63,6 +63,18 @@ options:
     required: false
     default: null
     version_added: "2.2"
+  replace_src:
+    description:
+      - The I(replace_src) argument provides path to the configuration file
+        to load into the remote system. This argument is used to replace the
+        entire config with a flat-file. This is used with argument I(replace)
+        with value I(config). This is mutually exclusive with the I(lines) and
+        I(src) arguments. This argument is supported on Nexus 9K device.
+        Use I(nxos_file_copy) module to copy the flat file to remote device and
+        then use the path with this argument.
+    required: false
+    default: null
+    version_added: "2.5"
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -100,10 +112,10 @@ options:
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
-        line is not correct.
+        line is not correct. I(replace config) is supported on Nexus 9K device.
     required: false
     default: lineo
-    choices: ['line', 'block']
+    choices: ['line', 'block', 'config']
   force:
     description:
       - The force argument instructs the module to not consider the
@@ -249,6 +261,12 @@ EXAMPLES = """
     parents: ip access-list test
     before: no ip access-list test
     replace: block
+
+- name: replace config with flat file
+  nxos_config:
+    replace_src: config.txt
+    replace: config
+
 """
 
 RETURN = """
@@ -268,9 +286,13 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
+
+import os
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
 from ansible.module_utils.network.common.utils import to_list
@@ -290,7 +312,10 @@ def get_running_config(module, config=None):
 def get_candidate(module):
     candidate = NetworkConfig(indent=2)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        if module.params['replace'] != 'config':
+            candidate.load(module.params['src'])
+    if module.params['replace'] == 'config':
+        candidate.load('config replace {0}'.format(module.params['replace_src']))
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -313,7 +338,7 @@ def main():
     """
     argument_spec = dict(
         src=dict(type='path'),
-
+        replace_src=dict(),
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
 
@@ -321,7 +346,7 @@ def main():
         after=dict(type='list'),
 
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
-        replace=dict(default='line', choices=['line', 'block']),
+        replace=dict(default='line', choices=['line', 'block', 'config']),
 
         running_config=dict(aliases=['config']),
         intended_config=dict(),
@@ -343,13 +368,14 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    mutually_exclusive = [('lines', 'src'),
+    mutually_exclusive = [('lines', 'src', 'replace_src'),
                           ('parents', 'src'),
                           ('save', 'save_when')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines']),
+                   ('replace', 'config', ['replace_src']),
                    ('diff_against', 'intended', ['intended_config'])]
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -364,19 +390,30 @@ def main():
 
     config = None
 
+    info = get_capabilities(module).get('device_info', {})
+    os_platform = info.get('network_os_platform', '')
+
+    if module.params['replace'] == 'config':
+        if '9K' not in os_platform:
+            module.fail_json(msg='replace: config is supported only for Nexus 9K series switches')
+
+    if module.params['replace_src']:
+        if module.params['replace'] != 'config':
+            module.fail_json(msg='replace: config is required with replace_src')
+
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
         config = NetworkConfig(indent=2, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
 
-    if any((module.params['src'], module.params['lines'])):
+    if any((module.params['src'], module.params['lines'], module.params['replace_src'])):
         match = module.params['match']
         replace = module.params['replace']
 
         candidate = get_candidate(module)
 
-        if match != 'none':
+        if match != 'none' and replace != 'config':
             config = get_running_config(module, config)
             path = module.params['parents']
             configobjs = candidate.difference(config, match=match, replace=replace, path=path)
