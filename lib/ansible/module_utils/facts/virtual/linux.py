@@ -220,6 +220,17 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_role'] = 'guest'
                 return virtual_facts
 
+        # In older Linux Kernel versions, /sys filesystem is not available
+        # dmidecode is the safest option to parse virtualization related values
+        dmi_bin = self.module.get_bin_path('dmidecode')
+        (rc, out, err) = self.module.run_command('%s -s system-product-name' % dmi_bin)
+        if rc == 0:
+            # Strip out commented lines (specific dmidecode output)
+            vendor_name = ''.join([line.strip() for line in out.splitlines() if not line.startswith('#')])
+            if vendor_name in ['VMware Virtual Platform', 'VMware7,1']:
+                virtual_facts['virtualization_type'] = 'VMware'
+                virtual_facts['virtualization_role'] = 'guest'
+
         # If none of the above matches, return 'NA' for virtualization_type
         # and virtualization_role. This allows for proper grouping.
         virtual_facts['virtualization_type'] = 'NA'
