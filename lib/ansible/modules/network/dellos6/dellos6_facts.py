@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-# Copyright (c) 2016 Dell Inc.
+# Copyright (c) 2017 Dell Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -23,16 +23,17 @@ description:
   - Collects a base set of device facts from a remote device that
     is running OS6.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
-    module always collects a base set of facts from the device
+    module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: dellos6
 options:
   gather_subset:
     description:
-      - When specified, this argument restricts the facts collected
+      - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, and interfaces.  You can specify a list of
-        values to include a larger subset.  You can also use values with an initial M(!) to specify that a specific subset should
+        all, hardware, config, and interfaces. Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
     default: '!config'
@@ -57,29 +58,29 @@ EXAMPLES = """
 RETURN = """
 ansible_net_gather_subset:
   description: The list of fact subsets collected from the device.
-  returned: Always.
+  returned: always.
   type: list
 
 # default
 ansible_net_model:
   description: The model name returned from the device.
-  returned: Always.
+  returned: always.
   type: str
 ansible_net_serialnum:
   description: The serial number of the remote device.
-  returned: Always.
+  returned: always.
   type: str
 ansible_net_version:
   description: The operating system version running on the remote device.
-  returned: Always.
+  returned: always.
   type: str
 ansible_net_hostname:
   description: The configured hostname of the device.
-  returned: Always.
+  returned: always.
   type: string
 ansible_net_image:
   description: The image file that the device is running.
-  returned: Always
+  returned: always
   type: string
 
 # hardware

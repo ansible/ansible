@@ -1,0 +1,10 @@
+LLDP Remote Device Summary
+
+Local
+Interface RemID   Chassis ID          Port ID           System Name
+--------- ------- ------------------- ----------------- -----------------
+Te1/0/5   14      F8:B1:56:70:49:38   Gi1/0/5             MAA-N2048-6884
+Te1/0/6   15      F8:B1:56:70:49:38   Gi1/0/6             MAA-N2048-6884
+
+
+
