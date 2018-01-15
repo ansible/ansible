@@ -19,9 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-import os
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_nxapi
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -32,25 +29,33 @@ class TestNxosNxapiModule(TestNxosModule):
     module = nxos_nxapi
 
     def setUp(self):
+        super(TestNxosNxapiModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_nxapi.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_nxapi.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_nxapi.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'device_info': {'network_os_platform': 'N7K-C7018'}, 'network_api': 'cliconf'}
+
     def tearDown(self):
+        super(TestNxosNxapiModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
-            output = list()
+            module_name = self.module.__name__.rsplit('.', 1)[1]
 
+            output = list()
             for command in commands:
-                filename = str(command).replace(' ', '_')
-                filename = os.path.join('nxos_nxapi', filename)
-                output.append(load_fixture(filename))
+                filename = str(command).split(' | ')[0].replace(' ', '_')
+                output.append(load_fixture(module_name, filename, device))
             return output
 
         self.run_commands.side_effect = load_from_file
@@ -58,12 +63,12 @@ class TestNxosNxapiModule(TestNxosModule):
 
     def test_nxos_nxapi_no_change(self):
         set_module_args(dict(http=True, https=False, http_port=80, https_port=443, sandbox=False))
-        self.execute_module(changed=False, commands=[])
+        self.execute_module_devices(changed=False, commands=[])
 
     def test_nxos_nxapi_disable(self):
         set_module_args(dict(state='absent'))
-        self.execute_module(changed=True, commands=['no feature nxapi'])
+        self.execute_module_devices(changed=True, commands=['no feature nxapi'])
 
     def test_nxos_nxapi_no_http(self):
         set_module_args(dict(https=True, http=False, https_port=8443))
-        self.execute_module(changed=True, commands=['no nxapi http', 'nxapi https port 8443'])
+        self.execute_module_devices(changed=True, commands=['no nxapi http', 'nxapi https port 8443'])

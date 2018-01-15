@@ -1,20 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Copyright: Ansible Project
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -138,14 +132,14 @@ EXAMPLES = '''
 
 import os
 import time
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
 
 try:
     from proxmoxer import ProxmoxAPI
     HAS_PROXMOXER = True
 except ImportError:
     HAS_PROXMOXER = False
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def get_template(proxmox, node, storage, content_type, template):
@@ -190,7 +184,7 @@ def main():
             api_password=dict(no_log=True),
             validate_certs=dict(type='bool', default='no'),
             node=dict(),
-            src=dict(),
+            src=dict(type='path'),
             template=dict(),
             content_type=dict(default='vztmpl', choices=['vztmpl', 'iso']),
             storage=dict(default='local'),
@@ -229,17 +223,15 @@ def main():
             content_type = module.params['content_type']
             src = module.params['src']
 
-            from ansible import utils
-            realpath = utils.path_dwim(None, src)
-            template = os.path.basename(realpath)
+            template = os.path.basename(src)
             if get_template(proxmox, node, storage, content_type, template) and not module.params['force']:
                 module.exit_json(changed=False, msg='template with volid=%s:%s/%s is already exists' % (storage, content_type, template))
             elif not src:
                 module.fail_json(msg='src param to uploading template file is mandatory')
-            elif not (os.path.exists(realpath) and os.path.isfile(realpath)):
-                module.fail_json(msg='template file on path %s not exists' % realpath)
+            elif not (os.path.exists(src) and os.path.isfile(src)):
+                module.fail_json(msg='template file on path %s not exists' % src)
 
-            if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
+            if upload_template(module, proxmox, api_host, node, storage, content_type, src, timeout):
                 module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
         except Exception as e:
             module.fail_json(msg="uploading of template %s failed with exception: %s" % (template, e))

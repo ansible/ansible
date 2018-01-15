@@ -31,15 +31,15 @@ from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
-from ansible.executor.module_common import modify_module, build_windows_module_payload
+from ansible.executor.module_common import modify_module
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
 from ansible.utils.unsafe_proxy import wrap_var
+from ansible.vars.clean import remove_internal_keys
 
 
 try:
@@ -92,11 +92,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         result = {}
 
-        if self._task.async and not self._supports_async:
+        if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
         elif self._play_context.check_mode and not self._supports_check_mode:
             raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async and self._play_context.check_mode:
+        elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         return result
@@ -153,22 +153,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                    "run 'git pull --rebase' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
-                                                                    task_vars=task_vars, module_compression=self._play_context.module_compression)
+        final_environment = dict()
+        self._compute_environment_string(final_environment)
 
-        # FUTURE: we'll have to get fancier about this to support powershell over SSH on Windows...
-        if self._connection.transport == "winrm":
-            # WinRM always pipelines, so we need to build up a fancier module payload...
-            final_environment = dict()
-            self._compute_environment_string(final_environment)
-            module_data = build_windows_module_payload(module_name=module_name, module_path=module_path,
-                                                       b_module_data=module_data, module_args=module_args,
-                                                       task_vars=task_vars, task=self._task,
-                                                       play_context=self._play_context, environment=final_environment)
+        (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
+                                                                    task_vars=task_vars, templar=self._templar,
+                                                                    module_compression=self._play_context.module_compression,
+                                                                    async_timeout=self._task.async_val,
+                                                                    become=self._play_context.become,
+                                                                    become_method=self._play_context.become_method,
+                                                                    become_user=self._play_context.become_user,
+                                                                    become_password=self._play_context.become_pass,
+                                                                    environment=final_environment)
 
         return (module_style, module_shebang, module_data, module_path)
 
-    def _compute_environment_string(self, raw_environment_out=dict()):
+    def _compute_environment_string(self, raw_environment_out=None):
         '''
         Builds the environment string to be used when executing the remote task.
         '''
@@ -179,12 +179,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if not isinstance(environments, list):
                 environments = [environments]
 
-            # the environments as inherited need to be reversed, to make
-            # sure we merge in the parent's values first so those in the
-            # block then task 'win' in precedence
-            environments.reverse()
+            # The order of environments matters to make sure we merge
+            # in the parent's values first so those in the block then
+            # task 'win' in precedence
             for environment in environments:
-                if environment is None:
+                if environment is None or len(environment) == 0:
                     continue
                 temp_environment = self._templar.template(environment)
                 if not isinstance(temp_environment, dict):
@@ -193,7 +192,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # these environment settings should not need to merge sub-dicts
                 final_environment.update(temp_environment)
 
-        final_environment = self._templar.template(final_environment)
+        if len(final_environment) > 0:
+            final_environment = self._templar.template(final_environment)
 
         if isinstance(raw_environment_out, dict):
             raw_environment_out.clear()
@@ -212,16 +212,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Determines if we are required and can do pipelining
         '''
-        if self._connection.always_pipeline_modules:
-            return True  # eg, winrm
 
         # any of these require a true
         for condition in [
             self._connection.has_pipelining,
-            self._play_context.pipelining,
+            self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-            not wrap_async,                            # async does not support pipelining
+            not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
             self._play_context.become_method != 'su',  # su does not work with pipelining,
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
@@ -245,11 +243,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             use_system_tmp = True
 
         tmp_mode = 0o700
-
-        if use_system_tmp:
-            tmpdir = None
-        else:
-            tmpdir = self._remote_expand_user(C.DEFAULT_REMOTE_TMP, sudoable=False)
+        tmpdir = self._remote_expand_user(self._play_context.remote_tmp_dir, sudoable=False)
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
@@ -274,7 +268,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                           'Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". '
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
-                output = output + u": %s" % result['stdout']
+                output = output + u", stdout output: %s" % result['stdout']
+            if self._play_context.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+                output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
             self._cleanup_remote_tmp = True
@@ -397,7 +393,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
+        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in ('root', remote_user):
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -483,7 +479,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args = dict(
             path=path,
             follow=follow,
-            get_md5=False,
             get_checksum=checksum,
             checksum_algo='sha1',
         )
@@ -537,7 +532,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif 'json' in errormsg or 'simplejson' in errormsg:
                 x = "5"  # json or simplejson modules needed
         finally:
-            return x
+            return x  # pylint: disable=lost-exception
 
     def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
@@ -610,7 +605,27 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
         # give the module the socket for persistent connections
-        module_args['_ansible_socket'] = task_vars.get('ansible_socket')
+        module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')
+        if not module_args['_ansible_socket']:
+            module_args['_ansible_socket'] = task_vars.get('ansible_socket')
+
+        # make sure all commands use the designated shell executable
+        module_args['_ansible_shell_executable'] = self._play_context.executable
+
+    def _update_connection_options(self, options, variables=None):
+        ''' ensures connections have the appropriate information '''
+        update = {}
+
+        if getattr(self.connection, 'glob_option_vars', False):
+            # if the connection allows for it, pass any variables matching it.
+            if variables is not None:
+                for varname in variables:
+                    if varname.match('ansible_%s_' % self.connection._load_name):
+                        update[varname] = variables[varname]
+
+        # always override existing with options
+        update.update(options)
+        self.connection.set_options(update)
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
         '''
@@ -679,7 +694,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         in_data = None
         cmd = ""
 
-        if wrap_async:
+        if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
             (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
                                                                                                          task_vars=task_vars)
@@ -688,7 +703,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            async_limit = self._task.async
+            async_limit = self._task.async_val
             async_jid = str(random.randint(0, 999999999999))
 
             # call the interpreter for async_wrapper directly
@@ -727,11 +742,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp).strip()
 
-            if module_name == "accelerate":
-                # always run the accelerate module as the user
-                # specified in the play, not the sudo_user
-                sudoable = False
-
         # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
         if remote_files:
             # remove none/empty
@@ -749,7 +759,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         tmpdir_delete = (not data.pop("_ansible_suppress_tmpdir_delete", False) and wrap_async)
 
         # remove internal keys
-        self._remove_internal_keys(data)
+        remove_internal_keys(data)
 
         # cleanup tmp?
         if (self._play_context.become and self._play_context.become_user != 'root') and not persist_files and delete_remote_tmp or tmpdir_delete:
@@ -772,53 +782,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _remove_internal_keys(self, data):
-        for key in list(data.keys()):
-            if key.startswith('_ansible_') and key != '_ansible_parsed' or key in C.INTERNAL_RESULT_KEYS:
-                display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
-                del data[key]
-
-        # remove bad/empty internal keys
-        for key in ['warnings', 'deprecations']:
-            if key in data and not data[key]:
-                del data[key]
-
-    def _clean_returned_data(self, data):
-        remove_keys = set()
-        fact_keys = set(data.keys())
-        # first we add all of our magic variable names to the set of
-        # keys we want to remove from facts
-        for magic_var in MAGIC_VARIABLE_MAPPING:
-            remove_keys.update(fact_keys.intersection(MAGIC_VARIABLE_MAPPING[magic_var]))
-        # next we remove any connection plugin specific vars
-        for conn_path in self._shared_loader_obj.connection_loader.all(path_only=True):
-            try:
-                conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-                re_key = re.compile('^ansible_%s_' % conn_name)
-                for fact_key in fact_keys:
-                    if re_key.match(fact_key):
-                        remove_keys.add(fact_key)
-            except AttributeError:
-                pass
-
-        # remove some KNOWN keys
-        for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:
-            if hard in fact_keys:
-                remove_keys.add(hard)
-
-        # finally, we search for interpreter keys to remove
-        re_interp = re.compile('^ansible_.*_interpreter$')
-        for fact_key in fact_keys:
-            if re_interp.match(fact_key):
-                remove_keys.add(fact_key)
-        # then we remove them (except for ssh host keys)
-        for r_key in remove_keys:
-            if not r_key.startswith('ansible_ssh_host_key_'):
-                display.warning("Removed restricted key from module data: %s = %s" % (r_key, data[r_key]))
-                del data[r_key]
-
-        self._remove_internal_keys(data)
-
     def _parse_returned_data(self, res):
         try:
             filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
@@ -828,7 +791,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = json.loads(filtered_output)
 
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                self._clean_returned_data(data['ansible_facts'])
                 data['ansible_facts'] = wrap_var(data['ansible_facts'])
             data['_ansible_parsed'] = True
         except ValueError:
@@ -844,7 +806,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -857,6 +819,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             used as a key or is going to be written back out to a file
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
+        :kwarg chdir: cd into this directory before executing the command.
         '''
 
         display.debug("_low_level_execute_command(): starting")
@@ -865,11 +828,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 #            display.debug("_low_level_execute_command(): no command, exiting")
 #           return dict(stdout='', stderr='', rc=254)
 
+        if chdir:
+            display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
+            cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
+
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
-            cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+            if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
+                cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         if self._connection.allow_executable:
             if executable is None:
@@ -983,9 +951,5 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # dwim already deals with playbook basedirs
         path_stack = self._task.get_search_path()
 
-        result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
-
-        if result is None:
-            raise AnsibleError("Unable to find '%s' in expected paths." % to_native(needle))
-
-        return result
+        # if missing it will return a file not found exception
+        return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)

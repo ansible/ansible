@@ -1,0 +1,295 @@
+---
+- block:
+
+    # ============================================================
+
+    - name: run the module without parameters
+      ec2_vpc_net:
+      ignore_errors: yes
+      register: result
+    
+    - name: assert failure
+      assert:
+        that:
+          - 'result is failed'
+          - 'result.msg.startswith("missing required arguments")'
+
+    # ============================================================
+
+    - name: attempt to create a VPC without providing connnection information
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        region: us-east-1
+      ignore_errors: yes
+      register: result
+
+    - name: assert connection failure
+      assert:
+        that:
+          - 'result is failed'
+          - '"Unable to locate credentials" in result.msg'
+
+    # ============================================================
+
+    - name: set connection information for subsequent tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+
+    - name: test check mode creating a VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: check for a change
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+
+    - name: create a VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert the VPC was created successfully
+      assert:
+        that:
+          - 'result is successful'
+          - 'result.changed'
+
+    - name: assert the output
+      assert:
+        that:
+          - '"cidr_block" in result.vpc'
+          - '"classic_link_enabled" in result.vpc'
+          - '"dhcp_options_id" in result.vpc'
+          - '"id" in result.vpc'
+          - '"instance_tenancy" in result.vpc'
+          - '"is_default" in result.vpc'
+          - '"state" in result.vpc'
+          - '"tags" in result.vpc'
+
+    - name: set the first VPC as a fact for comparison and cleanup
+      set_fact:
+        vpc_1: "{{ result.vpc.id }}"
+
+    - name: save default dhcp_options_id for later comparison
+      set_fact:
+        default_dhcp_options_id: "{{ result.vpc.dhcp_options_id }}"
+
+    # ============================================================
+
+    - name: test check mode creating an identical VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        multi_ok: yes
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert a change would be made
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+
+    - name: create a VPC with a dedicated tenancy using the same CIDR and name
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        tenancy: dedicated
+        state: present
+        multi_ok: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert a new VPC was created
+      assert:
+        that:
+          - 'result is successful'
+          - 'result.changed'
+          - 'result.vpc.instance_tenancy == "dedicated"'
+          - result.vpc.id != vpc_1
+
+    # ============================================================
+
+    - name: attempt to create another VPC with the same CIDR and name without multi_ok
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        multi_ok: no
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: yes
+
+    - name: assert failure
+      assert:
+        that:
+          - 'result is failed'
+          - '"If you would like to create the VPC anyway please pass True to the multi_ok param" in result.msg'
+
+    # ============================================================
+
+    # FIXME: right now if there are multiple matching VPCs they cannot be removed,
+    # as there is no vpc_id option for idempotence. A workaround is to retag the VPC.
+    - name: remove Name tag on vpc_1
+      ec2_tag:
+        resource: "{{ vpc_1 }}"
+        state: absent
+        tags:
+          Name: "{{ resource_prefix }}"
+        <<: *aws_connection_info
+
+    - name: add a unique name tag
+      ec2_tag:
+        resource: "{{ vpc_1 }}"
+        state: present
+        tags:
+          Name: "{{ resource_prefix }}-changed"
+        <<: *aws_connection_info
+
+    - name: delete one of the VPCs
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}-changed"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert success
+      assert:
+        that:
+          - 'result.changed'
+          - 'not result.vpc'
+
+    # ============================================================
+
+    - name: attempt to delete a VPC that doesn't exist
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}-changed"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert no changes were made
+      assert:
+        that:
+          - 'not result.changed'
+          - 'not result.vpc'
+
+    # ============================================================
+
+    - name: create a DHCP option set to use in next test
+      ec2_vpc_dhcp_option:
+        dns_servers:
+          - 4.4.4.4
+          - 8.8.8.8
+        tags:
+          Name: "{{ resource_prefix }}"
+        <<: *aws_connection_info
+      register: new_dhcp
+
+    - name: modify the DHCP options set for a VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        multi_ok: no
+        dhcp_opts_id: "{{ new_dhcp.dhcp_options_id }}"
+        <<: *aws_connection_info 
+      register: result
+
+    - name: assert the DHCP option set changed
+      assert:
+        that:
+          - 'result.changed'
+          - default_dhcp_options_id != result.vpc.dhcp_options_id
+
+    # ============================================================
+
+    - name: modify classic_link_enabled
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        dns_support: True
+        dns_hostnames: True
+        state: present
+        multi_ok: no
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert a change was made
+      assert:
+        that:
+          - 'result is successful'
+          # FIXME The module currently doesn't note changed for VPC attributes.
+          # Once this is fixed a test should be added for check mode as well.
+          # - 'result.changed'
+
+    # ============================================================
+
+    - name: test check mode to delete a VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert that a change would have been made
+      assert:
+        that:
+          - 'result.changed'
+
+    # ============================================================
+
+  always:
+
+    - name: replace the DHCP options set so the new one can be deleted
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        multi_ok: no
+        dhcp_opts_id: "{{ default_dhcp_options_id }}"
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: remove the DHCP option set
+      ec2_vpc_dhcp_option:
+        dhcp_options_id: "{{ new_dhcp.dhcp_options_id }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: remove the VPC
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
+
+    # ============================================================

@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -137,7 +137,7 @@ def admin_set(xapi, module, admin_username, admin_password, role):
                              element='<%s>%s</%s>' % (role, rbval, role))
 
         if admin_password is not None:
-            xapi.edit(xpath=_ADMIN_XPATH % admin_username+'/phash',
+            xapi.edit(xpath=_ADMIN_XPATH % admin_username + '/phash',
                       element='<phash>%s</phash>' % phash)
             changed = True
 

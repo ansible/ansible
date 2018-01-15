@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
@@ -234,7 +234,6 @@ tags:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -289,13 +288,13 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
             uuid = self.module.params.get('id')
             if uuid:
                 args['id'] = uuid
-                zones = self.cs.listZones(**args)
+                zones = self.query_api('listZones', **args)
                 if zones:
                     self.zone = zones['zone'][0]
                     return self.zone
 
             args['name'] = self.module.params.get('name')
-            zones = self.cs.listZones(**args)
+            zones = self.query_api('listZones', **args)
             if zones:
                 self.zone = zones['zone'][0]
         return self.zone
@@ -322,9 +321,7 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
 
         zone = None
         if not self.module.check_mode:
-            res = self.cs.createZone(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createZone', **args)
             zone = res['zone']
         return zone
 
@@ -338,9 +335,7 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.updateZone(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateZone', **args)
                 zone = res['zone']
         return zone
 
@@ -353,9 +348,8 @@ class AnsibleCloudStackZone(AnsibleCloudStack):
                 'id': zone['id']
             }
             if not self.module.check_mode:
-                res = self.cs.deleteZone(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                self.query_api('deleteZone', **args)
+
         return zone
 
 
@@ -386,19 +380,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_zone = AnsibleCloudStackZone(module)
+    acs_zone = AnsibleCloudStackZone(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            zone = acs_zone.absent_zone()
-        else:
-            zone = acs_zone.present_zone()
+    state = module.params.get('state')
+    if state in ['absent']:
+        zone = acs_zone.absent_zone()
+    else:
+        zone = acs_zone.present_zone()
 
-        result = acs_zone.get_result(zone)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_zone.get_result(zone)
 
     module.exit_json(**result)
 

@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Chatham Financial <oss@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -74,6 +64,9 @@ EXAMPLES = """
     value: '"guest"'
     state: present
 """
+import json
+from ansible.module_utils.basic import AnsibleModule
+
 
 class RabbitMqParameter(object):
     def __init__(self, module, component, name, value, vhost, node):
@@ -120,6 +113,7 @@ class RabbitMqParameter(object):
     def has_modifications(self):
         return self.value != self._value
 
+
 def main():
     arg_spec = dict(
         component=dict(required=True),
@@ -143,25 +137,26 @@ def main():
     state = module.params['state']
     node = module.params['node']
 
+    result = dict(changed=False)
     rabbitmq_parameter = RabbitMqParameter(module, component, name, value, vhost, node)
 
-    changed = False
     if rabbitmq_parameter.get():
         if state == 'absent':
             rabbitmq_parameter.delete()
-            changed = True
+            result['changed'] = True
         else:
             if rabbitmq_parameter.has_modifications():
                 rabbitmq_parameter.set()
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_parameter.set()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, component=component, name=name, vhost=vhost, state=state)
-
-# import module snippets
-from ansible.module_utils.basic import *
+    result['component'] = component
+    result['name'] = name
+    result['vhost'] = vhost
+    result['state'] = state
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

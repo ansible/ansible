@@ -1,28 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Corwin Brown <corwin@corwinbrown.com>
-# (c) 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Corwin Brown <corwin@corwinbrown.com>
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# this is a windows documentation stub.  actual code lives in the .ps1
-# file of the same name
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -34,6 +17,7 @@ short_description: Interacts with webservices
 description:
 - Interacts with FTP, HTTP and HTTPS web services.
 - Supports Digest, Basic and WSSE HTTP authentication mechanisms.
+- For non-Windows targets, use the M(uri) module instead.
 options:
   url:
     description:
@@ -84,7 +68,7 @@ options:
     version_added: '2.4'
   return_content:
     description:
-    - Whether or not to return the body of the request as a "content" key in
+    - Whether or not to return the body of the response as a "content" key in
       the dictionary result. If the reported Content-type is
       "application/json", then the JSON is additionally loaded into a key
       called C(json) in the dictionary results.
@@ -138,6 +122,8 @@ options:
     description:
     - Specifies the client certificate(.pfx)  that is used for a secure web request.
     version_added: '2.4'
+notes:
+- For non-Windows targets, use the M(uri) module instead.
 author:
 - Corwin Brown (@blakfeld)
 - Dag Wieers (@dagwieers)

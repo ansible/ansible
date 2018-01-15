@@ -2,27 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
-
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -49,22 +37,24 @@ options:
     description:
       - List of interfaces to check the VLAN has been
         configured correctly.
-  collection:
+  aggregate:
     description: List of VLANs definitions.
-  purge:
-    description:
-      - Purge VLANs not defined in the collections parameter.
-    default: no
   state:
     description:
       - State of the VLAN configuration.
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
+    choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -82,26 +72,49 @@ EXAMPLES = """
 - name: deactive VLAN configuration
   junos_vlan:
     vlan_name: test
-    state: suspend
+    state: present
+    active: False
 
 - name: activate VLAN configuration
   junos_vlan:
     vlan_name: test
-    state: active
+    state: present
+    active: True
+
+- name: Create vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1 }
+      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2 }
+
+- name: Delete vlan configuration using aggregate
+  junos_vlan:
+    aggregate:
+      - { vlan_id: 159, name: test_vlan_1 }
+      - { vlan_id: 160, name: test_vlan_2 }
+    state: absent
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
   type: string
-  sample: "<vlans><vlan><name>test-vlan-4</name></vlan></vlans>"
+  sample: >
+         [edit vlans]
+         +   test-vlan-1 {
+         +       vlan-id 60;
+         +   }
 """
 import collections
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from copy import deepcopy
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -112,40 +125,54 @@ USE_PERSISTENT_CONNECTION = True
 
 
 def validate_vlan_id(value, module):
-    if not 1 <= value <= 4094:
+    if value and not 1 <= value <= 4094:
         module.fail_json(msg='vlan_id must be between 1 and 4094')
 
 
-def validate_param_values(module, obj):
+def validate_param_values(module, obj, param=None):
+    if not param:
+        param = module.params
     for key in obj:
         # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
         if callable(validator):
-            validator(module.params.get(key), module)
+            validator(param.get(key), module)
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        name=dict(required=True),
-        vlan_id=dict(required=True, type='int'),
+    element_spec = dict(
+        name=dict(),
+        vlan_id=dict(type='int'),
         description=dict(),
         interfaces=dict(),
-        collection=dict(),
-        purge=dict(default=False, type='bool'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'active', 'suspend'])
+        state=dict(default='present', choices=['present', 'absent']),
+        active=dict(default=True, type='bool')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
+    required_one_of = [['aggregate', 'name']]
+    mutually_exclusive = [['aggregate', 'name']]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
@@ -154,29 +181,42 @@ def main():
     top = 'vlans/vlan'
 
     param_to_xpath_map = collections.OrderedDict()
-    param_to_xpath_map.update({
-        'name': {'xpath': 'name', 'is_key': True},
-        'vlan_id': 'vlan-id',
-        'description': 'description'
-    })
+    param_to_xpath_map.update([
+        ('name', {'xpath': 'name', 'is_key': True}),
+        ('vlan_id', 'vlan-id'),
+        ('description', 'description')
+    ])
 
-    validate_param_values(module, param_to_xpath_map)
+    params = to_param_list(module)
+    requests = list()
 
-    want = list()
-    want.append(map_params_to_obj(module, param_to_xpath_map))
-    ele = map_obj_to_ele(module, want, top)
+    for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
 
-    kwargs = {'commit': not module.check_mode}
-    kwargs['action'] = 'replace'
+        item = param.copy()
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+        validate_param_values(module, param_to_xpath_map, param=item)
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
-        })
+        want = map_params_to_obj(module, param_to_xpath_map, param=item)
+        requests.append(map_obj_to_ele(module, want, top, param=item))
+
+    with locked_config(module):
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='merge')
+
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

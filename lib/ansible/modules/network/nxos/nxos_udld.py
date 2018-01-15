@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ description:
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=absent), it unconfigures existing settings C(msg_time) and set it
       to its default value of 15.  It is cleaner to always use C(state=present).
     - Module will fail if the udld feature has not been previously enabled.
@@ -109,23 +110,23 @@ changed:
     sample: true
 '''
 
+import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
-import re
-import re
-
-
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show run' not in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -153,7 +154,6 @@ def apply_key_map(key_map, table):
             else:
                 new_dict[new_key] = value
     return new_dict
-
 
 
 def get_commands_config_udld_global(delta, reset):
@@ -222,12 +222,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_one_of=[['aggressive', 'msg_time', 'reset']],
-                                supports_check_mode=True)
+                           required_one_of=[['aggressive', 'msg_time', 'reset']],
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     aggressive = module.params['aggressive']
     msg_time = module.params['msg_time']
@@ -294,4 +292,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

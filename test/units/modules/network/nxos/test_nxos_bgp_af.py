@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_bgp_af
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -31,6 +29,8 @@ class TestNxosBgpAfModule(TestNxosModule):
     module = nxos_bgp_af
 
     def setUp(self):
+        super(TestNxosBgpAfModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_bgp_af.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,11 +38,12 @@ class TestNxosBgpAfModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosBgpAfModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
-    def load_fixtures(self, commands=None):
-        self.get_config.return_value = load_fixture('nxos_bgp_config.cfg')
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('nxos_bgp', 'config.cfg')
         self.load_config.return_value = None
 
     def test_nxos_bgp_af(self):
@@ -89,3 +90,12 @@ class TestNxosBgpAfModule(TestNxosModule):
                              dampening_reuse_time=1900, dampening_max_suppress_time=10))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'dampening_routemap cannot be used with the dampening_half_time param')
+
+    def test_nxos_bgp_af_client(self):
+        set_module_args(dict(asn=65535, afi='ipv4', safi='unicast',
+                             client_to_client=False))
+        self.execute_module(
+            changed=True,
+            commands=['router bgp 65535', 'address-family ipv4 unicast',
+                      'no client-to-client reflection']
+        )

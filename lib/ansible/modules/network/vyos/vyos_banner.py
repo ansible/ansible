@@ -19,20 +19,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
 module: vyos_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on VyOS devices
 description:
   - This will configure both pre-login and post-login banners on remote
     devices running VyOS. It allows playbooks to add or remote
     banner text from the active running configuration.
+notes:
+  - Tested against VYOS 1.1.7
 options:
   banner:
     description:
@@ -85,8 +87,8 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vyos import get_config, load_config
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.network.vyos.vyos import get_config, load_config
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def spec_to_commands(updates, module):
@@ -94,16 +96,15 @@ def spec_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' or (state == 'absent' and
-                             'text' in have.keys() and have['text']):
-        commands.append('delete system login banner %s' % module.params['banner'])
+    if state == 'absent':
+        if have.get('state') != 'absent' or (have.get('state') != 'absent' and
+                                             'text' in have.keys() and have['text']):
+            commands.append('delete system login banner %s' % module.params['banner'])
 
     elif state == 'present':
-        if want['text'] and (want['text'] != have.get('text')):
+        if want['text'] and want['text'].encode().decode('unicode_escape') != have.get('text'):
             banner_cmd = 'set system login banner %s ' % module.params['banner']
-            banner_cmd += '"'
             banner_cmd += want['text'].strip()
-            banner_cmd += '"'
             commands.append(banner_cmd)
 
     return commands
@@ -118,9 +119,8 @@ def config_to_dict(module):
         if line.startswith('set system login banner %s' % obj['banner']):
             match = re.findall(r'%s (.*)' % obj['banner'], line, re.M)
             output = match
-
     if output:
-        obj['text'] = output
+        obj['text'] = output[0].encode().decode('unicode_escape')
         obj['state'] = 'present'
 
     return obj
@@ -129,7 +129,7 @@ def config_to_dict(module):
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
-        text = str(text).strip()
+        text = "%r" % (str(text).strip())
 
     return {
         'banner': module.params['banner'],
@@ -156,7 +156,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

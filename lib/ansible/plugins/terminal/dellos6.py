@@ -42,13 +42,13 @@ class TerminalModule(TerminalBase):
         re.compile(br"'[^']' +returned error code: ?\d+"),
     ]
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().endswith('#'):
             return
 
         cmd = {u'command': u'enable'}
         if passwd:
-            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            cmd[u'prompt'] = to_text(r"[\r\n]?password:$", errors='surrogate_or_strict')
             cmd[u'answer'] = passwd
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
@@ -60,7 +60,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
             # if prompt is None most likely the terminal is hung up at a prompt

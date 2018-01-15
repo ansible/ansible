@@ -27,6 +27,7 @@ RUN apt-get update -y && \
     openssh-client \
     openssh-server \
     python-dev \
+    pass \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
@@ -43,6 +44,7 @@ RUN apt-get update -y && \
     reprepro \
     rsync \
     ruby \
+    sshpass \
     subversion \
     sudo \
     tzdata \

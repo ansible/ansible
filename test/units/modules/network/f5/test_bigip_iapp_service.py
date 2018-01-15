@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -29,30 +15,30 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.bigip_iapp_service import Parameters
     from library.bigip_iapp_service import ModuleManager
     from library.bigip_iapp_service import ArgumentSpec
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_iapp_service import Parameters
         from ansible.modules.network.f5.bigip_iapp_service import ModuleManager
         from ansible.modules.network.f5.bigip_iapp_service import ArgumentSpec
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):
@@ -77,16 +63,20 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_keys(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         # Assert the top-level keys
         assert p.name == 'http_example'
         assert p.partition == 'Common'
         assert p.template == '/Common/f5.http'
+        assert p.deviceGroup == 'none'
+        assert p.inheritedTrafficGroup == 'true'
+        assert p.inheritedDevicegroup == 'true'
+        assert p.traffic_group == '/Common/traffic-group-local-only'
 
     def test_module_parameters_lists(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         assert 'lists' in p._values
 
@@ -102,7 +92,7 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_tables(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         assert 'tables' in p._values
 
@@ -129,7 +119,7 @@ class TestParameters(unittest.TestCase):
 
     def test_module_parameters_variables(self):
         args = load_fixture('create_iapp_service_parameters_f5_http.json')
-        p = Parameters(args)
+        p = Parameters(params=args)
 
         assert 'variables' in p._values
         assert len(p.variables) == 34
@@ -146,6 +136,70 @@ class TestParameters(unittest.TestCase):
         assert p.variables[1]['name'] == 'afm__policy'
         assert p.variables[1]['value'] == '/#do_not_use#'
 
+    def test_module_strict_updates_from_top_level(self):
+        # Assumes the user did not provide any parameters
+
+        args = dict(
+            strict_updates=True
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'enabled'
+
+        args = dict(
+            strict_updates=False
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'disabled'
+
+    def test_module_strict_updates_override_from_top_level(self):
+        args = dict(
+            strict_updates=True,
+            parameters=dict(
+                strictUpdates='disabled'
+            )
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'enabled'
+
+        args = dict(
+            strict_updates=False,
+            parameters=dict(
+                strictUpdates='enabled'
+            )
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'disabled'
+
+    def test_module_strict_updates_only_parameters(self):
+        args = dict(
+            parameters=dict(
+                strictUpdates='disabled'
+            )
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'disabled'
+
+        args = dict(
+            parameters=dict(
+                strictUpdates='enabled'
+            )
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'enabled'
+
+    def test_api_strict_updates_from_top_level(self):
+        args = dict(
+            strictUpdates='enabled'
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'enabled'
+
+        args = dict(
+            strictUpdates='disabled'
+        )
+        p = Parameters(params=args)
+        assert p.strict_updates == 'disabled'
+
     def test_api_parameters_variables(self):
         args = dict(
             variables=[
@@ -156,7 +210,7 @@ class TestParameters(unittest.TestCase):
                 )
             ]
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.variables[0]['name'] == 'client__http_compression'
 
     def test_api_parameters_tables(self):
@@ -188,7 +242,7 @@ class TestParameters(unittest.TestCase):
                 }
             ]
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.tables[0]['name'] == 'pool__members'
         assert p.tables[0]['columnNames'] == ['addr', 'port', 'connection_limit']
         assert len(p.tables[0]['rows']) == 2
@@ -197,9 +251,59 @@ class TestParameters(unittest.TestCase):
         assert p.tables[0]['rows'][0]['row'] == ['12.12.12.12', '80', '0']
         assert p.tables[0]['rows'][1]['row'] == ['13.13.13.13', '443', '10']
 
+    def test_api_parameters_device_group(self):
+        args = dict(
+            deviceGroup='none'
+        )
+        p = Parameters(params=args)
+        assert p.deviceGroup == 'none'
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
+    def test_api_parameters_inherited_traffic_group(self):
+        args = dict(
+            inheritedTrafficGroup='true'
+        )
+        p = Parameters(params=args)
+        assert p.inheritedTrafficGroup == 'true'
+
+    def test_api_parameters_inherited_devicegroup(self):
+        args = dict(
+            inheritedDevicegroup='true'
+        )
+        p = Parameters(params=args)
+        assert p.inheritedDevicegroup == 'true'
+
+    def test_api_parameters_traffic_group(self):
+        args = dict(
+            trafficGroup='/Common/traffic-group-local-only'
+        )
+        p = Parameters(params=args)
+        assert p.traffic_group == '/Common/traffic-group-local-only'
+
+    def test_module_template_same_partition(self):
+        args = dict(
+            template='foo',
+            partition='bar'
+        )
+        p = Parameters(params=args)
+        assert p.template == '/bar/foo'
+
+    def test_module_template_same_partition_full_path(self):
+        args = dict(
+            template='/bar/foo',
+            partition='bar'
+        )
+        p = Parameters(params=args)
+        assert p.template == '/bar/foo'
+
+    def test_module_template_different_partition_full_path(self):
+        args = dict(
+            template='/Common/foo',
+            partition='bar'
+        )
+        p = Parameters(params=args)
+        assert p.template == '/Common/foo'
+
+
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -217,12 +321,11 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(return_value=False)
@@ -248,12 +351,11 @@ class TestManager(unittest.TestCase):
         parameters = load_fixture('create_iapp_service_parameters_f5_http.json')
         current = Parameters(parameters)
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(return_value=True)

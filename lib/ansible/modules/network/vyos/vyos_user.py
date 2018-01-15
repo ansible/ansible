@@ -19,15 +19,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
 module: vyos_user
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage the collection of local users on VyOS device
 description:
   - This module provides declarative management of the local usernames
@@ -35,25 +35,27 @@ description:
     either individual usernames or the collection of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+notes:
+  - Tested against VYOS 1.1.7
 options:
-  users:
+  aggregate:
     description:
       - The set of username objects to be configured on the remote
         VyOS device. The list entries can either be the username or
         a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument.
+        exclusive with the C(name) argument. alias C(users).
   name:
     description:
       - The username to be configured on the VyOS device.
         This argument accepts a string value and is mutually exclusive
-        with the C(collection) argument.
+        with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
   full_name:
     description:
       - The C(full_name) argument provides the full name of the user
         account to be created on the remote device. This argument accepts
         any text string value.
-  password:
+  configured_password:
     description:
       - The password to be configured on the VyOS device. The
         password needs to be provided in clear and it will be encrypted
@@ -95,14 +97,14 @@ EXAMPLES = """
 - name: create a new user
   vyos_user:
     name: ansible
-    password: password
+    configured_password: password
     state: present
 - name: remove all users except admin
   vyos_user:
     purge: yes
 - name: set multiple users to level operator
   vyos_user:
-    users:
+    aggregate:
       - name: netop
       - name: netend
     level: operator
@@ -110,7 +112,7 @@ EXAMPLES = """
 - name: Change Password for User netop
   vyos_user:
     name: netop
-    password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     update_password: always
     state: present
 """
@@ -122,17 +124,19 @@ commands:
   type: list
   sample:
     - set system login user test level operator
-    - set system login user authentication encrypted-password password
+    - set system login user authentication plaintext-password password
 """
 
 import re
 
+from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vyos import get_config, load_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.vyos.vyos import get_config, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.vyos import vyos_argument_spec, check_args
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def validate_level(value, module):
@@ -159,33 +163,53 @@ def spec_to_commands(updates, module):
             continue
 
         if needs_update(want, have, 'level'):
-            add(commands, want, 'level %s' % want['level'])
+            add(commands, want, "level %s" % want['level'])
 
-        if needs_update(want, have, 'password'):
+        if needs_update(want, have, 'full_name'):
+            add(commands, want, "full-name %s" % want['full_name'])
+
+        if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'authentication encrypted-password %s' % want['password'])
+                add(commands, want, 'authentication plaintext-password %s' % want['configured_password'])
 
     return commands
 
 
+def parse_level(data):
+    match = re.search(r'level (\S+)', data, re.M)
+    if match:
+        level = match.group(1)[1:-1]
+        return level
+
+
+def parse_full_name(data):
+    match = re.search(r'full-name (\S+)', data, re.M)
+    if match:
+        full_name = match.group(1)[1:-1]
+        return full_name
+
+
 def config_to_dict(module):
     data = get_config(module)
-    instances = []
 
-    config = {'name': [], 'level': [], 'full_name': [], 'password': None, 'state': 'present'}
+    match = re.findall(r'^set system login user (\S+)', data, re.M)
+    if not match:
+        return list()
 
-    for line in data.split('\n'):
-        if line.startswith('set system login user'):
-            match = re.findall(r'user (\S+)', line, re.M)
-            config['name'].extend(match)
-            if 'level' in line:
-                match = re.findall(r'level (\S+)', line, re.M)
-                config['level'].extend(match)
-            if 'full-name' in line:
-                match = re.findall(r'full-name (\S+)', line, re.M)
-                config['full_name'].extend(match)
+    instances = list()
 
-    instances = [config]
+    for user in set(match):
+        regex = r' %s .+$' % user
+        cfg = re.findall(regex, data, re.M)
+        cfg = '\n'.join(cfg)
+        obj = {
+            'name': user,
+            'state': 'present',
+            'configured_password': None,
+            'level': parse_level(cfg),
+            'full_name': parse_full_name(cfg)
+        }
+        instances.append(obj)
 
     return instances
 
@@ -194,13 +218,6 @@ def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
     if not item.get(key):
         value = module.params[key]
-
-    # if key does exist, do a type check on it to validate it
-    else:
-        value_type = module.argument_spec[key].get('type', 'str')
-        type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER[value_type]
-        type_checker(item[key])
-        value = item[key]
 
     # validate the param value (if validator func exists)
     validator = globals().get('validate_%s' % key)
@@ -211,29 +228,26 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
-        elif not module.params['name']:
-            module.fail_json(msg='username is required')
         else:
-            collection = [{'name': module.params['name']}]
+            users = [{'name': module.params['name']}]
     else:
-        collection = list()
-        for item in users:
+        users = list()
+        for item in aggregate:
             if not isinstance(item, dict):
-                collection.append({'name': item})
-            elif 'name' not in item:
-                module.fail_json(msg='name is required')
+                users.append({'name': item})
             else:
-                collection.append(item)
+                users.append(item)
 
     objects = list()
 
-    for item in collection:
+    for item in users:
         get_value = partial(get_param_value, item=item, module=module)
-        item['password'] = get_value('password')
+        item['configured_password'] = get_value('configured_password')
+        item['full_name'] = get_value('full_name')
         item['level'] = get_value('level')
         item['state'] = get_value('state')
         objects.append(item)
@@ -243,7 +257,6 @@ def map_params_to_obj(module):
 
 def update_objects(want, have):
     updates = list()
-
     for entry in want:
         item = next((i for i in have if i['name'] == entry['name']), None)
         if item is None:
@@ -258,29 +271,43 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        users=dict(type='list', aliases=['collection']),
+    element_spec = dict(
         name=dict(),
 
         full_name=dict(),
         level=dict(aliases=['role']),
 
-        password=dict(no_log=True),
+        configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    argument_spec.update(vyos_argument_spec)
-    mutually_exclusive = [('name', 'users')]
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
 
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
+        purge=dict(type='bool', default=False)
+    )
+
+    argument_spec.update(element_spec)
+    argument_spec.update(vyos_argument_spec)
+
+    mutually_exclusive = [('name', 'aggregate')]
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
+    if module.params['password'] and not module.params['configured_password']:
+        warnings.append(
+            'The "password" argument is used to authenticate the current connection. ' +
+            'To set a user password use "configured_password" instead.'
+        )
 
     result = {'changed': False}
     if warnings:
@@ -292,8 +319,7 @@ def main():
 
     if module.params['purge']:
         want_users = [x['name'] for x in want]
-        for x in have:
-            have_users = x['name']
+        have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             commands.append('delete system login user %s' % item)
 

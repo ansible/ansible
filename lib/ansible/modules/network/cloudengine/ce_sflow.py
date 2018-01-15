@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -128,7 +128,7 @@ options:
         default: null
     counter_interval:
         description:
-            - Indicates the the counter sampling interval.
+            - Indicates the counter sampling interval.
               The value is an integer that ranges from 10 to 4294967295, in seconds. The default value is 20.
         required: false
         default: null
@@ -246,8 +246,8 @@ changed:
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
-from ansible.module_utils.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config
 
 CE_NC_GET_SFLOW = """
 <filter type="subtree">

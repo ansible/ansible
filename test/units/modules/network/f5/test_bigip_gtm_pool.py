@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -29,10 +15,9 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.compat.tests.mock import Mock
+from ansible.compat.tests.mock import patch
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.bigip_gtm_pool import Parameters
@@ -40,6 +25,9 @@ try:
     from library.bigip_gtm_pool import ArgumentSpec
     from library.bigip_gtm_pool import UntypedManager
     from library.bigip_gtm_pool import TypedManager
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_gtm_pool import Parameters
@@ -47,16 +35,14 @@ except ImportError:
         from ansible.modules.network.f5.bigip_gtm_pool import ArgumentSpec
         from ansible.modules.network.f5.bigip_gtm_pool import UntypedManager
         from ansible.modules.network.f5.bigip_gtm_pool import TypedManager
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):
@@ -87,7 +73,7 @@ class TestParameters(unittest.TestCase):
             fallback_ip='10.10.10.10',
             type='a'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.name == 'foo'
         assert p.preferred_lb_method == 'topology'
         assert p.alternate_lb_method == 'ratio'
@@ -103,7 +89,7 @@ class TestParameters(unittest.TestCase):
             fallbackMode='fewest-hops',
             fallbackIp='10.10.10.10'
         )
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.name == 'foo'
         assert p.preferred_lb_method == 'topology'
         assert p.alternate_lb_method == 'ratio'
@@ -111,8 +97,6 @@ class TestParameters(unittest.TestCase):
         assert p.fallback_ip == '10.10.10.10'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestUntypedManager(unittest.TestCase):
 
     def setUp(self):
@@ -127,19 +111,18 @@ class TestUntypedManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        tm = UntypedManager(client)
+        tm = UntypedManager(module=module)
         tm.exists = Mock(side_effect=[False, True])
         tm.create_on_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.version_is_less_than_12 = Mock(return_value=True)
         mm.get_manager = Mock(return_value=tm)
         mm.gtm_provisioned = Mock(return_value=True)
@@ -160,22 +143,21 @@ class TestUntypedManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        current = Parameters(load_fixture('load_gtm_pool_untyped_default.json'))
+        current = Parameters(params=load_fixture('load_gtm_pool_untyped_default.json'))
 
         # Override methods in the specific type of manager
-        tm = UntypedManager(client)
+        tm = UntypedManager(module=module)
         tm.exists = Mock(side_effect=[True, True])
         tm.update_on_device = Mock(return_value=True)
         tm.read_current_from_device = Mock(return_value=current)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.version_is_less_than_12 = Mock(return_value=True)
         mm.get_manager = Mock(return_value=tm)
         mm.gtm_provisioned = Mock(return_value=True)
@@ -196,19 +178,18 @@ class TestUntypedManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        tm = UntypedManager(client)
+        tm = UntypedManager(module=module)
         tm.exists = Mock(side_effect=[True, False])
         tm.remove_from_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.version_is_less_than_12 = Mock(return_value=True)
         mm.get_manager = Mock(return_value=tm)
         mm.gtm_provisioned = Mock(return_value=True)
@@ -218,8 +199,6 @@ class TestUntypedManager(unittest.TestCase):
         assert results['changed'] is True
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestTypedManager(unittest.TestCase):
 
     def setUp(self):
@@ -235,19 +214,18 @@ class TestTypedManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        tm = TypedManager(client)
+        tm = TypedManager(module=module)
         tm.exists = Mock(side_effect=[False, True])
         tm.create_on_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.version_is_less_than_12 = Mock(return_value=False)
         mm.get_manager = Mock(return_value=tm)
         mm.gtm_provisioned = Mock(return_value=True)
@@ -269,22 +247,21 @@ class TestTypedManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
-        current = Parameters(load_fixture('load_gtm_pool_a_default.json'))
+        current = Parameters(params=load_fixture('load_gtm_pool_a_default.json'))
 
         # Override methods in the specific type of manager
-        tm = TypedManager(client)
+        tm = TypedManager(module=module)
         tm.exists = Mock(side_effect=[True, True])
         tm.update_on_device = Mock(return_value=True)
         tm.read_current_from_device = Mock(return_value=current)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.version_is_less_than_12 = Mock(return_value=False)
         mm.get_manager = Mock(return_value=tm)
         mm.gtm_provisioned = Mock(return_value=True)
@@ -306,19 +283,18 @@ class TestTypedManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        tm = TypedManager(client)
+        tm = TypedManager(module=module)
         tm.exists = Mock(side_effect=[True, False])
         tm.remove_from_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.version_is_less_than_12 = Mock(return_value=False)
         mm.get_manager = Mock(return_value=tm)
         mm.gtm_provisioned = Mock(return_value=True)

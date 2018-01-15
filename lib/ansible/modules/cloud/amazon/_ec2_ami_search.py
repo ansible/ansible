@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # (c) 2013, Nimbis Services
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
 
@@ -146,9 +136,9 @@ def ubuntu(module):
     reader = csv.reader(req, delimiter='\t')
     try:
         ami, aki, ari, tag, serial = lookup_ubuntu_ami(reader, release, stream,
-            store, arch, region, virt)
+                                                       store, arch, region, virt)
         module.exit_json(changed=False, ami=ami, aki=aki, ari=ari, tag=tag,
-            serial=serial)
+                         serial=serial)
     except KeyError:
         module.fail_json(msg="No matching AMI found")
 
@@ -173,7 +163,7 @@ def lookup_ubuntu_ami(table, release, stream, store, arch, region, virt):
             actual_store, actual_arch, actual_region, ami, aki, ari,
             actual_virt) = row
         actual = (actual_release, actual_stream, actual_store, actual_arch,
-            actual_region, actual_virt)
+                  actual_region, actual_virt)
         if actual == expected:
             # aki and ari are sometimes blank
             if aki == '':
@@ -195,14 +185,14 @@ def main():
         distro=dict(required=True, choices=SUPPORTED_DISTROS),
         release=dict(required=True),
         stream=dict(required=False, default='server',
-            choices=['desktop', 'server']),
+                    choices=['desktop', 'server']),
         store=dict(required=False, default='ebs',
-            choices=['ebs', 'ebs-io1', 'ebs-ssd', 'instance-store']),
+                   choices=['ebs', 'ebs-io1', 'ebs-ssd', 'instance-store']),
         arch=dict(required=False, default='amd64',
-            choices=['i386', 'amd64']),
+                  choices=['i386', 'amd64']),
         region=dict(required=False, default='us-east-1', choices=AWS_REGIONS),
         virt=dict(required=False, default='paravirtual',
-            choices=['paravirtual', 'hvm']),
+                  choices=['paravirtual', 'hvm']),
     )
     module = AnsibleModule(argument_spec=arg_spec)
     distro = module.params['distro']

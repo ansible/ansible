@@ -1,4 +1,9 @@
+cryptography
 jinja2
 junit-xml
-pywinrm
+paramiko
+ntlm-auth
+requests-ntlm
+requests-credssp
+pywinrm[credssp]
 pyyaml

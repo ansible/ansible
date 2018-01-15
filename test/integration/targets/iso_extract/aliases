@@ -1,5 +1,2 @@
 posix/ci/group1
-needs/privileged
-needs/root
-skip/freebsd
-skip/osx
+destructive

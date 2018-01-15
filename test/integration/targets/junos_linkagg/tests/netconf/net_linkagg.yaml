@@ -1,0 +1,55 @@
+---
+- debug: msg="START junos netconf/net_linkagg.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove linkagg
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: configure linkagg using platform agnostic module
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>ae0</name>' in config.xml"
+      - "'<device-count>4</device-count>' in config.xml"
+      - "'<bundle>ae0</bundle>' in config.xml"
+      - "'<active/>' in config.xml"
+
+- name: teardown - remove linkagg
+  net_linkagg:
+    name: ae0
+    members:
+      - ge-0/0/6
+      - ge-0/0/7
+    mode: active
+    device_count: 4
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_linkagg.yaml on connection={{ ansible_connection }}"

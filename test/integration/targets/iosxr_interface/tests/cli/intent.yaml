@@ -1,0 +1,78 @@
+---
+- debug: msg="START iosxr_interface cli/intent.yaml on connection={{ ansible_connection }}"
+
+- name: Setup (interface is up)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test_interface_1
+    enabled: True
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- name: Check intent arguments
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    state: up
+    delay: 20
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    state: down
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+
+- name: Config + intent
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    enabled: False
+    state: down
+    delay: 20
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Config + intent (fail)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    enabled: False
+    state: up
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(up)' in result.failed_conditions"
+
+- name: Aggregate config + intent (pass)
+  iosxr_interface:
+    aggregate:
+    - name: GigabitEthernet0/0/0/1
+      enabled: True
+      state: up
+      delay: 20
+    provider: "{{ cli }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"

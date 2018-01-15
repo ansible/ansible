@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) 2017 James Tanner (@jctanner) <tanner.jc@gmail.com>
+#          Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+#
+# Written by James Tanner <tanner.jc@gmail.com>
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import psutil
@@ -20,6 +39,16 @@ GOVCURL = None
 @app.route('/')
 def m_index():
     return 'vcsim controller'
+
+
+@app.route('/log')
+def get_log():
+    """Read and return the vcsim log"""
+    fdata = ''
+    if os.path.isfile('vcsim.log'):
+        with open('vcsim.log', 'rb') as f:
+            fdata = f.read()
+    return fdata
 
 
 @app.route('/kill/<int:number>')
@@ -113,14 +142,30 @@ def spawn_vcsim():
         '-httptest.serve',
         '%s:%s' % (hostname, port),
     ]
-    for x in cli_opts:
-        name = x[0]
-        default = x[1]
-        if request.args.get(name):
-            default = request.args.get(name)
-        cmd.append('-%s=%s' % (name, default))
+
+    # trace soap requests+responses
+    if trace:
+        cmd.append('-trace')
+
+    # esx only allows certain arguments
+    if request.args.get('esx'):
+        cmd.append('-esx')
+        for x in [('vm', 1), ('ds', 1)]:
+            name = x[0]
+            default = x[1]
+            if request.args.get(name):
+                default = request.args.get(name)
+            cmd.append('-%s=%s' % (name, default))
+    else:
+        # use all other options as requested for vcenter
+        for x in cli_opts:
+            name = x[0]
+            default = x[1]
+            if request.args.get(name):
+                default = request.args.get(name)
+            cmd.append('-%s=%s' % (name, default))
     cmd = ' '.join(cmd)
-    cmd += ' 2>&1 > vcsim.log'
+    cmd += ' > vcsim.log 2>&1'
 
     # run it with environment settings
     p = subprocess.Popen(
@@ -147,18 +192,132 @@ def spawn_vcsim():
 @app.route('/govc_find')
 def govc_find():
     """Run govc find and optionally filter results"""
-
-    global GOVCURL
-
     ofilter = request.args.get('filter') or None
+    stdout_lines = _get_all_objs(ofilter=ofilter)
+    return jsonify(stdout_lines)
+
+
+@app.route('/govc_vm_info')
+def get_govc_vm_info():
+    """Run govc vm info """
+    vm_name = request.args.get('vm_name') or None
+    vm_output = {}
+    if vm_name:
+        all_vms = [vm_name]
+    else:
+        # Get all VMs
+        all_vms = _get_all_objs(ofilter='VM')
+
+    for vm_name in all_vms:
+        vm_info = _get_vm_info(vm_name=vm_name)
+        name = vm_info.get('Name', vm_name)
+        vm_output[name] = vm_info
+
+    return jsonify(vm_output)
+
+
+@app.route('/govc_host_info')
+def get_govc_host_info():
+    """ Run govc host.info """
+    host_name = request.args.get("host_name") or None
+    host_output = {}
+    if host_name:
+        all_hosts = [host_name]
+    else:
+        all_hosts = _get_all_objs(ofilter='H')
+    for host_system in all_hosts:
+        host_info = _get_host_info(host_name=host_system)
+        name = host_info.get('Name', host_system)
+        host_output[name] = host_info
+
+    return jsonify(host_output)
+
+
+def _get_host_info(host_name=None):
+    """
+    Get all information of host from vcsim
+    :param vm_name: Name of host
+    :return: Dictionary containing information about VM,
+             where KEY represent attributes and VALUE represent attribute's value
+    """
+    cmd = '%s host.info -host=%s 2>&1' % (GOVCPATH, host_name)
+
+    host_info = {}
+    if host_name is None:
+        return host_info
+    host_info = parse_govc_info(cmd)
+
+    return host_info
+
+
+def _get_vm_info(vm_name=None):
+    """
+    Get all information of VM from vcsim
+    :param vm_name: Name of VM
+    :return: Dictionary containing information about VM,
+             where KEY represent attributes and VALUE represent attribute's value
+    """
+    cmd = '%s vm.info %s 2>&1' % (GOVCPATH, vm_name)
+
+    vm_info = {}
+    if vm_name is None:
+        return vm_info
+    vm_info = parse_govc_info(cmd)
+
+    return vm_info
+
+
+def parse_govc_info(cmd):
+    """
+    Helper function to parse output of govc info commands
+    :param cmd: command variable to run and parse output for
+    :return: Dictionary containing information about object
+    """
+    so, se = run_cmd(cmd)
+    stdout_lines = so.splitlines()
+    info = {}
+    for line in stdout_lines:
+        if ":" in line:
+            key, value = line.split(":", 1)
+            key = key.lstrip()
+            info[key] = value.strip()
+
+    return info
+
+
+def _get_all_objs(ofilter=None):
+    """
+    Get all VM Objects from vcsim
+    :param ofilter: Specify which object to get
+    :return: list of Object specified by ofilter
+    """
+    cmd = '%s find ' % GOVCPATH
+    filter_mapping = dict(VA='a', CCR='c', DC='d', F='f', DVP='g', H='h',
+                          VM='m', N='n', ON='o', RP='p', CR='r', D='s', DVS='w')
+    if ofilter:
+        type_filter = filter_mapping.get(ofilter, '')
+        if type_filter != '':
+            cmd += '-type %s ' % type_filter
+
+    cmd += "2>&1"
+    so, se = run_cmd(cmd)
+    stdout_lines = so.splitlines()
+    return stdout_lines
+
+
+def run_cmd(cmd):
+    """
+    Helper Function to run commands
+    :param cmd: Command string to execute
+    :return: StdOut and StdErr in string format
+    """
+    global GOVCURL
 
     env = {
         'GOPATH': GOPATH,
         'GOVC_URL': GOVCURL,
         'GOVC_INSECURE': '1'
     }
-
-    cmd = '%s find 2>&1' % GOVCPATH
 
     p = subprocess.Popen(
         cmd,
@@ -169,12 +328,7 @@ def govc_find():
     )
 
     (so, se) = p.communicate()
-    stdout_lines = so.split('\n')
-
-    if ofilter:
-        stdout_lines = [x for x in stdout_lines if ofilter in x]
-
-    return jsonify(stdout_lines)
+    return so, se
 
 
 if __name__ == "__main__":

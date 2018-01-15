@@ -1,23 +1,13 @@
 #!/usr/bin/python
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -242,6 +232,8 @@ try:
 except ImportError:
     python_consul_installed = False
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def register_with_consul(module):
     state = module.params.get('state')
@@ -285,7 +277,7 @@ def add_check(module, check):
     retrieve the full metadata of an existing check  through the consul api.
     Without this we can't compare to the supplied check and so we must assume
     a change. '''
-    if not check.name and not service_id:
+    if not check.name and not check.service_id:
         module.fail_json(msg='a check name is required for a node level check, one not attached to a service')
 
     consul_api = get_consul_api(module)
@@ -314,7 +306,7 @@ def remove_check(module, check_id):
 
 
 def add_service(module, service):
-    ''' registers a service with the the current agent '''
+    ''' registers a service with the current agent '''
     result = service
     changed = False
 
@@ -367,9 +359,9 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
+    if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('http')) if p]) > 1:
         module.fail_json(
-            msg='check are either script, http or ttl driven, supplying more than one does not make sense')
+            msg='checks are either script, http or ttl driven, supplying more than one does not make sense')
 
     if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
 
@@ -397,8 +389,8 @@ def parse_service(module):
             module.params.get('service_port'),
             module.params.get('tags'),
         )
-    elif module.params.get('service_port') and not module.params.get('service_name'):
-        module.fail_json(msg="service_port supplied but no service_name, a name is required to configure a service.")
+    elif not module.params.get('service_name'):
+        module.fail_json(msg="service_name is required to configure a service.")
 
 
 class ConsulService():
@@ -425,7 +417,7 @@ class ConsulService():
             optional['port'] = self.port
 
         if len(self.checks) > 0:
-            optional['check'] = checks[0].check
+            optional['check'] = self.checks[0].check
 
         consul_api.agent.service.register(
             self.name,
@@ -464,7 +456,7 @@ class ConsulService():
         return data
 
 
-class ConsulCheck():
+class ConsulCheck(object):
 
     def __init__(self, check_id, name, node=None, host='localhost',
                  script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
@@ -513,8 +505,8 @@ class ConsulCheck():
                 self.check_id == other.check_id and
                 self.service_id == other.service_id and
                 self.name == other.name and
-                self.script == script and
-                self.interval == interval)
+                self.script == other.script and
+                self.interval == other.interval)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -586,7 +578,6 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

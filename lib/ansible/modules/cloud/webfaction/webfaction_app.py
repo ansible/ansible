@@ -1,33 +1,21 @@
 #!/usr/bin/python
 #
-# Create a Webfaction application using Ansible and the Webfaction API
-#
-# Valid application types can be found by looking here:
-# http://docs.webfaction.com/xmlrpc-api/apps.html#application-types
-#
-# ------------------------------------------
-#
 # (c) Quentin Stafford-Fraser 2015, with contributions gratefully acknowledged from:
 #     * Andy Baker
 #     * Federico Tarantini
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Create a Webfaction application using Ansible and the Webfaction API
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Valid application types can be found by looking here:
+# http://docs.webfaction.com/xmlrpc-api/apps.html#application-types
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -113,25 +101,29 @@ EXAMPLES = '''
 
 import xmlrpclib
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
-            type = dict(required=True),
-            autostart = dict(required=False, type='bool', default=False),
-            extra_info = dict(required=False, default=""),
-            port_open = dict(required=False, type='bool', default=False),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
-            machine = dict(required=False, default=False),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            type=dict(required=True),
+            autostart=dict(required=False, type='bool', default=False),
+            extra_info=dict(required=False, default=""),
+            port_open=dict(required=False, type='bool', default=False),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
+            machine=dict(required=False, default=False),
         ),
         supports_check_mode=True
     )
-    app_name  = module.params['name']
+    app_name = module.params['name']
     app_type = module.params['type']
     app_state = module.params['state']
 
@@ -165,7 +157,7 @@ def main():
             # If it exists with the right type, we don't change it
             # Should check other parameters.
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         if not module.check_mode:
@@ -184,7 +176,7 @@ def main():
         # If the app's already not there, nothing changed.
         if not existing_app:
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         if not module.check_mode:
@@ -196,13 +188,11 @@ def main():
     else:
         module.fail_json(msg="Unknown state specified: {}".format(app_state))
 
-
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

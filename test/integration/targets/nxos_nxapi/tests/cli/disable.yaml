@@ -25,7 +25,7 @@
 - name: Assert NXAPI is disabled
   assert:
     that:
-      result.stdout[0] | search('disabled')
+      result.stdout[0]  is search('disabled')
 
 - name: Disable NXAPI again
   nxos_nxapi:
@@ -40,7 +40,5 @@
   assert:
     that:
       result.changed == false
-# FIXME https://github.com/ansible/ansible-modules-core/issues/4955
-  ignore_errors: yes
 
 - debug: msg="END cli/disable.yaml"

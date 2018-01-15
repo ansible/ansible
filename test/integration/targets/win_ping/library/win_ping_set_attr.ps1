@@ -20,7 +20,7 @@ $params = Parse-Args $args $true;
 
 $data = Get-Attr $params "data" "pong";
 
-$result = New-Object psobject @{
+$result = @{
     changed = $false
     ping = "pong"
 };

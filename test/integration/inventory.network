@@ -25,7 +25,7 @@ vsrx01 ansible_network_os=junos
 clvx01
 
 [vyos]
-vyos01 ansible_network_os=vyos
+vyos02 ansible_network_os=vyos
 
 [ops]
 ops01

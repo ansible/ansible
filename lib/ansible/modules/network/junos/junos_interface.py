@@ -2,26 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -43,10 +32,7 @@ options:
       - Description of Interface.
   enabled:
     description:
-      - Configure operational status of the interface link.
-        If value is I(yes/true), interface is configured in up state.
-        For I(no/false) interface is configured in down state.
-    default: yes
+      - Configure interface link status.
   speed:
     description:
       - Interface link speed.
@@ -60,27 +46,46 @@ options:
     choices: ['full', 'half', 'auto']
   tx_rate:
     description:
-      - Transmit rate.
+      - Transmit rate in bits per second (bps).
   rx_rate:
     description:
-      - Receiver rate.
-  collection:
-    description: List of Interfaces definitions.
-  purge:
+      - Receiver rate in bits per second (bps).
+  neighbors:
     description:
-      - Purge Interfaces not defined in the collections parameter.
-        This applies only for logical interface.
-    default: no
+      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which given interface C(name) is connected."
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state argument which are
+        I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+    default: 10
+  aggregate:
+    description: List of Interfaces definitions.
   state:
     description:
-      - State of the Interface configuration.
+      - State of the Interface configuration, C(up) idicates present and
+        operationally up and C(down) indicates present and operationally C(down)
     default: present
-    choices: ['present', 'absent', 'active', 'suspend']
+    choices: ['present', 'absent', 'up', 'down']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
@@ -97,24 +102,24 @@ EXAMPLES = """
 - name: make interface down
   junos_interface:
     name: ge-0/0/1
-    state: present
     enabled: False
 
 - name: make interface up
   junos_interface:
     name: ge-0/0/1
-    state: present
     enabled: True
 
 - name: Deactivate interface config
   junos_interface:
     name: ge-0/0/1
-    state: suspend
+    state: present
+    active: False
 
 - name: Activate interface config
   net_interface:
     name: ge-0/0/1
-    state: active
+    state: present
+    active: True
 
 - name: Configure interface speed, mtu, duplex
   junos_interface:
@@ -123,32 +128,74 @@ EXAMPLES = """
     speed: 1g
     mtu: 256
     duplex: full
-    enabled: True
+
+- name: Create interface using aggregate
+  junos_interface:
+    aggregate:
+      - name: ge-0/0/1
+        description: test-interface-1
+      - name: ge-0/0/2
+        description: test-interface-2
+    speed: 1g
+    duplex: full
+    mtu: 512
+
+- name: Delete interface using aggregate
+  junos_interface:
+    aggregate:
+      - name: ge-0/0/1
+      - name: ge-0/0/2
+    state: absent
+
+- name: Check intent arguments
+  junos_interface:
+    name: "{{ name }}"
+    state: up
+    tx_rate: ge(0)
+    rx_rate: le(0)
+
+- name: Check neighbor intent
+  junos_interface:
+    name: xe-0/1/1
+    neighbors:
+    - port: Ethernet1/0/1
+      host: netdev
+
+- name: Config + intent
+  junos_interface:
+    name: "{{ name }}"
+    enabled: False
+    state: down
 """
 
 RETURN = """
-rpc:
-  description: load-configuration RPC send to the device
-  returned: when configuration is changed on device
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
   type: string
   sample: >
-            <interfaces>
-                <interface>
-                    <name>ge-0/0/0</name>
-                    <description>test interface</description>
-                </interface>
-            </interfaces>
+        [edit interfaces]
+        +   ge-0/0/1 {
+        +       description test-interface;
+        +   }
 """
 import collections
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
+from copy import deepcopy
+from time import sleep
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.common.utils import conditional
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
 try:
-    from lxml.etree import tostring
+    from lxml.etree import Element, SubElement, tostring
 except ImportError:
-    from xml.etree.ElementTree import tostring
+    from xml.etree.ElementTree import Element, SubElement, tostring
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -158,19 +205,26 @@ def validate_mtu(value, module):
         module.fail_json(msg='mtu must be between 256 and 9192')
 
 
-def validate_param_values(module, obj):
+def validate_param_values(module, obj, param=None):
+    if not param:
+        param = module.params
     for key in obj:
         # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
         if callable(validator):
-            validator(module.params.get(key), module)
+            validator(param.get(key), module)
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        name=dict(required=True),
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
+
+    element_spec = dict(
+        name=dict(),
         description=dict(),
         enabled=dict(default=True, type='bool'),
         speed=dict(),
@@ -178,20 +232,34 @@ def main():
         duplex=dict(choices=['full', 'half', 'auto']),
         tx_rate=dict(),
         rx_rate=dict(),
-        collection=dict(),
-        purge=dict(default=False, type='bool'),
-        state=dict(default='present',
-                   choices=['present', 'absent', 'active', 'suspend'])
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
+        delay=dict(default=10, type='int'),
+        state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
+        active=dict(default=True, type='bool')
     )
 
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
@@ -200,38 +268,110 @@ def main():
     top = 'interfaces/interface'
 
     param_to_xpath_map = collections.OrderedDict()
-    param_to_xpath_map.update({
-        'name': {'xpath': 'name', 'is_key': True},
-        'description': 'description',
-        'speed': 'speed',
-        'mtu': 'mtu',
-        'enabled': {'xpath': 'disable', 'tag_only': True},
-        'duplex': 'link-mode'
-    })
+    param_to_xpath_map.update([
+        ('name', {'xpath': 'name', 'is_key': True}),
+        ('description', 'description'),
+        ('speed', 'speed'),
+        ('mtu', 'mtu'),
+        ('duplex', 'link-mode'),
+        ('disable', {'xpath': 'disable', 'tag_only': True})
+    ])
 
     choice_to_value_map = {
-        'link-mode': {'full': 'full-duplex', 'half': 'half-duplex', 'auto': 'automatic'},
-        'disable': {True: False, False: True}
+        'link-mode': {'full': 'full-duplex', 'half': 'half-duplex', 'auto': 'automatic'}
     }
 
-    validate_param_values(module, param_to_xpath_map)
+    params = to_param_list(module)
 
-    want = list()
-    want.append(map_params_to_obj(module, param_to_xpath_map))
+    requests = list()
+    for param in params:
+        # if key doesn't exist in the item, get it from module.params
+        for key in param:
+            if param.get(key) is None:
+                param[key] = module.params[key]
 
-    ele = map_obj_to_ele(module, want, top, choice_to_value_map)
+        item = param.copy()
+        state = item.get('state')
+        item['disable'] = True if not item.get('enabled') else False
 
-    kwargs = {'commit': not module.check_mode}
-    kwargs['action'] = 'replace'
+        if state in ('present', 'up', 'down'):
+            item['state'] = 'present'
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+        validate_param_values(module, param_to_xpath_map, param=item)
+        want = map_params_to_obj(module, param_to_xpath_map, param=item)
+        requests.append(map_obj_to_ele(module, want, top, value_map=choice_to_value_map, param=item))
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff},
-            'rpc': tostring(ele)
-        })
+    diff = None
+    with locked_config(module):
+        for req in requests:
+            diff = load_config(module, tostring(req), warnings, action='merge')
+
+        # issue commit after last configuration change is done
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
+
+    failed_conditions = []
+    neighbors = None
+    for item in params:
+        state = item.get('state')
+        tx_rate = item.get('tx_rate')
+        rx_rate = item.get('rx_rate')
+        want_neighbors = item.get('neighbors')
+
+        if state not in ('up', 'down') and tx_rate is None and rx_rate is None and want_neighbors is None:
+            continue
+
+        element = Element('get-interface-information')
+        intf_name = SubElement(element, 'interface-name')
+        intf_name.text = item.get('name')
+
+        if result['changed']:
+            sleep(item.get('delay'))
+
+        reply = exec_rpc(module, tostring(element), ignore_warning=False)
+        if state in ('up', 'down'):
+            admin_status = reply.xpath('interface-information/physical-interface/admin-status')
+            if not admin_status or not conditional(state, admin_status[0].text.strip()):
+                failed_conditions.append('state ' + 'eq(%s)' % state)
+
+        if tx_rate:
+            output_bps = reply.xpath('interface-information/physical-interface/traffic-statistics/output-bps')
+            if not output_bps or not conditional(tx_rate, output_bps[0].text.strip(), cast=int):
+                failed_conditions.append('tx_rate ' + tx_rate)
+
+        if rx_rate:
+            input_bps = reply.xpath('interface-information/physical-interface/traffic-statistics/input-bps')
+            if not input_bps or not conditional(rx_rate, input_bps[0].text.strip(), cast=int):
+                failed_conditions.append('rx_rate ' + rx_rate)
+
+        if want_neighbors:
+            if neighbors is None:
+                element = Element('get-lldp-interface-neighbors')
+                intf_name = SubElement(element, 'interface-device')
+                intf_name.text = item.get('name')
+
+                reply = exec_rpc(module, tostring(element), ignore_warning=False)
+                have_host = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-system-name')]
+                have_port = [item.text for item in reply.xpath('lldp-neighbors-information/lldp-neighbor-information/lldp-remote-port-id')]
+
+            for neighbor in want_neighbors:
+                host = neighbor.get('host')
+                port = neighbor.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
+    if failed_conditions:
+        msg = 'One or more conditional statements have not be satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
 

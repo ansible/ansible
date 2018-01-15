@@ -7,14 +7,19 @@ and orchestrate infrastructure on the Microsoft Azure Cloud.
 Requirements
 ------------
 
-Using the Azure Resource Manager modules requires having `Azure Python SDK <https://github.com/Azure/azure-sdk-for-python>`_
-installed on the host running Ansible. You will need to have == v2.0.0RC5 installed. The simplest way to install the
-SDK is via pip:
+Using the Azure Resource Manager modules requires having specific Azure SDK modules
+installed on the host running Ansible.
 
 .. code-block:: bash
 
-    $ pip install "azure==2.0.0rc5"
+    $ pip install ansible[azure]
 
+If you are running Ansible from source, you can install the dependencies from the
+root directory of the Ansible repo.
+
+.. code-block:: bash
+
+    $ pip install .[azure]
 
 Authenticating with Azure
 -------------------------
@@ -35,11 +40,11 @@ There is now a detailed official tutorial describing `how to create a service pr
 
 After stepping through the tutorial you will have:
 
-* Your Client ID, which is found in the “client id” box in the “Configure” page of your application in the Azure portal
+* Your Client ID, which is found in the "client id" box in the "Configure" page of your application in the Azure portal
 * Your Secret key, generated when you created the application. You cannot show the key after creation.
-  If you lost the key, you must create a new one in the “Configure” page of your application.
-* And finally, a tenant ID. It’s a UUID (e.g. ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
-  application. You will find it in the URL from within the Azure portal, or in the “view endpoints” of any given URL.
+  If you lost the key, you must create a new one in the "Configure" page of your application.
+* And finally, a tenant ID. It's a UUID (e.g. ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
+  application. You will find it in the URL from within the Azure portal, or in the "view endpoints" of any given URL.
 
 
 Using Active Directory Username/Password
@@ -113,6 +118,14 @@ Or, pass the following parameters for Active Directory username/password:
 * password
 * subscription_id
 
+
+Other Cloud Environments
+------------------------
+
+To use an Azure Cloud other than the default public cloud (eg, Azure China Cloud, Azure US Government Cloud, Azure Stack),
+pass the "cloud_environment" argument to modules, configure it in a credential profile, or set the "AZURE_CLOUD_ENVIRONMENT"
+environment variable. The value is either a cloud name as defined by the Azure Python SDK (eg, "AzureChinaCloud",
+"AzureUSGovernment"; defaults to "AzureCloud") or an Azure metadata discovery URL (for Azure Stack).
 
 Creating Virtual Machines
 -------------------------

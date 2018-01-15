@@ -23,6 +23,7 @@ RUN apt-get update -y && \
     lsb-release \
     make \
     mysql-server \
+    pass \
     openssh-client \
     openssh-server \
     python3-cryptography \
@@ -44,6 +45,7 @@ RUN apt-get update -y && \
     reprepro \
     rsync \
     ruby \
+    sshpass \
     subversion \
     sudo \
     tzdata \

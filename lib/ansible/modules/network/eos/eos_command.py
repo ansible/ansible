@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,8 @@ description:
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 extends_documentation_fragment: eos
+notes:
+  - Tested against EOS 4.15
 options:
   commands:
     description:
@@ -137,12 +139,13 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import string_types
-from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.eos import run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.eos.eos import run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
+
 
 def to_lines(stdout):
     lines = list()
@@ -151,6 +154,7 @@ def to_lines(stdout):
             item = str(item).split('\n')
         lines.append(item)
     return lines
+
 
 def parse_commands(module, warnings):
     spec = dict(
@@ -163,20 +167,24 @@ def parse_commands(module, warnings):
     transform = ComplexList(spec, module)
     commands = transform(module.params['commands'])
 
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
-                'Only show commands are supported when using check_mode, not '
-                'executing %s' % item['command']
-            )
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check_mode, not '
+                    'executing %s' % item['command']
+                )
+                commands.remove(item)
 
     return commands
+
 
 def to_cli(obj):
     cmd = obj['command']
     if obj.get('output') == 'json':
         cmd += ' | json'
     return cmd
+
 
 def main():
     """entry point for module execution

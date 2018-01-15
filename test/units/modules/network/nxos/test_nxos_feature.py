@@ -31,17 +31,24 @@ class TestNxosFeatureModule(TestNxosModule):
     module = nxos_feature
 
     def setUp(self):
+        super(TestNxosFeatureModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_feature.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_feature.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_feature.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
+        super(TestNxosFeatureModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
@@ -52,9 +59,8 @@ class TestNxosFeatureModule(TestNxosModule):
                     command = obj['command']
                 except ValueError:
                     command = item['command']
-            filename = str(command).replace(' ', '_')
-            filename = 'nxos_feature/%s.txt' % filename
-            output.append(load_fixture(filename))
+            filename = '%s.txt' % str(command).replace(' ', '_')
+            output.append(load_fixture('nxos_feature', filename))
             return output
 
         self.run_commands.side_effect = load_from_file

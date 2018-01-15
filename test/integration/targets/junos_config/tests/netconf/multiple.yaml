@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/multiple.yaml"
+- debug: msg="START netconf/multiple.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   junos_config:
@@ -46,4 +46,4 @@
     provider: "{{ netconf }}"
   register: test
 
-- debug: msg="END netconf/multiple.yaml"
+- debug: msg="END netconf/multiple.yaml on connection={{ ansible_connection }}"

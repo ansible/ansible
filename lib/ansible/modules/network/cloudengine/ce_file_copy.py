@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -32,30 +32,32 @@ author:
 notes:
     - The feature must be enabled with feature scp-server.
     - If the file is already present, no transfer will take place.
+requirements:
+    - paramiko
 options:
     local_file:
         description:
             - Path to local file. Local directory must exist.
-              The maximum length of local_file is 4096.
+              The maximum length of I(local_file) is C(4096).
         required: true
     remote_file:
         description:
             - Remote file path of the copy. Remote directories must exist.
               If omitted, the name of the local file will be used.
-              The maximum length of remote_file is 4096.
+              The maximum length of I(remote_file) is C(4096).
         required: false
         default: null
     file_system:
         description:
             - The remote file system of the device. If omitted,
-              devices that support a file_system parameter will use
+              devices that support a I(file_system) parameter will use
               their default values.
               File system indicates the storage medium and can be set to as follows,
-              1) 'flash:' is root directory of the flash memory on the master MPU.
-              2) 'slave#flash:' is root directory of the flash memory on the slave MPU.
+              1) C(flash) is root directory of the flash memory on the master MPU.
+              2) C(slave#flash) is root directory of the flash memory on the slave MPU.
                  If no slave MPU exists, this drive is unavailable.
-              3) 'chassis ID/slot number#flash:' is root directory of the flash memory on
-                 a device in a stack. For example, 1/5#flash indicates the flash memory
+              3) C(chassis ID/slot number#flash) is root directory of the flash memory on
+                 a device in a stack. For example, C(1/5#flash) indicates the flash memory
                  whose chassis ID is 1 and slot number is 5.
         required: false
         default: 'flash:'
@@ -111,10 +113,14 @@ import re
 import os
 import time
 from xml.etree import ElementTree
-import paramiko
-from ansible.module_utils.shell import ShellError
 from ansible.module_utils.basic import get_exception, AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, run_commands, get_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 try:
     from scp import SCPClient
@@ -328,6 +334,10 @@ class FileCopy(object):
             self.module.fail_json(
                 msg="'Error: No scp package, please install it.'")
 
+        if not HAS_PARAMIKO:
+            self.module.fail_json(
+                msg="'Error: No paramiko package, please install it.'")
+
         if self.local_file and len(self.local_file) > 4096:
             self.module.fail_json(
                 msg="'Error: The maximum length of local_file is 4096.'")
@@ -359,13 +369,8 @@ class FileCopy(object):
             self.transfer_result = 'The local file already exists on the device.'
 
         if not file_exists:
-            try:
-                self.transfer_file(dest)
-                self.transfer_result = 'The local file has been successfully ' \
-                                       'transferred to the device.'
-            except ShellError:
-                clie = get_exception()
-                self.module.fail_json(msg=get_cli_exception(clie))
+            self.transfer_file(dest)
+            self.transfer_result = 'The local file has been successfully transferred to the device.'
 
         if self.remote_file is None:
             self.remote_file = '/' + os.path.basename(self.local_file)

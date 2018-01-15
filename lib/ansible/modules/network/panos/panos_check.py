@@ -70,16 +70,16 @@ EXAMPLES = '''
     ip_address: "192.168.1.1"
     password: "admin"
   register: result
-  until: not result|failed
+  until: result is not failed
   retries: 10
   delay: 30
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -131,7 +131,7 @@ def main():
         timeout=60
     )
 
-    checkpnt = time.time()+timeout
+    checkpnt = time.time() + timeout
     while True:
         try:
             xapi.op(cmd="show jobs all", cmd_xml=True)

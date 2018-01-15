@@ -2,24 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, GeekChimp - Franck Nijhof <franck@geekchimp.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -120,20 +111,23 @@ import datetime
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import binary_type, text_type
+
 
 # exceptions --------------------------------------------------------------- {{{
 class OSXDefaultsException(Exception):
     pass
+
+
 # /exceptions -------------------------------------------------------------- }}}
 
 # class MacDefaults -------------------------------------------------------- {{{
 class OSXDefaults(object):
-
     """ Class to manage Mac OS user defaults """
 
     # init ---------------------------------------------------------------- {{{
     """ Initialize this module. Finds 'defaults' executable and preps the parameters """
+
     def __init__(self, **kwargs):
 
         # Initial var for storing current defaults value
@@ -164,12 +158,13 @@ class OSXDefaults(object):
 
     # tools --------------------------------------------------------------- {{{
     """ Converts value to given type """
+
     def _convert_type(self, type, value):
 
         if type == "string":
             return str(value)
         elif type in ["bool", "boolean"]:
-            if isinstance(value, basestring):
+            if isinstance(value, (binary_type, text_type)):
                 value = value.lower()
             if value in [True, 1, "true", "1", "yes"]:
                 return True
@@ -201,6 +196,7 @@ class OSXDefaults(object):
         raise OSXDefaultsException('Type is not supported: {0}'.format(type))
 
     """ Returns a normalized list of commandline arguments based on the "host" attribute """
+
     def _host_args(self):
         if self.host is None:
             return []
@@ -210,10 +206,12 @@ class OSXDefaults(object):
             return ['-host', self.host]
 
     """ Returns a list containing the "defaults" executable and any common base arguments """
+
     def _base_command(self):
         return [self.executable] + self._host_args()
 
     """ Converts array output from defaults to an list """
+
     @staticmethod
     def _convert_defaults_str_to_list(value):
 
@@ -228,10 +226,12 @@ class OSXDefaults(object):
         value = [re.sub(',$', '', x.strip(' ')) for x in value]
 
         return value
+
     # /tools -------------------------------------------------------------- }}}
 
     # commands ------------------------------------------------------------ {{{
     """ Reads value of this domain & key from defaults """
+
     def read(self):
         # First try to find out the type
         rc, out, err = self.module.run_command(self._base_command() + ["read-type", self.domain, self.key])
@@ -265,6 +265,7 @@ class OSXDefaults(object):
         self.current_value = self._convert_type(type, out)
 
     """ Writes value to this domain & key to defaults """
+
     def write(self):
 
         # We need to convert some values so the defaults commandline understands it
@@ -296,6 +297,7 @@ class OSXDefaults(object):
             raise OSXDefaultsException('An error occurred while writing value to defaults: ' + out)
 
     """ Deletes defaults key from domain """
+
     def delete(self):
         rc, out, err = self.module.run_command(self._base_command() + ['delete', self.domain, self.key])
         if rc != 0:
@@ -305,6 +307,7 @@ class OSXDefaults(object):
 
     # run ----------------------------------------------------------------- {{{
     """ Does the magic! :) """
+
     def run(self):
 
         # Get the current value from defaults
@@ -326,10 +329,9 @@ class OSXDefaults(object):
 
         # Current value matches the given value. Nothing need to be done. Arrays need extra care
         if self.type == "array" and self.current_value is not None and not self.array_add and \
-                set(self.current_value) == set(self.value):
+                        set(self.current_value) == set(self.value):
             return False
-        elif self.type == "array" and self.current_value is not None and self.array_add and \
-                len(list(set(self.value) - set(self.current_value))) == 0:
+        elif self.type == "array" and self.current_value is not None and self.array_add and len(list(set(self.value) - set(self.current_value))) == 0:
             return False
         elif self.current_value == self.value:
             return False
@@ -341,7 +343,8 @@ class OSXDefaults(object):
         self.write()
         return True
 
-    # /run ---------------------------------------------------------------- }}}
+        # /run ---------------------------------------------------------------- }}}
+
 
 # /class MacDefaults ------------------------------------------------------ }}}
 
@@ -414,9 +417,9 @@ def main():
                                array_add=array_add, value=value, state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
-    except OSXDefaultsException:
-        e = get_exception()
+    except OSXDefaultsException as e:
         module.fail_json(msg=e.message)
+
 
 # /main ------------------------------------------------------------------- }}}
 

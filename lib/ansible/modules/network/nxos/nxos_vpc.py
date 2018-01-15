@@ -16,11 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community',
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = '''
@@ -35,6 +33,7 @@ author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
 notes:
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - The feature vpc must be enabled before this module can be used
   - If not using management vrf, vrf must be globally on the device
     before using in the pkl config
@@ -95,14 +94,24 @@ options:
 '''
 
 EXAMPLES = '''
-# configure a simple asn
-- nxos_vpc:
+- name: configure a simple asn
+  nxos_vpc:
     domain: 100
     role_priority: 1000
     system_priority: 2000
     pkl_dest: 192.168.100.4
     pkl_src: 10.1.100.20
     peer_gw: true
+    auto_recovery: true
+
+- name: configure
+  nxos_vpc:
+    domain: 100
+    role_priority: 32667
+    system_priority: 2000
+    peer_gw: true
+    pkl_src: 10.1.100.2
+    pkl_dest: 192.168.100.4
     auto_recovery: true
 '''
 
@@ -116,8 +125,8 @@ commands:
             "auto-recovery", "peer-gateway"]
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -172,13 +181,13 @@ def get_vpc(module):
         pkl_vrf = None
         peer_gw = False
 
-        run = get_config(module, flags=['section vpc'])
+        run = get_config(module, flags=['vpc'])
         if run:
             vpc_list = run.split('\n')
             for each in vpc_list:
                 if 'delay restore' in each:
                     line = each.split()
-                    if len(line) == 5:
+                    if len(line) == 3:
                         delay_restore = line[-1]
                 if 'peer-keepalive destination' in each:
                     line = each.split()
@@ -265,6 +274,8 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         command = CONFIG_ARGS.get(param)
         if command is not None:
             command = command.format(**vpc).strip()
+            if 'peer-gateway' in command:
+                commands.append('terminal dont-ask')
             commands.append(command)
 
     if commands or domain_only:
@@ -352,6 +363,7 @@ def main():
                 module.fail_json(msg="You are trying to remove a domain that "
                                      "does not exist on the device")
             else:
+                commands.append('terminal dont-ask')
                 commands.append('no vpc domain {0}'.format(domain))
 
     cmds = flatten_list(commands)

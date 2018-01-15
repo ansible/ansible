@@ -2,20 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016-2017, Cumulus Networks <ce-ceng@cumulusnetworks.com>
-#
-# This file is part of Ansible
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -101,10 +94,12 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def command_helper(module, command, errmsg=None):
     """Run a command, catch any nclu errors"""
-    (_rc, output, _err) = module.run_command("/usr/bin/net %s"%command)
+    (_rc, output, _err) = module.run_command("/usr/bin/net %s" % command)
     if _rc or 'ERROR' in output or 'ERROR' in _err:
         module.fail_json(msg=errmsg or output)
     return str(output)
@@ -118,7 +113,7 @@ def check_pending(module):
     color1 = '\x1b[94m'
     if delimeter1 in pending:
         pending = pending.split(delimeter1)[0]
-        pending = pending.replace('\x1b[94m', '')
+        pending = pending.replace(color1, '')
     return pending.strip()
 
 
@@ -143,10 +138,10 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
 
     # First, look at the staged commands.
     before = check_pending(module)
-    # Run all of the the net commands
+    # Run all of the net commands
     output_lines = []
     for line in commands:
-        output_lines += [command_helper(module, line.strip(), "Failed on line %s"%line)]
+        output_lines += [command_helper(module, line.strip(), "Failed on line %s" % line)]
     output = "\n".join(output_lines)
 
     # If pending changes changed, report a change.
@@ -158,7 +153,7 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
 
     # Do the commit.
     if do_commit:
-        result = command_helper(module, "commit description '%s'"%description)
+        result = command_helper(module, "commit description '%s'" % description)
         if "commit ignored" in result:
             _changed = False
             command_helper(module, "abort")
@@ -170,12 +165,12 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
 
 def main(testing=False):
     module = AnsibleModule(argument_spec=dict(
-        commands = dict(required=False, type='list'),
-        template = dict(required=False, type='str'),
-        description = dict(required=False, type='str', default="Ansible-originated commit"),
-        abort = dict(required=False, type='bool', default=False),
-        commit = dict(required=False, type='bool', default=False),
-        atomic = dict(required=False, type='bool', default=False)),
+        commands=dict(required=False, type='list'),
+        template=dict(required=False, type='str'),
+        description=dict(required=False, type='str', default="Ansible-originated commit"),
+        abort=dict(required=False, type='bool', default=False),
+        commit=dict(required=False, type='bool', default=False),
+        atomic=dict(required=False, type='bool', default=False)),
         mutually_exclusive=[('commands', 'template'),
                             ('commit', 'atomic'),
                             ('abort', 'atomic')]
@@ -193,7 +188,6 @@ def main(testing=False):
     elif testing:
         return {"changed": _changed, "msg": output}
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == '__main__':
     main()

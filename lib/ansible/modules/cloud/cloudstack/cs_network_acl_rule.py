@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -285,7 +285,6 @@ zone:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -317,7 +316,7 @@ class AnsibleCloudStackNetworkAclRule(AnsibleCloudStack):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
         }
-        network_acl_rules = self.cs.listNetworkACLs(**args)
+        network_acl_rules = self.query_api('listNetworkACLs', **args)
         for acl_rule in network_acl_rules.get('networkacl', []):
             if acl_rule['number'] == self.module.params.get('rule_position'):
                 return acl_rule
@@ -358,9 +357,7 @@ class AnsibleCloudStackNetworkAclRule(AnsibleCloudStack):
                 'id': network_acl_rule['id'],
             }
             if not self.module.check_mode:
-                res = self.cs.deleteNetworkACL(**args)
-                if 'errortext' in res:
-                    self.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteNetworkACL', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -384,9 +381,7 @@ class AnsibleCloudStackNetworkAclRule(AnsibleCloudStack):
             'cidrlist': self.module.params.get('cidr'),
         }
         if not self.module.check_mode:
-            res = self.cs.createNetworkACL(**args)
-            if 'errortext' in res:
-                self.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('createNetworkACL', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -410,9 +405,7 @@ class AnsibleCloudStackNetworkAclRule(AnsibleCloudStack):
         if self.has_changed(args, network_acl_rule):
             self.result['changed'] = True
             if not self.module.check_mode:
-                res = self.cs.updateNetworkACLItem(**args)
-                if 'errortext' in res:
-                    self.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('updateNetworkACLItem', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -470,19 +463,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_network_acl_rule = AnsibleCloudStackNetworkAclRule(module)
+    acs_network_acl_rule = AnsibleCloudStackNetworkAclRule(module)
 
-        state = module.params.get('state')
-        if state == 'absent':
-            network_acl_rule = acs_network_acl_rule.absent_network_acl_rule()
-        else:
-            network_acl_rule = acs_network_acl_rule.present_network_acl_rule()
+    state = module.params.get('state')
+    if state == 'absent':
+        network_acl_rule = acs_network_acl_rule.absent_network_acl_rule()
+    else:
+        network_acl_rule = acs_network_acl_rule.present_network_acl_rule()
 
-        result = acs_network_acl_rule.get_result(network_acl_rule)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_network_acl_rule.get_result(network_acl_rule)
 
     module.exit_json(**result)
 

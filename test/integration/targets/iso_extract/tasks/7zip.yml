@@ -1,0 +1,88 @@
+# Test code for the iso_extract module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+# (c) 2017, Dag Wieers <dag@wieers.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Gather facts
+  setup:
+  become: yes
+
+- name: Add EPEL repository
+  yum_repository:
+    name: epel
+    description: EPEL yum repo
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    state: present
+  when: ansible_distribution in ['CentOS']
+
+- name: Install 7zip package if we are on Fedora
+  dnf:
+    name: p7zip-plugins
+    state: installed
+  become: yes
+  when: ansible_distribution in ['Fedora']
+
+- name: Install 7zip package if we are on CentOS
+  yum:
+    name: p7zip-plugins
+    state: installed
+    update_cache: yes
+  become: yes
+  when: ansible_distribution in ['CentOS']
+
+- name: Install 7zip package if we are on OpenSUSE
+  zypper:
+    name: p7zip
+    state: installed
+    update_cache: yes
+  become: yes
+  when: ansible_distribution in ['openSUSE Leap']
+
+- name: Install 7zip package if we are on Ubuntu
+  apt:
+    name: p7zip-full
+    state: installed
+    update_cache: yes
+  become: yes
+  when: ansible_distribution in ['Ubuntu']
+
+- name: Find brew binary
+  command: which brew
+  register: brew_which
+  when: ansible_distribution in ['MacOSX']
+
+- name: Get owner of brew binary
+  stat:
+    path: "{{ brew_which.stdout }}"
+  register: brew_stat
+  when: ansible_distribution in ['MacOSX']
+
+- name: Install 7zip package if we are on MacOSX
+  homebrew:
+    name: p7zip
+    state: present
+    update_homebrew: no
+  become: yes
+  become_user: "{{ brew_stat.stat.pw_name }}"
+  when: ansible_distribution in ['MacOSX']
+
+- name: Install 7zip package if we are on FreeBSD
+  pkgng:
+    name: p7zip
+    state: present
+  become: yes
+  when: ansible_distribution in ['FreeBSD']

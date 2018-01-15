@@ -1,0 +1,20 @@
+# GCE Labels Setup.
+# ============================================================
+- name: "Create instance for executing gce_labels tests"
+  gce:
+    instance_names: "{{ instance_name }}"
+    machine_type: "{{ machine_type }}"
+    image: "{{ image }}"
+    zone: "{{ zone }}"
+    project_id: "{{ project_id }}"
+    pem_file: "{{ pem_file }}"
+    service_account_email: "{{ service_account_email }}"
+    state: present
+  register: result
+
+- name: assert VM created
+  assert:
+    that:
+      - 'result.changed'
+      - 'result.instance_names[0] == "{{ instance_name }}"'
+      - 'result.state == "present"'

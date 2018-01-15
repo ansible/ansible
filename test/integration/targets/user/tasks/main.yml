@@ -58,7 +58,7 @@
   user:
       name: "{{ user_names.stdout_lines|random }}"
       state: present
-      createhome: no
+      create_home: no
   with_sequence: start=1 end=5
   register: user_test1
 - debug: var=user_test1
@@ -74,7 +74,7 @@
       that:
           - "user_test1.results|map(attribute='changed')|unique|list == [False]"
           - "user_test1.results|map(attribute='state')|unique|list == ['present']"
-  when: "jinja2_version.stdout|version_compare('2.6', '>=')"
+  when: "jinja2_version.stdout is version('2.6', '>=')"
 
 - name: validate changed results for testcase 1 (jinja >= 2.6)
   assert:
@@ -89,7 +89,7 @@
           - "user_test1.results[2]['state'] == 'present'"
           - "user_test1.results[3]['state'] == 'present'"
           - "user_test1.results[4]['state'] == 'present'"
-  when: "jinja2_version.stdout|version_compare('2.6', '<')"
+  when: "jinja2_version.stdout is version('2.6', '<')"
 
 ##
 ## user remove
@@ -99,6 +99,7 @@
   user:
       name: ansibulluser
       state: absent
+      force: true
   register: user_test2
 - name: make a new list of users
   script: userlist.sh "{{ ansible_distribution }}"
@@ -108,3 +109,53 @@
   assert:
       that:
           - '"ansibulluser" not in user_names2.stdout_lines'
+
+
+- block:
+    - name: create non-system user on OSX to test the shell is set to /bin/bash
+      user:
+        name: osxuser
+      register: osxuser_output
+
+    - name: validate the shell is set to /bin/bash
+      assert:
+        that:
+          - 'osxuser_output.shell == "/bin/bash"'
+
+    - name: cleanup
+      user:
+        name: osxuser
+        state: absent
+
+    - name: create system user on OSX to test the shell is set to /usr/bin/false
+      user:
+        name: osxuser
+        system: yes
+      register: osxuser_output
+
+    - name: validate the shell is set to /usr/bin/false
+      assert:
+        that:
+          - 'osxuser_output.shell == "/usr/bin/false"'
+
+    - name: cleanup
+      user:
+        name: osxuser
+        state: absent
+
+    - name: create non-system user on OSX and set the shell to /bin/sh
+      user:
+        name: osxuser
+        shell: /bin/sh
+      register: osxuser_output
+
+    - name: validate the shell is set to /bin/sh
+      assert:
+        that:
+          - 'osxuser_output.shell == "/bin/sh"'
+
+    - name: cleanup
+      user:
+        name: osxuser
+        state: absent
+  when: ansible_distribution == "MacOSX"

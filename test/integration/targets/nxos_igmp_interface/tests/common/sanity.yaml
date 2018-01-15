@@ -1,0 +1,92 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_igmp_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- name: "Enable feature PIM"
+  nxos_feature:
+    feature: pim
+    state: enabled
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  
+  - name: put interface in L3 and enable PIM
+    nxos_config:
+      commands:
+        - no switchport
+        - ip pim sparse-mode
+      parents:
+        - "interface {{ intname }}"
+      match: none
+      provider: "{{ connection }}"
+
+  - name: Configure igmp interface with non-default values
+    nxos_igmp_interface: &non-default
+      interface: "{{ intname }}"
+      version: 3
+      startup_query_interval: 60
+      startup_query_count: 5
+      robustness: 6
+      querier_timeout: 2000
+      query_mrt: 12
+      query_interval: 200
+      last_member_qrt: 2
+      last_member_query_count: 4
+      report_llg: true
+      immediate_leave: true
+      restart: false
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Configure igmp interface with non-default values"
+    nxos_igmp_interface: *non-default
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure igmp interface with default value
+    nxos_igmp_interface: &default
+      interface: "{{ intname }}"
+      state: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp interface with default value"
+    nxos_igmp_interface: *default
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Configure igmp interface with default value
+    nxos_igmp_interface: *default
+    register: result
+
+  - name: Put interface in default mode
+    nxos_config:
+      commands:
+      - "default interface {{ intname }}"
+      provider: "{{ connection }}"
+      match: none
+
+  - name: "Disable feature PIM"
+    nxos_feature:
+      feature: pim
+      state: disabled
+      provider: "{{ connection }}"
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_igmp_interface sanity test"

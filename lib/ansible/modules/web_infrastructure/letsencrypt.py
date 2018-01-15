@@ -2,23 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -30,9 +20,9 @@ author: "Michael Gruener (@mgruener)"
 version_added: "2.2"
 short_description: Create SSL certificates with Let's Encrypt
 description:
-   - "Create and renew SSL certificates with Let's Encrypt. Let’s Encrypt is a
+   - "Create and renew SSL certificates with Let's Encrypt. Let's Encrypt is a
       free, automated, and open certificate authority (CA), run for the
-      public’s benefit. For details see U(https://letsencrypt.org). The current
+      public's benefit. For details see U(https://letsencrypt.org). The current
       implementation supports the http-01, tls-sni-02 and dns-01 challenges."
    - "To use this module, it has to be executed at least twice. Either as two
       different tasks in the same run or during multiple runs."
@@ -51,40 +41,43 @@ requirements:
   - "python >= 2.6"
   - openssl
 options:
-  account_key:
+  account_key_src:
     description:
-      - "File containing the the Let's Encrypt account RSA key."
+      - "Path to a file containing the Let's Encrypt account RSA key."
       - "Can be created with C(openssl rsa ...)."
-    required: true
+      - "Mutually exclusive with C(account_key_content)."
+      - "Required if C(account_key_content) is not used."
+    aliases: [ account_key ]
+  account_key_content:
+    description:
+      - "Content of the Let's Encrypt account RSA key."
+      - "Mutually exclusive with C(account_key_src)."
+      - "Required if C(account_key_src) is not used."
+    version_added: "2.5"
   account_email:
     description:
       - "The email address associated with this account."
       - "It will be used for certificate expiration warnings."
-    required: false
-    default: null
   acme_directory:
     description:
       - "The ACME directory to use. This is the entry point URL to access
          CA server API."
       - "For safety reasons the default is set to the Let's Encrypt staging server.
          This will create technically correct, but untrusted certificates."
-    required: false
     default: https://acme-staging.api.letsencrypt.org/directory
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
          ACME service at C(acme_directory)."
-    required: false
-    default: 'https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf'
+      - Default is latest gathered from C(acme_directory) URL.
   challenge:
     description: The challenge to be performed.
-    required: false
     choices: [ 'http-01', 'dns-01', 'tls-sni-02']
     default: 'http-01'
   csr:
     description:
       - "File containing the CSR for the new certificate."
-      - "Can be created with C(openssl csr ...)."
+      - "Can be created with C(openssl req ...)."
       - "The CSR may contain multiple Subject Alternate Names, but each one
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
@@ -95,25 +88,41 @@ options:
       - "The data to validate ongoing challenges."
       - "The value that must be used here will be provided by a previous use
          of this module."
-    required: false
-    default: null
   dest:
     description: The destination file for the certificate.
     required: true
     aliases: ['cert']
+  fullchain:
+    description: Include the full certificate chain in the destination file.
+    default: false
+    version_added: 2.5
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
          If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."
-    required: false
     default: 10
 '''
 
 EXAMPLES = '''
-- letsencrypt:
-    account_key: /etc/pki/cert/private/account.key
+- name: Create a challenge for sample.com using a account key from a variable.
+  letsencrypt:
+    account_key_content: "{{ account_private_key }}"
+    csr: /etc/pki/cert/csr/sample.com.csr
+    dest: /etc/httpd/ssl/sample.com.crt
+  register: sample_com_challenge
+
+- name: Create a challenge for sample.com using a account key from hashi vault.
+  letsencrypt:
+    account_key_content: "{{ lookup('hashi_vault', 'secret=secret/account_private_key:value') }}"
+    csr: /etc/pki/cert/csr/sample.com.csr
+    dest: /etc/httpd/ssl/sample.com.crt
+  register: sample_com_challenge
+
+- name: Create a challenge for sample.com using a account key file.
+  letsencrypt:
+    account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
   register: sample_com_challenge
@@ -124,10 +133,11 @@ EXAMPLES = '''
 # - copy:
 #     dest: /var/www/html/{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
 #     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
-#     when: sample_com_challenge|changed
+#     when: sample_com_challenge is changed
 
-- letsencrypt:
-    account_key: /etc/pki/cert/private/account.key
+- name: Let the challenge be validated and retrieve the cert
+  letsencrypt:
+    account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
     data: "{{ sample_com_challenge }}"
@@ -164,11 +174,38 @@ authorizations:
         type: dict
 '''
 
+import base64
 import binascii
 import copy
+import hashlib
+import json
 import locale
+import os
+import re
+import shutil
+import tempfile
 import textwrap
+import time
+import traceback
 from datetime import datetime
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.urls import fetch_url as _fetch_url
+
+
+def _lowercase_fetch_url(*args, **kwargs):
+    '''
+     Add lowercase representations of the header names as dict keys
+
+    '''
+    response, info = _fetch_url(*args, **kwargs)
+
+    info.update(dict((header.lower(), value) for (header, value) in info.items()))
+    return response, info
+
+
+fetch_url = _lowercase_fetch_url
 
 
 def nopad_b64(data):
@@ -178,12 +215,11 @@ def nopad_b64(data):
 def simple_get(module, url):
     resp, info = fetch_url(module, url, method='GET')
 
-    result = None
+    result = {}
     try:
         content = resp.read()
     except AttributeError:
-        if info['body']:
-            content = info['body']
+        content = info.get('body')
 
     if content:
         if info['content-type'].startswith('application/json'):
@@ -212,12 +248,12 @@ def get_cert_days(module, cert_file):
     _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True)
     try:
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)", out.decode('utf8')).group(1)
-        not_after = datetime.datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
+        not_after = datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
     except AttributeError:
         module.fail_json(msg="No 'Not after' date found in {0}".format(cert_file))
     except ValueError:
         module.fail_json(msg="Failed to parse 'Not after' date of {0}".format(cert_file))
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     return (not_after - now).days
 
 
@@ -235,7 +271,7 @@ def write_file(module, dest, content):
         f.write(content)
     except Exception as err:
         os.remove(tmpsrc)
-        module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
     f.close()
     checksum_src = None
     checksum_dest = None
@@ -267,7 +303,7 @@ def write_file(module, dest, content):
             changed = True
         except Exception as err:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(err)), exception=traceback.format_exc())
     os.remove(tmpsrc)
     return changed
 
@@ -280,6 +316,7 @@ class ACMEDirectory(object):
     require authentication).
     https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.2
     '''
+
     def __init__(self, module):
         self.module = module
         self.directory_root = module.params['acme_directory']
@@ -305,23 +342,37 @@ class ACMEAccount(object):
     ACME server. Provides access to account bound information like
     the currently active authorizations and valid certificates
     '''
+
     def __init__(self, module):
         self.module = module
         self.agreement = module.params['agreement']
-        self.key = module.params['account_key']
+        # account_key path and content are mutually exclusive
+        self.key = module.params['account_key_src']
+        self.key_content = module.params['account_key_content']
         self.email = module.params['account_email']
         self.data = module.params['data']
         self.directory = ACMEDirectory(module)
+        self.agreement = module.params['agreement'] or self.directory['meta']['terms-of-service']
+
         self.uri = None
         self.changed = False
 
         self._authz_list_uri = None
         self._certs_list_uri = None
 
-        if not os.path.exists(self.key):
-            module.fail_json(msg="Account key %s not found" % (self.key))
-
         self._openssl_bin = module.get_bin_path('openssl', True)
+
+        # Create a key file from content, key (path) and key content are mutually exclusive
+        if self.key_content is not None:
+            _, tmpsrc = tempfile.mkstemp()
+            f = open(tmpsrc, 'wb')
+            try:
+                f.write(self.key_content)
+                self.key = tmpsrc
+            except Exception as err:
+                os.remove(tmpsrc)
+                module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
+            f.close()
 
         pub_hex, pub_exp = self._parse_account_key(self.key)
         self.jws_header = {
@@ -353,7 +404,7 @@ class ACMEAccount(object):
 
         pub_hex, pub_exp = re.search(
             r"modulus:\n\s+00:([a-f0-9\:\s]+?)\npublicExponent: ([0-9]+)",
-            out.decode('utf8'), re.MULTILINE | re.DOTALL).groups()
+            to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL).groups()
         pub_exp = "{0:x}".format(int(pub_exp))
         if len(pub_exp) % 2:
             pub_exp = "0{0}".format(pub_exp)
@@ -383,16 +434,15 @@ class ACMEAccount(object):
             "header": self.jws_header,
             "protected": protected64,
             "payload": payload64,
-            "signature": nopad_b64(out),
+            "signature": nopad_b64(to_bytes(out)),
         })
 
         resp, info = fetch_url(self.module, url, data=data, method='POST')
-        result = None
+        result = {}
         try:
             content = resp.read()
         except AttributeError:
-            if info['body']:
-                content = info['body']
+            content = info.get('body')
 
         if content:
             if info['content-type'].startswith('application/json'):
@@ -405,13 +455,15 @@ class ACMEAccount(object):
 
         return result, info
 
-    def _new_reg(self, contact=[]):
+    def _new_reg(self, contact=None):
         '''
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created)
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.3
         '''
+        contact = [] if contact is None else contact
+
         if self.uri is not None:
             return True
 
@@ -511,6 +563,7 @@ class ACMEClient(object):
     start and validate ACME challenges and download the respective
     certificates.
     '''
+
     def __init__(self, module):
         self.module = module
         self.challenge = module.params['challenge']
@@ -536,10 +589,10 @@ class ACMEClient(object):
         _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         domains = set([])
-        common_name = re.search(r"Subject:.*? CN=([^\s,;/]+)", out.decode('utf8'))
+        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
         if common_name is not None:
             domains.add(common_name.group(1))
-        subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", out.decode('utf8'), re.MULTILINE | re.DOTALL)
+        subject_alt_names = re.search(r"X509v3 Subject Alternative Name: \n +([^\n]+)\n", to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
         if subject_alt_names is not None:
             for san in subject_alt_names.group(1).split(", "):
                 if san.startswith("DNS:"):
@@ -630,13 +683,13 @@ class ACMEClient(object):
                 len_ka_digest = len(ka_digest)
                 resource = 'subjectAlternativeNames'
                 value = [
-                    "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest / 2], token_digest[len_token_digest / 2:]),
-                    "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest / 2], ka_digest[len_ka_digest / 2:]),
+                    "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest // 2], token_digest[len_token_digest // 2:]),
+                    "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest // 2], ka_digest[len_ka_digest // 2:]),
                 ]
             elif type == 'dns-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.4
                 resource = '_acme-challenge'
-                value = nopad_b64(hashlib.sha256(keyauthorization).digest()).encode('utf8')
+                value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
             else:
                 continue
 
@@ -709,10 +762,21 @@ class ACMEClient(object):
             "csr": nopad_b64(out),
         }
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
+
+        chain = []
+        if 'link' in info:
+            link = info['link']
+            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
+            if parsed_link and parsed_link.group(2) == "up":
+                chain_link = parsed_link.group(1)
+                chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
+                if chain_info['status'] in [200, 201]:
+                    chain = [chain_result.read()]
+
         if info['status'] not in [200, 201]:
             self.module.fail_json(msg="Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
         else:
-            return {'cert': result, 'uri': info['location']}
+            return {'cert': result, 'uri': info['location'], 'chain': chain}
 
     def _der_to_pem(self, der_cert):
         '''
@@ -764,29 +828,47 @@ class ACMEClient(object):
         cert = self._new_cert()
         if cert['cert'] is not None:
             pem_cert = self._der_to_pem(cert['cert'])
+
+            chain = [self._der_to_pem(link) for link in cert.get('chain', [])]
+            if chain and self.module.params['fullchain']:
+                pem_cert += "\n".join(chain)
+
             if write_file(self.module, self.dest, pem_cert):
                 self.cert_days = get_cert_days(self.module, self.dest)
                 self.changed = True
+
+        # Clean up temporary account key file
+        if self.module.params['account_key_content'] is not None:
+            os.remove(self.account.key)
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            account_key=dict(required=True, type='path'),
+            account_key_src=dict(type='path', aliases=['account_key']),
+            account_key_content=dict(type='str'),
             account_email=dict(required=False, default=None, type='str'),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            agreement=dict(required=False, default='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf', type='str'),
+            agreement=dict(required=False, type='str'),
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
             data=dict(required=False, no_log=True, default=None, type='dict'),
+            fullchain=dict(required=False, default=True, type='bool'),
             dest=dict(required=True, aliases=['cert'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
+        ),
+        required_one_of=(
+            ['account_key_src', 'account_key_content'],
+        ),
+        mutually_exclusive=(
+            ['account_key_src', 'account_key_content'],
         ),
         supports_check_mode=True,
     )
 
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
-    locale.setlocale(locale.LC_ALL, "C")
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale.setlocale(locale.LC_ALL, 'C')
 
     cert_days = get_cert_days(module, module.params['dest'])
     if cert_days < module.params['remaining_days']:
@@ -805,9 +887,6 @@ def main():
     else:
         module.exit_json(changed=False, cert_days=cert_days)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

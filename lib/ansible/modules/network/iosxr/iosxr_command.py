@@ -1,24 +1,15 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -35,6 +26,8 @@ description:
   - This module does not support running commands in configuration mode.
     Please use M(iosxr_config) to configure iosxr devices.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   commands:
     description:
@@ -101,6 +94,7 @@ tasks:
       commands:
         - show version
         - show interfaces
+        - [{ command: example command that prompts, prompt: expected prompt, answer: yes}]
 
   - name: run multiple commands and evaluate the output
     iosxr_command:
@@ -132,38 +126,41 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.iosxr import run_commands
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import command_spec
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils._text import to_native
+
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = str(item).split('\n')
+            item = to_native(item, errors='surrogate_or_strict').split('\n')
         yield item
 
-def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-    commands = command(module.params['commands'])
 
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
+def parse_commands(module, warnings):
+    commands = module.params['commands']
+    for item in list(commands):
+        try:
+            command = item['command']
+        except Exception:
+            command = item
+        if module.check_mode and not command.startswith('show'):
             warnings.append(
                 'only show commands are supported when using check mode, not '
-                'executing `%s`' % item['command']
+                'executing `%s`' % command
             )
-        elif item['command'].startswith('conf'):
+            commands.remove(item)
+        elif command.startswith('conf'):
             module.fail_json(
                 msg='iosxr_command does not support running config mode '
                     'commands.  Please use iosxr_config instead'
             )
+
     return commands
+
 
 def main():
     spec = dict(
@@ -178,11 +175,12 @@ def main():
 
     spec.update(iosxr_argument_spec)
 
+    spec.update(command_spec)
+
     module = AnsibleModule(argument_spec=spec,
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     commands = parse_commands(module, warnings)
 
@@ -194,7 +192,7 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_commands(module, commands)
+        responses = run_command(module, commands)
 
         for item in list(conditionals):
             if item(responses):
@@ -213,7 +211,6 @@ def main():
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
-
 
     result = {
         'changed': False,

@@ -45,7 +45,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
    To protect your system from any potential changes caused by integration tests, and to ensure the a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/runner/completion/docker.txt>`_ for options.
 
-.. note:: Avoiding pulling new Docker images:
+.. note:: Avoiding pulling new Docker images
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
 
@@ -98,9 +98,9 @@ Tests in Docker containers
 If you have a Linux system with Docker installed, running integration tests using the same Docker containers used by
 the Ansible continuous integration (CI) system is recommended.
 
-.. note: Docker on non-Linux::
+.. note:: Docker on non-Linux
 
-   Using Docker Engine to run Docker on a non-Linux host is not recommended.
+   Using Docker Engine to run Docker on a non-Linux host (such as macOS) is not recommended.
    Some tests may fail, depending on the image used for testing.
    Using the ``--docker-privileged`` option may resolve the issue.
 
@@ -161,11 +161,17 @@ IAM policies for AWS
 
 Ansible needs fairly wide ranging powers to run the tests in an AWS account.  This rights can be provided to a dedicated user. These need to be configured before running the test.
 
-testing-iam-policy.json.j2
---------------------------
+testing-policies
+----------------
 
-The testing-iam-policy.json.j2 file contains a policy which can be given to the user
-running the tests to minimize the rights of that user.  Please note that while this policy does limit the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN notation). The user will still have wide privileges for viewing account definitions, and will also able to manage some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not be run in a primary production account in any case.
+``hacking/aws_config/testing_policies`` contains a set of policies that are required for all existing AWS module tests.
+The ``hacking/aws_config/setup_iam.yml`` playbook can be used to add all of those policies to an IAM group (using
+``-e iam_group=GROUP_NAME``. Once the group is created, you'll need to create a user and make the user a member of the
+group. The policies are designed to minimize the rights of that user.  Please note that while this policy does limit
+the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN
+notation). The user will still have wide privileges for viewing account definitions, and will also able to manage
+some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not
+be run in a primary production account in any case.
 
 Other Definitions required
 --------------------------
@@ -267,4 +273,4 @@ A top level playbook is required such as ``ansible/test/integration/eos.yaml`` w
 Where to find out more
 ======================
 
-If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.

@@ -3,24 +3,13 @@
 
 # Copyright (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -344,8 +333,9 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-from datetime import date
 import crypt
+from datetime import date, timedelta
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.univention_umc import (
     umc_module_for_add,
@@ -353,147 +343,146 @@ from ansible.module_utils.univention_umc import (
     ldap_search,
     base_dn,
 )
-from dateutil.relativedelta import relativedelta
 
 
 def main():
-    expiry = date.strftime(date.today() + relativedelta(years=1), "%Y-%m-%d")
+    expiry = date.strftime(date.today() + timedelta(days=365), "%Y-%m-%d")
     module = AnsibleModule(
-        argument_spec = dict(
-            birthday                = dict(default=None,
-                                           type='str'),
-            city                    = dict(default=None,
-                                           type='str'),
-            country                 = dict(default=None,
-                                           type='str'),
-            department_number       = dict(default=None,
-                                           type='str',
-                                           aliases=['departmentNumber']),
-            description             = dict(default=None,
-                                           type='str'),
-            display_name            = dict(default=None,
-                                           type='str',
-                                           aliases=['displayName']),
-            email                   = dict(default=[''],
-                                           type='list'),
-            employee_number         = dict(default=None,
-                                           type='str',
-                                           aliases=['employeeNumber']),
-            employee_type           = dict(default=None,
-                                           type='str',
-                                           aliases=['employeeType']),
-            firstname               = dict(default=None,
-                                           type='str'),
-            gecos                   = dict(default=None,
-                                           type='str'),
-            groups                  = dict(default=[],
-                                           type='list'),
-            home_share              = dict(default=None,
-                                           type='str',
-                                           aliases=['homeShare']),
-            home_share_path         = dict(default=None,
-                                           type='str',
-                                           aliases=['homeSharePath']),
-            home_telephone_number   = dict(default=[],
-                                           type='list',
-                                           aliases=['homeTelephoneNumber']),
-            homedrive               = dict(default=None,
-                                           type='str'),
-            lastname                = dict(default=None,
-                                           type='str'),
-            mail_alternative_address= dict(default=[],
-                                           type='list',
-                                           aliases=['mailAlternativeAddress']),
-            mail_home_server        = dict(default=None,
-                                           type='str',
-                                           aliases=['mailHomeServer']),
-            mail_primary_address    = dict(default=None,
-                                           type='str',
-                                           aliases=['mailPrimaryAddress']),
-            mobile_telephone_number = dict(default=[],
-                                           type='list',
-                                           aliases=['mobileTelephoneNumber']),
-            organisation            = dict(default=None,
-                                           type='str'),
-            overridePWHistory       = dict(default=False,
-                                           type='bool',
-                                           aliases=['override_pw_history']),
-            overridePWLength        = dict(default=False,
-                                           type='bool',
-                                           aliases=['override_pw_length']),
-            pager_telephonenumber   = dict(default=[],
-                                           type='list',
-                                           aliases=['pagerTelephonenumber']),
-            password                = dict(default=None,
-                                           type='str',
-                                           no_log=True),
-            phone                   = dict(default=[],
-                                           type='list'),
-            postcode                = dict(default=None,
-                                           type='str'),
-            primary_group           = dict(default=None,
-                                           type='str',
-                                           aliases=['primaryGroup']),
-            profilepath             = dict(default=None,
-                                           type='str'),
-            pwd_change_next_login   = dict(default=None,
-                                           type='str',
-                                           choices=['0', '1'],
-                                           aliases=['pwdChangeNextLogin']),
-            room_number             = dict(default=None,
-                                           type='str',
-                                           aliases=['roomNumber']),
-            samba_privileges        = dict(default=[],
-                                           type='list',
-                                           aliases=['sambaPrivileges']),
-            samba_user_workstations = dict(default=[],
-                                           type='list',
-                                           aliases=['sambaUserWorkstations']),
-            sambahome               = dict(default=None,
-                                           type='str'),
-            scriptpath              = dict(default=None,
-                                           type='str'),
-            secretary               = dict(default=[],
-                                           type='list'),
-            serviceprovider         = dict(default=[''],
-                                           type='list'),
-            shell                   = dict(default='/bin/bash',
-                                           type='str'),
-            street                  = dict(default=None,
-                                           type='str'),
-            title                   = dict(default=None,
-                                           type='str'),
-            unixhome                = dict(default=None,
-                                           type='str'),
-            userexpiry              = dict(default=expiry,
-                                           type='str'),
-            username                = dict(required=True,
-                                           aliases=['name'],
-                                           type='str'),
-            position                = dict(default='',
-                                           type='str'),
-            update_password         = dict(default='always',
-                                           choices=['always', 'on_create'],
-                                           type='str'),
-            ou                      = dict(default='',
-                                           type='str'),
-            subpath                 = dict(default='cn=users',
-                                           type='str'),
-            state                   = dict(default='present',
-                                           choices=['present', 'absent'],
-                                           type='str')
+        argument_spec=dict(
+            birthday=dict(default=None,
+                          type='str'),
+            city=dict(default=None,
+                      type='str'),
+            country=dict(default=None,
+                         type='str'),
+            department_number=dict(default=None,
+                                   type='str',
+                                   aliases=['departmentNumber']),
+            description=dict(default=None,
+                             type='str'),
+            display_name=dict(default=None,
+                              type='str',
+                              aliases=['displayName']),
+            email=dict(default=[''],
+                       type='list'),
+            employee_number=dict(default=None,
+                                 type='str',
+                                 aliases=['employeeNumber']),
+            employee_type=dict(default=None,
+                               type='str',
+                               aliases=['employeeType']),
+            firstname=dict(default=None,
+                           type='str'),
+            gecos=dict(default=None,
+                       type='str'),
+            groups=dict(default=[],
+                        type='list'),
+            home_share=dict(default=None,
+                            type='str',
+                            aliases=['homeShare']),
+            home_share_path=dict(default=None,
+                                 type='str',
+                                 aliases=['homeSharePath']),
+            home_telephone_number=dict(default=[],
+                                       type='list',
+                                       aliases=['homeTelephoneNumber']),
+            homedrive=dict(default=None,
+                           type='str'),
+            lastname=dict(default=None,
+                          type='str'),
+            mail_alternative_address=dict(default=[],
+                                          type='list',
+                                          aliases=['mailAlternativeAddress']),
+            mail_home_server=dict(default=None,
+                                  type='str',
+                                  aliases=['mailHomeServer']),
+            mail_primary_address=dict(default=None,
+                                      type='str',
+                                      aliases=['mailPrimaryAddress']),
+            mobile_telephone_number=dict(default=[],
+                                         type='list',
+                                         aliases=['mobileTelephoneNumber']),
+            organisation=dict(default=None,
+                              type='str'),
+            overridePWHistory=dict(default=False,
+                                   type='bool',
+                                   aliases=['override_pw_history']),
+            overridePWLength=dict(default=False,
+                                  type='bool',
+                                  aliases=['override_pw_length']),
+            pager_telephonenumber=dict(default=[],
+                                       type='list',
+                                       aliases=['pagerTelephonenumber']),
+            password=dict(default=None,
+                          type='str',
+                          no_log=True),
+            phone=dict(default=[],
+                       type='list'),
+            postcode=dict(default=None,
+                          type='str'),
+            primary_group=dict(default=None,
+                               type='str',
+                               aliases=['primaryGroup']),
+            profilepath=dict(default=None,
+                             type='str'),
+            pwd_change_next_login=dict(default=None,
+                                       type='str',
+                                       choices=['0', '1'],
+                                       aliases=['pwdChangeNextLogin']),
+            room_number=dict(default=None,
+                             type='str',
+                             aliases=['roomNumber']),
+            samba_privileges=dict(default=[],
+                                  type='list',
+                                  aliases=['sambaPrivileges']),
+            samba_user_workstations=dict(default=[],
+                                         type='list',
+                                         aliases=['sambaUserWorkstations']),
+            sambahome=dict(default=None,
+                           type='str'),
+            scriptpath=dict(default=None,
+                            type='str'),
+            secretary=dict(default=[],
+                           type='list'),
+            serviceprovider=dict(default=[''],
+                                 type='list'),
+            shell=dict(default='/bin/bash',
+                       type='str'),
+            street=dict(default=None,
+                        type='str'),
+            title=dict(default=None,
+                       type='str'),
+            unixhome=dict(default=None,
+                          type='str'),
+            userexpiry=dict(default=expiry,
+                            type='str'),
+            username=dict(required=True,
+                          aliases=['name'],
+                          type='str'),
+            position=dict(default='',
+                          type='str'),
+            update_password=dict(default='always',
+                                 choices=['always', 'on_create'],
+                                 type='str'),
+            ou=dict(default='',
+                    type='str'),
+            subpath=dict(default='cn=users',
+                         type='str'),
+            state=dict(default='present',
+                       choices=['present', 'absent'],
+                       type='str')
         ),
         supports_check_mode=True,
-        required_if = ([
+        required_if=([
             ('state', 'present', ['firstname', 'lastname', 'password'])
         ])
     )
-    username    = module.params['username']
-    position    = module.params['position']
-    ou          = module.params['ou']
-    subpath     = module.params['subpath']
-    state       = module.params['state']
-    changed     = False
+    username = module.params['username']
+    position = module.params['position']
+    ou = module.params['ou']
+    subpath = module.params['subpath']
+    state = module.params['state']
+    changed = False
 
     users = list(ldap_search(
         '(&(objectClass=posixAccount)(uid={}))'.format(username),
@@ -543,7 +532,7 @@ def main():
                 old_password = obj['password'].split('}', 2)[1]
                 if crypt.crypt(password, old_password) != old_password:
                     obj['overridePWHistory'] = module.params['overridePWHistory']
-                    obj['overridePWLength']  = module.params['overridePWLength']
+                    obj['overridePWLength'] = module.params['overridePWLength']
                     obj['password'] = password
 
             diff = obj.diff()

@@ -2,8 +2,8 @@
 - name: setup - remove login
   iosxr_banner:
     banner: login
-    state: absent
     provider: "{{ cli }}"
+    state: absent
 
 - name: Set login
   iosxr_banner:
@@ -12,8 +12,8 @@
       this is my login banner
       that has a multiline
       string
-    state: present
     provider: "{{ cli }}"
+    state: present
   register: result
 
 - debug:
@@ -22,8 +22,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my login banner' in result.commands"
-      - "'that has a multiline' in result.commands"
+      - "'this is my login banner' in result.commands[0]"
+      - "'that has a multiline' in result.commands[0]"
 
 - name: Set login again (idempotent)
   iosxr_banner:
@@ -32,8 +32,8 @@
       this is my login banner
       that has a multiline
       string
-    state: present
     provider: "{{ cli }}"
+    state: present
   register: result
 
 - assert:

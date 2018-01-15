@@ -30,6 +30,7 @@ RUN dnf clean all && \
     openssh-clients \
     openssh-server \
     openssl-devel \
+    pass \
     procps \
     python-cryptography \
     python-devel \
@@ -48,6 +49,7 @@ RUN dnf clean all && \
     PyYAML \
     rpm-build \
     rubygems \
+    sshpass \
     subversion \
     sudo \
     tar \

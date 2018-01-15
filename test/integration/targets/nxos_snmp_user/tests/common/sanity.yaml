@@ -1,0 +1,43 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_user sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Create snmp user
+  nxos_snmp_user: &create
+    user: ntc
+    group: network-operator
+    authentication: md5
+    pwd: N$tOpe%1
+    privacy: HelloU$er1
+    encrypt: true
+    provider: "{{ connection }}"
+  register: result
+
+- assert: &true
+    that:
+      - "result.changed == true"
+
+- name: delete snmp user
+  nxos_snmp_user: &remove
+    user: ntc
+    group: network-operator
+    authentication: md5
+    pwd: Testing1%
+    privacy: HelloU$er1
+    encrypt: true
+    state: absent
+    provider: "{{ connection }}"
+  register: result
+
+- assert: *true
+
+- name: "Remove Idempotence"
+  nxos_snmp_user: *remove
+  register: result
+
+- assert: &false
+    that:
+      - "result.changed == false"
+
+- debug: msg="END connection={{ ansible_connection }} nxos_snmp_user sanity test"

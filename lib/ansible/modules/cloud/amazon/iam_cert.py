@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -50,24 +50,20 @@ options:
     default: "/"
   cert_chain:
     description:
-      - The CA certificate chain in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file.
-        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
+      - The path to, or content of the CA certificate chain in PEM encoded format.
+        As of 2.4 content is accepted. If the parameter is not a file, it is assumed to be content.
   cert:
     description:
-      - The certificate body in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file.
-        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
+      - The path to, or content of the certificate body in PEM encoded format.
+        As of 2.4 content is accepted. If the parameter is not a file, it is assumed to be content.
   key:
     description:
-      - The key of the certificate in PEM encoded format.
-      - Note that prior to 2.4, this parameter expected a path to a file.
-        Since 2.4 this is now accomplished using a lookup plugin. See examples for detail.
+      - The path to, or content of the private key in PEM encoded format.
+        As of 2.4 content is accepted. If the parameter is not a file, it is assumed to be content.
   dup_ok:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS.
         If set to True, it will upload the certificate as long as the name is unique.
-    required: false
     default: False
 
 
@@ -87,6 +83,14 @@ EXAMPLES = '''
     key: "{{ lookup('file', 'path/to/key') }}"
     cert_chain: "{{ lookup('file', 'path/to/certchain') }}"
 
+# Basic server certificate upload
+- iam_cert:
+    name: very_ssl
+    state: present
+    cert: path/to/cert
+    key: path/to/key
+    cert_chain: path/to/certchain
+
 # Server certificate upload using key string
 - iam_cert:
     name: very_ssl
@@ -105,6 +109,7 @@ EXAMPLES = '''
 '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, connect_to_aws
+import os
 
 try:
     import boto
@@ -113,18 +118,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-
-
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = err.message
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
 
 
 def cert_meta(iam, name):
@@ -142,14 +135,11 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
     update = False
 
     # IAM cert names are case insensitive
-    names_lower = [n.lower() for n in [name, new_name]]
+    names_lower = [n.lower() for n in [name, new_name] if n is not None]
     orig_cert_names_lower = [ocn.lower() for ocn in orig_cert_names]
 
     if any(ct in orig_cert_names_lower for ct in names_lower):
         for i_name in names_lower:
-            if i_name is None:
-                continue
-
             if cert is not None:
                 try:
                     c_index = orig_cert_names_lower.index(i_name)
@@ -168,7 +158,7 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     elif slug_orig_cert_bodies != slug_cert:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                          ' has a different certificate body associated'
-                                         ' with it. Certificates cannot have the same name' % i_name)
+                                         ' with it. Certificates cannot have the same name' % orig_cert_names[c_index])
             else:
                 update = True
                 break
@@ -225,6 +215,17 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
             module.exit_json(changed=changed, msg='Certificate with the name %s already absent' % name)
 
 
+def load_data(cert, key, cert_chain):
+    # if paths are provided rather than lookups read the files and return the contents
+    if cert and os.path.isfile(cert):
+        cert = open(cert, 'r').read().rstrip()
+    if key and os.path.isfile(key):
+        key = open(key, 'r').read().rstrip()
+    if cert_chain and os.path.isfile(cert_chain):
+        cert_chain = open(cert_chain, 'r').read()
+    return cert, key, cert_chain
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -234,9 +235,9 @@ def main():
         key=dict(no_log=True),
         cert_chain=dict(),
         new_name=dict(),
-        path=dict(default='/', required=False),
-        new_path=dict(required=False),
-        dup_ok=dict(required=False, type='bool')
+        path=dict(default='/'),
+        new_path=dict(),
+        dup_ok=dict(type='bool')
     )
     )
 
@@ -272,9 +273,9 @@ def main():
     new_path = module.params.get('new_path')
     dup_ok = module.params.get('dup_ok')
     if state == 'present' and not new_name and not new_path:
-        cert = module.params.get('cert')
-        key = module.params.get('key')
-        cert_chain = module.params.get('cert_chain')
+        cert, key, cert_chain = load_data(cert=module.params.get('cert'),
+                                          key=module.params.get('key'),
+                                          cert_chain=module.params.get('cert_chain'))
     else:
         cert = key = cert_chain = None
 

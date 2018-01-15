@@ -1,0 +1,70 @@
+- name: Validate privatekey1 (test - RSA key with size 4096 bits)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey1
+
+- name: Validate privatekey1 (assert - RSA key with size 4096 bits)
+  assert:
+    that:
+      - privatekey1.stdout == '4096'
+
+
+- name: Validate privatekey2 (test - RSA key with size 2048 bits)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey2.pem  | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey2
+
+- name: Validate privatekey2 (assert - RSA key with size 2048 bits)
+  assert:
+    that:
+      - privatekey2.stdout == '2048'
+
+
+- name: Validate privatekey3 (test - DSA key with size 4096 bits)
+  shell: "openssl dsa -noout -text -in {{ output_dir }}/privatekey3.pem  | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey3
+
+- name: Validate privatekey3 (assert - DSA key with size 4096 bits)
+  assert:
+    that:
+      - privatekey3.stdout == '4096'
+
+
+- name: Validate privatekey4 (test - Ensure key has been removed)
+  stat:
+    path: '{{ output_dir }}/privatekey4.pem'
+  register: privatekey4
+
+- name: Validate privatekey4 (assert - Ensure key has been removed)
+  assert:
+    that:
+      - privatekey4.stat.exists == False
+
+
+- name: Validate privatekey5 (test - Passphrase protected key + idempotence)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey5.pem -passin pass:ansible  | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey5
+  # Current version of OS/X that runs in the CI (10.11) does not have an up to date version of the OpenSSL library
+  # leading to this test to fail when run in the CI. However, this test has been run for 10.12 and has returned succesfully.
+  when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate privatekey5 (assert - Passphrase protected key + idempotence)
+  assert:
+    that:
+      - privatekey5.stdout == '4096'
+  when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate privatekey5 idempotence (assert - Passphrase protected key + idempotence)
+  assert:
+    that:
+      - privatekey5_idempotence is not changed
+
+
+- name: Validate privatekey6 (test - Passphrase protected key with non ascii character)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey6.pem -passin pass:ànsïblé | grep Private | sed 's/Private-Key: (\\(.*\\) bit)/\\1/'"
+  register: privatekey6
+  when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate privatekey6 (assert - Passphrase protected key with non ascii character)
+  assert:
+    that:
+      - privatekey6.stdout == '4096'
+  when: openssl_version.stdout is version('0.9.8zh', '>=')

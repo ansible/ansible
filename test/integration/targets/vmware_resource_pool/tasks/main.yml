@@ -1,0 +1,156 @@
+# Test code for the vmware_resource_pool module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: make sure pyvmomi is installed
+  pip:
+    name: pyvmomi
+    state: latest
+  when: "{{ ansible_user_id == 'root' }}"
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- debug: var=vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Datacenters from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- name: get a datacenter
+  set_fact: dc1="{{ datacenters['json'][0] | basename }}"
+
+- debug: var=dc1
+
+- name: get a list of Clusters from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
+  register: clusters
+
+- name: get a cluster
+  set_fact: ccr1="{{ clusters['json'][0] | basename }}"
+
+- debug: var=ccr1
+
+# Testcase 0001: Add Resource pool
+- name: add resource pool
+  vmware_resource_pool:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: test_resource_0001
+    mem_shares: normal
+    mem_limit: -1
+    mem_reservation: 0
+    mem_expandable_reservations: True
+    cpu_shares: normal
+    cpu_limit: -1
+    cpu_reservation: 0
+    cpu_expandable_reservations: True
+    state: present
+  register: resource_result_0001
+
+- name: get a list of resources from vcsim after adding a resource pool
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=RP
+  register: new_rp_list
+
+- set_fact: new_resource="{% for rp in new_rp_list['json'] %} {{ True if (rp | basename) == 'test_resource_0001' else False }} {% endfor %}"
+
+- name: ensure a resource pool is present
+  assert:
+    that:
+        - "{{ resource_result_0001.changed == true }}"
+        - "{{ 'True' in new_resource }}"
+
+
+# Testcase 0002: Add Resource pool again
+- name: add resource pool again
+  vmware_resource_pool:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: test_resource_0001
+    mem_shares: normal
+    mem_limit: -1
+    mem_reservation: 0
+    mem_expandable_reservations: True
+    cpu_shares: normal
+    cpu_limit: -1
+    cpu_reservation: 0
+    cpu_expandable_reservations: True
+    state: present
+  register: resource_result_0002
+
+- name: check if nothing is changed
+  assert:
+    that:
+        - "{{ resource_result_0002.changed == false }}"
+
+
+# Testcase 0003: Remove Resource pool
+- name: add resource pool again
+  vmware_resource_pool:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: test_resource_0001
+    state: absent
+  register: resource_result_0003
+
+- name: check if resource pool is removed
+  assert:
+    that:
+        - "{{ resource_result_0003.changed == true }}"
+
+# Testcase 0004: Remove Resource pool again
+- name: add resource pool again
+  vmware_resource_pool:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: test_resource_0001
+    state: absent
+  register: resource_result_0004
+
+- name: check if resource pool is already removed
+  assert:
+    that:
+        - "{{ resource_result_0004.changed == false }}"

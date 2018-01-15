@@ -20,7 +20,7 @@ Options = (
             'connection', 'module_path', 'forks', 'become', 'become_method',
             'become_user', 'remote_user', 'private_key_file', 'ssh_common_args',
             'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args', 'verbosity',
-            'check'
+            'check', 'diff'
         ]
     )
 )
@@ -34,7 +34,7 @@ options = (
         forks=1, become=None, become_method=None, become_user=None, check=True,
         remote_user=None, private_key_file=None, ssh_common_args=None,
         sftp_extra_args=None, scp_extra_args=None, ssh_extra_args=None,
-        verbosity=3
+        verbosity=3, diff=False
     )
 )
 passwords = dict(vault_pass='')

@@ -21,6 +21,7 @@ from lib.util import (
 
 from lib.http import (
     HttpClient,
+    HttpError,
     urlparse,
 )
 
@@ -51,7 +52,8 @@ class CsCloudProvider(CloudProvider):
         """
         super(CsCloudProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'ansible/ansible:cloudstack-simulator'
+        # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
+        self.image = 'ansible/ansible:cloudstack-simulator@sha256:885aedb7f34ce7114eaa383a2541ede93c4f8cb543c05edf90b694def67b1a6a'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
@@ -65,12 +67,18 @@ class CsCloudProvider(CloudProvider):
         if os.path.isfile(self.config_static_path):
             return
 
-        docker = find_executable('docker')
+        docker = find_executable('docker', required=False)
 
         if docker:
             return
 
-        super(CsCloudProvider, self).filter(targets, exclude)
+        skip = 'cloud/%s/' % self.platform
+        skipped = [target.name for target in targets if skip in target.aliases]
+
+        if skipped:
+            exclude.append(skip)
+            display.warning('Excluding tests marked "%s" which require the "docker" command or config (see "%s"): %s'
+                            % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
@@ -242,7 +250,10 @@ class CsCloudProvider(CloudProvider):
             response = client.get(endpoint)
 
             if response.status_code == 200:
-                return response.json()
+                try:
+                    return response.json()
+                except HttpError as ex:
+                    display.error(ex)
 
             time.sleep(30)
 

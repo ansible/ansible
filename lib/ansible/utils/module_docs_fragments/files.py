@@ -69,6 +69,7 @@ options:
          they cannot be updated atomically and can only be done in an unsafe manner.
       -  This boolean option allows ansible to fall back to unsafe methods of updating files for those cases in which you do
          not have any other choice. Be aware that this is subject to race conditions and can lead to data corruption.
+    type: bool
     required: false
     default: false
     version_added: "2.2"

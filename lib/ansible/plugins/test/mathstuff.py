@@ -43,6 +43,9 @@ class TestModule:
         return {
             # set theory
             'issubset': issubset,
+            'subset': issubset,
             'issuperset': issuperset,
+            'superset': issuperset,
             'isnan': isnotanumber,
+            'nan': isnotanumber,
         }

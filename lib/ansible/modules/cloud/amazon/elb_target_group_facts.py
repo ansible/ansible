@@ -1,20 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -25,6 +17,7 @@ short_description: Gather facts about ELB target groups in AWS
 description:
     - Gather facts about ELB target groups in AWS
 version_added: "2.4"
+requirements: [ boto3 ]
 author: Rob White (@wimnat)
 options:
   load_balancer_arn:
@@ -171,9 +164,6 @@ target_groups:
 '''
 
 import traceback
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info)
 
 try:
     import boto3
@@ -181,6 +171,10 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
+                                      ec2_argument_spec, get_aws_connection_info)
 
 
 def get_target_group_attributes(connection, module, target_group_arn):
@@ -191,11 +185,8 @@ def get_target_group_attributes(connection, module, target_group_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Replace '.' with '_' in attribute key names to make it more Ansibley
-    for k, v in target_group_attributes.items():
-        target_group_attributes[k.replace('.', '_')] = v
-        del target_group_attributes[k]
-
-    return target_group_attributes
+    return dict((k.replace('.', '_'), v)
+                for (k, v) in target_group_attributes.items())
 
 
 def get_target_group_tags(connection, module, target_group_arn):
