@@ -33,7 +33,7 @@ import json
 from ansible.compat.tests import unittest
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
-from ansible.modules.nokia import netact_cm_command
+from ansible.modules.netact import netact_cm_command
 from ansible.compat.tests.mock import patch
 
 from units.modules.utils import set_module_args as _set_module_args, \
