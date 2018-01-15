@@ -157,7 +157,29 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, load_sdk_model
+
+
+(
+    ProvisioningState,
+    SkuName,
+    SkuTier,
+    Kind,
+    StorageAccountUpdateParameters,
+    CustomDomain,
+    StorageAccountCreateParameters,
+    Sku
+    ) = load_sdk_model(
+    'storage',
+    'ProvisioningState',
+    'SkuName',
+    'SkuTier',
+    'Kind',
+    'StorageAccountUpdateParameters',
+    'CustomDomain',
+    'StorageAccountCreateParameters',
+    'Sku'    
+    )
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):
@@ -177,7 +199,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
-        for key in self.storage_models.SkuName:
+        for key in SkuName:
             self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
@@ -319,7 +341,6 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         if self.account_type:
             if self.account_type != self.account_dict['sku_name']:
                 # change the account type
-                SkuName = self.storage_models.SkuName
                 if self.account_dict['sku_name'] in [SkuName.premium_lrs, SkuName.standard_zrs]:
                     self.fail("Storage accounts of type {0} and {1} cannot be changed.".format(
                         SkuName.premium_lrs, SkuName.standard_zrs))
@@ -335,9 +356,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                     try:
                         self.log("sku_name: %s" % self.account_dict['sku_name'])
                         self.log("sku_tier: %s" % self.account_dict['sku_tier'])
-                        sku = self.storage_models.Sku(SkuName(self.account_dict['sku_name']))
-                        sku.tier = self.storage_models.SkuTier(self.account_dict['sku_tier'])
-                        parameters = self.storage_models.StorageAccountUpdateParameters(sku=sku)
+                        sku = Sku(SkuName(self.account_dict['sku_name']))
+                        sku.tier = SkuTier(self.account_dict['sku_tier'])
+                        parameters = StorageAccountUpdateParameters(sku=sku)
                         self.storage_client.storage_accounts.update(self.resource_group,
                                                                     self.name,
                                                                     parameters)
@@ -350,9 +371,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 self.account_dict['custom_domain'] = self.custom_domain
 
             if self.results['changed'] and not self.check_mode:
-                new_domain = self.storage_models.CustomDomain(name=self.custom_domain['name'],
-                                                              use_sub_domain=self.custom_domain['use_sub_domain'])
-                parameters = self.storage_models.StorageAccountUpdateParameters(custom_domain=new_domain)
+                new_domain = CustomDomain(name=self.custom_domain['name'],
+                                          use_sub_domain=self.custom_domain['use_sub_domain'])
+                parameters = StorageAccountUpdateParameters(custom_domain=new_domain)
                 try:
                     self.storage_client.storage_accounts.update(self.resource_group, self.name, parameters)
                 except Exception as exc:
@@ -364,7 +385,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 self.account_dict['access_tier'] = self.access_tier
 
             if self.results['changed'] and not self.check_mode:
-                parameters = self.storage_models.StorageAccountUpdateParameters(access_tier=self.access_tier)
+                parameters = StorageAccountUpdateParameters(access_tier=self.access_tier)
                 try:
                     self.storage_client.storage_accounts.update(self.resource_group, self.name, parameters)
                 except Exception as exc:
@@ -374,7 +395,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         if update_tags:
             self.results['changed'] = True
             if not self.check_mode:
-                parameters = self.storage_models.StorageAccountUpdateParameters(tags=self.account_dict['tags'])
+                parameters = StorageAccountUpdateParameters(tags=self.account_dict['tags'])
                 try:
                     self.storage_client.storage_accounts.update(self.resource_group, self.name, parameters)
                 except Exception as exc:
@@ -406,11 +427,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             if self.tags:
                 account_dict['tags'] = self.tags
             return account_dict
-        sku = self.storage_models.Sku(self.storage_models.SkuName(self.account_type))
-        sku.tier = self.storage_models.SkuTier.standard if 'Standard' in self.account_type else \
-            self.storage_models.SkuTier.premium
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, self.kind, self.location,
-                                                                        tags=self.tags, access_tier=self.access_tier)
+        sku = Sku(SkuName(self.account_type))
+        sku.tier = SkuTier.standard if 'Standard' in self.account_type else SkuTier.premium
+        parameters = StorageAccountCreateParameters(sku, self.kind, self.location, tags=self.tags, access_tier=self.access_tier)
         self.log(str(parameters))
         try:
             poller = self.storage_client.storage_accounts.create(self.resource_group, self.name, parameters)
@@ -422,7 +441,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         return self.get_account()
 
     def delete_account(self):
-        if self.account_dict['provisioning_state'] == self.storage_models.ProvisioningState.succeeded.value and \
+        if self.account_dict['provisioning_state'] == ProvisioningState.succeeded.value and \
            self.account_has_blob_containers() and self.force:
             self.fail("Account contains blob containers. Is it in use? Use the force option to attempt deletion.")
 

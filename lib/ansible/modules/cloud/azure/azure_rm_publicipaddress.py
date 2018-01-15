@@ -110,13 +110,16 @@ state:
     }
 '''
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 
 try:
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+
+(PublicIPAddress, PublicIPAddressDnsSettings) = load_sdk_model('network', 'PublicIPAddress', 'PublicIPAddressDnsSettings')
 
 
 def pip_to_dict(pip):
@@ -222,25 +225,25 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             if self.state == 'present':
                 if not pip:
                     self.log("Create new Public IP {0}".format(self.name))
-                    pip = self.network_models.PublicIPAddress(
+                    pip = PublicIPAddress(
                         location=self.location,
                         public_ip_allocation_method=self.allocation_method,
                     )
                     if self.tags:
                         pip.tags = self.tags
                     if self.domain_name:
-                        pip.dns_settings = self.network_models.PublicIPAddressDnsSettings(
+                        pip.dns_settings = PublicIPAddressDnsSettings(
                             domain_name_label=self.domain_name
                         )
                 else:
                     self.log("Update Public IP {0}".format(self.name))
-                    pip = self.network_models.PublicIPAddress(
+                    pip = PublicIPAddress(
                         location=results['location'],
                         public_ip_allocation_method=results['public_ip_allocation_method'],
                         tags=results['tags']
                     )
                     if self.domain_name:
-                        pip.dns_settings = self.network_models.PublicIPAddressDnsSettings(
+                        pip.dns_settings = PublicIPAddressDnsSettings(
                             domain_name_label=self.domain_name
                         )
                 self.results['state'] = self.create_or_update_pip(pip)
