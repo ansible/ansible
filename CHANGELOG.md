@@ -63,6 +63,10 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/34854
 * fixes memory usage issues with many blocks/includes
   https://github.com/ansible/ansible/issues/31673
+* Fix to win_dns_client module to take ordering of DNS servers to resolve into account:
+  https://github.com/ansible/ansible/pull/34656
+* Fix for the nxos_banner module where some nxos images nest the output inside of an additional dict:
+  https://github.com/ansible/ansible/pull/34695
 
 
 <a id="2.4.2"></a>
