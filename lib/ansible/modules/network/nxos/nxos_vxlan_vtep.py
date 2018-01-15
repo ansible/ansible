@@ -58,7 +58,7 @@ options:
       - Administratively shutdown the NVE interface.
     required: false
     choices: ['true','false']
-    default: false
+    default: true
   source_interface:
     description:
       - Specify the loopback interface whose IP address should be
@@ -120,6 +120,7 @@ PARAM_TO_COMMAND_KEYMAP = {
 PARAM_TO_DEFAULT_KEYMAP = {
     'description': False,
     'shutdown': True,
+    'source_interface_hold_down_time': '180',
 }
 
 
@@ -270,7 +271,6 @@ def main():
         shutdown=dict(required=False, type='bool'),
         source_interface=dict(required=False, type='str'),
         source_interface_hold_down_time=dict(required=False, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
     )
 
