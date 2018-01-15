@@ -17,7 +17,7 @@ short_description: Manage Bridge Domains (BD) on Cisco ACI Fabrics (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI Fabrics.
 - More information from the internal APIC class I(fv:BD) at
-  U(https://developer.cisco.com/media/mim-ref/MO-fvBD.html).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
