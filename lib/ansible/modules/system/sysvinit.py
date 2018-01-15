@@ -36,11 +36,9 @@ options:
               Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
     enabled:
         type: bool
-        choices: [ "yes", "no" ]
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
     sleep:
-        type: int
         default: 1
         description:
             - If the service is being C(restarted) or C(reloaded) then sleep this many seconds between the stop and start command.
@@ -51,12 +49,10 @@ options:
             - If the string is found, the service will be assumed to be running.
             - This option is mainly for use with init scripts that don't support the 'status' option.
     runlevels:
-        type: list
         description:
             - The runlevels this script should be enabled/disabled from.
             - Use this to override the defaults set by the package or init script itself.
     arguments:
-        type: str
         description:
             - Additional arguments provided on the command line that some init scripts accept.
         aliases: [ 'args' ]
@@ -80,10 +76,15 @@ EXAMPLES = '''
       state: started
       enabled: yes
   name: make sure apache2 is started
-'''
 
-RETURN = '''
-# defaults
+- sysvinit:
+      name: apache2
+      state: started
+      enabled: yes
+      runlevels:
+        - 3
+        - 5
+  name: make sure apache2 is started on runlevels 3 and 5
 '''
 
 import re
