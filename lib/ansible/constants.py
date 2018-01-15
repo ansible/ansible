@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os  # used to set lang and for backwards compat get_config
+import os
 
 from ast import literal_eval
 from jinja2 import Template
@@ -114,7 +114,6 @@ MAGIC_VARIABLE_MAPPING = dict(
     module_compression=('ansible_module_compression', ),
     shell=('ansible_shell_type', ),
     executable=('ansible_shell_executable', ),
-    remote_tmp_dir=('ansible_remote_tmp', ),
 
     # connection common
     remote_addr=('ansible_ssh_host', 'ansible_host'),
@@ -183,3 +182,7 @@ for setting in config.data.get_settings():
         value = ensure_type(value, setting.name)
 
     set_constant(setting.name, value)
+
+    # speical hack to ensure all local temp files use the configured temp dir by default
+    if setting.name == 'DEFAULT_LOCAL_TMP':
+        os.environ['TEMPDIR'] = os.environ['TEMP'] = os.environ['TMP'] = value

@@ -29,7 +29,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
-    vars_loader, connection_loader, strategy_loader, inventory_loader
+    vars_loader, connection_loader, strategy_loader, inventory_loader, shell_loader, fragment_loader
 from ansible.utils import plugin_docs
 try:
     from __main__ import display
@@ -71,7 +71,7 @@ class DocCLI(CLI):
                                help='**For internal testing only** Show documentation for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
                                help='Choose which plugin type (defaults to "module")',
-                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'strategy', 'vars'])
+                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'shell', 'strategy', 'vars'])
 
         super(DocCLI, self).parse()
 
@@ -101,6 +101,8 @@ class DocCLI(CLI):
             loader = vars_loader
         elif plugin_type == 'inventory':
             loader = inventory_loader
+        elif plugin_type == 'shell':
+            loader = shell_loader
         else:
             loader = module_loader
 
@@ -158,7 +160,7 @@ class DocCLI(CLI):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
+                    doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename, fragment_loader, verbose=(self.options.verbosity > 0))
                 except:
                     display.vvv(traceback.format_exc())
                     display.error("%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin))
@@ -254,7 +256,7 @@ class DocCLI(CLI):
 
                 doc = None
                 try:
-                    doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename)
+                    doc, plainexamples, returndocs, metadata = plugin_docs.get_docstring(filename, fragment_loader)
                 except:
                     display.warning("%s has a documentation formatting error" % plugin)
 

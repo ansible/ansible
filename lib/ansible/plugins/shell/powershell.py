@@ -1,21 +1,33 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    name: powershell
+    plugin_type: shell
+    version_added: ""
+    short_description: Windows Powershell
+    description:
+      - The only option whne using 'winrm' as a connection plugin
+    options:
+      remote_temp:
+        description:
+          - Temporary directory to use on targets when executing tasks.
+        default: '%%TEMP%%'
+        env:
+          - name: ANSIBLE_REMOTE_TEMP
+          - name: ANSIBLE_PS_REMOTE_TEMP
+        ini:
+          - section: defaults
+            key: remote_tmp
+          - section: defaults
+            key: remote_ps_tmp
+        vars:
+          - name: ansible_remote_tmp
+          - name: ansible_ps_remote_tmp
+'''
 
 import base64
 import os

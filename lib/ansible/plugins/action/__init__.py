@@ -236,16 +236,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user is None:
             remote_user = self._play_context.remote_user
 
+        # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        use_system_tmp = False
-
-        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
-            use_system_tmp = True
-
-        tmp_mode = 0o700
-        tmpdir = self._remote_expand_user(self._play_context.remote_tmp_dir, sudoable=False)
-
-        cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
+        use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in ('root', remote_user))
+        tmpdir = self._remote_expand_user(self._connection._shell.get_option('remote_temp'), sudoable=False)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -320,7 +315,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if isinstance(data, dict):
             data = jsonify(data)
 
-        afd, afile = tempfile.mkstemp()
+        afd, afile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         afo = os.fdopen(afd, 'wb')
         try:
             data = to_bytes(data, errors='surrogate_or_strict')
@@ -534,33 +529,54 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         finally:
             return x  # pylint: disable=lost-exception
 
-    def _remote_expand_user(self, path, sudoable=True):
-        ''' takes a remote path and performs tilde expansion on the remote host '''
-        if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
-            return path
+    def _remote_expand_user(self, path, sudoable=True, pathsep=None):
+        ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
 
-        # FIXME: Can't use os.path.sep for Windows paths.
-        split_path = path.split(os.path.sep, 1)
-        expand_path = split_path[0]
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
+        expanded = path
 
-        cmd = self._connection._shell.expand_user(expand_path)
-        data = self._low_level_execute_command(cmd, sudoable=False)
-        try:
-            initial_fragment = data['stdout'].strip().splitlines()[-1]
-        except IndexError:
-            initial_fragment = None
+        if path and path.startswith(('~', '$HOME', '"~', '"$HOME', "'~", "'$HOME")):
 
-        if not initial_fragment:
-            # Something went wrong trying to expand the path remotely.  Return
-            # the original string
-            return path
+            # allow patshep override for windows and other 'fun' systems
+            if pathsep is None:
+                pathsep = os.path.sep
 
-        if len(split_path) > 1:
-            return self._connection._shell.join_path(initial_fragment, *split_path[1:])
-        else:
-            return initial_fragment
+            split_path = path.split(pathsep, 1)
+            expand_path = split_path[0]
+
+            quote = False
+            if expand_path.startswith(('"', "'")):
+                quote = expand_path[0]
+                expand_path = expand_path[1:]
+
+            # use become user if in that context
+            if sudoable and expand_path in ('~', '"~') and self._play_context.become and self._play_context.become_user:
+                expand_path = '~%s' % self._play_context.become_user
+
+            # use shell to construct appropriate command and execute
+            cmd = self._connection._shell.expand_user(expand_path)
+            data = self._low_level_execute_command(cmd, sudoable=False)
+            try:
+                # returns 'translation attempt' and pwd as fallback \t separated
+                pdata = data['stdout'].splitlines()[-1].rstrip()
+                initial_fragment, pwd = [x.strip() for x in pdata.split('\t')]
+            except (IndexError, ValueError):
+                initial_fragment = None
+                pwd = None
+
+            if not initial_fragment:
+                # Something went wrong trying to expand the path remotely. Try using pwd, if not, return the original string
+                if pwd:
+                    expanded = pwd
+                    quote = False
+            elif len(split_path) > 1:
+                expanded = self._connection._shell.join_path(initial_fragment, *split_path[1:])
+            else:
+                expanded = initial_fragment
+
+            if quote:
+                expanded = quote + expanded
+
+        return expanded
 
     def _strip_success_message(self, data):
         '''

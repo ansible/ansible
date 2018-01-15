@@ -85,6 +85,8 @@ class BaseFileCacheModule(BaseCacheModule):
             # expects a dir path
             self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION))
 
+        self.set_inventory_cache_override(**kwargs)
+
         if not self._cache_dir:
             raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option "
                                "to be set (to a writeable directory path)" % self.plugin_name)
@@ -99,6 +101,12 @@ class BaseFileCacheModule(BaseCacheModule):
                 if not os.access(self._cache_dir, x):
                     raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
                         self.plugin_name, self._cache_dir))
+
+    def set_inventory_cache_override(self, **kwargs):
+        if kwargs.get('cache_timeout'):
+            self._timeout = kwargs.get('cache_timeout')
+        if kwargs.get('cache_connection'):
+            self._cache_dir = os.path.expanduser(os.path.expandvars(kwargs.get('cache_connection')))
 
     def get(self, key):
         """ This checks the in memory cache first as the fact was not expired at 'gather time'
@@ -141,7 +149,7 @@ class BaseFileCacheModule(BaseCacheModule):
     def has_expired(self, key):
 
         if self._timeout == 0:
-            return False
+            return True
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
@@ -284,3 +292,26 @@ class FactCache(MutableMapping):
         host_cache = self._plugin.get(key)
         host_cache.update(value)
         self._plugin.set(key, host_cache)
+
+
+class InventoryFileCacheModule(BaseFileCacheModule):
+    """
+    A caching module backed by file based storage.
+    """
+    def __init__(self, plugin_name, timeout, cache_dir):
+
+        super(InventoryFileCacheModule, self).__init__(cache_connection=cache_dir, cache_timeout=timeout)
+        self._plugin = self.get_plugin(plugin_name)
+
+    def get_plugin(self, plugin_name):
+        plugin = cache_loader.get(plugin_name, cache_connection=self._cache_dir, cache_timeout=self._timeout)
+        if not plugin:
+            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (plugin_name))
+        self._cache = {}
+        return plugin
+
+    def _load(self, path):
+        return self._plugin._load(path)
+
+    def _dump(self, value, path):
+        return self._plugin._dump(value, path)

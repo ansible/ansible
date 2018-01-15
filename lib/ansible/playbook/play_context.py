@@ -49,7 +49,6 @@ except ImportError:
 
 __all__ = ['PlayContext']
 
-
 # TODO: needs to be configurable
 b_SU_PROMPT_LOCALIZATIONS = [
     to_bytes('Password'),
@@ -136,7 +135,6 @@ class PlayContext(Base):
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
     _remote_addr = FieldAttribute(isa='string')
-    _remote_tmp_dir = FieldAttribute(isa='string', default=C.DEFAULT_REMOTE_TMP)
     _password = FieldAttribute(isa='string')
     _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _connection_user = FieldAttribute(isa='string')

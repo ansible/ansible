@@ -19,7 +19,6 @@ __metaclass__ = type
 
 import os
 import re
-import ansible.constants as C
 import time
 import random
 
@@ -36,16 +35,32 @@ class ShellBase(AnsiblePlugin):
 
         super(ShellBase, self).__init__()
 
-        self.env = dict()
-        if C.DEFAULT_MODULE_SET_LOCALE:
-            module_locale = C.DEFAULT_MODULE_LANG or os.getenv('LANG', 'en_US.UTF-8')
+        self.env = {}
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        # not all shell modules have this option
+        if self.get_option('set_module_language'):
             self.env.update(
                 dict(
-                    LANG=module_locale,
-                    LC_ALL=module_locale,
-                    LC_MESSAGES=module_locale,
+                    LANG=self.get_option('module_language'),
+                    LC_ALL=self.get_option('module_language'),
+                    LC_MESSAGES=self.get_option('module_language'),
                 )
             )
+
+        if self.get_option('remote_temp'):
+            self._set_temp(self.get_option('remote_temp'))
+
+    def _set_temp(self, tmpdir):
+
+        # set tmpdir for modules to use
+        self.env.update({'TMPDIR': tmpdir,
+                         'TEMP': tmpdir,
+                         'TMP': tmpdir})
+        self.set_option('remote_temp', tmpdir)
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()
@@ -96,32 +111,27 @@ class ShellBase(AnsiblePlugin):
         cmd = ['test', '-e', shlex_quote(path)]
         return ' '.join(cmd)
 
-    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
+    def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
 
         # When system is specified we have to create this in a directory where
-        # other users can read and access the temp directory.  This is because
-        # we use system to create tmp dirs for unprivileged users who are
-        # sudo'ing to a second unprivileged user.  The only dirctories where
-        # that is standard are the tmp dirs, /tmp and /var/tmp.  So we only
-        # allow one of those two locations if system=True.  However, users
-        # might want to have some say over which of /tmp or /var/tmp is used
-        # (because /tmp may be a tmpfs and want to conserve RAM or persist the
-        # tmp files beyond a reboot.  So we check if the user set REMOTE_TMP
-        # to somewhere in or below /var/tmp and if so use /var/tmp.  If
-        # anything else we use /tmp (because /tmp is specified by POSIX nad
-        # /var/tmp is not).
+        # other users can read and access the temp directory.
+        # This is because we use system to create tmp dirs for unprivileged users who are
+        # sudo'ing to a second unprivileged user.
+        # The 'system_temps' setting defines dirctories we can use for this purpose
+        # the default are, /tmp and /var/tmp.
+        # So we only allow one of those locations if system=True, using the
+        # passed in tmpdir if it is valid or the first one from the setting if not.
 
         if system:
-            # FIXME: create 'system tmp dirs' config/var and check tmpdir is in those values to allow for /opt/tmp, etc
-            if tmpdir.startswith('/var/tmp'):
-                basetmpdir = '/var/tmp'
+            if tmpdir.startswith(tuple(self.get_option('system_temps'))):
+                basetmpdir = tmpdir
             else:
-                basetmpdir = '/tmp'
+                basetmpdir = self.get_option('system_temps')[0]
         else:
             if tmpdir is None:
-                basetmpdir = C.DEFAULT_REMOTE_TMP
+                basetmpdir = self.get_option('remote_temp')
             else:
                 basetmpdir = tmpdir
 
@@ -135,6 +145,10 @@ class ShellBase(AnsiblePlugin):
         if mode:
             tmp_umask = 0o777 & ~mode
             cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
+
+        # ensure we use same tmpdir from now on
+        if basetmpdir != self.get_option('remote_temp'):
+            self._set_temp(basetmpdir)
 
         return cmd
 
@@ -152,7 +166,7 @@ class ShellBase(AnsiblePlugin):
             if not _USER_HOME_PATH_RE.match(user_home_path):
                 # shlex_quote will make the shell return the string verbatim
                 user_home_path = shlex_quote(user_home_path)
-        return 'echo %s' % user_home_path
+        return 'echo "%s\t%spwd%s"' % (user_home_path, self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
