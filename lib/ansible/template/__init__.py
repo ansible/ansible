@@ -675,12 +675,11 @@ class Templar:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
-        # For preserving the number of input newlines in the output (used
-        # later in this method)
-
         if USE_JINJA2_NATIVE and not isinstance(data, string_types):
             return data
 
+        # For preserving the number of input newlines in the output (used
+        # later in this method)
         if not USE_JINJA2_NATIVE:
             data_newlines = _count_newlines_from_end(data)
         else:
