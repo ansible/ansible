@@ -164,10 +164,11 @@ try:
 except ImportError:
     pass
 
+
 def _add_input_(module, param, results):
     if module.params.get(param):
         results[param] = module.params.get(param)
-    
+
 
 def main():
 
@@ -232,12 +233,12 @@ def main():
 
             if module.params.get('description'):
                 params['description'] = module.params.get('description')
-           
+
             if module.params.get('user'):
                 user_res = tower_cli.get_resource('user')
                 user = user_res.get(name=module.params.get('user'))
                 params['user'] = user['id']
-                
+
             if module.params.get('team'):
                 team_res = tower_cli.get_resource('team')
                 team = team_res.get(name=module.params.get('team'))
