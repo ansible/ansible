@@ -30,6 +30,7 @@ options:
         command syntax as some commands are automatically modified by the
         device config parser.
     required: true
+    aliases: [commands]
   before:
     description:
       - The ordered set of commands to push on to the command stack if

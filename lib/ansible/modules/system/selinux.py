@@ -39,6 +39,7 @@ options:
       - path to the SELinux configuration file, if non-standard
     required: false
     default: "/etc/selinux/config"
+    aliases: ['configfile', 'file']
 notes:
    - Not tested on any debian based system
 requirements: [ libselinux-python ]

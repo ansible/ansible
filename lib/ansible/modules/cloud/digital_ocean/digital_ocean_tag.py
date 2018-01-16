@@ -31,6 +31,7 @@ options:
     description:
     - The ID of the resource to operate on.
     - The data type of resource_id is changed from integer to string, from version 2.5.
+    aliases: ['droplet_id']
   resource_type:
     description:
     - The type of resource to operate on. Currently, only tagging of

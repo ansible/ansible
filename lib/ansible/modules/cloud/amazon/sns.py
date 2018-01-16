@@ -84,7 +84,9 @@ options:
     required: true
     default: json
     choices: ['json', 'string']
-
+extends_documentation_fragment:
+ - ec2
+ - aws
 requirements:
     - "boto"
 """

@@ -60,7 +60,9 @@ options:
       - how long before wait gives up, in seconds
     default: 300
 author: "Simon JAILLET (@jails)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

@@ -52,7 +52,9 @@ options:
         default: 'present'
 author:
  - David M. Lee (@leedm777)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

@@ -52,6 +52,7 @@ options:
         append to the hostname for the purpose of doing name resolution.
         This argument accepts a list of names and will be reconciled
         with the current active configuration on the running node.
+    aliases: ['domain_list']
   lookup_source:
     description:
       - Provides one or more source

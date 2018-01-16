@@ -45,7 +45,9 @@ options:
     default: null
     aliases: ['subnets']
 requirements: [ 'boto' ]
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

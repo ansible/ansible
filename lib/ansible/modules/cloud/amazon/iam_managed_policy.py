@@ -45,6 +45,9 @@ options:
     default: null
     choices: [ "present", "absent" ]
 author: "Dan Kozlowski (@dkhenry)"
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements:
     - boto3
     - botocore

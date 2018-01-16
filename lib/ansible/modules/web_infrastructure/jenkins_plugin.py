@@ -114,6 +114,8 @@ notes:
     host where Jenkins runs as it needs direct access to the plugin files.
   - "The C(params) option was removed in Ansible 2.5 due to circumventing Ansible's
     option handling"
+extends_documentation_fragment:
+  - url
 '''
 
 EXAMPLES = '''

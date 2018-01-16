@@ -108,7 +108,9 @@ options:
     default: present
     choices: [ 'absent', 'present' ]
     version_added: "2.1"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements:
     - boto
 """

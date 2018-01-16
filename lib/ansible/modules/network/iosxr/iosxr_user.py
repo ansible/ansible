@@ -35,7 +35,8 @@ options:
       - The set of username objects to be configured on the remote
         Cisco IOS XR device. The list entries can either be the username
         or a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument, alias C(users).
+        exclusive with the C(name) argument.
+    aliases: ['users', 'collection']
   name:
     description:
       - The username to be configured on the Cisco IOS XR device.
@@ -62,7 +63,8 @@ options:
       - Configures the group for the username in the
         device running configuration. The argument accepts a string value
         defining the group name. This argument does not check if the group
-        has been configured on the device, alias C(role).
+        has been configured on the device.
+    aliases: ['role']
   groups:
     version_added: "2.5"
     description:

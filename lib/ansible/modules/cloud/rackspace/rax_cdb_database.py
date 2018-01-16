@@ -40,7 +40,9 @@ options:
     choices: ['present', 'absent']
     default: present
 author: "Simon JAILLET (@jails)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

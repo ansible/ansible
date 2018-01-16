@@ -43,7 +43,7 @@ options:
         required: true
         description:
             - Identifies the recoard in the table.
-    column:
+    col:
         required: true
         description:
             - Identifies the column in the record.

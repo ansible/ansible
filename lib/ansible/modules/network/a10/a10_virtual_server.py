@@ -25,8 +25,15 @@ description:
 author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
 notes:
     - Requires A10 Networks aXAPI 2.1.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
+  state:
+    description:
+      - If the specified virtual server should exist.
+    choices: ['present', 'absent']
+    default: present
   partition:
     version_added: "2.3"
     description:
