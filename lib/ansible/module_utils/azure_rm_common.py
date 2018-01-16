@@ -210,7 +210,7 @@ AZURE_PKG_VERSIONS = {
         'client_name': 'PostgreSqlManagementClient',
         'expected_version': '0.2.0rc1'
     }
-} if HAS_AZURE else {}
+}
 
 
 def _get_full_pkg_path(resource_type):
@@ -220,12 +220,15 @@ def _get_full_pkg_path(resource_type):
     return 'azure.mgmt.{0}'.format(pkg)
 
 
-def _get_sdk_attr(path, attr):
-    sdk = import_module(path)
-    if attr:
-        for part in attr.split('.'):
-            sdk = getattr(sdk, part)
-    return sdk
+def _import_module(path, attr=None):
+    try:
+        sdk = import_module(path)
+        if attr:
+            for part in attr.split('.'):
+                sdk = getattr(sdk, part)
+        return sdk
+    except ImportError:
+        return None
 
 
 def _get_sdk_model_path(resource_type):
@@ -242,8 +245,8 @@ def _get_sdk_model_path(resource_type):
 def load_sdk_model(resource_type, *attr_args):
     sdk_path = _get_sdk_model_path(resource_type)
     if not attr_args:
-        return import_module(sdk_path)
-    results = [_get_sdk_attr(sdk_path, attr_path) for attr_path in attr_args]
+        return _import_module(sdk_path)
+    results = [_import_module(sdk_path, attr_path) for attr_path in attr_args]
     return results[0] if len(results) == 1 else results
 
 
@@ -388,7 +391,7 @@ class AzureRMModuleBase(object):
         expected_version = AZURE_PKG_VERSIONS.get(client_type).get('expected_version')
         pkg_name = AZURE_PKG_VERSIONS.get(client_type).get('pkg_name')
         if expected_version:
-            installed_version = _get_sdk_attr('azure.mgmt.{0}.version'.format(pkg_name), 'VERSION')
+            installed_version = _import_module('azure.mgmt.{0}.version'.format(pkg_name), 'VERSION')
             if Version(installed_version) < Version(expected_version):
                 self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
                           "`pip install azure>={3} --upgrade`".format(pkg_name, installed_version, expected_version,
@@ -601,7 +604,7 @@ class AzureRMModuleBase(object):
         dependencies = dict()
         if enum_modules:
             for module_name in enum_modules:
-                mod = import_module(module_name)
+                mod = _import_module(module_name)
                 for mod_class_name, mod_class_obj in inspect.getmembers(mod, predicate=inspect.isclass):
                     dependencies[mod_class_name] = mod_class_obj
             self.log("dependencies: ")
@@ -796,7 +799,7 @@ class AzureRMModuleBase(object):
         api_version = AZURE_PKG_VERSIONS.get(client_type).get('api_version')
         client_name = AZURE_PKG_VERSIONS.get(client_type).get('client_name')
         pkg_path = _get_full_pkg_path(client_type)
-        client_model = _get_sdk_attr(pkg_path, client_name)
+        client_model = _import_module(pkg_path, client_name)
         if api_version:
             client = client_model(self.azure_credentials,
                                   self.subscription_id,

@@ -157,7 +157,6 @@ except ImportError:
                             'DataDisk')
 
 
-
 def managed_disk_to_dict(managed_disk):
     os_type = None
     if managed_disk.os_type:

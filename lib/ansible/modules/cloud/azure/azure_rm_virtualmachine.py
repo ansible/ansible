@@ -999,8 +999,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     plan = None
                     if self.plan:
                         plan = Plan(name=self.plan.get('name'), product=self.plan.get('product'),
-                                                        publisher=self.plan.get('publisher'),
-                                                        promotion_code=self.plan.get('promotion_code'))
+                                    publisher=self.plan.get('publisher'),
+                                    promotion_code=self.plan.get('promotion_code'))
 
                     vm_resource = VirtualMachine(
                         self.location,
@@ -1707,11 +1707,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         parameters.ip_configurations[0].subnet = Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
         parameters.network_security_group = NetworkSecurityGroup(id=group.id,
-                                                                                     location=group.location,
-                                                                                     resource_guid=group.resource_guid)
+                                                                 location=group.location,
+                                                                 resource_guid=group.resource_guid)
         parameters.ip_configurations[0].public_ip_address = PublicIPAddress(id=pip.id,
-                                                                                                location=pip.location,
-                                                                                                resource_guid=pip.resource_guid)
+                                                                            location=pip.location,
+                                                                            resource_guid=pip.resource_guid)
 
         self.log("Creating NIC {0}".format(network_interface_name))
         self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)
