@@ -1,4 +1,7 @@
-#  2016 Red Hat Inc.
+#
+# (c) 2016 Red Hat Inc.
+#
+# (c) 2017 Dell EMC.
 #
 # This file is part of Ansible
 #

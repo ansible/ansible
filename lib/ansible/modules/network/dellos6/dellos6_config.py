@@ -277,8 +277,12 @@ def main():
 
         if configobjs:
             commands = dumps(configobjs, 'commands')
-            if type(module.params['lines']) is list and type(module.params['lines'][0]) is dict and {'prompt', 'answer'}.issubset(module.params['lines'][0]):
-                cmd = {'command': commands, 'prompt': module.params['lines'][0]['prompt'], 'answer': module.params['lines'][0]['answer']}
+            if ((isinstance((module.params['lines']) is list)) and
+                    (isinstance((module.params['lines'][0]) is dict)) and
+                    ({'prompt', 'answer'}.issubset(module.params['lines'][0]))):
+                cmd = {'command': commands,
+                       'prompt': module.params['lines'][0]['prompt'],
+                       'answer': module.params['lines'][0]['answer']}
                 commands = [module.jsonify(cmd)]
             else:
                 commands = commands.split('\n')

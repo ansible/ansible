@@ -61,8 +61,8 @@ class TestDellos6ConfigModule(TestDellos6Module):
     def test_dellos6_config_src(self):
         src = load_fixture('dellos6_config_src.cfg')
         set_module_args(dict(src=src))
-        commands = ['hostname foo','exit','interface Te1/0/2',
-                    'shutdown','exit']
+        commands = ['hostname foo', 'exit', 'interface Te1/0/2',
+                    'shutdown', 'exit']
         self.execute_module(changed=True, commands=commands)
 
     def test_dellos6_config_backup(self):
@@ -86,9 +86,9 @@ class TestDellos6ConfigModule(TestDellos6Module):
         self.execute_module(changed=True, commands=commands)
 
     def test_dellos6_config_lines_w_parents(self):
-       set_module_args(dict(lines=['description "teest"', 'exit'], parents=['interface Te1/0/2']))
-       commands = ['interface Te1/0/2', 'description "teest"', 'exit']
-       self.execute_module(changed=True, commands=commands)
+        set_module_args(dict(lines=['description "teest"', 'exit'], parents=['interface Te1/0/2']))
+        commands = ['interface Te1/0/2', 'description "teest"', 'exit']
+        self.execute_module(changed=True, commands=commands)
 
     def test_dellos6_config_before(self):
         set_module_args(dict(lines=['hostname foo'], before=['snmp-server contact bar']))
@@ -125,7 +125,7 @@ class TestDellos6ConfigModule(TestDellos6Module):
         self.execute_module(changed=True, commands=lines)
 
     def test_dellos6_config_match_none(self):
-        lines = ['description test string','shutdown']
+        lines = ['description test string', 'shutdown']
         parents = ['interface Te1/0/2']
         set_module_args(dict(lines=lines, parents=parents, match='none'))
         commands = parents + lines
@@ -140,7 +140,7 @@ class TestDellos6ConfigModule(TestDellos6Module):
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_dellos6_config_match_exact(self):
-        lines = ['description test_string','shutdown']
+        lines = ['description test_string', 'shutdown']
         parents = ['interface Te1/0/1']
         set_module_args(dict(lines=lines, parents=parents, match='exact'))
         commands = parents + lines

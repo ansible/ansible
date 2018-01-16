@@ -1,4 +1,7 @@
-# 2016 Red Hat Inc.
+#
+# (c) 2016 Red Hat Inc.
+#
+# (c) 2017 Dell EMC.
 #
 # This file is part of Ansible
 #
@@ -72,7 +75,6 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
 
-
         # make sure we are in the right cli context which should be
         # enable mode and not config module
         if socket_path is None:
@@ -87,4 +89,3 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
-
