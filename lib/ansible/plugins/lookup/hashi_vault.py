@@ -34,14 +34,17 @@ DOCUMENTATION = """
     password:
       description: authentication password
     role_id:
+      version_added: "2.5"
       description: Role id for a vault AppRole auth
       env:
         - name: VAULT_ROLE_ID
     secret_id:
+      version_added: "2.5"
       description: Secret id for a vault AppRole auth
       env:
         - name: VAULT_SECRET_ID
     auth_method:
+      choices: [ldap, approle (added in 2.5)]
       description: authentication method used
     mount_point:
       description: vault mount point, only required if you have a custom mount point
@@ -74,7 +77,7 @@ EXAMPLES = """
   debug:
       msg: "{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
 
-- name: authenticate with a Vault app role
+- name: authenticate with a Vault app role (added in Ansible 2.5)
   debug:
       msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
 """
