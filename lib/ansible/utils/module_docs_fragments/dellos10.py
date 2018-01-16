@@ -3,7 +3,7 @@
 #
 # Copyright (c) 2016 Dell Inc.
 #
-# This file is part of Ansible 
+# This file is part of Ansible
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -43,14 +43,14 @@ options:
     required: false
   password:
     description:
-      - This value I(password) is used to authenticate the SSH session to 
+      - This value I(password) is used to authenticate the SSH session to
         the remote device. If the value is not specified in the task, the
         value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
     required: false
     default: null
   ssh_keyfile:
     description:
-      - This value I(ssh_keyfile) is the path to the key used to authenticate 
+      - This value I(ssh_keyfile) is the path to the key used to authenticate
         the SSH session to the remote device.  If the value is not specified
         in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE
         will be used instead.

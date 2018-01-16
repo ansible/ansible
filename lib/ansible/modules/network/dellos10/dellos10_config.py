@@ -205,9 +205,9 @@ def get_candidate(module):
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         commands = module.params['lines'][0]
-        if type(commands) is dict and type(commands['command']) is list:
+        if (isinstance(commands, dict)) and (isinstance((commands['command']), list)):
             candidate.add(commands['command'], parents=parents)
-        elif type(commands) is dict and type(commands['command']) is str:
+        elif (isinstance(commands, dict)) and (isinstance((commands['command']), str)):
             candidate.add([commands['command']], parents=parents)
         else:
             candidate.add(module.params['lines'], parents=parents)
@@ -281,9 +281,9 @@ def main():
 
         if configobjs:
             commands = dumps(configobjs, 'commands')
-            if (type(module.params['lines']) is list and
-                    type(module.params['lines'][0]) is dict and
-                    {'prompt', 'answer'}.issubset(module.params['lines'][0])):
+            if ((isinstance((module.params['lines']), list)) and
+                    (isinstance((module.params['lines'][0]), dict)) and
+                    ({'prompt', 'answer'}.issubset(module.params['lines'][0]))):
 
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],

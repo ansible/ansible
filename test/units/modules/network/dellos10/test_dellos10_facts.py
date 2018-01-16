@@ -1,5 +1,7 @@
 # (c) 2016 Red Hat Inc.
 #
+# (c) 2017 Dell EMC.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -57,7 +59,7 @@ class TestDellos10Facts(TestDellos10Module):
                     command = item
                 if '|' in command:
                     command = str(command).replace('|', '')
-                filename = str(command).replace(' ', '_') 
+                filename = str(command).replace(' ', '_')
                 filename = filename.replace('/', '7')
                 output.append(load_fixture(filename))
             return output
@@ -102,6 +104,5 @@ class TestDellos10Facts(TestDellos10Module):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('ethernet1/1/8', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(['mgmt1/1/1','ethernet1/1/4','ethernet1/1/2','ethernet1/1/3','ethernet1/1/1'], ansible_facts['ansible_net_neighbors'].keys())
+        self.assertEquals(['mgmt1/1/1', 'ethernet1/1/4', 'ethernet1/1/2', 'ethernet1/1/3', 'ethernet1/1/1'], ansible_facts['ansible_net_neighbors'].keys())
         self.assertIn('ansible_net_interfaces', ansible_facts)
-
