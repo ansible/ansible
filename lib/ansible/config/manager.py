@@ -116,7 +116,7 @@ def get_config_type(cfile):
 
     ftype = None
     if cfile is not None:
-        ext = to_text(os.path.splitext(cfile)[-1])
+        ext = os.path.splitext(cfile)[-1]
         if ext in ('.ini', '.cfg'):
             ftype = 'ini'
         elif ext in ('.yaml', '.yml'):
