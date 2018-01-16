@@ -40,6 +40,11 @@ options:
     description:
     - The name of the pool that the encap block should be assigned to.
     aliases: [ pool_name ]
+  pool_allocation_mode:
+    description:
+    - The method used for allocating encaps to resources.
+    choices: [ dynamic, static]
+    aliases: [ pool_mode ]
   block_end:
     description:
     - The end of encap block.
@@ -47,7 +52,7 @@ options:
   block_name:
     description:
     - The name to give to the encap block.
-    aliases: [ name, range ]
+    aliases: [ name ]
   block_start:
     description:
     - The start of the encap block.

@@ -30,9 +30,11 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    aliases: [ bd_name ]
   description:
     description:
     - The description for the Subnet.
+    aliases: [ descr ]
   enable_vip:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
@@ -98,6 +100,12 @@ options:
     description:
     - The name of the Tenant.
     aliases: [ tenant_name ]
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment: aci
 '''
 

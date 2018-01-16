@@ -109,7 +109,7 @@ ACI_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        certificate=dict(type='str', aliases=['certificate_data', 'data']),
+        certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),
         certificate_name=dict(type='str', aliases=['cert_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         user=dict(type='str', required=True),
