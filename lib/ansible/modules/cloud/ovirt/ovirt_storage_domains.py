@@ -115,21 +115,22 @@ options:
             - "C(port) - Port of the fibre channel storage server."
             - "C(lun_id) - LUN id."
             - "Note that these parameters are not idempotent."
-    discard_after_delete:
-        description:
-            - "Boolean flag which indicates whether the storage domain should discard after delete."
     wipe_after_delete:
         description:
             - "Boolean flag which indicates whether the storage domain should wipe the data after delete."
+        version_added: "2.5"
     backup:
         description:
             - "Boolean flag which indicates whether the storage domain is configured as backup or not."
+        version_added: "2.5"
     critical_space_action_blocker:
         description:
-            - "Inidcates what is the minimum free space the storage domain should contain."
+            - "Inidcates the minimal free space the storage domain should contain in GB percentages."
+        version_added: "2.5"
     warning_low_space:
         description:
             - "Inidcates the minimum percentage of a free space in a storage domain to present a warning."
+        version_added: "2.5"
     destroy:
         description:
             - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
@@ -323,12 +324,9 @@ class StorageDomainModule(BaseModule):
             description=self._module.params['description'],
             comment=self._module.params['comment'],
             wipe_after_delete=self._module.params['wipe_after_delete'],
-            discard_after_delete=self._module.params['discard_after_delete'],
             backup=self._module.params['backup'],
-            critical_space_action_blocker=self._module.params['critical_space_action_blocker']
-            if self._module.params['critical_space_action_blocker'] else None,
-            warning_low_space_indicator=self._module.params['warning_low_space']
-            if self._module.params['warning_low_space'] else None,
+            critical_space_action_blocker=self._module.params['critical_space_action_blocker'],
+            warning_low_space_indicator=self._module.params['warning_low_space'],
             import_=(
                 True
                 if self._module.params['state'] == 'imported' else None
@@ -575,11 +573,10 @@ def main():
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
-        discard_after_delete=dict(type='bool', default=False),
-        wipe_after_delete=dict(type='bool', default=False),
+        wipe_after_delete=dict(type='bool', default=None),
         backup=dict(type='bool', default=False),
-        critical_space_action_blocker=dict(type='int'),
-        warning_low_space=dict(type='int'),
+        critical_space_action_blocker=dict(type='int', default=None),
+        warning_low_space=dict(type='int', default=None),
         destroy=dict(type='bool', default=False),
         format=dict(type='bool', default=False),
         discard_after_delete=dict(type='bool', default=True)
