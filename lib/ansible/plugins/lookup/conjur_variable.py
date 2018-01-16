@@ -28,7 +28,7 @@ DOCUMENTATION = """
       config_file:
         description: Path to the Conjur configuration file. The configuration file is a YAML file.
         default: /etc/conjur.conf
-        require: False
+        required: False
         ini:
           - section: conjur,
             key: config_file_path
