@@ -45,6 +45,7 @@ options:
   description:
     description:
     - The description for the VRF.
+    aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

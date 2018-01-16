@@ -33,6 +33,7 @@ options:
   description:
     description:
     - Description for the AEP.
+    aliases: [ descr ]
   infra_vlan:
     description:
     - Enable infrastructure VLAN.

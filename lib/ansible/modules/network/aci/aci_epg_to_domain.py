@@ -64,7 +64,7 @@ options:
   epg:
     description:
     - Name of the end point group.
-    aliases: [ epg_name ]
+    aliases: [ epg_name, name ]
   netflow:
     description:
     - Determines if netflow should be enabled.

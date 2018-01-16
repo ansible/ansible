@@ -113,8 +113,8 @@ options:
   mac_address:
     description:
     - The MAC Address to assign to the C(bd) instead of using the default.
-    choices: [ mac ]
     default: 00:22:BD:F8:19:FF
+    aliases: [ mac ]
     version_added: '2.5'
   multi_dest:
     description:
