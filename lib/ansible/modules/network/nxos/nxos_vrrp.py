@@ -74,12 +74,6 @@ options:
         required: false
         choices: ['shutdown', 'no shutdown']
         default: no shutdown
-        version_added: "2.2"
-    include_defaults:
-        description:
-            - Specify if the complete running configuration for module operations should be used.
-        default: false
-        type: bool
     state:
         description:
             - Specify desired state of the resource.

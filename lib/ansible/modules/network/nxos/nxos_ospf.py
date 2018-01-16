@@ -41,11 +41,6 @@ options:
     required: false
     default: present
     choices: ['present','absent']
-  include_defaults:
-    description:
-      - Specify if the complete running configuration for module operations should be used.
-    default: true
-    type: bool
 '''
 
 EXAMPLES = '''

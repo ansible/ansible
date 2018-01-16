@@ -50,11 +50,6 @@ options:
               with checkpoint_file.
         required: false
         default: null
-    include_defaults:
-        description:
-            - Specify if the complete running configuration for module operations should be used.
-        default: false
-        type: bool
 '''
 
 EXAMPLES = '''
