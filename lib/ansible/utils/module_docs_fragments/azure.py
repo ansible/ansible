@@ -67,6 +67,15 @@ options:
               C(AzureUSGovernment)), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or
               the C(AZURE_CLOUD_ENVIRONMENT) environment variable.
         default: AzureCloud
+        version_added: 2.4
+    cert_validation_mode:
+        description:
+            - Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but
+              when an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing C(ignore). Can also be
+              set via credential file profile or the C(AZURE_CERT_VALIDATION) environment variable.
+        choices: [validate, ignore]
+        default: null
+        version_added: 2.5
 requirements:
     - "python >= 2.7"
     - "azure >= 2.0.0"

@@ -44,6 +44,7 @@ AZURE_COMMON_ARGS = dict(
     ad_user=dict(type='str', no_log=True),
     password=dict(type='str', no_log=True),
     cloud_environment=dict(type='str'),
+    cert_validation_mode=dict(type='str', choices=['validate', 'ignore'])
     # debug=dict(type='bool', default=False),
 )
 
@@ -57,6 +58,7 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     ad_user='AZURE_AD_USER',
     password='AZURE_PASSWORD',
     cloud_environment='AZURE_CLOUD_ENVIRONMENT',
+    cert_validation_mode='AZURE_CERT_VALIDATION_MODE',
 )
 
 AZURE_TAG_ARGS = dict(
@@ -255,6 +257,13 @@ class AzureRMModuleBase(object):
             self.fail("Failed to get credentials. Either pass as parameters, set environment variables, "
                       "or define a profile in ~/.azure/credentials or be logged using AzureCLI.")
 
+        # cert validation mode precedence: module-arg, credential profile, env, "validate"
+        self._cert_validation_mode = self.module.params['cert_validation_mode'] or self.credentials.get('cert_validation_mode') or \
+            os.environ.get('AZURE_CERT_VALIDATION_MODE') or 'validate'
+
+        if self._cert_validation_mode not in ['validate', 'ignore']:
+            self.fail('invalid cert_validation_mode: {0}'.format(self._cert_validation_mode))
+
         # if cloud_environment specified, look up/build Cloud object
         raw_cloud_env = self.credentials.get('cloud_environment')
         if not raw_cloud_env:
@@ -286,7 +295,8 @@ class AzureRMModuleBase(object):
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
                                                                  secret=self.credentials['secret'],
                                                                  tenant=self.credentials['tenant'],
-                                                                 cloud_environment=self._cloud_environment)
+                                                                 cloud_environment=self._cloud_environment,
+                                                                 verify=self._cert_validation_mode == 'validate')
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
@@ -296,7 +306,8 @@ class AzureRMModuleBase(object):
             self.azure_credentials = UserPassCredentials(self.credentials['ad_user'],
                                                          self.credentials['password'],
                                                          tenant=tenant,
-                                                         cloud_environment=self._cloud_environment)
+                                                         cloud_environment=self._cloud_environment,
+                                                         verify=self._cert_validation_mode == 'validate')
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password or "
@@ -718,6 +729,10 @@ class AzureRMModuleBase(object):
 
         return self.get_poller_result(poller)
 
+    @staticmethod
+    def _validation_ignore_callback(session, global_config, local_config, **kwargs):
+        session.verify = False
+
     def get_mgmt_svc_client(self, client_type, base_url=None, api_version=None):
         self.log('Getting management service client {0}'.format(client_type.__name__))
         self.check_client_version(client_type)
@@ -739,6 +754,9 @@ class AzureRMModuleBase(object):
         # Add user agent when running from VSCode extension
         if VSCODEEXT_USER_AGENT_KEY in os.environ:
             client.config.add_user_agent(os.environ[VSCODEEXT_USER_AGENT_KEY])
+
+        if self._cert_validation_mode == 'ignore':
+            client.config.session_configuration_callback = self._validation_ignore_callback
 
         return client
 
