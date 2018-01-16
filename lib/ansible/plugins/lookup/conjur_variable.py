@@ -18,6 +18,7 @@ DOCUMENTATION = """
         required: True
       identity_file:
         description: Path to the Conjur identity file. The identity file follows the netrc file format convention.
+        type: path
         default: /etc/conjur.identity
         required: False
         ini:
@@ -27,6 +28,7 @@ DOCUMENTATION = """
           - name: CONJUR_IDENTITY_FILE
       config_file:
         description: Path to the Conjur configuration file. The configuration file is a YAML file.
+        type: path
         default: /etc/conjur.conf
         required: False
         ini:
@@ -69,7 +71,6 @@ except ImportError:
 
 # Load configuration and return as dictionary if file is present on file system
 def _load_conf_from_file(conf_path):
-    conf_path = os.path.expanduser(conf_path)
     display.vvv('conf file: {0}'.format(conf_path))
 
     if not os.path.exists(conf_path):
@@ -85,7 +86,6 @@ def _load_conf_from_file(conf_path):
 
 # Load identity and return as dictionary if file is present on file system
 def _load_identity_from_file(identity_path, appliance_url):
-    identity_path = os.path.expanduser(identity_path)
     display.vvvv('identity file: {0}'.format(identity_path))
 
     if not os.path.exists(identity_path):
