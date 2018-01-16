@@ -247,7 +247,9 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
 
         vpn_conns = self.query_api('listVpnConnections', **args)
         if vpn_conns:
-            return vpn_conns['vpnconnection'][0]
+            for vpn_conn in vpn_conns['vpnconnection']:
+                if self.get_vpn_customer_gateway(key='id') == vpn_conn['s2scustomergatewayid']:
+                    return vpn_conn
 
     def present_vpn_connection(self):
         vpn_conn = self.get_vpn_connection()
