@@ -164,7 +164,7 @@ class LocalChanges(object):
         # tracked changes (including deletions) which are not staged
         self.unstaged = sorted(git.get_diff_names([]))
         # diff of all tracked files from fork point to working copy
-        self.diff = git.get_diff([self.fork_point])
+        self.diff = git.get_diff([self.fork_point], git_options=['-c', 'core.quotePath='])
 
     @staticmethod
     def is_official_branch(name):

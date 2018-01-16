@@ -18,12 +18,15 @@ class Git(object):
         self.args = args
         self.git = 'git'
 
-    def get_diff(self, args):
+    def get_diff(self, args, git_options=None):
         """
         :type args: list[str]
+        :type options: list[str]
         :rtype: list[str]
         """
         cmd = ['diff'] + args
+        if git_options:
+            cmd = git_options + cmd
         return self.run_git_split(cmd, '\n', str_errors='replace')
 
     def get_diff_names(self, args):
