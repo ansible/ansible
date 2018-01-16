@@ -63,6 +63,11 @@ class ConnectionMock(object):
     transport = None
     _new_stdin = StdinMock()
 
+    # my shell
+    _shell = MagicMock()
+    _shell.mkdtemp.return_value = 'mkdir command'
+    _shell.join_path.side_effect = os.path.join
+
 
 class PlayContextMock(object):
     shell = None

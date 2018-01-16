@@ -15,6 +15,7 @@ import tempfile
 import traceback
 import zipfile
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -218,7 +219,7 @@ class ActionModule(ActionBase):
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp()
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
