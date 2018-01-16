@@ -973,6 +973,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
 
+    # ensure we use proper tempdir
+    tempfile.tempdir = module.tempdir
+
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
 

@@ -49,6 +49,7 @@ from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
+from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
 
@@ -235,7 +236,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
             primary_category = module_categories[0]
 
         # use ansible core library to parse out doc metadata YAML and plaintext examples
-        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, verbose=verbose)
+        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
 
         # save all the information
         module_info[module] = {'path': module_path,

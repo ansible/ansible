@@ -60,7 +60,7 @@ class ConnectionBase(AnsiblePlugin):
     supports_persistence = False
     force_persistence = False
 
-    def __init__(self, play_context, new_stdin, *args, **kwargs):
+    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
 
         super(ConnectionBase, self).__init__()
 
@@ -78,8 +78,10 @@ class ConnectionBase(AnsiblePlugin):
         self.success_key = None
         self.prompt = None
         self._connected = False
-
         self._socket_path = None
+
+        if shell is not None:
+            self._shell = shell
 
         # load the shell plugin for this action/connection
         if play_context.shell:
