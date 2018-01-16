@@ -1103,6 +1103,8 @@ files:
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/connection/lxd.py:
+    maintainers: mattclay
   lib/ansible/plugins/connection/netconf.py:
     maintainers: $team_networking
     labels: networking
