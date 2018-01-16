@@ -54,7 +54,7 @@ def _safe_load(stream, file_name=None, vault_secrets=None):
             pass  # older versions of yaml don't have dispose function, ignore
 
 
-def from_yaml(data, file_name='<string>', show_content=True):
+def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None):
     '''
     Creates a python datastructure from the given data, which can be either
     a JSON or YAML string.
@@ -80,7 +80,7 @@ def from_yaml(data, file_name='<string>', show_content=True):
     except Exception:
         # must not be JSON, let the rest try
         try:
-            new_data = _safe_load(in_data, file_name=file_name)
+            new_data = _safe_load(in_data, file_name=file_name, vault_secrets=vault_secrets)
         except YAMLError as yaml_exc:
             _handle_error(yaml_exc, file_name, show_content)
 
