@@ -124,7 +124,7 @@ options:
     description:
       - The ProfitBricks API base URL.
     required: false
-    default: The value specified by API_HOST variable in ProfitBricks SDK for Python dependency.
+    default: None
     version_added: "2.5"
   username:
     description:
@@ -241,7 +241,6 @@ from uuid import (uuid4, UUID)
 HAS_PB_SDK = True
 
 try:
-    from profitbricks import API_HOST
     from profitbricks import __version__ as sdk_version
     from profitbricks.client import (ProfitBricksService, Volume, Server,
                                      Datacenter, NIC, LAN)
@@ -691,7 +690,7 @@ def main():
             count=dict(type='int', default=1),
             auto_increment=dict(type='bool', default=True),
             instance_ids=dict(type='list', default=[]),
-            api_url=dict(type='str', default=API_HOST),
+            api_url=dict(type='str', default=None),
             username=dict(
                 required=True,
                 aliases=['subscription_user'],
@@ -720,11 +719,14 @@ def main():
     password = module.params.get('password')
     api_url = module.params.get('api_url')
 
-    profitbricks = ProfitBricksService(
-        username=username,
-        password=password,
-        host_base=api_url
-    )
+    if not api_url:
+        profitbricks = ProfitBricksService(username=username, password=password)
+    else:
+        profitbricks = ProfitBricksService(
+            username=username,
+            password=password,
+            host_base=api_url
+        )
 
     user_agent = 'profitbricks-sdk-python/%s Ansible/%s' % (sdk_version, module.ansible_version)
     profitbricks.headers = {'User-Agent': user_agent}
