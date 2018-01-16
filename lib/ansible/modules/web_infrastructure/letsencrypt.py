@@ -853,7 +853,7 @@ def main():
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
             data=dict(required=False, no_log=True, default=None, type='dict'),
-            fullchain=dict(required=False, default=True, type='bool'),
+            fullchain=dict(required=False, default=False, type='bool'),
             dest=dict(required=True, aliases=['cert'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
         ),
