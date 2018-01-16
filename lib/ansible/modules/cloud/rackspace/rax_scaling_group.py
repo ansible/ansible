@@ -113,7 +113,9 @@ options:
       - how long before wait gives up, in seconds
     default: 300
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
