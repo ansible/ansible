@@ -158,6 +158,8 @@ files:
   $modules/cloud/azure/azure_rm_dnsrecordset.py:
     ignored: ozboms
     maintainers: $team_azure
+  $modules/cloud/azure/azure_rm_loadbalancer.py:
+    maintainers: $team_azure
   $modules/cloud/azure/azure_rm_networkinterface.py:
     ignored: chouseknecht
     maintainers: $team_azure
@@ -1103,6 +1105,8 @@ files:
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/connection/lxd.py:
+    maintainers: mattclay
   lib/ansible/plugins/connection/netconf.py:
     maintainers: $team_networking
     labels: networking
@@ -1219,7 +1223,7 @@ macros:
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone tstringer yuwzho xscript zikalino
+  team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
   team_cumulus: isharacomix jrrivers privateip
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_netapp: hulquest lmprice broncofan gouthampacha
