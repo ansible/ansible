@@ -777,7 +777,12 @@ def command_integration_filtered(args, targets, all_targets):
                     display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                     display.verbosity = args.verbosity = 6
 
+            start_time = time.time()
             original_environment.validate(target.name, throw=True)
+            end_time = time.time()
+
+            results[target.name]['validation_seconds'] = int(end_time - start_time)
+
             passed.append(target)
         except Exception as ex:
             failed.append(target)
