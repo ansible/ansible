@@ -28,6 +28,7 @@
 
 - name: setup remove vpn connection
   cs_vpn_connection:
+    vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -104,6 +105,7 @@
 
 - name: test remove vpn connection in check mode
   cs_vpn_connection:
+    vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -118,6 +120,7 @@
 
 - name: test remove vpn connection
   cs_vpn_connection:
+    vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -131,6 +134,7 @@
 
 - name: test remove vpn connection idempotence
   cs_vpn_connection:
+    vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent
@@ -190,6 +194,7 @@
 
 - name: cleanup remove vpn connection
   cs_vpn_connection:
+    vpn_customer_gateway: my_vpn_customer_gateway
     vpc: my_vpc
     zone: "{{ cs_common_zone_adv }}"
     state: absent

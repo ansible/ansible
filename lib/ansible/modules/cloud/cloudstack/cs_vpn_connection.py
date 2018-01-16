@@ -27,20 +27,20 @@ options:
     required: true
   vpn_customer_gateway:
     description:
-      - Name of the VPN connection.
-      - Required when C(state=present).
+      - Name of the VPN customer gateway.
+    required: true
   passive:
     description:
       - State of the VPN connection.
       - Only considered when C(state=present).
     default: no
-    choices: [ yes, no ]
+    type: bool
   force:
     description:
       - Activate the VPN gateway if not already activated on C(state=present).
       - Also see M(cs_vpn_gateway).
     default: no
-    choices: [ yes, no ]
+    type: bool
   state:
     description:
       - State of the VPN connection.
@@ -58,7 +58,8 @@ options:
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
@@ -79,6 +80,7 @@ EXAMPLES = r'''
 - name: Remove a vpn connection
   local_action:
     module: cs_vpn_connection
+    vpn_customer_gateway: my vpn connection
     vpc: my vpc
     state: absent
 '''
@@ -197,10 +199,8 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
         }
         self.vpn_customer_gateway = None
 
-    def get_vpn_customer_gateway(self, key=None):
-        vpn_customer_gateway = self.module.params.get('vpn_customer_gateway')
-
-        if self.vpn_customer_gateway:
+    def get_vpn_customer_gateway(self, key=None, identifier=None, refresh=False):
+        if not refresh and self.vpn_customer_gateway:
             return self._get_by_key(key, self.vpn_customer_gateway)
 
         args = {
@@ -209,6 +209,7 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
             'projectid': self.get_project(key='id')
         }
 
+        vpn_customer_gateway = identifier or self.module.params.get('vpn_customer_gateway')
         vcgws = self.query_api('listVpnCustomerGateways', **args)
         if vcgws:
             for vcgw in vcgws['vpncustomergateway']:
@@ -247,7 +248,9 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
 
         vpn_conns = self.query_api('listVpnConnections', **args)
         if vpn_conns:
-            return vpn_conns['vpnconnection'][0]
+            for vpn_conn in vpn_conns['vpnconnection']:
+                if self.get_vpn_customer_gateway(key='id') == vpn_conn['s2scustomergatewayid']:
+                    return vpn_conn
 
     def present_vpn_connection(self):
         vpn_conn = self.get_vpn_connection()
@@ -294,16 +297,19 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
                 self.result['cidrs'] = vpn_conn['cidrlist'].split(',') or [vpn_conn['cidrlist']]
             # Ensure we return a bool
             self.result['force_encap'] = True if vpn_conn['forceencap'] else False
-
-            self.module.params['vpn_customer_gateway'] = vpn_conn['s2scustomergatewayid']
-            self.result['vpn_customer_gateway'] = self.get_vpn_customer_gateway(key='name')
+            args = {
+                'key': 'name',
+                'identifier': vpn_conn['s2scustomergatewayid'],
+                'refresh': True,
+            }
+            self.result['vpn_customer_gateway'] = self.get_vpn_customer_gateway(**args)
         return self.result
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        vpn_customer_gateway=dict(),
+        vpn_customer_gateway=dict(required=True),
         vpc=dict(required=True),
         domain=dict(),
         account=dict(),
@@ -318,9 +324,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
-        required_if=[
-            ('state', 'present', ['vpn_customer_gateway']),
-        ],
         supports_check_mode=True
     )
 
