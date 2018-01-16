@@ -118,6 +118,12 @@ options:
       - User's public SSH key (contents, not path).
     required: false
     default: None
+  server_type:
+    description:
+      - The type of server to be built.
+    required: false
+    default: "cloud"
+    choices: [ "cloud", "baremetal", "k8s_node" ]
   wait:
     description:
       - Wait for the server to be in state 'running' before returning.
@@ -625,7 +631,7 @@ def main():
             firewall_policy=dict(type='str'),
             load_balancer=dict(type='str'),
             monitoring_policy=dict(type='str'),
-            server_type=dict(type='str', default='cloud', choices=['cloud', 'baremetal', 'K8S']),
+            server_type=dict(type='str', default='cloud', choices=['cloud', 'baremetal', 'k8s_node']),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             state=dict(type='str', default='present', choices=['present', 'absent', 'running', 'stopped']),
