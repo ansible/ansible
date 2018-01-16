@@ -136,6 +136,7 @@ provisioning_state:
 ip_address:
     description:
         - Public IP Address of created container group.
+    returned: if address is public
     type: str
     sample: 175.12.233.11
 '''
