@@ -102,13 +102,13 @@ id:
     sample: /subscriptions/12345678-1234-1234-1234-123412341234/resourceGroups/samplerg/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
 version:
     description:
-        - Server version. Possible values include: C(9.5), C(9.6)
+        - 'Server version. Possible values include: C(9.5), C(9.6)'
     returned: always
     type: str
     sample: 9.6
 state:
     description:
-        - A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)
+        - 'A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)'
     returned: always
     type: str
     sample: Ready

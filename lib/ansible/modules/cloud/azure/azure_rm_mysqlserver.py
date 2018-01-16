@@ -102,13 +102,13 @@ id:
     sample: /subscriptions/12345678-1234-1234-1234-123412341234/testrg/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
 version:
     description:
-        - Server version. Possible values include: C(5.6), C(5.7)
+        - 'Server version. Possible values include: C(5.6), C(5.7)'
     returned: always
     type: str
     sample: 5.6
 state:
     description:
-        - A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)
+        - 'A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)'
     returned: always
     type: str
     sample: Ready
