@@ -165,7 +165,8 @@ except ImportError:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, ansible_dict_to_boto3_tag_list, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 from ansible.module_utils.six import string_types
 
 
@@ -356,6 +357,7 @@ def main():
                     module.fail_json_aws(e, "Failed to update enabled dns hostnames attribute")
 
         final_state = camel_dict_to_snake_dict(get_vpc(module, connection, vpc_id))
+        final_state['tags'] = boto3_tag_list_to_ansible_dict(final_state.get('tags', []))
         final_state['id'] = final_state.pop('vpc_id')
 
         module.exit_json(changed=changed, vpc=final_state)
