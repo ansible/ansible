@@ -76,7 +76,8 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     results_callback = ResultCallback()
 
     # create inventory and pass to var manager
-    inventory = InventoryManager(loader=loader, sources=['localhost'])
+    # use path to host config file as source or hosts in a comma separated string
+    inventory = InventoryManager(loader=loader, sources='localhost,')
     variable_manager = VariableManager(loader=loader, inventory=inventory)
 
     # create play with tasks
