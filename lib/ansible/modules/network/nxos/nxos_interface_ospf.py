@@ -111,6 +111,11 @@ options:
       - Specifies the message_digest password. Valid value is a string.
     required: false
     default: null
+  include_defaults:
+    description:
+      - Specify if the complete running configuration for module operations should be used.
+    default: true
+    type: bool
   state:
     description:
       - Determines whether the config should be present or not

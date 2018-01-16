@@ -32,10 +32,11 @@ options:
         on the remote device.  The list of users will be compared against
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
-        the name argument. alias C(users).
+        the name argument.
     version_added: "2.4"
     required: False
     default: null
+    aliases: ['users', 'collection']
   name:
     description:
       - The C(name) argument defines the username of the user to be created

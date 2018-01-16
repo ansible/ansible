@@ -20,6 +20,7 @@ description:
 version_added: "2.2"
 extends_documentation_fragment:
   - aws
+  - ec2
 author: "Jim Dalton (@jsdalton) <jim.dalton@gmail.com>"
 requirements:
   - python >= 2.6

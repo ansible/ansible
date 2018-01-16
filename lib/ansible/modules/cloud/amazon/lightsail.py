@@ -69,7 +69,9 @@ requirements:
   - "python >= 2.6"
   - boto3
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 

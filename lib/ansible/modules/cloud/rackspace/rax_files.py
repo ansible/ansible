@@ -70,7 +70,9 @@ options:
     description:
        - Sets an object to be presented as the HTTP index page when accessed by the CDN URL
 author: "Paul Durivage (@angstwad)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

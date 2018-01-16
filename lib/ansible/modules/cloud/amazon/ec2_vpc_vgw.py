@@ -59,7 +59,6 @@ options:
     aliases: [ "resource_tags" ]
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
-  - aws
   - ec2
 '''
 

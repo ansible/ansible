@@ -45,6 +45,7 @@ options:
         command syntax as some commands are automatically modified by the
         device config parser.
     required: false
+    aliases: ['commands']
     default: null
   parents:
     description:

@@ -73,6 +73,11 @@ options:
         required: false
         default: false
         version_added: "2.4"
+    include_defaults:
+        description:
+            - Specify if the complete running configuration for module operations should be used.
+        default: true
+        type: bool
     state:
         description:
             - Specify desired state of the resource.

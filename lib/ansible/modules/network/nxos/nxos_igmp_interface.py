@@ -159,6 +159,11 @@ options:
         required: false
         choices: ['true', 'false']
         default: null
+    include_defaults:
+        description:
+            - Specify if the complete running configuration for module operations should be used.
+        default: true
+        type: bool
     state:
         description:
             - Manages desired state of the resource.

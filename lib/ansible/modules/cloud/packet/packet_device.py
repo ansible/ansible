@@ -98,12 +98,6 @@ options:
     description:
       - Userdata blob made available to the machine
 
-  wait:
-    description:
-      - Whether to wait for the instance to be assigned IP address before returning.
-      - This option has been deprecated in favor of C(wait_for_public_IPv).
-    default: false
-
   wait_for_public_IPv:
     description:
       - Whether to wait for the instance to be assigned a public IPv4/IPv6 address.

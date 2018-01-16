@@ -31,10 +31,11 @@ options:
     description:
      - DigitalOcean api token.
     version_added: "1.9.5"
-    aliases: ['api_token']
+    aliases: ['API_TOKEN']
   id:
     description:
      - Numeric, the droplet id you want to operate on.
+    aliases: ['droplet_id']
   name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key, or the name of a domain.

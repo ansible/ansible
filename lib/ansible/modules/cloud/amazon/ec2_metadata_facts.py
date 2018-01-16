@@ -26,6 +26,8 @@ description:
       The module must be called from within the EC2 instance itself.
 notes:
     - Parameters to filter on ec2_metadata_facts may be added later.
+extends_documentation_fragment:
+    - url
 '''
 
 EXAMPLES = '''

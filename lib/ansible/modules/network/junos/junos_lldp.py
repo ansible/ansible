@@ -35,12 +35,6 @@ options:
       - Specify the number of seconds that LLDP information is held before it is
         discarded. The multiplier value is used in combination with the
         C(interval) value.
-  enable:
-    description:
-      - If value is C(True) it enable LLDP protocol on remote device, if value
-        is C(False) it disables LLDP protocol.
-    default: present
-    choices: [True, False]
   state:
     description:
       - Value of C(present) ensures given LLDP configuration

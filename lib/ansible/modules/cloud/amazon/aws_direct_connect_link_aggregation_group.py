@@ -15,6 +15,9 @@ description:
   - Create, delete, or modify a Direct Connect link aggregation group.
 version_added: "2.4"
 author: "Sloane Hertel (@s-hertel)"
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements:
   - boto3
   - botocore

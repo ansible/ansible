@@ -87,7 +87,9 @@ notes:
   - As of version 1.7, the C(type) field is required and no longer defaults to an C(A) record.
   - C(PTR) record support was added in version 1.7
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

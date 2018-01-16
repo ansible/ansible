@@ -25,7 +25,9 @@ description:
 author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
 notes:
     - Requires A10 Networks aXAPI 2.1.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
   partition:
     version_added: "2.3"
@@ -59,6 +61,7 @@ options:
         required when C(state) is C(present).
     required: false
     default: null
+    aliases: ['port']
   state:
     description:
       - This is to specify the operation to create, update or remove SLB server.

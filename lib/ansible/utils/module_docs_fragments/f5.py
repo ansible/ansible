@@ -26,6 +26,7 @@ options:
         You can omit this option if the environment variable C(F5_PASSWORD)
         is set.
     required: true
+    aliases: ['pass', 'pwd']
   server:
     description:
       - The BIG-IP host. You can omit this option if the environment

@@ -144,7 +144,9 @@ options:
       - how long before wait gives up, in seconds
     default: 300
 requirements: [ 'boto' ]
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

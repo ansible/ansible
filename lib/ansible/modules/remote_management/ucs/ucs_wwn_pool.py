@@ -38,7 +38,7 @@ options:
     - Optional if state is absent.
     choices: [node, port]
     required: yes
-  descrption:
+  description:
     description:
     - A description of the WWNN or WWPN pool.
     - Enter up to 256 characters.

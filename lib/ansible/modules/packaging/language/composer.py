@@ -83,7 +83,7 @@ options:
             - Disables all plugins ( see --no-plugins ).
         default: false
         choices: [ true, false]
-        aliases: [ no-plugin ]
+        aliases: [ no-plugins ]
     optimize_autoloader:
         description:
             - Optimize autoloader during autoloader dump (see --optimize-autoloader).

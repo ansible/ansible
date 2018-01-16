@@ -63,7 +63,9 @@ options:
     choices: ['present', 'absent']
     default: present
 author: Mike Mochan(@mmochan)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements: [ botocore, boto3, json ]
 '''
 

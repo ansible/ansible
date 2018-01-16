@@ -42,6 +42,7 @@ options:
     - The email-address(es) the mail is being sent to.
     - This is a list, which may contain address and phrase portions.
     default: root
+    aliases: ['recipients']
   cc:
     description:
     - The email-address(es) the mail is being copied to.

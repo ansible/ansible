@@ -46,7 +46,6 @@ options:
       - The password to log-in with.
 
   project:
-    aliases: [ prj ]
     required: false
     description:
       - The project for this operation. Required for issue creation.

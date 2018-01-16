@@ -26,7 +26,6 @@ options:
         description:
             - IP tunnel interface name.
         required: true
-        aliases: [ "tunnel", "link" ]
     temporary:
         description:
             - Specifies that the IP tunnel interface is temporary. Temporary IP tunnel
@@ -39,6 +38,7 @@ options:
         required: false
         default: "ipv4"
         choices: [ "ipv4", "ipv6", "6to4" ]
+        aliases: ['tunnel_type']
     local_address:
         description:
             - Literat IP address or hostname corresponding to the tunnel source.

@@ -91,8 +91,8 @@ options:
 requirements:
     - boto3
 extends_documentation_fragment:
-    - aws
-
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

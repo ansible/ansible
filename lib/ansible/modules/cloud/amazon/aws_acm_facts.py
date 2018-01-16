@@ -25,7 +25,9 @@ requirements:
   - boto3
 author:
   - Will Thames (@willthames)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
