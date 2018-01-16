@@ -28,8 +28,8 @@ options:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
-    aliases: [ mode ]
     choices: [ dynamic, inherit, static]
+    aliases: [ mode ]
   description:
     description:
     - Description for the pool range.
@@ -38,6 +38,12 @@ options:
     description:
     - The name of the pool that the range should be assigned to.
     aliases: [ pool_name ]
+  pool_allocation_mode:
+    description:
+    - The method used for allocating encaps to resources.
+    - Only vlan and vsan support allocation modes.
+    choices: [ dynamic, static]
+    aliases: [ pool_mode ]
   pool_type:
     description:
     - The encap type of C(pool).

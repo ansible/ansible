@@ -34,6 +34,7 @@ options:
   filter:
     description:
     - The name of the Filter to bind to the Subject.
+    aliases: [ filter_name ]
   log:
     description:
     - Determines if the binding should be set to log.

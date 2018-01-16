@@ -26,6 +26,12 @@ notes:
 - The C(domain) and C(vlan_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_vlan_pool) can be used for these.
 options:
+  allocation_mode:
+    description:
+    - The method used for allocating VLANs to resources.
+    choices: [ dynamic, static]
+    required: yes
+    aliases: [ mode ]
   domain:
     description:
     - Name of the domain being associated with the VLAN Pool.
@@ -38,12 +44,6 @@ options:
     description:
     - The name of the pool.
     aliases: [ pool_name, vlan_pool ]
-  pool_allocation_mode:
-    description:
-    - The method used for allocating VLANs to resources.
-    aliases: [ mode ]
-    choices: [ dynamic, static]
-    required: yes
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -141,7 +141,7 @@ def main():
     argument_spec.update(
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),
-        pool=dict(type='str', aliases=['pool_name']),
+        pool=dict(type='str', aliases=['pool_name', 'vlan_pool']),
         pool_allocation_mode=dict(type='str', required=True, aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'redhat', 'vmware']),
