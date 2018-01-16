@@ -292,7 +292,6 @@ lib/ansible/modules/network/aci/aci_epg_to_domain.py E322
 lib/ansible/modules/network/aci/aci_filter.py E322
 lib/ansible/modules/network/aci/aci_filter_entry.py E322
 lib/ansible/modules/network/aci/aci_filter_entry.py E323
-lib/ansible/modules/network/aci/aci_firmware_source.py E322
 lib/ansible/modules/network/aci/aci_interface_policy_leaf_profile.py E322
 lib/ansible/modules/network/aci/aci_interface_selector_to_switch_policy_leaf_profile.py E322
 lib/ansible/modules/network/aci/aci_intf_policy_fc.py E322

@@ -295,7 +295,7 @@ def aci_response(result, rawoutput, rest_type='xml'):
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         path=dict(type='str', required=True, aliases=['uri']),
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),

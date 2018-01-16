@@ -82,7 +82,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         contract=dict(type='str', aliases=['contract_name']),
         filter=dict(type='str', aliases=['filter_name']),

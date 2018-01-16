@@ -137,7 +137,7 @@ MATCH_MAPPING = dict(all='All', at_least_one='AtleastOne', at_most_one='AtmostOn
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         contract=dict(type='str', aliases=['contract_name']),
         subject=dict(type='str', aliases=['contract_subject', 'name', 'subject_name']),

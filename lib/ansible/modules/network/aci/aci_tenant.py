@@ -83,7 +83,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),

@@ -128,7 +128,7 @@ BOUNCE_TRIG_MAPPING = dict(coop='protocol', rarp='rarp-flood')
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # not required for querying all EPRs
         epr_policy=dict(type='str', aliases=['epr_name', 'name']),

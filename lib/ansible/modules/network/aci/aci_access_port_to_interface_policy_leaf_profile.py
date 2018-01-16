@@ -124,7 +124,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update({
         'leaf_interface_profile': dict(type='str', aliases=['leaf_interface_profile_name']),
         'access_port_selector': dict(type='str', aliases=['name', 'access_port_selector_name']),
