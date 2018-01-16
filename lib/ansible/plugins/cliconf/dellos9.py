@@ -1,7 +1,7 @@
 #
 # (c) 2017 Red Hat Inc.
 #
-# Copyright (c) 2017 Dell Inc.
+# (c) 2017 Dell EMC.
 #
 # This file is part of Ansible
 #

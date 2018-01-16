@@ -2,7 +2,7 @@
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 # (c) 2017 Red Hat, Inc
 #
-# Copyright (c) 2017 Dell Inc.
+# Copyright (c) 2016 Dell Inc.
 #
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
