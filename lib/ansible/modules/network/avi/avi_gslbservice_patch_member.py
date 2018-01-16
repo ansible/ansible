@@ -66,7 +66,6 @@ EXAMPLES = '''
                 addr:  10.30.10.66
                 type: V4
               ratio: 3
-      api_version: 16.4
   - name: Patch GSLB Service to delete an existing member
     avi_gslbservice_patch_member:
       controller: "{{ controller }}"

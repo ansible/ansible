@@ -87,7 +87,6 @@ Tasks : The following are examples of using the module cnos_conditional_command.
       condition: "{{ hostvars[inventory_hostname]['condition']}}"
       flag: leaf_switch2
       command: "spanning-tree mode enable"
-      enablePassword: "anil"
 
 '''
 RETURN = '''

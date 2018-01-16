@@ -76,19 +76,19 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # Update a resource limit for instances of a domain
-local_action:
-  module: cs_resourcelimit
-  type: instance
-  limit: 10
-  domain: customers
+- local_action:
+    module: cs_resourcelimit
+    type: instance
+    limit: 10
+    domain: customers
 
 # Update a resource limit for instances of an account
-local_action:
-  module: cs_resourcelimit
-  type: instance
-  limit: 12
-  account: moserre
-  domain: customers
+- local_action:
+    module: cs_resourcelimit
+    type: instance
+    limit: 12
+    account: moserre
+    domain: customers
 '''
 
 RETURN = '''

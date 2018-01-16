@@ -251,11 +251,6 @@ gateway_ipv6:
   returned: success
   type: string
   sample: 2001:db8::1
-state:
-  description: State of the network.
-  returned: success
-  type: string
-  sample: Implemented
 zone:
   description: Name of zone.
   returned: success

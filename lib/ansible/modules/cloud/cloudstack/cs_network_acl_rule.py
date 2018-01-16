@@ -145,47 +145,47 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a network ACL rule, allow port 80 ingress
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  traffic_type: ingress
-  action_policy: allow
-  port: 80
-  cidr: 0.0.0.0/0
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    traffic_type: ingress
+    action_policy: allow
+    port: 80
+    cidr: 0.0.0.0/0
 
 # create a network ACL rule, deny port range 8000-9000 ingress for 10.20.0.0/16
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  traffic_type: ingress
-  action_policy: deny
-  start_port: 8000
-  end_port: 8000
-  cidr: 10.20.0.0/16
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    traffic_type: ingress
+    action_policy: deny
+    start_port: 8000
+    end_port: 8000
+    cidr: 10.20.0.0/16
 
 # create a network ACL rule
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  traffic_type: ingress
-  action_policy: deny
-  start_port: 8000
-  end_port: 8000
-  cidr: 10.20.0.0/16
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    traffic_type: ingress
+    action_policy: deny
+    start_port: 8000
+    end_port: 8000
+    cidr: 10.20.0.0/16
 
 # remove a network ACL rule
-local_action:
-  module: cs_network_acl_rule
-  network_acl: web
-  rule_position: 1
-  vpc: my vpc
-  state: absent
+- local_action:
+    module: cs_network_acl_rule
+    network_acl: web
+    rule_position: 1
+    vpc: my vpc
+    state: absent
 '''
 
 RETURN = '''

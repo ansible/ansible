@@ -51,11 +51,11 @@ options:
 '''
 
 EXAMPLES = '''
-name: Mark address on addrobj as deprecated
-ipadm_addrprop: property=deprecated value=on addrobj=e1000g0/v6
+- name: Mark address on addrobj as deprecated
+  ipadm_addrprop: property=deprecated value=on addrobj=e1000g0/v6
 
-name: Set network prefix length for addrobj
-ipadm_addrprop: addrobj=bge0/v4 name=prefixlen value=26
+- name: Set network prefix length for addrobj
+  ipadm_addrprop: addrobj=bge0/v4 name=prefixlen value=26
 '''
 
 RETURN = '''

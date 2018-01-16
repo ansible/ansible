@@ -97,8 +97,6 @@ EXAMPLES = """
       transport: cli
 
   tasks:
-
-  tasks:
   - name: "Run display version on remote devices"
     ce_command:
       commands: display version
