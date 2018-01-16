@@ -180,6 +180,7 @@ def main():
         argument_spec,
         supports_check_mode=True,
     )
+    # UCSModule verifies ucsmsdk is present and exits on failure.  Imports are below ucs object creation.
     ucs = UCSModule(module)
 
     err = False
