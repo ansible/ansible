@@ -1065,7 +1065,7 @@ class ModuleValidator(Validator):
         for option, details in options.items():
             try:
                 names = [option] + details.get('aliases', [])
-            except AttributeError:
+            except (TypeError, AttributeError):
                 # Reporting of this syntax error will be handled by schema validation.
                 continue
 

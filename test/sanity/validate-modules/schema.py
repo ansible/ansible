@@ -25,7 +25,7 @@ suboption_schema = Schema(
         Required('description'): Any(list_string_types, *string_types),
         'required': bool,
         'choices': list,
-        'aliases': Any(list, *string_types),
+        'aliases': Any(list_string_types),
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
@@ -43,7 +43,7 @@ option_schema = Schema(
         Required('description'): Any(list_string_types, *string_types),
         'required': bool,
         'choices': list,
-        'aliases': Any(list, *string_types),
+        'aliases': Any(list_string_types),
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
@@ -61,7 +61,7 @@ list_dict_option_schema = [{str_type: option_schema} for str_type in string_type
 def return_schema(data):
 
     return_schema_dict = {
-        Required('description'): Any(list, *string_types),
+        Required('description'): Any(list_string_types, *string_types),
         Required('returned'): Any(*string_types),
         Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
         'version_added': Any(float, *string_types),
