@@ -21,13 +21,34 @@ except ImportError:
 
 
 f5_provider_spec = {
-    'server': dict(fallback=(env_fallback, ['F5_SERVER'])),
-    'server_port': dict(type='int', default=443, fallback=(env_fallback, ['F5_SERVER_PORT'])),
-    'user': dict(fallback=(env_fallback, ['F5_USER', 'ANSIBLE_NET_USERNAME'])),
-    'password': dict(no_log=True, fallback=(env_fallback, ['F5_PASSWORD', 'ANSIBLE_NET_PASSWORD'])),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'validate_certs': dict(type='bool', fallback=(env_fallback, ['F5_VALIDATE_CERTS'])),
-    'transport': dict(default='rest', choices=['cli', 'rest'])
+    'server': dict(
+        fallback=(env_fallback, ['F5_SERVER'])
+    ),
+    'server_port': dict(
+        type='int',
+        default=443,
+        fallback=(env_fallback, ['F5_SERVER_PORT'])
+    ),
+    'user': dict(
+        fallback=(env_fallback, ['F5_USER', 'ANSIBLE_NET_USERNAME'])
+    ),
+    'password': dict(
+        no_log=True,
+        fallback=(env_fallback, ['F5_PASSWORD', 'ANSIBLE_NET_PASSWORD'])
+    ),
+    'ssh_keyfile': dict(
+        fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']),
+        type='path'
+    ),
+    'validate_certs': dict(
+        type='bool',
+        fallback=(env_fallback, ['F5_VALIDATE_CERTS'])
+    ),
+    'transport': dict(
+        default='rest',
+        choices=['cli', 'rest']
+    ),
+    'timeout': dict(type='int'),
 }
 
 f5_argument_spec = {
@@ -35,12 +56,34 @@ f5_argument_spec = {
 }
 
 f5_top_spec = {
-    'server': dict(removed_in_version=2.9, fallback=(env_fallback, ['F5_SERVER'])),
-    'user': dict(removed_in_version=2.9, fallback=(env_fallback, ['F5_USER', 'ANSIBLE_NET_USERNAME'])),
-    'password': dict(removed_in_version=2.9, no_log=True, fallback=(env_fallback, ['F5_PASSWORD'])),
-    'validate_certs': dict(removed_in_version=2.9, type='bool', fallback=(env_fallback, ['F5_VALIDATE_CERTS'])),
-    'server_port': dict(removed_in_version=2.9, type='int', default=443, fallback=(env_fallback, ['F5_SERVER_PORT'])),
-    'transport': dict(removed_in_version=2.9, choices=['cli', 'rest'])
+    'server': dict(
+        removed_in_version=2.9,
+        fallback=(env_fallback, ['F5_SERVER'])
+    ),
+    'user': dict(
+        removed_in_version=2.9,
+        fallback=(env_fallback, ['F5_USER', 'ANSIBLE_NET_USERNAME'])
+    ),
+    'password': dict(
+        removed_in_version=2.9,
+        no_log=True,
+        fallback=(env_fallback, ['F5_PASSWORD', 'ANSIBLE_NET_PASSWORD'])
+    ),
+    'validate_certs': dict(
+        removed_in_version=2.9,
+        type='bool',
+        fallback=(env_fallback, ['F5_VALIDATE_CERTS'])
+    ),
+    'server_port': dict(
+        removed_in_version=2.9,
+        type='int',
+        default=443,
+        fallback=(env_fallback, ['F5_SERVER_PORT'])
+    ),
+    'transport': dict(
+        removed_in_version=2.9,
+        choices=['cli', 'rest']
+    )
 }
 f5_argument_spec.update(f5_top_spec)
 
@@ -80,7 +123,7 @@ def run_commands(module, commands, check_rc=True):
         cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), rc=rc)
+            raise F5ModuleError(to_text(err, errors='surrogate_then_replace'))
         responses.append(to_text(out, errors='surrogate_then_replace'))
     return responses
 
@@ -93,6 +136,12 @@ def cleanup_tokens(client):
         resource.delete()
     except Exception:
         pass
+
+
+def is_cli(module):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+    return 'cli' in (transport, provider_transport)
 
 
 class Noop(object):
