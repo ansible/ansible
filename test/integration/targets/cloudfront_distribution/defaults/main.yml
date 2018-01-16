@@ -1,6 +1,6 @@
-cloudfront_hostname: "{{ resource_prefix }}01"
+cloudfront_hostname: "{{ resource_prefix | lower }}01"
 # Use a domain that has a wildcard DNS
-cloudfront_alias: "{{ cloudfront_hostname }}.github.io"
+cloudfront_alias: "{{ cloudfront_hostname | lower }}.github.io"
 
 cloudfront_test_cache_behaviors:
   - path_pattern: /test/path

@@ -88,6 +88,7 @@ Ansible Changes By Release
   * aws_kms_facts
   * aws_s3_cors
   * aws_ssm_parameter_store
+  * cloudfront_distribution
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_placement_group
@@ -288,18 +289,6 @@ Ansible Changes By Release
   * mksysb
   * nosh
   * service_facts
-* aws_acm_facts
-* aws_kms_facts
-* aws_ssm_parameter_store
-* cloudfront_distribution
-* digital_ocean_sshkey_facts
-* ec2_ami_facts
-* ec2_placement_group
-* ecs_taskdefinition_facts
-* elasticache_facts
-
-
-#### Windows
 
 #### Windows
   * win_audit_policy_system

@@ -37,22 +37,16 @@ except ImportError:
     pass
 
 
-class CloudFrontFactsServiceManager:
+class CloudFrontFactsServiceManager(object):
     """Handles CloudFront Facts Services"""
 
     def __init__(self, module):
         self.module = module
 
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            self.client = boto3_conn(module, conn_type='client',
-                                     resource='cloudfront', region=region,
-                                     endpoint=ec2_url, **aws_connect_kwargs)
-        except botocore.exceptions.NoRegionError:
-            self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION "
-                                  "environment variable or in boto configuration file")
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json_aws(e, msg="Can't establish connection")
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        self.client = boto3_conn(module, conn_type='client',
+                                 resource='cloudfront', region=region,
+                                 endpoint=ec2_url, **aws_connect_kwargs)
 
     def get_distribution(self, distribution_id):
         try:

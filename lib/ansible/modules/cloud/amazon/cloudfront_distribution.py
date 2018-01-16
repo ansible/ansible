@@ -1,18 +1,6 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -46,6 +34,7 @@ options:
           present - creates a new distribution or updates an existing distribution.
           absent - deletes an existing distribution.
       choices: ['present', 'absent']
+      default: 'present'
 
     distribution_id:
       description:
@@ -1087,7 +1076,7 @@ web_acl_id:
   sample: abcd1234-1234-abcd-abcd-abcd12345678
 '''
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 from ansible.module_utils.ec2 import get_aws_connection_info
@@ -1095,8 +1084,6 @@ from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, compare_aws_
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, boto3_tag_list_to_ansible_dict
 import datetime
-import time
-import timeit
 
 try:
     from collections import OrderedDict
@@ -1166,7 +1153,7 @@ def recursive_diff(dict1, dict2):
 
 def create_distribution(client, module, config, tags):
     try:
-        if tags is None:
+        if not tags:
             return client.create_distribution(DistributionConfig=config)['Distribution']
         else:
             distribution_config_with_tags = {
@@ -1797,30 +1784,27 @@ class CloudFrontValidationManager(object):
                     return distribution['Id']
         return None
 
-    def wait_until_processed(self, wait_timeout, distribution_id, caller_reference):
+    def wait_until_processed(self, client, wait_timeout, distribution_id, caller_reference):
+        if distribution_id is None:
+            distribution_id = self.validate_distribution_id_from_caller_reference(caller_reference=caller_reference)
+
         try:
-            start_time = timeit.default_timer()
+            waiter = client.get_waiter('distribution_deployed')
+            attempts = 1 + int(wait_timeout / 60)
+            waiter.wait(Id=distribution_id, WaiterConfig={'MaxAttempts': attempts})
+        except botocore.exceptions.WaiterError as e:
+            self.module.fail_json(msg="Timeout waiting for cloudfront action. Waited for {0} seconds before timeout. "
+                                  "Error: {1}".format(to_text(wait_timeout), to_native(e)))
 
-            if distribution_id is None:
-                distribution_id = self.validate_distribution_id_from_caller_reference(caller_reference=caller_reference)
-
-            while True:
-                time.sleep(10)
-                distribution = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
-                if distribution.get('Distribution').get('Status') == "Deployed":
-                    return
-                elapsed = timeit.default_timer() - start_time
-                if elapsed >= wait_timeout:
-                    self.module.fail_json(msg="Timeout waiting for cloudfront action. Waited for " + str(wait_timeout) + " seconds before timeout.")
-        except Exception:
-            return
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Error getting distribution {0}".format(distribution_id))
 
 
 def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        state=dict(choices=['present', 'absent']),
+        state=dict(choices=['present', 'absent'], default='present'),
         caller_reference=dict(),
         comment=dict(),
         distribution_id=dict(),
@@ -1865,13 +1849,8 @@ def main():
         ]
     )
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='cloudfront', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoRegionError:
-        module.fail_json(msg=("Region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file."))
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=to_native(e))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    client = boto3_conn(module, conn_type='client', resource='cloudfront', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     validation_mgr = CloudFrontValidationManager(module)
 
@@ -1907,7 +1886,7 @@ def main():
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
-    if alias not in aliases:
+    if alias and alias not in aliases:
         aliases.append(alias)
 
     distribution = validation_mgr.validate_distribution_from_aliases_caller_reference(distribution_id, aliases, caller_reference)
@@ -1957,7 +1936,7 @@ def main():
         if config['Enabled']:
             config['Enabled'] = False
             result = update_distribution(client, module, config, distribution_id, e_tag)
-            validation_mgr.wait_until_processed(wait_timeout, distribution_id, config.get('CallerReference'))
+            validation_mgr.wait_until_processed(client, wait_timeout, distribution_id, config.get('CallerReference'))
         distribution = validation_mgr.validate_distribution_from_aliases_caller_reference(distribution_id, aliases, caller_reference)
         # e_tag = distribution['ETag']
         result = delete_distribution(client, module, distribution)
@@ -1980,7 +1959,7 @@ def main():
             result['diff']['after'] = diff[1]
 
     if wait and (create or update):
-        validation_mgr.wait_until_processed(wait_timeout, distribution_id, config.get('CallerReference'))
+        validation_mgr.wait_until_processed(client, wait_timeout, distribution_id, config.get('CallerReference'))
 
     if 'distribution_config' in result:
         result.update(result['distribution_config'])
