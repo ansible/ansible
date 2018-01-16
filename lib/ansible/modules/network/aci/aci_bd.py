@@ -136,6 +136,7 @@ options:
     description:
     - The name of the VRF.
     aliases: [ vrf_name ]
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
