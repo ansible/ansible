@@ -199,10 +199,8 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
         }
         self.vpn_customer_gateway = None
 
-    def get_vpn_customer_gateway(self, key=None):
-        vpn_customer_gateway = self.module.params.get('vpn_customer_gateway')
-
-        if self.vpn_customer_gateway:
+    def get_vpn_customer_gateway(self, key=None, identifier=None, refresh=False):
+        if not refresh and self.vpn_customer_gateway:
             return self._get_by_key(key, self.vpn_customer_gateway)
 
         args = {
@@ -211,6 +209,7 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
             'projectid': self.get_project(key='id')
         }
 
+        vpn_customer_gateway = identifier or self.module.params.get('vpn_customer_gateway')
         vcgws = self.query_api('listVpnCustomerGateways', **args)
         if vcgws:
             for vcgw in vcgws['vpncustomergateway']:
@@ -298,9 +297,12 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
                 self.result['cidrs'] = vpn_conn['cidrlist'].split(',') or [vpn_conn['cidrlist']]
             # Ensure we return a bool
             self.result['force_encap'] = True if vpn_conn['forceencap'] else False
-
-            self.module.params['vpn_customer_gateway'] = vpn_conn['s2scustomergatewayid']
-            self.result['vpn_customer_gateway'] = self.get_vpn_customer_gateway(key='name')
+            args = {
+                'key': 'name',
+                'identifier': vpn_conn['s2scustomergatewayid'],
+                'refresh': True,
+            }
+            self.result['vpn_customer_gateway'] = self.get_vpn_customer_gateway(**args)
         return self.result
 
 
