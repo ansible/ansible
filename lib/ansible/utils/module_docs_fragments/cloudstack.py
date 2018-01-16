@@ -36,7 +36,7 @@ requirements:
 notes:
   - Ansible uses the C(cs) library's configuration method if credentials are not
     provided by the arguments C(api_url), C(api_key), C(api_secret).
-    Configuration is read from several locations, in the following order:
+    Configuration is read from several locations, in the following order.
     The C(CLOUDSTACK_ENDPOINT), C(CLOUDSTACK_KEY), C(CLOUDSTACK_SECRET) and
     C(CLOUDSTACK_METHOD). C(CLOUDSTACK_TIMEOUT) environment variables.
     A C(CLOUDSTACK_CONFIG) environment variable pointing to an C(.ini) file.
