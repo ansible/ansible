@@ -61,6 +61,7 @@ options:
   description:
     description:
     - Description for the contract subject.
+    aliases: [ descr ]
   consumer_match:
     description:
     - The match criteria across consumers.

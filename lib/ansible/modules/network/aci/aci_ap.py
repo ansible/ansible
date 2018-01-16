@@ -36,9 +36,10 @@ options:
      - The name of the application network profile.
      required: yes
      aliases: [ app_profile, app_profile_name, name ]
-   descr:
+   description:
      description:
      - Description for the AP.
+     aliases: [ descr ]
    state:
      description:
      - Use C(present) or C(absent) for adding or removing.
