@@ -396,8 +396,8 @@ class ACMEAccount(object):
 
     def _parse_account_key(self, key):
         '''
-        Parses an RSA or Elliptic Curve key file in PEM format and returns the type
-        and key data
+        Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
+        (error, key_data).
         '''
         account_key_type = None
         with open(key, "rt") as f:
@@ -407,7 +407,7 @@ class ACMEAccount(object):
                     account_key_type = m.group(1).lower()
                     break
         if account_key_type not in ("rsa", "ec"):
-            return 'unknown', {}
+            return 'unknown key type "%s" % account_key_type', {}
 
         openssl_keydump_cmd = [self._openssl_bin, account_key_type, "-in", key, "-noout", "-text"]
         _, out, _ = self.module.run_command(openssl_keydump_cmd, check_rc=True)
@@ -435,7 +435,7 @@ class ACMEAccount(object):
                 r"pub:\s*\n\s+04:([a-f0-9\:\s]+?)\nASN1 OID: (\S+)\nNIST CURVE: (\S+)",
                 to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
             if pub_data is None:
-                return 'unknown_elliptic_curve_key', {}
+                return 'cannot parse elliptic curve key', {}
             pub_hex = binascii.unhexlify(re.sub(r"(\s|:)", "", pub_data.group(1)).encode("utf-8"))
             curve = pub_data.group(3).lower()
             if curve == 'p-256':
@@ -456,10 +456,10 @@ class ACMEAccount(object):
                 hash = 'sha512'
                 point_size = 66
             else:
-                return 'unknown_elliptic_curve:' + curve, {}
+                return 'unknown elliptic curve: %s' % curve, {}
             bytes = (bits + 7) // 8
             if len(pub_hex) != 2 * bytes:
-                return 'bad_elliptic_curve_point:' + curve, {}
+                return 'bad elliptic curve point (%s)' % curve, {}
             return None, {
                 'type': 'ec',
                 'alg': alg,
