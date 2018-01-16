@@ -48,8 +48,9 @@ DOCUMENTATION = """
       scheme:
         description:
             - URI scheme to use
+            - If not set, then will default to C(https) or C(http) if I(port) is
+              C(5985).
         choices: [http, https]
-        default: https
         vars:
           - name: ansible_winrm_scheme
       path:
@@ -195,7 +196,13 @@ class Connection(ConnectionBase):
         self._become_pass = self._play_context.become_pass
 
         self._winrm_port = self.get_option('port')
+
         self._winrm_scheme = self.get_option('scheme')
+        # old behaviour, scheme should default to http if not set and the port
+        # is 5985 otherwise https
+        if self._winrm_scheme is None:
+            self._winrm_scheme = 'http' if self._winrm_port == 5985 else 'https'
+
         self._winrm_path = self.get_option('path')
         self._kinit_cmd = self.get_option('kerberos_command')
         self._winrm_transport = self.get_option('transport')
