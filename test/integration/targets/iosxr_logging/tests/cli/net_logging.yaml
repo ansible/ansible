@@ -6,14 +6,14 @@
 
 - name: Remove host logging - setup
   net_logging:
-    dest: hostnameprefix
+    dest: host
     name: 172.16.0.1
     state: absent
     provider: "{{ cli }}"
 
 - name: Set up host logging using platform agnostic module
   net_logging:
-    dest: hostnameprefix
+    dest: host
     name: 172.16.0.1
     state: present
     provider: "{{ cli }}"
@@ -22,11 +22,11 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging hostnameprefix 172.16.0.1" in result.commands'
+      - '"logging 172.16.0.1 vrf default severity info" in result.commands'
 
 - name: Remove host logging - teardown
   net_logging:
-    dest: hostnameprefix
+    dest: host
     name: 172.16.0.1
     state: absent
     provider: "{{ cli }}"
