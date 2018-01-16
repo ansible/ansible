@@ -216,8 +216,10 @@ if __name__ == '__main__':
         cmd = wrapped_module
     step = 5
 
+    async_dir = os.environ.get('ANSIBLE_ASYNC_DIR', '~/.ansible_async')
+
     # setup job output directory
-    jobdir = os.path.expanduser("~/.ansible_async")
+    jobdir = os.path.expanduser(async_dir)
     job_path = os.path.join(jobdir, jid)
 
     if not os.path.exists(jobdir):
