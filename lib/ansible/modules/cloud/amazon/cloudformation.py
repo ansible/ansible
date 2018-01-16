@@ -346,6 +346,21 @@ def create_changeset(module, stack_params, cfn):
             result = dict(changed=False, output='ChangeSet %s already exists.' % changeset_name, warnings=[warning])
         else:
             cs = cfn.create_change_set(**stack_params)
+            while True:
+                try:
+                    newcs = cfn.describe_change_set(ChangeSetName=cs['Id'])
+                except Exception as err:
+                    error_msg = boto_exception(err)
+                    module.fail_json(msg=error_msg)
+                if newcs['Status'] == 'CREATE_PENDING' or newcs['Status'] == 'CREATE_IN_PROGRESS':
+                    time.sleep(1)
+                elif 'FAILED' == newcs['Status'] and "The submitted information didn't contain changes" in newcs['StatusReason']:
+                    cfn.delete_change_set(ChangeSetName=cs['Id'])
+                    result = dict(changed=False,
+                                  output='Stack is already up-to-date, ChangeSet refused to create due to lack of changes.')
+                    module.exit_json(**result)
+                else:
+                    break
             result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET')
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
                                   'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
