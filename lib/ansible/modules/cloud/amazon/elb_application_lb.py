@@ -342,13 +342,8 @@ vpc_id:
     type: string
     sample: vpc-0011223344
 '''
-import time
-import collections
-from copy import deepcopy
-import traceback
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, \
     boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
 
@@ -357,7 +352,6 @@ from ansible.module_utils.aws.elb_utils import get_elb_listener_rules
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
     HAS_BOTO3 = False
 
@@ -505,7 +499,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleAWSModule(argument_spec=argument_spec,
                            required_if=[
                                ('state', 'present', ['subnets', 'security_groups'])
                            ],

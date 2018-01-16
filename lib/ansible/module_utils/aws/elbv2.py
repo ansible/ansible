@@ -9,7 +9,7 @@ from ansible.module_utils.aws.elb_utils import get_elb, get_elb_listener, conver
 
 # Non-ansible imports
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass
 import traceback
@@ -58,8 +58,8 @@ class ElasticLoadBalancerV2(object):
                     break
                 else:
                     time.sleep(polling_increment_secs)
-            except ClientError as e:
-                self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except (BotoCoreError, ClientError) as e:
+                self.module.fail_json_aws(e, msg=str(e))
 
         result = response
 
@@ -75,8 +75,8 @@ class ElasticLoadBalancerV2(object):
         try:
             elb_attributes = boto3_tag_list_to_ansible_dict(self.connection.describe_load_balancer_attributes(
                                                             LoadBalancerArn=self.elb['LoadBalancerArn'])['Attributes'])
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         # Replace '.' with '_' in attribute key names to make it more Ansibley
         return dict((k.replace('.', '_'), v) for k, v in elb_attributes.items())
@@ -97,8 +97,8 @@ class ElasticLoadBalancerV2(object):
 
         try:
             return self.connection.describe_tags(ResourceArns=[self.elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
     def delete_tags(self, tags_to_delete):
         """
@@ -109,8 +109,8 @@ class ElasticLoadBalancerV2(object):
 
         try:
             self.connection.remove_tags(ResourceArns=[self.elb['LoadBalancerArn']], TagKeys=tags_to_delete)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
 
@@ -123,8 +123,8 @@ class ElasticLoadBalancerV2(object):
 
         try:
             self.connection.add_tags(ResourceArns=[self.elb['LoadBalancerArn']], Tags=self.tags)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
 
@@ -136,8 +136,8 @@ class ElasticLoadBalancerV2(object):
 
         try:
             self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
 
@@ -178,8 +178,8 @@ class ElasticLoadBalancerV2(object):
 
         try:
             self.connection.set_subnets(LoadBalancerArn=self.elb['LoadBalancerArn'], Subnets=self.subnets)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
 
@@ -211,9 +211,9 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
             try:
                 self.security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), self.connection_ec2, boto3=True)
             except ValueError as e:
-                module.fail_json(msg=str(e), exception=traceback.format_exc())
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                self.module.fail_json(msg=str(e), exception=traceback.format_exc())
+            except (BotoCoreError, ClientError) as e:
+                self.module.fail_json_aws(e, msg=str(e))
         else:
             self.security_groups = module.params.get('security_groups')
         self.access_logs_enabled = module.params.get("access_logs_enabled")
@@ -245,8 +245,8 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
             self.elb = self.connection.create_load_balancer(**params)['LoadBalancers'][0]
             self.changed = True
             self.new_load_balancer = True
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         if self.wait:
             status_achieved, new_elb = self.wait_for_status('active', self.name)
@@ -278,11 +278,11 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
             try:
                 self.connection.modify_load_balancer_attributes(LoadBalancerArn=self.elb['LoadBalancerArn'], Attributes=update_attributes)
                 self.changed = True
-            except ClientError as e:
+            except (BotoCoreError, ClientError) as e:
                 # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
                 if self.new_load_balancer:
                     self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
-                self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                self.module.fail_json_aws(e, msg=str(e))
 
     def compare_security_groups(self):
         """
@@ -304,8 +304,8 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
 
         try:
             self.connection.set_security_groups(LoadBalancerArn=self.elb['LoadBalancerArn'], SecurityGroups=self.security_groups)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
 
@@ -348,8 +348,8 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
             self.elb = self.connection.create_load_balancer(**params)['LoadBalancers'][0]
             self.changed = True
             self.new_load_balancer = True
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         if self.wait:
             status_achieved, new_elb = self.wait_for_status('active', self.name)
@@ -371,14 +371,14 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
             try:
                 self.connection.modify_load_balancer_attributes(LoadBalancerArn=self.elb['LoadBalancerArn'], Attributes=update_attributes)
                 self.changed = True
-            except ClientError as e:
+            except (BotoCoreError, ClientError) as e:
                 # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
                 if self.new_load_balancer:
                     self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
-                self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                self.module.fail_json_aws(e, msg=str(e))
 
 
-class ELBListeners:
+class ELBListeners(object):
 
     def __init__(self, connection, module, elb_arn):
 
@@ -408,8 +408,8 @@ class ELBListeners:
         try:
             listener_paginator = self.connection.get_paginator('describe_listeners')
             return (listener_paginator.paginate(LoadBalancerArn=self.elb_arn).build_full_result())['Listeners']
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
     def _ensure_listeners_default_action_has_arn(self, listeners):
         """
@@ -510,7 +510,7 @@ class ELBListeners:
             return None
 
 
-class ELBListener:
+class ELBListener(object):
 
     def __init__(self, connection, module, listener, elb_arn):
         """
@@ -533,8 +533,8 @@ class ELBListener:
             if 'Rules' in self.listener:
                 self.listener.pop('Rules')
             self.connection.create_listener(LoadBalancerArn=self.elb_arn, **self.listener)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
     def modify(self):
 
@@ -543,18 +543,18 @@ class ELBListener:
             if 'Rules' in self.listener:
                 self.listener.pop('Rules')
             self.connection.modify_listener(**self.listener)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
     def delete(self):
 
         try:
             self.connection.delete_listener(ListenerArn=self.listener)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
 
-class ELBListenerRules:
+class ELBListenerRules(object):
 
     def __init__(self, connection, module, elb_arn, listener_rules, listener_port):
 
@@ -597,8 +597,8 @@ class ELBListenerRules:
 
         try:
             return self.connection.describe_rules(ListenerArn=self.current_listener['ListenerArn'])['Rules']
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
     def _compare_condition(self, current_conditions, condition):
         """
@@ -681,7 +681,7 @@ class ELBListenerRules:
         return rules_to_add, rules_to_modify, rules_to_delete
 
 
-class ELBListenerRule:
+class ELBListenerRule(object):
 
     def __init__(self, connection, module, rule, listener_arn):
 
@@ -702,8 +702,8 @@ class ELBListenerRule:
             self.rule['ListenerArn'] = self.listener_arn
             self.rule['Priority'] = int(self.rule['Priority'])
             self.connection.create_rule(**self.rule)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
 
@@ -717,8 +717,8 @@ class ELBListenerRule:
         try:
             del self.rule['Priority']
             self.connection.modify_rule(**self.rule)
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
 
@@ -731,7 +731,7 @@ class ELBListenerRule:
 
         try:
             self.connection.delete_rule(RuleArn=self.rule['RuleArn'])
-        except ClientError as e:
-            self.module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg=str(e))
 
         self.changed = True
