@@ -192,11 +192,6 @@ options:
     choices: ['af11', 'af12', 'af13', 'af21', 'af22', 'af23','af31','af32',
               'af33', 'af41', 'af42', 'af43', 'cs1', 'cs2', 'cs3', 'cs4',
               'cs5', 'cs6', 'cs7', 'default', 'ef']
-  include_defaults:
-    description:
-      - Specify if the complete running configuration for module operations should be used.
-    default: false
-    type: bool
   state:
     description:
       - Specify desired state of the resource.
@@ -433,14 +428,7 @@ def main():
                                            'cs1', 'cs2', 'cs3', 'cs4',
                                            'cs5', 'cs6', 'cs7', 'default',
                                            'ef']),
-        state=dict(choices=['absent', 'present', 'delete_acl'], default='present'),
-        protocol=dict(choices=['http', 'https'], default='http'),
-        host=dict(required=True),
-        username=dict(type='str'),
-        password=dict(no_log=True, type='str'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present', 'delete_acl'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)

@@ -446,8 +446,7 @@ def main():
         timers_holdtime=dict(required=False, type='str'),
         transport_passive_only=dict(required=False, type='bool'),
         update_source=dict(required=False, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
     argument_spec.update(nxos_argument_spec)
 

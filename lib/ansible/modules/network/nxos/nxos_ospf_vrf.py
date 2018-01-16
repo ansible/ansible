@@ -120,11 +120,11 @@ options:
     required: false
     choices: ['true','false']
     default: null
-  include_defaults:
+  state:
     description:
-      - Specify if the complete running configuration for module operations should be used.
-    default: true
-    type: bool
+      - State of ospf vrf configuration.
+    default: present
+    choices: ['present', 'absent']
 '''
 
 EXAMPLES = '''
@@ -361,10 +361,7 @@ def main():
         timer_throttle_spf_max=dict(required=False, type='str'),
         auto_cost=dict(required=False, type='str'),
         passive_interface=dict(required=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

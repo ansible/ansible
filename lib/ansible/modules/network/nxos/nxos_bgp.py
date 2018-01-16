@@ -71,6 +71,10 @@ options:
         required: false
         choices: ['true','false']
         default: null
+    bestpath_compare_neighborid:
+        description:
+            - Enable/Disable neighborid. Use this when more paths available than max path config.
+        choices: ['true', 'false']
     bestpath_cost_community_ignore:
         description:
             - Enable/Disable Ignores the cost community for BGP best-path
