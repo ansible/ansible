@@ -545,14 +545,17 @@ class GalaxyCLI(CLI):
         """
         # Authenticate with github and retrieve a token
         if self.options.token is None:
-            login = GalaxyLogin(self.galaxy)
-            github_token = login.create_github_token()
+            if C.GALAXY_TOKEN:
+                github_token = C.GALAXY_TOKEN
+            else:
+                login = GalaxyLogin(self.galaxy)
+                github_token = login.create_github_token()
         else:
             github_token = self.options.token
 
         galaxy_response = self.api.authenticate(github_token)
 
-        if self.options.token is None:
+        if self.options.token is None and C.GALAXY_TOKEN is None:
             # Remove the token we created
             login.remove_github_token()
 
