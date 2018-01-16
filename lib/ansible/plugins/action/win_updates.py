@@ -183,6 +183,7 @@ class ActionModule(ActionBase):
 
         changed = result['changed']
         updates = result.get('updates', dict())
+        filtered_updates = result.get('filtered_updates', dict())
         found_update_count = result.get('found_update_count', 0)
         installed_update_count = result.get('installed_update_count', 0)
 
@@ -231,7 +232,10 @@ class ActionModule(ActionBase):
                 result = self._run_win_updates(new_module_args, task_vars)
 
                 result_updates = result.get('updates', dict())
+                result_filtered_updates = result.get('filtered_updates', dict())
                 updates = self._merge_dict(updates, result_updates)
+                filtered_updates = self._merge_dict(filtered_updates,
+                                                    result_filtered_updates)
                 found_update_count += result.get('found_update_count', 0)
                 installed_update_count += result.get('installed_update_count', 0)
                 if result['changed']:
@@ -242,6 +246,7 @@ class ActionModule(ActionBase):
         if self._task.async_val == 0:
             result['changed'] = changed
             result['updates'] = updates
+            result['filtered_updates'] = filtered_updates
             result['found_update_count'] = found_update_count
             result['installed_update_count'] = installed_update_count
 
