@@ -78,7 +78,7 @@ options:
       - Instructs the module to consider the
         resource definition absolute. It will remove any previously
         configured usernames on the device with the exception of the
-        `admin` user (the current defined set of users).
+        `admin` user and the current defined set of users.
     type: bool
     default: false
   state:
@@ -123,7 +123,7 @@ EXAMPLES = """
     state: present
 - name: remove all users except admin
   iosxr_user:
-    purge: yes
+    purge: True
 - name: set multiple users to group sys-admin
   iosxr_user:
     aggregate:
@@ -192,7 +192,7 @@ import collections
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, is_netconf, is_cliconf
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_find, etree_findall
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_findall
 
 try:
     from base64 import b64decode
@@ -463,15 +463,15 @@ class CliConfiguration(ConfigBase):
                     for group in w['groups']:
                         commands.append(user_cmd + ' group ' + group)
 
-            if self._module.params['purge']:
-                want_users = [x['name'] for x in self._want]
-                have_users = [x['name'] for x in self._have]
-                for item in set(have_users).difference(want_users):
-                    if item != 'admin':
-                        commands.append('no username %s' % item)
+        if self._module.params['purge']:
+            want_users = [x['name'] for x in self._want]
+            have_users = [x['name'] for x in self._have]
+            for item in set(have_users).difference(set(want_users)):
+                if item != 'admin':
+                    commands.append('no username %s' % item)
 
-            if 'no username admin' in commands:
-                self._module.fail_json(msg='cannot delete the `admin` account')
+        if 'no username admin' in commands:
+            self._module.fail_json(msg='cannot delete the `admin` account')
 
         self._result['commands'] = []
         if commands:
@@ -588,7 +588,7 @@ class NCConfiguration(ConfigBase):
         if self._module.params['purge']:
             want_users = [x['name'] for x in self._want]
             have_users = [x['name'] for x in self._have]
-            for item in set(have_users).difference(want_users):
+            for item in set(have_users).difference(set(want_users)):
                 if item != 'admin':
                     purge_params.append({'name': item})
 
@@ -650,14 +650,16 @@ def main():
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)
 
+    mutually_exclusive = [('name', 'aggregate'), ('public_key', 'public_key_contents'), ('group', 'groups')]
+
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection']),
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['users', 'collection'],
+                       mutually_exclusive=mutually_exclusive),
         purge=dict(type='bool', default=False)
     )
 
     argument_spec.update(element_spec)
     argument_spec.update(iosxr_argument_spec)
-    mutually_exclusive = [('name', 'aggregate'), ('public_key', 'public_key_contents'), ('group', 'groups')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
