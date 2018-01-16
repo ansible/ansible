@@ -42,7 +42,8 @@ options:
       - The set of username objects to be configured on the remote
         Arista EOS device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
-        exclusive with the C(username) argument. alias C(users).
+        exclusive with the C(username) argument.
+    aliases: ['users', 'collection']
     version_added: "2.4"
   name:
     description:

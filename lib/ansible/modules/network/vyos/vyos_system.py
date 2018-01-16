@@ -36,7 +36,7 @@ extends_documentation_fragment: vyos
 notes:
   - Tested against VYOS 1.1.7
 options:
-  hostname:
+  host_name:
     description:
       - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:

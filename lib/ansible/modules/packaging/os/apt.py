@@ -55,6 +55,7 @@ options:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
         recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
+    aliases: ['install-recommends']
     type: bool
   force:
     description:

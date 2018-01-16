@@ -191,7 +191,7 @@ class AddrProp(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            addrobj=dict(required=True, default=None, aliases=['nic, interface']),
+            addrobj=dict(required=True, default=None, aliases=['nic', 'interface']),
             property=dict(required=True, aliases=['name']),
             value=dict(required=False),
             temporary=dict(default=False, type='bool'),

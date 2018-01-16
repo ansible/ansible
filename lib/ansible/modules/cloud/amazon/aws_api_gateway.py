@@ -63,6 +63,7 @@ author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
     - aws
+    - ec2
 notes:
    - A future version of this module will probably use tags or another
      ID so that an API can be create only once.

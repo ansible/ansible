@@ -32,6 +32,7 @@ options:
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment:
     - aws
+    - ec2
 '''
 
 EXAMPLES = '''

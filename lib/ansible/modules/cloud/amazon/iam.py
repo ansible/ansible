@@ -99,7 +99,9 @@ notes:
 author:
     - "Jonathan I. Davila (@defionscode)"
     - "Paul Seiffert (@seiffert)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

@@ -60,7 +60,7 @@ options:
     required: false
     description:
     - The id number of the host group to manage. Either this or C(name) must be supplied.
-  hosts::
+  hosts:
     required: false
     description:
     - a list of host names/labels to add to the group

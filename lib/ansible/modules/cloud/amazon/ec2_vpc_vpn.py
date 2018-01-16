@@ -15,6 +15,9 @@ description:
   - This module creates, modifies, and deletes VPN connections. Idempotence is achieved by using the filters
     option or specifying the VPN connection identifier.
 version_added: "2.4"
+extends_documentation_fragment:
+ - ec2
+ - aws
 requirements: ['boto3', 'botocore']
 author: "Sloane Hertel (@s-hertel)"
 options:

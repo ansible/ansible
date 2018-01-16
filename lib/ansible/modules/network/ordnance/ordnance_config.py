@@ -24,7 +24,7 @@ description:
     an implementation for working with these configuration sections in
     a deterministic way.
 options:
-  commands:
+  lines:
     description:
       - The ordered set of commands that should be configured in the
         section.  The commands must be the exact same commands as found

@@ -40,6 +40,7 @@ options:
     description:
       - "The inline definition of the resource. This is mutually exclusive with name, namespace and kind."
     required: false
+    aliases: ['def', 'definition']
   kind:
     description: The kind of the resource upon which to take action.
     required: true
@@ -53,8 +54,15 @@ options:
     required: false
   token:
     description:
-      - "The token with which to authenticate agains the OpenShift cluster."
+      - "The token with which to authenticate against the OpenShift cluster."
     required: true
+  validate_certs:
+    description:
+      - If C(no), SSL certificates for the target url will not be validated.
+        This should only be used on personally controlled sites using
+        self-signed certificates.
+    type: bool
+    default: yes
   state:
     choices:
       - present

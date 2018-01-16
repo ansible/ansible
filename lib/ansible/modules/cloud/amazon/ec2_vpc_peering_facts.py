@@ -31,7 +31,9 @@ options:
     required: false
     default: None
 author: Karen Cheng(@Etherdaemon)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

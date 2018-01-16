@@ -33,6 +33,7 @@ options:
     required: false
     default: None
     version_added: 2.4
+    aliases: ['id']
   name:
     description:
      - The name for the SSH key

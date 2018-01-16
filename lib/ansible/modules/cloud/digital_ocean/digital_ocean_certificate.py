@@ -43,6 +43,7 @@ options:
     description:
      - DigitalOcean OAuth token.
     required: true
+    aliases: ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN']
 
 notes:
   - Two environment variables can be used, DO_API_KEY, DO_OAUTH_TOKEN and DO_API_TOKEN.

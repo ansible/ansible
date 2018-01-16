@@ -82,6 +82,7 @@ options:
       - The 6 digit One Time Password for 2-Factor Authentication. Required together with I(username) and I(password).
     required: false
     default: null
+    aliases: ['2fa_token']
 requirements:
    - python-requests
 notes:

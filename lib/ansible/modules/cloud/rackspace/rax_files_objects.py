@@ -86,7 +86,9 @@ options:
       - meta
     default: file
 author: "Paul Durivage (@angstwad)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

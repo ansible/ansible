@@ -24,6 +24,7 @@ options:
     description:
         - Name of the parameter to update.
     required: true
+    aliases: [parameter]
   value:
     description:
         - Value of the parameter to be set.

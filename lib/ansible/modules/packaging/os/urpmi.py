@@ -41,6 +41,7 @@ options:
       - Corresponds to the C(--no-recommends) option for I(urpmi).
     type: bool
     default: 'yes'
+    aliases: ['no-recommends']
   force:
     description:
       - Assume "yes" is the answer to any question urpmi has to ask.

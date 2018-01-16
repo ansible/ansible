@@ -143,7 +143,9 @@ requirements: [ "boto3", "botocore" ]
 author:
     - "Lester Wade (@lwade)"
     - "Sloane Hertel (@s-hertel)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

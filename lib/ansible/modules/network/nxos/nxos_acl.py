@@ -172,7 +172,7 @@ options:
     required: false
     default: null
     choices: ['enable']
-  time-range:
+  time_range:
     description:
       - Name of time-range to apply.
     required: false
@@ -192,6 +192,11 @@ options:
     choices: ['af11', 'af12', 'af13', 'af21', 'af22', 'af23','af31','af32',
               'af33', 'af41', 'af42', 'af43', 'cs1', 'cs2', 'cs3', 'cs4',
               'cs5', 'cs6', 'cs7', 'default', 'ef']
+  include_defaults:
+    description:
+      - Specify if the complete running configuration for module operations should be used.
+    default: false
+    type: bool
   state:
     description:
       - Specify desired state of the resource.

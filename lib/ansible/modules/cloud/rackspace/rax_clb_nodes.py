@@ -77,7 +77,9 @@ options:
     description:
       - Weight of node
 author: "Lukasz Kawczynski (@neuroid)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

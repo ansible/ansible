@@ -33,7 +33,7 @@ options:
       - Provide this value as a list
     required: false
     default: None
-    aliases: ['DhcpOptionsIds']
+    aliases: ['DhcpOptionIds']
 extends_documentation_fragment:
     - aws
     - ec2

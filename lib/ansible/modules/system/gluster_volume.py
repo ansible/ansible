@@ -37,7 +37,7 @@ options:
   replicas:
     description:
       - Replica count for volume.
-  arbiter:
+  arbiters:
     description:
       - Arbiter count for volume.
     version_added: '2.3'

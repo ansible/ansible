@@ -44,7 +44,9 @@ notes:
     C(serial: 1) to avoid exceeding the API request limit imposed by
     the Rackspace CloudDNS API"
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
