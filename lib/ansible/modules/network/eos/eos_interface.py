@@ -27,7 +27,8 @@ notes:
 options:
   name:
     description:
-      - Name of the Interface to be configured on remote device.
+      - Name of the Interface to be configured on remote device. The name of interface
+        should be in expanded format and not abbreviated.
     required: true
   description:
     description:
