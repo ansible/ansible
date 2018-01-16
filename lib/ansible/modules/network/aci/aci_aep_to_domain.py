@@ -77,7 +77,7 @@ def main():
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'redhat', 'vmware']),
+        vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
     )
 
     module = AnsibleModule(
