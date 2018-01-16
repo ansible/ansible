@@ -44,7 +44,7 @@ EXAMPLES = """
     - debug:
         msg: task10
 
-  hosts: all
+- hosts: all
   tasks:
     - debug:
         msg: task1

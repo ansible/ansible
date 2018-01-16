@@ -125,7 +125,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Create Lambda functions
-tasks:
 - name: looped creation
   lambda:
     name: '{{ item.name }}'
@@ -154,7 +153,6 @@ tasks:
         key2: "2"
 
 # Basic Lambda function deletion
-tasks:
 - name: Delete Lambda functions HelloWorld and ByeBye
   lambda:
     name: '{{ item }}'

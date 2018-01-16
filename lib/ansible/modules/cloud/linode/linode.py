@@ -189,7 +189,6 @@ EXAMPLES = '''
      alert_bwin_threshold: 10
      alert_cpu_enabled: True
      alert_cpu_threshold: 210
-     alert_diskio_enabled: True
      alert_bwout_enabled: True
      alert_bwout_threshold: 10
      alert_diskio_enabled: True

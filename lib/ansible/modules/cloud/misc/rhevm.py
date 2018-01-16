@@ -235,7 +235,6 @@ EXAMPLES = '''
       cluster: "RH"
       state: "down"
       image: "centos7_x64"
-      cluster: "centos"
 
 # multi disk, multi nic create example
   - rhevm:

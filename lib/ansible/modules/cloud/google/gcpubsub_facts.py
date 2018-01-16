@@ -45,20 +45,20 @@ options:
 
 EXAMPLES = '''
 ## List all Topics in a project
-gcpubsub_facts:
-  view: topics
-  state: list
+- gcpubsub_facts:
+    view: topics
+    state: list
 
 ## List all Subscriptions in a project
-gcpubsub_facts:
-  view: subscriptions
-  state: list
+- gcpubsub_facts:
+    view: subscriptions
+    state: list
 
 ## List all Subscriptions for a Topic in a project
-gcpubsub_facts:
-  view: subscriptions
-  topic: my-topic
-  state: list
+- gcpubsub_facts:
+    view: subscriptions
+    topic: my-topic
+    state: list
 '''
 
 RETURN = '''

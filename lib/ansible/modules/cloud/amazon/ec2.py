@@ -596,19 +596,23 @@ EXAMPLES = '''
 #
 
     # instances with tag foo
+- ec2:
     count_tag:
         foo:
 
     # instances with tag foo=bar
+- ec2:
     count_tag:
         foo: bar
 
     # instances with tags foo=bar & baz
+- ec2:
     count_tag:
         foo: bar
         baz:
 
     # instances with tags foo & bar & baz=bang
+- ec2:
     count_tag:
         - foo
         - bar

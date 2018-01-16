@@ -628,7 +628,6 @@ EXAMPLES = '''
             - sg-8f4b8fe9
           spot_instance_types:
             - c3.large
-          state: absent
           do_not_update:
             - image_id
             - target

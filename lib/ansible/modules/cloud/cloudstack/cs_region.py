@@ -60,17 +60,17 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a region
-local_action:
-  module: cs_region
-  id: 2
-  name: geneva
-  endpoint: https://cloud.gva.example.com
+- local_action:
+    module: cs_region
+    id: 2
+    name: geneva
+    endpoint: https://cloud.gva.example.com
 
 # remove a region with ID 2
-local_action:
-  module: cs_region
-  id: 2
-  state: absent
+- local_action:
+    module: cs_region
+    id: 2
+    state: absent
 '''
 
 RETURN = '''

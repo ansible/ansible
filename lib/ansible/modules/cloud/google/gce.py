@@ -199,7 +199,7 @@ EXAMPLES = '''
 # Create multiple instances by specifying multiple names, separated by
 # commas in the instance_names field
 # (e.g. my-test-instance1,my-test-instance2)
-    gce:
+  - gce:
       instance_names: my-test-instance1
       zone: us-central1-a
       machine_type: n1-standard-1
@@ -213,7 +213,7 @@ EXAMPLES = '''
 # Create a single instance of an image from the "my-base-image" image family
 # in the us-central1-a Zone of the n1-standard-1 machine type.
 # This image family is in the "my-other-project" GCP project.
-    gce:
+  - gce:
       instance_names: my-test-instance1
       zone: us-central1-a
       machine_type: n1-standard-1
@@ -229,7 +229,7 @@ EXAMPLES = '''
 # Create a single Debian 8 instance in the us-central1-a Zone
 # Use existing disks, custom network/subnetwork, set service account permissions
 # add tags and metadata.
-    gce:
+  - gce:
       instance_names: my-test-instance
       zone: us-central1-a
       machine_type: n1-standard-1
