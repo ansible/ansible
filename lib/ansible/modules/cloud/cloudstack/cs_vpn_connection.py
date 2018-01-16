@@ -27,20 +27,20 @@ options:
     required: true
   vpn_customer_gateway:
     description:
-      - Name of the VPN connection.
-      - Required when C(state=present).
+      - Name of the VPN customer gateway.
+    required: true
   passive:
     description:
       - State of the VPN connection.
       - Only considered when C(state=present).
     default: no
-    choices: [ yes, no ]
+    type: bool
   force:
     description:
       - Activate the VPN gateway if not already activated on C(state=present).
       - Also see M(cs_vpn_gateway).
     default: no
-    choices: [ yes, no ]
+    type: bool
   state:
     description:
       - State of the VPN connection.
@@ -58,7 +58,8 @@ options:
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
@@ -79,6 +80,7 @@ EXAMPLES = r'''
 - name: Remove a vpn connection
   local_action:
     module: cs_vpn_connection
+    vpn_customer_gateway: my vpn connection
     vpc: my vpc
     state: absent
 '''
@@ -305,7 +307,7 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        vpn_customer_gateway=dict(),
+        vpn_customer_gateway=dict(required=True),
         vpc=dict(required=True),
         domain=dict(),
         account=dict(),
@@ -320,9 +322,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
-        required_if=[
-            ('state', 'present', ['vpn_customer_gateway']),
-        ],
         supports_check_mode=True
     )
 
