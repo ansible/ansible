@@ -221,14 +221,13 @@ def _get_full_pkg_path(resource_type):
 
 
 def _import_module(path, attr=None):
-    try:
-        sdk = import_module(path)
-        if attr:
-            for part in attr.split('.'):
-                sdk = getattr(sdk, part)
-        return sdk
-    except ImportError:
+    if not import_module:
         return None
+    sdk = import_module(path)
+    if attr:
+        for part in attr.split('.'):
+            sdk = getattr(sdk, part)
+    return sdk
 
 
 def _get_sdk_model_path(resource_type):
@@ -898,7 +897,7 @@ class AzureRMModuleBase(object):
         self.log('Getting mysql client')
         if not self._mysql_client:
             self._mysql_client = self.get_mgmt_svc_client('mysql',
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+                                                          base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
 
     @property
