@@ -54,10 +54,10 @@ options:
             - VRRP priority.
         required: false
         default: null
-  preempt:
-    description:
-      - Enable/Disable preempt.
-    choices: ['True', 'False']
+    preempt:
+        description:
+            - Enable/Disable preempt.
+        choices: ['True', 'False']
     vip:
         description:
             - VRRP virtual IP address.
