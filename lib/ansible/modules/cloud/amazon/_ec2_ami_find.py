@@ -205,11 +205,6 @@ architecture:
     returned: when AMI found
     type: string
     sample: "x86_64"
-architecture:
-    description: architecture of image
-    returned: when AMI found
-    type: string
-    sample: "x86_64"
 block_device_mapping:
     description: block device mapping associated with image
     returned: when AMI found
