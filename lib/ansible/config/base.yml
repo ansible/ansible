@@ -1387,6 +1387,16 @@ PLAYBOOK_VARS_ROOT:
   ini:
   - {key: playbook_vars_root, section: defaults}
   choices: [ top, bottom, all ]
+PLUGIN_FILTERS_CFG:
+  name: Config file for limiting valid plugins
+  default: null
+  version_added: "2.5.0"
+  description:
+    - "A path to configuration for filtering which plugins installed on the system are allowed to be used"
+    - " The default is /etc/ansible/plugin_filters.yml"
+  ini:
+  - key: plugin_filters_cfg
+    section: default
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True
