@@ -76,12 +76,6 @@ from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 
 
-def check_args(module, warnings):
-    for key in ('include_defaults', 'config', 'save'):
-        if module.params[key] is not None:
-            warnings.append('argument %s is no longer supported, ignoring value' % key)
-
-
 def get_available_features(feature, module):
     available_features = {}
     feature_regex = r'(?P<feature>\S+)\s+\d+\s+(?P<state>.*)'
@@ -213,12 +207,7 @@ def validate_feature(module, mode='show'):
 def main():
     argument_spec = dict(
         feature=dict(type='str', required=True),
-        state=dict(choices=['enabled', 'disabled'], default='enabled'),
-
-        # deprecated in Ans2.3
-        include_defaults=dict(),
-        config=dict(),
-        save=dict()
+        state=dict(choices=['enabled', 'disabled'], default='enabled')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -226,7 +215,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
 
     feature = validate_feature(module)

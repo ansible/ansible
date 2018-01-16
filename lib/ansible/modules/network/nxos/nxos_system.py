@@ -347,7 +347,6 @@ def main():
         name_servers=dict(type='list'),
 
         system_mtu=dict(type='int'),
-        lookup_source=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

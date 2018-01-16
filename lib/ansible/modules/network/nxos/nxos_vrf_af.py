@@ -93,8 +93,6 @@ def main():
         afi=dict(required=True, choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
-
-        m_facts=dict(default=False, type='bool', removed_in_version="2.4"),
         safi=dict(choices=['unicast', 'multicast'], removed_in_version="2.4"),
     )
 

@@ -61,6 +61,10 @@ options:
       - HSRP priority.
     required: false
     default: null
+  preempt:
+    description:
+      - Enable/Disable preempt.
+    choices: ['enabled', 'disabled']
   vip:
     description:
       - HSRP virtual IP address.

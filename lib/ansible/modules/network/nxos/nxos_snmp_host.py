@@ -46,6 +46,10 @@ options:
         required: false
         default: v2c
         choices: ['v2c', 'v3']
+    v3:
+        description:
+            - Use this when verion is v3. SNMPv3 Security level.
+        choices: ['noauth', 'auth', 'priv']
     community:
         description:
             - Community string or v3 username.
@@ -56,11 +60,11 @@ options:
             - UDP port number (0-65535).
         required: false
         default: null
-    type:
+    snmp_type:
         description:
             - type of message to send to host.
         required: false
-        default: traps
+        default: trap
         choices: ['trap', 'inform']
     vrf:
         description:

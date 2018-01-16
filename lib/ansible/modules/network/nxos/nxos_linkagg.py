@@ -68,6 +68,10 @@ options:
     required: false
     default: present
     choices: ['present','absent']
+  purge:
+    description:
+      - Purge links not defined in the I(aggregate) parameter.
+    default: no
 """
 
 EXAMPLES = """

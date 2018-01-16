@@ -44,6 +44,7 @@ options:
         device config parser.
     required: false
     default: null
+    aliases: ['commands']
   parents:
     description:
       - The ordered set of parents that uniquely identify the section
@@ -287,7 +288,6 @@ backup_path:
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
 
-import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps

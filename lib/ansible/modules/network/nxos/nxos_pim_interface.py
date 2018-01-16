@@ -54,6 +54,9 @@ options:
     required: false
     default: true
     choices: ['true', 'false']
+  dr_prio:
+    description:
+      - Configures priority for PIM DR election on interface.
   hello_auth_key:
     description:
       - Authentication for hellos on this interface.

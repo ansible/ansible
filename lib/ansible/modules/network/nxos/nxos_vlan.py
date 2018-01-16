@@ -88,6 +88,15 @@ options:
   aggregate:
     description: List of VLANs definitions.
     version_added: "2.5"
+  purge:
+    description:
+      - Purge VLANs not defined in the I(aggregate) parameter.
+    default: no
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state arguments.
+    default: 10
 '''
 
 EXAMPLES = '''
