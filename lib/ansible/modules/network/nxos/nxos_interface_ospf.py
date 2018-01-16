@@ -111,11 +111,6 @@ options:
       - Specifies the message_digest password. Valid value is a string.
     required: false
     default: null
-  include_defaults:
-    description:
-      - Specify if the complete running configuration for module operations should be used.
-    default: true
-    type: bool
   state:
     description:
       - Determines whether the config should be present or not
@@ -386,10 +381,7 @@ def main():
         message_digest_algorithm_type=dict(required=False, type='str', choices=['md5']),
         message_digest_encryption_type=dict(required=False, type='str', choices=['cisco_type_7', '3des']),
         message_digest_password=dict(required=False, type='str', no_log=True),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

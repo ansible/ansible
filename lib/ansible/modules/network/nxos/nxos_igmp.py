@@ -59,11 +59,6 @@ options:
         required: false
         default: null
         choices: ['true', 'false']
-    include_defaults:
-        description:
-            - Specify if the complete running configuration for module operations should be used.
-        default: false
-        type: bool
     state:
         description:
             - Manages desired state of the resource.
@@ -75,18 +70,15 @@ EXAMPLES = '''
 - name: Default igmp global params (all params except restart)
   nxos_igmp:
     state: default
-    host: "{{ inventory_hostname }}"
 
 - name: Ensure the following igmp global config exists on the device
   nxos_igmp:
     flush_routes: true
     enforce_rtr_alert: true
-    host: "{{ inventory_hostname }}"
 
 - name: Restart the igmp process
   nxos_igmp:
     restart: true
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
@@ -121,12 +113,7 @@ def main():
         flush_routes=dict(type='bool'),
         enforce_rtr_alert=dict(type='bool'),
         restart=dict(type='bool', default=False),
-
-        state=dict(choices=['present', 'default'], default='present'),
-
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'default'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)

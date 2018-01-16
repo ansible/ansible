@@ -54,6 +54,10 @@ options:
             - VRRP priority.
         required: false
         default: null
+    preempt:
+        description:
+            - Enable/Disable preempt.
+        choices: ['True', 'False']
     vip:
         description:
             - VRRP virtual IP address.
@@ -70,12 +74,6 @@ options:
         required: false
         choices: ['shutdown', 'no shutdown']
         default: no shutdown
-        version_added: "2.2"
-    include_defaults:
-        description:
-            - Specify if the complete running configuration for module operations should be used.
-        default: false
-        type: bool
     state:
         description:
             - Specify desired state of the resource.
@@ -338,10 +336,7 @@ def main():
                          choices=['shutdown', 'no shutdown'],
                          default='no shutdown'),
         authentication=dict(required=False, type='str'),
-        state=dict(choices=['absent', 'present'], required=False, default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
     argument_spec.update(nxos_argument_spec)
 
