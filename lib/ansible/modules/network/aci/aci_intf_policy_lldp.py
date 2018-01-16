@@ -49,6 +49,7 @@ options:
     - Use C(query) for listing an object or multiple objects.
     choices: [ absent, present, query ]
     default: present
+extends_documentation_fragment: aci
 '''
 
 # FIXME: Add more, better examples
