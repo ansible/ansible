@@ -99,7 +99,10 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
+
+
+ResourceGroup = load_sdk_model('resource', 'ResourceGroup')
 
 
 def resource_group_to_dict(rg):
@@ -192,13 +195,13 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     if self.name_exists():
                         self.fail("Error: a resource group with the name {0} already exists in your subscription."
                                   .format(self.name))
-                    params = self.rm_models.ResourceGroup(
+                    params = ResourceGroup(
                         location=self.location,
                         tags=self.tags
                     )
                 else:
                     # Update resource group
-                    params = self.rm_models.ResourceGroup(
+                    params = ResourceGroup(
                         location=results['location'],
                         tags=results['tags']
                     )

@@ -95,7 +95,7 @@ id:
     example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/images/foobar"
 '''  # NOQA
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id, load_sdk_model
 
 try:
     from msrestazure.tools import parse_resource_id
@@ -103,6 +103,20 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+
+(SubResource,
+ OperatingSystemStateTypes,
+ ImageStorageProfile,
+ Image,
+ ImageOSDisk,
+ ImageDataDisk) = load_sdk_model('compute',
+                                 'SubResource',
+                                 'OperatingSystemStateTypes',
+                                 'ImageStorageProfile',
+                                 'Image',
+                                 'ImageOSDisk',
+                                 'ImageDataDisk')
 
 
 class AzureRMImage(AzureRMModuleBase):
@@ -176,14 +190,14 @@ class AzureRMImage(AzureRMModuleBase):
                 if vm:
                     if self.data_disk_sources:
                         self.fail('data_disk_sources is not allowed when capturing image from vm')
-                    image_instance = self.compute_models.Image(self.location, source_virtual_machine=self.compute_models.SubResource(vm.id))
+                    image_instance = Image(self.location, source_virtual_machine=SubResource(vm.id))
                 else:
                     if not self.os_type:
                         self.fail('os_type is required to create the image')
                     os_disk = self.create_os_disk()
                     data_disks = self.create_data_disks()
-                    storage_profile = self.compute_models.ImageStorageProfile(os_disk=os_disk, data_disks=data_disks)
-                    image_instance = self.compute_models.Image(self.location, storage_profile=storage_profile, tags=self.tags)
+                    storage_profile = ImageStorageProfile(os_disk=os_disk, data_disks=data_disks)
+                    image_instance = Image(self.location, storage_profile=storage_profile, tags=self.tags)
 
                 # finally make the change if not check mode
                 if not self.check_mode and image_instance:
@@ -233,23 +247,23 @@ class AzureRMImage(AzureRMModuleBase):
 
     def create_os_disk(self):
         blob_uri, disk, snapshot = self.resolve_storage_source(self.source)
-        snapshot_resource = self.compute_models.SubResource(snapshot) if snapshot else None
-        managed_disk = self.compute_models.SubResource(disk) if disk else None
-        return self.compute_models.ImageOSDisk(os_type=self.os_type,
-                                               os_state=self.compute_models.OperatingSystemStateTypes.generalized,
-                                               snapshot=snapshot_resource,
-                                               managed_disk=managed_disk,
-                                               blob_uri=blob_uri)
+        snapshot_resource = SubResource(snapshot) if snapshot else None
+        managed_disk = SubResource(disk) if disk else None
+        return ImageOSDisk(os_type=self.os_type,
+                           os_state=OperatingSystemStateTypes.generalized,
+                           snapshot=snapshot_resource,
+                           managed_disk=managed_disk,
+                           blob_uri=blob_uri)
 
     def create_data_disk(self, lun, source):
         blob_uri, disk, snapshot = self.resolve_storage_source(source)
         if blob_uri or disk or snapshot:
-            snapshot_resource = self.compute_models.SubResource(snapshot) if snapshot else None
-            managed_disk = self.compute_models.SubResource(disk) if disk else None
-            return self.compute_models.ImageDataDisk(lun,
-                                                     blob_uri=blob_uri,
-                                                     snapshot=snapshot_resource,
-                                                     managed_disk=managed_disk)
+            snapshot_resource = SubResource(snapshot) if snapshot else None
+            managed_disk = SubResource(disk) if disk else None
+            return ImageDataDisk(lun,
+                                 blob_uri=blob_uri,
+                                 snapshot=snapshot_resource,
+                                 managed_disk=managed_disk)
 
     def create_data_disks(self):
         return list(filter(None, [self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources)]))

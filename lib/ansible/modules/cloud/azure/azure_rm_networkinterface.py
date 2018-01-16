@@ -222,7 +222,19 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, load_sdk_model
+
+
+(NetworkInterface,
+ NetworkInterfaceIPConfiguration,
+ Subnet,
+ PublicIPAddress,
+ NetworkSecurityGroup) = load_sdk_model('network',
+                                        'NetworkInterface',
+                                        'NetworkInterfaceIPConfiguration',
+                                        'Subnet',
+                                        'PublicIPAddress',
+                                        'NetworkSecurityGroup')
 
 
 def nic_to_dict(nic):
@@ -442,44 +454,44 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         pip = self.create_default_pip(self.resource_group, self.location, self.name,
                                                       self.public_ip_allocation_method)
 
-                    nic = self.network_models.NetworkInterface(
+                    nic = NetworkInterface(
                         location=self.location,
                         tags=self.tags,
                         ip_configurations=[
-                            self.network_models.NetworkInterfaceIPConfiguration(
+                            NetworkInterfaceIPConfiguration(
                                 private_ip_allocation_method=self.private_ip_allocation_method,
                             )
                         ]
                     )
                     # nic.name = self.name
-                    nic.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet.id)
+                    nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = 'default'
-                    nic.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
-                                                                                          location=nsg.location,
-                                                                                          resource_guid=nsg.resource_guid)
+                    nic.network_security_group = NetworkSecurityGroup(id=nsg.id,
+                                                                      location=nsg.location,
+                                                                      resource_guid=nsg.resource_guid)
                     if self.private_ip_address:
                         nic.ip_configurations[0].private_ip_address = self.private_ip_address
 
                     if pip:
-                        nic.ip_configurations[0].public_ip_address = self.network_models.PublicIPAddress(
+                        nic.ip_configurations[0].public_ip_address = PublicIPAddress(
                             id=pip.id,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
                 else:
                     self.log("Updating network interface {0}.".format(self.name))
-                    nic = self.network_models.NetworkInterface(
+                    nic = NetworkInterface(
                         id=results['id'],
                         location=results['location'],
                         tags=results['tags'],
                         ip_configurations=[
-                            self.network_models.NetworkInterfaceIPConfiguration(
+                            NetworkInterfaceIPConfiguration(
                                 private_ip_allocation_method=results['ip_configuration']['private_ip_allocation_method']
                             )
                         ]
                     )
                     subnet = self.get_subnet(results['ip_configuration']['subnet']['virtual_network_name'],
                                              results['ip_configuration']['subnet']['name'])
-                    nic.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet.id)
+                    nic.ip_configurations[0].subnet = Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = results['ip_configuration']['name']
                     # nic.name = name=results['name'],
 
@@ -489,7 +501,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                     if results['ip_configuration']['public_ip_address'].get('id'):
                         pip = \
                             self.get_public_ip_address(results['ip_configuration']['public_ip_address']['name'])
-                        nic.ip_configurations[0].public_ip_address = self.network_models.PublicIPAddress(
+                        nic.ip_configurations[0].public_ip_address = PublicIPAddress(
                             id=pip.id,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
@@ -497,9 +509,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
-                        nic.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
-                                                                                              location=nsg.location,
-                                                                                              resource_guid=nsg.resource_guid)
+                        nic.network_security_group = NetworkSecurityGroup(id=nsg.id,
+                                                                          location=nsg.location,
+                                                                          resource_guid=nsg.resource_guid)
 
                 # See what actually gets sent to the API
                 request = self.serialize_obj(nic, 'NetworkInterface')

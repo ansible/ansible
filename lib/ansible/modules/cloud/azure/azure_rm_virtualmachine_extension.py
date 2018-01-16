@@ -117,13 +117,16 @@ changed:
     type: bool
 '''
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 
 try:
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+
+VirtualMachineExtension = load_sdk_model('compute', 'VirtualMachineExtension')
 
 
 def vmextension_to_dict(extension):
@@ -257,7 +260,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
         '''
         self.log("Creating VM extension {0}".format(self.name))
         try:
-            params = self.compute_models.VirtualMachineExtension(
+            params = VirtualMachineExtension(
                 location=self.location,
                 publisher=self.publisher,
                 virtual_machine_extension_type=self.virtual_machine_extension_type,

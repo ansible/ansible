@@ -133,7 +133,9 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, load_sdk_model
+
+(VirtualNetwork, AddressSpace, DhcpOptions) = load_sdk_model('network', 'VirtualNetwork', 'AddressSpace', 'DhcpOptions')
 
 
 def virtual_network_to_dict(vnet):
@@ -294,14 +296,14 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                     self.log("Create virtual network {0}".format(self.name))
                     if not self.address_prefixes_cidr:
                         self.fail('Parameter error: address_prefixes_cidr required when creating a virtual network')
-                    vnet = self.network_models.VirtualNetwork(
+                    vnet = VirtualNetwork(
                         location=self.location,
-                        address_space=self.network_models.AddressSpace(
+                        address_space=AddressSpace(
                             address_prefixes=self.address_prefixes_cidr
                         )
                     )
                     if self.dns_servers:
-                        vnet.dhcp_options = self.network_models.DhcpOptions(
+                        vnet.dhcp_options = DhcpOptions(
                             dns_servers=self.dns_servers
                         )
                     if self.tags:
@@ -310,15 +312,15 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                 else:
                     # update existing virtual network
                     self.log("Update virtual network {0}".format(self.name))
-                    vnet = self.network_models.VirtualNetwork(
+                    vnet = VirtualNetwork(
                         location=results['location'],
-                        address_space=self.network_models.AddressSpace(
+                        address_space=AddressSpace(
                             address_prefixes=results['address_prefixes']
                         ),
                         tags=results['tags']
                     )
                     if results.get('dns_servers'):
-                        vnet.dhcp_options = self.network_models.DhcpOptions(
+                        vnet.dhcp_options = DhcpOptions(
                             dns_servers=results['dns_servers']
                         )
                     self.results['state'] = self.create_or_update_vnet(vnet)
