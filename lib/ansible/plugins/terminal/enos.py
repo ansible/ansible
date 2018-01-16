@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Contains Action Plugin methods for ENOS Config Module
+# Contains terminal Plugin methods for ENOS Config Module
 # Lenovo Networking
 #
 from __future__ import (absolute_import, division, print_function)
