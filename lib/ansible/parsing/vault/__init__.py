@@ -275,7 +275,7 @@ def parse_vaulttext(b_vaulttext):
     except AnsibleVaultFormatError:
         raise
     except Exception as exc:
-        msg = "Vault vaulttext format error: %s" % exc
+        msg = "Vault vaulttext format error: %s. String was: %s" % (exc, b_vaulttext)
         raise AnsibleVaultFormatError(msg)
 
 
