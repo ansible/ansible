@@ -62,7 +62,6 @@ options:
     description:
       - Specifies whether log file integrity validation is enabled.
       - CloudTrail will create a hash for every log file delivered and produce a signed digest file that can be used to ensure log files have not been tampered.
-    default: false
     version_added: "2.4"
     aliases: [ "log_file_validation_enabled" ]
   include_global_events:
@@ -444,7 +443,7 @@ def main():
         s3_key_prefix=dict(),
         sns_topic_name=dict(),
         is_multi_region_trail=dict(default=False, type='bool'),
-        enable_log_file_validation=dict(default=False, type='bool', aliases=['log_file_validation_enabled']),
+        enable_log_file_validation=dict(type='bool', aliases=['log_file_validation_enabled']),
         include_global_events=dict(default=True, type='bool', aliases=['include_global_service_events']),
         cloudwatch_logs_role_arn=dict(),
         cloudwatch_logs_log_group_arn=dict(),
@@ -472,12 +471,6 @@ def main():
         S3BucketName=module.params['s3_bucket_name'],
         IncludeGlobalServiceEvents=module.params['include_global_events'],
         IsMultiRegionTrail=module.params['is_multi_region_trail'],
-        EnableLogFileValidation=module.params['enable_log_file_validation'],
-        S3KeyPrefix='',
-        SnsTopicName='',
-        CloudWatchLogsRoleArn='',
-        CloudWatchLogsLogGroupArn='',
-        KmsKeyId=''
     )
 
     if module.params['s3_key_prefix']:
@@ -491,6 +484,9 @@ def main():
 
     if module.params['cloudwatch_logs_log_group_arn']:
         ct_params['CloudWatchLogsLogGroupArn'] = module.params['cloudwatch_logs_log_group_arn']
+
+    if module.params['enable_log_file_validation'] is not None:
+        ct_params['EnableLogFileValidation'] = module.params['enable_log_file_validation']
 
     if module.params['kms_key_id']:
         ct_params['KmsKeyId'] = module.params['kms_key_id']
@@ -599,7 +595,9 @@ def main():
                 pass
             trail = dict()
             trail.update(ct_params)
-            trail['LogFileValidationEnabled'] = ct_params['EnableLogFileValidation']
+            if 'EnableLogFileValidation' not in ct_params:
+                ct_params['EnableLogFileValidation'] = False
+            trail['EnableLogFileValidation'] = ct_params['EnableLogFileValidation']
             trail.pop('EnableLogFileValidation')
             fake_arn = 'arn:aws:cloudtrail:' + region + ':' + acct_id + ':trail/' + ct_params['Name']
             trail['HasCustomEventSelectors'] = False
