@@ -109,7 +109,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'interface Ethernet2' in result.commands"
+      - "'interface ethernet2' in result.commands"
       - "'vrf forwarding test' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
@@ -121,7 +121,7 @@
     state: present
     authorize: yes
     interfaces:
-      - Ethernet2
+      - ethernet 2  # interface name modified to test case insensitive and space scenario
     provider: "{{ cli }}"
   become: yes
   register: result
