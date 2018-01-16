@@ -198,6 +198,8 @@ def main_list(options):
                         }
                     results[group]['hosts'] += [vm]
 
+            metadata['proxmox_node'] = node
+
             results['_meta']['hostvars'][vm].update(metadata)
 
     # pools
