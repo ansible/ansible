@@ -136,7 +136,6 @@ provisioning_state:
 ip_address:
     description:
         - Public IP Address of created container group.
-    returned: always
     type: str
     sample: 175.12.233.11
 '''
@@ -279,15 +278,12 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         resource_group = None
         response = None
         results = dict()
-        to_be_updated = False
 
         self.mgmt_client = self.get_mgmt_svc_client(ContainerInstanceManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {0} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
+
         if not self.location:
             self.location = resource_group.location
 
@@ -299,7 +295,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             if self.state == 'absent':
                 self.log("Nothing to delete")
             else:
-                to_be_updated = True
+                self.force_update = True
         else:
             self.log("Container instance already exists")
 
@@ -310,8 +306,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.log("Container instance deleted")
             elif self.state == 'present':
                 self.log("Need to check if container group has to be deleted or may be updated")
-                to_be_updated = self.force_update
-                if to_be_updated:
+                if self.force_update:
                     self.log('Deleting container instance before update')
                     if not self.check_mode:
                         self.delete_containerinstance()
@@ -320,7 +315,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.log("Need to Create / Update the container instance")
 
-            if to_be_updated:
+            if self.force_update:
                 self.results['changed'] = True
                 if self.check_mode:
                     return self.results
