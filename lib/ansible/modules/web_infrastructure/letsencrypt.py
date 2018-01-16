@@ -43,14 +43,16 @@ requirements:
 options:
   account_key_src:
     description:
-      - "Path to a file containing the Let's Encrypt account RSA key."
-      - "Can be created with C(openssl rsa ...)."
+      - "Path to a file containing the Let's Encrypt account RSA or Elliptic Curve
+         key."
+      - "RSA keys can be created with C(openssl rsa ...). Elliptic curve keys can
+         be created with C(openssl ecparam -genkey ...)."
       - "Mutually exclusive with C(account_key_content)."
       - "Required if C(account_key_content) is not used."
     aliases: [ account_key ]
   account_key_content:
     description:
-      - "Content of the Let's Encrypt account RSA key."
+      - "Content of the Let's Encrypt account RSA or Elliptic Curve key."
       - "Mutually exclusive with C(account_key_src)."
       - "Required if C(account_key_src) is not used."
     version_added: "2.5"
@@ -374,14 +376,12 @@ class ACMEAccount(object):
                 module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
             f.close()
 
-        pub_hex, pub_exp = self._parse_account_key(self.key)
+        error, self.key_data = self._parse_account_key(self.key)
+        if error:
+            module.fail_json(msg="error while parsing account key: %s" % error)
         self.jws_header = {
-            "alg": "RS256",
-            "jwk": {
-                "e": nopad_b64(binascii.unhexlify(pub_exp.encode("utf-8"))),
-                "kty": "RSA",
-                "n": nopad_b64(binascii.unhexlify(re.sub(r"(\s|:)", "", pub_hex).encode("utf-8"))),
-            },
+            "alg": self.key_data['alg'],
+            "jwk": self.key_data['jwk'],
         }
         self.init_account()
 
@@ -396,20 +396,82 @@ class ACMEAccount(object):
 
     def _parse_account_key(self, key):
         '''
-        Parses an RSA key file in PEM format and returns the modulus
-        and public exponent of the key
+        Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
+        (error, key_data).
         '''
-        openssl_keydump_cmd = [self._openssl_bin, "rsa", "-in", key, "-noout", "-text"]
+        account_key_type = None
+        with open(key, "rt") as f:
+            for line in f:
+                m = re.match(r"^\s*-{5,}BEGIN\s+(EC|RSA)\s+PRIVATE\s+KEY-{5,}\s*$", line)
+                if m is not None:
+                    account_key_type = m.group(1).lower()
+                    break
+        if account_key_type not in ("rsa", "ec"):
+            return 'unknown key type "%s" % account_key_type', {}
+
+        openssl_keydump_cmd = [self._openssl_bin, account_key_type, "-in", key, "-noout", "-text"]
         _, out, _ = self.module.run_command(openssl_keydump_cmd, check_rc=True)
 
-        pub_hex, pub_exp = re.search(
-            r"modulus:\n\s+00:([a-f0-9\:\s]+?)\npublicExponent: ([0-9]+)",
-            to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL).groups()
-        pub_exp = "{0:x}".format(int(pub_exp))
-        if len(pub_exp) % 2:
-            pub_exp = "0{0}".format(pub_exp)
+        if account_key_type == 'rsa':
+            pub_hex, pub_exp = re.search(
+                r"modulus:\n\s+00:([a-f0-9\:\s]+?)\npublicExponent: ([0-9]+)",
+                to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL).groups()
+            pub_exp = "{0:x}".format(int(pub_exp))
+            if len(pub_exp) % 2:
+                pub_exp = "0{0}".format(pub_exp)
 
-        return pub_hex, pub_exp
+            return None, {
+                'type': 'rsa',
+                'alg': 'RS256',
+                'jwk': {
+                    "kty": "RSA",
+                    "e": nopad_b64(binascii.unhexlify(pub_exp.encode("utf-8"))),
+                    "n": nopad_b64(binascii.unhexlify(re.sub(r"(\s|:)", "", pub_hex).encode("utf-8"))),
+                },
+                'hash': 'sha256',
+            }
+        elif account_key_type == 'ec':
+            pub_data = re.search(
+                r"pub:\s*\n\s+04:([a-f0-9\:\s]+?)\nASN1 OID: (\S+)\nNIST CURVE: (\S+)",
+                to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
+            if pub_data is None:
+                return 'cannot parse elliptic curve key', {}
+            pub_hex = binascii.unhexlify(re.sub(r"(\s|:)", "", pub_data.group(1)).encode("utf-8"))
+            curve = pub_data.group(3).lower()
+            if curve == 'p-256':
+                bits = 256
+                alg = 'ES256'
+                hash = 'sha256'
+                point_size = 32
+            elif curve == 'p-384':
+                bits = 384
+                alg = 'ES384'
+                hash = 'sha384'
+                point_size = 48
+            elif curve == 'p-521':
+                # Not yet supported on Let's Encrypt side, see
+                # https://github.com/letsencrypt/boulder/issues/2217
+                bits = 521
+                alg = 'ES512'
+                hash = 'sha512'
+                point_size = 66
+            else:
+                return 'unknown elliptic curve: %s' % curve, {}
+            bytes = (bits + 7) // 8
+            if len(pub_hex) != 2 * bytes:
+                return 'bad elliptic curve point (%s)' % curve, {}
+            return None, {
+                'type': 'ec',
+                'alg': alg,
+                'jwk': {
+                    "kty": "EC",
+                    "crv": curve.upper(),
+                    "x": nopad_b64(pub_hex[:bytes]),
+                    "y": nopad_b64(pub_hex[bytes:]),
+                },
+                'hash': hash,
+                'point_size': point_size,
+            }
 
     def send_signed_request(self, url, payload):
         '''
@@ -426,9 +488,25 @@ class ACMEAccount(object):
         except Exception as e:
             self.module.fail_json(msg="Failed to encode payload / headers as JSON: {0}".format(e))
 
-        openssl_sign_cmd = [self._openssl_bin, "dgst", "-sha256", "-sign", self.key]
+        openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(self.key_data['hash']), "-sign", self.key]
         sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
         _, out, _ = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
+
+        if self.key_data['type'] == 'ec':
+            _, der_out, _ = self.module.run_command(
+                [self._openssl_bin, "asn1parse", "-inform", "DER"],
+                data=out, binary_data=True)
+            expected_len = 2 * self.key_data['point_size']
+            sig = re.findall(
+                r"prim:\s+INTEGER\s+:([0-9A-F]{1,%s})\n" % expected_len,
+                to_text(der_out, errors='surrogate_or_strict'))
+            if len(sig) != 2:
+                self.module.fail_json(
+                    msg="failed to generate Elliptic Curve signature; cannot parse DER output: {0}".format(
+                        to_text(der_out, errors='surrogate_or_strict')))
+            sig[0] = (expected_len - len(sig[0])) * '0' + sig[0]
+            sig[1] = (expected_len - len(sig[1])) * '0' + sig[1]
+            out = binascii.unhexlify(sig[0]) + binascii.unhexlify(sig[1])
 
         data = self.module.jsonify({
             "header": self.jws_header,
