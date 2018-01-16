@@ -42,9 +42,10 @@ options:
             - "Name of the storage domain to manage. (Not required when state is I(imported))"
     state:
         description:
-            - "Should the storage domain be present/absent/maintenance/unattached/imported"
+            - "Should the storage domain be present/absent/maintenance/unattached/imported/update_ovf_store"
             - "I(imported) is supported since version 2.4."
-        choices: ['present', 'absent', 'maintenance', 'unattached']
+            - "I(update_ovf_store) is supported since version 2.5, currently if C(wait) is (true), we don't wait for update."
+        choices: ['present', 'absent', 'maintenance', 'unattached', 'update_ovf_store']
         default: present
     description:
         description:
@@ -202,6 +203,11 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+
+# Update OVF_STORE:
+- ovirt_storage_domains:
+    state: update_ovf_store
+    name: domain
 
 # Create ISO NFS storage domain
 - ovirt_storage_domains:
@@ -523,7 +529,7 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached', 'imported'],
+            choices=['present', 'absent', 'maintenance', 'unattached', 'imported', 'update_ovf_store'],
             default='present',
         ),
         id=dict(default=None),
@@ -602,7 +608,10 @@ def main():
                 storage_domain=storage_domains_service.service(ret['id']).get()
             )
             ret['changed'] = storage_domains_module.changed
-
+        elif state == 'update_ovf_store':
+            ret = storage_domains_module.action(
+                action='update_ovf_store'
+            )
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
