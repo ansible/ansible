@@ -536,31 +536,28 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
-        if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
-            return path
+        result = path
+        if path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
 
-        # FIXME: Can't use os.path.sep for Windows paths.
-        split_path = path.split(os.path.sep, 1)
-        expand_path = split_path[0]
-        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
-            expand_path = '~%s' % self._play_context.become_user
+            # FIXME: Can't use os.path.sep for Windows paths.
+            split_path = path.split(os.path.sep, 1)
+            expand_path = split_path[0]
+            if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
+                expand_path = '~%s' % self._play_context.become_user
 
-        cmd = self._connection._shell.expand_user(expand_path)
-        data = self._low_level_execute_command(cmd, sudoable=False)
-        try:
-            initial_fragment = data['stdout'].strip().splitlines()[-1]
-        except IndexError:
-            initial_fragment = None
+            cmd = self._connection._shell.expand_user(expand_path)
+            data = self._low_level_execute_command(cmd, sudoable=False)
+            try:
+                initial_fragment = data['stdout'].strip().splitlines()[-1]
+            except IndexError:
+                initial_fragment = None
 
-        if not initial_fragment:
-            # Something went wrong trying to expand the path remotely.  Return
-            # the original string
-            return path
+            if initial_fragment:
+                result = initial_fragment
+            elif len(split_path) > 1:
+                result = self._connection._shell.join_path(initial_fragment, *split_path[1:])
 
-        if len(split_path) > 1:
-            return self._connection._shell.join_path(initial_fragment, *split_path[1:])
-        else:
-            return initial_fragment
+        return result
 
     def _strip_success_message(self, data):
         '''
