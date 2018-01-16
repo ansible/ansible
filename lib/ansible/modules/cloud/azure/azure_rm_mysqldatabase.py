@@ -40,6 +40,10 @@ options:
     collation:
         description:
             - The collation of the database. Check MySQL documentation for possible values.
+    force_update:
+      description:
+          - Needs to be set to True in order to MySQL Database to be updated.
+      type: boolean
 
 extends_documentation_fragment:
     - azure
@@ -112,6 +116,9 @@ class AzureRMDatabases(AzureRMModuleBase):
             collation=dict(
                 type='str'
             ),
+            force_update=dict(
+                type='bool'
+            ),
             state=dict(
                 type='str',
                 default='present',
@@ -172,7 +179,11 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if ('charset' in self.parameters) and (self.parameters['charset'] != old_response['charset']):
                     self.to_do = Actions.Update
         if self.to_do == Actions.Update:
-            self.delete_mysqldatabase()
+            if self.force_update:
+                if not self.check_mode:
+                    self.delete_mysqldatabase()
+            else:
+                self.to_do = Actions.NoAction
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the MySQL Database instance")
