@@ -36,10 +36,14 @@ options:
         required: True
     charset:
         description:
-            - The charset of the database. Refer to PostgreSQL documentation for possible values.
+            - The charset of the database. Check PostgreSQL documentation for possible values.
     collation:
         description:
-            - The collation of the database. Refer to PostgreSQL documentation for possible values.
+            - The collation of the database. Check PostgreSQL documentation for possible values.
+    force_update:
+      description:
+          - Needs to be set to True in order to PostgreSQL Database to be updated.
+      type: boolean
 
 extends_documentation_fragment:
     - azure
@@ -112,6 +116,9 @@ class AzureRMDatabases(AzureRMModuleBase):
             collation=dict(
                 type='str'
             ),
+            force_update=dict(
+                type='bool'
+            ),
             state=dict(
                 type='str',
                 default='present',
@@ -171,8 +178,12 @@ class AzureRMDatabases(AzureRMModuleBase):
                     self.to_do = Actions.Update
                 if ('charset' in self.parameters) and (self.parameters['charset'] != old_response['charset']):
                     self.to_do = Actions.Update
-                if self.to_do == Actions.Update:
+        if self.to_do == Actions.Update:
+            if self.force_update:
+                if not self.check_mode:
                     self.delete_postgresqldatabase()
+            else:
+                self.to_do = Actions.NoAction
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the PostgreSQL Database instance")
