@@ -49,6 +49,7 @@ options:
     description:
     - The VM platform for VMM Domains.
     choices: [ microsoft, openstack, vmware ]
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r''' # '''
