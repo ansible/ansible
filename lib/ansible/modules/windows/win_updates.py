@@ -224,6 +224,7 @@ filtered_updates:
     returned: success
     type: complex
     sample: see the updates return value
+    contains: {}
 
 found_update_count:
     description: The number of updates found needing to be applied
