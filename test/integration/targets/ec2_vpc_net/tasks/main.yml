@@ -250,6 +250,28 @@
 
     # ============================================================
 
+    - name: modify tags
+      ec2_vpc_net:
+        cidr_block: 20.0.0.0/24
+        name: "{{ resource_prefix }}"
+        dns_support: True
+        dns_hostnames: True
+        state: present
+        multi_ok: no
+        tags:
+          Ansible: Test
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert the VPC has Name and Ansible tags
+      assert:
+        that:
+          - result.vpc.tags|length == 2
+          - 'result.vpc.tags.Ansible == "Test"'
+          - 'result.vpc.tags.Name == "{{ resource_prefix }}"'
+
+    # ============================================================
+
     - name: test check mode to delete a VPC
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
