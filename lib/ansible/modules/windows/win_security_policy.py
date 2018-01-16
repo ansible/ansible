@@ -39,6 +39,7 @@ notes:
   it if the value differs.
 - You can also run C(SecEdit.exe /export /cfg C:\temp\output.ini) to view the
   current policies set on your system.
+- When assigning user rights, use the M(win_user_right) module instead.
 options:
   section:
     description:
