@@ -51,7 +51,7 @@ options:
         required: false
         default: null
     name:
-        description: ["The name of the alert."]
+        description: ["The name of the alert. Monitor name template variables can be accessed by using double square brackets, i.e '[[' and ']]'."]
         required: true
     message:
         description:
@@ -128,7 +128,7 @@ EXAMPLES = '''
 # Create a metric monitor
 datadog_monitor:
   type: "metric alert"
-  name: "Test monitor"
+  name: "Test monitor [[host.name]]"
   state: "present"
   query: "datadog.agent.up.over('host:host1').last(2).count_by_status()"
   message: "Host [[host.name]] with IP [[host.ip]] is failing to report to datadog."
@@ -137,14 +137,14 @@ datadog_monitor:
 
 # Deletes a monitor
 datadog_monitor:
-  name: "Test monitor"
+  name: "Test monitor [[host.name]]"
   state: "absent"
   api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
   app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
 
 # Mutes a monitor
 datadog_monitor:
-  name: "Test monitor"
+  name: "Test monitor [[host.name]]"
   state: "mute"
   silenced: '{"*":None}'
   api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
@@ -152,7 +152,7 @@ datadog_monitor:
 
 # Unmutes a monitor
 datadog_monitor:
-  name: "Test monitor"
+  name: "Test monitor [[host.name]]"
   state: "unmute"
   api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
   app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
@@ -240,7 +240,7 @@ def _get_monitor(module):
     else:
         monitors = api.Monitor.get_all()
         for monitor in monitors:
-            if monitor['name'] == module.params['name']:
+            if monitor['name'] == _fix_template_vars(module.params['name']):
                 return monitor
     return {}
 
@@ -248,7 +248,7 @@ def _get_monitor(module):
 def _post_monitor(module, options):
     try:
         kwargs = dict(type=module.params['type'], query=module.params['query'],
-                      name=module.params['name'], message=_fix_template_vars(module.params['message']),
+                      name=_fix_template_vars(module.params['name']), message=_fix_template_vars(module.params['message']),
                       options=options)
         if module.params['tags'] is not None:
             kwargs['tags'] = module.params['tags']
@@ -270,7 +270,7 @@ def _equal_dicts(a, b, ignore_keys):
 def _update_monitor(module, monitor, options):
     try:
         kwargs = dict(id=monitor['id'], query=module.params['query'],
-                      name=module.params['name'], message=_fix_template_vars(module.params['message']),
+                      name=_fix_template_vars(module.params['name']), message=_fix_template_vars(module.params['message']),
                       options=options)
         if module.params['tags'] is not None:
             kwargs['tags'] = module.params['tags']
