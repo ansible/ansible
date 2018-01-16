@@ -74,7 +74,6 @@ notes:
 
 EXAMPLES = '''
 # Update API resources for development
-tasks:
 - name: update API
   aws_api_gateway:
     api_id: 'abc123321cba'
@@ -82,7 +81,6 @@ tasks:
     swagger_file: my_api.yml
 
 # update definitions and deploy API to production
-tasks:
 - name: deploy API
   aws_api_gateway:
     api_id: 'abc123321cba'

@@ -116,7 +116,6 @@ notes:
 '''
 
 EXAMPLES = '''
-tasks:
   - block:
        # Create a vault with `ovirt_password` variable which store your
        # oVirt/RHV user's password, and include that yaml file with variable:
@@ -150,7 +149,6 @@ tasks:
 # in yaml file.
 # This is mainly usefull when using Ansible Tower or AWX, as it will work
 # for Red Hat Virtualization creadentials type.
-tasks:
   - name: Obtain SSO token
     ovirt_auth:
       state: present

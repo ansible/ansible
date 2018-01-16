@@ -158,7 +158,7 @@ end_state:
     returned: always
     type: dict
     sample: {"snmp local user": {"local_user_info": []},
-             "snmp local user": {"local_user_info": [{"aclNumber": "2000", "engineID": "800007DB03389222111200",
+             "snmp usm user": {"usm_user_info": [{"aclNumber": "2000", "engineID": "800007DB03389222111200",
                                  "groupName": "wdz_group", "userName": "wdz_snmp"}]}}
 updates:
     description: command sent to the device

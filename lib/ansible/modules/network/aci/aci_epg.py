@@ -85,7 +85,7 @@ EXAMPLES = r'''
     description: Web Intranet EPG
     bd: prod_bd
 
-  aci_epg:
+- aci_epg:
     hostname: apic
     username: admin
     password: SomeSecretPassword

@@ -62,33 +62,33 @@ options:
 EXAMPLES = """
 
 # create a Direct Connect connection
-aws_direct_connect_connection:
-  name: ansible-test-connection
-  state: present
-  location: EqDC2
-  link_aggregation_group: dxlag-xxxxxxxx
-  bandwidth: 1Gbps
-register: dc
+- aws_direct_connect_connection:
+    name: ansible-test-connection
+    state: present
+    location: EqDC2
+    link_aggregation_group: dxlag-xxxxxxxx
+    bandwidth: 1Gbps
+  register: dc
 
 # disassociate the LAG from the connection
-aws_direct_connect_connection:
-  state: present
-  connection_id: dc.connection.connection_id
-  location: EqDC2
-  bandwidth: 1Gbps
+- aws_direct_connect_connection:
+    state: present
+    connection_id: dc.connection.connection_id
+    location: EqDC2
+    bandwidth: 1Gbps
 
 # replace the connection with one with more bandwidth
-aws_direct_connect_connection:
-  state: present
-  name: ansible-test-connection
-  location: EqDC2
-  bandwidth: 10Gbps
-  forced_update: True
+- aws_direct_connect_connection:
+    state: present
+    name: ansible-test-connection
+    location: EqDC2
+    bandwidth: 10Gbps
+    forced_update: True
 
 # delete the connection
-aws_direct_connect_connection:
-  state: absent
-  name: ansible-test-connection
+- aws_direct_connect_connection:
+    state: absent
+    name: ansible-test-connection
 """
 
 RETURN = """

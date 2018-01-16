@@ -55,18 +55,18 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Add user user1 from authorization provider example.com-authz
-ovirt_users:
+- ovirt_users:
     name: user1
     domain: example.com-authz
 
 # Add user user1 from authorization provider example.com-authz
 # In case of Active Directory specify UPN:
-ovirt_users:
+- ovirt_users:
     name: user1@ad2.example.com
     domain: example.com-authz
 
 # Remove user user1 with authorization provider example.com-authz
-ovirt_users:
+- ovirt_users:
     state: absent
     name: user1
     authz_name: example.com-authz

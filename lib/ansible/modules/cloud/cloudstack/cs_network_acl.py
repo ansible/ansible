@@ -82,18 +82,18 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  description: a more detailed description of the ACL
-  vpc: customers
+- local_action:
+    module: cs_network_acl
+    name: Webserver ACL
+    description: a more detailed description of the ACL
+    vpc: customers
 
 # remove a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  vpc: customers
-  state: absent
+- local_action:
+    module: cs_network_acl
+    name: Webserver ACL
+    vpc: customers
+    state: absent
 '''
 
 RETURN = '''
