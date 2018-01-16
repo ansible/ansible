@@ -44,7 +44,7 @@ A YAML version would look like:
 
   all:
     hosts:
-      mail.example.com
+      mail.example.com:
     children:
       webservers:
         hosts:
