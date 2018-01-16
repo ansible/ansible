@@ -121,12 +121,7 @@ def main():
         flush_routes=dict(type='bool'),
         enforce_rtr_alert=dict(type='bool'),
         restart=dict(type='bool', default=False),
-
-        state=dict(choices=['present', 'default'], default='present'),
-
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'default'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)

@@ -213,12 +213,7 @@ def validate_feature(module, mode='show'):
 def main():
     argument_spec = dict(
         feature=dict(type='str', required=True),
-        state=dict(choices=['enabled', 'disabled'], default='enabled'),
-
-        # deprecated in Ans2.3
-        include_defaults=dict(),
-        config=dict(),
-        save=dict()
+        state=dict(choices=['enabled', 'disabled'], default='enabled')
     )
 
     argument_spec.update(nxos_argument_spec)

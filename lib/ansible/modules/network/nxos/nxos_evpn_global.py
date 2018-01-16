@@ -66,11 +66,6 @@ def check_args(module, warnings):
 def main():
     argument_spec = dict(
         nv_overlay_evpn=dict(required=True, type='bool'),
-
-        # deprecated in Ans2.3
-        include_defaults=dict(),
-        config=dict(),
-        save=dict()
     )
 
     argument_spec.update(nxos_argument_spec)
