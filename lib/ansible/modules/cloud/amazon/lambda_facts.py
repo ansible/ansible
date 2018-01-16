@@ -54,7 +54,7 @@ requirements:
 extends_documentation_fragment:
   - aws
   - ec2
- '''
+'''
 
 EXAMPLES = '''
 ---

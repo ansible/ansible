@@ -87,6 +87,7 @@ options:
     version_added: "2.5"
 extends_documentation_fragment:
     - aws
+    - ec2
 '''
 
 EXAMPLES = '''
