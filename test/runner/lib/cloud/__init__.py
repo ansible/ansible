@@ -3,6 +3,9 @@ from __future__ import absolute_import, print_function
 
 import abc
 import atexit
+import datetime
+import json
+import time
 import os
 import platform
 import random
@@ -128,9 +131,30 @@ def cloud_init(args, targets):
 
     args.metadata.cloud_config = {}
 
+    results = {}
+
     for provider in get_cloud_providers(args, targets):
         args.metadata.cloud_config[provider.platform] = {}
+
+        start_time = time.time()
         provider.setup()
+        end_time = time.time()
+
+        results[provider.platform] = dict(
+            platform=provider.platform,
+            setup_seconds=int(end_time - start_time),
+            targets=[t.name for t in targets],
+        )
+
+    if not args.explain and results:
+        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+
+        data = dict(
+            clouds=results,
+        )
+
+        with open(results_path, 'w') as results_fd:
+            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
 
 
 class CloudBase(ABC):
