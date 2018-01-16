@@ -53,18 +53,6 @@ options:
         required: false
         default: present
         choices: ['present','absent']
-    include_defaults:
-        description:
-            - Specify to retrieve or not the complete running configuration
-              for module operations.
-        required: false
-        default: false
-        choices: ['true','false']
-    config:
-        description:
-            - Specify the configuration string to be used for module operations.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -74,16 +62,11 @@ EXAMPLES = '''
     commands:
       - router eigrp 11
       - isolate
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
+
 # Remove the maintenance-mode profile
 - nxos_gir_profile_management:
     mode: maintenance
     state: absent
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
@@ -120,7 +103,7 @@ changed:
 
 import re
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -175,10 +158,7 @@ def main():
     argument_spec = dict(
         commands=dict(required=False, type='list'),
         mode=dict(required=True, choices=['maintenance', 'normal']),
-        state=dict(choices=['absent', 'present'],
-                   default='present'),
-        include_defaults=dict(default=False),
-        config=dict()
+        state=dict(choices=['absent', 'present'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -187,7 +167,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     state = module.params['state']
     commands = module.params['commands'] or []

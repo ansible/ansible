@@ -45,7 +45,8 @@ options:
       - Facility name for logging.
   dest_level:
     description:
-      - Set logging severity levels. C(alias level).
+      - Set logging severity levels.
+    aliases: ['level']
   facility_level:
     description:
       - Set logging serverity levels for facility based log messages.

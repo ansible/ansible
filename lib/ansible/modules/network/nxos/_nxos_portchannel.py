@@ -68,11 +68,6 @@ options:
     required: false
     choices: ['true', 'false']
     default: false
-  include_defaults:
-    description:
-      - Specify if the complete running configuration for module operations should be used.
-    default: false
-    type: bool
   state:
     description:
       - Manage the state of the resource.
@@ -444,9 +439,6 @@ def main():
         members=dict(required=False, default=None, type='list'),
         force=dict(required=False, default='false', type='str', choices=['true', 'false']),
         state=dict(required=False, choices=['absent', 'present'], default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
 
     argument_spec.update(nxos_argument_spec)

@@ -50,11 +50,6 @@ options:
               with checkpoint_file.
         required: false
         default: null
-    include_defaults:
-        description:
-            - Specify if the complete running configuration for module operations should be used.
-        default: false
-        type: bool
 '''
 
 EXAMPLES = '''
@@ -109,10 +104,7 @@ def rollback(filename, module):
 def main():
     argument_spec = dict(
         checkpoint_file=dict(required=False),
-        rollback_to=dict(required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        rollback_to=dict(required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

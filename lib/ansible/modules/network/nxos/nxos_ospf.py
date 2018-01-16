@@ -41,11 +41,6 @@ options:
     required: false
     default: present
     choices: ['present','absent']
-  include_defaults:
-    description:
-      - Specify if the complete running configuration for module operations should be used.
-    default: true
-    type: bool
 '''
 
 EXAMPLES = '''
@@ -116,10 +111,7 @@ def state_absent(module, proposed, candidate):
 def main():
     argument_spec = dict(
         ospf=dict(required=True, type='str'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

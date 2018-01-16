@@ -64,6 +64,12 @@ options:
     required: false
     choices: ['true','false']
     default: null
+  state:
+    description:
+      - Specify desired state of the resource.
+    required: true
+    default: present
+    choices: ['present','absent','default']
 '''
 EXAMPLES = '''
 - nxos_pim_rp_address:

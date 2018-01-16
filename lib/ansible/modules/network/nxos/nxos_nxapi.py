@@ -153,10 +153,6 @@ def check_args(module, warnings):
         warnings.append('state=stopped is deprecated and will be removed in a '
                         'a future release.  Please use state=absent instead')
 
-    for key in ['config']:
-        if module.params[key]:
-            warnings.append('argument %s is deprecated and will be ignored' % key)
-
     for key in ['http_port', 'https_port']:
         if module.params[key] is not None:
             if not 1 <= module.params[key] <= 65535:
@@ -271,15 +267,9 @@ def main():
     argument_spec = dict(
         http=dict(aliases=['enable_http'], type='bool'),
         http_port=dict(type='int'),
-
         https=dict(aliases=['enable_https'], type='bool'),
         https_port=dict(type='int'),
-
         sandbox=dict(aliases=['enable_sandbox'], type='bool'),
-
-        # deprecated (Ansible 2.3) arguments
-        config=dict(),
-
         state=dict(default='present', choices=['started', 'stopped', 'present', 'absent'])
     )
 

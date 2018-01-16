@@ -95,6 +95,11 @@ options:
       - Description of the VRF.
     required: false
     default: null
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state arguments.
+    default: 10
 '''
 
 EXAMPLES = '''
