@@ -258,7 +258,7 @@ def state_present(module, existing, proposed, candidate):
         interface_command = 'interface {0}'.format(module.params['interface'])
 
         if any(c in commands for c in (ingress_replications_command, ingress_replicationb_command,
-            ingress_replicationnb_command, ingress_replicationns_command)):
+               ingress_replicationnb_command, ingress_replicationns_command)):
             static_level_cmds = [cmd for cmd in commands if 'peer' in cmd]
             parents = [interface_command, vni_command]
             for cmd in commands:
@@ -308,7 +308,6 @@ def main():
     warnings = list()
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
-
 
     if module.params['assoc_vrf']:
         mutually_exclusive_params = ['multicast_group',
