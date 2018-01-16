@@ -55,6 +55,7 @@ options:
             - Version of IP address. If the IP address is IPV4 version should be v4.
               If the IP address is IPV6 version should be v6.
         default: v4
+        choices: ['v4', 'v6']
     mask:
         description:
             - Subnet mask for IPv4 or IPv6 Address in decimal format.
