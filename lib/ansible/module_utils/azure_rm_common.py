@@ -207,7 +207,7 @@ AZURE_PKG_VERSIONS = {
     'postgre_sql': {
         'pkg_name': 'rdbms',
         'sub_pkg': 'postgresql',
-        'client_name': 'PostgreSqlManagementClient',
+        'client_name': 'PostgreSQLManagementClient',
         'expected_version': '0.2.0rc1'
     }
 }
@@ -221,13 +221,16 @@ def _get_full_pkg_path(resource_type):
 
 
 def _import_module(path, attr=None):
-    if not import_module:
+    try:
+        if not import_module:
+            return None
+        sdk = import_module(path)
+        if attr:
+            for part in attr.split('.'):
+                sdk = getattr(sdk, part)
+        return sdk
+    except ImportError:
         return None
-    sdk = import_module(path)
-    if attr:
-        for part in attr.split('.'):
-            sdk = getattr(sdk, part)
-    return sdk
 
 
 def _get_sdk_model_path(resource_type):
