@@ -43,7 +43,7 @@ options:
     force_update:
       description:
           - Needs to be set to True in order to MySQL Database to be updated.
-      type: boolean
+      type: bool
 
 extends_documentation_fragment:
     - azure
