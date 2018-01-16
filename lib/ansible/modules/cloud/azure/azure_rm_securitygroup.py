@@ -338,8 +338,20 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 from ansible.module_utils.six import integer_types
+
+
+(NetworkSecurityGroup,
+ SecurityRule,
+ SecurityRuleAccess,
+ SecurityRuleDirection,
+ SecurityRuleProtocol) = load_sdk_model('network',
+                                        'NetworkSecurityGroup',
+                                        'SecurityRule',
+                                        'SecurityRuleAccess',
+                                        'SecurityRuleDirection',
+                                        'SecurityRuleProtocol')
 
 
 def validate_rule(self, rule, rule_type=None):
@@ -369,7 +381,7 @@ def validate_rule(self, rule, rule_type=None):
     if not rule.get('access'):
         rule['access'] = 'Allow'
 
-    access_names = [member.value for member in self.network_models.SecurityRuleAccess]
+    access_names = [member.value for member in SecurityRuleAccess]
     if rule['access'] not in access_names:
         raise Exception("Rule access must be one of [{0}]".format(', '.join(access_names)))
 
@@ -382,14 +394,14 @@ def validate_rule(self, rule, rule_type=None):
     if not rule.get('protocol'):
         rule['protocol'] = '*'
 
-    protocol_names = [member.value for member in self.network_models.SecurityRuleProtocol]
+    protocol_names = [member.value for member in SecurityRuleProtocol]
     if rule['protocol'] not in protocol_names:
         raise Exception("Rule protocol must be one of [{0}]".format(', '.join(protocol_names)))
 
     if not rule.get('direction'):
         rule['direction'] = 'Inbound'
 
-    direction_names = [member.value for member in self.network_models.SecurityRuleDirection]
+    direction_names = [member.value for member in SecurityRuleDirection]
     if rule['direction'] not in direction_names:
         raise Exception("Rule direction must be one of [{0}]".format(', '.join(direction_names)))
 
@@ -439,7 +451,7 @@ def create_rule_instance(self, rule):
     :param rule: dict
     :return: SecurityRule
     '''
-    return self.network_models.SecurityRule(
+    return SecurityRule(
         protocol=rule['protocol'],
         source_address_prefix=rule['source_address_prefix'],
         destination_address_prefix=rule['destination_address_prefix'],
@@ -681,7 +693,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         return self.results
 
     def create_or_update(self, results):
-        parameters = self.network_models.NetworkSecurityGroup()
+        parameters = NetworkSecurityGroup()
         if results.get('rules'):
             parameters.security_rules = []
             for rule in results.get('rules'):

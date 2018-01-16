@@ -234,21 +234,38 @@ state:
     type: dict
 '''
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerservice.models import (
-        ContainerService, ContainerServiceOrchestratorProfile, ContainerServiceCustomProfile,
-        ContainerServiceServicePrincipalProfile, ContainerServiceMasterProfile,
-        ContainerServiceAgentPoolProfile, ContainerServiceWindowsProfile,
-        ContainerServiceLinuxProfile, ContainerServiceSshConfiguration,
-        ContainerServiceDiagnosticsProfile, ContainerServiceSshPublicKey,
-        ContainerServiceVMDiagnostics
-    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+(ContainerService,
+ ContainerServiceOrchestratorProfile,
+ ContainerServiceCustomProfile,
+ ContainerServiceServicePrincipalProfile,
+ ContainerServiceMasterProfile,
+ ContainerServiceAgentPoolProfile,
+ ContainerServiceWindowsProfile,
+ ContainerServiceLinuxProfile,
+ ContainerServiceSshConfiguration,
+ ContainerServiceDiagnosticsProfile,
+ ContainerServiceSshPublicKey,
+ ContainerServiceVMDiagnostics) = load_sdk_model('containerservice',
+                                                 'ContainerService',
+                                                 'ContainerServiceOrchestratorProfile',
+                                                 'ContainerServiceCustomProfile',
+                                                 'ContainerServiceServicePrincipalProfile',
+                                                 'ContainerServiceMasterProfile',
+                                                 'ContainerServiceAgentPoolProfile',
+                                                 'ContainerServiceWindowsProfile',
+                                                 'ContainerServiceLinuxProfile',
+                                                 'ContainerServiceSshConfiguration',
+                                                 'ContainerServiceDiagnosticsProfile',
+                                                 'ContainerServiceSshPublicKey',
+                                                 'ContainerServiceVMDiagnostics')
 
 
 def create_agent_pool_profile_instance(agentpoolprofile):

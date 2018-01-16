@@ -149,28 +149,39 @@ tags:
     type: dict
 '''
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerregistry.models import (
-        Registry,
-        RegistryUpdateParameters,
-        StorageAccountProperties,
-        Sku,
-        SkuName,
-        SkuTier,
-        ProvisioningState,
-        PasswordName,
-        WebhookCreateParameters,
-        WebhookUpdateParameters,
-        WebhookAction,
-        WebhookStatus
-    )
-    from azure.mgmt.containerregistry import ContainerRegistryManagementClient
 except ImportError as exc:
     # This is handled in azure_rm_common
     pass
+
+
+(Registry,
+ RegistryUpdateParameters,
+ StorageAccountProperties,
+ Sku,
+ SkuName,
+ SkuTier,
+ ProvisioningState,
+ PasswordName,
+ WebhookCreateParameters,
+ WebhookUpdateParameters,
+ WebhookAction,
+ WebhookStatus) = load_sdk_model('containerregistry',
+                                 'Registry',
+                                 'RegistryUpdateParameters',
+                                 'StorageAccountProperties',
+                                 'Sku',
+                                 'SkuName',
+                                 'SkuTier',
+                                 'ProvisioningState',
+                                 'PasswordName',
+                                 'WebhookCreateParameters',
+                                 'WebhookUpdateParameters',
+                                 'WebhookAction',
+                                 'WebhookStatus')
 
 
 def create_containerregistry_dict(registry, credentials):
@@ -246,7 +257,6 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.state = None
         self.sku = None
         self.tags = None
-        self._containerregistry_mgmt_client = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -407,18 +417,6 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         else:
             return None
         return create_containerregistry_dict(response, credentials)
-
-    @property
-    def containerregistry_mgmt_client(self):
-        self.log('Getting container registry mgmt client')
-        if not self._containerregistry_mgmt_client:
-            self._containerregistry_mgmt_client = self.get_mgmt_svc_client(
-                ContainerRegistryManagementClient,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-10-01'
-            )
-
-        return self._containerregistry_mgmt_client
 
 
 def main():

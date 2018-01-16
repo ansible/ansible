@@ -108,15 +108,16 @@ state:
         default_host_name: myfunctionapp.azurewebsites.net
 '''  # NOQA
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, load_sdk_model
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.web.models import Site, SiteConfig, NameValuePair, SiteSourceControl
-    from azure.mgmt.resource.resources import ResourceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+
+(Site, SiteConfig, NameValuePair, SiteSourceControl) = load_sdk_model('web', 'Site', 'SiteConfig', 'NameValuePair', 'SiteSourceControl')
 
 
 class AzureRMFunctionApp(AzureRMModuleBase):
