@@ -1,19 +1,6 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -65,12 +52,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._loader = loader
         self._templar = templar
         self._shared_loader_obj = shared_loader_obj
-        # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display = display
         self._cleanup_remote_tmp = False
 
         self._supports_check_mode = True
         self._supports_async = False
+
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
+        self._display = display
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -98,6 +86,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleActionSkip('check mode is not supported for this task.')
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
+
+        if not tmp and self._early_needs_tmp_path():
+            self._make_tmp_path()
+        else:
+            self._connection._shell.tempdir = tmp
 
         return result
 
@@ -236,16 +229,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user is None:
             remote_user = self._play_context.remote_user
 
+        try:
+            admin_users = self._connection._shell.get_option('admin_users') + [remote_user]
+        except KeyError:
+            admin_users = ['root', remote_user]  # plugin does not support admin_users
+        try:
+            remote_tmp = self._connection._shell.get_option('remote_temp')
+        except KeyError:
+            remote_tmp = '~/ansible'
+
+        # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        use_system_tmp = False
-
-        if self._play_context.become and self._play_context.become_user not in ('root', remote_user):
-            use_system_tmp = True
-
-        tmp_mode = 0o700
-        tmpdir = self._remote_expand_user(self._play_context.remote_tmp_dir, sudoable=False)
-
-        cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
+        use_system_tmp = bool(self._play_context.become and self._play_context.become_user not in admin_users)
+        tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
+        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=use_system_tmp, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
@@ -287,11 +284,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if rc == '/':
             raise AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basefile, cmd))
 
+        self._connection._shell.tempdir = rc
+
+        if not use_system_tmp:
+            self._connection._shell.env.update({'ANSIBLE_REMOTE_TEMP': self._connection._shell.tempdir})
         return rc
 
     def _should_remove_tmp_path(self, tmp_path):
         '''Determine if temporary path should be deleted or kept by user request/config'''
-
         return tmp_path and self._cleanup_remote_tmp and not C.DEFAULT_KEEP_REMOTE_FILES and "-tmp-" in tmp_path
 
     def _remove_tmp_path(self, tmp_path):
@@ -320,7 +320,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if isinstance(data, dict):
             data = jsonify(data)
 
-        afd, afile = tempfile.mkstemp()
+        afd, afile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         afo = os.fdopen(afd, 'wb')
         try:
             data = to_bytes(data, errors='surrogate_or_strict')
@@ -393,7 +393,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
 
-        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in ('root', remote_user):
+        try:
+            admin_users = self._connection._shell.get_option('admin_users')
+        except KeyError:
+            admin_users = ['root']  # plugin does not support admin users
+
+        if self._play_context.become and self._play_context.become_user and self._play_context.become_user not in admin_users + [remote_user]:
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
@@ -420,12 +425,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
-                if res['rc'] != 0 and remote_user == 'root':
+                if res['rc'] != 0 and remote_user in admin_users:
                     # chown failed even if remove_user is root
-                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root. '
+                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
                                        'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
-                    if C.ALLOW_WORLD_READABLE_TMPFILES:
+                    if self._connection._shell('allow_world_readable_temp'):
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file
                         display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user. '
@@ -534,33 +539,46 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         finally:
             return x  # pylint: disable=lost-exception
 
-    def _remote_expand_user(self, path, sudoable=True):
-        ''' takes a remote path and performs tilde expansion on the remote host '''
-        if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
+    def _remote_expand_user(self, path, sudoable=True, pathsep=None):
+        ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
+
+        # We only expand ~/path and ~username/path
+        if not path.startswith('~'):
             return path
 
-        # FIXME: Can't use os.path.sep for Windows paths.
+        # Per Jborean, we don't have to worry about Windows as we don't have a notion of user's home
+        # dir there.
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
+
         if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
             expand_path = '~%s' % self._play_context.become_user
 
+        # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
+
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]
         except IndexError:
             initial_fragment = None
 
         if not initial_fragment:
-            # Something went wrong trying to expand the path remotely.  Return
+            # Something went wrong trying to expand the path remotely. Try using pwd, if not, return
             # the original string
-            return path
+            cmd = self._connection._shell.pwd()
+            pwd = self._low_level_execute_command(cmd, sudoable=False).get('stdout', '').strip()
+            if pwd:
+                expanded = pwd
+            else:
+                expanded = path
 
-        if len(split_path) > 1:
-            return self._connection._shell.join_path(initial_fragment, *split_path[1:])
+        elif len(split_path) > 1:
+            expanded = self._connection._shell.join_path(initial_fragment, *split_path[1:])
         else:
-            return initial_fragment
+            expanded = initial_fragment
+
+        return expanded
 
     def _strip_success_message(self, data):
         '''
@@ -655,8 +673,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not self._is_pipelining_enabled(module_style, wrap_async):
 
             # we might need remote tmp dir
-            if not tmp or 'tmp' not in tmp:
-                tmp = self._make_tmp_path()
+            if not tmp:
+                if not self._connection._shell.tempdir or tmp is None or 'tmp' not in tmp:
+                    tmp = self._make_tmp_path()
+                else:
+                    tmp = self._connection._shell.tempdir
 
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
@@ -733,14 +754,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             else:
                 cmd = remote_module_path
 
-            rm_tmp = None
-
-            if self._should_remove_tmp_path(tmp) and not persist_files and delete_remote_tmp:
-                if not self._play_context.become or self._play_context.become_user == 'root':
-                    # not sudoing or sudoing to root, so can cleanup files in the same step
-                    rm_tmp = tmp
-
-            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp).strip()
+            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
 
         # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
         if remote_files:
@@ -756,14 +770,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
         # get internal info before cleaning
-        tmpdir_delete = (not data.pop("_ansible_suppress_tmpdir_delete", False) and wrap_async)
+        if data.pop("_ansible_suppress_tmpdir_delete", False):
+            self._cleanup_remote_tmp = False
 
         # remove internal keys
         remove_internal_keys(data)
-
-        # cleanup tmp?
-        if (self._play_context.become and self._play_context.become_user != 'root') and not persist_files and delete_remote_tmp or tmpdir_delete:
-            self._remove_tmp_path(tmp)
 
         # FIXME: for backwards compat, figure out if still makes sense
         if wrap_async:

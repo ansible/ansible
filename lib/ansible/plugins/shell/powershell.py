@@ -1,21 +1,17 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    name: powershell
+    plugin_type: shell
+    version_added: ""
+    short_description: Windows Powershell
+    description:
+      - The only option whne using 'winrm' as a connection plugin
+'''
 
 import base64
 import os
@@ -1693,8 +1689,10 @@ Function Run($payload) {
 
 '''  # end async_watchdog
 
+from ansible.plugins import AnsiblePlugin
 
-class ShellModule(object):
+
+class ShellModule(AnsiblePlugin):
 
     # Common shell filenames that this plugin handles
     # Powershell is handled differently.  It's selected when winrm is the
@@ -1773,7 +1771,7 @@ class ShellModule(object):
         # FIXME: Support system temp path and passed in tmpdir!
         return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
-    def expand_user(self, user_home_path):
+    def expand_user(self, user_home_path, username=''):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
         # not seem to work remotely, though by default we are always starting
         # in the user's home directory.
@@ -1823,7 +1821,7 @@ class ShellModule(object):
         ''' % dict(path=path)
         return self._encode_script(script)
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # pipelining bypass
         if cmd == '':
             return '-'
@@ -1878,10 +1876,6 @@ class ShellModule(object):
                 Exit 1
             }
         ''' % (env_string, ' '.join(cmd_parts))
-        if rm_tmp:
-            rm_tmp = self._escape(self._unquote(rm_tmp))
-            rm_cmd = 'Remove-Item "%s" -Force -Recurse -ErrorAction SilentlyContinue' % rm_tmp
-            script = '%s\nFinally { %s }' % (script, rm_cmd)
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):

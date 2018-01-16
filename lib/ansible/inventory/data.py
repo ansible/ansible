@@ -97,6 +97,7 @@ class InventoryData(object):
                                 'You can correct this by setting ansible_python_interpreter for localhost')
             new_host.set_variable("ansible_python_interpreter", py_interp)
             new_host.set_variable("ansible_connection", 'local')
+            new_host.set_variable("ansible_remote_tmp", C.DEFAULT_LOCAL_TMP)
 
             self.localhost = new_host
 
