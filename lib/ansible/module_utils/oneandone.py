@@ -187,13 +187,14 @@ def get_vpn(oneandone_conn, vpn, full_object=False):
 def wait_for_resource_creation_completion(oneandone_conn,
                                           resource_type,
                                           resource_id,
-                                          wait_timeout):
+                                          wait_timeout,
+                                          wait_interval):
     """
     Waits for the resource create operation to complete based on the timeout period.
     """
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
-        time.sleep(5)
+        time.sleep(wait_interval)
 
         # Refresh the resource info
         resource = get_resource(oneandone_conn, resource_type, resource_id)
@@ -224,13 +225,14 @@ def wait_for_resource_creation_completion(oneandone_conn,
 def wait_for_resource_deletion_completion(oneandone_conn,
                                           resource_type,
                                           resource_id,
-                                          wait_timeout):
+                                          wait_timeout,
+                                          wait_interval):
     """
     Waits for the resource delete operation to complete based on the timeout period.
     """
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
-        time.sleep(5)
+        time.sleep(wait_interval)
 
         # Refresh the operation info
         logs = oneandone_conn.list_logs(q='DELETE',
