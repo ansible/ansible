@@ -64,7 +64,6 @@ notes:
 
 EXAMPLES = '''
 # Example of getting a password
-tasks:
 - name: get the Administrator password
   ec2_win_password:
     profile: my-boto-profile
@@ -73,7 +72,6 @@ tasks:
     key_file: "~/aws-creds/my_test_key.pem"
 
 # Example of getting a password with a password protected key
-tasks:
 - name: get the Administrator password
   ec2_win_password:
     profile: my-boto-profile
@@ -83,7 +81,6 @@ tasks:
     key_passphrase: "secret"
 
 # Example of waiting for a password
-tasks:
 - name: get the Administrator password
   ec2_win_password:
     profile: my-boto-profile
