@@ -68,11 +68,11 @@ class ConfigCLI(CLI):
         super(ConfigCLI, self).run()
 
         if self.options.config_file:
-            self.config_file = to_bytes(unfrackpath(self.options.config_file, follow=False))
+            self.config_file = unfrackpath(self.options.config_file, follow=False)
             self.config = ConfigManager(self.config_file)
         else:
             self.config = ConfigManager()
-            self.config_file = to_bytes(find_ini_config_file())
+            self.config_file = find_ini_config_file()
         try:
             if not os.path.exists(self.config_file):
                 raise AnsibleOptionsError("%s does not exist or is not accessible" % (self.config_file))
