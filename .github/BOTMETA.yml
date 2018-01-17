@@ -1135,6 +1135,8 @@ files:
   lib/ansible/plugins/lookup/dig:
     maintainers: jpmens
     labels: community
+  lib/ansible/plugins/lookup/conjur_variable.py:
+    maintainers: $team_cyberark_conjur
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
@@ -1221,6 +1223,7 @@ macros:
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone tstringer yuwzho xscript zikalino
   team_cumulus: isharacomix jrrivers privateip
+  team_cyberark_conjur: jvanderhoof ryanprior
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_netapp: hulquest lmprice broncofan gouthampacha
   team_netscaler: chiradeep giorgos-nikolopoulos
