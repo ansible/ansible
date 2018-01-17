@@ -200,8 +200,6 @@ except ImportError:
     # python3
     import configparser as cp
 
-from packaging.version import Version
-
 from os.path import expanduser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
