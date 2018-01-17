@@ -449,6 +449,7 @@ class SelfSignedCertificate(Certificate):
                 # 10 years. 315360000 is 10 years in seconds.
                 cert.gmtime_adj_notAfter(315360000)
             cert.set_subject(self.csr.get_subject())
+            cert.set_issuer(self.csr.get_subject())
             cert.set_version(self.version - 1)
             cert.set_pubkey(self.csr.get_pubkey())
             cert.add_extensions(self.csr.get_extensions())
