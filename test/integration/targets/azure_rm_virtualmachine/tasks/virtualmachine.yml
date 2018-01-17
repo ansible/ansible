@@ -90,38 +90,49 @@
         version: latest
       custom_data: |
         #!/bin/sh
-        apt-get update
-        apt-get install -y nginx
-        echo "custom_data was executed" > /var/www/html/index.nginx-debian.html
+        echo "custom_data was executed" > /tmp/custom_data.txt
 
 - assert:
       that:
         - azure_vm.properties.availabilitySet.id
 
-- name: Wait for nginx to come up
-  wait_for: host={{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}
-            port=80
-            delay=20
-            timeout=180
-            state=started
+- add_host:
+      name: new_azure_vm
+      ansible_host: '{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
+      ansible_connection: paramiko  # not guaranteed to have sshpass...
+      ansible_user: adminuser
+      ansible_password: Password123!
 
-- name: Wait for nginx to serve our custom_data text
-  pause:
-      seconds: 10
+- name: wait for SSH port to be open
+  wait_for:
+      host: '{{ hostvars["new_azure_vm"].ansible_host }}'
+      port: 22
+      timeout: 60
+      state: started
 
-- name: Download file served from virtual machine
-  get_url:
-      url: http://{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}
-      dest: /tmp/custom_data_was_executed.txt
+- block:
+  # TODO: figure out how to make this work under ansible-test with the coverage injector
+  #- name: wait for host to answer on SSH
+  #  delegate_to: new_azure_vm
+  #  wait_for_connection:
+  - name: get content from custom_data script
+    raw: cat /tmp/custom_data.txt
+    register: custom_data_content
 
-- name: Check the value of /custom_data.txt on the newly created VM
-  command: cat /tmp/custom_data_was_executed.txt
-  register: custom_data_result
+  - name: assert contents
+    assert:
+        that: custom_data_content.stdout | regex_search('custom_data was executed')
+  delegate_to: new_azure_vm
 
-- name: Verify that custom_data was executed and /custom_data.txt was created
-  assert:
-      that:
-          - custom_data_result.stdout == "custom_data was executed"
+  # TODO: figure out how to make this work under ansible-test with the coverage injector
+  #- name: wait for file/content created by custom_data script
+  #  delegate_to: new_azure_vm
+  #  vars:
+  #    ansible_python_interpreter: python
+  #  wait_for:
+  #    path: /tmp/custom_data.txt
+  #    search_regex: ^custom_data was executed$
+  #    timeout: 20
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:

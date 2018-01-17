@@ -608,6 +608,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.basic import to_native, to_bytes
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
 
 
@@ -980,7 +981,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_resource.os_profile.admin_password = self.admin_password
 
                     if self.custom_data:
-                        vm_resource.os_profile.custom_data = str(base64.b64encode(self.custom_data.encode()).decode('utf-8'))
+                        # Azure SDK (erroneously?) wants native string type for this
+                        vm_resource.os_profile.custom_data = to_native(base64.b64encode(to_bytes(self.custom_data)))
 
                     if self.os_type == 'Linux':
                         vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
@@ -1116,7 +1118,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     # Add custom_data, if provided
                     if vm_dict['properties']['osProfile'].get('customData'):
                         custom_data = vm_dict['properties']['osProfile']['customData']
-                        vm_resource.os_profile.custom_data = str(base64.b64encode(custom_data.encode()).decode('utf-8'))
+                        # Azure SDK (erroneously?) wants native string type for this
+                        vm_resource.os_profile.custom_data = to_native(base64.b64encode(to_bytes(custom_data)))
 
                     # Add admin password, if one provided
                     if vm_dict['properties']['osProfile'].get('adminPassword'):
