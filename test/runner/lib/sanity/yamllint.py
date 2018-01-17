@@ -85,6 +85,7 @@ class YamllintTest(SanitySingleVersion):
         results = json.loads(stdout)['messages']
 
         results = [SanityMessage(
+            code=r['code'],
             message=r['message'],
             path=r['path'],
             line=int(r['line']),
