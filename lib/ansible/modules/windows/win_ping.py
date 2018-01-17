@@ -34,6 +34,7 @@ description:
   - Checks management connectivity of a windows host.
   - This is NOT ICMP ping, this is just a trivial test module.
   - For non-Windows targets, use the M(ping) module instead.
+  - For Network targets, use the M(net_ping) module instead.
 options:
   data:
     description:
@@ -42,6 +43,7 @@ options:
     default: pong
 notes:
   - For non-Windows targets, use the M(ping) module instead.
+  - For Network targets, use the M(net_ping) module instead.
 author:
 - Chris Church (@cchurch)
 '''
