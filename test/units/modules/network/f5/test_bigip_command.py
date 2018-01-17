@@ -64,7 +64,7 @@ class TestParameters(unittest.TestCase):
             password='password'
         )
         p = Parameters(params=args)
-        assert len(p.commands) == 2
+        assert len(p.commands) == 1
 
 
 class TestManager(unittest.TestCase):
@@ -143,7 +143,17 @@ class TestManager(unittest.TestCase):
         results = mm.exec_module()
 
         assert results['changed'] is False
-        assert mm._run_commands.call_count == 1
+
+        # call count is two on CLI transport because we must first
+        # determine if the remote CLI is in tmsh mode or advanced shell
+        # (bash) mode.
+        #
+        # 1 call for the shell check
+        # 1 call for the command in the "commands" list above
+        #
+        # Can we change this in the future by making the terminal plugin
+        # find this out ahead of time?
+        assert mm._run_commands.call_count == 2
         assert mm.execute_on_device.call_count == 0
 
     def test_command_with_commas(self, *args):
