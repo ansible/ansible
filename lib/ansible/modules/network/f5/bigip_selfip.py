@@ -60,8 +60,8 @@ options:
         IP, this value is required.
   route_domain:
     description:
-        - The route domain id of the system. When creating a new Self IP, if
-          this value is not specified, a default value of C(0) will be used.
+      - The route domain id of the system. When creating a new Self IP, if
+        this value is not specified, a default value of C(0) will be used.
     version_added: 2.3
   partition:
     description:
