@@ -1,0 +1,54 @@
+---
+- name: test setup dns record
+  vr_dns_record:
+    name: "{{ item.name }}"
+    domain: "{{ vr_dns_domain_name }}"
+    state: absent
+  register: result
+- name: verify test setup dns record
+  assert:
+    that:
+    - result is successful
+
+- name: test create a dns record in check mode
+  vr_dns_record:
+    name: "{{ item.name }}"
+    domain: "{{ vr_dns_domain_name }}"
+    data: "{{ item.data }}"
+    record_type: "{{ item.record_type | default(omit) }}"
+  check_mode: yes
+  register: result
+- name: verify test create a dns record in check mode
+  assert:
+    that:
+    - result is changed
+
+- name: test create a dns record
+  vr_dns_record:
+    name: "{{ item.name }}"
+    domain: "{{ vr_dns_domain_name }}"
+    data: "{{ item.data }}"
+    record_type: "{{ item.record_type | default(omit) }}"
+  register: result
+- name: verify test create a dns record
+  assert:
+    that:
+    - result is changed
+    - result.vultr_dns_record.data == "{{ item.data }}"
+    - result.vultr_dns_record.name == "{{ item.name }}"
+    - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"
+
+- name: test create a dns record idempotence
+  vr_dns_record:
+    name: "{{ item.name }}"
+    domain: "{{ vr_dns_domain_name }}"
+    data: "{{ item.data }}"
+    record_type: "{{ item.record_type | default(omit) }}"
+  register: result
+- name: verify test create a dns record idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_dns_record.data == "{{ item.data }}"
+    - result.vultr_dns_record.name == "{{ item.name }}"
+    - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"

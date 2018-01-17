@@ -1,0 +1,4 @@
+---
+- include_tasks: create_record.yml
+- include_tasks: update_record.yml
+- include_tasks: remove_record.yml
