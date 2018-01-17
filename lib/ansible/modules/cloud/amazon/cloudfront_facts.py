@@ -670,5 +670,6 @@ def main():
     result['cloudfront'].update(facts)
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
 
+
 if __name__ == '__main__':
     main()
