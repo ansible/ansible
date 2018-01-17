@@ -174,7 +174,7 @@ import sys
 
 from ansible.module_utils.basic import _load_params
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, HAS_AZURE
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -229,7 +229,7 @@ RECORDSET_VALUE_MAP = dict(
     SRV=dict(attrname='srv_records', classobj=SrvRecord, is_list=True),
     TXT=dict(attrname='txt_records', classobj=TxtRecord, is_list=True),
     # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
-)
+) if HAS_AZURE else {}
 
 
 class AzureRMRecordSet(AzureRMModuleBase):
