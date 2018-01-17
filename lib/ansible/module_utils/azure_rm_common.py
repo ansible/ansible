@@ -296,7 +296,7 @@ class AzureRMModuleBase(object):
             if Version(client_version) < Version(expected_version):
                 self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
                           "`pip install ansible[azure]`".format(client_name, client_version, expected_version,
-                                                                      AZURE_MIN_RELEASE))
+                                                                AZURE_MIN_RELEASE))
 
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
