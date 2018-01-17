@@ -21,11 +21,13 @@ short_description: Try to connect to host, verify a usable python and return C(p
 description:
    - A trivial test module, this module always returns C(pong) on successful
      contact. It does not make sense in playbooks, but it is useful from
-     C(/usr/bin/ansible) to verify the ability to login and that a usable python is configured.
-   - This is NOT ICMP ping, this is just a trivial test module.
+     C(/usr/bin/ansible) to verify the ability to login and that a usable Python is configured.
+   - This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node.
    - For Windows targets, use the M(win_ping) module instead.
+   - For Network targets, use the M(net_ping) module instead.
 notes:
    - For Windows targets, use the M(win_ping) module instead.
+   - For Network targets, use the M(net_ping) module instead.
 options:
   data:
     description:
