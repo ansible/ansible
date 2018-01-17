@@ -42,6 +42,15 @@
     that:
         - 'list_sum_multi|type_debug in ["string", "unicode"]'
 
+- name: add two dicts
+  set_fact:
+      dict_sum: "{{ dict_one + dict_two }}"
+  ignore_errors: yes
+
+- assert:
+    that:
+        - 'dict_sum is undefined'
+
 - name: loop through list with strings
   set_fact:
       list_for_strings: "{% for x in list_one %}{{ x }}{% endfor %}"

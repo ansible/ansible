@@ -8,9 +8,12 @@
       s_one: "1"
       s_two: "2"
       s_three: "3"
-      a_dict:
+      dict_one:
           foo: bar
           baz: bang
+      dict_two:
+          bar: foo
+          foobar: barfoo
       list_one:
           - one
           - two
