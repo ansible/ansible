@@ -38,6 +38,12 @@ options:
         description:
             - Name of the virtual machine.
         required: true
+    custom_data:
+        description:
+            - Data which is made available to the virtual machine and used by e.g., cloud-init.
+        default: null
+        required: false
+        version_added: "2.5"
     state:
         description:
             - Assert the state of the virtual machine.
@@ -591,6 +597,7 @@ azure_vm:
     }
 '''  # NOQA
 
+import base64
 import random
 import re
 
@@ -626,6 +633,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
+            custom_data=dict(type='str'),
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
@@ -660,6 +668,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         self.resource_group = None
         self.name = None
+        self.custom_data = None
         self.state = None
         self.location = None
         self.short_hostname = None
@@ -970,6 +979,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
 
+                    if self.custom_data:
+                        vm_resource.os_profile.custom_data = str(base64.b64encode(self.custom_data.encode()).decode('utf-8'))
+
                     if self.os_type == 'Linux':
                         vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
                             disable_password_authentication=disable_ssh_password
@@ -1100,6 +1112,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     if vm_dict.get('tags'):
                         vm_resource.tags = vm_dict['tags']
+
+                    # Add custom_data, if provided
+                    if vm_dict['properties']['osProfile'].get('customData'):
+                        custom_data = vm_dict['properties']['osProfile']['customData']
+                        vm_resource.os_profile.custom_data = str(base64.b64encode(custom_data.encode()).decode('utf-8'))
 
                     # Add admin password, if one provided
                     if vm_dict['properties']['osProfile'].get('adminPassword'):
@@ -1666,6 +1683,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
 def main():
     AzureRMVirtualMachine()
+
 
 if __name__ == '__main__':
     main()

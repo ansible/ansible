@@ -44,6 +44,20 @@
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
       name: testvm001
+      purge_rules: yes
+      rules:
+        - name: ALLOW_SSH
+          protocol: Tcp
+          destination_port_range: 22
+          access: Allow
+          priority: 100
+          direction: Inbound
+        - name: ALLOW_HTTP
+          protocol: Tcp
+          destination_port_range: 80
+          access: Allow
+          priority: 110
+          direction: Inbound
 
 - name: Create NIC
   azure_rm_networkinterface:
@@ -55,6 +69,7 @@
       security_group: testvm001
 
 - name: Create virtual machine
+  register: output
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
@@ -73,11 +88,40 @@
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
-  register: output
+      custom_data: |
+        #!/bin/sh
+        apt-get update
+        apt-get install -y nginx
+        echo "custom_data was executed" > /var/www/html/index.nginx-debian.html
 
 - assert:
       that:
         - azure_vm.properties.availabilitySet.id
+
+- name: Wait for nginx to come up
+  wait_for: host={{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}
+            port=80
+            delay=20
+            timeout=180
+            state=started
+
+- name: Wait for nginx to serve our custom_data text
+  pause:
+      seconds: 10
+
+- name: Download file served from virtual machine
+  get_url:
+      url: http://{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}
+      dest: /tmp/custom_data_was_executed.txt
+
+- name: Check the value of /custom_data.txt on the newly created VM
+  command: cat /tmp/custom_data_was_executed.txt
+  register: custom_data_result
+
+- name: Verify that custom_data was executed and /custom_data.txt was created
+  assert:
+      that:
+          - custom_data_result.stdout == "custom_data was executed"
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
