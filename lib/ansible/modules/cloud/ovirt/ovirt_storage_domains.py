@@ -125,7 +125,7 @@ options:
         version_added: "2.5"
     critical_space_action_blocker:
         description:
-            - "Inidcates the minimal free space the storage domain should contain in GB percentages."
+            - "Inidcates the minimal free space the storage domain should contain in percentages."
         version_added: "2.5"
     warning_low_space:
         description:
@@ -574,7 +574,7 @@ def main():
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
         wipe_after_delete=dict(type='bool', default=None),
-        backup=dict(type='bool', default=False),
+        backup=dict(type='bool', default=None),
         critical_space_action_blocker=dict(type='int', default=None),
         warning_low_space=dict(type='int', default=None),
         destroy=dict(type='bool', default=False),
