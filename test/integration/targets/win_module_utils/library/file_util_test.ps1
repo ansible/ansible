@@ -3,57 +3,61 @@
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.FileUtil
 
+$ErrorActionPreference = "Stop"
+
+$result = @{
+    changed = $false
+}
+
 Function Assert-Equals($actual, $expected) {
     if ($actual -cne $expected) {
-        Fail-Json @{} "actual != expected`nActual: $actual`nExpected: $expected"
+        $call_stack = (Get-PSCallStack)[1]
+        $error_msg = "AssertionError:`r`nActual: `"$actual`" != Expected: `"$expected`"`r`nLine: $($call_stack.ScriptLineNumber), Method: $($call_stack.Position.Text)"
+        Fail-Json -obj $result -message $error_msg
     }
 }
 
-# Test-FilePath Hidden system file
-$actual = Test-FilePath -path C:\pagefile.sys
+# Test-AnsiblePath Hidden system file
+$actual = Test-AnsiblePath -Path C:\pagefile.sys
 Assert-Equals -actual $actual -expected $true
 
-# Test-FilePath File that doesn't exist
-$actual = Test-FilePath -path C:\fakefile
+# Test-AnsiblePath File that doesn't exist
+$actual = Test-AnsiblePath -Path C:\fakefile
 Assert-Equals -actual $actual -expected $false
 
-# Test-FilePath Normal directory
-$actual = Test-FilePath -path C:\Windows
+# Test-AnsiblePath Normal directory
+$actual = Test-AnsiblePath -Path C:\Windows
 Assert-Equals -actual $actual -expected $true
 
-# Test-FilePath Normal file
-$actual = Test-FilePath -path C:\Windows\System32\kernel32.dll
+# Test-AnsiblePath Normal file
+$actual = Test-AnsiblePath -Path C:\Windows\System32\kernel32.dll
 
-# Test-FilePath fails with wildcard
+# Test-AnsiblePath fails with wildcard
+$failed = $false
 try {
-    Test-FilePath -Path C:\Windows\*.exe
-    Fail-Json @{} "exception was not thrown with wildcard search for Test-FilePath"
+    Test-AnsiblePath -Path C:\Windows\*.exe
 } catch {
-    Assert-Equals -actual $_.Exception.Message -expected "found multiple files at path 'C:\Windows\*.exe', make sure no wildcards are set in the path"
+    $failed = $true
+    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
 }
+Assert-Equals -actual $failed -expected $true
 
-# Get-FileItem file
-$actual = Get-FileItem -path C:\pagefile.sys
-Assert-Equals -actual $actual.FullName -expected C:\pagefile.sys
-Assert-Equals -actual $actual.PSIsContainer -expected $false
-Assert-Equals -actual $actual.Exists -expected $true
-
-# Get-FileItem directory
-$actual = Get-FileItem -path C:\Windows
-Assert-Equals -actual $actual.FullName -expected C:\Windows
-Assert-Equals -actual $actual.PSIsContainer -expected $true
-Assert-Equals -actual $actual.Exists -expected $true
-
-# Get-FileItem doesn't exists
-$actual = Get-FileItem -path C:\fakefile
+# Get-AnsibleItem doesn't exist with -ErrorAction SilentlyContinue param
+$actual = Get-AnsibleItem -Path C:\fakefile -ErrorAction SilentlyContinue
 Assert-Equals -actual $actual -expected $null
 
-# Get-FileItem fails with wildcard
-try {
-    Get-FileItem -Path C:\Windows\*.exe
-    Fail-Json @{} "exception was not thrown with wildcard search for Get-FileItem"
-} catch {
-    Assert-Equals -actual $_.Exception.Message -expected "found multiple files at path 'C:\Windows\*.exe', make sure no wildcards are set in the path"
-}
 
-Exit-Json @{ data = 'success' }
+# Get-AnsibleItem file
+$actual = Get-AnsibleItem -Path C:\pagefile.sys
+Assert-Equals -actual $actual.FullName -expected C:\pagefile.sys
+Assert-Equals -actual $actual.Attributes.HasFlag([System.IO.FileAttributes]::Directory) -expected $false
+Assert-Equals -actual $actual.Exists -expected $true
+
+# Get-AnsibleItem directory
+$actual = Get-AnsibleItem -Path C:\Windows
+Assert-Equals -actual $actual.FullName -expected C:\Windows
+Assert-Equals -actual $actual.Attributes.HasFlag([System.IO.FileAttributes]::Directory) -expected $true
+Assert-Equals -actual $actual.Exists -expected $true
+
+$result.data = "success"
+Exit-Json -obj $result
