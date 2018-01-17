@@ -9,9 +9,9 @@ DOCUMENTATION = """
     version_added: "2.5"
     short_description: Fetch credentials from CyberArk Conjur.
     description:
-      - Retrieves credentials from Conjur using the server's Conjur identity. More information about Conjur can be found at https://www.conjur.org/.
+      - Retrieves credentials from Conjur using the server's Conjur identity. More information about Conjur can be found at U(https://www.conjur.org/).
     requirements:
-      - The machine running Ansible has been given a Conjur identity.
+      - The machine running Ansible has been given a Conjur identity. (More: U(https://developer.conjur.net/key_concepts/machine_identity.html))
     options:
       _term:
         description: Variable path
