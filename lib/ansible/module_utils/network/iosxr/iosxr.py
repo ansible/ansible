@@ -137,9 +137,7 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
     meta_subtree = list()
 
     for key, meta in xmap.items():
-
         candidates = meta.get('xpath', "").split("/")
-
         if container_ele.tag == candidates[-2]:
             parent = container_ele
         elif sub_root.tag == candidates[-2]:
@@ -249,14 +247,13 @@ def build_xml(container, xmap=None, params=None, opcode=None):
 
     container_ele = etree.SubElement(root, container, nsmap=NS_DICT[container.upper() + "_NSMAP"])
 
-    if xmap:
-        if not params:
-            build_xml_subtree(container_ele, xmap)
+    if xmap is not None:
+        if params is None:
+            build_xml_subtree(container_ele, xmap, opcode=opcode)
         else:
             subtree_list = list()
-
             for param in to_list(params):
-                subtree_ele = build_xml_subtree(container_ele, xmap, param, opcode=opcode)
+                subtree_ele = build_xml_subtree(container_ele, xmap, param=param, opcode=opcode)
                 if subtree_ele is not None:
                     subtree_list.append(subtree_ele)
 

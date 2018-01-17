@@ -81,6 +81,13 @@
       - result.commands|length == 1
       - "'no domain name-server 3.3.3.3' in result.commands"
 
-# FIXME: No teardown
-#
+- name: setup
+  iosxr_config:
+    lines:
+      - no ip name-server 1.1.1.1
+      - no ip name-server 2.2.2.2
+      - no ip name-server 3.3.3.3
+    match: none
+    provider: "{{ cli }}"
+
 - debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"
