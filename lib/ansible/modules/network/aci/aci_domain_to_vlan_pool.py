@@ -137,7 +137,7 @@ VM_PROVIDER_MAPPING = dict(
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),

@@ -79,7 +79,7 @@ PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_o
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
         epg=dict(type='str', aliases=['epg_name']),

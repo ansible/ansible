@@ -61,18 +61,19 @@ except ImportError:
     HAS_XMLJSON_COBRA = False
 
 
-aci_argument_spec = dict(
-    hostname=dict(type='str', required=True, aliases=['host']),
-    username=dict(type='str', default='admin', aliases=['user']),
-    password=dict(type='str', no_log=True),
-    private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
-    certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
-    protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
-    timeout=dict(type='int', default=30),
-    use_proxy=dict(type='bool', default=True),
-    use_ssl=dict(type='bool', default=True),
-    validate_certs=dict(type='bool', default=True),
-)
+def aci_argument_spec():
+    return dict(
+        hostname=dict(type='str', required=True, aliases=['host']),
+        username=dict(type='str', default='admin', aliases=['user']),
+        password=dict(type='str', no_log=True),
+        private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
+        certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
+        timeout=dict(type='int', default=30),
+        use_proxy=dict(type='bool', default=True),
+        use_ssl=dict(type='bool', default=True),
+        validate_certs=dict(type='bool', default=True),
+    )
 
 '''
 URL_MAPPING = dict(

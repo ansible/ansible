@@ -69,7 +69,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         source=dict(type='str', aliases=['name', 'source_name']),  # Not required for querying all objects
         polling_interval=dict(type='int'),

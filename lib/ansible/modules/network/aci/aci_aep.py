@@ -95,7 +95,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         aep=dict(type='str', aliases=['name', 'aep_name']),  # not required for querying all AEPs
         description=dict(type='str', aliases=['descr']),

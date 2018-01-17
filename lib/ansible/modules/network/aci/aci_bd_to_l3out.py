@@ -57,7 +57,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
         l3out=dict(type='str'),

@@ -39,7 +39,7 @@ from fnmatch import fnmatch
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.plugins.loader import fragment_loader
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
 from module_args import AnsibleModuleImportError, get_argument_spec
 
@@ -49,6 +49,7 @@ from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -804,6 +805,7 @@ class ModuleValidator(Validator):
     def _validate_docs(self):
         doc_info = self._get_docs()
         deprecated = False
+        doc = None
         if not bool(doc_info['DOCUMENTATION']['value']):
             self.reporter.error(
                 path=self.object_path,
@@ -965,7 +967,7 @@ class ModuleValidator(Validator):
                 self._validate_docs_schema(metadata, metadata_1_1_schema(deprecated),
                                            'ANSIBLE_METADATA', 316)
 
-        return doc_info
+        return doc_info, doc
 
     def _check_version_added(self, doc):
         if not self._is_new_module():
@@ -993,12 +995,12 @@ class ModuleValidator(Validator):
                 msg='version_added should be %s. Currently %s' % (should_be, version_added)
             )
 
-    def _validate_argument_spec(self):
+    def _validate_argument_spec(self, docs):
         if not self.analyze_arg_spec:
             return
 
         try:
-            spec = get_argument_spec(self.path)
+            spec, args, kwargs = get_argument_spec(self.path)
         except AnsibleModuleImportError:
             self.reporter.error(
                 path=self.object_path,
@@ -1011,7 +1013,17 @@ class ModuleValidator(Validator):
             )
             return
 
+        provider_args = set()
+        args_from_argspec = set()
         for arg, data in spec.items():
+            args_from_argspec.add(arg)
+            args_from_argspec.update(data.get('aliases', []))
+            if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
+                # Record provider options from network modules, for later comparison
+                for provider_arg, provider_data in data.get('options', {}).items():
+                    provider_args.add(provider_arg)
+                    provider_args.update(provider_data.get('aliases', []))
+
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
                     path=self.object_path,
@@ -1019,6 +1031,50 @@ class ModuleValidator(Validator):
                     msg=('"%s" is marked as required but specifies '
                          'a default. Arguments with a default '
                          'should not be marked as required' % arg)
+                )
+
+        if docs:
+            try:
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+            except Exception:
+                # Cannot merge fragments
+                return
+
+            file_common_arguments = set()
+            for arg, data in FILE_COMMON_ARGUMENTS.items():
+                file_common_arguments.add(arg)
+                file_common_arguments.update(data.get('aliases', []))
+
+            args_from_docs = set()
+            for arg, data in docs.get('options', {}).items():
+                args_from_docs.add(arg)
+                args_from_docs.update(data.get('aliases', []))
+
+            args_missing_from_docs = args_from_argspec.difference(args_from_docs)
+            docs_missing_from_args = args_from_docs.difference(args_from_argspec)
+            for arg in args_missing_from_docs:
+                # args_from_argspec contains undocumented argument
+                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
+                    continue
+                if arg in provider_args:
+                    # Provider args are being removed from network module top level
+                    # So they are likely not documented on purpose
+                    continue
+                self.reporter.error(
+                    path=self.object_path,
+                    code=322,
+                    msg='"%s" is listed in the argument_spec, but not documented in the module' % arg
+                )
+            for arg in docs_missing_from_args:
+                # args_from_docs contains argument not in the argument_spec
+                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
+                    continue
+                self.reporter.error(
+                    path=self.object_path,
+                    code=323,
+                    msg='"%s" is listed in DOCUMENTATION.options, but not accepted by the module' % arg
                 )
 
     def _check_for_new_args(self, doc):
@@ -1150,10 +1206,10 @@ class ModuleValidator(Validator):
             return
 
         if self._python_module():
-            doc_info = self._validate_docs()
+            doc_info, docs = self._validate_docs()
 
         if self._python_module() and not self._just_docs():
-            self._validate_argument_spec()
+            self._validate_argument_spec(docs)
             self._check_for_sys_exit()
             self._find_blacklist_imports()
             main = self._find_main_call()

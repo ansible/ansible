@@ -159,7 +159,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         epg=dict(type='str', aliases=['name', 'epg_name']),
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
