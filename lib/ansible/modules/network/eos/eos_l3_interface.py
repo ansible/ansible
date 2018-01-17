@@ -48,6 +48,7 @@ options:
         be present or absent on remote device.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """

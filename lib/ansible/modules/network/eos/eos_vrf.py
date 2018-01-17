@@ -65,6 +65,7 @@ options:
       - State of the VRF configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """

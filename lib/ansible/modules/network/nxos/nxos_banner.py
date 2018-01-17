@@ -53,6 +53,7 @@ options:
         devices active running configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """

@@ -42,6 +42,7 @@ options:
       - State of the link aggregation group.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """

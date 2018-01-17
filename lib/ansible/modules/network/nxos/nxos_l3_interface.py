@@ -41,6 +41,7 @@ options:
       - State of the L3 interface configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """
