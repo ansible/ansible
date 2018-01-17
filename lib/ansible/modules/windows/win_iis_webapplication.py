@@ -50,6 +50,16 @@ options:
   application_pool:
     description:
     - The application pool in which the new site executes.
+  attributes:
+    description:
+    - Dict entries to set the application attributes.
+    - These attributes are based on the naming standard at
+      U(https://docs.microsoft.com/en-us/iis/configuration/system.applicationhost/sites/site/application/#attributes)
+      see the examples section for more details on how to set this.
+    required: false
+    default: null
+    aliases: []
+    version_added: '2.5'
 author:
 - Henrik Wallström
 '''
@@ -61,6 +71,18 @@ EXAMPLES = r'''
     site: acme
     state: present
     physical_path: C:\apps\acme\api
+
+# Add application with custom protocol
+
+- name: Add ACME webapplication on IIS with net.tcp protocol
+  win_iis_webapplication:
+    name: api
+    site: acme
+    state: present
+    physical_path: C:\apps\acme\api
+    attributes:
+      enabledProtocols: net.tcp
+
 '''
 
 RETURN = r'''

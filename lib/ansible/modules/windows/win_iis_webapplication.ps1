@@ -29,10 +29,13 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $physical_path = Get-AnsibleParam -obj $params -name "physical_path" -type "str" -aliases "path"
 $application_pool = Get-AnsibleParam -obj $params -name "application_pool" -type "str"
 
+$attributes = Get-AnsibleParam -obj $params -name "attributes" -default @{};
+
 $result = @{
   application_pool = $application_pool
   changed = $false
   physical_path = $physical_path
+  attributes = $attributes
 }
 
 # Ensure WebAdministration module is loaded
@@ -98,6 +101,25 @@ try {
         Set-ItemProperty "IIS:\Sites\$($site)\$($name)" -name applicationPool -value $application_pool -WhatIf:$check_mode
         $result.changed = $true
       }
+    }
+
+	# Modify application based on parameters
+    foreach ($attribute in $attributes.GetEnumerator()) {
+        $attribute_key = $attribute.Name
+        $new_value = $attribute.Value
+        
+        $attribute_value = Get-ItemProperty "IIS:\Sites\$($site)\$($name)" $attribute_key
+
+        switch ($attribute_value.GetType().Name)
+        {
+          "ConfigurationAttribute" { $attribute_value = $attribute_value.value }
+          "String" { $attribute_value = $attribute_value }
+        }
+
+        if((-not $attribute_value) -or ($attribute_value) -ne $new_value) {
+          Set-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name $attribute_key -Value $new_value
+          $result.changed = $true
+        }
     }
   }
 } catch {
