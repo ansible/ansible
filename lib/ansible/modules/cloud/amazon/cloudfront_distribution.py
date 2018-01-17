@@ -80,6 +80,13 @@ options:
         - A I(list[]) of domain name aliases (CNAMEs) as strings to be used for the distribution. Each alias must be unique across all distribution for the AWS
           account.
 
+    purge_aliases:
+      description:
+        - Specifies whether existing aliases will be removed before adding new aliases. When I(purge_aliases=yes), existing aliases are removed and I(aliases)
+          are added.
+      default: 'no'
+      choices: ['yes', 'no']
+
     default_root_object:
       description:
         - A config element that specifies the path to request when the user requests the origin. e.g. if specified as 'index.html', this maps to
