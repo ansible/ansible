@@ -93,7 +93,7 @@ class Device(object):
         elif os.path.isfile(self.path):
             return os.path.getsize(self.path)
         else:
-            self.module.fail_json(changed=False, msg="Target device not supported: %r." % self.path)
+            self.module.fail_json(changed=False, msg="Target device not supported: %s" % self)
 
     def __str__(self):
         return self.path
@@ -122,14 +122,14 @@ class Filesystem(object):
 
         mkfs = self.module.get_bin_path(self.MKFS, required=True)
         if opts is None:
-            cmd = "%s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, dev.path)
+            cmd = "%s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, dev)
         else:
-            cmd = "%s %s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, opts, dev.path)
+            cmd = "%s %s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, opts, dev)
         self.module.run_command(cmd, check_rc=True)
 
     def grow_cmd(self, dev):
         cmd = self.module.get_bin_path(self.GROW, required=True)
-        return [cmd, dev.path]
+        return [cmd, str(dev)]
 
     def grow(self, dev):
         """Get dev and fs size and compare. Returns stdout of used command."""
@@ -156,7 +156,7 @@ class Ext(Filesystem):
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path('tune2fs', required=True)
         # Get Block count and Block size
-        _, size, _ = self.module.run_command([cmd, '-l', dev.path], check_rc=True)
+        _, size, _ = self.module.run_command([cmd, '-l', str(dev)], check_rc=True)
         for line in size.splitlines():
             if 'Block count:' in line:
                 block_count = int(line.split(':')[1].strip())
@@ -184,7 +184,7 @@ class XFS(Filesystem):
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path('xfs_growfs', required=True)
-        _, size, _ = self.module.run_command([cmd, '-n', dev.path], check_rc=True)
+        _, size, _ = self.module.run_command([cmd, '-n', str(dev)], check_rc=True)
         for line in size.splitlines():
             col = line.split('=')
             if col[0].strip() == 'data':
@@ -232,7 +232,7 @@ class VFAT(Filesystem):
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path(self.GROW, required=True)
-        _, output, _ = self.module.run_command([cmd, '--info', dev.path], check_rc=True)
+        _, output, _ = self.module.run_command([cmd, '--info', str(dev)], check_rc=True)
         for line in output.splitlines()[1:]:
             param, value = line.split(':', 1)
             if param.strip() == 'Size':
@@ -241,7 +241,7 @@ class VFAT(Filesystem):
 
     def grow_cmd(self, dev):
         cmd = self.module.get_bin_path(self.GROW)
-        return [cmd, "-s", str(dev.size()), dev.path]
+        return [cmd, "-s", str(dev.size()), str(dev.path)]
 
 
 class LVM(Filesystem):
@@ -251,7 +251,7 @@ class LVM(Filesystem):
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path('pvs', required=True)
-        _, size, _ = self.module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', dev.path], check_rc=True)
+        _, size, _ = self.module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', str(dev)], check_rc=True)
         block_count = int(size[:-1])  # block size is 1
         return block_count
 
