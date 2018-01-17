@@ -982,10 +982,10 @@ def _need_netaddr(f_name, *args, **kwargs):
                                     'installed on the ansible controller' % f_name)
 
 
-def ip4_hex(arg):
+def ip4_hex(arg, delimiter=''):
     ''' Convert an IPv4 address to Hexadecimal notation '''
     numbers = list(map(int, arg.split('.')))
-    return '{:02x}{:02x}{:02x}{:02x}'.format(*numbers)
+    return '{0:02x}{sep}{1:02x}{sep}{2:02x}{sep}{3:02x}'.format(*numbers, sep=delimiter)
 
 
 # ---- Ansible filters ----
