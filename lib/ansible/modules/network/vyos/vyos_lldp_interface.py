@@ -46,6 +46,7 @@ options:
       - State of the LLDP configuration.
     default: present
     choices: ['present', 'absent', 'enabled', 'disabled']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """

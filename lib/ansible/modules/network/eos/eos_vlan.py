@@ -62,6 +62,7 @@ options:
       - State of the VLAN configuration.
     default: present
     choices: ['present', 'absent', 'active', 'suspend']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """

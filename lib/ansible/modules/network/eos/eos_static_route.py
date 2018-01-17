@@ -44,6 +44,7 @@ options:
       - State of the static route configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """

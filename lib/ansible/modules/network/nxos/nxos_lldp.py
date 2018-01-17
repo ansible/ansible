@@ -31,6 +31,7 @@ options:
         else if it is I(absent) it will be disabled.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """

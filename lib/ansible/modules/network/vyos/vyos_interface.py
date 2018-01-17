@@ -83,6 +83,7 @@ options:
         operationally up and C(down) means present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
