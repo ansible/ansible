@@ -37,6 +37,7 @@ lib/ansible/modules/cloud/atomic/atomic_container.py E317
 lib/ansible/modules/cloud/azure/azure_rm_acs.py E322
 lib/ansible/modules/cloud/azure/azure_rm_availabilityset.py E322
 lib/ansible/modules/cloud/azure/azure_rm_availabilityset_facts.py E322
+lib/ansible/modules/cloud/azure/azure_rm_containerinstance.py E322
 lib/ansible/modules/cloud/azure/azure_rm_containerregistry.py E322
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py E322
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py E322
@@ -50,9 +51,11 @@ lib/ansible/modules/cloud/azure/azure_rm_loadbalancer.py E322
 lib/ansible/modules/cloud/azure/azure_rm_loadbalancer_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_managed_disk.py E322
 lib/ansible/modules/cloud/azure/azure_rm_managed_disk_facts.py E322
+lib/ansible/modules/cloud/azure/azure_rm_mysqldatabase.py E322
 lib/ansible/modules/cloud/azure/azure_rm_mysqlserver.py E322
 lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py E322
 lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py E322
+lib/ansible/modules/cloud/azure/azure_rm_postgresqldatabase.py E322
 lib/ansible/modules/cloud/azure/azure_rm_postgresqlserver.py E322
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress.py E322
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress_facts.py E322
@@ -184,6 +187,8 @@ lib/ansible/modules/cloud/vmware/vca_nat.py E322
 lib/ansible/modules/cloud/vmware/vca_vapp.py E322
 lib/ansible/modules/cloud/vmware/vcenter_license.py E322
 lib/ansible/modules/cloud/vmware/vmware_guest.py E322
+lib/ansible/modules/cloud/vmware/vmware_guest_file_operation.py E322
+lib/ansible/modules/cloud/vmware/vmware_guest_file_operation.py E323
 lib/ansible/modules/cloud/vmware/vmware_guest_powerstate.py E322
 lib/ansible/modules/cloud/vmware/vmware_maintenancemode.py E322
 lib/ansible/modules/cloud/vmware/vmware_maintenancemode.py E323
@@ -412,6 +417,8 @@ lib/ansible/modules/network/f5/bigip_device_connectivity.py E322
 lib/ansible/modules/network/f5/bigip_device_connectivity.py E323
 lib/ansible/modules/network/f5/bigip_device_dns.py E322
 lib/ansible/modules/network/f5/bigip_device_dns.py E323
+lib/ansible/modules/network/f5/bigip_device_group.py E322
+lib/ansible/modules/network/f5/bigip_device_group.py E323
 lib/ansible/modules/network/f5/bigip_device_httpd.py E322
 lib/ansible/modules/network/f5/bigip_device_httpd.py E323
 lib/ansible/modules/network/f5/bigip_device_ntp.py E322
@@ -421,6 +428,7 @@ lib/ansible/modules/network/f5/bigip_device_sshd.py E323
 lib/ansible/modules/network/f5/bigip_device_trust.py E322
 lib/ansible/modules/network/f5/bigip_device_trust.py E323
 lib/ansible/modules/network/f5/bigip_facts.py E322
+lib/ansible/modules/network/f5/bigip_facts.py E323
 lib/ansible/modules/network/f5/bigip_gtm_datacenter.py E322
 lib/ansible/modules/network/f5/bigip_gtm_datacenter.py E323
 lib/ansible/modules/network/f5/bigip_gtm_facts.py E322
@@ -466,6 +474,8 @@ lib/ansible/modules/network/f5/bigip_policy_rule.py E322
 lib/ansible/modules/network/f5/bigip_policy_rule.py E323
 lib/ansible/modules/network/f5/bigip_pool.py E322
 lib/ansible/modules/network/f5/bigip_pool.py E323
+lib/ansible/modules/network/f5/bigip_pool_member.py E322
+lib/ansible/modules/network/f5/bigip_pool_member.py E323
 lib/ansible/modules/network/f5/bigip_profile_client_ssl.py E322
 lib/ansible/modules/network/f5/bigip_profile_client_ssl.py E323
 lib/ansible/modules/network/f5/bigip_provision.py E322
