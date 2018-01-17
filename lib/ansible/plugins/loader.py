@@ -214,7 +214,7 @@ class PluginLoader:
             if type_name in ('callback', 'connection', 'inventory', 'lookup', 'shell'):
                 dstring = get_docstring(path, fragment_loader, verbose=False, ignore_errors=True)[0]
 
-                if 'options' in dstring and isinstance(dstring['options'], dict):
+                if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
                     C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
                     display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
 
