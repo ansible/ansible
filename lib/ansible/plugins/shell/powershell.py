@@ -1768,8 +1768,10 @@ class ShellModule(AnsiblePlugin):
 
     def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
         basefile = self._escape(self._unquote(basefile))
-        # FIXME: Support system temp path and passed in tmpdir!
-        return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        if tmpdir is None:
+            tmpdir = "$env:temp"
+
+        return self._encode_script('''(New-Item -Type Directory -Path %s -Name "%s").FullName | Write-Host -Separator '';''' % (tmpdir, basefile))
 
     def expand_user(self, user_home_path, username=''):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
