@@ -163,7 +163,7 @@ class DocCLI(CLI):
                     doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(self.options.verbosity > 0))
                 except:
                     display.vvv(traceback.format_exc())
-                    display.error("%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin))
+                    display.error("%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin), wrap_text=False)
                     continue
 
                 if doc is not None:
