@@ -252,7 +252,7 @@ def get_cert_days(module, cert_file):
 
     openssl_bin = module.get_bin_path('openssl', True)
     openssl_cert_cmd = [openssl_bin, "x509", "-in", cert_file, "-noout", "-text"]
-    _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True)
+    _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True, encoding=None)
     try:
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)", out.decode('utf8')).group(1)
         not_after = datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
@@ -375,7 +375,7 @@ class ACMEAccount(object):
             module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
             f = open(tmpsrc, 'wb')
             try:
-                f.write(self.key_content)
+                f.write(self.key_content.encode('utf-8'))
                 self.key = tmpsrc
             except Exception as err:
                 os.remove(tmpsrc)
@@ -843,7 +843,7 @@ class ACMEClient(object):
 
         new_cert = {
             "resource": "new-cert",
-            "csr": nopad_b64(out),
+            "csr": nopad_b64(to_bytes(out)),
         }
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
 
@@ -917,7 +917,7 @@ class ACMEClient(object):
             if chain and self.module.params['fullchain']:
                 pem_cert += "\n".join(chain)
 
-            if write_file(self.module, self.dest, pem_cert):
+            if write_file(self.module, self.dest, pem_cert.encode('utf8')):
                 self.cert_days = get_cert_days(self.module, self.dest)
                 self.changed = True
 
