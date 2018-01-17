@@ -55,6 +55,11 @@ options:
       - "Content of the Let's Encrypt account RSA or Elliptic Curve key."
       - "Mutually exclusive with C(account_key_src)."
       - "Required if C(account_key_src) is not used."
+      - "Warning: the content will be written into a temporary file, which will
+         be deleted by Ansible when the module completes. Since this is an
+         important private key — it can be used to change the account key,
+         or to revoke your certificates without knowing their private keys
+         —, this might not be acceptable."
     version_added: "2.5"
   account_email:
     description:
