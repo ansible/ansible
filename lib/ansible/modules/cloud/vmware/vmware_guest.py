@@ -1416,6 +1416,9 @@ class PyVmomiHelper(PyVmomi):
             resource_pool = cluster.resourcePool
         # fallback, pick any RP
         else:
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+
+        if resource_pool is None:
             self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
 
         return resource_pool
