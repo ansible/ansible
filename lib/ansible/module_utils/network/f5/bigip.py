@@ -16,19 +16,27 @@ except ImportError:
 
 try:
     from library.module_utils.network.f5.common import F5BaseClient
+    from library.module_utils.network.f5.common import F5ModuleError
 except ImportError:
     from ansible.module_utils.network.f5.common import F5BaseClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
 
 
 class F5Client(F5BaseClient):
     @property
     def api(self):
-        result = ManagementRoot(
-            self.params['server'],
-            self.params['user'],
-            self.params['password'],
-            port=self.params['server_port'],
-            verify=self.params['validate_certs'],
-            token='tmos'
-        )
+        try:
+            result = ManagementRoot(
+                self.params['server'],
+                self.params['user'],
+                self.params['password'],
+                port=self.params['server_port'],
+                verify=self.params['validate_certs'],
+                token='tmos'
+            )
+        except Exception:
+            raise F5ModuleError(
+                'Unable to connect to {0} on port {1}. '
+                'Is "validate_certs" preventing this?'.format(self.params['server'], self.params['server_port'])
+            )
         return result
