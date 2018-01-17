@@ -123,8 +123,15 @@ options:
   es_version:
     required: false
     default: 5
+    choices: [2, 5, 56]
     description:
       - Elasticsearch version (for ds_type = elasticsearch only)
+      - Version 56 is for elasticsearch 5.6+ where tou can specify the max_concurrent_shard_requests option.
+  max_concurrent_shard_requests:
+    required: false
+    default: 256
+    description:
+      - Starting with elasticsearch 5.6, you can specify the max concurrent shard per requests.
   time_field:
     required: false
     default: timestamp
@@ -136,6 +143,11 @@ options:
     description:
       - Minimum group by interval for influxdb or elasticsearch datasources
       - for example '>10s'
+  interval:
+    required: false
+    choices: ['', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly']
+    description:
+      - for elasticsearch ds_type, this is the index pattern used.
   tsdb_version:
     required: false
     choices: [1, 2, 3]
@@ -245,22 +257,22 @@ class GrafanaAPIException(Exception):
 
 
 def grafana_switch_organisation(module, grafana_url, org_id, headers):
-    r, info = fetch_url(module, '{}/api/user/using/{}'.format(grafana_url, org_id), headers=headers, method='POST')
+    r, info = fetch_url(module, '%s/api/user/using/%d' % (grafana_url, org_id), headers=headers, method='POST')
     if info['status'] != 200:
-        raise GrafanaAPIException('Unable to switch to organization {} : {}'.format(org_id, info))
+        raise GrafanaAPIException('Unable to switch to organization %s : %s' % (org_id, info))
 
 
 def grafana_datasource_exists(module, grafana_url, name, headers):
     datasource_exists = False
     ds = {}
-    r, info = fetch_url(module, '{}/api/datasources/name/{}'.format(grafana_url, name), headers=headers, method='GET')
+    r, info = fetch_url(module, '%s/api/datasources/name/%s' % (grafana_url, name), headers=headers, method='GET')
     if info['status'] == 200:
         datasource_exists = True
         ds = json.loads(r.read())
     elif info['status'] == 404:
         datasource_exists = False
     else:
-        raise GrafanaAPIException('Unable to get datasource {} : {}'.format(name, info))
+        raise GrafanaAPIException('Unable to get datasource %s : %s' % (name, info))
 
     return datasource_exists, ds
 
@@ -313,6 +325,8 @@ def grafana_create_datasource(module, data):
         json_data['timeField'] = data['time_field']
         if data.get('interval'):
             json_data['interval'] = data['interval']
+        if data['es_version'] >= 56:
+            json_data['maxConcurrentShardRequests'] = data['max_concurrent_shard_requests']
 
     if data['ds_type'] == 'elasticsearch' or data['ds_type'] == 'influxdb':
         if data.get('time_interval'):
@@ -333,7 +347,7 @@ def grafana_create_datasource(module, data):
     # define http header
     headers = {'content-type': 'application/json; charset=utf8'}
     if 'grafana_api_key' in data and data['grafana_api_key'] is not None:
-        headers['Authorization'] = "Bearer {}".format(data['grafana_api_key'])
+        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
         auth = base64.encodestring('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', '')
         headers['Authorization'] = 'Basic %s' % auth
@@ -358,32 +372,32 @@ def grafana_create_datasource(module, data):
             # unchanged
             result['name'] = data['name']
             result['id'] = ds['id']
-            result['msg'] = "Datasource {} unchanged.".format(data['name'])
+            result['msg'] = "Datasource %s unchanged." % data['name']
             result['changed'] = False
         else:
             # update
-            r, info = fetch_url(module, '{}/api/datasources/{}'.format(data['grafana_url'], ds['id']), data=json.dumps(payload), headers=headers, method='PUT')
+            r, info = fetch_url(module, '%s/api/datasources/%d' % (data['grafana_url'], ds['id']), data=json.dumps(payload), headers=headers, method='PUT')
             if info['status'] == 200:
                 res = json.loads(r.read())
                 result['name'] = data['name']
                 result['id'] = ds['id']
                 result['before'] = ds
                 result['after'] = payload
-                result['msg'] = "Datasource {} updated {}".format(data['name'], res['message'])
+                result['msg'] = "Datasource %s updated %s" % (data['name'], res['message'])
                 result['changed'] = True
             else:
-                raise GrafanaAPIException('Unable to update the datasource id {} : {}'.format(ds['id'], info))
+                raise GrafanaAPIException('Unable to update the datasource id %d : %s' % (ds['id'], info))
     else:
         # create
-        r, info = fetch_url(module, '{}/api/datasources'.format(data['grafana_url']), data=json.dumps(payload), headers=headers, method='POST')
+        r, info = fetch_url(module, '%s/api/datasources' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
             res = json.loads(r.read())
-            result['msg'] = "Datasource {} created : {}".format(data['name'], res['message'])
+            result['msg'] = "Datasource %s created : %s" % (data['name'], res['message'])
             result['changed'] = True
             result['name'] = data['name']
             result['id'] = res['id']
         else:
-            raise GrafanaAPIException('Unable to create the new datasource {} : {} - {}.'.format(data['name'], info['status'], info))
+            raise GrafanaAPIException('Unable to create the new datasource %s : %s - %s.' % (data['name'], info['status'], info))
 
     return result
 
@@ -393,7 +407,7 @@ def grafana_delete_datasource(module, data):
     # define http headers
     headers = {'content-type': 'application/json'}
     if 'grafana_api_key' in data and data['grafana_api_key']:
-        headers['Authorization'] = "Bearer {}".format(data['grafana_api_key'])
+        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
         auth = base64.encodestring('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', '')
         headers['Authorization'] = 'Basic %s' % auth
@@ -405,18 +419,18 @@ def grafana_delete_datasource(module, data):
     result = {}
     if datasource_exists is True:
         # delete
-        r, info = fetch_url(module, '{}/api/datasources/name/{}'.format(data['grafana_url'], data['name']), headers=headers, method='DELETE')
+        r, info = fetch_url(module, '%s/api/datasources/name/%s' % (data['grafana_url'], data['name']), headers=headers, method='DELETE')
         if info['status'] == 200:
             res = json.loads(r.read())
-            result['msg'] = "Datasource {} deleted : {}".format(data['name'], res['message'])
+            result['msg'] = "Datasource %s deleted : %s" % (data['name'], res['message'])
             result['changed'] = True
             result['name'] = data['name']
             result['id'] = 0
         else:
-            raise GrafanaAPIException('Unable to update the datasource id {} : {}'.format(ds['id'], info))
+            raise GrafanaAPIException('Unable to update the datasource id %s : %s' % (ds['id'], info))
     else:
         # datasource does not exists : do nothing
-        result = {'msg': "Datasource {} does not exists".format(data['name']),
+        result = {'msg': "Datasource %s does not exists" % data['name'],
                   'changed': False,
                   'id': 0,
                   'name': data['name']}
@@ -454,10 +468,11 @@ def main():
             tls_ca_cert=dict(type='str', no_log=True),
             is_default=dict(default=False, type='bool'),
             org_id=dict(default=1, type='int'),
-            es_version=dict(type='int', default=5, choices=[2, 5]),
+            es_version=dict(type='int', default=5, choices=[2, 5, 56]),
+            max_concurrent_shard_requests=dict(type='int', default=256),
             time_field=dict(default='@timestamp', type='str'),
             time_interval=dict(type='str'),
-            interval=dict(type='str'),
+            interval=dict(type='str', choices=['', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'], default=''),
             tsdb_version=dict(type='int', default=1, choices=[1, 2, 3]),
             tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
             sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
@@ -469,9 +484,10 @@ def main():
         required_if=[
             ['ds_type', 'opentsdb', ['tsdb_version', 'tsdb_resolution']],
             ['ds_type', 'influxdb', ['database']],
-            ['ds_type', 'elasticsearch', ['database', 'es_version', 'time_field']],
+            ['ds_type', 'elasticsearch', ['database', 'es_version', 'time_field', 'interval']],
             ['ds_type', 'mysql', ['database']],
             ['ds_type', 'postgres', ['database', 'sslmode']],
+            ['es_version', 56, ['max_concurrent_shard_requests']]
         ],
     )
 
@@ -483,7 +499,7 @@ def main():
     except GrafanaAPIException as e:
         module.fail_json(
             failed=True,
-            msg="error {} : {} ".format(type(e), e)
+            msg="error %s : %s " % (type(e), e)
         )
         return
 
