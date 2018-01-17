@@ -162,7 +162,6 @@ EXAMPLES = """
     parents: ['ip access-list test']
     before: ['no ip access-list test']
     replace: block
-
 """
 
 RETURN = """
@@ -170,14 +169,12 @@ updates:
   description: The set of commands that will be pushed to the remote device.
   returned: always
   type: list
-  sample: ['...', '...']
-
+  sample: ['hostname foo', 'router bgp 1', 'router-id 1.1.1.1']
 commands:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: ['...', '...']
-
+  sample: ['hostname foo', 'router bgp 1', 'router-id 1.1.1.1']
 saved:
   description: Returns whether the configuration is saved to the startup
                configuration or not.
@@ -283,7 +280,7 @@ def main():
             commands = dumps(configobjs, 'commands')
             if ((isinstance((module.params['lines']), list)) and
                     (isinstance((module.params['lines'][0]), dict)) and
-                    ({'prompt', 'answer'}.issubset(module.params['lines'][0]))):
+                    (['prompt', 'answer'].issubset(module.params['lines'][0]))):
 
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],

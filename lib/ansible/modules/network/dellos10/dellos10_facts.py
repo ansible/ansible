@@ -213,7 +213,7 @@ class Hardware(FactsBase):
 
     COMMANDS = [
         'show version | display-xml',
-        'show processes node-id 1 | grep "Mem:"'
+        'show processes node-id 1 | grep Mem:'
     ]
 
     def populate(self):
