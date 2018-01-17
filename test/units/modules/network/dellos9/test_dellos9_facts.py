@@ -1,7 +1,5 @@
 # (c) 2016 Red Hat Inc.
 #
-# (c) 2017 Dell EMC.
-#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -104,5 +102,5 @@ class TestDellos9Facts(TestDellos9Module):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('fortyGigE 0/24', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(['Ma 0/0'], ansible_facts['ansible_net_neighbors'].keys())
+        self.assertEquals(['Ma 0/0'], list(ansible_facts['ansible_net_neighbors'].keys()))
         self.assertIn('ansible_net_interfaces', ansible_facts)
