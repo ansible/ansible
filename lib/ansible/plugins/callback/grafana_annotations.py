@@ -91,7 +91,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
         token = os.getenv('GRAFANA_API_TOKEN')
-        self.secure = os.getenv('GRAFANA_SECURE', 0)
+        self.secure = int(os.getenv('GRAFANA_SECURE', 0))
         if self.secure not in [0, 1]:
             self.secure = 0
         if token is None:
