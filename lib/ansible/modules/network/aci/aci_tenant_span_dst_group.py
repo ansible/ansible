@@ -68,7 +68,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         dst_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects

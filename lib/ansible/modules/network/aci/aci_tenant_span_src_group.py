@@ -75,7 +75,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         admin_state=dict(type='str', choices=['enabled', 'disabled']),
         description=dict(type='str', aliases=['descr']),

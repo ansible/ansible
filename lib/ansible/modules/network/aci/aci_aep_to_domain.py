@@ -68,7 +68,7 @@ VM_PROVIDER_MAPPING = dict(
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         aep=dict(type='str', aliases=['aep_name']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),

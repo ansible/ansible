@@ -138,7 +138,7 @@ ICMP6_MAPPING = dict(dst_unreachable='dst-unreach', echo_request='echo-req', ech
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         arp_flag=dict(type='str', choices=VALID_ARP_FLAGS),
         description=dict(type='str'),
