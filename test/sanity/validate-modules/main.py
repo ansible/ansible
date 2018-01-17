@@ -840,7 +840,7 @@ class ModuleValidator(Validator):
                             code=303,
                             msg='DOCUMENTATION fragment missing: %s' % fragment
                         )
-                    except Exception:
+                    except Exception as e:
                         self.reporter.trace(
                             path=self.object_path,
                             tracebk=traceback.format_exc()
@@ -848,7 +848,7 @@ class ModuleValidator(Validator):
                         self.reporter.error(
                             path=self.object_path,
                             code=304,
-                            msg='Unknown DOCUMENTATION error, see TRACE'
+                            msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                         )
 
                 if 'options' in doc and doc['options'] is None:
@@ -946,22 +946,32 @@ class ModuleValidator(Validator):
                     doc_info['ANSIBLE_METADATA']['value']
                 )
             else:
-                metadata, errors, traces = parse_yaml(
-                    doc_info['ANSIBLE_METADATA']['value'].s,
-                    doc_info['ANSIBLE_METADATA']['lineno'],
-                    self.name, 'ANSIBLE_METADATA'
+                # ANSIBLE_METADATA doesn't properly support YAML
+                # we should consider removing it from the spec
+                # Below code kept, incase we change our minds
+
+                # metadata, errors, traces = parse_yaml(
+                #     doc_info['ANSIBLE_METADATA']['value'].s,
+                #     doc_info['ANSIBLE_METADATA']['lineno'],
+                #     self.name, 'ANSIBLE_METADATA'
+                # )
+                # for error in errors:
+                #     self.reporter.error(
+                #         path=self.object_path,
+                #         code=315,
+                #         **error
+                #     )
+                # for trace in traces:
+                #     self.reporter.trace(
+                #         path=self.object_path,
+                #         tracebk=trace
+                #     )
+
+                self.reporter.error(
+                    path=self.object_path,
+                    code=315,
+                    msg='ANSIBLE_METADATA was not provided as a dict, YAML not supported'
                 )
-                for error in errors:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code=315,
-                        **error
-                    )
-                for trace in traces:
-                    self.reporter.trace(
-                        path=self.object_path,
-                        tracebk=trace
-                    )
 
             if metadata:
                 self._validate_docs_schema(metadata, metadata_1_1_schema(deprecated),
