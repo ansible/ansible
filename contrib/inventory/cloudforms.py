@@ -29,6 +29,7 @@ from time import time
 import requests
 from requests.auth import HTTPBasicAuth
 import warnings
+from ansible.errors import AnsibleError
 
 try:
     import json
@@ -176,6 +177,8 @@ class CloudFormsInventory(object):
 
         if config.has_option('cloudforms', 'suffix'):
             self.cloudforms_suffix = config.get('cloudforms', 'suffix')
+            if self.cloudforms_suffix[0] != '.':
+                raise AnsibleError('Leading fullstop is required for Cloudforms suffix')
         else:
             self.cloudforms_suffix = None
 
