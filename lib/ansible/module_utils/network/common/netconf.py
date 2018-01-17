@@ -84,14 +84,16 @@ class NetconfConnection(Connection):
 
                 warnings = []
                 for error in error_list:
-                    try:
-                        message = error.find('./nc:error-message', NS_MAP).text
-                    except Exception:
-                        message = error.find('./nc:error-info', NS_MAP).text
+                    message_ele = error.find('./nc:error-message', NS_MAP)
+
+                    if message_ele is None:
+                        message_ele = error.find('./nc:error-info', NS_MAP)
+
+                    message = message_ele.text if message_ele is not None else None
 
                     severity = error.find('./nc:error-severity', NS_MAP).text
 
-                    if severity == 'warning' and self.ignore_warning:
+                    if severity == 'warning' and self.ignore_warning and message is not None:
                         warnings.append(message)
                     else:
                         raise ConnectionError(to_text(rpc_error, errors='surrogate_then_replace'))

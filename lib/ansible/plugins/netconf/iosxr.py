@@ -107,17 +107,18 @@ class Netconf(NetconfBase):
 
         reply = self.get(install_filter)
         ele_boot_variable = etree.fromstring(reply).find('.//boot-variable/boot-variable')
-        if ele_boot_variable:
+        if ele_boot_variable is not None:
             device_info['network_os_image'] = re.split('[:|,]', ele_boot_variable.text)[1]
         ele_package_name = etree.fromstring(reply).find('.//package-name')
-        if ele_package_name:
+        if ele_package_name is not None:
             device_info['network_os_package'] = ele_package_name.text
             device_info['network_os_version'] = re.split('-', ele_package_name.text)[-1]
 
         hostname_filter = build_xml('host-names', opcode='filter')
 
         reply = self.get(hostname_filter)
-        device_info['network_os_hostname'] = etree.fromstring(reply).find('.//host-name').text
+        hostname_ele = etree.fromstring(reply).find('.//host-name')
+        device_info['network_os_hostname'] = hostname_ele.text if hostname_ele is not None else None
 
         return device_info
 
