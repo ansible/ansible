@@ -6,10 +6,6 @@
     state: absent
     provider: "{{ cli }}"
   register: result
-  # delegate_to: "{{ delegate_to }}"
-
-- debug: var=result
-  when: debug
 
 - name: Check NXAPI state
   nxos_command:
@@ -17,10 +13,6 @@
       - show feature | grep nxapi
     provider: "{{ cli }}"
   register: result
-  # delegate_to: "{{ delegate_to }}"
-
-- debug: var=result
-  when: debug
 
 - name: Assert NXAPI is disabled
   assert:
@@ -33,8 +25,6 @@
       absent
     provider: "{{ cli }}"
   register: result
-  # delegate_to: "{{ delegate_to }}"
-
 
 - name: Assert idempotence
   assert:
