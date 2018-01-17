@@ -102,6 +102,7 @@
       ansible_connection: paramiko  # not guaranteed to have sshpass...
       ansible_user: adminuser
       ansible_password: Password123!
+      ansible_host_key_checking: false
 
 - name: wait for SSH port to be open
   wait_for:
