@@ -10,8 +10,41 @@ DOCUMENTATION = '''
     version_added: ""
     short_description: Windows Powershell
     description:
-      - The only option whne using 'winrm' as a connection plugin
+      - The only option when using 'winrm' as a connection plugin
+    options:
+      remote_temp:
+        description:
+        - Temporary directory to use on targets when copying files to the host.
+        default: '%TEMP%'
+        ini:
+        - section: powershell
+          key: remote_tmp
+        vars:
+        - name: ansible_remote_tmp
+      admin_users:
+        description:
+        - List of users to be expected to have admin privileges, this is unused
+          in the PowerShell plugin
+        type: list
+        default: []
+      set_module_language:
+        description:
+        - Controls if we set the locale for moduels when executing on the
+          target.
+        - Windows only supports C(no) as an option.
+        type: bool
+        default: 'no'
+        choices:
+        - 'no'
+      environment:
+        description:
+        - Dictionary of environment variables and their values to use when
+          executing commands.
+        type: dict
+        default: {}
 '''
+# FIXME: admin_users and set_module_language don't belong here but must be set
+# so they don't failk when someone get_option('admin_users') on this plugin
 
 import base64
 import os
@@ -19,7 +52,8 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
+from ansible.plugins.shell import ShellBase
 
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
@@ -1692,7 +1726,7 @@ Function Run($payload) {
 from ansible.plugins import AnsiblePlugin
 
 
-class ShellModule(AnsiblePlugin):
+class ShellModule(ShellBase):
 
     # Common shell filenames that this plugin handles
     # Powershell is handled differently.  It's selected when winrm is the
@@ -1766,10 +1800,18 @@ class ShellModule(AnsiblePlugin):
         else:
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
+    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
+        # Windows does not have an equivalent for the system temp files, so
+        # the param is ignored
         basefile = self._escape(self._unquote(basefile))
-        # FIXME: Support system temp path and passed in tmpdir!
-        return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        basetmpdir = tmpdir if tmpdir else self.get_option('remote_temp')
+
+        script = '''
+        $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')
+        $tmp = New-Item -Type Directory -Path $tmp_path -Name '%s'
+        $tmp.FullName | Write-Host -Separator ''
+        ''' % (basetmpdir, basefile)
+        return self._encode_script(script.strip())
 
     def expand_user(self, user_home_path, username=''):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
