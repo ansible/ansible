@@ -51,6 +51,11 @@ options:
   ttl:
     description:
       - TTL of the record.
+  multiple:
+    description:
+      - Whether to use more than one record with similar C(name).
+      - Only allowed for a few record types, e.g. C(record_type=A).
+      - C(data) will not be updated, it is used as a key to find existing records.
   priority:
     description:
       - Priority of the record.
@@ -176,12 +181,16 @@ class AnsibleVultrDnsRecord(Vultr):
 
     def get_record(self):
         records = self.api_query(path="/v1/dns/records?domain=%s" % self.module.params.get('domain'))
+
         for record in records or []:
             if record.get('type') != self.module.params.get('record_type'):
                 continue
 
             if record.get('name') == self.module.params.get('name'):
-                return record
+                if not self.module.params.get('multiple'):
+                    return record
+                elif record.get('data') == self.module.params.get('data'):
+                    return record
         return {}
 
     def present_record(self):
@@ -269,6 +278,7 @@ def main():
         state=dict(choices=['present', 'absent'], default='present'),
         ttl=dict(type='int', default=300),
         record_type=dict(choices=RECORD_TYPES, default='A', aliases=['type']),
+        multiple=dict(type='bool', default=False),
         priority=dict(type='int', default=0),
         data=dict()
     ))
