@@ -100,6 +100,10 @@ class VmwareVmFacts(PyVmomi):
                         else:
                             net_dict[device.macAddress]['ipv4'].append(ip_addr)
 
+            esxi_hostname = None
+            if summary.runtime.host:
+                esxi_hostname = summary.runtime.host.summary.config.name
+
             virtual_machine = {
                 summary.config.name: {
                     "guest_fullname": summary.config.guestFullName,
@@ -108,6 +112,7 @@ class VmwareVmFacts(PyVmomi):
                     "mac_address": _mac_address,  # Kept for backward compatibility
                     "uuid": summary.config.uuid,
                     "vm_network": net_dict,
+                    "esxi_hostname": esxi_hostname,
                 }
             }
 
