@@ -1166,21 +1166,6 @@ class PyVmomiHelper(object):
 
         return root
 
-    def get_resource_pool(self):
-
-        resource_pool = None
-
-        if self.params['esxi_hostname']:
-            host = self.select_host()
-            resource_pool = self.select_resource_pool_by_host(host)
-        else:
-            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
-
-        if resource_pool is None:
-            self.module.fail_json(msg='Unable to find resource pool "%(resource_pool)s"' % self.params)
-
-        return resource_pool
-
     def deploy_vm(self):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.CloneSpec.html
@@ -1228,10 +1213,24 @@ class PyVmomiHelper(object):
         else:
             vm_obj = None
 
-        # need a resource pool if cloning from template
-        if self.params['resource_pool'] or self.params['template']:
-            resource_pool = self.get_resource_pool()
+        resource_pool = None
+        # highest priority, resource_pool given.
+        if self.params['resource_pool']:
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
+        # next priority, esxi hostname given.
+        elif self.params['esxi_hostname']:
+            host = self.select_host()
+            resource_pool = self.select_resource_pool_by_host(host)
+        # next priority, cluster given, take the root of the pool
+        elif self.params['cluster']:
+            cluster = self.cache.get_cluster(self.params['cluster'])
+            resource_pool = cluster.resourcePool
+        # fallback, pick any RP
+        else:
+            resource_pool = self.select_resource_pool_by_name(self.params['resource_pool'])
 
+        if resource_pool is None:
+            self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
 
@@ -1258,12 +1257,14 @@ class PyVmomiHelper(object):
         clone_method = None
         try:
             if self.params['template']:
+                
                 # create the relocation spec
                 relospec = vim.vm.RelocateSpec()
 
                 # Only select specific host when ESXi hostname is provided
                 if self.params['esxi_hostname']:
                     relospec.host = self.select_host()
+                
                 relospec.datastore = datastore
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
@@ -1289,6 +1290,9 @@ class PyVmomiHelper(object):
                 task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
                 self.change_detected = True
             else:
+                # If no pool specified by user, get it from host
+                if resource_pool is None:
+                    resource_pool = self.select_host().parent.resourcePool
                 # ConfigSpec require name for VM creation
                 self.configspec.name = self.params['name']
                 self.configspec.files = vim.vm.FileInfo(logDirectory=None,
@@ -1297,7 +1301,6 @@ class PyVmomiHelper(object):
                                                         vmPathName="[" + datastore_name + "] " + self.params["name"])
 
                 clone_method = 'CreateVM_Task'
-                resource_pool = self.get_resource_pool()
                 task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
                 self.change_detected = True
             self.wait_for_task(task)
@@ -1510,3 +1513,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
