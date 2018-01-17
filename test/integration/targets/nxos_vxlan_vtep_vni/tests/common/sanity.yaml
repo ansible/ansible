@@ -47,8 +47,17 @@
       state: absent
       provider: "{{ connection }}"
 
-  - name: configure vxlan_vtep_vni mcast
+  - name: configure vxlan_vtep_vni
     nxos_vxlan_vtep_vni: &conf2
+      interface: nve1
+      vni: 8000
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: configure vxlan_vtep_vni mcast
+    nxos_vxlan_vtep_vni: &conf3
       interface: nve1
       vni: 8000
       multicast_group: 224.1.1.1
@@ -57,8 +66,24 @@
 
   - assert: *true
 
-  - name: "Conf 2 Idempotence"
-    nxos_vxlan_vtep_vni: *conf2
+  - name: "Conf 3 Idempotence"
+    nxos_vxlan_vtep_vni: *conf3
+    register: result
+
+  - assert: *false
+
+  - name: configure vxlan_vtep_vni default mcast
+    nxos_vxlan_vtep_vni: &conf4
+      interface: nve1
+      vni: 8000
+      multicast_group: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf 4 Idempotence"
+    nxos_vxlan_vtep_vni: *conf4
     register: result
 
   - assert: *false
@@ -77,8 +102,65 @@
       provider: "{{ connection }}"
 
   - block:
+    - name: configure vxlan_vtep_vni
+      nxos_vxlan_vtep_vni: &conf5
+        interface: nve1
+        vni: 8000
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+
+    - name: configure vxlan_vtep_vni ingress static
+      nxos_vxlan_vtep_vni: &conf6
+        interface: nve1
+        vni: 8000
+        ingress_replication: static
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+
+    - name: "Conf 6 Idempotence"
+      nxos_vxlan_vtep_vni: *conf6
+      register: result
+
+    - assert: *false
+
+    - name: configure vxlan_vtep_vni ingress bgp
+      nxos_vxlan_vtep_vni: &conf7
+        interface: nve1
+        vni: 8000
+        ingress_replication: bgp
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+
+    - name: "Conf 7 Idempotence"
+      nxos_vxlan_vtep_vni: *conf7
+      register: result
+
+    - assert: *false
+
+    - name: remove ingress_repl
+      nxos_vxlan_vtep_vni: &conf8
+        interface: nve1
+        vni: 8000
+        ingress_replication: default
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+
+    - name: "Conf 8 Idempotence"
+      nxos_vxlan_vtep_vni: *conf8
+      register: result
+
+    - assert: *false
+
     - name: configure vxlan_vtep_vni peer-list
-      nxos_vxlan_vtep_vni: &conf3
+      nxos_vxlan_vtep_vni: &conf9
         interface: nve1
         vni: 8000
         peer_list: 
@@ -92,11 +174,34 @@
   
     - assert: *true
 
-    - name: "Conf 3 Idempotence"
-      nxos_vxlan_vtep_vni: *conf3
+    - name: "Conf 9 Idempotence"
+      nxos_vxlan_vtep_vni: *conf9
       register: result
   
     - assert: *false
+
+    - name: configure vxlan_vtep_vni default peer-list
+      nxos_vxlan_vtep_vni: &conf10
+        interface: nve1
+        vni: 8000
+        peer_list: default
+        ingress_replication: static
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+
+    - name: "Conf 10 Idempotence"
+      nxos_vxlan_vtep_vni: *conf10
+      register: result
+  
+    - assert: *false
+
+    - name: "Conf 9 again"
+      nxos_vxlan_vtep_vni: *conf9
+      register: result
+  
+    - assert: *true
 
     - name: remove vxlan_vtep_vni
       nxos_vxlan_vtep_vni: *remove
