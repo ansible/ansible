@@ -367,6 +367,7 @@ class ACMEAccount(object):
         # Create a key file from content, key (path) and key content are mutually exclusive
         if self.key_content is not None:
             _, tmpsrc = tempfile.mkstemp()
+            module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
             f = open(tmpsrc, 'wb')
             try:
                 f.write(self.key_content)
@@ -914,10 +915,6 @@ class ACMEClient(object):
             if write_file(self.module, self.dest, pem_cert):
                 self.cert_days = get_cert_days(self.module, self.dest)
                 self.changed = True
-
-        # Clean up temporary account key file
-        if self.module.params['account_key_content'] is not None:
-            os.remove(self.account.key)
 
 
 def main():
