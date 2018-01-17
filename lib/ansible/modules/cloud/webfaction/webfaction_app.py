@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 module: webfaction_app
 short_description: Add or remove applications on a Webfaction host
 description:
-    - Add or remove applications on a Webfaction host.  Further documentation at http://github.com/quentinsf/ansible-webfaction.
+    - Add or remove applications on a Webfaction host. Further documentation at U(http://github.com/quentinsf/ansible-webfaction).
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -50,12 +50,12 @@ options:
 
     type:
         description:
-            - The type of application to create. See the Webfaction docs at http://docs.webfaction.com/xmlrpc-api/apps.html for a list.
+            - The type of application to create. See the Webfaction docs at U(http://docs.webfaction.com/xmlrpc-api/apps.html) for a list.
         required: true
 
     autostart:
         description:
-            - Whether the app should restart with an autostart.cgi script
+            - Whether the app should restart with an C(autostart.cgi) script
         type: bool
         default: "no"
 
