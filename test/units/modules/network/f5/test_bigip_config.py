@@ -100,12 +100,12 @@ class TestManager(unittest.TestCase):
 
         # Override methods to force specific logic in the module to happen
         mm.exit_json = Mock(return_value=True)
-        mm.reset_device = Mock(return_value=True)
+        mm.reset_device = Mock(return_value='reset output')
         mm.upload_to_device = Mock(return_value=True)
         mm.move_on_device = Mock(return_value=True)
-        mm.merge_on_device = Mock(return_value=True)
+        mm.merge_on_device = Mock(return_value='merge output')
         mm.remove_temporary_file = Mock(return_value=True)
-        mm.save_on_device = Mock(return_value=True)
+        mm.save_on_device = Mock(return_value='save output')
 
         results = mm.exec_module()
 
