@@ -4,13 +4,6 @@
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
 
-- name: Enable Netconf service
-  iosxr_netconf:
-    netconf_port: 830
-    netconf_vrf: 'default'
-    state: present
-  register: result
-
 - name: Setup interface
   net_interface:
     name: GigabitEthernet0/0/0/1
