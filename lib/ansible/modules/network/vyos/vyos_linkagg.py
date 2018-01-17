@@ -56,6 +56,7 @@ options:
       - State of the link aggregation group.
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """

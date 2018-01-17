@@ -572,7 +572,7 @@ lib/ansible/modules/network/nxos/nxos_aaa_server.py E323
 lib/ansible/modules/network/nxos/nxos_aaa_server_host.py E323
 lib/ansible/modules/network/nxos/nxos_acl.py E323
 lib/ansible/modules/network/nxos/nxos_acl_interface.py E323
-lib/ansible/modules/network/nxos/nxos_banner.py E322
+lib/ansible/modules/network/nxos/nxos_banner.py E323
 lib/ansible/modules/network/nxos/nxos_bgp.py E323
 lib/ansible/modules/network/nxos/nxos_bgp_af.py E323
 lib/ansible/modules/network/nxos/nxos_bgp_neighbor.py E323
@@ -594,10 +594,10 @@ lib/ansible/modules/network/nxos/nxos_install_os.py E323
 lib/ansible/modules/network/nxos/nxos_interface.py E323
 lib/ansible/modules/network/nxos/nxos_interface_ospf.py E323
 lib/ansible/modules/network/nxos/nxos_l2_interface.py E323
-lib/ansible/modules/network/nxos/nxos_l3_interface.py E322
+lib/ansible/modules/network/nxos/nxos_l3_interface.py E323
 lib/ansible/modules/network/nxos/nxos_linkagg.py E323
-lib/ansible/modules/network/nxos/nxos_lldp.py E322
-lib/ansible/modules/network/nxos/nxos_logging.py E322
+lib/ansible/modules/network/nxos/nxos_lldp.py E323
+lib/ansible/modules/network/nxos/nxos_logging.py E323
 lib/ansible/modules/network/nxos/nxos_ntp.py E323
 lib/ansible/modules/network/nxos/nxos_ntp_auth.py E323
 lib/ansible/modules/network/nxos/nxos_ntp_options.py E323

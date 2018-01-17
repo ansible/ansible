@@ -65,6 +65,7 @@ options:
       - Existential state of the logging configuration on the node.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: iosxr
 """
 
 EXAMPLES = """
