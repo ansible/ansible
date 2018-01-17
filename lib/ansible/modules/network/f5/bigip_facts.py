@@ -97,8 +97,13 @@ except ImportError:
     pass  # Handle via f5_utils.bigsuds_found
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.f5_utils import bigip_api, bigsuds_found, f5_argument_spec
+from ansible.module_utils.f5_utils import bigip_api, bigsuds_found
 from ansible.module_utils.six.moves import map, zip
+
+try:
+    from library.module_utils.network.f5.common import f5_argument_spec
+except ImportError:
+    from ansible.module_utils.network.f5.common import f5_argument_spec
 
 
 class F5(object):
@@ -1640,8 +1645,7 @@ def generate_provision_dict(f5):
 
 
 def main():
-    argument_spec = f5_argument_spec()
-
+    argument_spec = f5_argument_spec
     meta_args = dict(
         session=dict(type='bool', default=False),
         include=dict(type='list', required=True),
