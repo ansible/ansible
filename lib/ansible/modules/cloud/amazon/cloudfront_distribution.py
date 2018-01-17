@@ -26,6 +26,10 @@ author:
   - Willem van Ketwich (@wilvk)
   - Will Thames (@willthames)
 
+extends_documentation_fragment:
+  - aws
+  - ec2
+
 options:
 
     state:
@@ -75,6 +79,13 @@ options:
       description:
         - A I(list[]) of domain name aliases (CNAMEs) as strings to be used for the distribution. Each alias must be unique across all distribution for the AWS
           account.
+
+    purge_aliases:
+      description:
+        - Specifies whether existing aliases will be removed before adding new aliases. When I(purge_aliases=yes), existing aliases are removed and I(aliases)
+          are added.
+      default: 'no'
+      choices: ['yes', 'no']
 
     default_root_object:
       description:
