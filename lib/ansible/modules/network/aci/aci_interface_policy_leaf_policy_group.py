@@ -24,9 +24,9 @@ author:
 version_added: '2.5'
 notes:
 - When using the module please select the appropriate link_aggregation_type:
-    - link: Create a PC Interface Policy Group
-    - node: Create a VPC Interface Policy Group
-    - leaf: Create a Leaf Access Port Policy Group
+  link: Create a PC Interface Policy Group
+  node: Create a VPC Interface Policy Group
+  leaf: Create a Leaf Access Port Policy Group
 options:
  policy_group:
    description:
@@ -48,10 +48,10 @@ options:
    description:
    - Choice of cdp_policy to be used as part of the leaf policy group to be created.
    aliases: [ cdp_policy, cdp_policy_name ]
-  mcp_policy:
-    description:
-    - Choice of mcp_policy to be used as part of the leaf policy group to be created.
-    aliases: [ mcp_policy, mcp_policy_name ]
+ mcp_policy:
+   description:
+   - Choice of mcp_policy to be used as part of the leaf policy group to be created.
+   aliases: [ mcp_policy, mcp_policy_name ]
  lldp_policy:
    description:
    - Choice of lldp_policy to be used as part of the leaf policy group to be created.
@@ -97,9 +97,9 @@ options:
    - Choice of l2_interface_policy to be used as part of the leaf policy group to be created.
    aliases: [ l2_interface_policy, l2_interface_policy_name ]
  port_security_policy:
-    description:
-    - Choice of port_security_policy to be used as part of the leaf policy group to be created.
-    aliases: [ port_security_policy, port_security_policy_name ]
+   description:
+   - Choice of port_security_policy to be used as part of the leaf policy group to be created.
+   aliases: [ port_security_policy, port_security_policy_name ]
  attached_entity_profile:
    description:
    - Choice of attached_entity_profile (AEP) to be used as part of the leaf policy group to be created.
@@ -170,7 +170,8 @@ def main():
     argument_spec.update({
         'policy_group': dict(type='str', aliases=['name', 'policy_group_name']),
         'description': dict(type='str', aliases=['descr', 'description']),
-        # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC andVPC) and infra:AccPortGrp (for leaf access port policy group), I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
+        # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC andVPC) and infra:AccPortGrp (for leaf access port policy group):
+        # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
         'link_aggregation_type': dict(type='str', aliases=['link_aggregation_type', 'link_aggregation_type_name']),
         'link_level_policy': dict(type='str', aliases=['link_level_policy', 'link_level_policy_name']),
         'cdp_policy': dict(type='str', aliases=['cdp_policy', 'cdp_policy_name']),
