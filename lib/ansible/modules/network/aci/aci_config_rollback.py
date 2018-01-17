@@ -145,7 +145,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         compare_export_policy=dict(type='str'),
         compare_snapshot=dict(type='str'),

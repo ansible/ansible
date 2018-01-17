@@ -147,7 +147,7 @@ ACI_POOL_MAPPING = dict(
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'inherit', 'static']),
         description=dict(type='str', aliases=['descr']),

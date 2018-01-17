@@ -77,7 +77,7 @@ QINQ_MAPPING = dict(core='corePort', disabled='disabled', edge='edgePort')
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         l2_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all policies
         description=dict(type='str', aliases=['descr']),
