@@ -55,6 +55,11 @@ options:
       - "Content of the Let's Encrypt account RSA or Elliptic Curve key."
       - "Mutually exclusive with C(account_key_src)."
       - "Required if C(account_key_src) is not used."
+      - "Warning: the content will be written into a temporary file, which will
+         be deleted by Ansible when the module completes. Since this is an
+         important private key — it can be used to change the account key,
+         or to revoke your certificates without knowing their private keys
+         —, this might not be acceptable."
     version_added: "2.5"
   account_email:
     description:
@@ -367,6 +372,7 @@ class ACMEAccount(object):
         # Create a key file from content, key (path) and key content are mutually exclusive
         if self.key_content is not None:
             _, tmpsrc = tempfile.mkstemp()
+            module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
             f = open(tmpsrc, 'wb')
             try:
                 f.write(self.key_content)
@@ -914,10 +920,6 @@ class ACMEClient(object):
             if write_file(self.module, self.dest, pem_cert):
                 self.cert_days = get_cert_days(self.module, self.dest)
                 self.changed = True
-
-        # Clean up temporary account key file
-        if self.module.params['account_key_content'] is not None:
-            os.remove(self.account.key)
 
 
 def main():
