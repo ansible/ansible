@@ -393,9 +393,12 @@ class Connection(ConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            display.debug("CLI-PROMPT: looking for prompts in | %s" % self._escape_crnl(window))
+
             if prompts and not handled:
                 handled = self._handle_prompt(window, prompts, answer, newline)
 
+            # XXX Should it be a warning here if recv.getvalue()[:len(command)] != command
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
@@ -407,10 +410,12 @@ class Connection(ConnectionBase):
         '''
         try:
             self._history.append(command)
+            display.debug("CLI-SEND: %s\\r" % self._escape_crnl(command))
             self._ssh_shell.sendall(b'%s\r' % command)
             if sendonly:
                 return
             response = self.receive(command, prompt, answer, newline)
+            display.debug("CLI-RECV: %s" % self._escape_crnl(self._last_response))
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
@@ -422,6 +427,13 @@ class Connection(ConnectionBase):
         '''
         for regex in self._terminal.ansi_re:
             data = regex.sub(b'', data)
+        return data
+
+    def _escape_crnl(self, data):
+        '''
+        Replace carriage-return and newline with escaped versions
+        '''
+        data = data.replace(b'\r', b'\\r').replace(b'\n', b'\\n')
         return data
 
     def _handle_prompt(self, resp, prompts, answer, newline):
@@ -443,6 +455,9 @@ class Connection(ConnectionBase):
                 self._ssh_shell.sendall(b'%s' % answer)
                 if newline:
                     self._ssh_shell.sendall(b'\r')
+                    display.debug("CLI-SUBPROMPT: Matched %s, sent '<answer>\\r'" % regex.pattern)
+                else:
+                    display.debug("CLI-SUBPROMPT: Matched %s, sent '<answer>'" % regex.pattern)
                 return True
         return False
 
@@ -471,6 +486,7 @@ class Connection(ConnectionBase):
                 for regex in self._terminal.terminal_stdout_re:
                     match = regex.search(response)
                     if match:
+                        display.debug("CLI-PROMPT: Matched Error Prompt %s" % regex.pattern)
                         errored_response = response
                         self._matched_prompt = match.group()
                         break
@@ -479,6 +495,7 @@ class Connection(ConnectionBase):
             for regex in self._terminal.terminal_stdout_re:
                 match = regex.search(response)
                 if match:
+                    display.debug("CLI-PROMPT: Matched Standard Prompt %s" % regex.pattern)
                     self._matched_pattern = regex.pattern
                     self._matched_prompt = match.group()
                     if not errored_response:
