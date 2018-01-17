@@ -141,17 +141,17 @@ def azure_id_to_dict(id):
 AZURE_PKG_VERSIONS = {
     StorageManagementClient.__name__: {
         'package_name': 'storage',
-        'expected_version': '1.0.0',
+        'expected_version': '1.5.0',
         'installed_version': storage_client_version
     },
     ComputeManagementClient.__name__: {
         'package_name': 'compute',
-        'expected_version': '1.0.0',
+        'expected_version': '2.0.0',
         'installed_version': compute_client_version
     },
     NetworkManagementClient.__name__: {
         'package_name': 'network',
-        'expected_version': '1.0.0',
+        'expected_version': '1.3.0',
         'installed_version': network_client_version
     },
     ResourceManagementClient.__name__: {
@@ -209,7 +209,7 @@ class AzureRMModuleBase(object):
                       "- {0}".format(HAS_MSRESTAZURE_EXC))
 
         if not HAS_AZURE:
-            self.fail("Do you have azure>={1} installed? Try `pip install 'azure>={1}' --upgrade`"
+            self.fail("Do you have azure>={1} installed? Try `pip install ansible[azure] --upgrade`"
                       "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
 
         self._cloud_environment = None
@@ -295,7 +295,7 @@ class AzureRMModuleBase(object):
             expected_version = package_version.get('expected_version')
             if Version(client_version) < Version(expected_version):
                 self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
-                          "`pip install azure>={3} --upgrade`".format(client_name, client_version, expected_version,
+                          "`pip install ansible[azure]`".format(client_name, client_version, expected_version,
                                                                       AZURE_MIN_RELEASE))
 
     def exec_module(self, **kwargs):
