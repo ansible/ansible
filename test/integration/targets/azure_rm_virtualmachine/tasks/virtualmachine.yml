@@ -44,6 +44,20 @@
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
       name: testvm001
+      purge_rules: yes
+      rules:
+        - name: ALLOW_SSH
+          protocol: Tcp
+          destination_port_range: 22
+          access: Allow
+          priority: 100
+          direction: Inbound
+        - name: ALLOW_HTTP
+          protocol: Tcp
+          destination_port_range: 80
+          access: Allow
+          priority: 110
+          direction: Inbound
 
 - name: Create NIC
   azure_rm_networkinterface:
@@ -55,6 +69,7 @@
       security_group: testvm001
 
 - name: Create virtual machine
+  register: output
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvm002
@@ -73,11 +88,51 @@
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
-  register: output
+      custom_data: |
+        #!/bin/sh
+        echo "custom_data was executed" > /tmp/custom_data.txt
 
 - assert:
       that:
         - azure_vm.properties.availabilitySet.id
+
+- add_host:
+      name: new_azure_vm
+      ansible_host: '{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
+      ansible_connection: paramiko  # not guaranteed to have sshpass...
+      ansible_user: adminuser
+      ansible_password: Password123!
+
+- name: wait for SSH port to be open
+  wait_for:
+      host: '{{ hostvars["new_azure_vm"].ansible_host }}'
+      port: 22
+      timeout: 60
+      state: started
+
+- block:
+  # TODO: figure out how to make this work under ansible-test with the coverage injector
+  #- name: wait for host to answer on SSH
+  #  delegate_to: new_azure_vm
+  #  wait_for_connection:
+  - name: get content from custom_data script
+    raw: cat /tmp/custom_data.txt
+    register: custom_data_content
+
+  - name: assert contents
+    assert:
+        that: custom_data_content.stdout | regex_search('custom_data was executed')
+  delegate_to: new_azure_vm
+
+  # TODO: figure out how to make this work under ansible-test with the coverage injector
+  #- name: wait for file/content created by custom_data script
+  #  delegate_to: new_azure_vm
+  #  vars:
+  #    ansible_python_interpreter: python
+  #  wait_for:
+  #    path: /tmp/custom_data.txt
+  #    search_regex: ^custom_data was executed$
+  #    timeout: 20
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
