@@ -37,14 +37,21 @@ options:
     charset:
         description:
             - The charset of the database. Check MySQL documentation for possible values.
+            - This is only set on creation, use I(force_update) to recreate a database if the
+              values don't match.
     collation:
         description:
             - The collation of the database. Check MySQL documentation for possible values.
+            - This is only set on creation, use I(force_update) to recreate a database if the
+              values don't match.
     force_update:
       description:
-          - Needs to be set to True in order to MySQL Database to be updated.
-          - Note that old database will be deleted and new one created.
+          - When set to C(true), will delete and recreate the existing MySQL database if any
+            of the properties don't match what is set.
+          - When set to C(false), no change will occur to the database even if any
+            of the properties do not match.
       type: bool
+      default: 'no'
 
 extends_documentation_fragment:
     - azure
@@ -118,7 +125,8 @@ class AzureRMDatabases(AzureRMModuleBase):
                 type='str'
             ),
             force_update=dict(
-                type='bool'
+                type='bool',
+                default=False
             ),
             state=dict(
                 type='str',
