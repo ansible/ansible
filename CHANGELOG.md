@@ -70,7 +70,9 @@ Ansible Changes By Release
 * Fix failure message "got multiple values for keyword argument id" in the
   azure_rm_securitygroup module (caused by changes to the azure python API):
   https://github.com/ansible/ansible/pull/34810
-
+* Bump Azure storage client minimum to 1.5.0 to fix deserialization issues. This will break Azure Stack
+  until it receives storage API version 2017-10-01 or changes are made to support multiple versions.
+  (https://github.com/ansible/ansible/pull/34442)
 
 <a id="2.4.2"></a>
 
