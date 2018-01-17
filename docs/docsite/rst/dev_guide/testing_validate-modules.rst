@@ -100,7 +100,7 @@ Errors
   312       No ``RETURN`` documentation provided
   313       ``RETURN`` is not valid YAML
   314       No ``ANSIBLE_METADATA`` provided
-  315       ``ANSIBLE_METADATA`` is not valid YAML
+  315       ``ANSIBLE_METADATA`` was not provided as a dict, YAML not supported
   316       Invalid ``ANSIBLE_METADATA`` schema
   317       option is marked as required but specifies a default.
             Arguments with a default should not be marked as required
