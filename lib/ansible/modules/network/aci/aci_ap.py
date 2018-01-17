@@ -95,7 +95,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all APs
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name', 'name']),

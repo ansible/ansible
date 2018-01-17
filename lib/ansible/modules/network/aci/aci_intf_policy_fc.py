@@ -65,7 +65,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         fc_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
