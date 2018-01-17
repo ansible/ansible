@@ -9,33 +9,39 @@ as possible. They work by using Get-ChildItem with a filter and return the
 result from that.
 #>
 
-Function Test-FilePath($path) {
-    # Basic replacement for Test-Path that tests if the file/folder exists at the path
-    $directory = Split-Path -Path $path -Parent
-    $filename = Split-Path -Path $path -Leaf
-
-    $file = Get-ChildItem -Path $directory -Filter $filename -Force -ErrorAction SilentlyContinue
-    if ($file -ne $null) {
-        if ($file -is [Array] -and $file.Count -gt 1) {
-            throw "found multiple files at path '$path', make sure no wildcards are set in the path"
-        }
-        return $true
-    } else {
+Function Test-AnsiblePath {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)][string]$Path
+    )
+    # Replacement for Test-Path
+    try {
+        $file_attributes = [System.IO.File]::GetAttributes($Path)
+    } catch [System.IO.FileNotFoundException] {
         return $false
     }
-}
 
-Function Get-FileItem($path) {
-    # Replacement for Get-Item
-    $directory = Split-Path -Path $path -Parent
-    $filename = Split-Path -Path $path -Leaf
-
-    $file = Get-ChildItem -Path $directory -Filter $filename -Force -ErrorAction SilentlyContinue
-    if ($file -is [Array] -and $file.Count -gt 1) {
-        throw "found multiple files at path '$path', make sure no wildcards are set in the path"
+    if ([Int32]$file_attributes -eq -1) {
+        return $false
+    } else {
+        return $true
     }
-
-    return $file
 }
 
-Export-ModuleMember -Function Test-FilePath, Get-FileItem
+Function Get-AnsibleItem {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)][string]$Path
+    )
+    # Replacement for Get-Item
+    $file_attributes = [System.IO.File]::GetAttributes($Path)
+    if ([Int32]$file_attributes -eq -1) {
+        throw New-Object -TypeName System.Management.Automation.ItemNotFoundException -ArgumentList "Cannot find path '$Path' because it does not exist."
+    } elseif ($file_attributes.HasFlag([System.IO.FileAttributes]::Directory)) {
+        return New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path
+    } else {
+        return New-Object -TypeName System.IO.FileInfo -ArgumentList $Path
+    }
+}
+
+Export-ModuleMember -Function Test-AnsiblePath, Get-AnsibleItem
