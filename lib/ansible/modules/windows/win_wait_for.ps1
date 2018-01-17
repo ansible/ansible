@@ -119,7 +119,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-FilePath -path $path) {
+            if (Test-AnsiblePath -Path $path) {
                 if ($search_regex -eq $null) {
                     $complete = $true
                     break
@@ -150,7 +150,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
         $complete = $false
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
-            if (Test-FilePath -path $path) {
+            if (Test-AnsiblePath -Path $path) {
                 if ($search_regex -ne $null) {
                     $file_contents = Get-Content -Path $path -Raw
                     if ($file_contents -notmatch $search_regex) {
