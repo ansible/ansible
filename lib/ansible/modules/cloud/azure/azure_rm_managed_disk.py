@@ -130,6 +130,7 @@ import re
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.compute.models import DiskCreateOption
     from azure.mgmt.compute.models import DiskSku
 except ImportError:
     # This is handled in azure_rm_common
@@ -254,16 +255,16 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
         if self.storage_account_type:
-            storage_account_type = self.compute_models.DiskSku(self.storage_account_type)
+            storage_account_type = DiskSku(self.storage_account_type)
             disk_params['sku'] = storage_account_type
         disk_params['disk_size_gb'] = self.disk_size_gb
         # TODO: Add support for EncryptionSettings
-        creation_data['create_option'] = self.compute_models.DiskCreateOption.empty
+        creation_data['create_option'] = DiskCreateOption.empty
         if self.create_option == 'import':
-            creation_data['create_option'] = self.compute_models.DiskCreateOption.import_enum
+            creation_data['create_option'] = DiskCreateOption.import_enum
             creation_data['source_uri'] = self.source_uri
         elif self.create_option == 'copy':
-            creation_data['create_option'] = self.compute_models.DiskCreateOption.copy
+            creation_data['create_option'] = DiskCreateOption.copy
             creation_data['source_resource_id'] = self.source_resource_uri
         try:
             # CreationData cannot be changed after creation

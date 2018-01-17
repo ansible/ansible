@@ -538,6 +538,17 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.compute.models import NetworkInterfaceReference, \
+                                          VirtualMachine, HardwareProfile, \
+                                          StorageProfile, OSProfile, OSDisk, DataDisk, \
+                                          VirtualHardDisk, ManagedDiskParameters, \
+                                          ImageReference, NetworkProfile, LinuxConfiguration, \
+                                          SshConfiguration, SshPublicKey, VirtualMachineSizeTypes, \
+                                          DiskCreateOptionTypes
+    from azure.mgmt.network.models import PublicIPAddress, NetworkSecurityGroup, NetworkInterface, \
+                                          NetworkInterfaceIPConfiguration, Subnet
+    from azure.mgmt.storage.models import StorageAccountCreateParameters, Sku
+    from azure.mgmt.storage.models import Kind, SkuTier, SkuName
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -828,42 +839,42 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not self.short_hostname:
                         self.short_hostname = self.name
 
-                    nics = [self.compute_models.NetworkInterfaceReference(id=id) for id in network_interfaces]
+                    nics = [NetworkInterfaceReference(id=id) for id in network_interfaces]
 
                     # os disk
                     if not self.managed_disk_type:
                         managed_disk = None
-                        vhd = self.compute_models.VirtualHardDisk(uri=requested_vhd_uri)
+                        vhd = VirtualHardDisk(uri=requested_vhd_uri)
                     else:
                         vhd = None
-                        managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=self.managed_disk_type)
+                        managed_disk = ManagedDiskParameters(storage_account_type=self.managed_disk_type)
 
-                    vm_resource = self.compute_models.VirtualMachine(
+                    vm_resource = VirtualMachine(
                         self.location,
                         tags=self.tags,
-                        os_profile=self.compute_models.OSProfile(
+                        os_profile=OSProfile(
                             admin_username=self.admin_username,
                             computer_name=self.short_hostname,
                         ),
-                        hardware_profile=self.compute_models.HardwareProfile(
+                        hardware_profile=HardwareProfile(
                             vm_size=self.vm_size
                         ),
-                        storage_profile=self.compute_models.StorageProfile(
-                            os_disk=self.compute_models.OSDisk(
+                        storage_profile=StorageProfile(
+                            os_disk=OSDisk(
                                 name=self.storage_blob_name,
                                 vhd=vhd,
                                 managed_disk=managed_disk,
-                                create_option=self.compute_models.DiskCreateOptionTypes.from_image,
+                                create_option=DiskCreateOptionTypes.from_image,
                                 caching=self.os_disk_caching,
                             ),
-                            image_reference=self.compute_models.ImageReference(
+                            image_reference=ImageReference(
                                 publisher=self.image['publisher'],
                                 offer=self.image['offer'],
                                 sku=self.image['sku'],
                                 version=self.image['version'],
                             ),
                         ),
-                        network_profile=self.compute_models.NetworkProfile(
+                        network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
                     )
@@ -872,13 +883,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_resource.os_profile.admin_password = self.admin_password
 
                     if self.os_type == 'Linux':
-                        vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
+                        vm_resource.os_profile.linux_configuration = LinuxConfiguration(
                             disable_password_authentication=disable_ssh_password
                         )
                     if self.ssh_public_keys:
-                        ssh_config = self.compute_models.SshConfiguration()
+                        ssh_config = SshConfiguration()
                         ssh_config.public_keys = \
-                            [self.compute_models.SshPublicKey(path=key['path'], key_data=key['key_data']) for key in self.ssh_public_keys]
+                            [SshPublicKey(path=key['path'], key_data=key['key_data']) for key in self.ssh_public_keys]
                         vm_resource.os_profile.linux_configuration.ssh = ssh_config
 
                     # data disk
@@ -916,10 +927,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             if not data_disk.get('managed_disk_type'):
                                 data_disk_managed_disk = None
                                 disk_name = data_disk['storage_blob_name']
-                                data_disk_vhd = self.compute_models.VirtualHardDisk(uri=data_disk_requested_vhd_uri)
+                                data_disk_vhd = VirtualHardDisk(uri=data_disk_requested_vhd_uri)
                             else:
                                 data_disk_vhd = None
-                                data_disk_managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=data_disk['managed_disk_type'])
+                                data_disk_managed_disk = ManagedDiskParameters(storage_account_type=data_disk['managed_disk_type'])
                                 disk_name = self.name + "-datadisk-" + str(count)
                                 count += 1
 
@@ -927,12 +938,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 'caching', 'ReadOnly'
                             )
 
-                            data_disks.append(self.compute_models.DataDisk(
+                            data_disks.append(DataDisk(
                                 lun=data_disk['lun'],
                                 name=disk_name,
                                 vhd=data_disk_vhd,
                                 caching=data_disk['caching'],
-                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
+                                create_option=DiskCreateOptionTypes.empty,
                                 disk_size_gb=data_disk['disk_size_gb'],
                                 managed_disk=data_disk_managed_disk,
                             ))
@@ -948,30 +959,30 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log("Update virtual machine {0}".format(self.name))
                     self.results['actions'].append('Updated VM {0}'.format(self.name))
 
-                    nics = [self.compute_models.NetworkInterfaceReference(id=interface['id'])
+                    nics = [NetworkInterfaceReference(id=interface['id'])
                             for interface in vm_dict['properties']['networkProfile']['networkInterfaces']]
 
                     # os disk
                     if not vm_dict['properties']['storageProfile']['osDisk'].get('managedDisk'):
                         managed_disk = None
-                        vhd = self.compute_models.VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
+                        vhd = VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
                     else:
                         vhd = None
-                        managed_disk = self.compute_models.ManagedDiskParameters(
+                        managed_disk = ManagedDiskParameters(
                             storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk']['storageAccountType']
                         )
 
-                    vm_resource = self.compute_models.VirtualMachine(
+                    vm_resource = VirtualMachine(
                         vm_dict['location'],
-                        os_profile=self.compute_models.OSProfile(
+                        os_profile=OSProfile(
                             admin_username=vm_dict['properties']['osProfile']['adminUsername'],
                             computer_name=vm_dict['properties']['osProfile']['computerName']
                         ),
-                        hardware_profile=self.compute_models.HardwareProfile(
+                        hardware_profile=HardwareProfile(
                             vm_size=vm_dict['properties']['hardwareProfile']['vmSize']
                         ),
-                        storage_profile=self.compute_models.StorageProfile(
-                            os_disk=self.compute_models.OSDisk(
+                        storage_profile=StorageProfile(
+                            os_disk=OSDisk(
                                 name=vm_dict['properties']['storageProfile']['osDisk']['name'],
                                 vhd=vhd,
                                 managed_disk=managed_disk,
@@ -979,14 +990,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
                                 caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
                             ),
-                            image_reference=self.compute_models.ImageReference(
+                            image_reference=ImageReference(
                                 publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
                                 offer=vm_dict['properties']['storageProfile']['imageReference']['offer'],
                                 sku=vm_dict['properties']['storageProfile']['imageReference']['sku'],
                                 version=vm_dict['properties']['storageProfile']['imageReference']['version']
                             ),
                         ),
-                        network_profile=self.compute_models.NetworkProfile(
+                        network_profile=NetworkProfile(
                             network_interfaces=nics
                         ),
                     )
@@ -1002,16 +1013,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     linux_config = vm_dict['properties']['osProfile'].get('linuxConfiguration')
                     if linux_config:
                         ssh_config = linux_config.get('ssh', None)
-                        vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
+                        vm_resource.os_profile.linux_configuration = LinuxConfiguration(
                             disable_password_authentication=linux_config.get('disablePasswordAuthentication', False)
                         )
                         if ssh_config:
                             public_keys = ssh_config.get('publicKeys')
                             if public_keys:
-                                vm_resource.os_profile.linux_configuration.ssh = self.compute_models.SshConfiguration(public_keys=[])
+                                vm_resource.os_profile.linux_configuration.ssh = SshConfiguration(public_keys=[])
                                 for key in public_keys:
                                     vm_resource.os_profile.linux_configuration.ssh.public_keys.append(
-                                        self.compute_models.SshPublicKey(path=key['path'], key_data=key['keyData'])
+                                        SshPublicKey(path=key['path'], key_data=key['keyData'])
                                     )
 
                     # data disk
@@ -1021,13 +1032,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         for data_disk in vm_dict['properties']['storageProfile']['dataDisks']:
                             if data_disk.get('managedDisk'):
                                 managed_disk_type = data_disk['managedDisk']['storageAccountType']
-                                data_disk_managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=managed_disk_type)
+                                data_disk_managed_disk = ManagedDiskParameters(storage_account_type=managed_disk_type)
                                 data_disk_vhd = None
                             else:
                                 data_disk_vhd = data_disk['vhd']['uri']
                                 data_disk_managed_disk = None
 
-                            data_disks.append(self.compute_models.DataDisk(
+                            data_disks.append(DataDisk(
                                 lun=int(data_disk['lun']),
                                 name=data_disk.get('name'),
                                 vhd=data_disk_vhd,
@@ -1390,10 +1401,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
             return account
-        sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
-        sku.tier = self.storage_models.SkuTier.standard
-        kind = self.storage_models.Kind.storage
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location)
+        sku = Sku(SkuName.standard_lrs)
+        Sku.tier = SkuTier.standard
+        kind = Kind.storage
+        parameters = StorageAccountCreateParameters(sku, kind, self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
@@ -1505,22 +1516,22 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type,
                                                   self.open_ports)
 
-        parameters = self.network_models.NetworkInterface(
+        parameters = NetworkInterface(
             location=self.location,
             ip_configurations=[
-                self.network_models.NetworkInterfaceIPConfiguration(
+                NetworkInterfaceIPConfiguration(
                     private_ip_allocation_method='Dynamic',
                 )
             ]
         )
-        parameters.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet_id)
+        parameters.ip_configurations[0].subnet = Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
-        parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
-                                                                                     location=group.location,
-                                                                                     resource_guid=group.resource_guid)
-        parameters.ip_configurations[0].public_ip_address = self.network_models.PublicIPAddress(id=pip.id,
-                                                                                                location=pip.location,
-                                                                                                resource_guid=pip.resource_guid)
+        parameters.network_security_group = NetworkSecurityGroup(id=group.id,
+                                                                 location=group.location,
+                                                                 resource_guid=group.resource_guid)
+        parameters.ip_configurations[0].public_ip_address = PublicIPAddress(id=pip.id,
+                                                                            location=pip.location,
+                                                                            resource_guid=pip.resource_guid)
 
         self.log("Creating NIC {0}".format(network_interface_name))
         self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)
