@@ -23,10 +23,10 @@ author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- When using the module please select the appropriate link_aggregation_type:
-  link: Create a PC Interface Policy Group
-  node: Create a VPC Interface Policy Group
-  leaf: Create a Leaf Access Port Policy Group
+- When using the module please select the appropriate link_aggregation_type.
+- link, Create a PC Interface Policy Group.
+- node, Create a VPC Interface Policy Group.
+- leaf, Create a Leaf Access Port Policy Group.
 options:
  policy_group:
    description:
@@ -166,7 +166,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update({
         'policy_group': dict(type='str', aliases=['name', 'policy_group_name']),
         'description': dict(type='str', aliases=['descr', 'description']),
