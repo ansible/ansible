@@ -43,7 +43,7 @@ try {
     Test-AnsiblePath -Path C:\Windows\*.exe
 } catch {
     $failed = $true
-    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
+    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"GetFileAttributesExW(C:\Windows\*.exe) failed (The filename, directory name, or volume label syntax is incorrect, Win32ErrorCode 123)`""
 }
 Assert-Equals -actual $failed -expected $true
 
