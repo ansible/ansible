@@ -17,9 +17,9 @@ short_description: Add/remove datastore on ESXi host
 description:
 - This module can be used to mount/umount on datastore on ESXi host.
 - Currently, this module only support NFS datastore type but it's planned to add vmfs support.
-version_added: '1.0'
+version_added: '2.5'
 author:
-- Ludovic Rivallain <ludovic.rivallain@gmail.com>
+- Ludovic Rivallain <ludovic.rivallain@gmail.com> @lrivallain
 notes:
 - Tested on vSphere 6.0, 6.5
 requirements:
@@ -29,15 +29,15 @@ options:
   datacenter_name:
     description:
     - Name of the datacenter to add the host.
-    required: yes
+    required: true
   datastore_name:
     description:
     - Name of the datastore to add/remove.
-    required: yes
+    required: true
   datastore_type:
     description:
     - Type of the datastore to configure (nfs/vmfs).
-    - required: yes
+    required: true
   nfs_server:
     description:
     - NFS host serving nfs datastore.
@@ -54,10 +54,20 @@ options:
     - Required for nfs datastore type
     - Unused for others types
     default: False
+  vmfs_device_name:
+    description:
+    - Name a the device to use as VMFS datastore
+    - Required for vmfs datastore type
+    - Unused for others types
+  vmfs_version:
+    description:
+    - VMFS version to use for datastore creation
+    - Required for vmfs datastore type
+    - Unused for others types
   esxi_hostname:
     description:
     - ESXi hostname to mount the datastore.
-    required: yes
+    required: true
   state:
     description:
     - "present: Mount datastore on host if it's absent else do nothing."
@@ -143,7 +153,6 @@ class VMwareDatastoreHost(object):
         self.content = connect_to_api(module)
         self.esxi = self.get_esx_view()
 
-
     def process_state(self):
         try:
             ds_states = {
@@ -165,10 +174,8 @@ class VMwareDatastoreHost(object):
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
-
     def state_exit_unchanged(self):
         self.module.exit_json(changed=False)
-
 
     def get_esx_view(self):
         object_view = self.content.viewManager.CreateContainerView(self.content.rootFolder,
@@ -182,19 +189,16 @@ class VMwareDatastoreHost(object):
                 return host
         self.module.fail_json(msg="No ESXi found with name %s" % self.esxi_hostname)
 
-
     def get_ds_view(self):
         object_view = self.content.viewManager.CreateContainerView(self.content.rootFolder,
                                                                    [vim.Datastore],
                                                                    True)
         ds_list = object_view.view
         object_view.Destroy()
-
         for ds in ds_list:
             if ds.name == self.datastore_name:
                 return ds
         self.module.fail_json(msg="No datastore found with name %s" % self.datastore_name)
-
 
     def check_datastore_host_state(self):
         storage_system = self.esxi.configManager.storageSystem
@@ -204,7 +208,6 @@ class VMwareDatastoreHost(object):
             if host_mount_info.volume.name == self.datastore_name:
                 return 'present'
         return 'absent'
-
 
     def umount_datastore_host(self):
         ds = self.get_ds_view()
@@ -221,13 +224,11 @@ class VMwareDatastoreHost(object):
             self.module.fail_json(msg=error_message_umount + ": " + str(e))
         self.module.exit_json(changed=True, result="datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
-
     def mount_datastore_host(self):
         if self.datastore_type == 'nfs':
             self.mount_nfs_datastore_host()
         if self.datastore_type == 'vmfs':
             self.mount_vmfs_datastore_host()
-
 
     def mount_nfs_datastore_host(self):
         mnt_specs = vim.host.NasVolume.Specification()
@@ -235,9 +236,9 @@ class VMwareDatastoreHost(object):
         mnt_specs.remotePath = self.nfs_path
         mnt_specs.localPath = self.datastore_name
         if self.nfs_ro:
-            mnt_specs.accessMode="readOnly"
+            mnt_specs.accessMode = "readOnly"
         else:
-            mnt_specs.accessMode="readWrite"
+            mnt_specs.accessMode = "readWrite"
         error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
         try:
             ds = self.esxi.configManager.datastoreSystem.CreateNasDatastore(mnt_specs)
@@ -258,7 +259,6 @@ class VMwareDatastoreHost(object):
         except Exception as e:
             self.module.fail_json(msg=error_message_mount + ": " + str(e))
         self.module.exit_json(changed=True, result="datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
-
 
     def mount_vmfs_datastore_host(self):
         ds_path = "/vmfs/devices/disks/" + str(self.vmfs_device_name)
