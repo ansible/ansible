@@ -6,7 +6,7 @@
 - name: Create MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     sku:
       name: MYSQLB50
       tier: basic
@@ -19,7 +19,7 @@
 - name: Create instance of MySQL Database -- check mode
   azure_rm_mysqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: "mysqlsrv{{ rpfx }}"
+    server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
   check_mode: yes
   register: output
@@ -31,7 +31,7 @@
 - name: Create instance of MySQL Database
   azure_rm_mysqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: "mysqlsrv{{ rpfx }}"
+    server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
   register: output
 - name: Assert the resource instance is well created
@@ -43,7 +43,7 @@
 - name: Create again instance of MySQL Database
   azure_rm_mysqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: "mysqlsrv{{ rpfx }}"
+    server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
   register: output
 - name: Assert the state has not changed
@@ -55,7 +55,7 @@
 - name: Delete instance of MySQL Database -- check mode
   azure_rm_mysqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: "mysqlsrv{{ rpfx }}"
+    server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
     state: absent
   check_mode: yes
@@ -68,7 +68,7 @@
 - name: Delete instance of MySQL Database
   azure_rm_mysqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: "mysqlsrv{{ rpfx }}"
+    server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
     state: absent
   register: output
@@ -80,7 +80,7 @@
 - name: Delete unexisting instance of MySQL Database
   azure_rm_mysqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: "mysqlsrv{{ rpfx }}"
+    server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
     state: absent
   register: output
@@ -92,5 +92,5 @@
 - name: Delete instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     state: absent

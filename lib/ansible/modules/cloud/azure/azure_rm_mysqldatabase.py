@@ -43,6 +43,7 @@ options:
     force_update:
       description:
           - Needs to be set to True in order to MySQL Database to be updated.
+          - Note that old database will be deleted and new one created.
       type: bool
 
 extends_documentation_fragment:
@@ -193,11 +194,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 return self.results
 
             response = self.create_update_mysqldatabase()
-
-            if not old_response:
-                self.results['changed'] = True
-            else:
-                self.results['changed'] = old_response.__ne__(response)
+            self.results['changed'] = True
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("MySQL Database instance deleted")
