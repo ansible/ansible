@@ -184,6 +184,16 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.network.models import (
+        LoadBalancer,
+        FrontendIPConfiguration,
+        BackendAddressPool,
+        Probe,
+        LoadBalancingRule,
+        SubResource,
+        InboundNatPool,
+        Subnet
+    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -336,7 +346,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             if self.public_ip_address_name:
                 pip = self.get_public_ip_address(self.public_ip_address_name)
                 load_balancer_props['frontend_ip_configurations'] = [
-                    self.network_models.FrontendIPConfiguration(
+                    FrontendIPConfiguration(
                         name=frontend_ip_config_name,
                         public_ip_address=pip
                     )
@@ -386,7 +396,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             load_balancer_name=self.name,
             name=backend_address_pool_name
         )
-        load_balancer_props['backend_address_pools'] = [self.network_models.BackendAddressPool(name=backend_address_pool_name)]
+        load_balancer_props['backend_address_pools'] = [BackendAddressPool(name=backend_address_pool_name)]
 
         probe_name = random_name('probe')
         prb_id = probe_id(
@@ -398,7 +408,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
         if self.probe_protocol:
             load_balancer_props['probes'] = [
-                self.network_models.Probe(
+                Probe(
                     name=probe_name,
                     protocol=self.probe_protocol,
                     port=self.probe_port,
@@ -411,11 +421,11 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         load_balancing_rule_name = random_name('lbr')
         if self.protocol:
             load_balancer_props['load_balancing_rules'] = [
-                self.network_models.LoadBalancingRule(
+                LoadBalancingRule(
                     name=load_balancing_rule_name,
-                    frontend_ip_configuration=self.network_models.SubResource(id=frontend_ip_config_id),
-                    backend_address_pool=self.network_models.SubResource(id=backend_addr_pool_id),
-                    probe=self.network_models.SubResource(id=prb_id),
+                    frontend_ip_configuration=SubResource(id=frontend_ip_config_id),
+                    backend_address_pool=SubResource(id=backend_addr_pool_id),
+                    probe=SubResource(id=prb_id),
                     protocol=self.protocol,
                     load_distribution=self.load_distribution,
                     frontend_port=self.frontend_port,
@@ -428,9 +438,9 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         inbound_nat_pool_name = random_name('inp')
         if frontend_ip_config_id and self.natpool_protocol:
             load_balancer_props['inbound_nat_pools'] = [
-                self.network_models.InboundNatPool(
+                InboundNatPool(
                     name=inbound_nat_pool_name,
-                    frontend_ip_configuration=self.network_models.Subnet(id=frontend_ip_config_id),
+                    frontend_ip_configuration=Subnet(id=frontend_ip_config_id),
                     protocol=self.natpool_protocol,
                     frontend_port_range_start=self.natpool_frontend_port_start,
                     frontend_port_range_end=self.natpool_frontend_port_end,
@@ -441,7 +451,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.results['changed'] = changed
         self.results['state'] = (
             results if results
-            else load_balancer_to_dict(self.network_models.LoadBalancer(**load_balancer_props))
+            else load_balancer_to_dict(LoadBalancer(**load_balancer_props))
         )
 
         if self.check_mode:
@@ -451,7 +461,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             self.network_client.load_balancers.create_or_update(
                 resource_group_name=self.resource_group,
                 load_balancer_name=self.name,
-                parameters=self.network_models.LoadBalancer(**load_balancer_props)
+                parameters=LoadBalancer(**load_balancer_props)
             ).wait()
         except CloudError as err:
             self.fail('Error creating load balancer {}'.format(err))
