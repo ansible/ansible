@@ -6,7 +6,6 @@ lib/ansible/modules/cloud/amazon/aws_api_gateway.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E322
 lib/ansible/modules/cloud/amazon/aws_direct_connect_gateway.py E322
 lib/ansible/modules/cloud/amazon/aws_s3.py E322
-lib/ansible/modules/cloud/amazon/cloudfront_distribution.py E322
 lib/ansible/modules/cloud/amazon/cloudfront_facts.py E323
 lib/ansible/modules/cloud/amazon/data_pipeline.py E322
 lib/ansible/modules/cloud/amazon/ec2.py E322
