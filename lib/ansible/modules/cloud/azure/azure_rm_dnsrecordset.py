@@ -58,8 +58,8 @@ options:
             - purge
     state:
         description:
-            - Assert the state of the record set. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the record set. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent
