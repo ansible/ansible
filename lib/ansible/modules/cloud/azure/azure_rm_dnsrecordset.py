@@ -183,9 +183,6 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-base_record = dict(
-    entry=dict(type='str', required=True)
-)
 
 RECORD_ARGSPECS = dict(
     A=dict(
