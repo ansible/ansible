@@ -331,7 +331,7 @@ class NetAppCDOTLUN(object):
                 property_changed = True
 
             elif self.state == 'present':
-                if not current_size == self.size:
+                if not int(current_size) == self.size:
                     size_changed = True
                     property_changed = True
 
