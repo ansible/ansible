@@ -26,6 +26,10 @@ author:
   - Willem van Ketwich (@wilvk)
   - Will Thames (@willthames)
 
+extends_documentation_fragment:
+  - aws
+  - ec2
+
 options:
 
     state:
