@@ -93,6 +93,7 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
