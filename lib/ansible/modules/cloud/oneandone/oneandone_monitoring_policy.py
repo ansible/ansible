@@ -1059,7 +1059,7 @@ def main():
                 type='str',
                 default=os.environ.get('ONEANDONE_API_URL')),
             name=dict(type='str'),
-            monitoring_policy_id=dict(type='str'),
+            monitoring_policy=dict(type='str'),
             agent=dict(type='str'),
             email=dict(type='str'),
             description=dict(type='str'),
