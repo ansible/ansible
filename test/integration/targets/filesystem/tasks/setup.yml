@@ -7,6 +7,7 @@
     - e2fsprogs
     - xfsprogs
     - dosfstools
+    - fatresize
 
 - block:
   - name: install btrfs progs
@@ -34,12 +35,18 @@
 - command: mke2fs -V
   register: mke2fs
 
+- command: fatresize --help
+  register: fatresize
+
 - set_fact:
     # mke2fs 1.43.6 (29-Aug-2017)
     e2fsprogs_version: '{{ mke2fs.stderr_lines[0] | regex_search("[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]{1,2})?") }}'
+    fatresize_version: '{{ fatresize.stdout_lines[0] | regex_search("[0-9]+\.[0-9]+\.[0-9]+")  }}'
 
 - set_fact:
     # http://e2fsprogs.sourceforge.net/e2fsprogs-release.html#1.43
     # Mke2fs no longer complains if the user tries to create a file system
     # using the entire block device.
     force_creation: "{{ e2fsprogs_version is version('1.43', '<') }}"
+    # Earlier versions have a segfault bug
+    resize_vfat: "{{ fatresize_version is version('1.0.4', '>=') }}"

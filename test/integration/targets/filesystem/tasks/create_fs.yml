@@ -50,7 +50,7 @@
   - name: increase fake device
     shell: 'dd if=/dev/zero bs=1M count=20 >> {{ dev }}'
 
-  - when: 'grow|bool'
+  - when: 'grow|bool and (fstype != "vfat" or resize_vfat)'
     block:
     - name: Expand filesystem
       filesystem:

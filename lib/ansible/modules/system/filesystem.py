@@ -42,8 +42,9 @@ options:
   resizefs:
     description:
     - If C(yes), if the block device and filesytem size differ, grow the filesystem into the space.
-    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(lvm) and C(xfs) filesystems.
+    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(lvm), C(xfs) and C(vfat) filesystems.
     - XFS Will only grow if mounted.
+    - vFAT will likely fail if fatresize < 1.04.
     type: bool
     default: 'no'
     version_added: "2.0"
@@ -229,6 +230,7 @@ class VFAT(Filesystem):
         MKFS = "newfs_msdos"
     else:
         MKFS = 'mkfs.vfat'
+    GROW = 'fatresize'
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path(self.GROW, required=True)
