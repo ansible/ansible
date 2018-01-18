@@ -506,7 +506,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if not subnet:
                     self.fail('subnet {0} is not exist'.format(self.subnet_name))
                 nic_ip_configurations = [
-                    NetworkInterfaceIPConfiguration(
+                    self.network_models.NetworkInterfaceIPConfiguration(
                         private_ip_allocation_method=ip_config.get('private_ip_allocation_method'),
                         private_ip_address=ip_config.get('private_ip_address'),
                         name=ip_config.get('name'),
@@ -518,7 +518,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
                 nsg = nsg or self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type, self.open_ports)
                 self.log('Creating or updating network interface {0}'.format(self.name))
-                nic = NetworkInterface(
+                nic = self.network_models.NetworkInterface(
                     id=results['id'] if results else None,
                     location=self.location,
                     tags=self.tags,
@@ -538,7 +538,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         name = ip_config.get('public_ip_address_name')
         pip = self.get_public_ip_address(name)
         if not pip:
-            params = PublicIPAddress(
+            params = self.network_models.PublicIPAddress(
                 location=self.location,
                 public_ip_allocation_method=ip_config.get('public_ip_allocation_method'),
             )
