@@ -54,9 +54,9 @@ options:
     default: 300
   multiple:
     description:
-      - Whether to use more than one record with similar C(name) including no name.
-      - Only allowed for a few record types, e.g. C(record_type=A) or C(record_type=MX).
-      - C(data) will not be updated, it is used as a key to find existing records.
+      - Whether to use more than one record with similar C(name) including no name and C(record_type).
+      - Only allowed for a few record types, e.g. C(record_type=A), C(record_type=NS) or C(record_type=MX).
+      - C(data) will not be updated, instead it is used as a key to find existing records.
     default: no
     type: bool
   priority:
@@ -73,16 +73,14 @@ extends_documentation_fragment: vultr
 
 EXAMPLES = '''
 - name: Ensure an A record exists
-  local_action:
-    module: vr_dns_record
+  vr_dns_record:
     name: www
     domain: example.com
     data: 10.10.10.10
     ttl: 3600
 
 - name: Ensure a second A record exists for round robin LB
-  local_action:
-    module: vr_dns_record
+  vr_dns_record:
     name: www
     domain: example.com
     data: 10.10.10.11
@@ -90,16 +88,14 @@ EXAMPLES = '''
     multiple: yes
 
 - name: Ensure a CNAME record exists
-  local_action:
-    module: vr_dns_record
+  vr_dns_record:
     name: web
     record_type: CNAME
     domain: example.com
     data: www.example.com
 
 - name: Ensure MX record exists
-  local_action:
-    module: vr_dns_record
+  vr_dns_record:
     record_type: MX
     domain: example.com
     data: "{{ item.data }}"
@@ -115,6 +111,14 @@ EXAMPLES = '''
     module: vr_dns_record
     name: www
     domain: example.com
+    state: absent
+
+- name: Ensure MX record is absent in case multiple exists
+  vr_dns_record:
+    record_type: MX
+    domain: example.com
+    data: mx1.example.com
+    multiple: yes
     state: absent
 '''
 
