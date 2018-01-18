@@ -101,5 +101,5 @@ class TestDellos6Facts(TestDellos6Module):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('Te1/0/1', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(['Te1/0/5', 'Te1/0/6'], ansible_facts['ansible_net_neighbors'].keys())
+        self.assertEquals(['Te1/0/5', 'Te1/0/6'], list(ansible_facts['ansible_net_neighbors'].keys()))
         self.assertIn('ansible_net_interfaces', ansible_facts)
