@@ -51,15 +51,18 @@ options:
   ttl:
     description:
       - TTL of the record.
+    default: 300
   multiple:
     description:
       - Whether to use more than one record with similar C(name) including no name.
       - Only allowed for a few record types, e.g. C(record_type=A) or C(record_type=MX).
       - C(data) will not be updated, it is used as a key to find existing records.
+    default: no
+    type: bool
   priority:
     description:
       - Priority of the record.
-      - Required for types MX and SRV if C(state=present)
+    default: 0
   state:
     description:
       - State of the DNS record.
@@ -211,16 +214,27 @@ class AnsibleVultrDnsRecord(Vultr):
     def get_record(self):
         records = self.api_query(path="/v1/dns/records?domain=%s" % self.module.params.get('domain'))
 
+        multiple = self.module.params.get('multiple')
+        data = self.module.params.get('data')
+        name = self.module.params.get('name')
+        record_type = self.module.params.get('record_type')
+
+        result = None
         for record in records or []:
-            if record.get('type') != self.module.params.get('record_type'):
+            if record.get('type') != record_type:
                 continue
 
-            if record.get('name') == self.module.params.get('name'):
-                if not self.module.params.get('multiple'):
+            if record.get('name') == name:
+                if not multiple:
+                    if result:
+                        self.module.fail_json(msg="More than one record with record_type=%s and name=%s params. "
+                                                  "Use multiple=yes for more than one record." % (record_type, name))
+                    else:
+                        result = record
+                elif record.get('data') == data:
                     return record
-                elif record.get('data') == self.module.params.get('data'):
-                    return record
-        return {}
+
+        return result if result else {}
 
     def present_record(self):
         record = self.get_record()
@@ -318,7 +332,9 @@ def main():
         argument_spec=argument_spec,
         required_if=[
             ('state', 'present', ['data']),
+            ('multiple', True, ['data']),
         ],
+
         supports_check_mode=True,
     )
 
