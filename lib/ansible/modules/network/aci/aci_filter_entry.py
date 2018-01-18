@@ -141,7 +141,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         arp_flag=dict(type='str', choices=VALID_ARP_FLAGS),
-        description=dict(type='str'),
+        description=dict(type='str', aliases=['descr']),
         dst_port=dict(type='str'),
         dst_port_end=dict(type='str'),
         dst_port_start=dict(type='str'),
