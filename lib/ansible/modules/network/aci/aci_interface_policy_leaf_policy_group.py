@@ -23,7 +23,7 @@ author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- When using the module please select the appropriate link_aggregation_type: 'link'(PC)/'node'(VPC), 'leaf'(Leaf Access Port Policy Group)
+- When using the module please select the appropriate link_aggregation_type. 'link'(PC)/'node'(VPC), 'leaf'(Leaf Access Port Policy Group)
 options:
  policy_group:
    description:
