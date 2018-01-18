@@ -88,6 +88,9 @@ options:
       - "The CSR may contain multiple Subject Alternate Names, but each one
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
+      - "Note: the private key used to create the CSR I(must not) be the the
+         account key. This is a bad idea from a security point of view, and
+         Let's Encrypt will not accept the CSR."
     required: true
     aliases: ['src']
   data:
