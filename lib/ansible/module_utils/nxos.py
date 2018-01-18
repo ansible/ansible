@@ -176,7 +176,13 @@ class Cli:
         msgs = []
         for cmd in config:
             rc, out, err = self.exec_command(cmd)
-            if rc != 0:
+            if rc != 0 and 'no graceful-restart' in err:
+                if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
+                    out = ''
+                    msgs.append(out)
+                else:
+                    self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            elif rc != 0:
                 self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
             elif out:
                 msgs.append(out)

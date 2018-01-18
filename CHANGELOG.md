@@ -40,6 +40,43 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33931)
 * Fix extended file attributes detection and changing:
   (https://github.com/ansible/ansible/pull/18731)
+* correctly ensure 'ungrouped' membership rules (https://github.com/ansible/ansible/pull/33878)
+* made warnings less noisy when empty/no inventory is supplied (https://github.com/ansible/ansible/pull/32806)
+* Fixes a failure which prevents to create servers in module cloudscale_server
+* Fix win_firewall_rule "Specified cast is invalid" error when modifying a rule with all of Domain/Public/Private profiles set (https://github.com/ansible/ansible/pull/34383)
+* Fix case for multilib when installing from a file in the yum module
+  (https://github.com/ansible/ansible/pull/32236)
+* Fix WinRM parsing/escaping of IPv6 addresses (https://github.com/ansible/ansible/pull/34072)
+* Fix win_package to detect MSI regardless of the extension case
+  (https://github.com/ansible/ansible/issues/34465)
+* Updated win_mapped_drive docs to clarify what it is used for
+  (https://github.com/ansible/ansible/pull/34478)
+* Fix file related modules run in check_mode when the file being operated on does not exist
+  (https://github.com/ansible/ansible/pull/33967)
+* Make eos_vlan idempotent
+  (https://github.com/ansible/ansible/pull/34443)
+* Fix win_iis_website to properly check attributes before setting
+  (https://github.com/ansible/ansible/pull/34501)
+* Fixed the removal date for ios_config save and force parameters
+  (https://github.com/ansible/ansible/pull/33885)
+* cloudstack: fix timeout from ini config file being ignored
+  https://github.com/ansible/ansible/pull/34854
+* fixes memory usage issues with many blocks/includes
+  https://github.com/ansible/ansible/issues/31673
+  https://github.com/ansible/ansible/pull/34461
+* Fix to win_dns_client module to take ordering of DNS servers to resolve into account:
+  https://github.com/ansible/ansible/pull/34656
+* Fix for the nxos_banner module where some nxos images nest the output inside of an additional dict:
+  https://github.com/ansible/ansible/pull/34695
+* Fix failure message "got multiple values for keyword argument id" in the
+  azure_rm_securitygroup module (caused by changes to the azure python API):
+  https://github.com/ansible/ansible/pull/34810
+* Bump Azure storage client minimum to 1.5.0 to fix deserialization issues. This will break Azure Stack
+  until it receives storage API version 2017-10-01 or changes are made to support multiple versions.
+  (https://github.com/ansible/ansible/pull/34442)
+* Flush stdin when passing the become password.  Fixes some cases of timeout on
+  Python 3 with the ssh connection plugin: https://github.com/ansible/ansible/pull/35049
+
 
 <a id="2.4.2"></a>
 

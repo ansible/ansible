@@ -35,6 +35,16 @@ The ``inventory_file`` remains unchanged, as it was always host specific.
 
 A bug was fixed with the inventory path/directory, which was defaulting to the current working directory. This caused ``group_vars`` and ``host_vars`` to be picked up from the current working directory instead of just adjacent to the playbook or inventory directory when a host list (comma separated host names) was provided as inventory.
 
+Initial playbook relative group_vars and host_vars
+--------------------------------------------------
+
+In Ansible versions prior to 2.4, the inventory system would maintain the context of the initial playbook that was executed. This allowed successively included playbooks from other directories to inherit group_vars and host_vars placed relative to the top level playbook file.
+
+Due to some behavioral inconsistencies, this functionality will not be included in the new
+inventory system starting with Ansible version 2.4.
+
+Similar functionality can still be achieved by using vars_files, include_vars, or group_vars and host_vars placed relative to the inventory file.
+
 Deprecated
 ==========
 

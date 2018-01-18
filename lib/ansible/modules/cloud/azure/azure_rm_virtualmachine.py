@@ -710,12 +710,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 self.storage_blob_name = self.name
 
             if self.storage_account_name and not self.managed_disk_type:
-                self.get_storage_account(self.storage_account_name)
+                properties = self.get_storage_account(self.storage_account_name)
 
-                requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(self.storage_account_name,
-                                                                          self._cloud_environment.suffixes.storage_endpoint,
-                                                                          self.storage_container_name,
-                                                                          self.storage_blob_name)
+                requested_vhd_uri = '{0}{1}/{2}'.format(properties.primary_endpoints.blob,
+                                                        self.storage_container_name,
+                                                        self.storage_blob_name)
 
             disable_ssh_password = not self.ssh_password_enabled
 

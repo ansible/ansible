@@ -758,6 +758,9 @@ class Connection(ConnectionBase):
                     if self._flags['become_prompt']:
                         display.debug('Sending become_pass in response to prompt')
                         stdin.write(to_bytes(self._play_context.become_pass) + b'\n')
+                        # On python3 stdin is a BufferedWriter, and we don't have a guarantee
+                        # that the write will happen without a flush
+                        stdin.flush()
                         self._flags['become_prompt'] = False
                         state += 1
                     elif self._flags['become_success']:

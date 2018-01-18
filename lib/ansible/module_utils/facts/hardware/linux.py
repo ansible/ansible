@@ -601,7 +601,7 @@ class LinuxHardware(Hardware):
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
-                    part['size'] = bytes_to_human((float(part['sectors']) * float(part['sectorsize'])))
+                    part['size'] = bytes_to_human((float(part['sectors']) * 512.0))
                     part['uuid'] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
@@ -621,7 +621,7 @@ class LinuxHardware(Hardware):
             d['sectorsize'] = get_file_content(sysdir + "/queue/logical_block_size")
             if not d['sectorsize']:
                 d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size", 512)
-            d['size'] = bytes_to_human(float(d['sectors']) * float(d['sectorsize']))
+            d['size'] = bytes_to_human(float(d['sectors']) * 512.0)
 
             d['host'] = ""
 
