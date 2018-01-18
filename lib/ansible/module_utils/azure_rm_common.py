@@ -236,7 +236,7 @@ class AzureRMModuleBase(object):
 
         if not HAS_AZURE:
             self.fail("Do you have azure>={1} installed? Try `pip install ansible[azure]`"
-                      "- {0}".format(HAS_AZURE_EXC))
+                      "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
 
         self._cloud_environment = None
         self._network_client = None
