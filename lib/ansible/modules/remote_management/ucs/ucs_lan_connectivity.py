@@ -42,7 +42,7 @@ options:
     aliases: [ descr ]
   mac_pool:
     description:
-    - Name of the MAC pool to use for MAC address assignment.
+    - The name of the MAC pool used for MAC address assignment.
     default: default
   vnic_list:
     description:
@@ -50,12 +50,12 @@ options:
     - vNICs used by the LAN Connectivity Policy must be created from a vNIC template.
     - "Each list element has the following suboptions:"
     - "= name"
-    - "  The name of the virtual NIC (required)."
+    - "  The name of the vNIC (required)."
     - "= vnic_template"
-    - "  The name of the virtual NIC template (required)."
+    - "  The name of the vNIC template (required)."
     - "- adapter_policy"
     - "  The name of the LAN adapter policy."
-    - "  A user defined policy can be used, or one of the system defined policies (default, Linux, Solaris, VMware, Windows, WindowsBoot)"
+    - "  A user defined policy can be used, or one of the system defined policies (default, Linux, Solaris, VMware, Windows, WindowsBoot)"   
     - "  [Default: default]"
     - "- order"
     - "  String specifying the vNIC assignment order (e.g., '1', '2')."
