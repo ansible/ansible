@@ -74,6 +74,9 @@ Ansible Changes By Release
 * Bump Azure storage client minimum to 1.5.0 to fix deserialization issues. This will break Azure Stack
   until it receives storage API version 2017-10-01 or changes are made to support multiple versions.
   (https://github.com/ansible/ansible/pull/34442)
+* Flush stdin when passing the become password.  Fixes some cases of timeout on
+  Python 3 with the ssh connection plugin: https://github.com/ansible/ansible/pull/35049
+
 
 <a id="2.4.2"></a>
 
