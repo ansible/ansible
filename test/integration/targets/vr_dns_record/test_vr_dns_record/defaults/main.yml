@@ -1,0 +1,7 @@
+---
+vr_dns_domain_name: example-ansible.com
+vr_dns_record_items:
+- { name: test-www, data: 10.10.10.10, ttl: 400, update_data: 10.10.10.11, update_ttl: 200 }
+- { name: test-www-multiple, data: 10.10.11.10, update_data: 10.10.11.11, multiple: true, update_ttl: 600}
+- { name: test-cname, data: www.ansible.com, update_data: www.ansible.ch, record_type: CNAME }
+- { data: example-ansible.com, priority: 10, update_priority: 20, record_type: MX }

@@ -23,7 +23,7 @@ options:
   name:
     description:
       - The record name (subrecord).
-    required: true
+    default: ""
     aliases: [ subrecord ]
   domain:
     description:
@@ -144,6 +144,11 @@ vultr_dns_record:
       returned: success
       type: int
       sample: 10
+    ttl:
+      description: Time to live of the DNS record.
+      returned: success
+      type: int
+      sample: 300
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -176,7 +181,8 @@ class AnsibleVultrDnsRecord(Vultr):
             'record': dict(),
             'priority': dict(),
             'data': dict(),
-            'type': dict(key='record_type')
+            'type': dict(key='record_type'),
+            'ttl': dict(),
         }
 
     def get_record(self):
@@ -209,6 +215,7 @@ class AnsibleVultrDnsRecord(Vultr):
             'data': self.module.params.get('data'),
             'type': self.module.params.get('record_type'),
             'priority': self.module.params.get('priority'),
+            'ttl': self.module.params.get('ttl'),
         }
         self.result['diff']['before'] = {}
         self.result['diff']['after'] = data
@@ -230,6 +237,7 @@ class AnsibleVultrDnsRecord(Vultr):
             'data': self.module.params.get('data'),
             'type': self.module.params.get('record_type'),
             'priority': self.module.params.get('priority'),
+            'ttl': self.module.params.get('ttl'),
         }
         has_changed = [k for k in data if k in record and data[k] != record[k]]
         if has_changed:
@@ -274,7 +282,7 @@ def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
         domain=dict(required=True),
-        name=dict(required=True, aliases=['subrecord']),
+        name=dict(default="", aliases=['subrecord']),
         state=dict(choices=['present', 'absent'], default='present'),
         ttl=dict(type='int', default=300),
         record_type=dict(choices=RECORD_TYPES, default='A', aliases=['type']),
