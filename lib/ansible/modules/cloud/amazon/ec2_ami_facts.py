@@ -35,6 +35,11 @@ options:
     description:
       - Filter images by users with explicit launch permissions. Valid options are an AWS account ID, self, or all (public AMIs).
     aliases: [executable_user]
+  describe_image_attributes:
+    description:
+      - Describe attributes (like launchPermission) of the images found.
+    default: no
+    choices: ["yes", "no"]
 
 extends_documentation_fragment:
     - aws
@@ -127,7 +132,7 @@ images:
       sample: machine
     launch_permissions:
       description: launch permissions of the ami
-      returned: when image is owned by calling account
+      returned: when image is owned by calling account and describe_image_attributes is yes
       type: complex
       sample: [{"group": "all"}, {"user_id": "408466080000"}]
     name:
@@ -222,8 +227,9 @@ def list_ec2_images(ec2_client, module):
     for image in images:
         try:
             image['tags'] = boto3_tag_list_to_ansible_dict(image.get('tags', []))
-            launch_permissions = ec2_client.describe_image_attribute(Attribute='launchPermission', ImageId=image['image_id'])['LaunchPermissions']
-            image['launch_permissions'] = [camel_dict_to_snake_dict(perm) for perm in launch_permissions]
+            if module.params.get("describe_image_attributes"):
+                launch_permissions = ec2_client.describe_image_attribute(Attribute='launchPermission', ImageId=image['image_id'])['LaunchPermissions']
+                image['launch_permissions'] = [camel_dict_to_snake_dict(perm) for perm in launch_permissions]
         except (ClientError, BotoCoreError) as err:
             # describing launch permissions of images owned by others is not permitted, but shouldn't cause failures
             pass
@@ -239,7 +245,8 @@ def main():
             image_ids=dict(default=[], type='list', aliases=['image_id']),
             filters=dict(default={}, type='dict'),
             owners=dict(default=[], type='list', aliases=['owner']),
-            executable_users=dict(default=[], type='list', aliases=['executable_user'])
+            executable_users=dict(default=[], type='list', aliases=['executable_user']),
+            describe_image_attributes=dict(default=False, type='bool')
         )
     )
 
