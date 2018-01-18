@@ -49,8 +49,8 @@ options:
   name:
     description:
       - Firewall policy name used with present state. Used as identifier (id or name) when used with absent state.
+        maxLength=128
     required: true
-    maxLength: 128
   firewall_policy:
     description:
       - The identifier (id or name) of the firewall policy used with update state.
@@ -60,25 +60,6 @@ options:
       - A list of rules that will be set for the firewall policy.
         Each rule must contain protocol parameter, in addition to three optional parameters
         (port_from, port_to, and source)
-  port_from:
-    description:
-      - First port in range. Required for UDP and TCP protocols, otherwise it will be set up automatically.
-    required: false
-    minimum: 1
-    maximum: 65535
-  port_to:
-    description:
-      - Second port in range. Required for UDP and TCP protocols, otherwise it will be set up automatically.
-  protocol:
-    description:
-      - Internet protocol
-    choices: [ "TCP", "UDP", "ICMP", "AH", "ESP", "GRE" ]
-    required: true
-  source:
-    description:
-      - IPs from which access is available. Setting 0.0.0.0 all IPs are allowed.
-    default: 0.0.0.0
-    required: false
   add_server_ips:
     description:
       - A list of server identifiers (id or name) to be assigned to a firewall policy.
@@ -99,8 +80,7 @@ options:
     required: false
   description:
     description:
-      - Firewall policy description.
-    maxLength: 256
+      - Firewall policy description. maxLength=256
     required: false
   wait:
     description:
@@ -214,6 +194,14 @@ EXAMPLES = '''
     wait_timeout: 500
     state: update
 
+'''
+
+RETURN = '''
+firewall_policy:
+    description: Information about the firewall policy that was processed
+    type: dict
+    sample: '{"id": "92B74394A397ECC3359825C1656D67A6", "name": "Default Policy"}'
+    returned: always
 '''
 
 import os
