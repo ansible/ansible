@@ -535,7 +535,6 @@ lib/ansible/modules/network/ios/ios_interface.py E322
 lib/ansible/modules/network/ios/ios_l3_interface.py E322
 lib/ansible/modules/network/ios/ios_linkagg.py E322
 lib/ansible/modules/network/ios/ios_lldp.py E322
-lib/ansible/modules/network/ios/ios_logging.py E322
 lib/ansible/modules/network/ios/ios_static_route.py E322
 lib/ansible/modules/network/ios/ios_user.py E322
 lib/ansible/modules/network/ios/ios_vlan.py E322
