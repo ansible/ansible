@@ -30,6 +30,12 @@ description:
        This module has a dependency on 1and1 >= 1.0
 version_added: "2.5"
 options:
+  state:
+    description:
+      - Define a load balancer state to create, remove, or update.
+    required: false
+    default: 'present'
+    choices: [ "present", "absent", "update" ]
   auth_token:
     description:
       - Authenticating API token provided by 1&1.
@@ -46,8 +52,8 @@ options:
   name:
     description:
       - Load balancer name used with present state. Used as identifier (id or name) when used with absent state.
+        maxLength=128
     required: true
-    maxLength: 128
   health_check_test:
     description:
       - Type of the health check. At the moment, HTTP is not allowed.
@@ -55,20 +61,15 @@ options:
     required: true
   health_check_interval:
     description:
-      - Health check period in seconds.
-    minimum: 5
-    maximum: 300
-    multipleOf: 1
+      - Health check period in seconds. minimum=5, maximum=300, multipleOf=1
     required: true
   health_check_path:
     description:
-      - Url to call for cheking. Required for HTTP health check.
-    maxLength: 1000
+      - Url to call for cheking. Required for HTTP health check. maxLength=1000
     required: false
-  health_check_parser:
+  health_check_parse:
     description:
-      - Regular expression to check. Required for HTTP health check.
-    maxLength: 64
+      - Regular expression to check. Required for HTTP health check. maxLength=64
     required: false
   persistence:
     description:
@@ -76,10 +77,7 @@ options:
     required: true
   persistence_time:
     description:
-      - Persistence time in seconds. Required if persistence is enabled.
-    minimum: 30
-    maximum: 1200
-    multipleOf: 1
+      - Persistence time in seconds. Required if persistence is enabled. minimum=30, maximum=1200, multipleOf=1
     required: true
   method:
     description:
@@ -97,34 +95,9 @@ options:
       - A list of rule objects that will be set for the load balancer. Each rule must contain protocol,
         port_balancer, and port_server parameters, in addition to source parameter, which is optional.
     required: true
-  protocol:
-    description:
-      - Internet protocol
-    choices: [ "TCP", "UDP" ]
-    required: true
-  port_balancer:
-    description:
-      - Port in balancer. Port 0 means every port.
-        Only can be used if also 0 is set in port_server and health_check_test is set to NONE or ICMP.
-    minimum: 0
-    maximum: 65535
-    required: true
-  port_server:
-    description:
-      - Port in server. Port 0 means every port.
-        Only can be used if also 0 is set in port_balancer and health_check_test is set to NONE or ICMP.
-    minimum: 0
-    maximum: 65535
-    required: true
-  source:
-    description:
-      - IPs from which access is available. Setting 0.0.0.0 all IPs are allowed.
-    default: 0.0.0.0
-    required: false
   description:
     description:
-      - Description of the load balancer.
-    maxLength: 256
+      - Description of the load balancer. maxLength=256
     required: false
   add_server_ips:
     description:
@@ -267,6 +240,14 @@ EXAMPLES = '''
     wait: true
     wait_timeout: 500
     state: update
+'''
+
+RETURN = '''
+load_balancer:
+    description: Information about the load balancer that was processed
+    type: dict
+    sample: '{"id": "92B74394A397ECC3359825C1656D67A6", "name": "Default Balancer"}'
+    returned: always
 '''
 
 import os
@@ -572,7 +553,7 @@ def create_load_balancer(module, oneandone_conn):
                                                   wait_timeout,
                                                   wait_interval)
 
-        load_balancer = get_load_balancer(oneandone_conn, load_balancer['id'], True) # refresh
+        load_balancer = get_load_balancer(oneandone_conn, load_balancer['id'], True)  # refresh
         changed = True if load_balancer else False
 
         _check_mode(module, False)
