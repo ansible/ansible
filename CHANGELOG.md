@@ -9,6 +9,8 @@ Ansible Changes By Release
 * Fix `win_script` to work with large arguments and removed uneeded function
   that produces errors and was not needed
   (https://github.com/ansible/ansible/pull/33855)
+* Fix timeout when using piped ssh transfer with become
+  https://github.com/ansible/ansible/issues/34523
 
 
 <a id="2.4.3"></a>
