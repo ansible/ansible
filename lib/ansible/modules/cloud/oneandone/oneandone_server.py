@@ -219,8 +219,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-machines:
-    description: Information about each machine that was processed
+servers:
+    description: Information about each server that was processed
     type: list
     sample: '[{"hostname": "my-server", "id": "server-id"}]'
     returned: always
@@ -630,8 +630,8 @@ def main():
                 default=os.environ.get('ONEANDONE_AUTH_TOKEN'),
                 no_log=True),
             api_url=dict(
-                type = 'str',
-                default = os.environ.get('ONEANDONE_API_URL')),
+                type='str',
+                default=os.environ.get('ONEANDONE_API_URL')),
             hostname=dict(type='str'),
             description=dict(type='str'),
             appliance=dict(type='str'),

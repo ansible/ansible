@@ -31,6 +31,12 @@ description:
        This module has a dependency on 1and1 >= 1.0
 version_added: "2.5"
 options:
+  state:
+    description:
+      - Define a monitoring policy's state to create, remove, update.
+    required: false
+    default: present
+    choices: [ "present", "absent", "update" ]
   auth_token:
     description:
       - Authenticating API token provided by 1&1.
@@ -42,8 +48,7 @@ options:
     required: false
   name:
     description:
-      - Monitoring policy name used with present state. Used as identifier (id or name) when used with absent state.
-    maxLength: 128
+      - Monitoring policy name used with present state. Used as identifier (id or name) when used with absent state. maxLength=128
     required: true
   monitoring_policy:
     description:
@@ -55,186 +60,40 @@ options:
     required: true
   email:
     description:
-      - User's email.
-    maxLength: 128
+      - User's email. maxLength=128
     required: true
   description:
     description:
-      - Monitoring policy description.
-    maxLength: 256
+      - Monitoring policy description. maxLength=256
     required: false
   thresholds:
     description:
-      - Monitoring policy thresholds.
+      - Monitoring policy thresholds. Each of the suboptins have warning and critical,
+        which both have alert and value suboptions. Warning is used to set limits for
+        warning alerts, critical is used to set critical alerts. alert enables alert,
+        and value is used to advise when the value is exceeded.
     required: true
     suboptions:
       cpu:
         description:
           - Consumption limits of CPU.
         required: true
-        suboptions:
-          warning:
-            description:
-              - Set limits for warning.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (%).
-                minimum: 1
-                maximum: 95
-                required: true
-          critical:
-            description:
-              - Set limits for critical case.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (%).
-                maximum: 100
-                required: true
       ram:
         description:
           - Consumption limits of RAM.
         required: true
-        suboptions:
-          warning:
-            description:
-              - Set limits for warning.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (%).
-                minimum: 1
-                maximum: 95
-                required: true
-          critical:
-            description:
-              - Set limits for critical case.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (%).
-                maximum: 100
-                required: true
       disk:
         description:
           - Consumption limits of hard disk.
         required: true
-        suboptions:
-          warning:
-            description:
-              - Set limits for warning.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (%).
-                minimum: 1
-                maximum: 95
-                required: true
-          critical:
-            description:
-              - Set limits for critical case.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (%).
-                maximum: 100
-                required: true
       internal_ping:
         description:
           - Response limits of internal ping.
         required: true
-        suboptions:
-          warning:
-            description:
-              - Set limits for warning.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (ms).
-                required: true
-          critical:
-            description:
-              - Set limits for critical case.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (ms).
-                maximum: 100
-                required: true
       transfer:
         description:
           - Consumption limits for transfer.
         required: true
-        suboptions:
-          warning:
-            description:
-              - Set limits for warning.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (kbps).
-                minimum: 1
-                required: true
-          critical:
-            description:
-              - Set limits for critical case.
-            required: true
-            suboptions:
-              alert:
-                description:
-                  - Enable alert.
-                required: true
-              value:
-                description:
-                  - Advise when this value is exceeded (kbps).
-                maximum: 2000
-                required: true
   ports:
     description:
       - Array of ports that will be monitoring.
@@ -247,9 +106,7 @@ options:
         required: true
       port:
         description:
-          - Port number.
-        minimum: 1
-        maximum: 65535
+          - Port number. minimum=1, maximum=65535
         required: true
       alert_if:
         description:
@@ -267,14 +124,45 @@ options:
     suboptions:
       process:
         description:
-          - Name of the process.
-        maxLength: 50
+          - Name of the process. maxLength=50
         required: true
       alert_if:
         description:
           - Case of alert.
         choices: [ "RUNNING", "NOT_RUNNING" ]
         required: true
+  add_ports:
+    description:
+      - Ports to add to the monitoring policy.
+    required: false
+  add_processes:
+    description:
+      - Processes to add to the monitoring policy.
+    required: false
+  add_servers:
+    description:
+      - Servers to add to the monitoring policy.
+    required: false
+  remove_ports:
+    description:
+      - Ports to remove from the monitoring policy.
+    required: false
+  remove_processes:
+    description:
+      - Processes to remove from the monitoring policy.
+    required: false
+  remove_servers:
+    description:
+      - Servers to remove from the monitoring policy.
+    required: false
+  update_ports:
+    description:
+      - Ports to be updated on the monitoring policy.
+    required: false
+  update_processes:
+    description:
+      - Processes to be updated on the monitoring policy.
+    required: false
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
@@ -525,6 +413,14 @@ EXAMPLES = '''
      - server01
     wait: true
     state: update
+'''
+
+RETURN = '''
+monitoring_policy:
+    description: Information about the monitoring policy that was processed
+    type: dict
+    sample: '{"id": "92B74394A397ECC3359825C1656D67A6", "name": "Default Policy"}'
+    returned: always
 '''
 
 import os
