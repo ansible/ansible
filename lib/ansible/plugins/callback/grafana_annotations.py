@@ -16,6 +16,38 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    callback: grafana_annotations
+    type: notification
+    short_description: Sends events to Grafana HTTP API
+    description:
+      - This callback will report start, failed and stats events to Grafana as annotations (https://grafana.com)
+    version_added: "2.5"
+    requirements:
+      - whitelisting in configuration
+    options:
+      server:
+        description: Address of the Logstash server
+        env:
+          - name: GRAFANA_SERVER
+        default: localhost
+      port:
+        description: Port on which Grafana is listening
+        env:
+            - name: GRAFANA_PORT
+        default: 3000
+      secure:
+        description: Boolean specifying if HTTPS should be used. (0=HTTP, 1=HTTPS)
+        env:
+          - name: GRAFANA_SECURE
+        default: 0
+      token:
+        description: Grafana API Token, allowing to authenticate when posting on the HTTP API.
+                     If not provided, the callback will be disabled.
+        env:
+          - name: GRAFANA_API_TOKEN
+'''
+
 import os
 import json
 import socket
