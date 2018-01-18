@@ -457,6 +457,7 @@ class TestSSHConnectionRun(object):
         self.mock_selector.get_map.side_effect = lambda: True
 
         return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
+        self.mock_popen_res.stdin.flush.assert_called_once_with()
         assert return_code == 0
         assert b_stdout == b'abc'
         assert b_stderr == b'123'
