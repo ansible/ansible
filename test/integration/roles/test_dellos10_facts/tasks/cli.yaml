@@ -12,5 +12,3 @@
 - name: run test case
   include: "{{ item }}"
   with_items: "{{ test_items }}"
-
-
