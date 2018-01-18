@@ -617,7 +617,7 @@ def main():
             api_url=dict(
                 type='str',
                 default=os.environ.get('ONEANDONE_API_URL')),
-            load_balancer_id=dict(type='str'),
+            load_balancer=dict(type='str'),
             name=dict(type='str'),
             description=dict(type='str'),
             health_check_test=dict(
