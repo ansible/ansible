@@ -127,7 +127,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-attempts:
+wait_attempts:
   description: The number of attempts to poll the file or port before module
     finishes.
   returned: always
