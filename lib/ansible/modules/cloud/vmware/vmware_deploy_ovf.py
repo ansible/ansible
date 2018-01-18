@@ -44,6 +44,11 @@ options:
         default: thin
         description:
         - 'Disk provisioning type'
+    fail_on_spec_warnings:
+        description:
+        - Cause the module to treat OVF Import Spec warnings as errors
+        default: "no"
+        type: bool
     name:
         description:
         - Name of the VM to work with.
@@ -294,10 +299,14 @@ class VMwareDeployOvf:
             spec_params
         )
 
-        joined_errors = '. '.join(to_native(e.msg) for e in getattr(self.import_spec, 'error', []))
-        if joined_errors:
+        errors = [to_native(e.msg) for e in getattr(self.import_spec, 'error', [])]
+        if self.params['fail_on_spec_warnings']:
+            errors.extend(
+                (to_native(w.msg) for w in getattr(self.import_spec, 'warning', []))
+            )
+        if errors:
             self.module.fail_json(
-                msg='Failure validating OVF import spec: %s' % joined_errors
+                msg='Failure validating OVF import spec: %s' % '. '.join(errors)
             )
 
         for warning in getattr(self.import_spec, 'warning', []):
@@ -472,6 +481,10 @@ def main():
         'allow_duplicates': {
             'type': 'bool',
             'default': True,
+        },
+        'fail_on_spec_warnings': {
+            'type': 'bool',
+            'default': False,
         },
     })
     module = AnsibleModule(
