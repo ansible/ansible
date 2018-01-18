@@ -85,8 +85,7 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if not tmp:
-            tmp = self._connection._shell.tempdir
+        tmp = self._connection._shell.tempdir
 
         if task_vars is None:
             task_vars = dict()
