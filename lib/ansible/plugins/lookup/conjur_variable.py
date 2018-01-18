@@ -112,8 +112,10 @@ def _fetch_conjur_token(conjur_url, account, username, api_key):
     display.vvvv('Authentication request to Conjur at: {0}, with user: {1}'.format(conjur_url, username))
 
     response = open_url(conjur_url, data=api_key, method='POST')
-    if response.getcode() != 200:
-        raise AnsibleError('Failed to authenticate as \'{0}\''.format(username))
+    code = response.getcode()
+    if code != 200:
+        raise AnsibleError('Failed to authenticate as \'{0}\' (got {1} response)'
+                           .format(username, code))
 
     return response.read()
 
