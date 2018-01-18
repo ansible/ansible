@@ -119,7 +119,6 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
-
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
 
         # FIXME: This does also match hyperv
