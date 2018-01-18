@@ -102,8 +102,8 @@ class InventoryModule(BaseInventoryPlugin):
 
                 # get available variables to templar
                 hostvars = inventory.hosts[host].get_vars()
-                if host in inventory.cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, inventory.cache[host])
+                if host in self.cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, self.cache[host])
 
                 # create composite vars
                 self._set_composite_vars(data.get('compose'), hostvars, host, strict=strict)
