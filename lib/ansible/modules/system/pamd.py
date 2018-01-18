@@ -200,6 +200,17 @@ EXAMPLES = """
     module_path: pam_faillock.so
     module_arguments: 'fail_interval=300'
     state: args_present
+
+- name: Add pam common-auth rule for duo
+  pamd:
+    name: common-auth
+    new_type: auth
+    new_control: '[success=1 default=ignore]'
+    new_module_path: '/lib64/security/pam_duo.so'
+    state: after
+    type: auth
+    module_path: pam_sss.so
+    control: 'requisite'
 """
 
 RETURN = '''
@@ -285,7 +296,7 @@ class PamdRule(object):
             pattern = re.compile(
                 r"""([\-A-Za-z0-9_]+)\s*         # Rule Type
                     \[([A-Za-z0-9_=\s]+)\]\s*    # Rule Control
-                    ([A-Za-z0-9_\-\.]+)\s*         # Rule Path
+                    ([A-Za-z0-9/_\-\.]+)\s*         # Rule Path
                     ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
             complicated = True
@@ -293,7 +304,7 @@ class PamdRule(object):
             pattern = re.compile(
                 r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
                     ([A-Za-z0-9_]+)\s*          # Rule Control
-                    ([A-Za-z0-9_\-\.]+)\s*        # Rule Path
+                    ([A-Za-z0-9/_\-\.]+)\s*        # Rule Path
                     ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
 
