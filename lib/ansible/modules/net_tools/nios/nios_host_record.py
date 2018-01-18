@@ -1,34 +1,139 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright (c) 2018 Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = """
-"""
+DOCUMENTATION = '''
+---
+module: nios_host_record
+version_added: "2.5"
+author: "Peter Sprygada (@privateip)"
+short_description: Configure Infoblox NIOS host records
+description:
+  - Adds and/or removes instances of host record objects from
+    Infoblox NIOS servers.  This module manages NIOS C(record:host) objects
+    using the Infoblox WAPI interface over REST.
+requirements:
+  - infoblox_client
+extends_documentation_fragment: nios
+options:
+  name:
+    description:
+      - Specifies the fully qualified hostname to add or remove from
+        the system
+    required: true
+    default: null
+  view:
+    description:
+      - Sets the DNS view to associate this host record with.  The DNS
+        view must already be configured on the system
+    required: true
+    default: default
+    aliases:
+      - dns_view
+  ipv4addrs:
+    description:
+      - Configures the IPv4 addresses for this host record.  This argument
+        accepts a list of values (see suboptions)
+    required: false
+    default: null
+    aliases:
+      - ipv4
+    suboptions:
+      ipv4addr:
+        description:
+          - Configures the IPv4 address for the host record
+        required: true
+        default: null
+        aliases:
+          - address
+      mac:
+        description:
+          - Configures the hardware MAC address for the host record
+        required: false
+  ipv6addrs:
+    description:
+      - Configures the IPv6 addresses for the host record.  This argument
+        accepts a list of values (see options)
+    required: false
+    default: null
+    aliases:
+      - ipv6
+    suboptions:
+      ipv6addr:
+        description:
+          - Configures the IPv6 address for the host record
+        required: true
+        default: null
+        aliases:
+          - address
+  ttl:
+    description:
+      - Configures the TTL to be associated with this host record
+    required: false
+    default: null
+  extattrs:
+    description:
+      - Allows for the configuration of Extensible Attributes on the
+        instance of the object.  This argument accepts a set of key / value
+        pairs for configuration.
+    required: false
+  comment:
+    description:
+      - Configures a text string comment to be associated with the instance
+        of this object.  The provided text string will be configured on the
+        object instance.
+    required: false
+  state:
+    description:
+      - Configures the intended state of the instance of the object on
+        the NIOS server.  When this value is set to C(present), the object
+        is configured on the device and when this value is set to C(absent)
+        the value is removed (if necessary) from the device.
+    required: false
+    default: present
+    choices:
+      - present
+      - absent
+'''
 
-EXAMPLES = """
-"""
+EXAMPLES = '''
+vars:
+  provider:
+    host: "{{ inventory_hostname_short }}"
+    username: admin
+    password: admin
 
-RETURN = """
-"""
+- name: configure an ipv4 host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      address: 192.168.10.1
+    provider: "{{ provider }}"
+    state: present
+
+- name: add a comment to an existing host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      address: 192.168.10.1
+    comment: this is a test comment
+    provider: "{{ provider }}"
+    state: present
+
+- name: remove a host record from the system
+  nios_host_record:
+    name: host.ansible.com
+    provider: "{{ provider }}"
+    state: absent
+'''
+
+RETURN = ''' # '''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import get_provider_spec, Wapi
@@ -63,8 +168,8 @@ def ipv6addrs(module):
 
 
 def main():
-    """main entry point for module execution
-    """
+    ''' Main entry point for module execution
+    '''
     ipv4addr_spec = dict(
         ipv4addr=dict(required=True, aliases=['address'], ib_req=True),
         mac=dict()

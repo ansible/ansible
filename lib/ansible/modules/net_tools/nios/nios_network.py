@@ -1,34 +1,135 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright (c) 2018 Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = """
-"""
+DOCUMENTATION = '''
+---
+module: nios_network
+version_added: "2.5"
+author: "Peter Sprygada (@privateip)"
+short_description: Configure Infoblox NIOS network object
+description:
+  - Adds and/or removes instances of network objects from
+    Infoblox NIOS servers.  This module manages NIOS C(network) objects
+    using the Infoblox WAPI interface over REST.
+requirements:
+  - infoblox_client
+extends_documentation_fragment: nios
+options:
+  network:
+    description:
+      - Specifies the network to add or remove from the system.  The value
+        should use CIDR notation.
+    required: true
+    default: null
+    aliases:
+      - name
+      - cidr
+  network_view:
+    description:
+      - Configures the name of the network view to associate with this
+        configured instance.
+    required: true
+    default: default
+  options:
+    description:
+      - Configures the set of DHCP options to be included as part of
+        the configured network instance.  This argument accepts a list
+        of values (see suboptions).  When configuring suboptions at
+        least one of C(name) or C(num) must be specified.
+    required: false
+    default: null
+    suboptions:
+      name:
+        description:
+          - The name of the DHCP option to configure
+        required: false
+        default: null
+      num:
+        description:
+          - The number of the DHCP option to configure
+        required: false
+      value:
+        description:
+          - The value of the DHCP option specified by C(name)
+        required: true
+        default: null
+      use_option:
+        description:
+          - Only applies to a subset of options (see NIOS API documentation)
+        required: false
+        type: bool
+        default: true
+      vendor_class:
+        description:
+          - The name of the space this DHCP option is associated to
+        required: false
+        default: DHCP
+  extattrs:
+    description:
+      - Allows for the configuration of Extensible Attributes on the
+        instance of the object.  This argument accepts a set of key / value
+        pairs for configuration.
+    required: false
+    default: null
+  comment:
+    description:
+      - Configures a text string comment to be associated with the instance
+        of this object.  The provided text string will be configured on the
+        object instance.
+    required: false
+    default: null
+  state:
+    description:
+      - Configures the intended state of the instance of the object on
+        the NIOS server.  When this value is set to C(present), the object
+        is configured on the device and when this value is set to C(absent)
+        the value is removed (if necessary) from the device.
+    required: false
+    default: present
+    choices:
+      - present
+      - absent
+'''
 
-EXAMPLES = """
-"""
+EXAMPLES = '''
+vars:
+  provider:
+    host: "{{ inventory_hostname_short }}"
+    username: admin
+    password: admin
 
-RETURN = """
-"""
+- name: configure a network
+  nios_network:
+    network: 192.168.10.0/24
+    comment: this is a test comment
+    provider: "{{ provider }}"
+    state: present
+
+- name: set dhcp options for a network
+  nios_network:
+    network: 192.168.10.0/24
+    comment: this is a test comment
+    options:
+      - name: domain-name
+        value: ansible.com
+    provider: "{{ provider }}"
+    state: present
+
+- name: remove a network
+  nios_network:
+    network: 192.168.10.0/24
+    provider: "{{ provider }}"
+    state: absent
+'''
+
+RETURN = ''' # '''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import get_provider_spec, Wapi
@@ -48,7 +149,7 @@ def options(module):
             vendor_class: <value>
         }
 
-    It wil remove any options that are set to None since WAPI will error on
+    It will remove any options that are set to None since WAPI will error on
     that condition.  It will also verify that either `name` or `num` is
     set in the structure but does not validate the values are equal.
 
@@ -64,8 +165,8 @@ def options(module):
 
 
 def main():
-    """main entry point for module execution
-    """
+    ''' Main entry point for module execution
+    '''
     option_spec = dict(
         # one of name or num is required; enforced by the function options()
         name=dict(),

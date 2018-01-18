@@ -1,41 +1,101 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright (c) 2018 Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = """
-"""
+DOCUMENTATION = '''
+---
+module: nios_dns_view
+version_added: "2.5"
+author: "Peter Sprygada (@privateip)"
+short_description: Configure Infoblox NIOS DNS views
+description:
+  - Adds and/or removes instances of DNS view objects from
+    Infoblox NIOS servers.  This module manages NIOS C(view) objects
+    using the Infoblox WAPI interface over REST.
+requirements:
+  - infoblox_client
+extends_documentation_fragment: nios
+options:
+  name:
+    description:
+      - Specifies the name of the DNS view to add and/or remove from the
+        system configuration based on the setting of the C(state) argument.
+    required: true
+    aliases:
+      - view
+  network_view
+    description:
+      - Specifies the name of the network view to assign the configured
+        DNS view to.  The network view must already be configured on the
+        target system.
+    required: true
+    default: default
+  extattrs:
+    description:
+      - Allows for the configuration of Extensible Attributes on the
+        instance of the object.  This argument accepts a set of key / value
+        pairs for configuration.
+    required: false
+  comment:
+    description:
+      - Configures a text string comment to be associated with the instance
+        of this object.  The provided text string will be configured on the
+        object instance.
+    required: false
+  state:
+    description:
+      - Configures the intended state of the instance of the object on
+        the NIOS server.  When this value is set to C(present), the object
+        is configured on the device and when this value is set to C(absent)
+        the value is removed (if necessary) from the device.
+    required: false
+    default: present
+    choices:
+      - present
+      - absent
+'''
 
-EXAMPLES = """
-"""
+EXAMPLES = '''
+vars:
+  provider:
+    host: "{{ inventory_hostname_short }}"
+    username: admin
+    password: admin
 
-RETURN = """
-"""
+- name: configure a new dns view instance
+  nios_dns_view:
+    name: ansible-dns
+    provider: "{{ provider }}"
+    state: present
+
+- name: update the comment for dns view
+  nios_dns_view:
+    name: ansible-dns
+    comment: this is an example comment
+    provider: "{{ provider }}"
+    state: present
+
+- name: remove the dns view instance
+  nios_dns_view:
+    name: ansible-dns
+    provider: "{{ provider }}"
+    state: absent
+'''
+
+RETURN = ''' # '''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.nios.api import get_provider_spec, Wapi
 
 
 def main():
-    """main entry point for module execution
-    """
+    ''' Main entry point for module execution
+    '''
     ib_spec = dict(
         name=dict(required=True, aliases=['view'], ib_req=True),
         network_view=dict(default='default', ib_req=True),

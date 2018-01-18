@@ -93,6 +93,19 @@ class WapiBase(object):
     def run(self, ib_obj_type, ib_spec):
         raise NotImplementedError
 
+class WapiFacts(WapiBase):
+
+    def run(self, ib_obj_type, ib_spec=None, return_fields=None):
+        return_fields = return_fields or list()
+        if ib_spec is not None:
+            obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
+            return self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+        else:
+            kwargs = {}
+            if return_fields:
+                kwargs['return_fields'] = return_fields
+            return self.get_object(ib_obj_type, **kwargs)
+
 
 class Wapi(WapiBase):
     ''' Implements WapiBase for executing a NIOS module '''
@@ -110,7 +123,7 @@ class Wapi(WapiBase):
         result = {'changed': False}
 
         obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
-        ib_obj = self.connector.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+        ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
 
         if ib_obj:
             current_object = ib_obj[0]
@@ -265,4 +278,5 @@ class Wapi(WapiBase):
 
         else:
             return True
+
 
