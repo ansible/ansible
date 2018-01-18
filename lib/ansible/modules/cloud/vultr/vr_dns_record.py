@@ -47,7 +47,7 @@ options:
   data:
     description:
       - Data of the record.
-      - Required if C(state=present).
+      - Required if C(state=present) or C(multiple=yes).
   ttl:
     description:
       - TTL of the record.
