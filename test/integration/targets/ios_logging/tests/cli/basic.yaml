@@ -136,6 +136,7 @@
     level: warnings
     trap: warnings
     state: present
+    authorize: yes
   register: result
 
 - assert:
@@ -153,6 +154,7 @@
     level: warnings
     trap: warnings
     state: present
+    authorize: yes
   register: result
 
 - assert:
