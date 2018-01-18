@@ -136,7 +136,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             if ($search_regex -eq $null) {
                 Fail-Json $result "timeout while waiting for file $path to be present"
@@ -168,7 +168,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             if ($search_regex -eq $null) {
                 Fail-Json $result "timeout while waiting for file $path to be absent"
@@ -195,7 +195,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to start listening"
         }
@@ -216,7 +216,7 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to stop listening"
         }
@@ -257,14 +257,14 @@ if ($path -eq $null -and $port -eq $null -and $state -eq "drained") {
 
         if ($complete -eq $false) {
             $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
-            $result.attempts = $attempts
+            $result.wait_attempts = $attempts
             $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to drain"
         }
     }  
 }
 
-$result.attempts = $attempts
+$result.wait_attempts = $attempts
 $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 Exit-Json $result
