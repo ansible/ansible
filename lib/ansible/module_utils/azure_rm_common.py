@@ -235,8 +235,8 @@ class AzureRMModuleBase(object):
                       "- {0}".format(HAS_MSRESTAZURE_EXC))
 
         if not HAS_AZURE:
-            self.fail("Do you have azure>={1} installed? Try `pip install ansible[azure] --upgrade`"
-                      "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
+            self.fail("Do you have azure>={1} installed? Try `pip install ansible[azure]`"
+                      "- {0}".format(HAS_AZURE_EXC))
 
         self._cloud_environment = None
         self._network_client = None
@@ -330,8 +330,7 @@ class AzureRMModuleBase(object):
             expected_version = package_version.get('expected_version')
             if Version(client_version) < Version(expected_version):
                 self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
-                          "`pip install ansible[azure]`".format(client_name, client_version, expected_version,
-                                                                AZURE_MIN_RELEASE))
+                          "`pip install ansible[azure]`".format(client_name, client_version, expected_version))
 
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
