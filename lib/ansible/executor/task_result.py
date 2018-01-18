@@ -24,8 +24,8 @@ from copy import deepcopy
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.manager import strip_internal_keys
 
-_IGNORE = ('failed', 'skipped')
-_PRESERVE = ('attempts', 'changed', 'retries')
+_IGNORE = tuple()
+_PRESERVE = ('attempts', 'changed', 'retries', 'failed', 'unreachable', 'skipped')
 
 
 class TaskResult:
