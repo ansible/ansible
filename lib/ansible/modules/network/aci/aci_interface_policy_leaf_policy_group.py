@@ -23,10 +23,7 @@ author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- When using the module please select the appropriate link_aggregation_type.
-- link, Create a PC Interface Policy Group.
-- node, Create a VPC Interface Policy Group.
-- leaf, Create a Leaf Access Port Policy Group.
+- When using the module please select the appropriate link_aggregation_type: 'link'(PC)/'node'(VPC), 'leaf'(Leaf Access Port Policy Group)
 options:
  policy_group:
    description:
@@ -39,71 +36,71 @@ options:
  link_aggregation_type:
    description:
    - Selector for the type of leaf policy group we want to create.
-   aliases: [ link_aggregation_type, link_aggregation_type_name ]
+   aliases: [ link_aggregation_type_name ]
  link_level_policy:
    description:
    - Choice of link_level_policy to be used as part of the leaf policy group to be created.
-   aliases: [ link_level_policy, link_level_policy_name ]
+   aliases: [ link_level_policy_name ]
  cdp_policy:
    description:
    - Choice of cdp_policy to be used as part of the leaf policy group to be created.
-   aliases: [ cdp_policy, cdp_policy_name ]
+   aliases: [ cdp_policy_name ]
  mcp_policy:
    description:
    - Choice of mcp_policy to be used as part of the leaf policy group to be created.
-   aliases: [ mcp_policy, mcp_policy_name ]
+   aliases: [ mcp_policy_name ]
  lldp_policy:
    description:
    - Choice of lldp_policy to be used as part of the leaf policy group to be created.
-   aliases: [ lldp_policy, lldp_policy_name ]
+   aliases: [ lldp_policy_name ]
  stp_interface_policy:
    description:
    - Choice of stp_interface_policy to be used as part of the leaf policy group to be created.
-   aliases: [ stp_interface_policy, stp_interface_policy_name ]
+   aliases: [ stp_interface_policy_name ]
  egress_data_plane_policing_policy:
    description:
    - Choice of egress_data_plane_policing_policy to be used as part of the leaf policy group to be created.
-   aliases: [ egress_data_plane_policing_policy, egress_data_plane_policing_policy_name ]
+   aliases: [ egress_data_plane_policing_policy_name ]
  ingress_data_plane_policing_policy:
    description:
    - Choice of ingress_data_plane_policing_policy to be used as part of the leaf policy group to be created.
-   aliases: [ ingress_data_plane_policing_policy, ingress_data_plane_policing_policy_name ]
+   aliases: [ ingress_data_plane_policing_policy_name ]
  priority_flow_control_policy:
    description:
    - Choice of priority_flow_control_policy to be used as part of the leaf policy group to be created.
-   aliases: [ priority_flow_control_policy, priority_flow_control_policy_name ]
+   aliases: [ priority_flow_control_policy_name ]
  fibre_channel_interface_policy:
    description:
    - Choice of fibre_channel_interface_policy to be used as part of the leaf policy group to be created.
-   aliases: [ fibre_channel_interface_policy, fibre_channel_interface_policy_name ]
+   aliases: [ fibre_channel_interface_policy_name ]
  slow_drain_policy:
    description:
    - Choice of slow_drain_policy to be used as part of the leaf policy group to be created.
-   aliases: [ slow_drain_policy, slow_drain_policy_name ]
+   aliases: [ slow_drain_policy_name ]
  port_channel_policy:
    description:
    - Choice of port_channel_policy to be used as part of the leaf policy group to be created.
-   aliases: [ port_channel_policy, port_channel_policy_name ]
+   aliases: [ port_channel_policy_name ]
  monitoring_policy:
    description:
    - Choice of monitoring_policy to be used as part of the leaf policy group to be created.
-   aliases: [ monitoring_policy, monitoring_policy_name ]
+   aliases: [ monitoring_policy_name ]
  storm_control_interface_policy:
    description:
    - Choice of storm_control_interface_policy to be used as part of the leaf policy group to be created.
-   aliases: [ storm_control_interface_policy, storm_control_interface_policy_name ]
+   aliases: [ storm_control_interface_policy_name ]
  l2_interface_policy:
    description:
    - Choice of l2_interface_policy to be used as part of the leaf policy group to be created.
-   aliases: [ l2_interface_policy, l2_interface_policy_name ]
+   aliases: [ l2_interface_policy_name ]
  port_security_policy:
    description:
    - Choice of port_security_policy to be used as part of the leaf policy group to be created.
-   aliases: [ port_security_policy, port_security_policy_name ]
+   aliases: [ port_security_policy_name ]
  attached_entity_profile:
    description:
    - Choice of attached_entity_profile (AEP) to be used as part of the leaf policy group to be created.
-   aliases: [ attached_entity_profile, attached_entity_profile_name, AEP, AEP_name ]
+   aliases: [ attached_entity_profile_name, AEP, AEP_name ]
  state:
    description:
    - Use C(present) or C(absent) for adding or removing.
@@ -126,25 +123,23 @@ EXAMPLES = r'''
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
 
-- name: creating a Virtual Port Channel (VPC) Interface Policy Group
+- name: creating a Virtual Port Channel (VPC) Interface Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
     hostname: apic
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
-    description: policygroupname description
     link_aggregation_type: node
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
 
-- name: creating a Leaf Access Port Policy Group
+- name: creating a Leaf Access Port Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
     hostname: apic
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
-    description: policygroupname description
     link_aggregation_type: leaf
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
@@ -173,23 +168,23 @@ def main():
         'description': dict(type='str', aliases=['descr', 'description']),
         # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC andVPC) and infra:AccPortGrp (for leaf access port policy group):
         # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
-        'link_aggregation_type': dict(type='str', aliases=['link_aggregation_type', 'link_aggregation_type_name']),
-        'link_level_policy': dict(type='str', aliases=['link_level_policy', 'link_level_policy_name']),
-        'cdp_policy': dict(type='str', aliases=['cdp_policy', 'cdp_policy_name']),
-        'mcp_policy': dict(type='str', aliases=['mcp_policy', 'mcp_policy_name']),
-        'lldp_policy': dict(type='str', aliases=['lldp_policy', 'lldp_policy_name']),
-        'stp_interface_policy': dict(type='str', aliases=['stp_interface_policy', 'stp_interface_policy_name']),
-        'egress_data_plane_policing_policy': dict(type='str', aliases=['egress_data_plane_policing_policy', 'egress_data_plane_policing_policy_name']),
-        'ingress_data_plane_policing_policy': dict(type='str', aliases=['ingress_data_plane_policing_policy', 'ingress_data_plane_policing_policy_name']),
-        'priority_flow_control_policy': dict(type='str', aliases=['priority_flow_control_policy', 'priority_flow_control_policy_name']),
-        'fibre_channel_interface_policy': dict(type='str', aliases=['fibre_channel_interface_policy', 'fibre_channel_interface_policy_name']),
-        'slow_drain_policy': dict(type='str', aliases=['slow_drain_policy', 'slow_drain_policy_name']),
-        'port_channel_policy': dict(type='str', aliases=['port_channel_policy', 'port_channel_policy_name']),
-        'monitoring_policy': dict(type='str', aliases=['monitoring_policy', 'monitoring_policy_name']),
-        'storm_control_interface_policy': dict(type='str', aliases=['storm_control_interface_policy', 'storm_control_interface_policy_name']),
-        'l2_interface_policy': dict(type='str', aliases=['l2_interface_policy', 'l2_interface_policy_name']),
-        'port_security_policy': dict(type='str', aliases=['port_security_policy', 'port_security_policy_name']),
-        'attached_entity_profile': dict(type='str', aliases=['AEP', 'AEP_name', 'attached_entity_profile', 'attached_entity_profile_name']),
+        'link_aggregation_type': dict(type='str', aliases=['link_aggregation_type_name']),
+        'link_level_policy': dict(type='str', aliases=['link_level_policy_name']),
+        'cdp_policy': dict(type='str', aliases=['cdp_policy_name']),
+        'mcp_policy': dict(type='str', aliases=['mcp_policy_name']),
+        'lldp_policy': dict(type='str', aliases=['lldp_policy_name']),
+        'stp_interface_policy': dict(type='str', aliases=['stp_interface_policy_name']),
+        'egress_data_plane_policing_policy': dict(type='str', aliases=['egress_data_plane_policing_policy_name']),
+        'ingress_data_plane_policing_policy': dict(type='str', aliases=['ingress_data_plane_policing_policy_name']),
+        'priority_flow_control_policy': dict(type='str', aliases=['priority_flow_control_policy_name']),
+        'fibre_channel_interface_policy': dict(type='str', aliases=['fibre_channel_interface_policy_name']),
+        'slow_drain_policy': dict(type='str', aliases=['slow_drain_policy_name']),
+        'port_channel_policy': dict(type='str', aliases=['port_channel_policy_name']),
+        'monitoring_policy': dict(type='str', aliases=['monitoring_policy_name']),
+        'storm_control_interface_policy': dict(type='str', aliases=['storm_control_interface_policy_name']),
+        'l2_interface_policy': dict(type='str', aliases=['l2_interface_policy_name']),
+        'port_security_policy': dict(type='str', aliases=['port_security_policy_name']),
+        'attached_entity_profile': dict(type='str', aliases=['AEP', 'AEP_name', 'attached_entity_profile_name']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query'])
     })
 
