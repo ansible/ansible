@@ -1,9 +1,11 @@
 ---
+- debug: msg="START cli/nxos_banner motd test"
+
 - name: setup - remove motd
-  nxos_banner:
+  nxos_banner: &remove
     banner: motd
     state: absent
-    provider: "{{ connection }}"
+    provider: "{{ cli }}"
 
 - name: Set motd
   nxos_banner: &motd
@@ -13,7 +15,7 @@
       that has a multiline
       string
     state: present
-    provider: "{{ connection }}"
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -28,8 +30,8 @@
 - assert:
     that:
       - "result.changed == false"
-      - "result.commands | length == 0"
 
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"
+- name: teardown - remove motd
+  nxos_banner: *remove
+
+- debug: msg="END cli/nxos_banner motd test"
