@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-# Copyright (c) 2017 Dell Inc.
+# Copyright (c) 2016 Dell Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -11,7 +11,6 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = """
 ---
@@ -169,13 +168,13 @@ updates:
   description: The set of commands that will be pushed to the remote device.
   returned: always
   type: list
-  sample: ['...', '...']
+  sample: ['interface Te1/0/1', 'no shutdown', 'exit']
 
 commands:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: ['...', '...']
+  sample: ['interface Te1/0/1', 'no shutdown', 'exit']
 
 saved:
   description: Returns whether the configuration is saved to the startup
@@ -205,9 +204,9 @@ def get_candidate(module):
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         commands = module.params['lines'][0]
-        if type(commands) is dict and type(commands['command']) is list:
+        if (isinstance(commands, dict)) and (isinstance(commands['command'], list)):
             candidate.add(commands['command'], parents=parents)
-        elif type(commands) is dict and type(commands['command']) is str:
+        elif (isinstance(commands, dict)) and (isinstance(commands['command'], str)):
             candidate.add([commands['command']], parents=parents)
         else:
             candidate.add(module.params['lines'], parents=parents)
@@ -243,7 +242,8 @@ def main():
     )
 
     argument_spec.update(dellos6_argument_spec)
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -277,9 +277,9 @@ def main():
 
         if configobjs:
             commands = dumps(configobjs, 'commands')
-            if ((isinstance((module.params['lines']) is list)) and
-                    (isinstance((module.params['lines'][0]) is dict)) and
-                    ({'prompt', 'answer'}.issubset(module.params['lines'][0]))):
+            if ((isinstance(module.params['lines'], list)) and
+                    (isinstance(module.params['lines'][0], dict)) and
+                    ['prompt', 'answer'].issubset(module.params['lines'][0])):
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],
                        'answer': module.params['lines'][0]['answer']}
@@ -303,7 +303,8 @@ def main():
     if module.params['save']:
         result['changed'] = True
         if not module.check_mode:
-                cmd = {'command': 'copy running-config startup-config', 'prompt': '\(y/n\)$', 'answer': 'yes'}
+                cmd = {'command': 'copy running-config startup-config',
+                       'prompt': r'\(y/n\)$', 'answer': 'yes'}
                 run_commands(module, [cmd])
                 result['saved'] = True
         else:

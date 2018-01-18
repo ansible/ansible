@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-# Copyright (c) 2017 Dell Inc.
+# Copyright (c) 2016 Dell Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -148,7 +148,7 @@ class Default(FactsBase):
         self.facts['serialnum'] = self.parse_serialnum(data)
         self.facts['model'] = self.parse_model(data)
         self.facts['image'] = self.parse_image(data)
-        hdata = self.responses[0]
+        hdata = self.responses[1]
         self.facts['hostname'] = self.parse_hostname(hdata)
 
     def parse_version(self, data):

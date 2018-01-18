@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-# Copyright (c) 2017 Dell Inc.
+# Copyright (c) 2016 Dell Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -11,7 +11,6 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = """
 ---
@@ -58,7 +57,7 @@ options:
     required: false
     default: all
     choices: ['any', 'all']
-    version_added: "2.2"
+    version_added: "2.5"
   retries:
     description:
       - Specifies the number of retries a command should be tried
@@ -218,11 +217,11 @@ def main():
         msg = 'One or more conditional statements have not be satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-    result = {
+    result.update({
         'changed': False,
         'stdout': responses,
         'stdout_lines': list(to_lines(responses))
-    }
+    })
 
     module.exit_json(**result)
 
