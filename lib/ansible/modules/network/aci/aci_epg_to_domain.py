@@ -130,6 +130,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),
         vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'vmware']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
