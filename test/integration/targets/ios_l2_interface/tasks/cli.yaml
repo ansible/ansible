@@ -17,6 +17,8 @@
 
 - name: run test case (connection=local)
   include: "{{ test_case_to_run }} ansible_connection=local"
-  with_first_found: "{{ test_items }}"
+  with_first_found:
+    - files: "{{ test_items|default([]) }}"
+      skip: true
   loop_control:
     loop_var: test_case_to_run
