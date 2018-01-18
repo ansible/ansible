@@ -74,6 +74,20 @@ class PamdRuleTestCase(unittest.TestCase):
         module_string = re.sub(' +', ' ', str(module).replace('\t', ' '))
         self.assertEqual(rule, module_string.rstrip())
 
+    def test_slash_in_args(self):
+        rule = "auth sufficient /lib64/security/pam_duo.so".rstrip()
+        module = PamdRule.rulefromstring(stringline=rule)
+        module_string = re.sub(' +', ' ', str(module).replace('\t', ' '))
+        self.assertEqual(rule, module_string.rstrip())
+        self.assertEqual('', module.get_module_args_as_string())
+
+    def test_slash_in_args_more(self):
+        rule = "auth [success=1 default=ignore] /lib64/security/pam_duo.so".rstrip()
+        module = PamdRule.rulefromstring(stringline=rule)
+        module_string = re.sub(' +', ' ', str(module).replace('\t', ' '))
+        self.assertEqual(rule, module_string.rstrip())
+        self.assertEqual('', module.get_module_args_as_string())
+
 
 class PamdServiceTestCase(unittest.TestCase):
     def setUp(self):
@@ -141,6 +155,13 @@ session   \trequired\tpam_unix.so"""
     def test_update_rule_module_path(self):
         old_rule = PamdRule.rulefromstring('auth      	required	pam_env.so')
         new_rule = PamdRule.rulefromstring('session      	required	pam_limits.so')
+        update_rule(self.pamd, old_rule, new_rule)
+        self.assertIn(str(new_rule).rstrip(), str(self.pamd))
+        self.assertNotIn(str(old_rule).rstrip(), str(self.pamd))
+
+    def test_update_rule_module_path_slash(self):
+        old_rule = PamdRule.rulefromstring('auth      	required	pam_env.so')
+        new_rule = PamdRule.rulefromstring('auth      	required	/lib64/security/pam_duo.so')
         update_rule(self.pamd, old_rule, new_rule)
         self.assertIn(str(new_rule).rstrip(), str(self.pamd))
         self.assertNotIn(str(old_rule).rstrip(), str(self.pamd))
