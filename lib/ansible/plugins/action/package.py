@@ -39,6 +39,8 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        tmp = self._connection._shell.tempdir
+
         module = self._task.args.get('use', 'auto')
 
         if module == 'auto':
@@ -76,6 +78,6 @@ class ActionModule(ActionBase):
         finally:
             if not self._task.async_val:
                 # remove a temporary path we created
-                self._remove_tmp_path(self._connection._shell.tempdir)
+                self._remove_tmp_path(tmp)
 
         return result

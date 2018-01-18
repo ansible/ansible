@@ -15,6 +15,8 @@ class ActionModule(ActionBase):
         self._supports_async = True
         results = super(ActionModule, self).run(tmp, task_vars)
 
+        tmp = self._connection._shell.tempdir
+
         # Command module has a special config option to turn off the command nanny warnings
         if 'warn' not in self._task.args:
             self._task.args['warn'] = C.COMMAND_WARNINGS
@@ -24,6 +26,6 @@ class ActionModule(ActionBase):
 
         if not wrap_async:
             # remove a temporary path we created
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(tmp)
 
         return results
