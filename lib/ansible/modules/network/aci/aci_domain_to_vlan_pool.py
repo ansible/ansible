@@ -26,12 +26,6 @@ notes:
 - The C(domain) and C(vlan_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_vlan_pool) can be used for these.
 options:
-  allocation_mode:
-    description:
-    - The method used for allocating VLANs to resources.
-    choices: [ dynamic, static]
-    required: yes
-    aliases: [ mode ]
   domain:
     description:
     - Name of the domain being associated with the VLAN Pool.
@@ -44,6 +38,12 @@ options:
     description:
     - The name of the pool.
     aliases: [ pool_name, vlan_pool ]
+  pool_allocation_mode:
+    description:
+    - The method used for allocating VLANs to resources.
+    choices: [ dynamic, static]
+    required: yes
+    aliases: [ allocation_mode, mode ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

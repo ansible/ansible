@@ -26,12 +26,6 @@ notes:
 - The C(domain) and C(encap_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_encap_pool) can be used for these.
 options:
-  allocation_mode:
-    description:
-    - The method used for allocating encaps to resources.
-    - Only vlan and vsan support allocation modes.
-    choices: [ dynamic, static]
-    aliases: [ mode ]
   domain:
     description:
     - Name of the domain being associated with the Encap Pool.
@@ -44,6 +38,12 @@ options:
     description:
     - The name of the pool.
     aliases: [ pool_name ]
+  pool_allocation_mode:
+    description:
+    - The method used for allocating encaps to resources.
+    - Only vlan and vsan support allocation modes.
+    choices: [ dynamic, static]
+    aliases: [ allocation_mode, mode ]
   pool_type:
     description:
     - The encap type of C(pool).

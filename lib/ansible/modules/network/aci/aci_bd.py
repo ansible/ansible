@@ -237,9 +237,10 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),
         vrf=dict(type='str', aliases=['vrf_name']),
         gateway_ip=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         scope=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         subnet_mask=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

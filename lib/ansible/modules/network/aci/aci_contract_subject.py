@@ -149,9 +149,10 @@ def main():
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         directive=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         filter=dict(type='str', aliases=['filter_name'], removed_in_version='2.4'),  # Deprecated starting from v2.4
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
