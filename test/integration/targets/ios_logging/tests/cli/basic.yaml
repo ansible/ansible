@@ -144,3 +144,17 @@
       - '"logging host 172.16.0.1" in result.commands'
       - '"logging facility local6" in result.commands'
       - '"logging trap warnings" in result.commands'
+
+- name: Configure logging trap (idempotent)
+  ios_logging:
+    dest: host
+    name: 172.16.0.1
+    facility: local6
+    level: warnings
+    trap: warnings
+    state: present
+  register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
