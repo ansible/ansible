@@ -44,7 +44,6 @@ options:
         See examples.
     required: false
     default: null
-    aliases: ['waitfor']
     version_added: "2.2"
   match:
     description:
