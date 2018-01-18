@@ -408,18 +408,12 @@ class Task(Base, Conditional, Taggable, Become):
         Generic logic to get the attribute or parent attribute for a task value.
         '''
 
-        extend = self._valid_attrs[attr].extend
-        prepend = self._valid_attrs[attr].prepend
+        value = None
         try:
             value = self._attributes[attr]
             if self._parent and (value is None or extend):
-                if getattr(self._parent, 'statically_loaded', True):
-                    # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
-                        parent_value = self._parent._get_parent_attribute(attr)
-                    else:
-                        parent_value = self._parent._attributes.get(attr, None)
-
+                if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
+                    parent_value = getattr(self._parent, attr, None)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:
@@ -436,6 +430,12 @@ class Task(Base, Conditional, Taggable, Become):
         if value is None:
             value = C.ANY_ERRORS_FATAL
         return value
+
+    def _get_attr_environment(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def get_dep_chain(self):
         if self._parent:
