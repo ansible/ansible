@@ -35,7 +35,6 @@ if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
 
 exec_wrapper = br'''
-#Requires -Version 3.0
 begin {
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
@@ -566,7 +565,6 @@ namespace Ansible.Shell
 "@
 
 $exec_wrapper = {
-#Requires -Version 3.0
 $DebugPreference = "Continue"
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2
@@ -835,7 +833,6 @@ $ErrorActionPreference = "Stop"
 # return asyncresult to controller
 
 $exec_wrapper = {
-#Requires -Version 3.0
 $DebugPreference = "Continue"
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2
