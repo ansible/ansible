@@ -54,6 +54,12 @@
 
   - assert: *true
 
+  - name: "Conf2 Idempotence"
+    nxos_udld_interface: *conf2
+    register: result
+
+  - assert: *false
+
   - name: Remove the config
     nxos_udld_interface: &remove
       interface: "{{ intname }}"
