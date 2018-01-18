@@ -1,6 +1,16 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.4.4"></a>
+
+## 2.4.4 "Dancing Days" - TBD
+
+### Bugfixes
+* Fix `win_script` to work with large arguments and removed uneeded function
+  that produces errors and was not needed
+  (https://github.com/ansible/ansible/pull/33855)
+
+
 <a id="2.4.3"></a>
 
 ## 2.4.3 "Dancing Days" - 2018-01-31
