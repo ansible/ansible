@@ -219,7 +219,7 @@ class AnsibleVultrDnsRecord(Vultr):
         name = self.module.params.get('name')
         record_type = self.module.params.get('record_type')
 
-        result = None
+        result = {}
         for record in records or []:
             if record.get('type') != record_type:
                 continue
@@ -234,7 +234,7 @@ class AnsibleVultrDnsRecord(Vultr):
                 elif record.get('data') == data:
                     return record
 
-        return result if result else {}
+        return result
 
     def present_record(self):
         record = self.get_record()
