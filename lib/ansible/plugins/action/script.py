@@ -22,8 +22,9 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionDone, AnsibleActionFail, AnsibleActionSkip
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
+from ansible.plugins.shell.powershell import exec_wrapper
 
 
 class ActionModule(ActionBase):
@@ -114,9 +115,14 @@ class ActionModule(ActionBase):
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
             exec_data = None
-            # HACK: come up with a sane way to pass around env outside the command
+            # WinRM requires a special wrapper to work with environment variables
             if self._connection.transport == "winrm":
-                exec_data = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
+                pay = self._connection._create_raw_wrapper_payload(script_cmd,
+                                                                   env_dict)
+                exec_data = exec_wrapper.replace(b"$json_raw = ''",
+                                                 b"$json_raw = @'\r\n%s\r\n'@"
+                                                 % to_bytes(pay))
+                script_cmd = "-"
 
             result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
 
