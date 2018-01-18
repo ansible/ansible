@@ -74,13 +74,15 @@ def _load_conf_from_file(conf_path):
     display.vvv('conf file: {0}'.format(conf_path))
 
     if not os.path.exists(conf_path):
-        raise AnsibleError('Conjur configuration file `{0}` was not found'.format(conf_path))
+        raise AnsibleError('Conjur configuration file `{0}` was not found on the controlling host'
+                           .format(conf_path))
 
     display.vvvv('Loading configuration from: {0}'.format(conf_path))
     with open(conf_path) as f:
         config = yaml.safe_load(f.read())
         if 'account' not in config or 'appliance_url' not in config:
-            raise AnsibleError('{0} must contain an `account` and `appliance_url` entry'.format(conf_path))
+            raise AnsibleError('{0} on the controlling host must contain an `account` and `appliance_url` entry'
+                               .format(conf_path))
         return config
 
 
@@ -89,7 +91,8 @@ def _load_identity_from_file(identity_path, appliance_url):
     display.vvvv('identity file: {0}'.format(identity_path))
 
     if not os.path.exists(identity_path):
-        raise AnsibleError('Conjur identity file `{0}` was not found'.format(identity_path))
+        raise AnsibleError('Conjur identity file `{0}` was not found on the controlling host'
+                           .format(identity_path))
 
     display.vvvv('Loading identity from: {0} for {1}'.format(identity_path, appliance_url))
 
@@ -97,11 +100,13 @@ def _load_identity_from_file(identity_path, appliance_url):
     identity = netrc(identity_path)
 
     if identity.authenticators(conjur_authn_url) is None:
-        raise AnsibleError('The netrc file does not contain an entry for: {0}'.format(conjur_authn_url))
+        raise AnsibleError('The netrc file on the controlling host does not contain an entry for: {0}'
+                           .format(conjur_authn_url))
 
     id, account, api_key = identity.authenticators(conjur_authn_url)
     if not id or not api_key:
-        raise AnsibleError('{0} must contain a `login` and `password` entry for {1}'.format(identity_path, appliance_url))
+        raise AnsibleError('{0} on the controlling host must contain a `login` and `password` entry for {1}'
+                           .format(identity_path, appliance_url))
 
     return {'id': id, 'api_key': api_key}
 
@@ -137,7 +142,8 @@ def _fetch_conjur_variable(conjur_variable, token, conjur_url, account):
     if response.getcode() == 401:
         raise AnsibleError('Conjur request has invalid authorization credentials')
     if response.getcode() == 403:
-        raise AnsibleError('Conjur host does not have authorization to retrieve {0}'.format(conjur_variable))
+        raise AnsibleError('The controlling host\'s Conjur identity does not have authorization to retrieve {0}'
+                           .format(conjur_variable))
     if response.getcode() == 404:
         raise AnsibleError('The variable {0} does not exist'.format(conjur_variable))
 
