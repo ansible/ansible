@@ -1,11 +1,12 @@
 ---
 - name: test update or add another dns record in check mode
   vr_dns_record:
-    name: "{{ item.name }}"
+    name: "{{ item.name | default(omit) }}"
     domain: "{{ vr_dns_domain_name }}"
-    data: "{{ item.update_data }}"
+    data: "{{ item.update_data | default(item.data) }}"
     ttl: "{{ item.update_ttl | default(omit) }}"
     record_type: "{{ item.record_type | default(omit) }}"
+    priority: "{{ item.update_priority | default(omit) }}"
     multiple: "{{ item.multiple | default(omit) }}"
   check_mode: yes
   register: result
@@ -14,9 +15,10 @@
     that:
     - result is changed
     - result.vultr_dns_record.data == "{{ item.data }}"
-    - result.vultr_dns_record.name == "{{ item.name }}"
+    - result.vultr_dns_record.name == "{{ item.name | default("") }}"
     - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"
     - result.vultr_dns_record.ttl == {{ item.ttl | default(300) }}
+    - result.vultr_dns_record.priority == {{ item.priority | default(0) }}
   when: item.multiple is undefined or item.multiple == false
 - name: verify test add another dns record in check mode
   assert:
@@ -27,36 +29,40 @@
 
 - name: test update or add another dns record
   vr_dns_record:
-    name: "{{ item.name }}"
+    name: "{{ item.name | default(omit) }}"
     domain: "{{ vr_dns_domain_name }}"
-    data: "{{ item.update_data }}"
+    data: "{{ item.update_data | default(item.data) }}"
     ttl: "{{ item.update_ttl | default(omit) }}"
     record_type: "{{ item.record_type | default(omit) }}"
+    priority: "{{ item.update_priority | default(omit) }}"
     multiple: "{{ item.multiple | default(omit) }}"
   register: result
 - name: verify test update a dns record
   assert:
     that:
     - result is changed
-    - result.vultr_dns_record.data == "{{ item.update_data }}"
-    - result.vultr_dns_record.name == "{{ item.name }}"
+    - result.vultr_dns_record.data == "{{ item.update_data | default(item.data) }}"
+    - result.vultr_dns_record.name == "{{ item.name | default("") }}"
     - result.vultr_dns_record.ttl == {{ item.update_ttl | default(300) }}
     - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"
+    - result.vultr_dns_record.priority == {{ item.update_priority | default(0) }}
 
 - name: test update or add another dns record idempotence
   vr_dns_record:
-    name: "{{ item.name }}"
+    name: "{{ item.name | default(omit) }}"
     domain: "{{ vr_dns_domain_name }}"
-    data: "{{ item.update_data }}"
+    data: "{{ item.update_data | default(item.data) }}"
     ttl: "{{ item.update_ttl | default(omit) }}"
     record_type: "{{ item.record_type | default(omit) }}"
+    priority: "{{ item.update_priority | default(omit) }}"
     multiple: "{{ item.multiple | default(omit) }}"
   register: result
 - name: verify test update a dns record idempotence
   assert:
     that:
     - result is not changed
-    - result.vultr_dns_record.data == "{{ item.update_data }}"
-    - result.vultr_dns_record.name == "{{ item.name }}"
+    - result.vultr_dns_record.data == "{{ item.update_data | default(item.data) }}"
+    - result.vultr_dns_record.name == "{{ item.name | default("") }}"
     - result.vultr_dns_record.ttl == {{ item.update_ttl | default(300) }}
     - result.vultr_dns_record.record_type == "{{ item.record_type | default('A') }}"
+    - result.vultr_dns_record.priority == {{ item.update_priority | default(0) }}
