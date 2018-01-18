@@ -1,6 +1,12 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.3.4"></a>
+
+## 2.3.4 "Ramble On" - TBD
+* Flush stdin when passing the become password.  Fixes some cases of timeout on
+  Python3 with the ssh connection plugin: https://github.com/ansible/ansible/pull/35049
+
 <a id="2.3.3"></a>
 
 ## 2.3.3 "Ramble On" - TBD
