@@ -24,7 +24,4 @@ class ActionModule(ActionBase):
                                                                    shared_loader_obj=self._shared_loader_obj)
         result = command_action.run(task_vars=task_vars)
 
-        # remove a temporary path we created
-        self._remove_tmp_path(self._connection._shell.tempdir)
-
         return result
