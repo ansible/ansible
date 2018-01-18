@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/nxos_banner no-motd test"
+
 - name: Setup
   nxos_banner:
     banner: motd
@@ -6,13 +8,13 @@
       Junk motd banner
       over multiple lines
     state: present
-    provider: "{{ connection }}"
+    provider: "{{ cli }}"
 
 - name: remove motd
   nxos_banner: &rm-motd
     banner: motd
     state: absent
-    provider: "{{ connection }}"
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -29,6 +31,4 @@
       - "result.changed == false"
       - "result.commands | length == 0"
 
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"
+- debug: msg="END cli/nxos_banner no-motd test"
