@@ -27,7 +27,7 @@ options:
     default: present
   name:
     description:
-    - The name of the virtual NIC template.
+    - The name of the vNIC template.
     - This name can be between 1 and 16 alphanumeric characters.
     - "You cannot use spaces or any special characters other than - (hyphen), \"_\" (underscore), : (colon), and . (period)."
     - You cannot change this name after the template is created.
@@ -45,6 +45,16 @@ options:
     - The name of the fabric interconnect that vNICs created with this template are associated with.
     choices: [A, B]
     default: A
+The fabric interconnect associated with the component.
+
+If you want vNICs created from this template to be able to access the second fabric interconnect if the default one is unavailable, check the Enable Failover check box.
+
+Note
+Do not enable vNIC fabric failover under the following circumstances:
+
+If the Cisco UCS domain is running in Ethernet switch mode. vNIC fabric failover is not supported in that mode. If all Ethernet uplinks on one fabric interconnect fail, the vNICs do not fail over to the other.
+
+If you plan to associate one or more vNICs created from this template to a server with an adapter that does not support fabric failover, such as the Cisco UCS 82598KR-CI 10-Gigabit Ethernet Adapter. If so, Cisco UCS Manager generates a configuration fault when you associate the service profile with the server.
   redundancy_type:
     description:
     - The Redundancy Type used for template pairing from the Primary or Secondary redundancy template.
@@ -54,10 +64,32 @@ options:
     - "none - Legacy vNIC template behavior. Select this option if you do not want to use redundancy."
     choices: [none, primary, secondary]
     default: none
+target:
+A list of the possible targets for vNICs created from this template. The target you choose determines whether or not Cisco UCS Manager automatically creates a VM-FEX port profile with the appropriate settings for the vNIC template. This can be one of the following:
+
+Adapter—The vNICs apply to all adapters. No VM-FEX port profile is created if you choose this option.
+
+VM—The vNICs apply to all virtual machines. A VM-FEX port profile is created if you choose this option.
   vlan:
     description:
     - The VLAN to associate with vNICs created from this template.
     default: default
+VLANs Area
+Name	Description
+Select column
+
+Check the check box in this column for each VLAN that you want to use.
+
+Note
+VLANs and PVLANs can not be assigned to the same vNIC.
+
+Name column
+
+The name of the VLAN.
+
+Native VLAN column
+
+To designate one of the VLANs as the native VLAN, click the radio button in this column.
   template_type:
     description:
     - The Template Type field.
@@ -86,6 +118,63 @@ options:
     description:
     - The statistics collection policy that is associated with vNICs created from this template.
     default: default
+VLANs and VLAN Groups Properties
+Name	Description
+CDN Source field
+
+This can be one of the following options:
+
+vNIC Name
+
+—Uses the vNIC template name of the vNIC instance as the CDN name. This is the default option.
+User Defined
+
+— Displays the CDN Name field for you to enter a user-defined CDN name for the vNIC template.
+MTU field
+
+The maximum transmission unit, or packet size, that vNICs created from this vNIC template should use.
+
+Enter an integer between 1500 and 9000.
+
+Note
+If the vNIC template has an associated QoS policy, the MTU specified here must be equal to or less than the MTU specified in the associated QoS system class. If this MTU value exceeds the MTU value in the QoS system class, packets may be dropped during data transmission.
+
+MAC Pool drop-down list
+
+The MAC address pool that vNICs created from this vNIC template should use.
+
+QoS Policy drop-down list
+
+The quality of service policy that vNICs created from this vNIC template should use.
+
+Network Control Policy drop-down list
+
+The network control policy that vNICs created from this vNIC template should use.
+
+Pin Group drop-down list
+
+The LAN pin group that vNICs created from this vNIC template should use.
+
+Stats Threshold Policy drop-down list
+
+The statistics collection policy that vNICs created from this vNIC template should use.
+Connection Policies Area
+Name	Description
+Connection Policy radio button
+
+Choose the type of connection policy to associate with the vNIC. This can be one of the following:
+
+Dynamic vNIC
+
+usNIC
+
+VMQ
+
+Connection Policy drop-down list
+
+Choose the connection policy that the vNIC should use. The values displayed depend on the type of connection policy chosen.
+
+You can also create a new connection policy in this area.
   org_dn:
     description:
     - Org dn (distinguished name)
