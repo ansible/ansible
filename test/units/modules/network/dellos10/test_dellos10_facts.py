@@ -104,5 +104,7 @@ class TestDellos10Facts(TestDellos10Module):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('ethernet1/1/8', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(['mgmt1/1/1', 'ethernet1/1/4', 'ethernet1/1/2', 'ethernet1/1/3', 'ethernet1/1/1'], list(ansible_facts['ansible_net_neighbors'].keys()))
+        self.assertEquals(
+                            sorted(['mgmt1/1/1', 'ethernet1/1/4', 'ethernet1/1/2', 'ethernet1/1/3', 'ethernet1/1/1']),
+                            sorted(list(ansible_facts['ansible_net_neighbors'].keys())))
         self.assertIn('ansible_net_interfaces', ansible_facts)
