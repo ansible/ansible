@@ -59,7 +59,7 @@ options:
     path:
         required: true
         description:
-            - Name of the folder in which the generated OpenSSL certificate signing request will be written
+            - Name of the file into which the generated OpenSSL certificate signing request will be written
     subject:
         required: false
         description:
