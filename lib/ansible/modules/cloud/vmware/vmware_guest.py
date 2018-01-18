@@ -1185,7 +1185,7 @@ class PyVmomiHelper(object):
 
         if resource_pool is None:
             self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
-      
+
         return resource_pool
 
     def deploy_vm(self):
