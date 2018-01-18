@@ -226,6 +226,7 @@ def parse_vgs(data):
         })
     return vgs
 
+
 def parse_pvs(data):
     pvs = []
     for line in data.splitlines():
@@ -237,6 +238,7 @@ def parse_pvs(data):
             'ext_size': int(decimal_point.match(parts[3]).group(1))
         })
     return pvs
+
 
 def get_lvm_version(module):
     ver_cmd = module.get_bin_path("lvm", required=True)
@@ -354,21 +356,21 @@ def main():
     this_vg = vgs[0]
 
     if pvs != "":
-      pvs_arr = pvs.split(" ")
-      this_pvs_total = 0
-      for onepv in pvs_arr:
-        pvs_cmd = module.get_bin_path("pvs", required=True)
-        rc, current_pvs, err = module.run_command(
-            "%s --noheadings -o pv_name,size,free,vg_extent_size --units %s --separator ';' %s" % (pvs_cmd, unit, onepv))
-    
-        if rc != 0:
-            if state == 'absent':
-                module.exit_json(changed=False, stdout="Physical volume %s does not exist." % onepv)
-            else:
-                module.fail_json(msg="Physical volume %s does not exist." % onepv, rc=rc, err=err)
-    
-        pvs_single = parse_pvs(current_pvs)
-        this_pvs_total += pvs_single[0]['size']
+        pvs_arr = pvs.split(" ")
+        this_pvs_total = 0
+        for onepv in pvs_arr:
+            pvs_cmd = module.get_bin_path("pvs", required=True)
+            rc, current_pvs, err = module.run_command(
+                "%s --noheadings -o pv_name,size,free,vg_extent_size --units %s --separator ';' %s" % (pvs_cmd, unit, onepv))
+
+            if rc != 0:
+                if state == 'absent':
+                    module.exit_json(changed=False, stdout="Physical volume %s does not exist." % onepv)
+                else:
+                    module.fail_json(msg="Physical volume %s does not exist." % onepv, rc=rc, err=err)
+
+            pvs_single = parse_pvs(current_pvs)
+            this_pvs_total += pvs_single[0]['size']
     # Get information on logical volume requested
     lvs_cmd = module.get_bin_path("lvs", required=True)
     rc, current_lvs, err = module.run_command(
@@ -436,9 +438,9 @@ def main():
                 size_requested = size_percent * this_vg['size'] / 100
             elif size_whole == 'PVS':
                 if 'this_pvs_total' in locals():
-                  size_requested = size_percent * this_pvs_total / 100
+                    size_requested = size_percent * this_pvs_total / 100
                 else:
-                  module.fail_json(msg="You must specify 'pvs' when using '%PVS' in 'size'.")
+                    module.fail_json(msg="You must specify 'pvs' when using '%PVS' in 'size'.")
             else:  # size_whole == 'FREE':
                 size_requested = size_percent * this_vg['free'] / 100
             if '+' in size:
@@ -528,4 +530,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
