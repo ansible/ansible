@@ -2,6 +2,9 @@
 # Copyright (c) 2018 Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -157,11 +160,12 @@ def ipaddr(module, key, filtered_keys=None):
     objects = list()
     for item in module.params[key]:
         objects.append(dict([(k, v) for k, v in iteritems(item) if v is not None and k not in filtered_keys]))
-    import q; q(objects)
     return objects
+
 
 def ipv4addrs(module):
     return ipaddr(module, 'ipv4addrs', filtered_keys=['address'])
+
 
 def ipv6addrs(module):
     return ipaddr(module, 'ipv6addrs', filtered_keys=['address'])

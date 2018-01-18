@@ -2,6 +2,9 @@
 # Copyright (c) 2018 Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -28,7 +31,7 @@ options:
     required: true
     aliases:
       - view
-  network_view
+  network_view:
     description:
       - Specifies the name of the network view to assign the configured
         DNS view to.  The network view must already be configured on the

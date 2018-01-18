@@ -57,9 +57,8 @@ def get_provider_spec():
 def get_connector(module):
     if not HAS_INFOBLOX_CLIENT:
         module.fail_json(msg='infoblox-client is required but does not appear '
-            'to be installed.  It can be installed using the command '
-            '`pip install infoblox-client`'
-        )
+                             'to be installed.  It can be installed using the '
+                             'command `pip install infoblox-client`')
     return Connector(module.params['provider'])
 
 
@@ -92,19 +91,6 @@ class WapiBase(object):
 
     def run(self, ib_obj_type, ib_spec):
         raise NotImplementedError
-
-class WapiFacts(WapiBase):
-
-    def run(self, ib_obj_type, ib_spec=None, return_fields=None):
-        return_fields = return_fields or list()
-        if ib_spec is not None:
-            obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
-            return self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-        else:
-            kwargs = {}
-            if return_fields:
-                kwargs['return_fields'] = return_fields
-            return self.get_object(ib_obj_type, **kwargs)
 
 
 class Wapi(WapiBase):
@@ -278,5 +264,3 @@ class Wapi(WapiBase):
 
         else:
             return True
-
-
