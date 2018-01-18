@@ -692,6 +692,10 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
             except:
                 pass
 
+        # if not a string type, convert and make sure it's a text string
+        if isinstance(tags, int):
+            tags = to_text(tags)
+
         # if string, we only care that a tag of that name exists
         if isinstance(tags, str):
             filters.update({"tag-key": tags})
@@ -709,6 +713,10 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
         if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
             filters.update(dict(("tag:" + tn, tv) for (tn, tv) in tags.items()))
+
+        # lets check to see if the filters dict is empty, if so then stop
+        if not filters:
+            module.fail_json(msg="Filters based on tag is empty => tags: %s" % (tags))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
