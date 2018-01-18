@@ -144,7 +144,6 @@ def is_switchport(name, module):
     return False
 
 
-
 def interface_is_portchannel(name, module):
     if get_interface_type(name) == 'ethernet':
         config = get_config(module, flags=[' | section interface'])
@@ -296,7 +295,7 @@ def vlan_range_to_list(vlans):
                 break
             if '-' in part:
                 start, stop = (int(i) for i in part.split('-'))
-                result.extend(range(start, stop+1))
+                result.extend(range(start, stop + 1))
             else:
                 result.append(int(part))
     return sorted(result)
