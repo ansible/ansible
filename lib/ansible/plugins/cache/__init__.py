@@ -312,15 +312,12 @@ class InventoryFileCacheModule(BaseFileCacheModule):
         self._plugin = self.get_plugin(plugin_name)
 
     def validate_cache_connection(self):
-        cache_connection_set = True
-        try:
-            cache_connection_set = os.path.exists(self._cache_dir)
-        except TypeError:
-            cache_connection_set = False
         try:
             super(InventoryFileCacheModule, self).validate_cache_connection()
-        except AnsibleError:
+        except AnsibleError as e:
             cache_connection_set = False
+        else:
+            cache_connection_set = True
 
         if not cache_connection_set:
             raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set:\n"
