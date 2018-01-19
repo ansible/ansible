@@ -42,8 +42,8 @@ class InfluxDb():
         return dict(
             hostname=dict(default='localhost', type='str'),
             port=dict(default=8086, type='int'),
-            username=dict(default='root', type='str'),
-            password=dict(default='root', type='str', no_log=True),
+            username=dict(default='root', type='str', aliases=['login_username']),
+            password=dict(default='root', type='str', no_log=True, aliases=['login_password']),
             ssl=dict(default=False, type='bool'),
             validate_certs=dict(default=True, type='bool'),
             timeout=dict(type='int'),
