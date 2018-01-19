@@ -63,6 +63,8 @@ class IncludeRole(TaskInclude):
         self._parent_role = role
         self._role_name = None
         self._role_path = None
+        self._play = None
+        self._role = None
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
@@ -81,6 +83,9 @@ class IncludeRole(TaskInclude):
 
         # save this for later use
         self._role_path = actual_role._role_path
+        self._role = actual_role
+        if myplay is not None:
+            self._play = myplay
 
         # compile role with parent roles as dependencies to ensure they inherit
         # variables
@@ -136,8 +141,15 @@ class IncludeRole(TaskInclude):
         new_me._parent_role = self._parent_role
         new_me._role_name = self._role_name
         new_me._role_path = self._role_path
+        new_me._role = self._role
+        new_me.private = self.private
+        new_me._play = self._play
 
         return new_me
+
+    @property
+    def is_loaded(self):
+        return self._role is not None
 
     def get_include_params(self):
         v = super(IncludeRole, self).get_include_params()
