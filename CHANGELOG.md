@@ -16,6 +16,9 @@ Ansible Changes By Release
 * Updated copy test to create recursive symlink during the test and not have it
   located in the git repo
   (https://github.com/ansible/ansible/pull/35073)
+* Fix Digital Ocean tags data type due to backend API changes no longer
+  acceping integers
+  (https://github.com/ansible/ansible/pull/33486)
 
 
 <a id="2.4.3"></a>
