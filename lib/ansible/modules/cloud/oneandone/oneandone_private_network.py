@@ -56,6 +56,9 @@ options:
   description:
     description:
       - Set a description for the network.
+  datacenter:
+    description:
+      - The identifier of the datacenter where the private network will be created
   network_address:
     description:
       - Set a private network space, i.e. 192.168.1.0
