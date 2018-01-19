@@ -76,8 +76,18 @@ except ImportError:
     pass  # Handled by f5_utils.bigsuds_found
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.f5_utils import bigip_api, bigsuds_found, f5_argument_spec
+from ansible.module_utils.f5_utils import bigip_api, bigsuds_found
 from ansible.module_utils._text import to_native
+
+HAS_DEVEL_IMPORTS = False
+
+try:
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.common import f5_argument_spec
+    HAS_DEVEL_IMPORTS = True
+except ImportError:
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.common import f5_argument_spec
 
 
 def server_exists(api, server):
@@ -136,7 +146,7 @@ def set_virtual_server_state(api, name, server, state):
 
 
 def main():
-    argument_spec = f5_argument_spec()
+    argument_spec = f5_argument_spec
 
     meta_args = dict(
         state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
