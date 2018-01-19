@@ -1,0 +1,37 @@
+---
+- name: >-
+    verify that allow_duplicates prevent include_role to run a role that
+    has already run only if if it does not allow it
+  hosts: testhost
+  pre_tasks: [set_fact: {counter: 0, altcounter: 0, nocounter: 0, cacheable: False}]
+  roles: [honour_duplicates/inccounter, honour_duplicates/altinccounter,
+          honour_duplicates/noinccounter]
+  tasks:
+  - include_role: {name: honour_duplicates/inccounter,    allow_duplicates: false}
+  - include_role: {name: honour_duplicates/altinccounter, allow_duplicates: false}
+  - include_role: {name: honour_duplicates/noinccounter,  allow_duplicates: false}
+  - assert: {that: counter=='1',    msg: "{{counter}} counterfail"}
+  - assert: {that: altcounter=='1', msg: "{{altcounter}} altcounterfail"}
+  - assert: {that: nocounter=='1',  msg: "{{nocounter}} nocounterfail"}
+  - include_role: {name: honour_duplicates/inccounter,    allow_duplicates: true}
+  - include_role: {name: honour_duplicates/altinccounter, allow_duplicates: true}
+  - include_role: {name: honour_duplicates/noinccounter,  allow_duplicates: true}
+  - assert: {that: counter=='2',    msg: "{{counter}} counterfail"}
+  - assert: {that: altcounter=='2', msg: "{{altcounter}} altcounterfail"}
+  - assert: {that: nocounter=='2',  msg: "{{nocounter}} nocounterfail"}
+  - include_role: {name: honour_duplicates/inccounter,    allow_duplicates: false}
+  - include_role: {name: honour_duplicates/altinccounter, allow_duplicates: false}
+  - include_role: {name: honour_duplicates/noinccounter,  allow_duplicates: false}
+  - assert: {that: counter=='2',    msg: "{{counter}} counterfail"}
+  - assert: {that: altcounter=='2', msg: "{{altcounter}} altcounterfail"}
+  - assert: {that: nocounter=='2',  msg: "{{nocounter}} nocounterfail"}
+- name: verify that with include_role, it works same way
+  hosts: testhost
+  pre_tasks:
+  - set_fact: {cacheable: false, counter: 0}
+  - include_role: {name: honour_duplicates/inccounter, allow_duplicates: false}
+  roles: [honour_duplicates/inccounter]
+  tasks:
+  - assert: {that: counter=='1', msg: "counterfailir1 {{counter}}"}
+  - include_role: {name: honour_duplicates/inccounter, allow_duplicates: true}
+  - assert: {that: counter=='2', msg: "counterfailir2 {{counter}}"}

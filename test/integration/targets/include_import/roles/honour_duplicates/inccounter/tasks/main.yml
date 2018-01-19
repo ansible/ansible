@@ -1,0 +1,4 @@
+---
+- set_fact:
+    cacheable: false
+    counter: "{{counter|int+1}}"
