@@ -43,6 +43,10 @@ class TerminalModule(TerminalBase):
         re.compile(br"connection timed out", re.I),
         re.compile(br"[^\r\n]+ not found"),
         re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"Bad mask", re.I),
+        re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
+        re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
+        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I)
     ]
 
     def on_open_shell(self):
