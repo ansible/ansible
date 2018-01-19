@@ -142,7 +142,6 @@ class TestNiosApi(unittest.TestCase):
         self.assertTrue(res['changed'])
         wapi.update_object.assert_called_once_with(ref, kwargs)
 
-
     def test_wapi_extattrs_nochange(self):
         self.module.params = {'provider': None, 'state': 'present', 'name': 'default',
                               'comment': 'test comment', 'extattrs': {'Site': 'test'}}
@@ -239,4 +238,3 @@ class TestNiosApi(unittest.TestCase):
 
         self.assertTrue(res['changed'])
         wapi.update_object.assert_called_once_with(ref, kwargs)
-
