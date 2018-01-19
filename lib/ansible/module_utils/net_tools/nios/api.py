@@ -262,5 +262,4 @@ class Wapi(WapiBase):
                 if current_item != proposed_item:
                     return False
 
-        else:
-            return True
+        return True

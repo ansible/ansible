@@ -39,6 +39,8 @@ options:
         prior to configuring zones.
     required: true
     default: default
+    aliases:
+      - dns_view
   grid_primary:
     description:
       - Configures the grid primary servers for this zone.
@@ -84,17 +86,14 @@ options:
 '''
 
 EXAMPLES = '''
-vars:
-  provider:
-    host: "{{ inventory_hostname_short }}"
-    username: admin
-    password: admin
-
 - name: configure a zone on the system
   nios_zone:
     name: ansible.com
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: update the comment and ext attributes for an existing zone
   nios_zone:
@@ -102,14 +101,20 @@ vars:
     comment: this is an example comment
     extattrs:
       Site: west-dc
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: remove the dns zone
   nios_zone:
     name: ansible.com
-    provider: "{{ provider }}"
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 '''
 
 RETURN = ''' # '''

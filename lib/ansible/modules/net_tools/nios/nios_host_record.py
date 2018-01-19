@@ -105,34 +105,36 @@ options:
 '''
 
 EXAMPLES = '''
-vars:
-  provider:
-    host: "{{ inventory_hostname_short }}"
-    username: admin
-    password: admin
-
 - name: configure an ipv4 host record
   nios_host_record:
     name: host.ansible.com
     ipv4:
       address: 192.168.10.1
-    provider: "{{ provider }}"
     state: present
-
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 - name: add a comment to an existing host record
   nios_host_record:
     name: host.ansible.com
     ipv4:
       address: 192.168.10.1
     comment: this is a test comment
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: remove a host record from the system
   nios_host_record:
     name: host.ansible.com
-    provider: "{{ provider }}"
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 '''
 
 RETURN = ''' # '''

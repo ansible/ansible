@@ -59,30 +59,33 @@ options:
 '''
 
 EXAMPLES = '''
-vars:
-  provider:
-    host: "{{ inventory_hostname_short }}"
-    username: admin
-    password: admin
-
 - name: configure a new network view
   nios_network_view:
     name: ansible
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: update the comment for network view
   nios_network_view:
     name: ansible
     comment: this is an example comment
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: remove the network view
   nios_network_view:
     name: ansible
-    provider: "{{ provider }}"
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 '''
 
 RETURN = ''' # '''

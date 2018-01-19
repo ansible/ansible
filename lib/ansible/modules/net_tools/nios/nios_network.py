@@ -101,18 +101,15 @@ options:
 '''
 
 EXAMPLES = '''
-vars:
-  provider:
-    host: "{{ inventory_hostname_short }}"
-    username: admin
-    password: admin
-
 - name: configure a network
   nios_network:
     network: 192.168.10.0/24
     comment: this is a test comment
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: set dhcp options for a network
   nios_network:
@@ -121,14 +118,20 @@ vars:
     options:
       - name: domain-name
         value: ansible.com
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: remove a network
   nios_network:
     network: 192.168.10.0/24
-    provider: "{{ provider }}"
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 '''
 
 RETURN = ''' # '''

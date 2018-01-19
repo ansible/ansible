@@ -64,30 +64,33 @@ options:
 '''
 
 EXAMPLES = '''
-vars:
-  provider:
-    host: "{{ inventory_hostname_short }}"
-    username: admin
-    password: admin
-
 - name: configure a new dns view instance
   nios_dns_view:
     name: ansible-dns
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: update the comment for dns view
   nios_dns_view:
     name: ansible-dns
     comment: this is an example comment
-    provider: "{{ provider }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 
 - name: remove the dns view instance
   nios_dns_view:
     name: ansible-dns
-    provider: "{{ provider }}"
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
 '''
 
 RETURN = ''' # '''
