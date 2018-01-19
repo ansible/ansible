@@ -1,18 +1,14 @@
 #!/usr/bin/python
 
 # Copyright: (c) 2017, Giovanni Sciortino (@giovannisciortino)
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
-ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
-
 __metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -26,42 +22,26 @@ author: Giovanni Sciortino (@giovannisciortino)
 notes:
   - In order to manage RHSM repositories the system must be already registered
     to RHSM manually or using the ansible module redhat_subscription.
-  - One option between name and list must be defined, both options in the
-    same task must not be defined.
 
 requirements:
   - subscription-manager
 options:
   state:
     description:
-      - If state is equal to enabled or disabled, indicates the desired
+      - If state is equal to present or disabled, indicates the desired
         repository state.
-      - If state is equal to list, list_enabled, or list_disabled, list
-        C(all)/C(enabled)/C(disabled) repositories.
-    choices: [enabled, disabled, list, list_enabled, list_disabled]
+    choices: [present, absent]
     required: True
-    default: "enabled"
+    default: "present"
   name:
     description:
       - The ID of repositories to enable.
       - To operate on several repositories this can accept a comma separated
         list or a YAML list.
-      - If state is equal to enabled or disabled, this option is required.
-      - If state is not equal to enabled or disabled, this option must not be used.
-    required: False
+    required: True
 '''
 
 EXAMPLES = '''
-- name: List all RHSM repositories.
-  rhsm_repository:
-    state: list
-  register: rhsm_repository
-
-- name: List enabled RHSM repositories.
-  rhsm_repository:
-    state: list_enabled
-  register: enabled_rhsm_repository
-
 - name: Enable a RHSM repository
   rhsm_repository:
     name: rhel-7-server-rpms
@@ -179,12 +159,6 @@ def get_repository_list(module, list_parameter):
     return repo_result
 
 
-def repository_list(module, list_parameter):
-    # Get RHSM repository list and format it for the user
-    repo = get_repository_list(module, list_parameter)
-    module.exit_json(changed=False, repositories=repo)
-
-
 def repository_modify(module, state, name):
     name = set(name)
     current_repo_list = get_repository_list(module, 'list')
@@ -238,26 +212,16 @@ def repository_modify(module, state, name):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='list'),
-            state=dict(
-                choices=['enabled', 'disabled', 'list', 'list_enabled', 'list_disabled'],
-                default='enabled'),
+            name=dict(type='list', required=True),
+            state=dict(choices=['enabled', 'disabled'], default='enabled'),
         ),
         supports_check_mode=True,
     )
     name = module.params['name']
     state = module.params['state']
 
-    if state in ['enabled', 'disabled'] and not name:
-        module.fail_json(msg="If state is equal to enabled or disabled, this option name is required.")
+    repository_modify(module, state, name)
 
-    if state in ['list', 'list_enabled', 'list_disabled'] and name:
-        module.fail_json(msg="If state is equal to list, list_enabled or list_disabled, the option name must be null.")
-
-    if state in ['list', 'list_enabled', 'list_disabled']:
-        repository_list(module, state)
-    else:
-        repository_modify(module, state, name)
 
 if __name__ == '__main__':
     main()
