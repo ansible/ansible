@@ -334,6 +334,8 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.network import NetworkManagementClient
+    from azure.mgmt.resource import ResourceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -541,10 +543,23 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             state=dict()
         )
 
+        self.network_client = None
+        self.network_models = None
+        self.resource_client = None
+
         super(AzureRMSecurityGroup, self).__init__(self.module_arg_spec,
                                                    supports_check_mode=True)
 
+
     def exec_module(self, **kwargs):
+        self.network_client = self.get_mgmt_svc_client(NetworkManagementClient,
+                                                       base_url=self._cloud_environment.endpoints.resource_manager,
+                                                       api_version='2017-06-01')
+        self.network_models = NetworkManagementClient.models(self.network_client.api_version)
+
+        self.resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
+                                                        base_url=self._cloud_environment.endpoints.resource_manager,
+                                                        api_version='2017-05-10')
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -552,7 +567,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         changed = False
         results = dict()
 
-        resource_group = self.get_resource_group(self.resource_group)
+        resource_group = self.get_resource_group(self.resource_group, self.resource_client)
         if not self.location:
             # Set default location
             self.location = resource_group.location
@@ -572,7 +587,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
         try:
-            nsg = self.network_client.network_security_groups.get(self.resource_group, self.name)
+            nsg = self.network_client.network_security_groups.get(resource_group_name=self.resource_group, network_security_group_name=self.name)
             results = create_network_security_group_dict(nsg)
             self.log("Found security group:")
             self.log(results, pretty_print=True)
@@ -694,9 +709,9 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         parameters.location = results.get('location')
 
         try:
-            poller = self.network_client.network_security_groups.create_or_update(self.resource_group,
-                                                                                  self.name,
-                                                                                  parameters)
+            poller = self.network_client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                  network_security_group_name=self.name,
+                                                                                  parameters=parameters)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
@@ -704,7 +719,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def delete(self):
         try:
-            poller = self.network_client.network_security_groups.delete(self.resource_group, self.name)
+            poller = self.network_client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))
