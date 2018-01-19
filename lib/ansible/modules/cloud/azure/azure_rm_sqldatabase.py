@@ -409,19 +409,19 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if ('location' in self.parameters) and (self.parameters['location'] != old_response['location']):
                     self.to_do = Actions.Update
                 if ('read_scale' in self.parameters) and
-                   (self.parameters['read_scale'] != old_response['read_scale']):
+                        (self.parameters['read_scale'] != old_response['read_scale']):
                     self.to_do = Actions.Update
                 if ('requested_service_objective_id' in self.parameters) and
-                   (self.parameters['requested_service_objective_id'] != old_response['requested_service_objective_id']):
+                        (self.parameters['requested_service_objective_id'] != old_response['requested_service_objective_id']):
                     self.to_do = Actions.Update
                 if ('requested_service_objective_name' in self.parameters) and 
-                   (self.parameters['requested_service_objective_name'] != old_response['requested_service_objective_name']):
+                        (self.parameters['requested_service_objective_name'] != old_response['requested_service_objective_name']):
                     self.to_do = Actions.Update
                 if ('max_size_bytes' in self.parameters) and
-                   (self.parameters['max_size_bytes'] != old_response['max_size_bytes']):
+                        (self.parameters['max_size_bytes'] != old_response['max_size_bytes']):
                     self.to_do = Actions.Update
                 if ('edition' in self.parameters) and
-                   (self.parameters['edition'] != old_response['edition']):
+                        (self.parameters['edition'] != old_response['edition']):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
