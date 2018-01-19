@@ -38,7 +38,7 @@ class TestNiosApi(unittest.TestCase):
         self.assertIn('provider', res)
         self.assertIn('options', res['provider'])
         returned_options = res['provider']['options']
-        self.assertItemsEqual(provider_options, returned_options.keys())
+        self.assertEqual(sorted(provider_options), sorted(returned_options.keys()))
 
     def test_wapi_base(self):
         wapi = api.WapiBase(self.module)
