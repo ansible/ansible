@@ -15,8 +15,8 @@
             ],
             "Effect": "Allow",
             "Resource": [
-                "arn:aws:s3:::ansible_test_*",
-                "arn:aws:s3:::ansible_test_*/*"
+                "arn:aws:s3:::ansible-test-*",
+                "arn:aws:s3:::ansible-test-*/*"
             ]
         }
     ]
