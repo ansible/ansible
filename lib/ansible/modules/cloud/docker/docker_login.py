@@ -46,8 +46,7 @@ options:
   email:
     required: False
     description:
-      - "The email address for the registry account. NOTE: private registries may not require this,
-        but Docker Hub requires it."
+      - "The email address for the registry account."
   reauthorize:
     description:
       - Refresh existing authentication found in the configuration file.
