@@ -94,7 +94,7 @@ options:
   vm_provider:
     description:
     - The VM platform for VMM Domains.
-    choices: [ microsoft, openstack, vmware ]
+    choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
@@ -106,9 +106,13 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 VM_PROVIDER_MAPPING = dict(
-    microsoft="uni/vmmp-Microsoft/dom-",
-    openstack="uni/vmmp-OpenStack/dom-",
-    vmware="uni/vmmp-VMware/dom-",
+    cloudfoundry='CloudFoundry',
+    kubernetes='Kubernetes',
+    microsoft='Microsoft',
+    openshift='OpenShift',
+    openstack='OpenStack',
+    redhat='Redhat',
+    vmware='VMware',
 )
 
 
@@ -128,7 +132,7 @@ def main():
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'vmware']),
+        vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
@@ -173,7 +177,7 @@ def main():
 
     # Compile the full domain for URL building
     if domain_type == 'vmm':
-        epg_domain = '{0}{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        epg_domain = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     elif domain_type is not None:
         epg_domain = 'uni/phys-{0}'.format(domain)
     else:

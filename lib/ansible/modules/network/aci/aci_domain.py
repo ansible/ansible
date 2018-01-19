@@ -59,7 +59,7 @@ options:
   vm_provider:
     description:
     - The VM platform for VMM Domains.
-    choices: [ microsoft, openstack, redhat, vmware ]
+    choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
   vswitch:
     description:
     - The virtual switch to use for vmm domains.
@@ -130,10 +130,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VM_PROVIDER_MAPPING = dict(
-    microsoft="Microsoft",
-    openstack="OpenStack",
-    redhat="Redhat",
-    vmware="VMware",
+    cloudfoundry='CloudFoundry',
+    kubernetes='Kubernetes',
+    microsoft='Microsoft',
+    openshift='OpenShift',
+    openstack='OpenStack',
+    redhat='Redhat',
+    vmware='VMware',
 )
 VSWITCH_MAPPING = dict(
     avs='n1kv',
@@ -155,7 +158,7 @@ def main():
         encap_mode=dict(type='str', choices=['unknown', 'vlan', 'vxlan']),
         multicast_address=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'redhat', 'vmware']),
+        vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
         vswitch=dict(type='str', choices=['avs', 'default', 'dvs', 'unknown']),
     )
 
