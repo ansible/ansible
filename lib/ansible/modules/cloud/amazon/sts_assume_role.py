@@ -161,7 +161,6 @@ def assume_role_policy(connection, module):
     module.exit_json(changed=changed, sts_creds=sts_cred, sts_user=sts_user)
 
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(

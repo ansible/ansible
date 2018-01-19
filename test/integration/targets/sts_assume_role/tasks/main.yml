@@ -33,12 +33,18 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
-        name: "ansible-test-sts-role"
+        name: "ansible-test-sts-{{ resource_prefix }}"
         assume_role_policy_document:  "{{ lookup('template','policy.json.j2') }}"
+        create_instance_profile: False
         managed_policy:
           - arn:aws:iam::aws:policy/IAMReadOnlyAccess
         state: present
       register: test_role
+
+    # ============================================================
+    - name: pause to ensure role exists before using
+      pause:
+        seconds: 30
 
     # ============================================================
     - name: test with no parameters
@@ -121,7 +127,7 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
+        region: "{{ aws_region }}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: "AnsibleTest"
         policy: "invalid policy"
@@ -300,7 +306,7 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
-        region: "{{ aws_region}}"
+        region: "{{ aws_region }}"
         role_arn: "{{ test_role.iam_role.arn }}"
         role_session_name: AnsibleTest
       register: assumed_role
@@ -315,14 +321,15 @@
            - "'session_token' in assumed_role.sts_creds"
 
     # ============================================================
-    - name: test assumed role with privileged action
+    - name: test that assumed credentials have IAM read-only access
       iam_role:
         aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
         aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
         security_token: "{{ assumed_role.sts_creds.session_token }}"
         region: "{{ aws_region}}"
-        name: "ansible-test-sts-role"
+        name: "ansible-test-sts-{{ resource_prefix }}"
         assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
+        create_instance_profile: False
         state: present
       register: result
 
@@ -340,7 +347,7 @@
         aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
         security_token: "{{ assumed_role.sts_creds.session_token }}"
         region: "{{ aws_region}}"
-        name: "ansible-test-sts-new-role"
+        name: "ansible-test-sts-{{ resource_prefix }}-new"
         assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
         state: present
       register: result
@@ -350,14 +357,28 @@
       assert:
         that:
           - 'result.failed'
-          - 'not result.changed'
           - "'is not authorized to perform: iam:CreateRole' in result.msg"
+      # runs on Python2
       when: result.module_stderr is not defined
 
     - name: assert assumed role with unprivileged action (expect changed=false)
       assert:
         that:
           - 'result.failed'
-          - 'not result.changed'
           - "'is not authorized to perform: iam:CreateRole' in result.module_stderr"
+      # runs on Python3
       when: result.module_stderr is defined
+
+    # ============================================================
+  always:
+
+    - name: delete test iam role
+      iam_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        name: "ansible-test-sts-{{ resource_prefix }}"
+        assume_role_policy_document:  "{{ lookup('template','policy.json.j2') }}"
+        managed_policy:
+          - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+        state: absent
