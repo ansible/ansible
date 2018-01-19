@@ -500,13 +500,13 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
-                           required_if=[
-                               ('state', 'present', ['subnets', 'security_groups'])
-                           ],
-                           required_together=(
-                               ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
-                           )
-                           )
+                              required_if=[
+                                  ('state', 'present', ['subnets', 'security_groups'])
+                              ],
+                              required_together=(
+                                  ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
+                              )
+                              )
 
     # Quick check of listeners parameters
     listeners = module.params.get("listeners")
