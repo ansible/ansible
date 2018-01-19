@@ -34,16 +34,12 @@ options:
     required: yes
   description:
     description:
-    - A description of the policy.
+    - A description of the LAN Connectivity Policy.
     - Cisco recommends including information about where and when to use the policy.
     - Enter up to 256 characters.
     - "You can use any characters or spaces except the following:"
     - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
     aliases: [ descr ]
-  mac_pool:
-    description:
-    - The name of the MAC pool used for MAC address assignment.
-    default: default
   vnic_list:
     description:
     - List of vNICs used by the LAN Connectivity Policy.
@@ -54,9 +50,8 @@ options:
     - "= vnic_template"
     - "  The name of the vNIC template (required)."
     - "- adapter_policy"
-    - "  The name of the LAN adapter policy."
-    - "  A user defined policy can be used, or one of the system defined policies (default, Linux, Solaris, VMware, Windows, WindowsBoot)"   
-    - "  [Default: default]"
+    - "  The name of the Ethernet adapter policy."
+    - "  A user defined policy can be used, or one of the system defined policies."
     - "- order"
     - "  String specifying the vNIC assignment order (e.g., '1', '2')."
     - "  [Default: unspecified]"
@@ -79,7 +74,6 @@ EXAMPLES = r'''
     username: admin
     password: password
     name: Cntr-LAN-Boot
-    mac_pool: MAC-Pool
     vnic_list:
     - name: Fabric-A
       vnic_template: vNIC-Template-A
@@ -111,7 +105,6 @@ def main():
         org_dn=dict(type='str', default='org-root'),
         name=dict(type='str', required=True),
         descr=dict(type='str', default=''),
-        mac_pool=dict(type='str', default='default'),
         vnic_list=dict(type='list'),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
@@ -123,9 +116,9 @@ def main():
     ucs = UCSModule(module)
 
     err = False
+
     # UCSModule creation above verifies ucsmsdk is present and exits on failure.  Additional imports are done below.
     from ucsmsdk.mometa.vnic.VnicLanConnPolicy import VnicLanConnPolicy
-    from ucsmsdk.mometa.vnic.VnicEtherNode import VnicEtherNode
     from ucsmsdk.mometa.vnic.VnicEther import VnicEther
     from ucsmsdk.mometa.vnic.VnicEtherIf import VnicEtherIf
 
@@ -148,36 +141,31 @@ def main():
                     ucs.login_handle.commit()
                 changed = True
         else:
+            # set default params.  Done here to set values for lists which can't be done in the argument_spec
+            if module.params.get('vnic_list'):
+                for vnic in module.params['vnic_list']:
+                    if not vnic.get('adapter_policy'):
+                        vnic['adapter_policy'] = ''
+                    if not vnic.get('order'):
+                        vnic['order'] = 'unspecified'
             if mo_exists:
-                # set default params.  Done here to set values for lists which can't be done in the argument_spec
-                if module.params.get('vnic_list'):
-                    for vnic in module.params['vnic_list']:
-                        if not vnic.get('adapter_policy'):
-                            vnic['adapter_policy'] = ''
-                        if not vnic.get('order'):
-                            vnic['order'] = 'unspecified'
                 # check top-level mo props
                 kwargs = dict(descr=module.params['descr'])
                 if (mo.check_prop_match(**kwargs)):
                     # top-level props match, check next level mo/props
-                    # vnicEtherNode object
-                    child_dn = dn + '/ether-node'  
-                    mo_1 = ucs.login_handle.query_dn(child_dn)
-                    if mo_1:
-                        kwargs = dict(ident_pool_name=module.params['mac_pool'])
-                        if (mo_1.check_prop_match(**kwargs)):
-                            if not module.params.get('vnic_list'):
-                                props_match = True
-                            else:
-                                # check vnicEther props
-                                for vnic in module.params['vnic_list']:
-                                    child_dn = dn + '/ether-' + vnic['name']
-                                    mo_2 = ucs.login_handle.query_dn(child_dn)
-                                    kwargs = dict(adaptor_profile_name=vnic['adapter_policy'])
-                                    kwargs['order'] = vnic['order']
-                                    kwargs['nw_templ_name'] = vnic['vnic_template']
-                                    if (mo_2.check_prop_match(**kwargs)):
-                                        props_match = True
+                    if not module.params.get('vnic_list'):
+                        props_match = True
+                    else:
+                        # check vnicEther props
+                        for vnic in module.params['vnic_list']:
+                            child_dn = dn + '/ether-' + vnic['name']
+                            mo_1 = ucs.login_handle.query_dn(child_dn)
+                            if mo_1:
+                                kwargs = dict(adaptor_profile_name=vnic['adapter_policy'])
+                                kwargs['order'] = vnic['order']
+                                kwargs['nw_templ_name'] = vnic['vnic_template']
+                                if (mo_1.check_prop_match(**kwargs)):
+                                    props_match = True
 
             if not props_match:
                 if not module.check_mode:
@@ -188,24 +176,15 @@ def main():
                         descr=module.params['descr'],
                     )
 
-                    mo_1 = VnicEtherNode(
-                        parent_mo_or_dn=mo,
-                        ident_pool_name=module.params['mac_pool'],
-                        addr='pool-derived',
-                    )
-
                     if module.params.get('vnic_list'):
                         for vnic in module.params['vnic_list']:
-                            mo_2 = VnicEther(
+                            mo_1 = VnicEther(
+                                addr='derived',
                                 parent_mo_or_dn=mo,
                                 name=vnic['name'],
                                 adaptor_profile_name=vnic['adapter_policy'],
                                 nw_templ_name=vnic['vnic_template'],
                                 order=vnic['order'],
-                            )
-                            mo_2_1 = VnicEtherIf(
-                                parent_mo_or_dn=mo_2,
-                                name='default',
                             )
 
                     ucs.login_handle.add_mo(mo, True)

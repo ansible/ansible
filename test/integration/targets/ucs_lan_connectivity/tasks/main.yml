@@ -23,11 +23,9 @@
   ucs_lan_connectivity: &lan_connectivity_present
     <<: *login_info
     name: Cntr-LAN-Boot
-    mac_pool: MAC-Pool
     vnic_list:
     - name: Fabric-A
       vnic_template: vNIC-Template-A
-      adapter_policy: Linux
     - name: Fabric-B
       vnic_template: vNIC-Template-B
       adapter_policy: Linux
