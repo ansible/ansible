@@ -1,21 +1,6 @@
 ---
 - debug: msg="START ios_interface cli/intent.yaml on connection={{ ansible_connection }}"
 
-- name: Run show version
-  ios_command:
-    commands: show version
-    authorize: yes
-  register: show_version_result
-
-- name: Set test interface to GigabitEthernet0/2 if we are on Cisco IOS
-  set_fact: test_interface=GigabitEthernet0/2
-  when: "'Cisco IOS' in show_version_result.stdout[0]"
-
-- name: Set test interface to GigabitEthernet2 if we are on Cisco IOS-XE
-  set_fact: test_interface=GigabitEthernet2
-  when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
-
-
 - name: Check intent arguments
   ios_interface:
     name: "{{ test_interface }}"
