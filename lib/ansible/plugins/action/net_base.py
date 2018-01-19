@@ -57,7 +57,8 @@ class ActionModule(ActionBase):
             module = load_module(module_name, f, p, d)
 
             self.provider = load_provider(module.get_provider_argspec(), self._task.args)
-            if play_context.network_os == 'junos':
+            if play_context.network_os == 'junos' or (play_context.network_os == 'iosxr' and
+                                                      self.provider['transport'] == 'netconf'):
                 play_context.connection = 'netconf'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 830)
             elif self.provider.get('transport') in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
