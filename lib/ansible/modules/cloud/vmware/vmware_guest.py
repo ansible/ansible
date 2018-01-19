@@ -78,7 +78,6 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    default: /vm
   hardware:
     description:
     - Manage some VM hardware attributes.
@@ -1433,15 +1432,18 @@ class PyVmomiHelper(PyVmomi):
         #   - multiple templates by the same name
         #   - static IPs
 
-        # datacenters = get_all_objs(self.content, [vim.Datacenter])
+        self.folder = self.params.get('folder', None)
+        if self.folder is None:
+            self.module.fail_json(msg="Folder is required parameter while deploying new virtual machine")
+
+        # Prepend / if it was missing from the folder path, also strip trailing slashes
+        if not self.folder.startswith('/'):
+            self.folder = '/%(folder)s' % self.params
+        self.folder = self.folder.rstrip('/')
+
         datacenter = self.cache.find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
         if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
-
-        # Prepend / if it was missing from the folder path, also strip trailing slashes
-        if not self.params['folder'].startswith('/'):
-            self.params['folder'] = '/%(folder)s' % self.params
-        self.params['folder'] = self.params['folder'].rstrip('/')
 
         dcpath = compile_folder_path_for_object(datacenter)
 
@@ -1450,15 +1452,15 @@ class PyVmomiHelper(PyVmomi):
             dcpath += '/'
 
         # Check for full path first in case it was already supplied
-        if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm') or
-                self.params['folder'].startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
-            fullpath = self.params['folder']
-        elif self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm':
-            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.params['folder'])
-        elif self.params['folder'].startswith('/'):
-            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+        if (self.folder.startswith(dcpath + self.params['datacenter'] + '/vm') or
+                self.folder.startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
+            fullpath = self.folder
+        elif self.folder.startswith('/vm/') or self.folder == '/vm':
+            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.folder)
+        elif self.folder.startswith('/'):
+            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.folder)
         else:
-            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.folder)
 
         f_obj = self.content.searchIndex.FindByInventoryPath(fullpath)
 
@@ -1468,10 +1470,10 @@ class PyVmomiHelper(PyVmomi):
             details = {
                 'datacenter': datacenter.name,
                 'datacenter_path': dcpath,
-                'folder': self.params['folder'],
+                'folder': self.folder,
                 'full_search_path': fullpath,
             }
-            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.params['folder'], fullpath),
+            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.folder, fullpath),
                                   details=details)
 
         destfolder = f_obj
@@ -1751,10 +1753,10 @@ def main():
         is_template=dict(type='bool', default=False),
         annotation=dict(type='str', aliases=['notes']),
         customvalues=dict(type='list', default=[]),
-        name=dict(type='str', required=True),
+        name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
         cdrom=dict(type='dict', default={}),
@@ -1776,13 +1778,12 @@ def main():
                            mutually_exclusive=[
                                ['cluster', 'esxi_hostname'],
                            ],
+                           required_one_of=[
+                               ['name', 'uuid'],
+                           ],
                            )
 
     result = {'failed': False, 'changed': False}
-
-    # FindByInventoryPath() does not require an absolute path
-    # so we should leave the input folder path unmodified
-    module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
 
