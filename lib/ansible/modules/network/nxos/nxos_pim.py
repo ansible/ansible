@@ -34,7 +34,8 @@ options:
   ssm_range:
     description:
       - Configure group ranges for Source Specific Multicast (SSM).
-        Valid values are multicast addresses or the keyword 'none'.
+        Valid values are multicast addresses or the keyword 'none'
+        or keyword 'default'
     required: true
 '''
 EXAMPLES = '''
