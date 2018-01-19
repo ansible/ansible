@@ -108,7 +108,7 @@ class TestClass(unittest.TestCase):
         """
         set_module_args({
             'operation': "Upload",
-            'opsname': 'Uploading_testi',
+            'opsName': 'Uploading_testi',
             'DN': "PLMN-PLMN/MRBTS-746",
         })
 
@@ -135,7 +135,7 @@ class TestClass(unittest.TestCase):
         """
         set_module_args({
             'operation': "Provision",
-            'opsname': 'Provision_test',
+            'opsName': 'Provision_test',
             'DN': "PLMN-PLMN/MRBTS-746",
             'createBackupPlan': "Yes",
             'backupPlanName': "backupPlanName"
@@ -164,7 +164,7 @@ class TestClass(unittest.TestCase):
         """
         set_module_args({
             'operation': "Upload",
-            'opsname': 'Uploading_testi',
+            'opsName': 'Uploading_testi',
             'DN': "PLMN-PLMN/MRBTS-746",
             'abc': 'abc'
         })
