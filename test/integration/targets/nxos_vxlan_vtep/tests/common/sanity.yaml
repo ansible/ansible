@@ -1,7 +1,5 @@
 ---
-- debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vxlan_vtep sanity test"
 
 - block:
   - name: "Apply N7K specific setup config"
