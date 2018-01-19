@@ -408,15 +408,20 @@ class AzureRMDatabases(AzureRMModuleBase):
                 self.log("Need to check if SQL Database instance has to be deleted or may be updated")
                 if ('location' in self.parameters) and (self.parameters['location'] != old_response['location']):
                     self.to_do = Actions.Update
-                if ('read_scale' in self.parameters) and (self.parameters['read_scale'] != old_response['read_scale']):
+                if ('read_scale' in self.parameters) and
+                   (self.parameters['read_scale'] != old_response['read_scale']):
                     self.to_do = Actions.Update
-                if (self.requested_service_objective_id is not None) and (self.requested_service_objective_id != old_response['requested_service_objective_id']):
+                if ('requested_service_objective_id' in self.parameters) and
+                   (self.parameters['requested_service_objective_id'] != old_response['requested_service_objective_id']):
                     self.to_do = Actions.Update
-                if (self.requested_service_objective_name is not None) and (self.requested_service_objective_name != old_response['requested_service_objective_name']):
+                if ('requested_service_objective_name' in self.parameters) and 
+                   (self.parameters['requested_service_objective_name'] != old_response['requested_service_objective_name']):
                     self.to_do = Actions.Update
-                if (self.max_size_bytes is not None) and (self.max_size_bytes != old_response['max_size_bytes']):
+                if ('max_size_bytes' in self.parameters) and
+                   (self.parameters['max_size_bytes'] != old_response['max_size_bytes']):
                     self.to_do = Actions.Update
-                if (self.edition is not None) and (self.edition != old_response['edition']):
+                if ('edition' in self.parameters) and
+                   (self.parameters['edition'] != old_response['edition']):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -518,7 +523,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         return False
 
 
-def _snake_to_camel(snake, capitalize_first= False):
+def _snake_to_camel(snake, capitalize_first=False):
     if capitalize_first:
         return ''.join(x.capitalize() or '_' for x in snake.split('_'))
     else:
