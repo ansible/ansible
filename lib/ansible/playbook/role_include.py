@@ -212,7 +212,7 @@ class IncludeRole(TaskInclude):
         memo[id(self)] = ret
         return ret
 
-    def load_dynamic_role(self, allow_duplicates=None):
+    def load_dynamic_role(self):
         pr = None
         if self.profiling:
             pr = cProfile.Profile()
