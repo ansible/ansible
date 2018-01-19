@@ -1339,7 +1339,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         config.set_element_version(vm_hw_version)
     vmfiles = config.new_files()
     datastore_name, ds = find_datastore(
-        module, vsphere_client, vm_disk['disk1']['datastore'], config_target)
+        module, vsphere_client, vm_disk[next(iter(vm_disk))]['datastore'], config_target)
     vmfiles.set_element_vmPathName(datastore_name)
     config.set_element_files(vmfiles)
     config.set_element_name(guest)
@@ -1692,19 +1692,15 @@ def main():
     }
 
     proto_vm_disk = {
-        'disk1': {
-            'datastore': string_types,
-            'size_gb': int,
-            'type': string_types
-        }
+        'datastore': string_types,
+        'size_gb': int,
+        'type': string_types
     }
 
     proto_vm_nic = {
-        'nic1': {
-            'type': string_types,
-            'network': string_types,
-            'network_type': string_types
-        }
+        'type': string_types,
+        'network': string_types,
+        'network_type': string_types
     }
 
     proto_esxi = {
@@ -1908,8 +1904,10 @@ def main():
         elif state in ['present', 'powered_off', 'powered_on']:
 
             # Check the guest_config
-            config_check("vm_disk", vm_disk, proto_vm_disk, module)
-            config_check("vm_nic", vm_nic, proto_vm_nic, module)
+            for disk in sorted(vm_disk):
+                config_check("vm_disk.%s" % disk, vm_disk[disk], proto_vm_disk, module)
+            for nic in sorted(vm_nic):
+                config_check("vm_nic.%s" % nic, vm_nic[nic], proto_vm_nic, module)
             config_check("vm_hardware", vm_hardware, proto_vm_hardware, module)
             config_check("esxi", esxi, proto_esxi, module)
 
