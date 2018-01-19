@@ -21,6 +21,16 @@ short_description: Download and install Windows updates
 description:
     - Searches, downloads, and installs Windows updates synchronously by automating the Windows Update client
 options:
+    blacklist:
+        description:
+        - A list of update titles or KB numbers that can be used to specify
+          which updates are to be excluded from installation.
+        - If an available update does match one of the entries, then it is
+          skipped and not installed.
+        - Each entry can either be the KB article or Update title as a regex
+          according to the PowerShell regex rules.
+        required: false
+        version_added: '2.5'
     category_names:
         description:
         - A scalar or list of categories to install updates from
@@ -69,6 +79,19 @@ options:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
         required: false
+    whitelist:
+        description:
+        - A list of update titles or KB numbers that can be used to specify
+          which updates are to be searched or installed.
+        - If an available update does not match one of the entries, then it
+          is skipped and not installed.
+        - Each entry can either be the KB article or Update title as a regex
+          according to the PowerShell regex rules.
+        - The whitelist is only validated on updates that were found based on
+          I(category_names). It will not force the module to install an update
+          if it was not in the category specified.
+        required: false
+        version_added: '2.5'
 author: "Matt Davis (@nitzmahone)"
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
@@ -78,6 +101,8 @@ notes:
   C(reboot) can be used to reboot the host if required in the one task.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
+- More information about PowerShell and how it handles RegEx strings can be
+  found at U(https://technet.microsoft.com/en-us/library/2007.11.powershell.aspx).
 '''
 
 EXAMPLES = r'''
@@ -104,7 +129,24 @@ EXAMPLES = r'''
     - SecurityUpdates
     reboot: yes
 
-# Note async on works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
+- name: Install only particular updates based on the KB numbers
+  win_updates:
+    category_name:
+    - SecurityUpdates
+    whitelist:
+    - KB4056892
+    - KB4073117
+
+- name: Exlude updates based on the update title
+  win_updates:
+    category_name:
+    - SecurityUpdates
+    - CriticalUpdates
+    blacklist:
+    - Windows Malicious Software Removal Tool for Windows
+    - \d{4}-\d{2} Cumulative Update for Windows Server 2016
+
+# Note async works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
 - name: Search for Windows updates asynchronously
   win_updates:
     category_names:
@@ -174,6 +216,15 @@ updates:
             returned: on install failure
             type: boolean
             sample: 2147942402
+
+filtered_updates:
+    description: List of updates that were found but were filtered based on
+      I(blacklist) or I(whitelist). The return value is in the same form as
+      I(updates).
+    returned: success
+    type: complex
+    sample: see the updates return value
+    contains: {}
 
 found_update_count:
     description: The number of updates found needing to be applied
