@@ -381,8 +381,8 @@ try:
 except ImportError:
     import simplejson as json
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -399,18 +399,14 @@ class Diff(object):
             if _value(self._new[key]) == _value(self._old[key]):
                 self._commonvals.add(key)
 
-
     def added(self):
         return self._newkeys - self._commonkeys
-
 
     def removed(self):
         return self._oldkeys - self._commonkeys
 
-
     def modified(self):
         return self._commonkeys - self._commonvals
-
 
     def unmodified(self):
         return self._commonvals
@@ -418,11 +414,11 @@ class Diff(object):
 
 class JBossConfig(object):
     def __init__(self, module, url, timeout):
-        self.changes =  dict(
-                        added = list(),
-                        updated = list(),
-                        removed = list()
-                    )
+        self.changes = dict(
+            added=list(),
+            updated=list(),
+            removed=list()
+        )
         self.check_mode = module.check_mode
         self.reload_required = False
         self.module = module
@@ -433,36 +429,35 @@ class JBossConfig(object):
         self.restart = module.params['restart']
         self.timeout = timeout
         self.body = {
-                        "operation": "composite",
-                        "address": [],
-                        "steps": []
-                    }
-        self.headers = {'Content-Type':'application/json'}
-    
-    
+            "operation": "composite",
+            "address": [],
+            "steps": []
+        }
+        self.headers = {'Content-Type': 'application/json'}
+
     def _add_steps(self, address, new, old):
         d = Diff(new, old)
         for key in list(d.added() | d.modified()):
             if key not in old:
                 addsubkeys = []
                 if key == "value":
-                    step =  {
-                                "operation": "add",
-                                "address": address,
-                                "value": _value(new[key])
-                            }
+                    step = {
+                        "operation": "add",
+                        "address": address,
+                        "value": _value(new[key])
+                    }
                 elif _not_dict(new[key]):
-                    step =  {
-                                "operation": "write-attribute",
-                                "address": address,
-                                "name": key,
-                                "value": _value(new[key])
-                            }
+                    step = {
+                        "operation": "write-attribute",
+                        "address": address,
+                        "name": key,
+                        "value": _value(new[key])
+                    }
                 else:
-                    step =  {
-                                "operation": "add",
-                                "address": address + [key]
-                            }
+                    step = {
+                        "operation": "add",
+                        "address": address + [key]
+                    }
                     for subkey in new[key]:
                         if _not_dict(new[key][subkey]):
                             step[subkey] = _value(new[key][subkey])
@@ -478,7 +473,6 @@ class JBossConfig(object):
                     self._add_steps(address + [key], new[key], dict())
         return
 
-
     def _changes(self, body):
         if body['operation'] == "add":
             del body['operation']
@@ -491,9 +485,8 @@ class JBossConfig(object):
         elif body['operation'] == "undefine-attribute":
             return None
         else:
-            msg="Unknown operation '" + body['operation'] + "'.  Could not determine changes."
+            msg = "Unknown operation '" + body['operation'] + "'.  Could not determine changes."
             self.module.fail_json(msg=msg, response="")
-
 
     def _post(self, body):
         if not self.check_mode:
@@ -508,7 +501,7 @@ class JBossConfig(object):
             if info['status'] == 200:
                 respdict = json.loads(content)
                 if ('response-headers' in respdict and 'process-state' in respdict['response-headers']
-                    and respdict['response-headers']['process-state'] == "reload-required"):
+                        and respdict['response-headers']['process-state'] == "reload-required"):
                     self.reload_required = True
 
         if self.check_mode or info['status'] == 200:
@@ -520,34 +513,32 @@ class JBossConfig(object):
             msg = info.pop('msg', 'Operation ' + body['operation'] + ' failed with HTTP status' + str(info['status']))
             self.module.fail_json(msg=msg, response=content)
 
-
     def add(self, address, new, old):
         self._add_steps(address, new, old)
         ret = self._post(self.body)
         if 'operation' in ret and ret['operation'] == "composite":
             for step in ret['steps']:
                 self.changes['added'].append(
-                        dict(
-                            address = step['address'],
-                            new = self._changes(step)
-                        )
+                    dict(
+                        address=step['address'],
+                        new=self._changes(step)
                     )
+                )
         return ret
-
 
     def do_reload(self):
         reload_timeout = timedelta(seconds=self.reload_timeout)
         if self.restart:
-            body =  {
-                        "operation": "shutdown",
-                        "address": [],
-                        "restart": True
-                    }
+            body = {
+                "operation": "shutdown",
+                "address": [],
+                "restart": True
+            }
         else:
-            body =  {
-                        "operation": "reload",
-                        "address": []
-                    }
+            body = {
+                "operation": "reload",
+                "address": []
+            }
         resp, info = fetch_url(self.module, self.url, data=json.dumps(body), headers=self.headers,
                                method='POST', timeout=self.timeout)
 
@@ -557,10 +548,10 @@ class JBossConfig(object):
             content = info.pop('body', '')
 
         if info['status'] == 200:
-            body =  {
-                        "operation": "read-resource",
-                        "address": []
-                    }
+            body = {
+                "operation": "read-resource",
+                "address": []
+            }
             begintime = datetime.now()
             info['status'] = 503
 
@@ -580,20 +571,19 @@ class JBossConfig(object):
                 msg = 'Exceeded reload_timeout.  '
                 msg += info.pop('msg', 'Operation ' + body['operation'] + ' failed with HTTP status' + str(info['status']))
                 self.module.fail_json(msg=msg, response=content)
-                
+
         else:
             msg = info.pop('msg', 'Operation ' + body['operation'] + ' failed with HTTP status' + str(info['status']))
             self.module.fail_json(msg=msg, response=content)
 
-
     def read_resource(self, address, new):
-        body =  {
-                    "operation": "read-resource",
-                    "address": address,
-                    "include-defaults": self.include_defaults,
-                    "json.pretty": 0,
-                    "recursive-depth": _json_depth(new)
-                }
+        body = {
+            "operation": "read-resource",
+            "address": address,
+            "include-defaults": self.include_defaults,
+            "json.pretty": 0,
+            "recursive-depth": _json_depth(new)
+        }
         resp, info = fetch_url(self.module, self.url, data=json.dumps(body), headers=self.headers,
                                method='POST', timeout=self.timeout)
 
@@ -613,7 +603,6 @@ class JBossConfig(object):
             msg = info.pop('msg', 'Operation ' + body['operation'] + ' failed with HTTP status' + str(info['status']))
             self.module.fail_json(msg=msg, response=content)
 
-
     def remove(self, address, new, old):
         d = Diff(new, old)
         for key in list(d.modified() | d.unmodified()):
@@ -621,26 +610,26 @@ class JBossConfig(object):
                 chgdict = dict()
                 chgdict['old'] = _value(old[key])
                 if key == "value":
-                    body =  {
-                                "operation": "remove",
-                                "address": address
-                            }
+                    body = {
+                        "operation": "remove",
+                        "address": address
+                    }
                     chgdict['new'] = self._post(body)
                 elif not isinstance(old[key], dict):
-                    body =  {
-                                "operation": "undefine-attribute",
-                                "address": address,
-                                "name": key
-                            }
+                    body = {
+                        "operation": "undefine-attribute",
+                        "address": address,
+                        "name": key
+                    }
                     chgdict['new'] = dict()
                     chgdict['new'][key] = self._post(body)
                     chgdict['old'] = dict()
                     chgdict['old'][key] = _value(old[key])
                 else:
-                    body =  {
-                                "operation": "remove",
-                                "address": address + [key]
-                            }
+                    body = {
+                        "operation": "remove",
+                        "address": address + [key]
+                    }
                     chgdict['new'] = self._post(body)
                 chgdict['address'] = body['address']
                 self.changes['removed'].append(chgdict)
@@ -648,32 +637,31 @@ class JBossConfig(object):
                 self.remove(address + [key], new[key], old[key])
         return
 
-
     def update(self, address, new, old):
         d = Diff(new, old)
         for key in list(d.modified()):
             chgdict = dict()
             if key == "value" and _value(new[key]) != _value(old[key]):
-                body =  {
-                            "operation": "remove",
-                            "address": address
-                        }
+                body = {
+                    "operation": "remove",
+                    "address": address
+                }
                 self._post(body)
-                body =  {
-                            "operation": "add",
-                            "address": address,
-                            "value": _value(new[key])
-                        }
+                body = {
+                    "operation": "add",
+                    "address": address,
+                    "value": _value(new[key])
+                }
                 chgdict['new'] = self._post(body)
                 chgdict['old'] = dict()
                 chgdict['old']["value"] = _value(old[key])
             elif _not_dict(old[key]) and _not_dict(new[key]) and _value(new[key]) != _value(old[key]):
-                body =  {
-                            "operation": "write-attribute",
-                            "address": address,
-                            "name": key,
-                            "value": _value(new[key])
-                        }
+                body = {
+                    "operation": "write-attribute",
+                    "address": address,
+                    "name": key,
+                    "value": _value(new[key])
+                }
                 chgdict['new'] = dict()
                 chgdict['new'][key] = self._post(body)
                 chgdict['old'] = dict()
@@ -688,7 +676,7 @@ class JBossConfig(object):
 
 
 def _json_depth(val):
-    if type(val) is dict and val:
+    if isinstance(val, dict) and val:
         keys = val.keys()
         if 'value' in keys:
             keys.remove('value')
@@ -723,14 +711,14 @@ def jboss_config_present(module, url, json_address, new_config, timeout):
     d = Diff(new_config, old_config)
     reload_required = False
     reloaded = False
-    
+
     if not d.added() and not d.modified():
         module.exit_json(changed=False, result=jbosscfg.changes, reload_required=reload_required, reloaded=reloaded)
     else:
         if module.params['state'] == "present":
             jbosscfg.add(json_address, new_config, old_config)
         jbosscfg.update(json_address, new_config, old_config)
-    
+
     if not jbosscfg.changes['added'] and not jbosscfg.changes['updated']:
         module.exit_json(changed=False, result=jbosscfg.changes, reload_required=reload_required, reloaded=reloaded)
     else:
@@ -750,7 +738,7 @@ def jboss_config_absent(module, url, json_address, new_config, timeout):
     reloaded = False
 
     jbosscfg.remove(json_address, new_config, old_config)
-    
+
     if not jbosscfg.changes['removed']:
         module.exit_json(changed=False, result=jbosscfg.changes, reload_required=reload_required, reloaded=reloaded)
     else:
@@ -764,21 +752,21 @@ def jboss_config_absent(module, url, json_address, new_config, timeout):
 def main():
     argument_spec = url_argument_spec()
     argument_spec.update(dict(
-        url = dict(required=True, aliases=['mgmt_url']),
-        url_username = dict(required=True, aliases=['mgmt_user']),
-        url_password = dict(required=True, aliases=['mgmt_password'], no_log=True),
-        json_address = dict(default=[], type='list'),
-        json_config = dict(required=True, type='dict'),
-        include_defaults = dict(default=False, type='bool'),
-        reload = dict(default=False, type='bool'),
-        reload_timeout = dict(default=60, type='int'),
-        restart = dict(default=False, type='bool'),
-        state = dict(
+        url=dict(required=True, aliases=['mgmt_url']),
+        url_username=dict(required=True, aliases=['mgmt_user']),
+        url_password=dict(required=True, aliases=['mgmt_password'], no_log=True),
+        json_address=dict(default=[], type='list'),
+        json_config=dict(required=True, type='dict'),
+        include_defaults=dict(default=False, type='bool'),
+        reload=dict(default=False, type='bool'),
+        reload_timeout=dict(default=60, type='int'),
+        restart=dict(default=False, type='bool'),
+        state=dict(
             choices=['present', 'ensure', 'absent'],
             default='present',
             type='str'
         ),
-        timeout = dict(required=False, default=30, type='int'),
+        timeout=dict(required=False, default=30, type='int'),
     ))
 
     choice_map = dict(
@@ -798,13 +786,11 @@ def main():
     json_address = module.params['json_address']
     json_config = module.params['json_config']
     timeout = module.params['timeout']
-    
+
     choice_map.get(
         module.params['state']
     )(module, url, json_address, json_config, timeout)
 
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
