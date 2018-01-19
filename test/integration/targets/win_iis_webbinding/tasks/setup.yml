@@ -35,7 +35,6 @@
     state: absent
     protocol: "{{ item.protocol }}"
     port: "{{ item.port }}"
-    host_header: '*'
   with_items:
     - {protocol: http, port: 80}
     - {protocol: https, port: 443}
@@ -83,6 +82,12 @@
   raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN=*.test.com"})[0].Thumbprint'
   register: thumbprint_wc
 
-- debug: var=thumbprint1.stdout
-- debug: var=thumbprint2.stdout
-- debug: var=thumbprint_wc.stdout
+- debug: 
+    var: thumbprint1.stdout
+    verbosity: 1
+- debug: 
+    var: thumbprint2.stdout
+    verbosity: 1
+- debug: 
+    var: thumbprint_wc.stdout
+    verbosity: 1

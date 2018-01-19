@@ -42,8 +42,7 @@ options:
   host_header:
     description:
       - The host header to bind to / use for the new site.
-      - For state absent, you can use c('*') here to remove all bindings for a particular
-        protocol/ip/port combination.
+      - If you are creating/removing a catch-all binding, omit this parameter rather than defining it as '*'.
   protocol:
     description:
       - The protocol to be used for the Web binding (usually HTTP, HTTPS, or FTP).
@@ -80,11 +79,19 @@ EXAMPLES = r'''
     port: 9090
     state: absent
 
+- name: Remove the default http binding
+  win_iis_webbinding:
+    name: Default Web Site
+    port: 80
+    ip: '*'
+    state: absent
+
 - name: Add a HTTPS binding
   win_iis_webbinding:
     name: Default Web Site
     protocol: https
     port: 443
+    ip: 127.0.0.1
     certificate_hash: B0D0FA8408FC67B230338FCA584D03792DA73F4C
     state: present
 
@@ -97,31 +104,9 @@ EXAMPLES = r'''
     ssl_flags: 1
     certificate_hash: D1A3AF8988FD32D1A3AF8988FD323792DA73F4C
     state: present
-
-- name: Remove all https bindings on port 443
-  win_iis_webbinding:
-    name: Default Web Site
-    protocol: https
-    port: 443
-    host_header: '*'
-    state: absent
 '''
 
 RETURN = r'''
-cert_is_wildcard:
-  description:
-    - Tells you if the certificate you are using is a wildcard
-  returned: when certificate_hash is defined
-  type: boolean
-  sample: false
-  version_added: "2.5"
-certificate_subjects:
-  description:
-    - All of the subject names for the certificate you are using
-  returned: when certificate_hash is defined
-  type: list
-  sample: ["*.test.com","test.com"]
-  version_added: "2.5"
 website_state:
   description:
     - The state of the website being targetted
