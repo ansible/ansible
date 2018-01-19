@@ -24,7 +24,7 @@ options:
     blacklist:
         description:
         - A list of update titles or KB numbers that can be used to specify
-          which updates are to be exluded from installation.
+          which updates are to be excluded from installation.
         - If an available update does match one of the entries, then it is
           skipped and not installed.
         - Each entry can either be the KB article or Update title as a regex
@@ -146,7 +146,7 @@ EXAMPLES = r'''
     - Windows Malicious Software Removal Tool for Windows
     - \d{4}-\d{2} Cumulative Update for Windows Server 2016
 
-# Note async on works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
+# Note async works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
 - name: Search for Windows updates asynchronously
   win_updates:
     category_names:
