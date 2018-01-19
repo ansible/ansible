@@ -80,7 +80,8 @@ options:
     version_added: "2.4"
   executable:
     description:
-      - Command the scheduled task should execute
+      - Command the scheduled task should execute.
+      - This option is required when C(state=true).
     aliases: [ execute ]
   arguments:
     description:
@@ -88,17 +89,20 @@ options:
     aliases: [ argument ]
   frequency:
     description:
-      - The frequency of the command, not idempotent
+      - The frequency of the command, not idempotent.
+      - This option is required when C(state=true)
     choices:
       - once
       - daily
       - weekly
   time:
     description:
-      - Time to execute scheduled task, not idempotent
+      - Time to execute scheduled task, not idempotent.
+      - This option is required when C(state=true).
   days_of_week:
     description:
-      - Days of the week to run a weekly task, not idempotent
+      - Days of the week to run a weekly task, not idempotent.
+      - This option is required when C(frequence=weekly).
   path:
     description:
       - Task folder in which this task will be stored - creates a non-existent path when C(state) is C(present),
