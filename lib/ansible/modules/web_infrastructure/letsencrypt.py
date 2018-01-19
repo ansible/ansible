@@ -71,6 +71,8 @@ options:
          CA server API."
       - "For safety reasons the default is set to the Let's Encrypt staging server.
          This will create technically correct, but untrusted certificates."
+      - "The production Let's Encrypt ACME directory URL, which produces properly
+         trusted certificates, is U(https://acme-v01.api.letsencrypt.org/directory)."
     default: https://acme-staging.api.letsencrypt.org/directory
   agreement:
     description:
@@ -116,6 +118,8 @@ options:
 '''
 
 EXAMPLES = '''
+### Example with HTTP challenge ###
+
 - name: Create a challenge for sample.com using a account key from a variable.
   letsencrypt:
     account_key_content: "{{ account_private_key }}"
@@ -123,6 +127,7 @@ EXAMPLES = '''
     dest: /etc/httpd/ssl/sample.com.crt
   register: sample_com_challenge
 
+# Alternative first step:
 - name: Create a challenge for sample.com using a account key from hashi vault.
   letsencrypt:
     account_key_content: "{{ lookup('hashi_vault', 'secret=secret/account_private_key:value') }}"
@@ -130,6 +135,7 @@ EXAMPLES = '''
     dest: /etc/httpd/ssl/sample.com.crt
   register: sample_com_challenge
 
+# Alternative first step:
 - name: Create a challenge for sample.com using a account key file.
   letsencrypt:
     account_key_src: /etc/pki/cert/private/account.key
@@ -150,6 +156,41 @@ EXAMPLES = '''
     account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
+    data: "{{ sample_com_challenge }}"
+
+### Example with DNS challenge against production ACME server ###
+
+- name: Create a challenge for sample.com using a account key file.
+  letsencrypt:
+    account_key_src: /etc/pki/cert/private/account.key
+    account_email: myself@sample.com
+    src: /etc/pki/cert/csr/sample.com.csr
+    cert: /etc/httpd/ssl/sample.com.crt
+    challenge: dns-01
+    acme_directory: https://acme-v01.api.letsencrypt.org/directory
+    # Renew if the certificate is at least 30 days old
+    remaining_days: 60
+  register: sample_com_challenge
+
+# perform the necessary steps to fulfill the challenge
+# for example:
+#
+# - route53:
+#     zone: sample.com
+#     record: "{{ item.value[challenge].resource }}.sample.com"
+#     type: TXT
+#     ttl: 60
+#     value: '"{{ item.value[challenge].resource_value }}"'
+
+- name: Let the challenge be validated and retrieve the cert
+  letsencrypt:
+    account_key_src: /etc/pki/cert/private/account.key
+    account_email: myself@sample.com
+    src: /etc/pki/cert/csr/sample.com.csr
+    cert: /etc/httpd/ssl/sample.com.crt
+    challenge: dns-01
+    acme_directory: https://acme-v01.api.letsencrypt.org/directory
+    remaining_days: 60
     data: "{{ sample_com_challenge }}"
 '''
 
