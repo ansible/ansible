@@ -105,6 +105,8 @@ class Wapi(WapiBase):
         :returns: a results dict
         '''
         state = self.module.params['state']
+        if state not in ('present', 'absent'):
+            self.module.fail_json(msg='state must be one of `present`, `absent`, got `%s`' % state)
 
         result = {'changed': False}
 
@@ -248,15 +250,13 @@ class Wapi(WapiBase):
             if current_item is None:
                 return False
 
-            # TODO need to address use case where list is a list of scalars
             elif isinstance(proposed_item, list):
                 for subitem in proposed_item:
                     if not self.issubset(subitem, current_item):
                         return False
 
             elif isinstance(proposed_item, dict):
-                if not self.issubset(proposed_item, [current_item]):
-                    return False
+                return self.compare_objects(current_item, proposed_item)
 
             else:
                 if current_item != proposed_item:
