@@ -451,19 +451,15 @@ or with this Ansible task:
 
 Become Flags
 ------------
-With Ansible 2.5, the ``runas`` become method has the ability to set custom
-flags through the ``become_flags`` task directive or ``ansible_become_flags``
-variable. This value can set two different options that control the become
-process and is expressed using key=value arguments. The two options that are
-supported are ``logon_type`` and ``logon_flags``.
+Ansible 2.5 adds the ``become_flags`` parameter to the ``runas`` become method. This parameter can be set using the ``become_flags`` task directive or set in Ansible's configuration using ``ansible_become_flags``. The two valid values that are initially supported for this parameter are ``logon_type`` and ``logon_flags``.
 
-.. Note:: These flags should only be set when becoming a normal user account
-    and not a local service account like LocalSystem.
+
+.. Note:: These flags should only be set when becoming a normal user account, not a local service account like LocalSystem.
 
 The key ``logon_type`` sets the type of logon operation to perform. The value
 can be set to one of the following:
 
-* ``interactive``: The default logon type set, the process will be run under a
+* ``interactive``: The default logon type. The process will be run under a
   context that is the same as when running a process locally. This bypasses all
   WinRM restrictions and is the recommended method to use.
 
@@ -472,38 +468,37 @@ can be set to one of the following:
   restrictions and is useful if the ``become_user`` is not allowed to log on
   interactively.
 
-* ``new_credentials``: Runs under the same credentials as the calling user but
+* ``new_credentials``: Runs under the same credentials as the calling user, but
   outbound connections are run under the context of the ``become_user`` and
   ``become_password``, similar to ``runas.exe /netonly``. The ``logon_flags``
-  flag should also be set to ``netcredentials_only`` as well. Use this flag if
-  the process needs to access a network resource like an SMB share using a
+  flag should also be set to ``netcredentials_only``. Use this flag if
+  the process needs to access a network resource (like an SMB share) using a
   different set of credentials.
 
 * ``network``: Runs the process under a network context without any cached
   credentials. This results in the same type of logon session as running a
-  normal WinRM process without credential delegation so comes under the same
+  normal WinRM process without credential delegation, and operates under the same
   restrictions.
 
-* ``network_cleartext``: Like the ``network`` logon type but instead it caches
+* ``network_cleartext``: Like the ``network`` logon type, but instead caches
   the credentials so it can access network resources. This is the same type of
   logon session as running a normal WinRM process with credential delegation.
 
-More details on these values can be read under the ``dwLogonType`` section
-`Here <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
+For more information, see
+`dwLogonType <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
 
-The key ``logon_flags`` sets the way Windows will log the user on when creating
+The ``logon_flags`` key specifies how Windows will log the user on when creating
 the new process. The value can be set to one of the following:
 
-* ``with_profile``: The default logon flag set, the process will load the
+* ``with_profile``: The default logon flag set. The process will load the
   user's profile in the ``HKEY_USERS`` registry key to ``HKEY_CURRENT_USER``.
 
 * ``netcredentials_only``: The process will use the same token as the caller
-  but will use the ``become_user`` and ``become_password`` when access a remote
+  but will use the ``become_user`` and ``become_password`` when accessing a remote
   resource. This is useful in inter-domain scenarios where there is no trust
-  relationship and should be used with the ``new_credentials`` ``logon_type``.
+  relationship, and should be used with the ``new_credentials`` ``logon_type``.
 
-More details on these values can be read under the ``dwLogonFlags`` section
-`Here <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
+For more information, see `dwLogonFlags <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
 
 Here are some examples of how to use ``become_flags`` with Windows tasks:
 
