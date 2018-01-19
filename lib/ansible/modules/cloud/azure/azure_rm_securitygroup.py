@@ -332,11 +332,11 @@ state:
     }
 '''  # NOQA
 
-try:
-    from msrestazure.azure_exceptions import CloudError
-except ImportError:
-    # This is handled in azure_rm_common
-    pass
+
+from msrestazure.azure_exceptions import CloudError
+from azure.mgmt.resource.resources.v2017_05_10 import ResourceManagementClient
+from azure.mgmt.network.v2017_06_01 import NetworkManagementClient
+from azure.mgmt.network.v2017_06_01.models import NetworkSecurityGroup, SecurityRule, SecurityRuleAccess, SecurityRuleProtocol, SecurityRuleDirection
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
@@ -369,7 +369,7 @@ def validate_rule(self, rule, rule_type=None):
     if not rule.get('access'):
         rule['access'] = 'Allow'
 
-    access_names = [member.value for member in self.network_models.SecurityRuleAccess]
+    access_names = [member.value for member in SecurityRuleAccess]
     if rule['access'] not in access_names:
         raise Exception("Rule access must be one of [{0}]".format(', '.join(access_names)))
 
@@ -382,14 +382,14 @@ def validate_rule(self, rule, rule_type=None):
     if not rule.get('protocol'):
         rule['protocol'] = '*'
 
-    protocol_names = [member.value for member in self.network_models.SecurityRuleProtocol]
+    protocol_names = [member.value for member in SecurityRuleProtocol]
     if rule['protocol'] not in protocol_names:
         raise Exception("Rule protocol must be one of [{0}]".format(', '.join(protocol_names)))
 
     if not rule.get('direction'):
         rule['direction'] = 'Inbound'
 
-    direction_names = [member.value for member in self.network_models.SecurityRuleDirection]
+    direction_names = [member.value for member in SecurityRuleDirection]
     if rule['direction'] not in direction_names:
         raise Exception("Rule direction must be one of [{0}]".format(', '.join(direction_names)))
 
@@ -439,7 +439,7 @@ def create_rule_instance(self, rule):
     :param rule: dict
     :return: SecurityRule
     '''
-    return self.network_models.SecurityRule(
+    return SecurityRule(
         protocol=rule['protocol'],
         source_address_prefix=rule['source_address_prefix'],
         destination_address_prefix=rule['destination_address_prefix'],
@@ -536,6 +536,9 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.state = None
         self.tags = None
 
+        self.resource_client = None
+        self.network_client = None
+
         self.results = dict(
             changed=False,
             state=dict()
@@ -545,6 +548,8 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
+        self.resource_client = self.get_mgmt_svc_client(ResourceManagementClient, base_url=self._cloud_environment.endpoints.resource_manager)
+        self.network_client = self.get_mgmt_svc_client(NetworkManagementClient, base_url=self._cloud_environment.endpoints.resource_manager)
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -552,7 +557,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         changed = False
         results = dict()
 
-        resource_group = self.get_resource_group(self.resource_group)
+        resource_group = self.get_resource_group(self.resource_group, self.resource_client)
         if not self.location:
             # Set default location
             self.location = resource_group.location
@@ -681,7 +686,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         return self.results
 
     def create_or_update(self, results):
-        parameters = self.network_models.NetworkSecurityGroup()
+        parameters = NetworkSecurityGroup()
         if results.get('rules'):
             parameters.security_rules = []
             for rule in results.get('rules'):
