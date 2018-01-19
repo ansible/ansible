@@ -45,7 +45,6 @@ options:
         See examples.
     required: false
     default: null
-    aliases: ['waitfor']
     version_added: "2.2"
   match:
     description:
@@ -58,7 +57,7 @@ options:
     required: false
     default: all
     choices: ['any', 'all']
-    version_added: "2.2"
+    version_added: "2.5"
   retries:
     description:
       - Specifies the number of retries a command should be tried
