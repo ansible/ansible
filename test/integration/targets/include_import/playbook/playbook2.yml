@@ -1,0 +1,9 @@
+- name: Playbook 2
+  hosts: testhost2
+
+  tasks:
+    - name: Set fact in playbook 2
+      set_fact:
+        canary_var2: playbook2 imported
+      tags:
+        - canary2
