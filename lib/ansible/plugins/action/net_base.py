@@ -37,6 +37,9 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+_CLI_ONLY_MODULES = frozenset(['junos_netconf', 'iosxr_netconf', 'iosxr_config', 'iosxr_command'])
+_NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
+
 
 class ActionModule(ActionBase):
 
@@ -57,7 +60,8 @@ class ActionModule(ActionBase):
             module = load_module(module_name, f, p, d)
 
             self.provider = load_provider(module.get_provider_argspec(), self._task.args)
-            if play_context.network_os == 'junos':
+            if self.provider.get('transport') == 'netconf' and play_context.network_os in _NETCONF_SUPPORTED_PLATFORMS \
+                    and self._task.action not in _CLI_ONLY_MODULES:
                 play_context.connection = 'netconf'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 830)
             elif self.provider.get('transport') in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):

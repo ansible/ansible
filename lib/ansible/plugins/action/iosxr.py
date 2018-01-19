@@ -45,15 +45,14 @@ class ActionModule(_ActionModule):
             provider = load_provider(iosxr_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             if self._task.action in ['iosxr_netconf', 'iosxr_config', 'iosxr_command'] or \
-                    (provider['transport'] == 'cli' and (self._task.action == 'iosxr_banner' or
-                                                         self._task.action == 'iosxr_facts' or self._task.action == 'iosxr_logging' or
-                                                         self._task.action == 'iosxr_system' or self._task.action == 'iosxr_user' or
-                                                         self._task.action == 'iosxr_interface')):
+                    (provider['transport'] == 'cli'):
                 pc.connection = 'network_cli'
                 pc.port = int(provider['port'] or self._play_context.port or 22)
-            else:
+            elif provider['transport'] == 'netconf':
                 pc.connection = 'netconf'
                 pc.port = int(provider['port'] or self._play_context.port or 830)
+            else:
+                return {'failed': True, 'msg': 'Transport type %s is not valid for this module' % provider['transport']}
 
             pc.network_os = 'iosxr'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
