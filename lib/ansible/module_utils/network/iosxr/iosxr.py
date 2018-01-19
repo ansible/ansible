@@ -48,7 +48,6 @@ try:
 except ImportError:
     HAS_XML = False
 
-_DEVICE_CONFIGS = {}
 _EDIT_OPS = frozenset(['merge', 'create', 'replace', 'delete'])
 
 BASE_1_0 = "{urn:ietf:params:xml:ns:netconf:base:1.0}"
@@ -78,7 +77,7 @@ iosxr_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'transport': dict(),
+    'transport': dict(type='str', default='cli', choices=['cli', 'netconf']),
 }
 
 iosxr_argument_spec = {
@@ -356,8 +355,6 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, p
 
 
 def get_oper(module, filter=None):
-    global _DEVICE_CONFIGS
-
     conn = get_connection(module)
 
     if filter is not None:
@@ -367,25 +364,16 @@ def get_oper(module, filter=None):
 
 
 def get_config(module, config_filter=None, source='running'):
-    global _DEVICE_CONFIGS
-
     conn = get_connection(module)
 
-    if config_filter is not None:
-        key = (source + ' ' + ' '.join(config_filter)).strip().rstrip()
-    else:
-        key = source
-    config = _DEVICE_CONFIGS.get(key)
-    if config:
-        return config
-    else:
-        out = conn.get_config(source=source, filter=config_filter)
-        if is_netconf(module):
-            out = to_xml(conn.get_config(source=source, filter=config_filter))
+    # Note: Does not cache config in favour of latest config on every get operation.
+    out = conn.get_config(source=source, filter=config_filter)
+    if is_netconf(module):
+        out = to_xml(conn.get_config(source=source, filter=config_filter))
 
-        cfg = out.strip()
-        _DEVICE_CONFIGS.update({key: cfg})
-        return cfg
+    cfg = out.strip()
+
+    return cfg
 
 
 def load_config(module, command_filter, commit=False, replace=False,
