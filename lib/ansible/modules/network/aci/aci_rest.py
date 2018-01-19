@@ -22,8 +22,8 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
 requirements:
-- lxml (when using XML content)
-- xmljson >= 0.1.8 (when using XML content)
+- lxml (when using XML payload)
+- xmljson >= 0.1.8 (when using XML payload)
 - python 2.7+ (when using xmljson)
 extends_documentation_fragment: aci
 options:
@@ -45,7 +45,7 @@ options:
     aliases: [ uri ]
   content:
     description:
-    - When used instead of C(src), sets the content of the API request directly.
+    - When used instead of C(src), sets the payload of the API request directly.
     - This may be convenient to template simple requests, for anything complex use the M(template) module.
   src:
     description:
@@ -53,8 +53,12 @@ options:
       of the http request being sent to the ACI fabric.
     aliases: [ config_file ]
 notes:
-- When using inline-JSON (using C(content)), YAML requires to start with a blank line.
-  Otherwise the JSON statement will be parsed as a YAML mapping (dictionary) and translated into invalid JSON as a result.
+- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
+  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
+  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
+- Certain payloads (or used paths) are known to report no changes happened when changes did happen.
+  This is a known APIC problem and has been reported to the vendor.
+  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
 - XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
 '''
 
@@ -75,7 +79,7 @@ EXAMPLES = r'''
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     validate_certs: no
-    path: /api/mo/uni/tn-[Sales].json
+    path: /api/mo/uni.json
     method: post
     content:
       fvTenant:
@@ -90,9 +94,9 @@ EXAMPLES = r'''
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     validate_certs: no
-    path: /api/mo/uni/tn-[Sales].json
+    path: /api/mo/uni.json
     method: post
-    content: |
+    content:
       {
         "fvTenant": {
           "attributes": {
@@ -109,10 +113,9 @@ EXAMPLES = r'''
     username: '{{ aci_username }}'
     private_key: pki/{{ aci_username}}.key
     validate_certs: no
-    path: /api/mo/uni/tn-[Sales].xml
+    path: /api/mo/uni.xml
     method: post
-    content: |
-      <fvTenant name="Sales" descr="Sales departement"/>
+    content: '<fvTenant name="Sales" descr="Sales departement"/>'
   delegate_to: localhost
 
 - name: Get tenants using password authentication
@@ -301,6 +304,7 @@ def main():
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
         src=dict(type='path', aliases=['config_file']),
         content=dict(type='raw'),
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -330,7 +334,7 @@ def main():
     elif path.find('.json') != -1:
         rest_type = 'json'
     else:
-        module.fail_json(msg='Failed to find REST API content type (neither .xml nor .json).')
+        module.fail_json(msg='Failed to find REST API payload type (neither .xml nor .json).')
 
     aci = ACIModule(module)
 
@@ -341,7 +345,7 @@ def main():
             # TODO: Would be nice to template this, requires action-plugin
             payload = config_object.read()
 
-    # Validate content
+    # Validate payload
     if rest_type == 'json':
         if content and isinstance(content, dict):
             # Validate inline YAML/JSON
@@ -351,7 +355,7 @@ def main():
                 # Validate YAML/JSON string
                 payload = json.dumps(yaml.safe_load(payload))
             except Exception as e:
-                module.fail_json(msg='Failed to parse provided JSON/YAML content: %s' % to_text(e), exception=to_text(e), payload=payload)
+                module.fail_json(msg='Failed to parse provided JSON/YAML payload: %s' % to_text(e), exception=to_text(e), payload=payload)
     elif rest_type == 'xml' and HAS_LXML_ETREE:
         if content and isinstance(content, dict) and HAS_XMLJSON_COBRA:
             # Validate inline YAML/JSON
@@ -363,7 +367,7 @@ def main():
                 # Validate XML string
                 payload = lxml.etree.tostring(lxml.etree.fromstring(payload))
             except Exception as e:
-                module.fail_json(msg='Failed to parse provided XML content: %s' % to_text(e), payload=payload)
+                module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
     # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
