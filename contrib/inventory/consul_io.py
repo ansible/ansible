@@ -261,17 +261,25 @@ class ConsulInventory(object):
         if self.config.has_config('availability'):
             for service_name, service in iteritems(node['Services']):
                 for node in self.consul_api.health.service(service_name)[1]:
-                    for check in node['Checks']:
-                        if check['ServiceName'] == service_name:
-                            ok = 'passing' == check['Status']
-                            if ok:
-                                suffix = self.config.get_availability_suffix(
-                                    'available_suffix', '_available')
-                            else:
-                                suffix = self.config.get_availability_suffix(
-                                    'unavailable_suffix', '_unavailable')
-                            self.add_node_to_map(self.nodes_by_availability,
-                                                 service_name + suffix, node['Node'])
+                    if self.is_service_available(node, service_name):
+                        suffix = self.config.get_availability_suffix(
+                            'available_suffix', '_available')
+                    else:
+                        suffix = self.config.get_availability_suffix(
+                            'unavailable_suffix', '_unavailable')
+                    self.add_node_to_map(self.nodes_by_availability,
+                                         service_name + suffix, node['Node'])
+
+    def is_service_available(self, node, service_name):
+        '''check the availability of the service on the node beside ensuring the
+        availability of the node itself'''
+        consul_ok = service_ok = False
+        for check in node['Checks']:
+            if check['CheckID'] == 'serfHealth':
+                consul_ok = check['Status'] == 'passing'
+            elif check['ServiceName'] == service_name:
+                service_ok = check['Status'] == 'passing'
+        return consul_ok and service_ok
 
     def consul_get_kv_inmemory(self, key):
         result = filter(lambda x: x['Key'] == key, self.inmemory_kv)
