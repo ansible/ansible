@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import sys
 import copy
 
 from ansible.compat.tests import unittest
@@ -20,7 +21,7 @@ class TestNiosApi(unittest.TestCase):
         self.module.check_mode = False
         self.module.params = {'provider': None}
 
-        self.mock_connector = patch('ansible.module_utils.net_tools.nios.api.Connector', spec=True)
+        self.mock_connector = patch('ansible.module_utils.net_tools.nios.api.get_connector')
         self.mock_connector.start()
 
     def tearDown(self):
@@ -39,19 +40,8 @@ class TestNiosApi(unittest.TestCase):
         returned_options = res['provider']['options']
         self.assertItemsEqual(provider_options, returned_options.keys())
 
-    def test_get_connector(self):
-        res = api.get_connector(self.module)
-        for meth in ('get_object', 'update_object', 'delete_object'):
-            self.assertTrue(hasattr(res, meth))
-
     def test_wapi_base(self):
         wapi = api.WapiBase(self.module)
-
-        for meth in ('get_object', 'update_object', 'delete_object'):
-            self.assertTrue(hasattr(wapi, meth))
-
-        with self.assertRaises(AttributeError):
-            wapi.invalid_method_foo()
 
         with self.assertRaises(NotImplementedError):
             wapi.run(None, None)
