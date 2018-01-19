@@ -17,81 +17,62 @@ DOCUMENTATION = '''
 module: influxdb_user
 short_description: Manage InfluxDB users
 description:
-    - Manage InfluxDB users
+  - Manage InfluxDB users
 version_added: 2.5
 author: "Vitaliy Zhhuta (@zhhuta)"
 requirements:
-    - "python >= 2.6"
-    - "influxdb >= 0.9"
+  - "python >= 2.6"
+  - "influxdb >= 0.9"
 options:
-    hostname:
-        description:
-            - The hostname or IP address on which InfluxDB server is listening
-        default: localhost
-        required: false
-    user_name:
-        description:
-            - User that we want to create
-        default: None
-        required: True
-    user_password:
-        description:
-            - Password that we want to set for user
-        default: None
-        required: false
-    admin:
-        description:
-            - specify if user should be admin
-        default: False
-        required: false
-
-    port:
-        description:
-            - The port on which InfluxDB server is listening
-        default: 8086
-        required: false
-    state:
-        description:
-            - Determines if the database should be created or destroyed
-        choices: ['present', 'absent']
-        default: present
-        required: false
-    username:
-        description:
-            - user to auth with influxdb
-        default: root
-        required: false
-    password:
-        description:
-            - password to auth username with influxdb
-        default: root
-        required: false
+  user_name:
+    description:
+      - Name of the user.
+    required: True
+  user_password:
+    description:
+      - Password to be set for the user.
+    required: false
+  admin:
+    description:
+      - Whether the user should be in the admin role or not.
+    default: no
+    choices: [ yes, no]
+  state:
+    description:
+      - State of the user.
+    choices: [ present, absent ]
+    default: present
+extends_documentation_fragment: influxdb
 '''
 
 EXAMPLES = '''
-# Example influxdb_user command from Ansible Playbooks
-- name: Create User
+- name: Create a user on localhost using default login credentials
   influxdb_user:
-      user_name: "{{influxdb_user_name}}"
-      user_password: "{{influxdb_user_password}}"
-      state: present
+    user_name: john
+    user_password: s3cr3t
 
-- name: Destroy User
+- name: Create a user on localhost using custom login credentials
   influxdb_user:
-      user_name: "{{influxdb_user_name}}"
-      username: "{{influxdb_password}}"
-      password: "{{influxdb_user_password}}"
-      state: absent
+    user_name: john
+    user_password: s3cr3t
+    login_username: "{{ influxdb_username }}"
+    login_password: "{{ influxdb_password }}"
 
-- name: Create user on dest host
+- name: Create an admin user on a remote host using custom login credentials
   influxdb_user:
-      hostname: "{{influxdb_ip_address}}"
-      username: "{{influxdb_username}}"
-      password: "{{influxdb_password}}"
-      user_name: "{{influxdb_user_name}}"
-      user_password: "{{influxdb_user_password}}"
-      admin: true
-      state: present
+    user_name: john
+    user_password: s3cr3t
+    admin: yes
+    hostname: "{{ influxdb_hostname }}"
+    login_username: "{{ influxdb_username }}"
+    login_password: "{{ influxdb_password }}"
+
+- name: Destroy a user using custom login credentials
+  influxdb_user:
+    user_name: john
+    login_username: "{{ influxdb_username }}"
+    login_password: "{{ influxdb_password }}"
+    state: absent
 '''
 
 RETURN = '''
