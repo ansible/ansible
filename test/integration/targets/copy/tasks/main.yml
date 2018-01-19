@@ -13,6 +13,12 @@
     - file: path={{local_temp_dir}} state=directory
       name: ensure temp dir exists
 
+    # file cannot do this properly, use command instead
+    - name: Create ciruclar symbolic link
+      command: ln -s ../ circles
+      args:
+        chdir: '{{role_path}}/files/subdir/subdir1'
+
     - name: Create remote unprivileged remote user
       user:
         name: '{{ remote_unprivileged_user }}'
@@ -46,6 +52,12 @@
     - name: Cleaning
       file:
         path: '{{ local_temp_dir }}'
+        state: absent
+      connection: local
+
+    - name: Remove circular symbolic link
+      file:
+        path: subdir/subdir1/circles
         state: absent
       connection: local
 
