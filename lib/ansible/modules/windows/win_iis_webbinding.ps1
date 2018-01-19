@@ -52,82 +52,37 @@ function Create-BindingInfo {
 }
 
 # Used instead of get-webbinding to ensure we always return a single binding
+# We can't filter properly with get-webbinding...ex get-webbinding ip * returns all bindings
 # pass it $binding_parameters hashtable
 function Get-SingleWebBinding {
-    $bind_search_splat = @{
-        'name' = $args[0].name
-        'protocol' = $args[0].protocol
-        'port' = $args[0].port
-        'ip' = $args[0].ip
-        'hostheader' = $args[0].hostheader
+
+    Try {
+        $site_bindings = get-webbinding -name $args[0].name
+    }
+    Catch {
+        # 2k8r2 throws this error when you run get-webbinding with no bindings in iis
+        If (-not $_.Exception.Message.CompareTo('Cannot process argument because the value of argument "obj" is null. Change the value of argument "obj" to a non-null value'))
+        {
+            Throw $_.Exception.Message
+        }
+        Else { return }
     }
 
-    # if no bindings exist, get-webbinding fails with an error that can't be ignored via error actions on older systems
-    # let's ignore that specific error
-    If (-not $bind_search_splat['hostheader'])
+    Foreach ($binding in $site_bindings)
     {
-        Try {
-            Get-WebBinding @bind_search_splat | Where-Object {$_.BindingInformation.Split(':')[-1] -eq [string]::Empty}
-        }
-        Catch {
-            If (-not $_.Exception.Message.CompareTo('Cannot process argument because the value of argument "obj" is null. Change the value of argument "obj" to a non-null value'))
-            {
-                Throw $_.Exception.Message
-            }
-        }
-    }
-    Else
-    {
-        Try {
-            Get-WebBinding @bind_search_splat
-        }
-        Catch {
-            If (-not $_.Exception.Message.CompareTo('Cannot process argument because the value of argument "obj" is null. Change the value of argument "obj" to a non-null value'))
-            {
-                Throw $_.Exception.Message
-            }
+        $splits = $binding.bindingInformation -split ':'
+
+        if (
+            $args[0].protocol -eq $binding.protocol -and
+            $args[0].ipaddress -eq $splits[0] -and
+            $args[0].port -eq $splits[1] -and
+            $args[0].hostheader -eq $splits[2]
+        )
+        {
+            Return $binding
         }
     }
 }
-
-Function Get-CertificateSubjects {
-Param (
-[string]$CertPath
-)
-    If (-Not (Test-Path $CertPath) )
-    {
-        Fail-Json -obj $result -message "Unable to locate certificate at $CertPath"
-    }
-
-    $cert = get-item $CertPath
-
-    If ([version][System.Environment]::OSVersion.Version -ge [version]6.2)
-    {
-        $cert.DnsNameList.unicode
-    }
-    Else
-    {
-        $san = $cert.extensions | Where-Object {$_.Oid.FriendlyName -eq 'Subject Alternative Name'}
-        If ($san)
-        {
-            $san.Format(1) -split '\r\n' | Where-Object {$_} | ForEach-Object {
-                ($_ -split '=')[-1]
-            }
-        }
-        Else
-        {
-            If ($cert.subject -like "*,*")
-            {
-                ($cert.Subject | Select-String "CN=(.*?),?").matches.groups[-1].value
-            }
-            Else
-            {
-                $cert.subject -replace "CN=",''
-            }
-        }
-    }
-}
-
 
 
 #############################
@@ -203,29 +158,6 @@ If ($certificateHash -and $state -eq 'present')
     {
         Fail-Json -obj $result -message "Unable to locate certificate at $cert_path"
     }
-
-    #check if cert is wildcard and update results with useful info.
-    $cert_subjects = Get-CertificateSubjects $cert_path
-    $result.certificate_subjects = $cert_subjects
-    If ($cert_subjects | Where-Object {$_ -match '^\*'})
-    {
-        $cert_is_wildcard = $true
-        $result.cert_is_wildcard = $cert_is_wildcard
-    }
-    Else
-    {
-        $cert_is_wildcard = $false
-        $result.cert_is_wildcard = $cert_is_wildcard
-    }
-
-    If ($os_version -lt [version]6.2 -and $host_header -and -not $cert_is_wildcard)
-    {
-        Fail-Json -obj $result -message "You cannot specify host headers with SSL unless it is a wildcard certificate."
-    }
-    Elseif ($os_version -ge [version]6.2 -and $host_header -and (-not $cert_is_wildcard -and $sslFlags -eq 0))
-    {
-        Fail-Json -obj $result -message "You cannot specify host headers with SSL unless it is a wildcard certificate or SNI is enabled."
-    }
 }
 
 # make sure binding info is valid for central cert store if sslflags -gt 1
@@ -236,10 +168,10 @@ If ($sslFlags -gt 1 -and ($certificateHash -ne [string]::Empty -or $certificateS
     the certificate is automatically retrieved from the store rather than manually assigned to the binding."
 }
 
-# make sure host_header: '*' only present when state: absent
-If ($host_header -match '^\*$' -and $state -ne 'absent')
+# disallow host_header: '*'
+If ($host_header -eq '*')
 {
-    Fail-Json -obj $result -message "host_header: '*' can only be used in combinaiton with state: absent"
+    Fail-Json -obj $result -message "To make or remove a catch-all binding, please omit the host_header parameter entirely rather than specify host_header *"
 }
 
 ##########################
@@ -259,6 +191,10 @@ If ($host_header)
 {
     $binding_parameters.HostHeader = $host_header
 }
+Else
+{
+    $binding_parameters.HostHeader = [string]::Empty
+}
 
 # Get bindings matching parameters
 Try {
@@ -274,10 +210,27 @@ Catch {
 If ($current_bindings -and $state -eq 'absent')
 {
     Try {
-        # will remove multiple objects in the case of * host header
-        $current_bindings | Remove-WebBinding -WhatIf:$check_mode
+        #there is a bug in this method that will result in all bindings being removed if the IP in $current_bindings is a *
+        #$current_bindings | Remove-WebBinding -verbose -WhatIf:$check_mode
+
+        #another method that did not work. It kept failing to match on element and removed everything.
+        #$element = @{protocol="$protocol";bindingInformation="$ip`:$port`:$host_header"}
+        #Remove-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection -AtElement $element -WhatIf #:$check_mode
+
+        #this method works
+        [array]$bindings = Get-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection
+
+        $index = Foreach ($item in $bindings) {
+            If ( $protocol -eq $item.protocol -and $current_bindings.bindingInformation -eq $item.bindingInformation ) {
+                $bindings.indexof($item)
+                break
+            }
+        }
+
+        Remove-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection -AtIndex $index -WhatIf:$check_mode
         $result.changed = $true
     }
+
     Catch {
         Fail-Json -obj $result -message "Failed to remove the binding from IIS - $($_.Exception.Message)"
     }
@@ -299,7 +252,7 @@ ElseIf (-Not $current_bindings -and $state -eq 'absent')
 ### Modify existing bindings ###
 ################################
 <#
-since we have already.binding_info the parameters available to get-webbinding,
+since we have already have the parameters available to get-webbinding,
 we just need to check here for the ones that are not available which are the
 ssl settings (hash, store, sslflags). If they aren't set we update here, or
 exit with changed: false
@@ -373,44 +326,6 @@ ElseIf ($current_bindings)
 ########################
 ElseIf (-not $current_bindings -and $state -eq 'present')
 {
-    If ($certificateHash)
-    {
-        <#
-        Make sure a valid binding is specified. It's possible for another site to have a binding on the same IP:PORT. If
-        we bind to that same ip port without hostheader/sni it will cause a collision. Note, this check only matters for
-        https. Http will generate an error when new-webbinding is called if there is a conflict, unlike https.
-
-        I couldn't think of a good way to handle scenarios involving wildcards. There's just too many to think about and I
-        wouldn't want to potentially hard fail valid scenarios here that I did not consider...so those can still collide. We just skip
-        validation anytime an existing binding is a wildcard.
-
-        If a collision does occur, the website will be stopped. To help with this we'll return the website state into results.
-        #>
-
-        #use this instead of get-webbinding. on 2k8r2 get-webbinding fails with an error if a site with no bindings exists
-        $binding_matches = (Get-Website).bindings.collection | Where-Object {$_.BindingInformation -eq "$ip`:$port`:"}
-
-        #get dns names for all certs in matching bindings
-        $subjects = Foreach ($binding in $binding_matches)
-        {
-            $cert_path = "cert:\localmachine\$($binding.certificatestorename)\$($binding.certificatehash)"
-            Get-CertificateSubjects $cert_path
-        }
-
-        #skip validating scenarios where existing certs are wildcard
-        If (-not ($subjects | Where-Object {$_ -match "^\*"}))
-        {
-            If ($sslFlags -eq 0 -and $binding_matches -and $os_version -gt [version]6.2)
-            {
-                Fail-Json -obj $result -message "A conflicting binding has been found on the same ip $ip and port $port. To continue, you will either have to remove the offending binding or enable sni"
-            }
-            ElseIf ($binding_matches -and $os_version -lt [version]6.2)
-            {
-                Fail-Json -obj $result -message "A conflicting binding has been found on the same ip $ip and port $port. To continue you will need to remove the existing binding or assign a new IP or Port to this one"
-            }
-        }
-    }
-
     # add binding. this creates the binding, but does not apply a certificate to it.
     Try
     {
@@ -437,7 +352,8 @@ ElseIf (-not $current_bindings -and $state -eq 'present')
     If ($certificateHash -and -not $check_mode)
     {
         Try {
-            $new_binding = get-webbinding -Name $name -IPAddress $ip -port $port -Protocol $protocol -hostheader $host_header
+            #$new_binding = get-webbinding -Name $name -IPAddress $ip -port $port -Protocol $protocol -hostheader $host_header
+            $new_binding = Get-SingleWebBinding $binding_parameters
             $new_binding.addsslcertificate($certificateHash,$certificateStoreName)
         }
         Catch {
