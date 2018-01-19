@@ -19,6 +19,7 @@ Ansible Changes By Release
 * Fix Digital Ocean tags data type due to backend API changes no longer
   acceping integers
   (https://github.com/ansible/ansible/pull/33486)
+* Fix for nxos_vxlan_vtep_vni issues: https://github.com/ansible/ansible/pull/34946
 
 
 <a id="2.4.3"></a>
