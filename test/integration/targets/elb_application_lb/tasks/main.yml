@@ -58,7 +58,7 @@
 
   - name: create ALB with no listeners
     elb_application_lb:
-      name: my_alb
+      name: "{{ alb_name }}"
       subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
       security_groups: "{{ sec_group.group_id }}"
       state: present
@@ -71,7 +71,7 @@
 
   - name: re-create ALB with no listeners
     elb_application_lb:
-      name: my_alb
+      name: "{{ alb_name }}"
       subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
       security_groups: "{{ sec_group.group_id }}"
       state: present
@@ -84,7 +84,7 @@
 
   - name: destroy ALB with no listeners
     elb_application_lb:
-      name: my_alb
+      name: "{{ alb_name }}"
       state: absent
       <<: *aws_connection_info
     register: alb
