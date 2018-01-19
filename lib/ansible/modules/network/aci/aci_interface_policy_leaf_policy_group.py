@@ -23,7 +23,8 @@ author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 notes:
-- When using the module please select the appropriate link_aggregation_type. 'link'(PC)/'node'(VPC), 'leaf'(Leaf Access Port Policy Group)
+- When using the module please select the appropriate link_aggregation_type (lag_type).
+  C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
 options:
  policy_group:
    description:
@@ -32,11 +33,11 @@ options:
  description:
    description:
    - Description for the leaf policy group to be created.
-   aliases: [ descr, description ]
- link_aggregation_type:
+   aliases: [ descr ]
+ lag_type:
    description:
    - Selector for the type of leaf policy group we want to create.
-   aliases: [ link_aggregation_type_name ]
+   aliases: [ lag_type_name ]
  link_level_policy:
    description:
    - Choice of link_level_policy to be used as part of the leaf policy group to be created.
@@ -97,10 +98,10 @@ options:
    description:
    - Choice of port_security_policy to be used as part of the leaf policy group to be created.
    aliases: [ port_security_policy_name ]
- attached_entity_profile:
+ aep:
    description:
    - Choice of attached_entity_profile (AEP) to be used as part of the leaf policy group to be created.
-   aliases: [ attached_entity_profile_name, AEP, AEP_name ]
+   aliases: [ aep_name ]
  state:
    description:
    - Use C(present) or C(absent) for adding or removing.
@@ -118,7 +119,7 @@ EXAMPLES = r'''
     password: yourpassword
     policy_group: policygroupname
     description: policygroupname description
-    link_aggregation_type: link
+    lag_type: link
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
@@ -129,7 +130,7 @@ EXAMPLES = r'''
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
-    link_aggregation_type: node
+    lag_type: node
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
@@ -140,7 +141,7 @@ EXAMPLES = r'''
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
-    link_aggregation_type: leaf
+    lag_type: leaf
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
@@ -151,7 +152,7 @@ EXAMPLES = r'''
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
-    link_aggregation_type: type_name
+    lag_type: type_name
     state: absent
 '''
 
@@ -168,7 +169,7 @@ def main():
         'description': dict(type='str', aliases=['descr', 'description']),
         # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC andVPC) and infra:AccPortGrp (for leaf access port policy group):
         # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
-        'link_aggregation_type': dict(type='str', aliases=['link_aggregation_type_name']),
+        'lag_type': dict(type='str', aliases=['lag_type_name']),
         'link_level_policy': dict(type='str', aliases=['link_level_policy_name']),
         'cdp_policy': dict(type='str', aliases=['cdp_policy_name']),
         'mcp_policy': dict(type='str', aliases=['mcp_policy_name']),
@@ -184,7 +185,7 @@ def main():
         'storm_control_interface_policy': dict(type='str', aliases=['storm_control_interface_policy_name']),
         'l2_interface_policy': dict(type='str', aliases=['l2_interface_policy_name']),
         'port_security_policy': dict(type='str', aliases=['port_security_policy_name']),
-        'attached_entity_profile': dict(type='str', aliases=['AEP', 'AEP_name', 'attached_entity_profile_name']),
+        'aep': dict(type='str', aliases=['aep_name']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query'])
     })
 
@@ -192,14 +193,14 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['policy_group', 'link_aggregation_type']],
-            ['state', 'present', ['policy_group', 'link_aggregation_type']]
+            ['state', 'absent', ['policy_group', 'lag_type']],
+            ['state', 'present', ['policy_group', 'lag_type']]
         ]
     )
 
     policy_group = module.params['policy_group']
     description = module.params['description']
-    link_aggregation_type = module.params['link_aggregation_type']
+    lag_type = module.params['lag_type']
     link_level_policy = module.params['link_level_policy']
     cdp_policy = module.params['cdp_policy']
     mcp_policy = module.params['mcp_policy']
@@ -215,13 +216,13 @@ def main():
     storm_control_interface_policy = module.params['storm_control_interface_policy']
     l2_interface_policy = module.params['l2_interface_policy']
     port_security_policy = module.params['port_security_policy']
-    attached_entity_profile = module.params['attached_entity_profile']
+    aep = module.params['aep']
     state = module.params['state']
     aci_class_name = ''
     dn_name = ''
     class_config_dict = {}
 
-    if link_aggregation_type == 'leaf':
+    if lag_type == 'leaf':
         aci_class_name = 'infraAccPortGrp'
         dn_name = 'accportgrp'
         class_config_dict = dict(
@@ -229,13 +230,13 @@ def main():
             descr=description,
             dn='uni/infra/funcprof/{0}-{1}'.format(dn_name, policy_group)
         )
-    elif link_aggregation_type == 'link' or link_aggregation_type == 'node':
+    elif lag_type == 'link' or lag_type == 'node':
         aci_class_name = 'infraAccBndlGrp'
         dn_name = 'accbundle'
         class_config_dict = dict(
             name=policy_group,
             descr=description,
-            lagT=link_aggregation_type,
+            lagT=lag_type,
             dn='uni/infra/funcprof/{0}-{1}'.format(dn_name, policy_group)
         )
 
@@ -372,7 +373,7 @@ def main():
                 dict(
                     infraRsAttEntP=dict(
                         attributes=dict(
-                            tDn='uni/infra/attentp-{0}'.format(attached_entity_profile)
+                            tDn='uni/infra/attentp-{0}'.format(aep)
                         )
                     )
                 )
