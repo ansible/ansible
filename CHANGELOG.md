@@ -13,6 +13,9 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/issues/34523
 * Fix win_scheduled_task docs to correctly reflect what is required and when
   (https://github.com/ansible/ansible/issues/35072)
+* Updated copy test to create recursive symlink during the test and not have it
+  located in the git repo
+  (https://github.com/ansible/ansible/pull/35073)
 
 
 <a id="2.4.3"></a>
