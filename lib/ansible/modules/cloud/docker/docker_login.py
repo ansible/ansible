@@ -50,7 +50,7 @@ options:
         but Docker Hub requires it."
   reauthorize:
     description:
-      - Refresh exiting authentication found in the configuration file.
+      - Refresh existing authentication found in the configuration file.
     type: bool
     default: 'no'
     aliases:
