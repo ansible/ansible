@@ -41,6 +41,9 @@ class AnsibleModuleImportError(ImportError):
 
 @contextmanager
 def add_mocks(filename):
+    # Used to clean up imports later
+    pre_sys_modules = list(sys.modules.keys())
+
     gp = mock.patch('ansible.module_utils.basic.get_platform').start()
     gp.return_value = 'linux'
 
@@ -61,6 +64,13 @@ def add_mocks(filename):
 
     for m in mocks:
         m.stop()
+
+    # Clean up imports to prevent issues with mutable data being used in modules
+    for k in list(sys.modules.keys()):
+        # It's faster if we limit to items in ansible.module_utils
+        # But if this causes problems later, we should remove it
+        if k not in pre_sys_modules and k.startswith('ansible.module_utils.'):
+            del sys.modules[k]
 
 
 def get_argument_spec(filename):
