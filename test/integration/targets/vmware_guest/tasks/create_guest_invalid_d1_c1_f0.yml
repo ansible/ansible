@@ -2,41 +2,42 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#- name: Wait for Flask controller to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 5000
-#    state: started
-#
-#- name: kill vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/killall
-#- name: start vcsim with no folders
-#  uri:
-#    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-#  register: vcsim_instance
-#
-#- name: Wait for Flask controller to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 443
-#    state: started
-#
-#- debug: var=vcsim_instance
-#
-#- name: get a list of Datacenter from vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-#  register: datacenters
-#
-#- set_fact: dc1="{{ datacenters['json'][0] }}"
-#
-#- name: get a list of virtual machines from vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-#  register: vms
-#
-#- set_fact: vm1="{{ vms['json'][0] }}"
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
+- name: get a list of Datacenter from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- set_fact: dc1="{{ datacenters['json'][0] }}"
+
+- name: get a list of virtual machines from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vms
+
+- set_fact: vm1="{{ vms['json'][0] }}"
+
 #
 #- name: create new virtual machine with invalid guest id
 #  vmware_guest:
@@ -66,3 +67,35 @@
 #    that:
 #        - "invalid_guest_0001_d1_c1_f0['changed'] == false"
 #        - "'configSpec.guestId' in invalid_guest_0001_d1_c1_f0['msg']"
+
+
+# For vmware_guest idempotent behavior name and folder parameters
+# should be specified together otherwise it will create duplicate machine with
+# same name.
+- name: Try to create new virtual machine without folder
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'invalid_vm_' + vm1 | basename }}"
+    guest_id: "invalid_guest_id"
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          autoselect_datastore: True
+    state: present
+  register: invalid_guest_0002_d1_c1_f0
+  ignore_errors: yes
+
+- debug: var=invalid_guest_0002_d1_c1_f0
+
+- name: assert the changes
+  assert:
+    that:
+        - "invalid_guest_0002_d1_c1_f0['changed'] == false"
+        - "'parameters are required together: name, folder' in invalid_guest_0002_d1_c1_f0['msg']"
