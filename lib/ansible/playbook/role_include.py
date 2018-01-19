@@ -21,9 +21,6 @@ __metaclass__ = type
 
 from os.path import basename
 
-import cProfile
-import tempfile
-
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task_include import TaskInclude
@@ -48,7 +45,7 @@ class IncludeRole(TaskInclude):
 
     BASE = ('name', 'role')  # directly assigned
     FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
-    OTHER_ARGS = ('private', 'allow_duplicates', 'profiling')  # assigned to matching property
+    OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
     # =================================================================================
@@ -57,7 +54,6 @@ class IncludeRole(TaskInclude):
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=None, private=True)
     _private = FieldAttribute(isa='bool', default=None, private=True)
-    _profiling = FieldAttribute(isa='bool', default=None, private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -124,10 +120,6 @@ class IncludeRole(TaskInclude):
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
-        pr = None
-        if self.profiling:
-            pr = cProfile.Profile()
-            pr.enable()
         # only need play passed in when dynamic
         if play is None:
             myplay = self._parent._play
@@ -181,11 +173,6 @@ class IncludeRole(TaskInclude):
         # updated available handlers in play
         handlers = actual_role.get_handler_blocks(play=myplay)
         myplay.handlers = myplay.handlers + handlers
-
-        if self.profiling:
-            pr.disable()
-            fich, fic = tempfile.mkstemp()
-            pr.dump_stats(fic + '_role_astat')
         return blocks, handlers
 
     @staticmethod
