@@ -604,9 +604,14 @@ namespace Ansible
         private static extern int ResumeThread(
             SafeHandle hThread);
 
-        public static CommandResult RunAsUser(string username, string password, string lpCommandLine, string lpCurrentDirectory, string stdinInput)
+        public static CommandResult RunAsUser(string username, string password, string lpCommandLine,
+            string lpCurrentDirectory, string stdinInput, LogonFlags logonFlags, LogonType logonType)
         {
-            SecurityIdentifier account = GetBecomeSid(username);
+            SecurityIdentifier account = null;
+            if (logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+            {
+                account = GetBecomeSid(username);
+            }
 
             STARTUPINFOEX si = new STARTUPINFOEX();
             si.startupInfo.dwFlags = (int)StartupInfoFlags.USESTDHANDLES;
@@ -649,14 +654,14 @@ namespace Ansible
             PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
 
             // Get the user tokens to try running processes with
-            List<IntPtr> tokens = GetUserTokens(account, username, password);
+            List<IntPtr> tokens = GetUserTokens(account, username, password, logonType);
 
             bool launch_success = false;
             foreach (IntPtr token in tokens)
             {
                 if (CreateProcessWithTokenW(
                     token,
-                    LogonFlags.LOGON_WITH_PROFILE,
+                    logonFlags,
                     null,
                     new StringBuilder(lpCommandLine),
                     startup_flags,
@@ -695,6 +700,11 @@ namespace Ansible
                 StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
                 stderr_write.Close();
 
+                int test = 0;
+                test = test + 1;
+                //if (test == 1)
+                //    throw new Exception(stdinInput);
+
                 stdin.WriteLine(stdinInput);
                 stdin.Close();
 
@@ -729,7 +739,7 @@ namespace Ansible
             }
         }
 
-        private static List<IntPtr> GetUserTokens(SecurityIdentifier account, string username, string password)
+        private static List<IntPtr> GetUserTokens(SecurityIdentifier account, string username, string password, LogonType logonType)
         {
             List<IntPtr> tokens = new List<IntPtr>();
             List<String> service_sids = new List<String>()
@@ -739,16 +749,20 @@ namespace Ansible
                 "S-1-5-20"  // NT AUTHORITY\NetworkService
             };
 
-            GrantAccessToWindowStationAndDesktop(account);
-            string account_sid = account.ToString();
+            IntPtr hSystemToken = IntPtr.Zero;
+            string account_sid = "";
+            if (logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+            {
+                GrantAccessToWindowStationAndDesktop(account);
+                // Try to get SYSTEM token handle so we can impersonate to get full admin token
+                hSystemToken = GetSystemUserHandle();
+                account_sid = account.ToString();
+            }
             bool impersonated = false;
 
             try
             {
                 IntPtr hSystemTokenDup = IntPtr.Zero;
-
-                // Try to get SYSTEM token handle so we can impersonate to get full admin token
-                IntPtr hSystemToken = GetSystemUserHandle();
                 if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
                 {
                     // We need the SYSTEM token if we want to become one of those accounts, fail here
@@ -780,12 +794,11 @@ namespace Ansible
                     // might get a limited token in UAC-enabled cases, but better than nothing...
                 }
 
-                LogonType logonType;
                 string domain = null;
 
                 if (service_sids.Contains(account_sid))
                 {
-                    // We're using a well-known service account, do a service logon instead of interactive
+                    // We're using a well-known service account, do a service logon instead of the actual flag set
                     logonType = LogonType.LOGON32_LOGON_SERVICE;
                     domain = "NT AUTHORITY";
                     password = null;
@@ -805,7 +818,6 @@ namespace Ansible
                 else
                 {
                     // We are trying to become a local or domain account
-                    logonType = LogonType.LOGON32_LOGON_INTERACTIVE;
                     if (username.Contains(@"\"))
                     {
                         var user_split = username.Split(Convert.ToChar(@"\"));
@@ -876,7 +888,6 @@ namespace Ansible
                         TokenAccessLevels.AssignPrimary |
                         TokenAccessLevels.Impersonate;
 
-                    // TODO: Find out why I can't see processes from Network Service and Local Service
                     if (OpenProcessToken(hProcess, desired_access, out hToken))
                     {
                         string sid = GetTokenUserSID(hToken);
@@ -1139,21 +1150,82 @@ $exec_wrapper = {
 
 Function Dump-Error ($excep) {
     $eo = @{failed=$true}
-
     $eo.msg = $excep.Exception.Message
     $eo.exception = $excep | Out-String
     $host.SetShouldExit(1)
 
-    $eo | ConvertTo-Json -Depth 10
+    $eo | ConvertTo-Json -Depth 10 -Compress
+}
+
+Function Get-BecomeFlags($payload) {
+    # parses the become flags and returns the default flags if not set
+    if (-not ($payload.ContainsKey("become_flags"))) {
+        return ,@{
+            logon_type = [Ansible.LogonType]::LOGON32_LOGON_INTERACTIVE
+            logon_flags = [Ansible.LogonFlags]::LOGON_WITH_PROFILE
+        }
+    }
+
+    $flags = $payload.become_flags
+    if ($flags -eq $null -or $flags -eq "") {
+        $flags = @{}
+    } elseif (-not ($flags -is [Hashtable])) {
+        throw "become_flags for runas must be of the type dictionary not $($flags.GetType().ToString())"
+    }
+
+    $invalid_keys = [System.Collections.ArrayList]@()
+    $flags.GetEnumerator() | Where-Object { -not ($_.Name -eq "logon_type" -or $_.Name -eq "logon_flags")} | ForEach-Object { [void]$invalid_keys.Add($_.Name) }
+    if ($invalid_keys.Count -gt 0) {
+        throw "become_flags contains invalid keys '$($invalid_keys -join "', '")': only logon_type and logon_flags can be set"
+    }
+
+    if ($flags.ContainsKey("logon_type")) {
+        $logon_type_value = switch ($flags.logon_type) {
+            "interactive" { [Ansible.LogonType]::LOGON32_LOGON_INTERACTIVE }
+            "network" { [Ansible.LogonType]::LOGON32_LOGON_NETWORK }
+            "network_cleartext" { [Ansible.LogonType]::LOGON32_LOGON_NETWORK_CLEARTEXT }
+            "batch" { [Ansible.LogonType]::LOGON32_LOGON_BATCH }
+            "new_credentials" { [Ansible.LogonType]::LOGON32_LOGON_NEW_CREDENTIALS }
+            default { $null }
+        }
+        if ($logon_type_value -eq $null) {
+            $options = "interactive, network, network_cleartext, batch, or new_credentials"
+            throw "become_flags logon_type '$($flags.logon_type)' is not a valid value, must be $options"
+        }
+        $flags.logon_type = $logon_type_value
+    } else {
+        $flags.logon_type = [Ansible.LogonType]::LOGON32_LOGON_INTERACTIVE
+    }
+    if ($flags.ContainsKey("logon_flags")) {
+        $logon_flag_value = switch ($flags.logon_flags) {
+            "with_profile" { [Ansible.LogonFlags]::LOGON_WITH_PROFILE }
+            "netcredentials_only" { [Ansible.LogonFlags]::LOGON_NETCREDENTIALS_ONLY }
+            default { $null }
+        }
+        if ($logon_flag_value -eq $null) {
+            throw "become_flags logon_flags '$($flags.logon_flags)' is not a valid value, must be with_profile, or netcredentials_only"
+        }
+        $flags.logon_flags = $logon_flag_value
+    } else {
+        $flags.logon_flags = [Ansible.LogonFlags]::LOGON_WITH_PROFILE
+    }
+
+    return $flags
 }
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
 
+    Add-Type -TypeDefinition $helper_def -Debug:$false
+
     $username = $payload.become_user
     $password = $payload.become_password
-
-    Add-Type -TypeDefinition $helper_def -Debug:$false
+    try {
+        $become_flags = Get-BecomeFlags -payload $payload
+    } catch {
+        Dump-Error -excep $_
+        return $null
+    }
 
     # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via filesystem
     $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
@@ -1161,24 +1233,28 @@ Function Run($payload) {
     $rc = 0
 
     Try {
+        # do no modify ACL if LOGON32_LOGON_NEW_CREDENTIALS is set as the become user has the same perms as the ansible_user
         # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
-        $acl = Get-Acl $temp
+        if ($become_flags.logon_type -ne [Ansible.LogonType]::LOGON32_LOGON_NEW_CREDENTIALS) {
+            $acl = Get-Acl -Path $temp
 
-        Try {
-            $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
+            Try {
+                $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
+            } Catch [System.Security.Principal.IdentityNotMappedException] {
+                throw "become_user '$username' is not recognized on this host"
+            } Catch {
+                throw "failed to set ACL on temp become execution script: $($_.Exception.Message)"
+            }
+            Set-Acl -Path $temp -AclObject $acl | Out-Null
         }
-        Catch [System.Security.Principal.IdentityNotMappedException] {
-            throw "become_user '$username' is not recognized on this host"
-        }
-
-        Set-Acl $temp $acl | Out-Null
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
         $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -File $temp")
         $lp_current_directory = "$env:SystemRoot"
 
-        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $payload_string)
+        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory,
+            $payload_string, $become_flags.logon_flags, $become_flags.logon_type)
         $stdout = $result.StandardOut
         $stderr = $result.StandardError
         $rc = $result.ExitCode

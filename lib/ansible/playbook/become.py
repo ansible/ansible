@@ -36,7 +36,7 @@ class Become:
     _become = FieldAttribute(isa='bool')
     _become_method = FieldAttribute(isa='string')
     _become_user = FieldAttribute(isa='string')
-    _become_flags = FieldAttribute(isa='string')
+    _become_flags = FieldAttribute()  # used to be string but runas supports dict
 
     def __init__(self):
         super(Become, self).__init__()
@@ -57,6 +57,28 @@ class Become:
         elif has_sudo and has_su:
             raise AnsibleParserError('sudo params ("sudo", "sudo_user") and su params ("su", "su_user") cannot be used together')
 
+    def _detect_become_flags_type(self, ds):
+        # Fail if flags are not a string or dict (runas)
+        if 'become_flags' in ds:
+            # try and determine valid become_flag if become_method, otherwise
+            # accept all
+            become_flags = ds['become_flags']
+            become_method = ds.get('become_method', None)
+            flag_types = set(C.BECOME_FLAG_TYPES.values())
+            if become_method:
+                flag_types = list([C.BECOME_FLAG_TYPES[become_method]])
+
+            valid = False
+            for flag_type in flag_types:
+                if isinstance(become_flags, flag_type):
+                    valid = True
+                    break
+
+            if not valid:
+                valid_types = [str(valid_type) for valid_type in flag_types]
+                raise AnsibleParserError('The become params ("become_flags") must be a %s and not %s'
+                                         % (' or '.join(valid_types), type(become_flags)), obj=ds)
+
     def _preprocess_data_become(self, ds):
         """Preprocess the playbook data for become attributes
 
@@ -66,6 +88,7 @@ class Become:
         """
 
         self._detect_privilege_escalation_conflict(ds)
+        self._detect_become_flags_type(ds)
 
         # Privilege escalation, backwards compatibility for sudo/su
         if 'sudo' in ds or 'sudo_user' in ds:

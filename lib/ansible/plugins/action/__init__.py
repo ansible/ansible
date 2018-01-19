@@ -157,6 +157,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                     become_method=self._play_context.become_method,
                                                                     become_user=self._play_context.become_user,
                                                                     become_password=self._play_context.become_pass,
+                                                                    become_flags=self._play_context.become_flags,
                                                                     environment=final_environment)
 
         return (module_style, module_shebang, module_data, module_path)

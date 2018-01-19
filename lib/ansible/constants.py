@@ -12,6 +12,7 @@ from jinja2 import Template
 from string import ascii_letters, digits
 
 from ansible.module_utils._text import to_text
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleUnicode
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
 from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
@@ -82,6 +83,18 @@ BECOME_MISSING_STRINGS = {
     'pmrun': '',
     'enable': '',
 }  # FIXME: deal with i18n
+BECOME_FLAG_TYPES = {
+    'sudo': AnsibleUnicode,
+    'su': AnsibleUnicode,
+    'pbrun': AnsibleUnicode,
+    'pfexec': AnsibleUnicode,
+    'doas': AnsibleUnicode,
+    'dzdo': AnsibleUnicode,
+    'ksu': AnsibleUnicode,
+    'runas': AnsibleMapping,
+    'pmrun': AnsibleUnicode,
+    'enable': AnsibleUnicode,
+}
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 BOOL_TRUE = BOOLEANS_TRUE
 CONTROLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
