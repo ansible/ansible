@@ -536,7 +536,7 @@ files:
   $modules/packaging/language/maven_artifact.py: chrisisbeef tumbl3w33d
   $modules/packaging/language/npm.py:
     ignored: chrishoffman
-    maintainers: shane-walker
+    maintainers: shane-walker xcambar
   $modules/packaging/language/pear.py:
   $modules/packaging/language/pip.py: lujeni robinro
   $modules/packaging/os/apk.py:
