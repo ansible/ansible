@@ -65,6 +65,31 @@
       - result.changed == True
       - result.msg == "PUT operation complete"
 # ============================================================
+- name: check that roles file lookups work as expected
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: put
+    src: hello.txt
+    object: hello.txt
+    <<: *aws_connection_info
+  retries: 3
+  delay: 3
+  register: result
+- name: assert object exists
+  assert:
+    that:
+      - result.changed == True
+      - result.msg == "PUT operation complete"
+- name: remove hello.txt (deletion tests are later)
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: delobj
+    object: hello.txt
+    <<: *aws_connection_info
+  retries: 3
+  delay: 3
+  register: result
+# ============================================================
 - name: create a second temp file to download the object from the bucket
   tempfile:
   register: tmp2
