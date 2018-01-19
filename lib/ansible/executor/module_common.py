@@ -599,7 +599,7 @@ def _is_binary(b_module_data):
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, environment):
+                       become_method, become_user, become_password, become_flags, environment):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -787,6 +787,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest["actions"].insert(0, 'become')
             exec_manifest["become_user"] = become_user
             exec_manifest["become_password"] = become_password
+            exec_manifest['become_flags'] = become_flags
             exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
         lines = b_module_data.split(b'\n')
@@ -842,6 +843,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest["actions"].insert(0, 'become')
             exec_manifest["become_user"] = "SYSTEM"
             exec_manifest["become_password"] = None
+            exec_manifest['become_flags'] = None
             exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
         # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
@@ -872,7 +874,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
 
 def modify_module(module_name, module_path, module_args, task_vars=None, templar=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, environment=None):
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -903,7 +905,7 @@ def modify_module(module_name, module_path, module_args, task_vars=None, templar
 
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
-                                                                become_user=become_user, become_password=become_password,
+                                                                become_user=become_user, become_password=become_password, become_flags=become_flags,
                                                                 environment=environment)
 
     if module_style == 'binary':
