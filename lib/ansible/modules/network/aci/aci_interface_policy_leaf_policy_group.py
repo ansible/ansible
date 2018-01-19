@@ -166,7 +166,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update({
         'policy_group': dict(type='str', aliases=['name', 'policy_group_name']),
-        'description': dict(type='str', aliases=['descr', 'description']),
+        'description': dict(type='str', aliases=['descr']),
         # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC andVPC) and infra:AccPortGrp (for leaf access port policy group):
         # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
         'lag_type': dict(type='str', aliases=['lag_type_name']),
