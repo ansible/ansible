@@ -1,7 +1,5 @@
 ---
-- debug: msg="START connection={{ ansible_connection }} nxos_bgp parameter test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp parameter test"
 
 - name: "Disable feature BGP"
   nxos_feature:
@@ -65,4 +63,4 @@
       provider: "{{ connection }}"
     ignore_errors: yes
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"
+  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_bgp parameter test"
