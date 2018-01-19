@@ -21,6 +21,7 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33486)
 * Fix for nxos_vxlan_vtep_vni issues: https://github.com/ansible/ansible/pull/34946
 * Fixes for nxos_bgp: https://github.com/ansible/ansible/pull/34590
+* Enable nxapi nxos_banner test: https://github.com/ansible/ansible/pull/35033
 
 
 <a id="2.4.3"></a>
