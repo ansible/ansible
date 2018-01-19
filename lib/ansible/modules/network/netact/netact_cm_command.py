@@ -24,23 +24,25 @@ DOCUMENTATION = '''
 ---
 module: netact_cm_command
 
-short_description: NetAct CM operation ansible module
+short_description: Manage network configuration data in Nokia Core and Radio networks
 
 version_added: "2.5"
 
 description:
     netact_cm_command can be used to run various configuration management operations.
-    This ansible module requires that target host have Nokia NetAct Configuration Management.
     This module requires that the target hosts have Nokia NetAct network management system installed.
     Module will access the Configurator command line interface in NetAct to upload network configuration to NetAct,
     run configuration export, plan import and configuration provision operations
     To set the scope of the operation, define Distinguished Name (DN) or Working Set (WS) or
-    Maintenance Region (MR) as input.
+    Maintenance Region (MR) as input
 options:
     operation:
         description:
-            operation
-            Supported operations are upload, provision, import, export and Provision_Mass_Modification.
+            Supported operations allow user to upload actual configuration from the network, to import and
+            provision prepared plans, or export reference or actual configuration for planning purposes.
+            Provision_Mass_Modification enables provisioning the same parameters to multiple network elements.
+            This operation supports modifications only to one object class at a time. With this option
+            NetAct Configurator creates and provisions a plan to the network with the given scope and options.
         required: true
         choices:
             - upload
@@ -96,6 +98,7 @@ options:
           - reference
           - template
           - siteTemplate
+        aliases: typeOption
     fileFormat:
         description:
             Indicates file format.
@@ -106,7 +109,7 @@ options:
             - XLSX
     fileName:
         description:
-            - Specifies a file name.
+            - Specifies a file name. Valid for Import and Export operations.
         required: false
     inputFile:
         description:
@@ -122,6 +125,10 @@ options:
         description:
             - Specifies a backup plan name
         required: false
+    verbose:
+        description:
+            NetAct Configurator will print more info
+        required: false        
     extra_opts:
         description:
             Extra options to be set for operations. Check Configuration Management > Configuration Management
@@ -200,7 +207,7 @@ from ansible.module_utils.basic import AnsibleModule
 racclimx = '/opt/oss/bin/racclimx.sh'
 
 
-def run_module():
+def main():
     """
     Main module where option are handled and command is executed
     :return:
@@ -213,20 +220,17 @@ def run_module():
                        choices=['Upload', 'Provision', 'Import',
                                 'Export', 'Provision_Mass_Modification']),
         opsname=dict(type='str', required=False, aliases=['opsName']),
-        dn=dict(type='str', required=False, aliases=['DN']),
-        ws=dict(type='str', required=False, aliases=['WS']),
-        mr=dict(type='str', required=False, aliases=['MR']),
+        DN=dict(type='str', required=False),
+        WS=dict(type='str', required=False),
+        MR=dict(type='str', required=False),
 
-        planname=dict(type='str', required=False, aliases=['planName']),
+        planName=dict(type='str', required=False),
         typeoption=dict(type='str', required=False, aliases=['type'],
                         choices=['plan', 'actual', 'reference', 'template', 'siteTemplate']),
-        fileformat=dict(type='str', required=False, choices=['CSV', 'RAML2', 'XLSX'],
-                        aliases=['fileFormat']),
-        filename=dict(type='str', required=False, aliases=['fileName']),
-
-        createBackupPlan=dict(type='str', required=False, choices=['true', 'false'],
-                              aliases=['createBackupPlan']),
-        backupPlanName=dict(type='str', required=False, aliases=['backupPlanName']),
+        fileFormat=dict(type='str', required=False, choices=['CSV', 'RAML2', 'XLSX']),
+        fileName=dict(type='str', required=False),
+        createBackupPlan=dict(type='bool', required=False),
+        backupPlanName=dict(type='str', required=False),
         inputFile=dict(type='str', required=False),
 
         verbose=dict(type='str', required=False),
@@ -241,6 +245,7 @@ def run_module():
     result = dict(
         changed=False,
         original_message='',
+        cmd='',
         message=''
     )
 
@@ -257,7 +262,9 @@ def run_module():
     # want to make any changes to the environment, just return the current
     # state with no modifications
     if module.check_mode:
-        return result
+        result['skipped'] = True
+        result['msg'] = 'check mode not (yet) supported for this module'
+        module.exit_json(**result)
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -267,14 +274,14 @@ def run_module():
         module.fail_json(msg='Operation not defined', **result)
 
     opsname = module.params.get('opsname')
-    dn = module.params.get('dn')
-    ws = module.params.get('ws')
-    mr = module.params.get('mr')
+    dn = module.params.get('DN')
+    ws = module.params.get('WS')
+    mr = module.params.get('MR')
 
-    planname = module.params.get('planname')
+    planname = module.params.get('planName')
     typeoption = module.params.get('typeoption')
-    fileformat = module.params.get('fileformat')
-    filename = module.params.get('filename')
+    fileformat = module.params.get('fileFormat')
+    filename = module.params.get('fileName')
 
     createBackupPlan = module.params.get('createBackupPlan')
     backupPlanName = module.params.get('backupPlanName')
@@ -321,7 +328,7 @@ def run_module():
 
     if createBackupPlan:
         command.append('-createBackupPlan')
-        command.append(createBackupPlan)
+        command.append('true')
 
     if backupPlanName:
         command.append('-backupPlanName')
@@ -344,20 +351,13 @@ def run_module():
         module.fail_json(msg=err)
     else:
         result['changed'] = True
-        result['original_message'] = command
+        result['original_message'] = out
+        result['cmd'] = command
         result['message'] = out
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
-
-
-def main():
-    """
-    main
-    :return:
-    """
-    run_module()
 
 
 if __name__ == '__main__':

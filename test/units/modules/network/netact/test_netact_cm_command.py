@@ -109,7 +109,7 @@ class TestClass(unittest.TestCase):
         set_module_args({
             'operation': "Upload",
             'opsname': 'Uploading_testi',
-            'dn': "PLMN-PLMN/MRBTS-746",
+            'DN': "PLMN-PLMN/MRBTS-746",
         })
 
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
@@ -128,6 +128,35 @@ class TestClass(unittest.TestCase):
              '-DN', 'PLMN-PLMN/MRBTS-746'],
             check_rc=True)
 
+    def test_ensure_backupPlanName_outputs_correctly(self):
+        """
+        Testing that command is executed with correct args
+        :return:
+        """
+        set_module_args({
+            'operation': "Provision",
+            'opsname': 'Provision_test',
+            'DN': "PLMN-PLMN/MRBTS-746",
+            'createBackupPlan': "Yes",
+            'backupPlanName': "backupPlanName"
+        })
+
+        with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
+            stdout = 'configuration updated'
+            stderr = ''
+            return_code = 0
+            mock_run_command.return_value = return_code, stdout, stderr  # successful execution
+
+            with self.assertRaises(AnsibleExitJson) as result:
+                netact_cm_command.main()
+            print(result.exception.args)
+            self.assertTrue(result.exception.args[0]['changed'])  # ensure result is changed
+
+        mock_run_command.assert_called_once_with(
+            ['/opt/oss/bin/racclimx.sh', '-op', 'Provision', '-opsName', 'Provision_test',
+             '-DN', 'PLMN-PLMN/MRBTS-746', '-createBackupPlan', 'true', '-backupPlanName', 'backupPlanName'],
+            check_rc=True)
+
     def test_withwrongargs(self):
         """
         Testing that wrong attribute causing error
@@ -136,7 +165,7 @@ class TestClass(unittest.TestCase):
         set_module_args({
             'operation': "Upload",
             'opsname': 'Uploading_testi',
-            'dn': "PLMN-PLMN/MRBTS-746",
+            'DN': "PLMN-PLMN/MRBTS-746",
             'abc': 'abc'
         })
 
