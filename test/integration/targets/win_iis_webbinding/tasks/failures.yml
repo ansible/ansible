@@ -1,17 +1,12 @@
-- name: failure check bind with host header but no wc or sni
+- name: failure check define * for host header
   win_iis_webbinding:
     name: "{{ test_iis_site_name }}"
     state: present
-    host_header: test.com
-    protocol: https
+    host_header: '*'
+    protocol: http
     ip: '*'
-    port: 443
-    certificate_hash: "{{ thumbprint1.stdout_lines[0] }}"
-    ssl_flags: 0
   register: failure
-  failed_when:
-    - failure.msg != "You cannot specify host headers with SSL unless it is a wildcard certificate."
-    - failure.msg != "You cannot specify host headers with SSL unless it is a wildcard certificate or SNI is enabled."
+  failed_when: failure.msg != "To make or remove a catch-all binding, please omit the host_header parameter entirely rather than specify host_header *"
 
 - debug:
     var: failure
@@ -29,46 +24,47 @@
     with_items:
       - "{{ existing_sites.stdout_lines }}"
 
-  - name: add sites
+  - name: add testremove site
     win_iis_website:
-      name: "{{ item.name }}"
+      name: testremove
       state: started
-      ip: 127.0.0.1
-      port: "{{ item.port }}"
       physical_path: c:\inetpub\wwwroot
+
+  - name: add bindings to testremove
+    win_iis_webbinding:
+      name: testremove
+      ip: "{{ item.ip }}"
+      port: "{{ item.port }}"
     with_items:
-      - {name: testconflict1, port: 8080}
-      - {name: testconflict2, port: 8081}
+      - {ip: 127.0.0.1, port: 80}
+      - {ip: '*', port: 80}
 
-  - name: add https binding to testconflict1
+  - name: remove ip  * binding from testremove
     win_iis_webbinding:
-      name: testconflict1
-      state: present
-      protocol: https
-      port: 443
-      ip: 127.0.0.1
-      certificate_hash: "{{ thumbprint1.stdout_lines[0] }}"
+      name: testremove
+      state: absent
+      port: 80
+      ip: '*'
 
-  - name: add https binding to testconflict2 (expect failure)
-    win_iis_webbinding:
-      name: testconflict2
-      state: present
-      protocol: https
+  - name: get the remaining binding from testremove
+    test_get_webbindings:
+      name: testremove
+      port: 80
       ip: 127.0.0.1
-      port: 443
-      certificate_hash: "{{ thumbprint1.stdout_lines[0] }}"
-    register: failure
-    failed_when: '"A conflicting binding has been found on the same ip" not in failure.msg'
+    register: test_result
 
   - debug:
-      var: failure
+      var: test_result
       verbosity: 1
+
+  - name: assert that remove *:80 doesn't also remove 127.0.0.1:80
+    assert:
+      that:
+      - test_result.binding.ip == '127.0.0.1'
+      - test_result.binding.port == 80
 
   always:
   - name: remove websites
     win_iis_website:
-      name: "{{ item }}"
+      name: testremove
       state: absent
-    with_items:
-      - testconflict1
-      - testconflict2
