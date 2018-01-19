@@ -88,17 +88,18 @@ options:
         description:
             - Specifies a plan name.
         required: false
-    type:
+    typeOption:
         description:
              Specifies the type of the export operation.
-        required: true
+        required: false
         choices:
           - plan
           - actual
           - reference
           - template
           - siteTemplate
-        aliases: typeOption
+        aliases: 
+            - type
     fileFormat:
         description:
             Indicates file format.
@@ -128,7 +129,7 @@ options:
     verbose:
         description:
             NetAct Configurator will print more info
-        required: false        
+        required: false
     extra_opts:
         description:
             Extra options to be set for operations. Check Configuration Management > Configuration Management
@@ -219,13 +220,13 @@ def main():
                        aliases=['op'],
                        choices=['Upload', 'Provision', 'Import',
                                 'Export', 'Provision_Mass_Modification']),
-        opsname=dict(type='str', required=False, aliases=['opsName']),
+        opsName=dict(type='str', required=False),
         DN=dict(type='str', required=False),
         WS=dict(type='str', required=False),
         MR=dict(type='str', required=False),
 
         planName=dict(type='str', required=False),
-        typeoption=dict(type='str', required=False, aliases=['type'],
+        typeOption=dict(type='str', required=False, aliases=['type'],
                         choices=['plan', 'actual', 'reference', 'template', 'siteTemplate']),
         fileFormat=dict(type='str', required=False, choices=['CSV', 'RAML2', 'XLSX']),
         fileName=dict(type='str', required=False),
@@ -273,13 +274,13 @@ def main():
     if not operation:
         module.fail_json(msg='Operation not defined', **result)
 
-    opsname = module.params.get('opsname')
+    opsname = module.params.get('opsName')
     dn = module.params.get('DN')
     ws = module.params.get('WS')
     mr = module.params.get('MR')
 
     planname = module.params.get('planName')
-    typeoption = module.params.get('typeoption')
+    typeoption = module.params.get('typeOption')
     fileformat = module.params.get('fileFormat')
     filename = module.params.get('fileName')
 
