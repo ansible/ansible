@@ -11,6 +11,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/33855)
 * Fix timeout when using piped ssh transfer with become
   https://github.com/ansible/ansible/issues/34523
+* Fix win_scheduled_task docs to correctly reflect what is required and when
+  (https://github.com/ansible/ansible/issues/35072)
 
 
 <a id="2.4.3"></a>
