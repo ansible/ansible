@@ -382,7 +382,7 @@ except ImportError:
     import simplejson as json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -750,8 +750,7 @@ def jboss_config_absent(module, url, json_address, new_config, timeout):
 
 
 def main():
-    argument_spec = url_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         url=dict(required=True, aliases=['mgmt_url']),
         url_username=dict(required=True, aliases=['mgmt_user']),
         url_password=dict(required=True, aliases=['mgmt_password'], no_log=True),
@@ -767,7 +766,7 @@ def main():
             type='str'
         ),
         timeout=dict(required=False, default=30, type='int'),
-    ))
+    )
 
     choice_map = dict(
         present=jboss_config_present,
