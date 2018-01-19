@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: ezjail
-version_added: "2.4"
+version_added: "2.5"
 author:
   - Hans-Christian Halfbrodt (@hc42)
 short_description: Manage jails with Ezjail
