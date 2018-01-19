@@ -801,6 +801,9 @@ def set_vm_power_state(content, vm, state, force):
 
 class PyVmomi(object):
     def __init__(self, module):
+        """
+        Constructor
+        """
         if not HAS_PYVMOMI:
             module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
 
@@ -828,41 +831,174 @@ class PyVmomi(object):
         elif api_type == 'HostAgent':
             return False
 
+    def get_managed_objects_properties(self, vim_type, properties=None):
+        """
+        Function to look up a Managed Object Reference in vCenter / ESXi Environment
+        :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
+        :param properties: List of properties related to vim object e.g. Name
+        :return: local content object
+        """
+        # Get Root Folder
+        root_folder = self.content.rootFolder
+
+        if properties is None:
+            properties = ['name']
+
+        # Create Container View with default root folder
+        mor = self.content.viewManager.CreateContainerView(root_folder, [vim_type], True)
+
+        # Create Traversal spec
+        traversal_spec = vmodl.query.PropertyCollector.TraversalSpec(
+            name="traversal_spec",
+            path='view',
+            skip=False,
+            type=vim.view.ContainerView
+        )
+
+        # Create Property Spec
+        property_spec = vmodl.query.PropertyCollector.PropertySpec(
+            type=vim_type,  # Type of object to retrieved
+            all=False,
+            pathSet=properties
+        )
+
+        # Create Object Spec
+        object_spec = vmodl.query.PropertyCollector.ObjectSpec(
+            obj=mor,
+            skip=True,
+            selectSet=[traversal_spec]
+        )
+
+        # Create Filter Spec
+        filter_spec = vmodl.query.PropertyCollector.FilterSpec(
+            objectSet=[object_spec],
+            propSet=[property_spec],
+            reportMissingObjectsInResults=False
+        )
+
+        return self.content.propertyCollector.RetrieveContents([filter_spec])
+
     # Virtual Machine related functions
     def get_vm(self):
-        vm = None
-        match_first = (self.params['name_match'] == 'first')
+        """
+        Function to find unique virtual machine either by UUID or Name.
+        Returns: virtual machine object if found, else None.
+
+        """
+        vm_obj = None
+        user_desired_path = None
 
         if self.params['uuid']:
-            vm = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
-        elif self.params['folder'] and self.params['name']:
-            vm = find_vm_by_id(self.content, vm_id=self.params['name'], vm_id_type="inventory_path",
-                               folder=self.params['folder'], match_first=match_first)
+            vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
 
-        if vm:
-            self.current_vm_obj = vm
+        elif self.params['name']:
+            objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
+            vms = []
 
-        return vm
+            for temp_vm_object in objects:
+                if len(temp_vm_object.propSet) != 1:
+                    continue
+                for temp_vm_object_property in temp_vm_object.propSet:
+                    if temp_vm_object_property.val == self.params['name']:
+                        vms.append(temp_vm_object.obj)
+                        break
+
+            # get_managed_objects_properties may return multiple virtual machine,
+            # following code tries to find user desired one depending upon the folder specified.
+            if len(vms) > 1:
+                # We have found multiple virtual machines, decide depending upon folder value
+                if self.params['folder'] is None:
+                    self.module.fail_json(msg="Multiple virtual machines with same name [%s] found, "
+                                              "Folder value is a required parameter to find uniqueness "
+                                              "of the virtual machine" % self.params['name'],
+                                          details="Please see documentation of the vmware_guest module "
+                                                  "for folder parameter.")
+
+                # Get folder path where virtual machine is located
+                # User provided folder where user thinks virtual machine is present
+                user_folder = self.params['folder']
+                # User defined datacenter
+                user_defined_dc = self.params['datacenter']
+                # User defined datacenter's object
+                datacenter_obj = find_datacenter_by_name(self.content, self.params['datacenter'])
+                # Get Path for Datacenter
+                dcpath = compile_folder_path_for_object(vobj=datacenter_obj)
+
+                # Nested folder does not return trailing /
+                if not dcpath.endswith('/'):
+                    dcpath += '/'
+
+                if user_folder in [None, '', '/']:
+                    # User provided blank value or
+                    # User provided only root value, we fail
+                    self.module.fail_json(msg="vmware_guest found multiple virtual machines with same "
+                                              "name [%s], please specify folder path other than blank "
+                                              "or '/'" % self.params['name'])
+                elif user_folder.startswith('/vm/'):
+                    # User provided nested folder under VMware default vm folder i.e. folder = /vm/india/finance
+                    user_desired_path = "%s%s%s" % (dcpath, user_defined_dc, user_folder)
+                else:
+                    # User defined datacenter is not nested i.e. dcpath = '/' , or
+                    # User defined datacenter is nested i.e. dcpath = '/F0/DC0' or
+                    # User provided folder starts with / and datacenter i.e. folder = /ha-datacenter/ or
+                    # User defined folder starts with datacenter without '/' i.e.
+                    # folder = DC0/vm/india/finance or
+                    # folder = DC0/vm
+                    user_desired_path = user_folder
+
+                for vm in vms:
+                    # Check if user has provided same path as virtual machine
+                    actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vm)
+                    if not actual_vm_folder_path.startswith("%s%s" % (dcpath, user_defined_dc)):
+                        continue
+                    if user_desired_path in actual_vm_folder_path:
+                        vm_obj = vm
+                        break
+            elif vms:
+                # Unique virtual machine found.
+                vm_obj = vms[0]
+
+        if vm_obj:
+            self.current_vm_obj = vm_obj
+
+        return vm_obj
 
     def gather_facts(self, vm):
+        """
+        Function to gather facts of virtual machine.
+        Args:
+            vm: Name of virtual machine.
+
+        Returns: Facts dictionary of the given virtual machine.
+
+        """
         return gather_vm_facts(self.content, vm)
 
     @staticmethod
-    def get_vm_path(content, vm):
-        foldername = None
-        folder = vm.parent
+    def get_vm_path(content, vm_name):
+        """
+        Function to find the path of virtual machine.
+        Args:
+            content: VMware content object
+            vm_name: virtual machine managed object
+
+        Returns: Folder of virtual machine if exists, else None
+
+        """
+        folder_name = None
+        folder = vm_name.parent
         if folder:
-            foldername = folder.name
+            folder_name = folder.name
             fp = folder.parent
             # climb back up the tree to find our path, stop before the root folder
             while fp is not None and fp.name is not None and fp != content.rootFolder:
-                foldername = fp.name + '/' + foldername
+                folder_name = fp.name + '/' + folder_name
                 try:
                     fp = fp.parent
                 except:
                     break
-            foldername = '/' + foldername
-        return foldername
+            folder_name = '/' + folder_name
+        return folder_name
 
     # Cluster related functions
     def find_cluster_by_name(self, cluster_name, datacenter_name=None):
