@@ -36,24 +36,29 @@ options:
         required: True
     location:
         description:
-            - Resource location. If not set, location from the resource group will be used as default.
+            - Resource location. If not set, location from the resource group will be used as C(default).
     collation:
         description:
-            - The collation of the database. If createMode is not Default, this value is ignored.
+            - The collation of the database. If I(create_mode) is not C(default), this value is ignored.
     create_mode:
         description:
-            - "Specifies the mode of database creation.\n\nDefault: regular database creation.\n\nCopy: creates a database as a copy of an existing database.
-                sourceDatabaseId must be specified as the resource ID of the source database.\n\nOnlineSecondary/NonReadableSecondary: creates a database as
-               a (readable or nonreadable) secondary replica of an existing database. sourceDatabaseId must be specified as the resource ID of the existing p
-               rimary database.\n\nPointInTimeRestore: Creates a database by restoring a point in time backup of an existing database. sourceDatabaseId must
-               be specified as the resource ID of the existing database, and restorePointInTime must be specified.\n\nRecovery: Creates a database by restori
-               ng a geo-replicated backup. sourceDatabaseId must be specified as the recoverable database resource ID to restore.\n\nRestore: Creates a datab
-               ase by restoring a backup of a deleted database. sourceDatabaseId must be specified. If sourceDatabaseId is the database's original resource I
-               D, then sourceDatabaseDeletionDate must be specified. Otherwise sourceDatabaseId must be the restorable dropped database resource ID and sourc
-               eDatabaseDeletionDate is ignored. restorePointInTime may also be specified to restore from an earlier point in time.\n\nRestoreLongTermRetenti
-               onBackup: Creates a database by restoring from a long term retention vault. recoveryServicesRecoveryPointResourceId must be specified as the r
-               ecovery point resource ID.\n\nCopy, NonReadableSecondary, OnlineSecondary and RestoreLongTermRetentionBackup are not supported for DataWarehou
-               se edition."
+            - Specifies the mode of database creation.
+            - "C(default): regular database creation."
+            - "C(copy): creates a database as a C(copy) of an existing database. I(source_database_id) must be specified as the resource ID of the source dat
+              abase."
+            - "C(online_secondary)/C(non_readable_secondary): creates a database as a (readable or nonreadable) secondary replica of an existing database. I(
+              source_database_id) must be specified as the resource ID of the existing primary database."
+            - "C(point_in_time_restore): Creates a database by restoring a point in time backup of an existing database. I(source_database_id) must be specif
+              ied as the resource ID of the existing database, and I(restore_point_in_time) must be specified."
+            - "C(recovery): Creates a database by restoring a geo-replicated backup. I(source_database_id) must be specified as the recoverable database reso
+              urce ID to C(restore)."
+            - "C(restore): Creates a database by restoring a backup of a deleted database. I(source_database_id) must be specified. If I(source_database_id)
+              is the database's original resource ID, then I(source_database_deletion_date) must be specified. Otherwise I(source_database_id) must be the r
+              estorable dropped database resource ID and I(source_database_deletion_date) is ignored. I(restore_point_in_time) may also be specified to C(re
+              store) from an earlier point in time."
+            - "C(restore_long_term_retention_backup): Creates a database by restoring from a long term retention vault. I(recovery_services_recovery_point_re
+              source_id) must be specified as the C(recovery) point resource ID."
+            - C(copy), C(non_readable_secondary), C(online_secondary) and C(restore_long_term_retention_backup) are not supported for C(data_warehouse) edition.
         choices:
             - 'copy'
             - 'default'
@@ -65,27 +70,27 @@ options:
             - 'restore_long_term_retention_backup'
     source_database_id:
         description:
-            - "Conditional. If createMode is Copy, NonReadableSecondary, OnlineSecondary, PointInTimeRestore, Recovery, or Restore, then this value is requir
-               ed. Specifies the resource ID of the source database. If createMode is NonReadableSecondary or OnlineSecondary, the name of the source databas
-               e must be the same as the new database being created."
+            - "Conditional. If I(create_mode) is C(copy), C(non_readable_secondary), C(online_secondary), C(point_in_time_restore), C(recovery), or C(restore
+              ), then this value is required. Specifies the resource ID of the source database. If I(create_mode) is C(non_readable_secondary) or C(online_s
+              econdary), the name of the source database must be the same as the new database being created."
     source_database_deletion_date:
         description:
-            - "Conditional. If createMode is Restore and sourceDatabaseId is the deleted database's original resource id when it existed (as opposed to its c
-               urrent restorable dropped database id), then this value is required. Specifies the time that the database was deleted."
+            - "Conditional. If I(create_mode) is C(restore) and I(source_database_id) is the deleted database's original resource id when it existed (as oppo
+              sed to its current restorable dropped database id), then this value is required. Specifies the time that the database was deleted."
     restore_point_in_time:
         description:
-            - "Conditional. If createMode is PointInTimeRestore, this value is required. If createMode is Restore, this value is optional. Specifies the poin
-               t in time (ISO8601 format) of the source database that will be restored to create the new database. Must be greater than or equal to the sourc
-               e database's earliestRestoreDate value."
+            - "Conditional. If I(create_mode) is C(point_in_time_restore), this value is required. If I(create_mode) is C(restore), this value is optional. S
+              pecifies the point in time (ISO8601 format) of the source database that will be restored to create the new database. Must be greater than or e
+              qual to the source database's earliestRestoreDate value."
     recovery_services_recovery_point_resource_id:
         description:
-            - "Conditional. If createMode is RestoreLongTermRetentionBackup, then this value is required. Specifies the resource ID of the recovery point to
-               restore from."
+            - "Conditional. If I(create_mode) is C(restore_long_term_retention_backup), then this value is required. Specifies the resource ID of the C(recov
+              ery) point to C(restore) from."
     edition:
         description:
-            - "The edition of the database. The DatabaseEditions enumeration contains all the valid editions. If createMode is NonReadableSecondary or Online
-               Secondary, this value is ignored. To see possible values, query the capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/
-               locations/{locationID}/capabilities) referred to by operationId: 'Capabilities_ListByLocation.'."
+            - "The edition of the database. The DatabaseEditions enumeration contains all the valid editions. If I(create_mode) is C(non_readable_secondary)
+              or C(online_secondary), this value is ignored. To see possible values, query the capabilities API (/subscriptions/{subscriptionId}/providers/M
+              icrosoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 'Capabilities_ListByLocation.'."
         choices:
             - 'web'
             - 'business'
@@ -99,22 +104,22 @@ options:
             - 'system2'
     max_size_bytes:
         description:
-            - "The max size of the database expressed in bytes. If createMode is not Default, this value is ignored. To see possible values, query the capabi
-               lities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 'Capabili
-               ties_ListByLocation.'"
+            - "The max size of the database expressed in bytes. If I(create_mode) is not C(default), this value is ignored. To see possible values, query the
+               capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 'C
+              apabilities_ListByLocation.'"
     requested_service_objective_id:
         description:
             - "The configured service level objective ID of the database. This is the service level objective that is in the process of being applied to the
-               database. Once successfully updated, it will match the value of currentServiceObjectiveId property. If requestedServiceObjectiveId and request
-               edServiceObjectiveName are both updated, the value of requestedServiceObjectiveId overrides the value of requestedServiceObjectiveName. To see
-                possible values, query the capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) ref
-               erred to by operationId: 'Capabilities_ListByLocation.'"
+              database. Once successfully updated, it will match the value of currentServiceObjectiveId property. If requestedServiceObjectiveId and I(reque
+              sted_service_objective_name) are both updated, the value of requestedServiceObjectiveId overrides the value of I(requested_service_objective_n
+              ame). To see possible values, query the capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capab
+              ilities) referred to by operationId: 'Capabilities_ListByLocation.'"
     requested_service_objective_name:
         description:
             - "The name of the configured service level objective of the database. This is the service level objective that is in the process of being applie
-               d to the database. Once successfully updated, it will match the value of serviceLevelObjective property. To see possible values, query the cap
-               abilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 'Capab
-               ilities_ListByLocation.'."
+              d to the database. Once successfully updated, it will match the value of serviceLevelObjective property. To see possible values, query the cap
+              abilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 'Capab
+              ilities_ListByLocation.'."
         choices:
             - 'basic'
             - 's0'
@@ -133,24 +138,29 @@ options:
             - 'elastic_pool'
     elastic_pool_name:
         description:
-            - "The name of the elastic pool the database is in. If elasticPoolName and requestedServiceObjectiveName are both updated, the value of requested
-               ServiceObjectiveName is ignored. Not supported for DataWarehouse edition."
+            - "The name of the elastic pool the database is in. If elasticPoolName and I(requested_service_objective_name) are both updated, the value of I(r
+              equested_service_objective_name) is ignored. Not supported for C(data_warehouse) edition."
     read_scale:
         description:
-            - "Conditional. If the database is a geo-secondary, readScale indicates whether read-only connections are allowed to this database or not. Not su
-               pported for DataWarehouse edition."
-        choices:
-            - 'enabled'
-            - 'disabled'
+            - "If the database is a geo-secondary, readScale indicates whether read-only connections are allowed to this database or not. Not supported for C
+              (data_warehouse) edition."
+        type: bool
+        default: False
     sample_name:
         description:
-            - "Indicates the name of the sample schema to apply when creating this database. If createMode is not Default, this value is ignored. Not support
-               ed for DataWarehouse edition."
+            - "Indicates the name of the sample schema to apply when creating this database. If I(create_mode) is not C(default), this value is ignored. Not
+              supported for C(data_warehouse) edition."
         choices:
             - 'adventure_works_lt'
     zone_redundant:
         description:
-            - Whether or not this database is zone redundant, which means the replicas of this database will be spread across multiple availability zones.
+            - Is this database is zone redundant? It means the replicas of this database will be spread across multiple availability zones.
+        type: bool
+        default: False
+    force_update:
+      description:
+          - Needs to be set to True in order to SQL Database to be updated.
+      type: bool
 
 extends_documentation_fragment:
     - azure
@@ -175,8 +185,8 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-4799/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/test
-             db"
+    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-4799/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t
+            estdb"
 database_id:
     description:
         - The ID of the database.
@@ -295,16 +305,19 @@ class AzureRMDatabases(AzureRMModuleBase):
                 type='str'
             ),
             read_scale=dict(
-                type='str',
-                choices=['enabled',
-                         'disabled']
+                type='bool',
+                default=False
             ),
             sample_name=dict(
                 type='str',
                 choices=['adventure_works_lt']
             ),
             zone_redundant=dict(
-                type='str'
+                type='bool',
+                default=False
+            ),
+            force_update=dict(
+                type='bool'
             ),
             state=dict(
                 type='str',
@@ -339,24 +352,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 elif key == "collation":
                     self.parameters["collation"] = kwargs[key]
                 elif key == "create_mode":
-                    ev = kwargs[key]
-                    if ev == 'copy':
-                        ev = 'Copy'
-                    elif ev == 'default':
-                        ev = 'Default'
-                    elif ev == 'non_readable_secondary':
-                        ev = 'NonReadableSecondary'
-                    elif ev == 'online_secondary':
-                        ev = 'OnlineSecondary'
-                    elif ev == 'point_in_time_restore':
-                        ev = 'PointInTimeRestore'
-                    elif ev == 'recovery':
-                        ev = 'Recovery'
-                    elif ev == 'restore':
-                        ev = 'Restore'
-                    elif ev == 'restore_long_term_retention_backup':
-                        ev = 'RestoreLongTermRetentionBackup'
-                    self.parameters["create_mode"] = ev
+                    self.parameters["create_mode"] = _snake_to_camel(kwargs[key], True)
                 elif key == "source_database_id":
                     self.parameters["source_database_id"] = kwargs[key]
                 elif key == "source_database_deletion_date":
@@ -366,81 +362,24 @@ class AzureRMDatabases(AzureRMModuleBase):
                 elif key == "recovery_services_recovery_point_resource_id":
                     self.parameters["recovery_services_recovery_point_resource_id"] = kwargs[key]
                 elif key == "edition":
-                    ev = kwargs[key]
-                    if ev == 'web':
-                        ev = 'Web'
-                    elif ev == 'business':
-                        ev = 'Business'
-                    elif ev == 'basic':
-                        ev = 'Basic'
-                    elif ev == 'standard':
-                        ev = 'Standard'
-                    elif ev == 'premium':
-                        ev = 'Premium'
-                    elif ev == 'free':
-                        ev = 'Free'
-                    elif ev == 'stretch':
-                        ev = 'Stretch'
-                    elif ev == 'data_warehouse':
-                        ev = 'DataWarehouse'
-                    elif ev == 'system':
-                        ev = 'System'
-                    elif ev == 'system2':
-                        ev = 'System2'
-                    self.parameters["edition"] = ev
+                    self.parameters["edition"] = _snake_to_camel(kwargs[key], True)
                 elif key == "max_size_bytes":
                     self.parameters["max_size_bytes"] = kwargs[key]
                 elif key == "requested_service_objective_id":
                     self.parameters["requested_service_objective_id"] = kwargs[key]
                 elif key == "requested_service_objective_name":
-                    ev = kwargs[key]
-                    if ev == 'basic':
-                        ev = 'Basic'
-                    elif ev == 's0':
-                        ev = 'S0'
-                    elif ev == 's1':
-                        ev = 'S1'
-                    elif ev == 's2':
-                        ev = 'S2'
-                    elif ev == 's3':
-                        ev = 'S3'
-                    elif ev == 'p1':
-                        ev = 'P1'
-                    elif ev == 'p2':
-                        ev = 'P2'
-                    elif ev == 'p3':
-                        ev = 'P3'
-                    elif ev == 'p4':
-                        ev = 'P4'
-                    elif ev == 'p6':
-                        ev = 'P6'
-                    elif ev == 'p11':
-                        ev = 'P11'
-                    elif ev == 'p15':
-                        ev = 'P15'
-                    elif ev == 'system':
-                        ev = 'System'
-                    elif ev == 'system2':
-                        ev = 'System2'
-                    elif ev == 'elastic_pool':
-                        ev = 'ElasticPool'
-                    self.parameters["requested_service_objective_name"] = ev
+                    self.parameters["requested_service_objective_name"] = _snake_to_camel(kwargs[key], True)
                 elif key == "elastic_pool_name":
                     self.parameters["elastic_pool_name"] = kwargs[key]
                 elif key == "read_scale":
-                    ev = kwargs[key]
-                    if ev == 'enabled':
-                        ev = 'Enabled'
-                    elif ev == 'disabled':
-                        ev = 'Disabled'
-                    self.parameters["read_scale"] = ev
+                    self.parameters["read_scale"] = 'Enabled' if kwargs[key] else 'Disabled'
                 elif key == "sample_name":
                     ev = kwargs[key]
                     if ev == 'adventure_works_lt':
                         ev = 'AdventureWorksLT'
                     self.parameters["sample_name"] = ev
                 elif key == "zone_redundant":
-                    self.parameters["zone_redundant"] = kwargs[key]
+                    self.parameters["zone_redundant"] = 'Enabled' if kwargs[key] else 'Disabled'
 
         old_response = None
         response = None
@@ -467,7 +406,18 @@ class AzureRMDatabases(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if SQL Database instance has to be deleted or may be updated")
-                self.to_do = Actions.Update
+                if ('location' in self.parameters) and (self.parameters['location'] != old_response['location']):
+                    self.to_do = Actions.Update
+                if ('read_scale' in self.parameters) and (self.parameters['read_scale'] != old_response['read_scale']):
+                    self.to_do = Actions.Update
+                if (self.requested_service_objective_id is not None) and (self.requested_service_objective_id != old_response['requested_service_objective_id']):
+                    self.to_do = Actions.Update
+                if (self.requested_service_objective_name is not None) and (self.requested_service_objective_name != old_response['requested_service_objective_name']):
+                    self.to_do = Actions.Update
+                if (self.max_size_bytes is not None) and (self.max_size_bytes != old_response['max_size_bytes']):
+                    self.to_do = Actions.Update
+                if (self.edition is not None) and (self.edition != old_response['edition']):
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the SQL Database instance")
@@ -566,6 +516,13 @@ class AzureRMDatabases(AzureRMModuleBase):
             return response.as_dict()
 
         return False
+
+
+def _snake_to_camel(snake, capitalize_first= False):
+    if capitalize_first:
+        return ''.join(x.capitalize() or '_' for x in snake.split('_'))
+    else:
+        return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
 
 
 def main():
