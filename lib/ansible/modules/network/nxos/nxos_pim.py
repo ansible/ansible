@@ -93,7 +93,6 @@ def apply_key_map(key_map, table):
 def get_commands(module, existing, proposed, candidate):
     commands = list()
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
-    existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in proposed_commands.items():
         if key == 'ip pim ssm range' and value == 'default':
