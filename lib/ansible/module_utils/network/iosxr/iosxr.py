@@ -77,7 +77,7 @@ iosxr_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'transport': dict(),
+    'transport': dict(type='str', default='cli', choices=['cli', 'netconf']),
 }
 
 iosxr_argument_spec = {
