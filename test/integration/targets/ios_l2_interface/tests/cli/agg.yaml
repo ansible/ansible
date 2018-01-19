@@ -7,7 +7,7 @@
       - switchport
     parents:
       - "interface {{ item }}"
-  with_items:
+  loop:
     - "{{ test_interface }}"
     - "{{ test_interface2 }}"
 
