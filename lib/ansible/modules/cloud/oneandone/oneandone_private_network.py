@@ -174,7 +174,7 @@ def _check_mode(module, result):
         )
 
 
-def _add_members(module, oneandone_conn, name, members):
+def _add_servers(module, oneandone_conn, name, members):
     try:
         private_network_id = get_private_network(oneandone_conn, name)
 
@@ -308,16 +308,26 @@ def update_network(module, oneandone_conn):
             instances = []
 
             for member in _add_members:
-                instance = get_server(oneandone_conn, member, True)
-                instance_obj = oneandone.client.AttachServer(server_id=instance['id'])
+                instance_id = get_server(oneandone_conn, member)
+                instance_obj = oneandone.client.AttachServer(server_id=instance_id)
 
                 instances.extend([instance_obj])
-            private_network = _add_members(module, oneandone_conn, private_network['id'], instances)
+            private_network = _add_servers(module, oneandone_conn, private_network['id'], instances)
+            _check_mode(module, private_network)
             changed = True
 
         if _remove_members:
+            chk_changed = False
             for member in _remove_members:
                 instance = get_server(oneandone_conn, member, True)
+
+                if module.check_mode:
+                    chk_changed |= _remove_member(module,
+                                                  oneandone_conn,
+                                                  private_network['id'],
+                                                  instance['id'])
+                _check_mode(module, instance and chk_changed)
+
                 _remove_member(module,
                                oneandone_conn,
                                private_network['id'],
@@ -375,7 +385,7 @@ def main():
             api_url=dict(
                 type='str',
                 default=os.environ.get('ONEANDONE_API_URL')),
-            private_network_id=dict(type='str'),
+            private_network=dict(type='str'),
             name=dict(type='str'),
             description=dict(type='str'),
             network_address=dict(type='str'),
