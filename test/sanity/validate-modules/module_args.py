@@ -44,9 +44,6 @@ def add_mocks(filename):
     # Used to clean up imports later
     pre_sys_modules = list(sys.modules.keys())
 
-    gp = mock.patch('ansible.module_utils.basic.get_platform').start()
-    gp.return_value = 'linux'
-
     module_mock = mock.MagicMock()
     mocks = []
     for module_class in MODULE_CLASSES:
