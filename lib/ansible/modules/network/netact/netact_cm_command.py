@@ -98,7 +98,7 @@ options:
           - reference
           - template
           - siteTemplate
-        aliases: 
+        aliases:
             - type
     fileFormat:
         description:
