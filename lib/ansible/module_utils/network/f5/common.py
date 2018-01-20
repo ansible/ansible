@@ -34,6 +34,7 @@ f5_provider_spec = {
     ),
     'password': dict(
         no_log=True,
+        aliases=['pass', 'pwd'],
         fallback=(env_fallback, ['F5_PASSWORD', 'ANSIBLE_NET_PASSWORD'])
     ),
     'ssh_keyfile': dict(
@@ -67,6 +68,7 @@ f5_top_spec = {
     'password': dict(
         removed_in_version=2.9,
         no_log=True,
+        aliases=['pass', 'pwd'],
         fallback=(env_fallback, ['F5_PASSWORD', 'ANSIBLE_NET_PASSWORD'])
     ),
     'validate_certs': dict(
