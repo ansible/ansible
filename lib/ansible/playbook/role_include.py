@@ -66,56 +66,6 @@ class IncludeRole(TaskInclude):
         self._play = None
         self._role = None
 
-    def serialize(self, no_play=False):
-        data = super(IncludeRole, self).serialize()
-        if not self._squashed and not self._finalized:
-            data['_irole_name'] = self._role_name
-            if self._parent_role:
-                data['_irole_prole'] = self._parent_role.serialize()
-            data['_irole_path'] = self._role_path
-            if self._role:
-                data['_irole_drole'] = self._role.serialize()
-            if self._play and not no_play:
-                # avoid deepcopy recurse errors
-                self._play.unregister_dynamic_role(self)
-                data['_irole_play'] = self._play.serialize(
-                    skip_dynamic_roles=True)
-                self._play.register_dynamic_role(self)
-        return data
-
-    def __setstate__(self, sr):
-        self.__init__()
-        self.deserialize(sr)
-
-    def __getstate__(self):
-        sr = self.serialize()
-        return sr
-
-    def deserialize(self, data, play=None, include_deps=True):
-        from ansible.playbook.play import Play
-        from ansible.playbook.role import Role
-        self._role_name = data.get('_irole_name', '')
-        self._role_path = data.get('_irole_path', '')
-        if play is None and '_irole_play' in data:
-            play = Play()
-            play.deserialize(data['_irole_play'])
-            del data['_irole_play']
-        if play is not None:
-            setattr(self, '_play', play)
-        if '_irole_drole' in data:
-            r = Role()
-            r.deserialize(data['_irole_drole'])
-            setattr(self, '_role', r)
-            del data['_irole_drole']
-        if '_irole_prole' in data:
-            r = Role()
-            r.deserialize(data['_irole_prole'])
-            setattr(self, '_parent_role', r)
-            del data['_irole_prole']
-        if play is not None:
-            play.register_dynamic_role(self)
-        super(IncludeRole, self).deserialize(data)
-
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
         # only need play passed in when dynamic
@@ -234,17 +184,7 @@ class IncludeRole(TaskInclude):
         new_me._play = self._play
         new_me._role = self._role
 
-        new_me._role = self._role
-        new_me.private = self.private
-        new_me._play = self._play
-        new_me._role = self._role
-
         return new_me
-
-    def __deepcopy__(self, memo):
-        ret = self.deserialize(self.serialize())
-        memo[id(self)] = ret
-        return ret
 
     @property
     def is_loaded(self):
