@@ -108,7 +108,8 @@ except ImportError:
     from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
-import q
+
+
 def validate_vlan_id(value, module):
     if value and not 0 <= value <= 4094:
         module.fail_json(msg='vlan_id must be between 1 and 4094')
@@ -122,6 +123,7 @@ def validate_param_values(module, obj, param=None):
         validator = globals().get('validate_%s' % key)
         if callable(validator):
             validator(param.get(key), module)
+
 
 def main():
     """ main entry point for module execution
@@ -203,7 +205,6 @@ def main():
     diff = None
     with locked_config(module):
         for req in requests:
-            q(tostring(req))
             diff = load_config(module, tostring(req), warnings, action='replace')
 
         commit = not module.check_mode
