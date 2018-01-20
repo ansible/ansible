@@ -52,6 +52,9 @@ overridden_in_parent=2000
 aci_hostname=your-apic-1
 aci_username=admin
 aci_password=your-password
+aci_validate_certs=no
+aci_use_ssl=yes
+aci_use_proxy=no
 
 [aci]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
