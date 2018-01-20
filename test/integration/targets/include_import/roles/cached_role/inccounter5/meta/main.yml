@@ -1,0 +1,4 @@
+---
+allow_duplicates: true
+dependencies:
+- role: cached_role/inccounter
