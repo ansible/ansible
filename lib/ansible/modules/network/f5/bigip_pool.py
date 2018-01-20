@@ -57,18 +57,24 @@ options:
       - weighted-least-connections-nod
   monitor_type:
     description:
-      - Monitor rule type when C(monitors) is specified. When creating a new
-        pool, if this value is not specified, the default of 'and_list' will
-        be used.
+      - Monitor rule type when C(monitors) is specified.
+      - When creating a new pool, if this value is not specified, the default
+        of 'and_list' will be used.
+      - When C(single) ensures that all specified monitors are checked, but
+        additionally includes checks to make sure you only specified a single
+        monitor.
+      - When C(and_list) ensures that B(all) monitors are checked.
+      - When C(m_of_n) ensures that C(quorum) of C(monitors) are checked. C(m_of_n)
+        B(requires) that a C(quorum) of 1 or greater be set either in the playbook,
+        or already existing on the device.
       - Both C(single) and C(and_list) are functionally identical since BIG-IP
-        considers all monitors as "a list". BIG=IP either has a list of many,
-        or it has a list of one. Where they differ is in the extra guards that
-        C(single) provides; namely that it only allows a single monitor.
+        considers all monitors as "a list".
     version_added: "1.3"
     choices: ['and_list', 'm_of_n', 'single']
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
+      - Quorum must be a value of 1 or greater when C(monitor_type) is C(m_of_n).
     version_added: "1.3"
   monitors:
     description:
@@ -99,7 +105,17 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
-  metdata:
+  state:
+    description:
+      - When C(present), guarantees that the pool exists with the provided
+        attributes.
+      - When C(absent), removes the pool from the system.
+    default: present
+    choices:
+      - absent
+      - present
+    version_added: 2.5
+  metadata:
     description:
       - Arbitrary key/value pairs that you can attach to a pool. This is useful in
         situations where you might want to annotate a pool to me managed by Ansible.
@@ -522,6 +538,15 @@ class ReportableChanges(Changes):
         return result
 
     @property
+    def monitor_type(self):
+        pattern = r'min\s+\d+\s+of'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches:
+            return 'm_of_n'
+        else:
+            return 'and_list'
+
+    @property
     def metadata(self):
         result = dict()
         for x in self._values['metadata']:
@@ -569,16 +594,29 @@ class Difference(object):
         else:
             return want
 
-    @property
-    def monitor_type(self):
+    def _monitors_and_quorum(self):
         if self.want.monitor_type is None:
             self.want.update(dict(monitor_type=self.have.monitor_type))
-        if self.want.quorum is None:
-            self.want.update(dict(quorum=self.have.quorum))
-        if self.want.monitor_type == 'm_of_n' and self.want.quorum is None:
-            raise F5ModuleError(
-                "Quorum value must be specified with monitor_type 'm_of_n'."
-            )
+        if self.want.monitor_type == 'm_of_n':
+            if self.want.quorum is None:
+                self.want.update(dict(quorum=self.have.quorum))
+            if self.want.quorum is None or self.want.quorum < 1:
+                raise F5ModuleError(
+                    "Quorum value must be specified with monitor_type 'm_of_n'."
+                )
+            if self.want.monitors != self.have.monitors:
+                return dict(
+                    monitors=self.want.monitors
+                )
+        elif self.want.monitor_type == 'and_list':
+            if self.want.quorum is not None and self.want.quorum > 0:
+                raise F5ModuleError(
+                    "Quorum values have no effect when used with 'and_list'."
+                )
+            if self.want.monitors != self.have.monitors:
+                return dict(
+                    monitors=self.want.monitors
+                )
         elif self.want.monitor_type == 'single':
             if len(self.want.monitors_list) > 1:
                 raise F5ModuleError(
@@ -598,8 +636,18 @@ class Difference(object):
             # Remember that 'single' is nothing more than a fancy way of saying
             # "and_list plus some extra checks"
             self.want.update(dict(monitor_type='and_list'))
-        if self.want.monitor_type != self.have.monitor_type:
-            return self.want.monitor_type
+        if self.want.monitors != self.have.monitors:
+            return dict(
+                monitors=self.want.monitors
+            )
+
+    @property
+    def monitor_type(self):
+        return self._monitors_and_quorum()
+
+    @property
+    def quorum(self):
+        return self._monitors_and_quorum()
 
     @property
     def monitors(self):
@@ -734,9 +782,13 @@ class ModuleManager(object):
             if self.want.monitor_type is None:
                 self.want.update(dict(monitor_type='and_list'))
 
-        if self.want.monitor_type == 'm_of_n' and self.want.quorum is None:
+        if self.want.monitor_type == 'm_of_n' and (self.want.quorum is None or self.want.quorum < 1):
             raise F5ModuleError(
                 "Quorum value must be specified with monitor_type 'm_of_n'."
+            )
+        elif self.want.monitor_type == 'and_list' and self.want.quorum is not None and self.want.quorum > 0:
+            raise F5ModuleError(
+                "Quorum values have no effect when used with 'and_list'."
             )
         elif self.want.monitor_type == 'single' and len(self.want.monitors_list) > 1:
             raise F5ModuleError(

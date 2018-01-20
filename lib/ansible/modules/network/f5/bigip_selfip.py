@@ -41,9 +41,9 @@ options:
         is required.
   state:
     description:
-      - The state of the variable on the system. When C(present), guarantees
-        that the Self-IP exists with the provided attributes. When C(absent),
-        removes the Self-IP from the system.
+      - When C(present), guarantees that the Self-IP exists with the provided
+        attributes.
+      - When C(absent), removes the Self-IP from the system.
     default: present
     choices:
       - absent

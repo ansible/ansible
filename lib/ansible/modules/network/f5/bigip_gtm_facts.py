@@ -27,7 +27,7 @@ options:
     choices:
       - pool
       - wide_ip
-      - virtual_server
+      - server
   filter:
     description:
       - Perform regex filter of response. Filtering is done on the name of
@@ -117,13 +117,13 @@ pool:
         ttl: 30
         type: naptr
         verify_member_availability: disabled
-virtual_server:
+server:
   description:
     Contains the virtual server enabled and availability status, and address.
   returned: changed
   type: list
   sample:
-    virtual_server:
+    server:
       - addresses:
           - device_name: /Common/qweqwe
             name: 10.10.10.10
@@ -231,10 +231,6 @@ class BaseManager(object):
             srvs='srv'
         )
 
-    def exec_module(self):
-        result = self.read_current_from_device()
-        return result
-
     def filter_matches_name(self, name):
         if self.want.filter is None:
             return True
@@ -270,7 +266,8 @@ class UntypedManager(BaseManager):
         results = []
         facts = self.read_facts()
         for item in facts:
-            filtered = [(k, v) for k, v in iteritems(item) if self.filter_matches_name(k)]
+            attrs = item.to_return()
+            filtered = [(k, v) for k, v in iteritems(attrs) if self.filter_matches_name(k)]
             if filtered:
                 results.append(dict(filtered))
         return results
@@ -297,18 +294,11 @@ class Parameters(AnsibleF5Parameters):
     @property
     def include(self):
         requested = self._values['include']
-        valid = ['pool', 'wide_ip', 'virtual_server', 'server', 'all']
+        valid = ['pool', 'wide_ip', 'server', 'all']
 
         if any(x for x in requested if x not in valid):
             raise F5ModuleError(
                 "The valid 'include' choices are {0}".format(', '.join(valid))
-            )
-        if any(x for x in requested if x == 'virtual_server'):
-            self._values['__warnings'].append(
-                dict(
-                    msg="The 'virtual_server' param is deprecated. Use 'server' instead",
-                    version='2.5'
-                )
             )
 
         if 'all' in requested:
@@ -337,9 +327,11 @@ class BaseParameters(Parameters):
             return False
 
     def _remove_internal_keywords(self, resource):
-        del resource['kind']
-        del resource['generation']
-        del resource['selfLink']
+        resource.pop('kind', None)
+        resource.pop('generation', None)
+        resource.pop('selfLink', None)
+        resource.pop('isSubcollection', None)
+        resource.pop('fullPath', None)
 
     def to_return(self):
         result = {}
@@ -653,7 +645,7 @@ class ServerParameters(BaseParameters):
             if 'translationAddress' in item:
                 item['translation_address'] = item.pop('translationAddress')
             if 'translationPort' in item:
-                item['translation_port'] = int(item.pop('translation_port'))
+                item['translation_port'] = int(item.pop('translationPort'))
             result.append(item)
         return result
 
@@ -724,7 +716,7 @@ class TypedPoolFactManager(TypedManager):
         for resource in collection:
             attrs = resource.attrs
             attrs['stats'] = self.read_stats_from_device(resource)
-            params = PoolParameters(attrs)
+            params = PoolParameters(params=attrs)
             results.append(params)
         return results
 
@@ -752,7 +744,7 @@ class UntypedPoolFactManager(UntypedManager):
         for resource in collection:
             attrs = resource.attrs
             attrs['stats'] = self.read_stats_from_device(resource)
-            params = PoolParameters(attrs)
+            params = PoolParameters(params=attrs)
             results.append(params)
         return results
 
@@ -794,7 +786,7 @@ class TypedWideIpFactManager(TypedManager):
         collection = self.read_collection_from_device(collection)
         for resource in collection:
             attrs = resource.attrs
-            params = WideIpParameters(attrs)
+            params = WideIpParameters(params=attrs)
             results.append(params)
         return results
 
@@ -821,7 +813,7 @@ class UntypedWideIpFactManager(UntypedManager):
         collection = self.read_collection_from_device()
         for resource in collection:
             attrs = resource.attrs
-            params = WideIpParameters(attrs)
+            params = WideIpParameters(params=attrs)
             results.append(params)
         return results
 
@@ -843,7 +835,7 @@ class ServerFactManager(UntypedManager):
 
     def exec_module(self):
         facts = super(ServerFactManager, self).exec_module()
-        result = dict(server=facts, virtual_server=facts)
+        result = dict(server=facts)
         return result
 
     def read_facts(self):
@@ -851,7 +843,7 @@ class ServerFactManager(UntypedManager):
         collection = self.read_collection_from_device()
         for resource in collection:
             attrs = resource.attrs
-            params = WideIpParameters(attrs)
+            params = ServerParameters(params=attrs)
             results.append(params)
         return results
 
@@ -881,10 +873,6 @@ class ModuleManager(object):
             names = ['pool', 'wide_ip', 'server']
         else:
             names = self.want.include
-            # The virtual_server parameter is deprecated
-            if 'virtual_server' in names:
-                names.append('server')
-                names.remove('virtual_server')
         managers = [self.get_manager(name) for name in names]
         result = self.execute_managers(managers)
         if result:

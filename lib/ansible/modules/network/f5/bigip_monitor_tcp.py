@@ -23,8 +23,6 @@ options:
     description:
       - Monitor name.
     required: True
-    aliases:
-      - monitor
   parent:
     description:
       - The parent template of this monitor template. Once this value has
@@ -44,19 +42,6 @@ options:
         '*'.
       - If this value is an IP address, and the C(type) is C(tcp) (the default),
         then a C(port) number must be specified.
-  type:
-    description:
-      - The template type of this monitor template.
-      - Deprecated in 2.4. Use one of the C(bigip_monitor_tcp_echo) or
-        C(bigip_monitor_tcp_half_open) modules instead.
-    default: tcp
-    choices:
-      - tcp
-      - tcp_echo
-      - tcp_half_open
-      - TTYPE_TCP
-      - TTYPE_TCP_ECHO
-      - TTYPE_TCP_HALF_OPEN
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not

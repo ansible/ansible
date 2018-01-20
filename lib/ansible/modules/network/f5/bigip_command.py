@@ -427,14 +427,6 @@ class ArgumentSpec(object):
                 type='str',
                 default='rest',
                 choices=['cli', 'rest']
-            ),
-            password=dict(
-                fallback=(env_fallback, ['F5_PASSWORD']),
-                no_log=True
-            ),
-            partition=dict(
-                default='Common',
-                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
         self.argument_spec = {}

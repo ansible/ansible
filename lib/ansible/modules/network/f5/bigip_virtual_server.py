@@ -152,7 +152,7 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
-  metdata:
+  metadata:
     description:
       - Arbitrary key/value pairs that you can attach to a pool. This is useful in
         situations where you might want to annotate a virtual to me managed by Ansible.

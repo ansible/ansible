@@ -23,8 +23,6 @@ options:
     description:
       - Monitor name.
     required: True
-    aliases:
-      - monitor
   parent:
     description:
       - The parent template of this monitor template. Once this value has
