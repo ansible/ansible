@@ -334,7 +334,7 @@ class StrategyModule(StrategyBase):
                                     loader=self._loader,
                                 )
                                 # Prevent included tasks to run if already done
-                                if (
+                                if new_ir._role and (
                                     new_ir._role.has_run(host) and
                                     (new_ir._role._metadata is None or (new_ir._role._metadata and not new_ir._role._metadata.allow_duplicates))
                                 ):
