@@ -104,7 +104,7 @@ def main():
     argument_spec.update(
         org_dn=dict(type='str', default='org-root'),
         name=dict(type='str', required=True),
-        descr=dict(type='str', default=''),
+        description=dict(type='str', aliases=['descr'], default=''),
         vnic_list=dict(type='list'),
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
@@ -150,7 +150,7 @@ def main():
                         vnic['order'] = 'unspecified'
             if mo_exists:
                 # check top-level mo props
-                kwargs = dict(descr=module.params['descr'])
+                kwargs = dict(descr=module.params['description'])
                 if (mo.check_prop_match(**kwargs)):
                     # top-level props match, check next level mo/props
                     if not module.params.get('vnic_list'):
@@ -173,7 +173,7 @@ def main():
                     mo = VnicLanConnPolicy(
                         parent_mo_or_dn=module.params['org_dn'],
                         name=module.params['name'],
-                        descr=module.params['descr'],
+                        descr=module.params['description'],
                     )
 
                     if module.params.get('vnic_list'):
