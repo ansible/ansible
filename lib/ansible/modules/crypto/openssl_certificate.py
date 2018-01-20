@@ -748,9 +748,11 @@ class AcmeCertificate(Certificate):
             )
 
         if not self.check(module, perms_required=False) or self.force:
+            acme_tiny_path = self.module.get_bin_path('acme-tiny', required=True)
+
             try:
                 p = subprocess.Popen([
-                    'acme-tiny',
+                    acme_tiny_path,
                     '--account-key', self.accountkey_path,
                     '--csr', self.csr_path,
                     '--acme-dir', self.challenge_path], stdout=subprocess.PIPE)
