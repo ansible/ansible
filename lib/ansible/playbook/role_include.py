@@ -208,14 +208,12 @@ class IncludeRole(TaskInclude):
 
         # save our attrs
         role = self._role
-        cachedvars = self._cached_vars
         parentrole = self._parent_role
         parent = self._parent
         play = self._play
 
         # be smaller for parent methods to shallow copy
         self._role = None
-        self._cached_vars = {}
         self._parent = None
         self._parent_role = None
         self._play = None
@@ -223,7 +221,6 @@ class IncludeRole(TaskInclude):
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
 
         # restore our state
-        self._cached_vars = cachedvars
         self._parent_role = parentrole
         self._parent = parent
         self._play = play
