@@ -184,6 +184,10 @@ class IncludeRole(TaskInclude):
         new_me._play = self._play
         new_me._role = self._role
 
+        new_me._play = self._play
+        new_me._role = self._role
+        new_me.private = self.private
+
         return new_me
 
     @property
@@ -211,7 +215,7 @@ class IncludeRole(TaskInclude):
             v.update(self._parent_role.get_role_params())
         return v
 
-   def serialize(self, no_play=False):
+    def serialize(self, no_play=False):
         data = super(IncludeRole, self).serialize()
         if not self._squashed and not self._finalized:
             data['_irole_name'] = self._role_name
@@ -227,14 +231,6 @@ class IncludeRole(TaskInclude):
                     skip_dynamic_roles=True)
                 self._play.register_dynamic_role(self)
         return data
-
-    def __setstate__(self, sr):
-        self.__init__()
-        self.deserialize(sr)
-
-    def __getstate__(self):
-        sr = self.serialize()
-        return sr
 
     def deserialize(self, data, play=None, include_deps=True):
         from ansible.playbook.play import Play
@@ -260,6 +256,14 @@ class IncludeRole(TaskInclude):
         if play is not None:
             play.register_dynamic_role(self)
         super(IncludeRole, self).deserialize(data)
+
+    def __setstate__(self, sr):
+        self.__init__()
+        self.deserialize(sr)
+
+    def __getstate__(self):
+        sr = self.serialize()
+        return sr
 
     def __deepcopy__(self, memo):
         ret = self.deserialize(self.serialize())
