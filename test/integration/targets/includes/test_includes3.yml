@@ -1,3 +1,4 @@
+---
 - hosts: localhost
   tasks:
     - include: test_includes4.yml
