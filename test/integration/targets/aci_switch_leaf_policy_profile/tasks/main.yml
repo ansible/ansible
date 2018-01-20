@@ -16,7 +16,6 @@
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: no
-    use_ssl: no
     leaf_profile: ansible_test
     state: absent
 
@@ -28,7 +27,6 @@
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: no
-    use_ssl: no
     leaf_profile: ansible_test
     state: present
   check_mode: yes
@@ -111,7 +109,6 @@
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: no
-    use_ssl: no
     state: query
   check_mode: yes
   register: cm_query_all_switch_leaf_profiles

@@ -81,7 +81,7 @@
       - epg_present_update.changed == true
       - 'epg_present_update.config == {"fvAEPg": {"attributes": {"descr": "Ansible Test Update"}}}'
       - epg_present_missing_param.failed == true
-      - 'epg_present_missing_param.msg == "state is present but the following are missing: ap"'
+      - 'epg_present_missing_param.msg == "state is present but all of the following are missing: ap"'
 
 - name: get specific epg
   aci_epg:
@@ -147,7 +147,7 @@
       - delete_epg_idempotent.changed == false
       - delete_epg_idempotent.existing == []
       - delete_epg_missing_param.failed == true
-      - 'delete_epg_missing_param.msg == "state is absent but the following are missing: tenant"'
+      - 'delete_epg_missing_param.msg == "state is absent but all of the following are missing: tenant"'
 
 - name: cleanup bd
   aci_bd:
