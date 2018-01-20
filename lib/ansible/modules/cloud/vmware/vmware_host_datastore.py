@@ -1,28 +1,30 @@
 #!/usr/bin/python
-
-# Copyright (c) 2017 Ansible Project
+# Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = r'''
 ---
 module: vmware_host_datastore
-short_description: Add/remove datastore on ESXi host
+short_description: Manage a datastore on ESXi host
 description:
-- This module can be used to mount/umount on datastore on ESXi host.
-- This module only support NFS/VMFS datastores.
-- For VMFS datastore, available device must already be connected on host.
+- This module can be used to mount/umount datastore on ESXi host.
+- This module only support NFS/VMFS type of datastores.
+- For VMFS datastore, available device must already be connected on ESXi host.
+- All parameters and VMware object names are case sensitive.
 version_added: '2.5'
 author:
 - Ludovic Rivallain <ludovic.rivallain@gmail.com> @lrivallain
 notes:
-- Tested on vSphere 6.0, 6.5
+- Tested on vSphere 6.0 and 6.5
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -42,36 +44,34 @@ options:
   nfs_server:
     description:
     - NFS host serving nfs datastore.
-    - Required if datastore type is "nfs" and state is "present", else unused.
+    - Required if datastore type is set to C(nfs) and state is set to C(present), else unused.
   nfs_path:
     description:
     - Resource path on NFS host.
-    - Required if datastore type is "nfs" and state is "present", else unused.
+    - Required if datastore type is set to C(nfs) and state is set to C(present), else unused.
   nfs_ro:
     description:
     - ReadOnly or ReadWrite mount.
-    - Unsed if datastore type is not "nfs" and state is not "present".
+    - Unused if datastore type is not set to C(nfs) and state is not set to C(present).
     default: False
   vmfs_device_name:
     description:
-    - Name a the device to use as VMFS datastore.
-    - Required for vmfs datastore type and state is "present", else unused.
+    - Name of the device to be used as VMFS datastore.
+    - Required for VMFS datastore type and state is set to C(present), else unused.
   vmfs_version:
     description:
     - VMFS version to use for datastore creation.
-    - Unsed if datastore type is not "vmfs" and state is not "present".
+    - Unused if datastore type is not set to C(vmfs) and state is not set to C(present).
   esxi_hostname:
-    description:.
-    - ESXi hostname to mount the datastore.
+    description:
+    - ESXi hostname to manage the datastore.
     required: true
   state:
     description:
-    - "present: Mount datastore on host if it's absent else do nothing."
-    - "absent: Umount datastore if it's present else do nothing."
+    - "present: Mount datastore on host if datastore is absent else do nothing."
+    - "absent: Umount datastore if datastore is present else do nothing."
     default: present
-    choices:
-    - present
-    - absent
+    choices: [ present, absent ]
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -125,18 +125,18 @@ RETURN = r'''
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec, PyVmomi, find_datastore_by_name
+from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, find_datastore_by_name
 from ansible.module_utils._text import to_native
 
 
 class VMwareHostDatastore(PyVmomi):
     def __init__(self, module):
-        self.module = module
+        super(VMwareHostDatastore, self).__init__(module)
+
         self.datacenter_name = module.params['datacenter_name']
         self.datastore_name = module.params['datastore_name']
         self.datastore_type = module.params['datastore_type']
@@ -147,8 +147,10 @@ class VMwareHostDatastore(PyVmomi):
         self.vmfs_version = module.params['vmfs_version']
         self.esxi_hostname = module.params['esxi_hostname']
         self.state = module.params['state']
-        self.content = connect_to_api(module)
+
         self.esxi = self.find_hostsystem_by_name(self.esxi_hostname)
+        if self.esxi is None:
+            self.module.fail_json(msg="Failed to find ESXi hostname %s " % self.esxi_hostname)
 
     def process_state(self):
         ds_states = {
@@ -163,11 +165,10 @@ class VMwareHostDatastore(PyVmomi):
         }
         try:
             ds_states[self.state][self.check_datastore_host_state()]()
-
         except (vmodl.RuntimeFault, vmodl.MethodFault) as vmodl_fault:
-            self.module.fail_json(msg=vmodl_fault.msg)
+            self.module.fail_json(msg=to_native(vmodl_fault.msg))
         except Exception as e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg=to_native(e))
 
     def state_exit_unchanged(self):
         self.module.exit_json(changed=False)
@@ -190,8 +191,8 @@ class VMwareHostDatastore(PyVmomi):
         except (vim.fault.NotFound, vim.fault.HostConfigFault, vim.fault.ResourceInUse) as fault:
             self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(fault.msg)))
         except Exception as e:
-            self.module.fail_json(msg="%s: %s" % (error_message_umount, str(e)))
-        self.module.exit_json(changed=True, result="datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
+            self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(e)))
+        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
     def mount_datastore_host(self):
         if self.datastore_type == 'nfs':
@@ -219,8 +220,8 @@ class VMwareHostDatastore(PyVmomi):
                 vim.fault.NoGateway) as fault:
             self.module.fail_json(msg="%s: %s" % (error_message_mount, to_native(fault.msg)))
         except Exception as e:
-            self.module.fail_json(msg="%s : %s" % (error_message_mount, str(e)))
-        self.module.exit_json(changed=True, result="datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
+            self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
+        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
     def mount_vmfs_datastore_host(self):
         ds_path = "/vmfs/devices/disks/" + str(self.vmfs_device_name)
@@ -238,8 +239,8 @@ class VMwareHostDatastore(PyVmomi):
                 vim.fault.HostConfigFault, vmodl.fault.InvalidArgument) as fault:
             self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(fault.msg)))
         except Exception as e:
-            self.module.fail_json(msg="%s : %s" % (error_message_mount, str(e)))
-        self.module.exit_json(changed=True, result="datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
+            self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
+        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
 
 
 def main():
@@ -261,8 +262,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_together=[
-            [ 'nfs_server', 'nfs_path' ]
-        ]
+            ['nfs_server', 'nfs_path']
+        ],
     )
 
     # more complex required_if
@@ -274,9 +275,6 @@ def main():
         if module.params['datastore_type'] == 'vmfs' and not module.params['vmfs_device_name']:
             msg = "Missing vmfs_device_name with datastore_type = vmfs"
             module.fail_json(msg=msg)
-
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
 
     vmware_host_datastore = VMwareHostDatastore(module)
     vmware_host_datastore.process_state()
