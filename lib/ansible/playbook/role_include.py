@@ -66,7 +66,6 @@ class IncludeRole(TaskInclude):
         self._play = None
         self._role = None
 
-
     def serialize(self, no_play=False):
         data = super(IncludeRole, self).serialize()
         if not self._squashed and not self._finalized:
