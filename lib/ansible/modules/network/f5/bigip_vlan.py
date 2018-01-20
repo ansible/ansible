@@ -91,7 +91,12 @@ options:
       - When creating a new VLAN, if this parameter is not specified, the default
         of (no) is used.
     version_added: 2.5
-    choices: [yes, no]
+    type: bool
+  partition:
+    description:
+      - Device partition to manage resources on.
+    default: Common
+    version_added: 2.5
 notes:
   - Requires BIG-IP versions >= 12.0.0
 extends_documentation_fragment: f5

@@ -97,6 +97,17 @@ options:
       - yes
       - no
     version_added: 2.1
+  priority_group:
+    description:
+      - Specifies a number representing the priority group for the pool member.
+      - When adding a new member, the default is 0, meaning that the member has no priority.
+      - To specify a priority, you must activate priority group usage when you
+        create a new pool or when adding or removing pool members. When activated,
+        the system load balances traffic according to the priority group number
+        assigned to the pool member.
+      - The higher the number, the higher the priority, so a member with a priority
+        of 3 has higher priority than a member with a priority of 1.
+    version_added: 2.5
 extends_documentation_fragment: f5
 '''
 
