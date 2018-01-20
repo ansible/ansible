@@ -189,9 +189,9 @@ class ACIModule(object):
         ''' Set protocol based on use_ssl parameter '''
 
         # Set protocol for further use
-        if self.params['protocol'] in ('http', 'https'):
+        if 'protocol' in self.params and self.params['protocol'] in ('http', 'https'):
             self.module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", '2.6')
-        elif self.params['protocol'] is None:
+        elif 'protocol' not in self.params or self.params['protocol'] is None:
             self.params['protocol'] = 'https' if self.params.get('use_ssl', True) else 'http'
         else:
             self.module.fail_json(msg="Parameter 'protocol' needs to be one of ( http, https )")
