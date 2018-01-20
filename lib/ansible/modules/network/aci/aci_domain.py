@@ -59,6 +59,8 @@ options:
   vm_provider:
     description:
     - The VM platform for VMM Domains.
+    - Support for Kubernetes was added in ACI v3.0.
+    - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
   vswitch:
     description:
