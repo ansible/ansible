@@ -82,7 +82,7 @@ class DistributionFiles:
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
@@ -115,6 +115,7 @@ class DistributionFiles:
             if self.SEARCH_STRING[name] in dist_file_content:
                 # this sets distribution=RedHat if 'Red Hat' shows up in data
                 dist_file_dict['distribution'] = name
+                dist_file_dict['distribution_file_search_string'] = self.SEARCH_STRING[name]
             else:
                 # this sets distribution to what's in the data, e.g. CentOS, Scientific, ...
                 dist_file_dict['distribution'] = dist_file_content.split()[0]
