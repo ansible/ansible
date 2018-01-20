@@ -38,6 +38,14 @@ DOCUMENTATION = """
       - kubectl (go binary)
 
     options:
+      kubectl_pod:
+        description:
+          - Pod name. Required when the host name does not match pod name.
+        default: ''
+        vars:
+          - name: ansible_kubectl_pod
+        env:
+          - name: K8S_AUTH_POD
       kubectl_container:
         description:
           - Container name. Required when a pod contains more than one container.
@@ -217,7 +225,7 @@ class Connection(ConnectionBase):
         # Build command options based on doc string
         doc_yaml = AnsibleLoader(self.documentation).get_single_data()
         for key in doc_yaml.get('options'):
-            if key.endswith('verify_ssl') and self.get_option(key) is not None:
+            if key.endswith('verify_ssl') and self.get_option(key) != '':
                 # Translate verify_ssl to skip_verify_ssl, and output as string
                 skip_verify_ssl = not self.get_option(key)
                 local_cmd.append(u'{0}={1}'.format(self.connection_options[key], str(skip_verify_ssl).lower()))
@@ -229,8 +237,11 @@ class Connection(ConnectionBase):
         if self.get_option(extra_args_name):
             local_cmd += self.get_option(extra_args_name).split(' ')
 
+        pod = self.get_option(u'{0}_pod'.format(self.transport))
+        if not pod:
+            pod = self._play_context.remote_addr
         # -i is needed to keep stdin open which allows pipelining to work
-        local_cmd += ['exec', '-i', self._play_context.remote_addr]
+        local_cmd += ['exec', '-i', pod]
 
         # if the pod has more than one container, then container is required
         container_arg_name = u'{0}_container'.format(self.transport)
