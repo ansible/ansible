@@ -55,7 +55,7 @@ options:
     - Please note that a supplied UUID will be ignored on VM creation, as VMware creates the UUID internally.
   template:
     description:
-    - Template used to create VM.
+    - Template or existing VM used to create VM.
     - If this value is not set, VM is created without using a template.
     - If the VM exists already this setting will be ignored.
   is_template:
