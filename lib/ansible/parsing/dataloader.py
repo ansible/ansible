@@ -18,7 +18,7 @@ from yaml import YAMLError
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
-from ansible.module_utils.six import binary_type, string_types, text_type
+from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
@@ -174,6 +174,19 @@ class DataLoader:
             except AttributeError:
                 pass  # older versions of yaml don't have dispose function, ignore
 
+    def _decrypt_if_vault_data(self, b_vault_data, b_file_name=None):
+        '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
+
+        if not is_encrypted(b_vault_data):
+            show_content = True
+            return b_vault_data, show_content
+
+        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
+        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
+
+        show_content = False
+        return b_data, show_content
+
     def _get_file_contents(self, file_name):
         '''
         Reads the file contents from the given file name
@@ -196,17 +209,10 @@ class DataLoader:
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
-        show_content = True
         try:
             with open(b_file_name, 'rb') as f:
                 data = f.read()
-                if is_encrypted(data):
-                    # FIXME: plugin vault selector
-                    b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(data)
-                    data = self._vault.decrypt(data, filename=b_file_name)
-                    show_content = False
-
-            return (data, show_content)
+                return self._decrypt_if_vault_data(data, b_file_name)
 
         except (IOError, OSError) as e:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)), orig_exc=e)
