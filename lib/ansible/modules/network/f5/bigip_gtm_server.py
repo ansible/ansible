@@ -78,6 +78,8 @@ options:
       - foundry-server-iron
       - netapp
       - windows-2000-server
+    aliases:
+      - product
   link_discovery:
     description:
       - Specifies whether the system auto-discovers the links for this server. When
