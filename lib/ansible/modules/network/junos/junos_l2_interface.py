@@ -18,14 +18,17 @@ DOCUMENTATION = """
 module: junos_l2_interface
 version_added: "2.5"
 author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Manage Layer-2 interface on network devices
+short_description: Manage Layer-2 interface on Juniper JUNOS network devices
 description:
   - This module provides declarative management of Layer-2 interface
-    on network devices.
+    on Juniper JUNOS network devices.
 options:
   name:
     description:
       - Name of the interface excluding any logical unit number.
+  description:
+    description:
+      - Description of Interface.
   aggregate:
     description:
       - List of Layer-2 interface definitions.
@@ -70,27 +73,63 @@ extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
-- name: configure Layer-2 interface
-  net_l2_interface:
-    name: gigabitethernet0/0/1
+- name: Configure interface in access mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: interface-access
     mode: access
-    access_vlan: 30
+    access_vlan: red
+    active: True
+    state: present
 
-- name: remove Layer-2 interface configuration
-  net_l2_interface:
-    name: gigabitethernet0/0/1
-    state: absent
+- name: Configure interface in trunk mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: interface-trunk
+    mode: trunk
+    trunk_vlans:
+    - blue
+    - green
+    native_vlan: 100
+    active: True
+    state: present
+
+- name: Configure interface in access and trunk mode using aggregate
+  junos_l2_interface:
+    aggregate:
+    - name: ge-0/0/1
+      description: test-interface-access
+      mode: access
+      access_vlan: red
+    - name: ge-0/0/2
+      description: test-interface-trunk
+      mode: trunk
+      trunk_vlans:
+      - blue
+      - green
+      native_vlan: 100
+    active: True
+    state: present
 """
 
 RETURN = """
-commands:
-  description: The list of configuration mode commands to send to the device
-  returned: always, except for the platforms that use Netconf transport to manage the device.
-  type: list
-  sample:
-    - interface gigabitethernet0/0/1
-    - switchport mode access
-    - switchport access vlan 30
+diff:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
+  type: string
+  sample: >
+        [edit interfaces]
+        +   ge-0/0/1 {
+        +       description "l2 interface configured by Ansible";
+        +       unit 0 {
+        +           family ethernet-switching {
+        +               interface-mode access;
+        +               vlan {
+        +                   members red;
+        +               }
+        +           }
+        +       }
+        +   }
 """
 import collections
 
@@ -134,7 +173,7 @@ def main():
         access_vlan=dict(),
         native_vlan=dict(type='int'),
         trunk_vlans=dict(type='list'),
-        unit=dict(default=0),
+        unit=dict(default=0, type='int'),
         description=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
