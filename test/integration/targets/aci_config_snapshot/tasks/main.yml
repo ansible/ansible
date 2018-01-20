@@ -54,7 +54,7 @@
       - invalid_max_count.failed == true
       - 'invalid_max_count.msg == "The \"max_count\" must be a number between 1 and 10"'
       - missing_param.failed == true
-      - 'missing_param.msg == "state is present but the following are missing: export_policy"'
+      - 'missing_param.msg == "state is present but all of the following are missing: export_policy"'
 
 - name: query with export_policy
   aci_config_snapshot: &query_snapshot
@@ -136,4 +136,4 @@
       - delete_idempotent.changed == false
       - delete_idempotent.existing == []
       - delete_missing_param.failed == true
-      - 'delete_missing_param.msg == "state is absent but the following are missing: snapshot"'
+      - 'delete_missing_param.msg == "state is absent but all of the following are missing: snapshot"'

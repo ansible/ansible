@@ -15,7 +15,6 @@
     hostname: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    use_proxy: no
     validate_certs: no
     user: admin
     certificate_name: admin
@@ -28,7 +27,6 @@
     hostname: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    use_proxy: no
     validate_certs: no
     user: admin
     certificate_name: admin
@@ -64,7 +62,6 @@
     username: '{{ aci_username }}'
     #password: '{{ aci_password }}'
     private_key: '{{ role_path }}/pki/admin.key'
-    use_proxy: no
     validate_certs: no
     user: admin
     state: query

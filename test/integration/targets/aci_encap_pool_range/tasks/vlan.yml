@@ -182,7 +182,7 @@
   assert:
     that:
       - range_present_missing_param.failed == true
-      - 'range_present_missing_param.msg == "state is present but the following are missing: range_end,range_name,range_start"'
+      - 'range_present_missing_param.msg == "state is present but all of the following are missing: range_end, range_name, range_start"'
 
 - name: missing required param - error message works
   aci_encap_pool_range:

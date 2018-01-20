@@ -82,7 +82,7 @@
       - '"<fvTenant name=\"anstest\" rn=\"tn-anstest\" status=\"deleted\">" in rollback_preview.diff'
       - '"snapshots.diff.xml" in rollback_preview.url'
       - rollback_missing_param.failed == true
-      - 'rollback_missing_param.msg == "state is rollback but the following are missing: import_policy"'
+      - 'rollback_missing_param.msg == "state is rollback but all of the following are missing: import_policy"'
       - rollback_rollback.changed == true
       - '"ce2_" in rollback_rollback.config.configImportP.attributes.fileName'
       - '".tar.gz" in rollback_rollback.config.configImportP.attributes.fileName'

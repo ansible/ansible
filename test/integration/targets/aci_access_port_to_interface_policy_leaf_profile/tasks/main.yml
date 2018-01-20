@@ -15,8 +15,6 @@
     password: "{{ aci_password }}"
     leaf_interface_profile: leafintprftest
     validate_certs: no
-    use_ssl: no
-    use_proxy: no
     state: present
   register: leaf_profile_present
 
