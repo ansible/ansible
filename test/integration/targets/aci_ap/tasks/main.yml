@@ -67,7 +67,7 @@
       - ap_present_update.changed == true
       - 'ap_present_update.config.fvAp.attributes == {"descr": "Ansible Test Update"}'
       - ap_present_missing_param.failed == true
-      - 'ap_present_missing_param.msg == "state is present but the following are missing: ap"'
+      - 'ap_present_missing_param.msg == "state is present but all of the following are missing: ap"'
 
 - name: get ap - query specific ap
   aci_ap: &aci_ap_query
@@ -155,7 +155,7 @@
       - ap_delete_idempotent.changed == false
       - ap_delete_idempotent.existing == []
       - ap_delete_missing_param.failed == true
-      - 'ap_delete_missing_param.msg == "state is absent but the following are missing: tenant"'
+      - 'ap_delete_missing_param.msg == "state is absent but all of the following are missing: tenant"'
 
 - name: delete tenant - cleanup before ending tests
   aci_tenant:
