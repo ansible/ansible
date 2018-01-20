@@ -26,8 +26,6 @@ options:
     description:
       - Monitor name.
     required: True
-    aliases:
-      - monitor
   description:
     description:
       - Specifies descriptive text that identifies the monitor.
@@ -401,13 +399,6 @@ class Difference(object):
             )
 
     @property
-    def destination(self):
-        if self.want.ip is None:
-            return None
-        if self.want.destination != self.have.destination:
-            return self.want.destination
-
-    @property
     def interval(self):
         if self.want.timeout is not None and self.want.interval is not None:
             if self.want.interval >= self.want.timeout:
@@ -613,7 +604,6 @@ class ArgumentSpec(object):
             name=dict(required=True),
             description=dict(),
             parent=dict(default='/Common/snmp_dca'),
-            ip=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),

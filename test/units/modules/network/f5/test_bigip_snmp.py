@@ -135,7 +135,7 @@ class TestManager(unittest.TestCase):
         # Configure the parameters that would be returned by querying the
         # remote device
         current = Parameters(
-            dict(
+            params=dict(
                 agent_status_traps='disabled'
             )
         )

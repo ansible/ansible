@@ -39,7 +39,7 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
-    default: 'Common'
+    default: Common
     version_added: 2.5
 notes:
    - Requires the netaddr Python package on the host. This is as easy as

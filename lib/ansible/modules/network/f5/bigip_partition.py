@@ -20,6 +20,10 @@ description:
   - Manage BIG-IP partitions.
 version_added: "2.5"
 options:
+  name:
+    description:
+      - Name of the partition
+    required: True
   description:
     description:
       - The description to attach to the Partition.

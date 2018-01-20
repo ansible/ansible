@@ -492,13 +492,10 @@ class ModuleManager(object):
         return False
 
     def exec_module(self):
-        changed = False
         result = dict()
-        state = self.want.state
 
         try:
-            if state == "present":
-                changed = self.update()
+            changed = self.update()
         except iControlUnexpectedHTTPError as e:
             raise F5ModuleError(str(e))
 
@@ -556,11 +553,7 @@ class ArgumentSpec(object):
             ),
             mirror_primary_address=dict(),
             mirror_secondary_address=dict(),
-            config_sync_ip=dict(),
-            state=dict(
-                default='present',
-                choices=['present']
-            )
+            config_sync_ip=dict()
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)

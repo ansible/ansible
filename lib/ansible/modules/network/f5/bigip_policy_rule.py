@@ -20,6 +20,9 @@ description:
   - This module will manage LTM policy rules on a BIG-IP.
 version_added: 2.5
 options:
+  description:
+    description:
+      - Description of the policy rule.
   actions:
     description:
       - The actions that you want the policy rule to perform.

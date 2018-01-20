@@ -35,6 +35,15 @@ options:
         provide no local IP, specify the value C(none). When creating a
         remote syslog, if this parameter is not specified, the default value
         C(none) is used.
+  state:
+    description:
+      - When C(present), guarantees that the remote syslog exists with the provided
+        attributes.
+      - When C(absent), removes the remote syslog from the system.
+    default: present
+    choices:
+      - absent
+      - present
 notes:
   - Requires the netaddr Python package on the host. This is as easy as pip
     install netaddr.
