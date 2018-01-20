@@ -76,10 +76,6 @@ options:
         incremental synchronization operations can reduce the per-device sync/load
         time for configuration changes. This setting is relevant only when
         C(full_sync) is C(false).
-  partition:
-    description:
-      - Device partition to manage resources on.
-    default: Common
   state:
     description:
       - When C(state) is C(present), ensures the device group exists.
@@ -151,7 +147,6 @@ max_incremental_sync_size:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
 HAS_DEVEL_IMPORTS = False
@@ -339,8 +334,7 @@ class ModuleManager(object):
 
     def exists(self):
         result = self.client.api.tm.cm.device_groups.device_group.exists(
-            name=self.want.name,
-            partition=self.want.partition
+            name=self.want.name
         )
         return result
 
@@ -372,15 +366,13 @@ class ModuleManager(object):
         params = self.want.api_params()
         self.client.api.tm.cm.device_groups.device_group.create(
             name=self.want.name,
-            partition=self.want.partition,
             **params
         )
 
     def update_on_device(self):
         params = self.want.api_params()
         resource = self.client.api.tm.cm.device_groups.device_group.load(
-            name=self.want.name,
-            partition=self.want.partition
+            name=self.want.name
         )
         resource.modify(**params)
 
@@ -391,16 +383,14 @@ class ModuleManager(object):
 
     def remove_from_device(self):
         resource = self.client.api.tm.cm.device_groups.device_group.load(
-            name=self.want.name,
-            partition=self.want.partition
+            name=self.want.name
         )
         if resource:
             resource.delete()
 
     def read_current_from_device(self):
         resource = self.client.api.tm.cm.device_groups.device_group.load(
-            name=self.want.name,
-            partition=self.want.partition
+            name=self.want.name
         )
         result = resource.attrs
         return Parameters(params=result)
@@ -431,10 +421,6 @@ class ArgumentSpec(object):
             state=dict(
                 default='present',
                 choices=['absent', 'present']
-            ),
-            partition=dict(
-                default='Common',
-                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
         self.argument_spec = {}
