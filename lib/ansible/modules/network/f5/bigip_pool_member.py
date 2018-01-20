@@ -179,6 +179,7 @@ except ImportError:
     pass  # Handled by f5_utils.bigsuds_found
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.f5_utils import bigip_api, bigsuds_found
 
 HAS_DEVEL_IMPORTS = False
@@ -399,7 +400,12 @@ def main():
         rate_limit=dict(type='int'),
         ratio=dict(type='int'),
         preserve_node=dict(type='bool', default=False),
-        priority_group=dict(type='int')
+        priority_group=dict(type='int'),
+        state=dict(default='present', choices=['absent', 'present']),
+        partition=dict(
+            default='Common',
+            fallback=(env_fallback, ['F5_PARTITION'])
+        )
     )
     argument_spec.update(meta_args)
 
