@@ -9,6 +9,7 @@ target="windows/ci/group${args[1]}/"
 
 stage="${S:-prod}"
 provider="${P:-default}"
+platform="${args[2]}"
 
 # python versions to test in order
 # python 2.7 runs full tests while other versions run minimal tests
@@ -29,18 +30,14 @@ if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Running Windows integration tests for multiple versions concurrently."
 
     platforms=(
-        --windows 2008
-        --windows 2008-R2
-        --windows 2012
-        --windows 2012-R2
-        --windows 2016
+        --windows "${platform}"
     )
 else
     echo "No changes requiring integration tests specific to Windows were detected."
     echo "Running Windows integration tests for a single version only."
 
     platforms=(
-        --windows 2012-R2
+        --windows "${platform}"
     )
 fi
 
