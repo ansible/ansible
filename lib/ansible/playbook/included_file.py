@@ -115,7 +115,16 @@ class IncludedFile:
                                     include_target = templar.template(include_result['include'])
                                     if original_task._role:
                                         new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
-                                        include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
+                                        candidates = [loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target),
+                                                      loader.path_dwim_relative(new_basedir, 'tasks', include_target)]
+                                        for include_file in candidates:
+                                            try:
+                                                # may throw OSError
+                                                os.stat(include_file)
+                                                # or select the task file if it exists
+                                                break
+                                            except OSError:
+                                                pass
                                     else:
                                         include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 

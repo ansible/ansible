@@ -1,0 +1,34 @@
+---
+- name: verify that tags doesnt make a role run more that scheduled
+  hosts: testhost
+  strategy: linear
+  pre_tasks:
+  - set_fact: {cacheable: false, counter: 0}
+  roles: [inccounter2, inccounter3]
+  tasks:
+  - assert: {that: counter=='1', msg: "counterfail2 {{counter}}"}
+- name: verify that tags doesnt make a role run more that scheduled 2
+  hosts: testhost
+  strategy: linear
+  pre_tasks:
+  - set_fact: {cacheable: false, counter: 0}
+  roles: [inccounter3, inccounter2]
+  tasks:
+  - assert: {that: counter=='1', msg: "counterfail3 {{counter}}"}
+- name: verify that tags doesnt make a role run more that scheduled 3
+  hosts: testhost
+  strategy: linear
+  pre_tasks:
+  - set_fact: {cacheable: false, counter: 0}
+  roles: [inccounter4, inccounter3]
+  tasks:
+  - assert: {that: counter=='1', msg: "counterfail4 {{counter}}"}
+- name: verify that tags doesnt make a role can run more if allow_duplicates on a caller
+  hosts: testhost
+  strategy: linear
+  pre_tasks:
+  - set_fact: {cacheable: false, counter: 0}
+  roles: [inccounter5, inccounter5]
+  tasks:
+  - assert: {that: counter=='3', msg: "counterfail1 {{counter}}"}
+

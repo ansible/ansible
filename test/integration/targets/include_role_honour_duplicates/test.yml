@@ -1,0 +1,37 @@
+---
+- hosts: testhost
+  tasks: [set_fact: {counter: 1, altcounter: 1, nocounter: 1, cacheable: False}]
+- name: >-
+    verify that allow_duplicates prevent include_role to run a role that
+    has already run only if if it does not allow it
+  hosts: testhost
+  strategy: linear
+  roles: [inccounter, altinccounter, noinccounter]
+  tasks:
+  - include_role: {name: inccounter}
+  - include_role: {name: altinccounter}
+  - include_role: {name: noinccounter}
+  - include_role: {name: inccounter}
+  - include_role: {name: altinccounter}
+  - include_role: {name: noinccounter}
+  - assert: {that: counter=='3', msg: counterfail}
+  - assert: {that: altcounter=='4', msg: altcounterfail}
+  - assert: {that: nocounter=='3', msg: nocounterfail}
+- hosts: testhost
+  tasks: [set_fact: {counter: 1, altcounter: 1, nocounter: 1, cacheable: False}]
+- name: >-
+    verify that allow_duplicates prevent include_role to run a role that
+    has already run only if if it does not allow it
+  hosts: testhost
+  strategy: free
+  roles: [inccounter, altinccounter, noinccounter]
+  tasks:
+  - include_role: {name: inccounter}
+  - include_role: {name: altinccounter}
+  - include_role: {name: noinccounter}
+  - include_role: {name: inccounter}
+  - include_role: {name: altinccounter}
+  - include_role: {name: noinccounter}
+  - assert: {that: counter=='3', msg: counterfail}
+  - assert: {that: altcounter=='4', msg: altcounterfail}
+  - assert: {that: nocounter=='3', msg: nocounterfail}
