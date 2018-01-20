@@ -93,7 +93,7 @@
       - subject_filter_update.changed == true
       - 'subject_filter_update.config.vzRsSubjFiltAtt.attributes == {"directives": ""}'
       - present_missing_param.failed == true
-      - 'present_missing_param.msg == "state is present but the following are missing: contract,filter,subject"'
+      - 'present_missing_param.msg == "state is present but all of the following are missing: contract, filter, subject"'
 
 - name: query all
   aci_contract_subject_to_filter:
@@ -157,7 +157,7 @@
       - subject_filter_absent_idempotent.changed == false
       - subject_filter_absent_idempotent.existing == []
       - absent_missing_param.failed == true
-      - 'absent_missing_param.msg == "state is absent but the following are missing: filter"'
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: filter"'
 
 - name: cleanup subject
   aci_contract_subject:

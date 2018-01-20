@@ -15,7 +15,6 @@
     password: "{{ aci_password }}"
     leaf_profile: swleafprftest
     validate_certs: no
-    use_ssl: no
     state: absent
 
 - name: delete Interface Policy Leaf profile for kick off
@@ -25,8 +24,6 @@
     password: "{{ aci_password }}"
     leaf_interface_profile: leafintprftest
     validate_certs: no
-    use_ssl: no
-    use_proxy: no
     state: absent
 
 - name: Ensuring Switch Policy Leaf profile exists for kick off
@@ -36,7 +33,6 @@
     password: "{{ aci_password }}"
     leaf_profile: swleafprftest
     validate_certs: no
-    use_ssl: no
     state: present
   register: leaf_profile_present
 
@@ -47,8 +43,6 @@
     password: "{{ aci_password }}"
     leaf_interface_profile: leafintprftest
     validate_certs: no
-    use_ssl: no
-    use_proxy: no
     state: present
   register: leaf_profile_present
 
