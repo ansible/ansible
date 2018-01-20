@@ -522,7 +522,7 @@ class ACIModule(object):
             # matching the provided ID value for the parent object
             else:
                 path = 'api/class/{0}.json'.format(parent_class)
-                filter_string = '?query-target-filter={1}{2}'.format(parent_filter, self_child_includes)
+                filter_string = '?query-target-filter={0}{1}'.format(parent_filter, self_child_includes)
         # Query for all objects of the module's class matching the provided ID value of the object
         else:
             path = 'api/class/{0}.json'.format(obj_class)
