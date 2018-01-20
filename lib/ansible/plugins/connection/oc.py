@@ -38,6 +38,14 @@ DOCUMENTATION = """
       - oc (go binary)
 
     options:
+      oc_pod:
+        description:
+          - Pod name. Required when the host name does not match pod name.
+        default: ''
+        vars:
+          - name: ansible_oc_pod
+        env:
+          - name: K8S_AUTH_POD
       oc_container:
         description:
           - Container name. Required when a pod contains more than one container.
