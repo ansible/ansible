@@ -2,11 +2,6 @@
 # Copyright 2017, Bruno Calogero <bcaloger@cisco.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-- name: setting facts
-  set_fact:
-    aci_hostname: svlngen4-fab4-apic1.cisco.com
-    aci_username: admin
-    aci_password: F@b44p1c
 
 - name: Test that we have an ACI APIC host, ACI username and ACI password
   fail:
