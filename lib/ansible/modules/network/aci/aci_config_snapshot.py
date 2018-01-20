@@ -192,7 +192,7 @@ def main():
             subclass_1=dict(
                 aci_class='configSnapshot',
                 aci_rn='snapshot-{0}'.format(snapshot),
-                filter_target='(configSnapshot.name, "{0}")'.format(snapshot),
+                filter_target='eq(configSnapshot.name, "{0}")'.format(snapshot),
                 module_object=snapshot,
             ),
         )
