@@ -39,7 +39,7 @@ extends_documentation_fragment:
 
 requirements:
   - "python >= 2.7"
-  - "openshift >= 0.3"
+  - "openshift == 0.4.1"
   - "PyYAML >= 3.11"
 '''
 
