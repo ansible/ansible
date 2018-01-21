@@ -163,7 +163,7 @@ options:
       type: bool
     state:
       description:
-        - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+        - Assert the state of the SQL Database. Use 'present' to create or update an SQL Database and 'absent' to delete it.
       default: present
       choices:
         - absent
