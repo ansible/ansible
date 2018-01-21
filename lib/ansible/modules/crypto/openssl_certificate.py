@@ -689,7 +689,7 @@ class AcmeCertificate(Certificate):
                     '--acme-dir', self.challenge_path], stdout=subprocess.PIPE)
                 crt = p.communicate()[0]
                 with open(self.path, 'wb') as certfile:
-                    certfile.write(str(crt))
+                    certfile.write(to_bytes(crt))
             except OSError as exc:
                 raise CertificateError(exc)
 
