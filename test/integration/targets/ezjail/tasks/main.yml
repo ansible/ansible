@@ -1,0 +1,13 @@
+- debug:
+    msg: '{{ role_name }}'
+- debug:
+    msg: '{{ role_path|basename }}'
+
+- name: only freebsd supported
+  when: ansible_os_family == "FreeBSD"
+  block:
+    - include_tasks: setup.yml
+    - include_tasks: test_jail1.yml
+    - include_tasks: test_jail2.yml
+    - include_tasks: test_jail3.yml
+    - include_tasks: test_jail4.yml

@@ -1,0 +1,6 @@
+destructive
+skip/osx
+skip/rhel
+skip/linux
+skip/windows
+freebsd

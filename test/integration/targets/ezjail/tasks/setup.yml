@@ -1,0 +1,8 @@
+- name: install ezjail
+  pkgng: name=ezjail state=present
+
+- name: start ezjail
+  service: name=ezjail state=started enabled=yes
+
+- name: install basejail
+  raw: ls /usr/jails/basejail || ezjail-admin install

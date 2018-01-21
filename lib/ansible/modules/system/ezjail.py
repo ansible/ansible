@@ -26,24 +26,26 @@ description:
   - The purpose of this module is to manage jails with Ezjail. Ezjail must
     be installed and configured to use this module. There is currently no
     support for provisioning. You can create jails, delete jails, change
-    the ip config, start and stop jail and set if jails are runnable.
+    the ip config, start and stop jails and set if jails are runnable.
 notes:
   - Developed for FreeBSD jails creation. You have to setup and install the
     basejail yourself with your own playbook. This way you can decide if
     e.g. you want to use zfs or ufs.
 options:
   name:
-    description: The jails name (used as identifier)
+    description: The jail name (used as identifier)
     required: true
   state:
     description:
       - The state the jail should have
       - C(started) creates jail if not present and starts it.
-        C(stopped) creates a jail if not present and stops the jail
-        if running. C(restarted) also creates the jail if not present
-        and starts or restarts it. C(absent) will delete the jail if
+      - C(stopped) creates a jail if not present and stops the jail
+        if running.
+      - C(restarted) also creates the jail if not present
+        and starts or restarts it.
+      - C(absent) will delete the jail if
         present (Caution This will also wipe the jailroot. Consider
-        stopping and disbaling the jail if you want to keep the jailroot.)
+        stopping and disabling the jail if you want to keep the jailroot.)
     required: true
   enabled:
     description:
@@ -68,13 +70,12 @@ EXAMPLES = '''
   ezjail:
     name: www
     state: started
-    ip_addr: em0|192.168.56.2
-
+    ip_addr: em0|203.0.113.123,em0|2001:db8::1
 - name: database is created
   ezjail:
     name: database
     state: started
-    ip_addr: lo1|172.0.0.1
+    ip_addr: lo0|127.0.0.1,lo0|::1
 
 - name: old gets deleted if present
   ezjail:
@@ -85,9 +86,9 @@ EXAMPLES = '''
   ezjail:
     name: test
     state: started
-    enabled: False
+    enabled: no
 
-- name: otherjail is stopped and not runnable
+- name: otherjail is stopped and marked as not runnable
   ezjail:
     name: otherjail
     state: stopped
@@ -96,8 +97,8 @@ EXAMPLES = '''
 - name: lastjail is restarted
   ezjail:
     name: otherjail
-    state: stopped
-    enabled: no
+    state: restarted
+    enabled: yes
 '''
 
 RETURN = '''
@@ -133,11 +134,13 @@ class FailedException(Exception):
         self.msg = msg
 
 
-def ezjail_admin(module, *params):
+def ezjail_admin(module, *params, **cmd_options):
     ''' execute ezjail-admin command '''
 
     cmd = module.get_bin_path('ezjail-admin', required=True)
-    return module.run_command(' '.join([cmd] + list(params)))
+    if 'check_rc' not in cmd_options:
+        cmd_options['check_rc'] = True
+    return module.run_command(' '.join([cmd] + list(params)), **cmd_options)
 
 
 def get_current_ip_addr(module):
@@ -192,16 +195,11 @@ def is_enabled(module):
     ''' is the jail enabled / runnable '''
 
     name = module.params['name']
-    result = dict()
     rc, out, err = ezjail_admin(module, 'config', '-r', 'test', name)
-    if rc != 0:
-        raise FailedException(
-            'Failed to get jail %s status: %s %s'
-            % (name, out, err))
     return re.search('is not runnable', out) is None
 
 
-def setEnabled(module, enabled):
+def set_enabled(module, enabled):
     ''' set the jail enabled / runnable or not '''
 
     name = module.params['name']
@@ -209,18 +207,14 @@ def setEnabled(module, enabled):
         action = 'run'
     else:
         action = 'norun'
-    rc, out, err = ezjail_admin(module, 'config', '-r', action, name)
-    if rc != 0:
-        raise FailedException(
-            'Failed to set enabled state for jail %s status: %s %s'
-            % (name, out, err))
+    ezjail_admin(module, 'config', '-r', action, name)
 
 
 def exists(module):
     ''' is the jailname known to ezjail '''
 
     name = module.params['name']
-    rc, out, err = ezjail_admin(module, 'config', '-r', 'test', name)
+    rc, out, err = ezjail_admin(module, 'config', '-r', 'test', name, check_rc=False)
     return rc == 0
 
 
@@ -229,8 +223,6 @@ def started(module):
 
     name = module.params['name']
     rc, out, err = ezjail_admin(module, 'list')
-    if rc != 0:
-        raise FailedException('Failed to get jail status for %s' % (name))
 
     lines = out.strip().split('\n')
     if len(lines) > 2:
@@ -261,22 +253,18 @@ def start_or_stop(module, state):
     # enable to change run state
     if not is_enabled(module):
         should_be_enabled = False
-        setEnabled(module, True)
+        set_enabled(module, True)
 
     # change run state
     if state == 'started':
         action = 'start'
     else:
         action = 'stop'
-    rc, out, err = ezjail_admin(module, action, name)
-    if rc != 0:
-        raise FailedException(
-            'Could not %s jail %s: %s %s'
-            % (action, name, out, err))
+    ezjail_admin(module, action, name)
 
     # reset enabled state
     if not should_be_enabled:
-        setEnabled(module, False)
+        set_enabled(module, False)
 
 
 def create(module):
@@ -292,17 +280,16 @@ def create(module):
     # create if not exists
     if new_jail:
         change_msgs.append('created')
+        if module.params['ip_addr'] is None:
+            raise FailedException('Missing required parameter ip_addr')
         if not module.check_mode:
-            if 'ip_addr' not in module.params or module.params['ip_addr'] is None:
-                raise FailedException('Missing required parameter ip_addr')
             ip_addr = module.params['ip_addr']
-            rc, out, err = ezjail_admin(module, 'create', name, ip_addr)
-            if rc != 0:
-                raise FailedException(
-                    'Failed to create jail %s: %s %s'
-                    % (name, out, err))
+            ezjail_admin(module, 'create', name, ip_addr)
 
-    is_started = started(module)
+    if module.check_mode and not exists(module):
+        is_started = False
+    else:
+        is_started = started(module)
 
     # update ip
     if not new_jail and 'ip_addr' in module.params and module.params['ip_addr'] is not None:
@@ -326,17 +313,18 @@ def create(module):
                 start_or_stop(module, 'started')
 
     # set enabled / runnable state
-    if enabled != is_enabled(module):
+    is_enabled_save = (module.check_mode and not exists(module)) or is_enabled(module)
+    if enabled != is_enabled_save:
         if enabled:
             change_msgs.append('enabled')
         else:
             change_msgs.append('disabled')
         if not module.check_mode:
-            setEnabled(module, enabled)
+            set_enabled(module, enabled)
 
     if module.check_mode:
         msg = 'Jail %s would have been' % (name)
-        changed = False
+        changed = True
     else:
         msg = 'Jail %s' % (name)
         changed = True
@@ -356,14 +344,9 @@ def delete(module):
     if not exists(module):
         return dict(changed=False, msg='Jail %s does not exist' % (name))
     if module.check_mode:
-        return dict(changed=True, msg='Jail %s would habe been deleted' % (name))
+        return dict(changed=True, msg='Jail %s would have been deleted' % (name))
 
-    rc, out, err = ezjail_admin(module, 'delete', '-f', '-w', name)
-    if rc != 0:
-        raise FailedException(
-            'Failed to delete jail %s: %s %s'
-            % (name, out, err))
-
+    ezjail_admin(module, 'delete', '-f', '-w', name)
     return dict(changed=True, msg='Jail %s deleted' % (name))
 
 
