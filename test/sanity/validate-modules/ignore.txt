@@ -287,6 +287,7 @@ lib/ansible/modules/network/aci/aci_intf_policy_mcp.py E322
 lib/ansible/modules/network/aci/aci_intf_policy_port_channel.py E322
 lib/ansible/modules/network/aci/aci_intf_policy_port_security.py E322
 lib/ansible/modules/network/aci/aci_l3out_route_tag_policy.py E322
+lib/ansible/modules/network/aci/aci_rest.py E322
 lib/ansible/modules/network/aci/aci_taboo_contract.py E322
 lib/ansible/modules/network/aci/aci_tenant.py E322
 lib/ansible/modules/network/aci/aci_tenant_action_rule_profile.py E322
