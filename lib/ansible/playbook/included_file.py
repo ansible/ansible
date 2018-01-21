@@ -118,7 +118,8 @@ class IncludedFile:
                                     else:
                                         parent_include = parent_include._parent
                                 else:
-                                    cumulative_path = os.path.join(parent_include._role._role_path, "tasks")
+                                    if parent_include._role:
+                                        cumulative_path = os.path.join(parent_include._role._role_path, "tasks")
                                     include_target = templar.template(include_result['include'])
                                     include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
