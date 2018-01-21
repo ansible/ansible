@@ -102,6 +102,12 @@ options:
         description:
             - Path to the ACME challenge directory that is served on U(http://<HOST>:80/.well-known/acme-challenge/)
 
+    acme_chain:
+        default: True
+        description:
+            - Include the intermediate certificate to the generated certificate
+        version_added: "2.5"
+
     signature_algorithms:
         description:
             - list of algorithms that you would accept the certificate to be signed with
@@ -723,6 +729,7 @@ class AcmeCertificate(Certificate):
         super(AcmeCertificate, self).__init__(module)
         self.accountkey_path = module.params['acme_accountkey_path']
         self.challenge_path = module.params['acme_challenge_path']
+        self.use_chain = module.params['acme_chain']
 
     def generate(self, module):
 
@@ -748,10 +755,13 @@ class AcmeCertificate(Certificate):
 
         if not self.check(module, perms_required=False) or self.force:
             acme_tiny_path = self.module.get_bin_path('acme-tiny', required=True)
+            chain = ''
+            if self.use_chain:
+                chain = '--chain'
 
             try:
-                crt = module.run_command("%s --account-key %s --csr %s"
-                                         "--acme-dir %s" % (acme_tiny_path,
+                crt = module.run_command("%s %s --account-key %s --csr %s"
+                                         "--acme-dir %s" % (acme_tiny_path, chain,
                                                             self.accountkey_path,
                                                             self.csr_path,
                                                             self.challenge_path),
@@ -818,6 +828,7 @@ def main():
             # provider: acme
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
+            acme_chain=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
