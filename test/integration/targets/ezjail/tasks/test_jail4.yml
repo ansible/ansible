@@ -3,21 +3,28 @@
   register: result
   check_mode: yes
 
-- name: test14 check jail state
-  raw: ezjail-admin list
-  register: state
+- name: test14 check jail count
+  raw: ezjail-admin list|wc -l|tr -d ' '
+  register: jailcount
 
-- name: test14 check jailroot
-  raw: ls /usr/jails
+- name: test14 check jail state
+  raw: ezjail-admin list|grep 'DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test4[ ]*/usr/jails/test4'
+  register: state
+  ignore_errors: yes
+
+- name: test14 check jailroot deleted
+  raw: ls /usr/jails|grep 'test4'
   register: jailroot
+  ignore_errors: yes
 
 - name: test14 assert
   assert:
     that:
       - "result.changed"
       - "'Jail test4 would have been created and started' == result.msg"
-      - "state.stdout_lines|length == 2"
-      - "jailroot.stdout|search('basejail[\\t]*flavours[\\t]*newjail\\r\\n')"
+      - "jailcount.stdout_lines[0] == '2'"
+      - "state.stdout == ''"
+      - "jailroot.stdout == ''"
 
 - name: test15 create jail for delete check mode
   ezjail: name=test4 state=started ip_addr=127.0.0.1
@@ -27,12 +34,16 @@
   register: result
   check_mode: yes
 
+- name: test15 check jail count
+  raw: ezjail-admin list|wc -l|tr -d ' '
+  register: jailcount
+
 - name: test15 check jail state
-  raw: ezjail-admin list
+  raw: ezjail-admin list|grep 'DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test4[ ]*/usr/jails/test4'
   register: state
 
-- name: test15 check jailroot
-  raw: ls /usr/jails
+- name: test13 check jailroot deleted
+  raw: ls /usr/jails|grep 'test4'
   register: jailroot
 
 - name: test15 assert
@@ -40,21 +51,25 @@
     that:
       - "result.changed"
       - "'Jail test4 would have been deleted' == result.msg"
-      - "state.stdout_lines|length == 3"
-      - "state.stdout_lines[2]|search('DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test4[ ]*/usr/jails/test4')"
-      - "jailroot.stdout|search('basejail[\\t]*flavours[\\t]*newjail[\\t]*test4\\r\\n')"
+      - "jailcount.stdout_lines[0] == '3'"
+      - "state.stdout != ''"
+      - "jailroot.stdout != ''"
 
 - name: test16 delete check mode
   ezjail: name=test4 state=stopped ip_addr=127.1.1.1 enabled=no
   register: result
   check_mode: yes
 
+- name: test16 check jail count
+  raw: ezjail-admin list|wc -l|tr -d ' '
+  register: jailcount
+
 - name: test16 check jail state
-  raw: ezjail-admin list
+  raw: ezjail-admin list|grep 'DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test4[ ]*/usr/jails/test4'
   register: state
 
-- name: test16 check jailroot
-  raw: ls /usr/jails
+- name: test16 check jailroot deleted
+  raw: ls /usr/jails|grep 'test4'
   register: jailroot
 
 - name: test16 assert
@@ -62,26 +77,33 @@
     that:
       - "result.changed"
       - "'Jail test4 would have been ip_addr updated and stopped and disabled' == result.msg"
-      - "state.stdout_lines|length == 3"
-      - "state.stdout_lines[2]|search('DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test4[ ]*/usr/jails/test4')"
-      - "jailroot.stdout|search('basejail[\\t]*flavours[\\t]*newjail[\\t]*test4\\r\\n')"
+      - "jailcount.stdout_lines[0] == '3'"
+      - "state.stdout != ''"
+      - "jailroot.stdout != ''"
 
 - name: test17 cleanup
   ezjail: name=test4 state=absent
   register: result
 
-- name: test17 check jail state
-  raw: ezjail-admin list
-  register: state
+- name: test17 check jail count
+  raw: ezjail-admin list|wc -l|tr -d ' '
+  register: jailcount
 
-- name: test17 check jailroot
-  raw: ls /usr/jails
+- name: test17 check jail state
+  raw: ezjail-admin list|grep 'DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test4[ ]*/usr/jails/test4'
+  register: state
+  ignore_errors: yes
+
+- name: test17 check jailroot deleted
+  raw: ls /usr/jails|grep 'test4'
   register: jailroot
+  ignore_errors: yes
 
 - name: test17 assert
   assert:
     that:
       - "result.changed"
       - "'Jail test4 deleted' == result.msg"
-      - "state.stdout_lines|length == 2"
-      - "jailroot.stdout|search('basejail[\\t]*flavours[\\t]*newjail\\r\\n')"
+      - "jailcount.stdout_lines[0] == '2'"
+      - "state.stdout == ''"
+      - "jailroot.stdout == ''"

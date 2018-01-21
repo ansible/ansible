@@ -2,12 +2,16 @@
   ezjail: name=test1 state=started ip_addr=lo0|127.0.0.1
   register: result
 
+- name: test1 check jail count
+  raw: ezjail-admin list|wc -l|tr -d ' '
+  register: jailcount
+
 - name: test1 check jail state
-  raw: ezjail-admin list
+  raw: ezjail-admin list|grep 'DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test1[ ]*/usr/jails/test1'
   register: state
 
 - name: test2 check jailroot deleted
-  raw: ls /usr/jails
+  raw: ls /usr/jails|grep 'test1'
   register: jailroot
 
 - name: test1 assert return values
@@ -15,26 +19,34 @@
     that:
       - "result.changed"
       - "'Jail test1 created and started' == result.msg"
-      - "state.stdout_lines|length == 3"
-      - "state.stdout_lines[2]|search('DR[ ]*[0-9]*[ ]*127.0.0.1[ ]*test1[ ]*/usr/jails/test1')"
-      - "jailroot.stdout|search('basejail[\\t]*flavours[\\t]*newjail[\\t]*test1\\r\\n')"
+      - "jailcount.stdout_lines[0] == '3'"
+      - "state.stdout != ''"
+      - "jailroot.stdout != ''"
 
 - name: test2 delete jail
   ezjail: name=test1 state=absent
   register: result
 
+- name: test2 check jail count
+  raw: ezjail-admin list|wc -l|tr -d ' '
+  register: jailcount
+  ignore_errors: yes
+
 - name: test2 check jail state
-  raw: ezjail-admin list
+  raw: ezjail-admin list|grep 'test1'
   register: state
+  ignore_errors: yes
 
 - name: test2 check jailroot deleted
-  raw: ls /usr/jails
+  raw: ls /usr/jails|grep 'test1'
   register: jailroot
+  ignore_errors: yes
 
 - name: test2 assert
   assert:
     that:
       - "result.changed"
       - "'Jail test1 deleted' == result.msg"
-      - "state.stdout_lines|length == 2"
-      - "jailroot.stdout|search('basejail[\\t]*flavours[\\t]*newjail\\r\\n')"
+      - "jailcount.stdout_lines[0] == '2'"
+      - "state.stdout == ''"
+      - "jailroot.stdout == ''"
