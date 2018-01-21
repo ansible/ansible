@@ -19,7 +19,6 @@
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     path: /api/mo/uni/tn-[ansible_test].json
     method: delete
-  delegate_to: localhost
 
 # ADD TENANT
 - name: Add tenant (normal mode)
@@ -30,7 +29,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    path: /api/mo/uni/tn-[ansible_test].json
+    path: /api/mo/uni.json
     method: post
     content: |
       {
@@ -40,12 +39,10 @@
               }
           }
       }
-  delegate_to: localhost
   register: nm_add_tenant
 
 - name: Add tenant again (normal mode)
   aci_rest: *tenant_present
-  delegate_to: localhost
   register: nm_add_tenant_again
 
 - name: Verify add_tenant
@@ -63,7 +60,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    path: /api/mo/uni/tn-[ansible_test].json
+    path: /api/mo/uni.json
     method: post
     content: |
       {
@@ -74,12 +71,10 @@
               }
           }
       }
-  delegate_to: localhost
   register: nm_add_tenant_descr
 
 - name: Change description of tenant again (normal mode)
   aci_rest: *tenant_changed
-  delegate_to: localhost
   register: nm_add_tenant_descr_again
 
 - name: Verify add_tenant_descr
@@ -91,7 +86,6 @@
 # ADD TENANT AGAIN
 - name: Add tenant again with no description (normal mode)
   aci_rest: *tenant_present
-  delegate_to: localhost
   register: nm_add_tenant_again_no_descr
 
 - name: Verify add_tenant_again_no_descr
@@ -110,7 +104,6 @@
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     path: /api/mo/uni/tn-[ansible_test].json
     method: get
-  delegate_to: localhost
   register: nm_query_all_tenants
 
 - name: Verify query_all_tenants
@@ -129,7 +122,6 @@
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     path: /api/mo/uni/tn-[ansible_test].json
     method: get
-  delegate_to: localhost
   register: nm_query_tenant
 
 - name: Verify query_tenant
@@ -140,12 +132,10 @@
 # REMOVE TENANT
 - name: Remove tenant (normal mode)
   aci_rest: *tenant_absent
-  delegate_to: localhost
   register: nm_remove_tenant
 
 - name: Remove tenant again (normal mode)
   aci_rest: *tenant_absent
-  delegate_to: localhost
   register: nm_remove_tenant_again
 
 - name: Verify remove_tenant
@@ -157,7 +147,6 @@
 # QUERY NON-EXISTING TENANT
 - name: Query non-existing tenant (normal mode)
   aci_rest: *tenant_query
-  delegate_to: localhost
   register: nm_query_non_tenant
 
 - name: Verify query_non_tenant
