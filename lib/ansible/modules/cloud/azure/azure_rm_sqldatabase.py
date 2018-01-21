@@ -414,7 +414,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if (('requested_service_objective_id' in self.parameters) and
                         (self.parameters['requested_service_objective_id'] != old_response['requested_service_objective_id'])):
                     self.to_do = Actions.Update
-                if (('requested_service_objective_name' in self.parameters) and 
+                if (('requested_service_objective_name' in self.parameters) and
                         (self.parameters['requested_service_objective_name'] != old_response['requested_service_objective_name'])):
                     self.to_do = Actions.Update
                 if (('max_size_bytes' in self.parameters) and
