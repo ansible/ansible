@@ -935,6 +935,207 @@ class FreeBsdUser(User):
         return (rc, out, err)
 
 
+class DragonFlyUser(User):
+    """
+    This is a DragonFlyBSD User manipulation class - it uses the pw command
+    to manipulate the user database, followed by the chpass command
+    to change the password.
+
+    This overrides the following methods from the generic class:-
+      - create_user()
+      - remove_user()
+      - modify_user()
+    """
+
+    platform = 'DragonFly'
+    distribution = None
+    SHADOWFILE = '/etc/master.passwd'
+
+    def remove_user(self):
+        cmd = [
+            self.module.get_bin_path('pw', True),
+            'userdel',
+            '-n',
+            self.name
+        ]
+        if self.remove:
+            cmd.append('-r')
+
+        return self.execute_command(cmd)
+
+    def create_user(self):
+        cmd = [
+            self.module.get_bin_path('pw', True),
+            'useradd',
+            '-n',
+            self.name,
+        ]
+
+        if self.uid is not None:
+            cmd.append('-u')
+            cmd.append(self.uid)
+
+            if self.non_unique:
+                cmd.append('-o')
+
+        if self.comment is not None:
+            cmd.append('-c')
+            cmd.append(self.comment)
+
+        if self.home is not None:
+            cmd.append('-d')
+            cmd.append(self.home)
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg="Group %s does not exist" % self.group)
+            cmd.append('-g')
+            cmd.append(self.group)
+
+        if self.groups is not None:
+            groups = self.get_groups_set()
+            cmd.append('-G')
+            cmd.append(','.join(groups))
+
+        if self.create_home:
+            cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
+
+        if self.shell is not None:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        if self.login_class is not None:
+            cmd.append('-L')
+            cmd.append(self.login_class)
+
+        if self.expires:
+            days = (time.mktime(self.expires) - time.time()) // 86400
+            cmd.append('-e')
+            cmd.append(str(int(days)))
+
+        # system cannot be handled currently - should we error if its requested?
+        # create the user
+        (rc, out, err) = self.execute_command(cmd)
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # we have to set the password in a second command
+        if self.password is not None:
+            cmd = [
+                self.module.get_bin_path('chpass', True),
+                '-p',
+                self.password,
+                self.name
+            ]
+            return self.execute_command(cmd)
+
+        return (rc, out, err)
+
+    def modify_user(self):
+        cmd = [
+            self.module.get_bin_path('pw', True),
+            'usermod',
+            '-n',
+            self.name
+        ]
+        cmd_len = len(cmd)
+        info = self.user_info()
+
+        if self.uid is not None and info[2] != int(self.uid):
+            cmd.append('-u')
+            cmd.append(self.uid)
+
+            if self.non_unique:
+                cmd.append('-o')
+
+        if self.comment is not None and info[4] != self.comment:
+            cmd.append('-c')
+            cmd.append(self.comment)
+
+        if self.home is not None and info[5] != self.home:
+            if self.move_home:
+                cmd.append('-m')
+            cmd.append('-d')
+            cmd.append(self.home)
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg="Group %s does not exist" % self.group)
+            ginfo = self.group_info(self.group)
+            if info[3] != ginfo[2]:
+                cmd.append('-g')
+                cmd.append(self.group)
+
+        if self.shell is not None and info[6] != self.shell:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        if self.login_class is not None:
+            # find current login class
+            user_login_class = None
+            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+                for line in open(self.SHADOWFILE).readlines():
+                    if line.startswith('%s:' % self.name):
+                        user_login_class = line.split(':')[4]
+
+            # act only if login_class change
+            if self.login_class != user_login_class:
+                cmd.append('-L')
+                cmd.append(self.login_class)
+
+        if self.groups is not None:
+            current_groups = self.user_group_membership()
+            groups = self.get_groups_set()
+
+            group_diff = set(current_groups).symmetric_difference(groups)
+            groups_need_mod = False
+
+            if group_diff:
+                if self.append:
+                    for g in groups:
+                        if g in group_diff:
+                            groups_need_mod = True
+                            break
+                else:
+                    groups_need_mod = True
+
+            if groups_need_mod:
+                cmd.append('-G')
+                new_groups = groups
+                if self.append:
+                    new_groups = groups | set(current_groups)
+                cmd.append(','.join(new_groups))
+
+        if self.expires:
+            days = (time.mktime(self.expires) - time.time()) // 86400
+            cmd.append('-e')
+            cmd.append(str(int(days)))
+
+        # modify the user if cmd will do anything
+        if cmd_len != len(cmd):
+            (rc, out, err) = self.execute_command(cmd)
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+        else:
+            (rc, out, err) = (None, '', '')
+
+        # we have to set the password in a second command
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            cmd = [
+                self.module.get_bin_path('chpass', True),
+                '-p',
+                self.password,
+                self.name
+            ]
+            return self.execute_command(cmd)
+
+        return (rc, out, err)
+
+
 class OpenBSDUser(User):
     """
     This is a OpenBSD User manipulation class.
