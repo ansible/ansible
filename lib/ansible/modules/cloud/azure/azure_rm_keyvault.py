@@ -55,7 +55,6 @@ options:
         description:
             - "An array of 0 to 16 identities that have access to the key vault. All identities in the array must use the same tenant ID as the key vault's t
               enant ID."
-        type: list
         suboptions:
             tenant_id:
                 description:
@@ -71,41 +70,48 @@ options:
                     -  Application ID of the client making request on behalf of a principal
             keys:
                 description:
-                    - Permissions to keys
-                type: list
+                    - List of permissions to keys
             secrets:
                 description:
-                    - Permissions to secrets
-                type: list
+                    - List of permissions to secrets
             certificates:
                 description:
-                    - Permissions to certificates
-                type: list
+                    - List of permissions to certificates
             storage:
                 description:
-                    - Permissions to storage accounts
-                type: list
+                    - List of permissions to storage accounts
     vault_uri:
         description:
             - The URI of the vault for performing operations on keys and secrets.
     enabled_for_deployment:
         description:
             - Property to specify whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault.
+        type: bool
     enabled_for_disk_encryption:
         description:
             - Property to specify whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys.
+        type: bool
     enabled_for_template_deployment:
         description:
             - Property to specify whether Azure Resource Manager is permitted to retrieve secrets from the key vault.
+        type: bool
     enable_soft_delete:
         description:
-            - Property to specify whether the C(soft delete) functionality is enabled for this key vault. It does not accept false value.
+            - Property to specify whether the soft delete functionality is enabled for this key vault.
+        type: bool
     create_mode:
         description:
             - "The vault's create mode to indicate whether the vault need to be recovered or not."
         choices:
             - 'recover'
             - 'default'
+    state:
+        description:
+            - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
@@ -116,11 +122,20 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Key Vault
+  - name: Create instance of Key Vault
     azure_rm_keyvault:
-      resource_group: NOT FOUND
-      vault_name: NOT FOUND
-      location: eastus
+      resource_group: myresourcegroup
+      vault_name: samplekeyvault
+      enabled_for_deployment: yes
+      tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
+      sku:
+        name: standard
+      access_policies:
+        - tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
+          object_id: 99998888-8666-4144-9199-2d7cd0111111
+          keys:
+            - get
+            - list
 '''
 
 RETURN = '''
@@ -178,16 +193,16 @@ class AzureRMVaults(AzureRMModuleBase):
                 type='str'
             ),
             enabled_for_deployment=dict(
-                type='str'
+                type='bool'
             ),
             enabled_for_disk_encryption=dict(
-                type='str'
+                type='bool'
             ),
             enabled_for_template_deployment=dict(
-                type='str'
+                type='bool'
             ),
             enable_soft_delete=dict(
-                type='str'
+                type='bool'
             ),
             create_mode=dict(
                 type='str',
@@ -320,20 +335,6 @@ class AzureRMVaults(AzureRMModuleBase):
             self.results["id"] = response["id"]
 
         return self.results
-
-    def adjust_parameters(self):
-        if self.parameters.get('access_policies', None) is not None:
-            # option keys must go to dictionary :permissions as keys
-            # option secrets must go to dictionary :permissions as secrets
-            # option certificates must go to dictionary :permissions as certificates
-            # option storage must go to dictionary :permissions as storage
-            return
-
-    def rename_key(self, d, old_name, new_name):
-        old_value = d.get(old_name, None)
-        if old_value is not None:
-            d.pop(old_name, None)
-            d[new_name] = old_value
 
     def create_update_keyvault(self):
         '''
