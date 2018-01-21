@@ -113,6 +113,7 @@ class TestManager(unittest.TestCase):
         v1.wait_for_task = Mock(side_effect=[True, True])
         v1.read_current_from_device = Mock(return_value=current)
         v1.apply_on_device = Mock(return_value=True)
+        v1.remove_temp_policy_from_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -348,6 +349,7 @@ class TestManager(unittest.TestCase):
         v1.import_to_device = Mock(return_value=True)
         v1.wait_for_task = Mock(side_effect=[True, True])
         v1.read_current_from_device = Mock(return_value=current)
+        v1.remove_temp_policy_from_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -478,15 +480,15 @@ class TestManager(unittest.TestCase):
 
         msg = 'Import policy task failed.'
         # Override methods to force specific logic in the module to happen
-        v1 = V1Manager(module=module)
-        v1.exists = Mock(return_value=False)
-        v1.import_to_device = Mock(return_value=True)
-        v1.wait_for_task = Mock(return_value=False)
+        v2 = V2Manager(module=module)
+        v2.exists = Mock(return_value=False)
+        v2.import_to_device = Mock(return_value=True)
+        v2.wait_for_task = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
         mm.version_is_less_than_13 = Mock(return_value=False)
-        mm.get_manager = Mock(return_value=v1)
+        mm.get_manager = Mock(return_value=v2)
 
         with pytest.raises(F5ModuleError) as err:
             mm.exec_module()
