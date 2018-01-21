@@ -61,6 +61,10 @@ options:
             - Azure tenant ID. Use when authenticating with a Service Principal.
         required: false
         default: null
+    cli_default_profile:
+        description:
+            - Use default Azure CLI security profile.
+        type: bool    
     cloud_environment:
         description:
             - For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, C(AzureChinaCloud),
