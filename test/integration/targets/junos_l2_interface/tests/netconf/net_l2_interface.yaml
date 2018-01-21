@@ -10,14 +10,6 @@
     state: absent
     provider: "{{ netconf }}"
 
-- name: Setup delete vlan 100
-  junos_vlan:
-    vlan_id: 100
-    name: red
-    state: absent
-    provider: "{{ netconf }}"
-  register: result
-
 - name: Setup create vlan 100
   junos_vlan:
     vlan_id: 100
