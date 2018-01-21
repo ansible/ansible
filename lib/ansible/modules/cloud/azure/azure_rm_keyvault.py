@@ -71,12 +71,53 @@ options:
             keys:
                 description:
                     - List of permissions to keys
+                choices:
+                    - 'encrypt'
+                    - 'decrypt'
+                    - 'wrapkey'
+                    - 'unwrapkey'
+                    - 'sign'
+                    - 'verify'
+                    - 'get'
+                    - 'list'
+                    - 'create'
+                    - 'update'
+                    - 'import'
+                    - 'delete'
+                    - 'backup'
+                    - 'restore'
+                    - 'recover'
+                    - 'purge'
             secrets:
                 description:
                     - List of permissions to secrets
+                choices:
+                    - 'get'
+                    - 'list'
+                    - 'set'
+                    - 'delete'
+                    - 'backup'
+                    - 'restore'
+                    - 'recover'
+                    - 'purge'
             certificates:
                 description:
                     - List of permissions to certificates
+                choices:
+                    - 'get'
+                    - 'list'
+                    - 'delete'
+                    - 'create'
+                    - 'import'
+                    - 'update'
+                    - 'managecontacts'
+                    - 'getissuers'
+                    - 'listissuers'
+                    - 'setissuers'
+                    - 'deleteissuers'
+                    - 'manageissuers'
+                    - 'recover'
+                    - 'purge'
             storage:
                 description:
                     - List of permissions to storage accounts
