@@ -121,9 +121,6 @@ options:
             storage:
                 description:
                     - List of permissions to storage accounts
-    vault_uri:
-        description:
-            - The URI of the vault for performing operations on keys and secrets.
     enabled_for_deployment:
         description:
             - Property to specify whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault.
@@ -230,9 +227,6 @@ class AzureRMVaults(AzureRMModuleBase):
             access_policies=dict(
                 type='list'
             ),
-            vault_uri=dict(
-                type='str'
-            ),
             enabled_for_deployment=dict(
                 type='bool'
             ),
@@ -299,8 +293,6 @@ class AzureRMVaults(AzureRMModuleBase):
                             policy.setdefault("permissions", {})["keys"] = policy["keys"]
                             policy.pop("storage", None)
                     self.parameters.setdefault("properties", {})["access_policies"] = access_policies
-                elif key == "vault_uri":
-                    self.parameters.setdefault("properties", {})["vault_uri"] = kwargs[key]
                 elif key == "enabled_for_deployment":
                     self.parameters.setdefault("properties", {})["enabled_for_deployment"] = kwargs[key]
                 elif key == "enabled_for_disk_encryption":
