@@ -340,7 +340,6 @@ filename:
 
 from random import randint
 import datetime
-import subprocess
 import os
 
 from ansible.module_utils import crypto as crypto_utils
@@ -748,13 +747,15 @@ class AcmeCertificate(Certificate):
             )
 
         if not self.check(module, perms_required=False) or self.force:
+            acme_tiny_path = self.module.get_bin_path('acme-tiny', required=True)
+
             try:
-                p = subprocess.Popen([
-                    'acme-tiny',
-                    '--account-key', self.accountkey_path,
-                    '--csr', self.csr_path,
-                    '--acme-dir', self.challenge_path], stdout=subprocess.PIPE)
-                crt = p.communicate()[0]
+                crt = module.run_command("%s --account-key %s --csr %s"
+                                         "--acme-dir %s" % (acme_tiny_path,
+                                                            self.accountkey_path,
+                                                            self.csr_path,
+                                                            self.challenge_path),
+                                         check_rc=True)[1]
                 with open(self.path, 'wb') as certfile:
                     certfile.write(str(crt))
             except OSError as exc:
