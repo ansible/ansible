@@ -309,7 +309,7 @@ response:
 result:
     description: Dictionary of any changes made to the configuration.
     returned: success
-    type: dict
+    type: complex
     contains:
         added:
             description: List of dictionaries for keys and values that were added.
@@ -324,7 +324,7 @@ result:
                 new:
                     description: Dictionary of keys and values that were added.
                     returned: success
-                    type: dict
+                    type: complex
                     sample: {
                             "value": "16380"
                         }
@@ -341,12 +341,12 @@ result:
                 new:
                     description: Dictionary of values that were undefined or null if the key was removed.
                     returned: success
-                    type: dict
+                    type: complex
                     sample: null
                 old:
                     description: Dictionary of the affected keys and values prior to the change.
                     returned: success
-                    type: dict
+                    type: complex
                     sample: {
                             "value": "16380"
                         }
@@ -363,14 +363,14 @@ result:
                 new:
                     description: Dictionary of the new values.
                     returned: success
-                    type: dict
+                    type: complex
                     sample: {
                             "enabled": false
                         }
                 old:
                     description: Dictionary of the old values.
                     returned: success
-                    type: dict
+                    type: complex
                     sample: {
                             "enabled": true
                         }
