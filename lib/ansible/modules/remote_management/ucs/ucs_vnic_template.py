@@ -66,6 +66,7 @@ options:
     - "This can be one of the following:"
     - "adapter — The vNICs apply to all adapters. No VM-FEX port profile is created if you choose this option."
     - "vm - The vNICs apply to all virtual machines. A VM-FEX port profile is created if you choose this option."
+    default: adapter
   template_type:
     description:
     - The Template Type field.
@@ -95,7 +96,7 @@ options:
   cdn_name:
     description:
     - CDN Name used when cdn_source is set to user-defined.
-  mtu_field:
+  mtu:
     description:
     - The MTU field.
     - The maximum transmission unit, or packet size, that vNICs created from this vNIC template should use.
@@ -184,9 +185,10 @@ def main():
     argument_spec.update(
         org_dn=dict(type='str', default='org-root'),
         name=dict(type='str', required=True),
-        descr=dict(type='str', default=''),
+        description=dict(type='str', aliases=['descr'], default=''),
         fabric=dict(type='str', default='A', choices=['A', 'B', 'A-B', 'B-A']),
         redundancy_type=dict(type='str', default='none', choices=['none', 'primary', 'secondary']),
+        target=dict(type='str', default='adapter', choices=['adapter', 'vm']),
         template_type=dict(type='str', default='initial-template', choices=['initial-template', 'updating-template']),
         vlans_list=dict(type='list'),
         cdn_source=dict(type='str', default='vnic-name', choices=['vnic-name', 'user-defined']),
@@ -236,11 +238,15 @@ def main():
                 for vlan in module.params['vlans_list']:
                     if not vlan.get('native'):
                         vlan['native'] = 'no'
+            # for target 'adapter', change to internal UCS Manager spelling 'adaptor'
+            if module.params['target'] == 'adapter':
+                module.params['target'] = 'adaptor'
             if mo_exists:
                 # check top-level mo props
-                kwargs = dict(descr=module.params['descr'])
+                kwargs = dict(descr=module.params['description'])
                 kwargs['switch_id'] = module.params['fabric']
                 kwargs['redundancy_pair_type'] = module.params['redundancy_type']
+                kwargs['target'] = module.params['target']
                 kwargs['templ_type'] = module.params['template_type']
                 kwargs['cdn_source'] = module.params['cdn_source']
                 kwargs['admin_cdn_name'] = module.params['cdn_name']
@@ -270,8 +276,10 @@ def main():
                     mo = VnicLanConnTempl(
                         parent_mo_or_dn=module.params['org_dn'],
                         name=module.params['name'],
-                        descr=module.params['descr'],
+                        descr=module.params['description'],
                         switch_id=module.params['fabric'],
+                        redundancy_pair_type=module.params['redundancy_type'],
+                        target=module.params['target'],
                         templ_type=module.params['template_type'],
                         cdn_source=module.params['cdn_source'],
                         admin_cdn_name=module.params['cdn_name'],
