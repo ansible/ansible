@@ -530,7 +530,6 @@ class BaseManager(object):
         policies = self.client.api.tm.asm.policies_s.get_collection()
         if any(p.name == self.want.name and p.partition == self.want.partition for p in policies):
             return True
-
         return False
 
     def _file_is_missing(self):
@@ -541,7 +540,6 @@ class BaseManager(object):
         return False
 
     def create(self):
-        task = None
         if self.want.active is None:
             self.want.update(dict(active=False))
         if self._file_is_missing():
@@ -556,13 +554,9 @@ class BaseManager(object):
             self.create_blank()
         else:
             if self.want.template is not None:
-                task = self.create_from_template_on_device()
+                self.create_from_template()
             elif self.want.file is not None:
-                task = self.import_to_device()
-            if not task:
-                return False
-            if not self.wait_for_task(task):
-                raise F5ModuleError('Import policy task failed.')
+                self.create_from_file()
 
         if self.want.active:
             self.activate()
@@ -670,6 +664,7 @@ class BaseManager(object):
             partition=self.want.partition,
             policyTemplateReference=self.want.template_link
         )
+        time.sleep(2)
         return result
 
     def create_on_device(self):
@@ -721,6 +716,38 @@ class V1Manager(BaseManager):
         super(V1Manager, self).__init__(client=client, module=module)
         self.want = V1Parameters(params=module.params, client=client)
 
+    def create_from_file(self):
+        self.import_to_device()
+        self.remove_temp_policy_from_device()
+
+    def create_from_template(self):
+        self.create_from_template_on_device()
+
+    def create_from_template_on_device(self):
+        full_name = fqdn_name(self.want.partition, self.want.name)
+        cmd = 'tmsh create asm policy {0} policy-template {1}'.format(full_name, self.want.template)
+        self.client.api.tm.util.bash.exec_cmd(
+            'run',
+            utilCmdArgs='-c "{0}"'.format(cmd)
+        )
+
+    def remove_temp_policy_from_device(self):
+        name = os.path.split(self.want.file)[1]
+        tpath_name = '/var/config/rest/downloads/{0}'.format(name)
+        self.client.api.tm.util.unix_rm.exec_cmd('run', utilCmdArgs=tpath_name)
+
+    def import_to_device(self):
+        self.client.api.shared.file_transfer.uploads.upload_file(self.want.file)
+        time.sleep(2)
+        name = os.path.split(self.want.file)[1]
+        full_name = fqdn_name(self.want.partition, self.want.name)
+        cmd = 'tmsh load asm policy {0} file /var/config/rest/downloads/{1}'.format(full_name, name)
+        self.client.api.tm.util.bash.exec_cmd(
+            'run',
+            utilCmdArgs='-c "{0}"'.format(cmd)
+        )
+        return True
+
 
 class V2Manager(BaseManager):
     def __init__(self, *args, **kwargs):
@@ -728,6 +755,20 @@ class V2Manager(BaseManager):
         module = kwargs.get('module', None)
         super(V2Manager, self).__init__(client=client, module=module)
         self.want = V2Parameters(params=module.params, client=client)
+
+    def create_from_template(self):
+        task = self.create_from_template_on_device()
+        if not task:
+            return False
+        if not self.wait_for_task(task):
+            raise F5ModuleError('Import policy task failed.')
+
+    def create_from_file(self):
+        task = self.import_to_device()
+        if not task:
+            return False
+        if not self.wait_for_task(task):
+            raise F5ModuleError('Import policy task failed.')
 
 
 class ArgumentSpec(object):
