@@ -161,6 +161,13 @@ options:
       description:
           - Needs to be set to True in order to SQL Database to be updated.
       type: bool
+    state:
+      description:
+        - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+      default: present
+      choices:
+        - absent
+        - present
 
 extends_documentation_fragment:
     - azure
