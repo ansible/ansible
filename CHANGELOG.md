@@ -294,6 +294,8 @@ Ansible Changes By Release
   * onyx_pfc_interface
   * onyx_protocol
   * onyx_vlan
+- panos
+  * panos_query_rules
 - radware
   * vdirect_commit
   * vdirect_runnable
