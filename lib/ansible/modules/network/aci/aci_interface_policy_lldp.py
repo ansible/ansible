@@ -12,30 +12,37 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_intf_policy_fc
-short_description: Manage Fibre Channel interface policies on Cisco ACI fabrics (fc:IfPol)
+module: aci_interface_policy_lldp
+short_description: Manage LLDP interface policies on Cisco ACI fabrics (lldp:IfPol)
 description:
-- Manage ACI Fiber Channel interface policies on Cisco ACI fabrics.
-- More information from the internal APIC class I(fc:IfPol) at
+- Manage LLDP interface policies on Cisco ACI fabrics.
+- More information from the internal APIC class I(lldp:IfPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
 options:
-  fc_policy:
+  lldp_policy:
     description:
-    - The name of the Fiber Channel interface policy.
+    - The LLDP interface policy name.
     required: yes
     aliases: [ name ]
   description:
     description:
-    - The description of the Fiber Channel interface policy.
+    - The description for the LLDP interface policy name.
     aliases: [ descr ]
-  port_mode:
+  receive_state:
     description:
-    - Port Mode
-    choices: [ f, np ]
-    default: f
+    - Enable or disable Receive state (FIXME!)
+    required: yes
+    choices: [ disabled, enabled ]
+    default: enabled
+  transmit_state:
+    description:
+    - Enable or Disable Transmit state (FIXME!)
+    required: false
+    choices: [ disabled, enabled ]
+    default: enabled
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -45,15 +52,16 @@ options:
 extends_documentation_fragment: aci
 '''
 
+# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_intf_policy_fc:
+- aci_interface_policy_lldp:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    fc_policy: '{{ fc_policy }}'
-    port_mode: '{{ port_mode }}'
+    lldp_policy: '{{ lldp_policy }}'
     description: '{{ description }}'
-    state: present
+    receive_state: '{{ receive_state }}'
+    transmit_state: '{{ transmit_state }}'
 '''
 
 RETURN = r'''
@@ -67,9 +75,10 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        fc_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
+        lldp_policy=dict(type='str', require=False, aliases=['name']),
         description=dict(type='str', aliases=['descr']),
-        port_mode=dict(type='str', choices=['f', 'np']),  # No default provided on purpose
+        receive_state=dict(type='str', choices=['disabled', 'enabled']),
+        transmit_state=dict(type='str', choices=['disabled', 'enabled']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
@@ -79,23 +88,24 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['fc_policy']],
-            ['state', 'present', ['fc_policy']],
+            ['state', 'absent', ['lldp_policy']],
+            ['state', 'present', ['lldp_policy']],
         ],
     )
 
-    fc_policy = module.params['fc_policy']
-    port_mode = module.params['port_mode']
+    lldp_policy = module.params['lldp_policy']
     description = module.params['description']
+    receive_state = module.params['receive_state']
+    transmit_state = module.params['transmit_state']
     state = module.params['state']
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
-            aci_class='fcIfPol',
-            aci_rn='infra/fcIfPol-{0}'.format(fc_policy),
-            filter_target='eq(fcIfPol.name, "{0}")'.format(fc_policy),
-            module_object=fc_policy,
+            aci_class='lldpIfPol',
+            aci_rn='infra/lldpIfP-{0}'.format(lldp_policy),
+            filter_target='eq(lldpIfPol.name, "{0}")'.format(lldp_policy),
+            module_object=lldp_policy,
         ),
     )
 
@@ -104,16 +114,17 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(
-            aci_class='fcIfPol',
+            aci_class='lldpIfPol',
             class_config=dict(
-                name=fc_policy,
+                name=lldp_policy,
                 descr=description,
-                portMode=port_mode,
+                adminRxSt=receive_state,
+                adminTxSt=transmit_state,
             ),
         )
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='fcIfPol')
+        aci.get_diff(aci_class='lldpIfPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
