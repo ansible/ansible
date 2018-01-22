@@ -10,6 +10,7 @@ DOCUMENTATION = '''
     short_description: ec2 inventory source
     extends_documentation_fragment:
         - inventory_cache
+        - constructed
     description:
         - Get inventory hosts from Amazon Web Services EC2.
         - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
@@ -73,7 +74,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.basic import jsonify
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
 
 from collections import namedtuple
 import os
@@ -177,7 +178,7 @@ instance_data_filter_to_boto_attr = {
 }
 
 
-class InventoryModule(BaseInventoryPlugin, Cacheable):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'aws_ec2'
 
@@ -447,6 +448,22 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             self.inventory.add_host(hostname, group=group)
             for hostvar in host.keys():
                 self.inventory.set_variable(hostname, hostvar, host[hostvar])
+
+            # Use constructed if applicable
+
+            strict = self._options.get('strict', False)
+
+            # Composed variables
+            if self._options.get('compose'):
+                self._set_composite_vars(self._options.get('compose'), host, hostname, strict=strict)
+
+            # Complex groups based on jinaj2 conditionals, hosts that meet the conditional are added to group
+            if self._options.get('groups'):
+                self._add_host_to_composed_groups(self._options.get('groups'), host, hostname, strict=strict)
+
+            # Create groups based on variable values and add the corresponding hosts to it
+            if self._options.get('keyed_groups'):
+                self._add_host_to_keyed_groups(self._options.get('keyed_groups'), host, hostname, strict=strict)
 
     def _set_credentials(self):
         '''
