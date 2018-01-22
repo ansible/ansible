@@ -53,7 +53,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_epg_monitoring_policy:
-    hostname: '{{ hostname }}'
+    host: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     monitoring_policy: '{{ monitoring_policy }}'
