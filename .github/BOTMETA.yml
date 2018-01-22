@@ -450,6 +450,9 @@ files:
   $modules/net_tools/ldap/: jtyr
   $modules/net_tools/lldp.py:
     ignored: andyhky
+  $modules/net_tools/nios/:
+    labels: networking
+    maintainers: $team_networking
   $modules/net_tools/nmcli.py: alcamie101
   $modules/net_tools/nsupdate.py: nerzhul
   $modules/net_tools/omapi_host.py: nerzhul
@@ -928,6 +931,9 @@ files:
     - core inventory
     - inventory
     - inventory parsing
+  $module_utils/net_tools/nios/:
+    labels: networking
+    maintainers: $team_networking
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
     labels: networking
