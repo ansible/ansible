@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: eos_l2_interface
 version_added: "2.5"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Manage L@ interfaces on Arista EOS network devices.
+short_description: Manage L2 interfaces on Arista EOS network devices.
 description:
   - This module provides declarative management of L2 interfaces
     on Arist EOS network devices.
@@ -44,8 +44,9 @@ options:
   trunk_allowed_vlans:
     description:
       - List of allowed VLANs in a given trunk port.
-        If C(mode=trunk), these are the only VLANs that will be
-        configured on the trunk, i.e. "2-10,15".
+        If C(mode=trunk), these are the ONLY VLANs that will be
+        configured on the trunk, i.e. C(2-10,15).
+    aliases: ['trunk_vlans']
   aggregate:
     description:
       - List of Layer-2 interface definitions.
@@ -58,18 +59,16 @@ extends_documentation_fragment: eos
 """
 
 EXAMPLES = """
+- name: Ensure Ethernet1 does not have any switchport
+  eos_l2_interface:
+    name: Ethernet1
+    state: absent
+
 - name: Ensure Ethernet1 is configured for access vlan 20
   eos_l2_interface:
     name: Ethernet1
     mode: access
     access_vlan: 20
-
-- name: Ensure Ethernet1 only has vlans 5-10 as trunk vlans
-  eos_l2_interface:
-    name: Ethernet1
-    mode: trunk
-    native_vlan: 10
-    trunk_vlans: 5-10
 
 - name: Ensure Ethernet1 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
   eos_l2_interface:
@@ -78,12 +77,17 @@ EXAMPLES = """
     native_vlan: 10
     trunk_allowed_vlans: 2-50
 
+- name: Set switchports on aggregate
+  eos_l2_interface:
+    aggregate:
+      - { name: ethernet1, mode: access, access_vlan: 20}
+      - { name: ethernet2, mode: trunk, native_vlan: 10}
 """
 
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device
-  returned: always, except for the platforms that use Netconf transport to manage the device.
+  returned: always.
   type: list
   sample:
     - interface ethernet1
