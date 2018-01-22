@@ -185,14 +185,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return cacheable_results
 
     def _ungrouped_host(self, host, inventory):
-        for k, v in inventory.items():
-            if k == '_meta':
-                continue
-            if isinstance(v, dict):
-                return self._ungrouped_host(host, v)
-            elif isinstance(v, list):
-                return host not in v
-        return True
+        def find_host(host, inventory):
+            for k, v in inventory.items():
+                if k == '_meta':
+                    continue
+                if isinstance(v, dict):
+                    yield self._ungrouped_host(host, v)
+                elif isinstance(v, list):
+                    yield host not in v
+            yield True
+
+        return all([found_host for found_host in find_host(host, inventory)])
 
     def verify_file(self, path):
 
