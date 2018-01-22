@@ -12,40 +12,29 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_intf_policy_l2
-short_description: Manage Layer 2 interface policies on Cisco ACI fabrics (l2:IfPol)
+module: aci_interface_policy_port_security
+short_description: Manage port security on Cisco ACI fabrics (l2:PortSecurityPol)
 description:
-- Manage Layer 2 interface policies on Cisco ACI fabrics.
-- More information from the internal APIC class I(l2:IfPol) at
+- Manage port security on Cisco ACI fabrics.
+- More information from the internal APIC class I(l2:PortSecurityPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
 options:
-  l2_policy:
+  port_security:
     description:
-    - The name of the Layer 2 interface policy.
+    - The name of the port security.
     required: yes
     aliases: [ name ]
   description:
     description:
-    - The description of the Layer 2 interface policy.
+    - The description for the contract.
     aliases: [ descr ]
-  qinq:
+  max_end_points:
     description:
-    - Determines if QinQ is disabled or if the port should be considered a core or edge port.
-    choices: [ core, disabled, edge ]
-    default: disabled
-  vepa:
-    description:
-    - Determines if Virtual Ethernet Port Aggregator is disabled or enabled.
-    choices: [ disabled, enabled ]
-    default: disabled
-  vlan_scope:
-    description:
-    - The scope of the VLAN.
-    choices: [ global, portlocal ]
-    default: global
+    - Maximum number of end points (range 0-12000).
+    - The APIC defaults new port-security policies to C(0).
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -55,14 +44,15 @@ options:
 extends_documentation_fragment: aci
 '''
 
+# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_intf_policy_l2:
-    hostname: '{{ hostname }}'
+- aci_interface_policy_port_security:
+    hostname: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
-    l2_policy: '{{ l2_policy }}'
-    vlan_scope: '{{ vlan_policy }}'
-    description: '{{ description }}'
+    port_security: '{{ port_security }}'
+    description: '{{ descr }}'
+    max_end_points: '{{ max_end_points }}'
 '''
 
 RETURN = r'''
@@ -72,18 +62,13 @@ RETURN = r'''
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-# Mapping dicts are used to normalize the proposed data to what the APIC expects, which will keep diffs accurate
-QINQ_MAPPING = dict(core='corePort', disabled='disabled', edge='edgePort')
-
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        l2_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all policies
+        port_security=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        vlan_scope=dict(type='str', choices=['global', 'portlocal']),  # No default provided on purpose
-        qinq=dict(type='str', choices=['core', 'disabled', 'edge']),
-        vepa=dict(type='str', choices=['disabled', 'enabled']),
+        max_end_points=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
@@ -93,27 +78,25 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['l2_policy']],
-            ['state', 'present', ['l2_policy']],
+            ['state', 'absent', ['port_security']],
+            ['state', 'present', ['port_security']],
         ],
     )
 
-    l2_policy = module.params['l2_policy']
-    vlan_scope = module.params['vlan_scope']
-    qinq = module.params['qinq']
-    if qinq is not None:
-        qinq = QINQ_MAPPING[qinq]
-    vepa = module.params['vepa']
+    port_security = module.params['port_security']
     description = module.params['description']
+    max_end_points = module.params['max_end_points']
+    if max_end_points is not None and max_end_points not in range(12001):
+        module.fail_json(msg='The "max_end_points" must be between 0 and 12000')
     state = module.params['state']
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
-            aci_class='l2IfPol',
-            aci_rn='infra/l2IfP-{0}'.format(l2_policy),
-            filter_target='eq(l2IfPol.name, "{0}")'.format(l2_policy),
-            module_object=l2_policy,
+            aci_class='l2PortSecurityPol',
+            aci_rn='infra/portsecurityP-{0}'.format(port_security),
+            filter_target='eq(l2PortSecurityPol.name, "{0}")'.format(port_security),
+            module_object=port_security,
         ),
     )
 
@@ -122,17 +105,16 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(
-            aci_class='l2IfPol',
+            aci_class='l2PortSecurityPol',
             class_config=dict(
-                name=l2_policy,
+                name=port_security,
                 descr=description,
-                vlanScope=vlan_scope,
-                qinq=qinq, vepa=vepa,
+                maximum=max_end_points,
             ),
         )
 
         # Generate config diff which will be used as POST request body
-        aci.get_diff(aci_class='l2IfPol')
+        aci.get_diff(aci_class='l2PortSecurityPol')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
