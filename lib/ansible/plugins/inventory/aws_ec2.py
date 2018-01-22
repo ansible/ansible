@@ -64,8 +64,12 @@ simple_config_file:
       - us-east-1
       - us-east-2
     filters:
-    # filter by tags with the value dev
-      tag:Name: dev
+      # all instances with their `Environment` tag set to `dev`
+      tag:Environment: dev
+      # all dev and QA hosts
+      tag:Environment:
+        - dev
+        - qa
       instance.group-id: sg-xxxxxxxx
     # ignores 403 errors rather than failing
     strict_permissions: False
