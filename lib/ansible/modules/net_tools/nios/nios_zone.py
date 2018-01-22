@@ -62,9 +62,11 @@ options:
         required: true
   restart_if_needed:
     description:
-      - Restart the services if necessary
+      - Restart the services (if necessary) when objects are added or
+        removed
     required: false
     default: false
+    type: bool
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
