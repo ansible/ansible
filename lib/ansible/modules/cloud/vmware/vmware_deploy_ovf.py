@@ -372,13 +372,13 @@ class VMwareDeployOvf:
         uploaders = []
 
         for file_item in import_spec.fileItem:
-            vmdk_post_url = None
+            device_upload_url = None
             for device_url in lease.info.deviceUrl:
                 if file_item.deviceId == device_url.importKey:
-                    vmdk_post_url = device_url.url.replace('*', self.params['hostname'])
+                    device_upload_url = device_url.url.replace('*', self.params['hostname'])
                     break
 
-            if not vmdk_post_url:
+            if not device_upload_url:
                 lease.HttpNfcLeaseAbort(
                     vmodl.fault.SystemError(reason='Failed to find deviceUrl for file %s' % file_item.path)
                 )
@@ -413,7 +413,7 @@ class VMwareDeployOvf:
             uploaders.append(
                 VMDKUploader(
                     vmdk,
-                    vmdk_post_url,
+                    device_upload_url,
                     self.params['validate_certs'],
                     tarinfo=vmdk_tarinfo,
                     create=file_item.create
