@@ -911,7 +911,6 @@ def create_autoscaling_group(connection):
         if target_group_arns:
             ag['TargetGroupARNs'] = target_group_arns
 
-
         try:
             create_asg(connection, **ag)
             if metrics_collection:
