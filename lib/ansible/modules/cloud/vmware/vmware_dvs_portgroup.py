@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2017-18 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
@@ -9,9 +9,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -72,7 +74,7 @@ options:
         version_added: '2.5'
     network_policy:
         description:
-            - Dict which configures the different security values for portgroup.
+            - Dictionary which configures the different security values for portgroup.
             - 'Valid attributes are:'
             - '- C(promiscuous) (bool): indicates whether promiscuous mode is allowed. (default: false)'
             - '- C(forged_transmits) (bool): indicates whether forged transmits are allowed. (default: false)'
@@ -81,7 +83,7 @@ options:
         version_added: '2.5'
     port_policy:
         description:
-            - Dict which configures the advanced policy settings for the portgroup.
+            - Dictionary which configures the advanced policy settings for the portgroup.
             - 'Valid attributes are:'
             - '- C(block_override) (bool): indicates if the block policy can be changed per port. (default: true)'
             - '- C(ipfix_override) (bool): indicates if the ipfix policy can be changed per port. (default: false)'
@@ -172,18 +174,17 @@ EXAMPLES = '''
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
-except ImportError:
-    HAS_PYVMOMI = False
+except ImportError as e:
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_dvs_by_name, find_dvspg_by_name,
+from ansible.module_utils.vmware import (PyVmomi, find_dvs_by_name, find_dvspg_by_name,
                                          vmware_argument_spec, wait_for_task)
 
 
-class VMwareDvsPortgroup(object):
+class VMwareDvsPortgroup(PyVmomi):
     def __init__(self, module):
-        self.module = module
+        super(VMwareDvsPortgroup, self).__init__(module)
         self.dvs_portgroup = None
         self.switch_name = self.module.params['switch_name']
         self.portgroup_name = self.module.params['portgroup_name']
@@ -207,21 +208,20 @@ class VMwareDvsPortgroup(object):
         self.policy_uplink_teaming_override = self.module.params['port_policy']['uplink_teaming_override']
         self.policy_vendor_config_override = self.module.params['port_policy']['vendor_config_override']
         self.policy_vlan_override = self.module.params['port_policy']['vlan_override']
-        self.content = connect_to_api(module)
 
     def process_state(self):
-        try:
-            dvspg_states = {
-                'absent': {
-                    'present': self.state_destroy_dvspg,
-                    'absent': self.state_exit_unchanged,
-                },
-                'present': {
-                    'update': self.state_update_dvspg,
-                    'present': self.state_exit_unchanged,
-                    'absent': self.state_create_dvspg,
-                }
+        dvspg_states = {
+            'absent': {
+                'present': self.state_destroy_dvspg,
+                'absent': self.state_exit_unchanged,
+            },
+            'present': {
+                'update': self.state_update_dvspg,
+                'present': self.state_exit_unchanged,
+                'absent': self.state_create_dvspg,
             }
+        }
+        try:
             dvspg_states[self.state][self.check_dvspg_state()]()
         except vmodl.RuntimeFault as runtime_fault:
             self.module.fail_json(msg=runtime_fault.msg)
@@ -301,7 +301,7 @@ class VMwareDvsPortgroup(object):
         self.dv_switch = find_dvs_by_name(self.content, self.switch_name)
 
         if self.dv_switch is None:
-            raise Exception("A distributed virtual switch with name %s does not exist" % self.switch_name)
+            self.module.fail_json(msg="A distributed virtual switch with name %s does not exist" % self.switch_name)
         self.dvs_portgroup = find_dvspg_by_name(self.dv_switch, self.portgroup_name)
 
         if self.dvs_portgroup is None:
@@ -366,10 +366,8 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     vmware_dvs_portgroup = VMwareDvsPortgroup(module)
     vmware_dvs_portgroup.process_state()
