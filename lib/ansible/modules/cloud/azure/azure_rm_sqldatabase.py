@@ -70,21 +70,21 @@ options:
             - 'restore_long_term_retention_backup'
     source_database_id:
         description:
-            - "Conditional. If I(create_mode) is C(copy), C(non_readable_secondary), C(online_secondary), C(point_in_time_restore), C(recovery), or C(restore
+            - "Required if I(create_mode) is C(copy), C(non_readable_secondary), C(online_secondary), C(point_in_time_restore), C(recovery), or C(restore
               ), then this value is required. Specifies the resource ID of the source database. If I(create_mode) is C(non_readable_secondary) or C(online_s
               econdary), the name of the source database must be the same as the new database being created."
     source_database_deletion_date:
         description:
-            - "Conditional. If I(create_mode) is C(restore) and I(source_database_id) is the deleted database's original resource id when it existed (as oppo
+            - "Required if I(create_mode) is C(restore) and I(source_database_id) is the deleted database's original resource id when it existed (as oppo
               sed to its current restorable dropped database id), then this value is required. Specifies the time that the database was deleted."
     restore_point_in_time:
         description:
-            - "Conditional. If I(create_mode) is C(point_in_time_restore), this value is required. If I(create_mode) is C(restore), this value is optional. S
+            - "Required if I(create_mode) is C(point_in_time_restore), this value is required. If I(create_mode) is C(restore), this value is optional. S
               pecifies the point in time (ISO8601 format) of the source database that will be restored to create the new database. Must be greater than or e
               qual to the source database's earliestRestoreDate value."
     recovery_services_recovery_point_resource_id:
         description:
-            - "Conditional. If I(create_mode) is C(restore_long_term_retention_backup), then this value is required. Specifies the resource ID of the C(recov
+            - "Required if I(create_mode) is C(restore_long_term_retention_backup), then this value is required. Specifies the resource ID of the C(recov
               ery) point to C(restore) from."
     edition:
         description:
