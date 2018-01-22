@@ -334,32 +334,17 @@ class EcsServiceManager:
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
             placementStrategy=placement_strategy)
-        return self.jsonize(response['service'])
+        return response['service']
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       load_balancers, desired_count, client_token, role, deployment_configuration):
+                       desired_count, deployment_configuration):
         response = self.ecs.update_service(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
             deploymentConfiguration=deployment_configuration)
-        return self.jsonize(response['service'])
-
-    def jsonize(self, service):
-        # some fields are datetime which is not JSON serializable
-        # make them strings
-        if 'deployments' in service:
-            for d in service['deployments']:
-                if 'createdAt' in d:
-                    d['createdAt'] = str(d['createdAt'])
-                if 'updatedAt' in d:
-                    d['updatedAt'] = str(d['updatedAt'])
-        if 'events' in service:
-            for e in service['events']:
-                if 'createdAt' in e:
-                    e['createdAt'] = str(e['createdAt'])
-        return service
+        return response['service']
 
     def delete_service(self, service, cluster=None):
         return self.ecs.delete_service(cluster=cluster, service=service)
@@ -414,31 +399,30 @@ def main():
         if existing and 'status' in existing and existing['status'] == "ACTIVE":
             if service_mgr.is_matching_service(module.params, existing):
                 matching = True
-                results['service'] = service_mgr.jsonize(existing)
+                results['service'] = existing
             else:
                 update = True
 
         if not matching:
             if not module.check_mode:
-                loadBalancers = module.params['load_balancers']
-                for loadBalancer in loadBalancers:
-                    if 'containerPort' in loadBalancer:
-                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 role = module.params['role']
                 clientToken = module.params['client_token']
+                loadBalancers = module.params['load_balancers']
 
                 if update:
+                    if (existing['loadBalancers'] or []) != loadBalancers:
+                        module.fail_json(msg="It is not possible to update the load balancers of an existing service")
                     # update required
                     response = service_mgr.update_service(module.params['name'],
                                                           module.params['cluster'],
                                                           module.params['task_definition'],
-                                                          loadBalancers,
                                                           module.params['desired_count'],
-                                                          clientToken,
-                                                          role,
                                                           deploymentConfiguration)
                 else:
+                    for loadBalancer in loadBalancers:
+                        if 'containerPort' in loadBalancer:
+                            loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
                     # doesn't exist. create it.
                     response = service_mgr.create_service(module.params['name'],
                                                           module.params['cluster'],
