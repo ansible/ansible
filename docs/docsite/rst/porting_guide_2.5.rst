@@ -67,8 +67,8 @@ Major changes in popular modules are detailed here
 github_release
 --------------
 
-In the version 2.4 and older, after creating GitHub release using ``create_release`` state, module ``github_release`` used to report state as ``skipped``.
-In the version 2.5 and onwards, this behavior is now changed. After creating GitHub release using ``create_release`` state, module now reports state as ``changed``.
+In Ansible versions 2.4 and older, after creating a GitHub release using the ``create_release`` state, the ``github_release`` module reported state as ``skipped``.
+In Ansible version 2.5 and later, after creating a GitHub release using the ``create_release`` state, the ``github_release`` module now reports state as ``changed``.
 
 
 Modules removed
