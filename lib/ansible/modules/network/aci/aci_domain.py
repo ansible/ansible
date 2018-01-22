@@ -73,7 +73,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new physical domain
   aci_domain:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: phys_dom
@@ -82,7 +82,7 @@ EXAMPLES = r'''
 
 - name: Remove a physical domain
   aci_domain:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: phys_dom
@@ -91,7 +91,7 @@ EXAMPLES = r'''
 
 - name: Add a new VMM domain
   aci_domain:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: hyperv_dom
@@ -101,7 +101,7 @@ EXAMPLES = r'''
 
 - name: Remove a VMM domain
   aci_domain:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: hyperv_dom
@@ -111,7 +111,7 @@ EXAMPLES = r'''
 
 - name: Query a specific physical domain
   aci_domain:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: phys_dom
@@ -120,7 +120,7 @@ EXAMPLES = r'''
 
 - name: Query all domains
   aci_domain:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
