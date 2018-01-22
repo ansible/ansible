@@ -17,7 +17,52 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes.
+Dynamic includes and attribute inheritance
+------------------------------------------
+
+In Ansible 2.4, the concept of dyanmic includes (e.g. ``include_tasks``) vs static imports (e.g. ``import_tasks``) was introduced to alleviate confusion
+between how ``include`` worked between dynamic and static includes. Part of this separation was to define behaviors for how inheritance worked between
+the two.
+
+It was decided that all attributes applied to ia dyanmic ``include_*`` would only apply to the include itself, whereas attributes applied to a
+static ``import_*`` would be inherited by the tasks within.
+
+In 2.4 the separation was incomplete, and did not meet the expectations of this separation. In 2.5, the behaviors have been aligned with the expectations.
+As such, attributes applied to an ``include_*`` task will not be inherited by the tasks within. To achieve a similar outcome to pre-2.5 behaviors, playbooks
+should make use of explicit application of the attribute on the needed tasks, or using blocks to apply the attribute to many tasks.
+
+**OLD** In Ansible 2.4:
+
+.. code-block:: yaml
+
+    - include_tasks: "{{ ansible_distribution }}.yml"
+      tags:
+        - distro_include
+
+
+**NEW** In Ansible 2.5:
+
+Including task:
+
+.. code-block:: yaml
+
+    - include_tasks: "{{ ansible_distribution }}.yml"
+      tags:
+        - distro_include
+
+Included file:
+
+.. code-block:: yaml
+
+    - block:
+        - debug:
+            msg: "In included file"
+
+        - apt:
+            name: nginx
+            state: latest
+      tags:
+        - distro_include
 
 Deprecated
 ==========
