@@ -33,11 +33,11 @@ options:
   name:
     description:
     - Name of the web application.
-    required: true
+    required: yes
   site:
     description:
     - Name of the site on which the application is created.
-    required: true
+    required: yes
   state:
     description:
     - State of the web application.
@@ -50,6 +50,12 @@ options:
   application_pool:
     description:
     - The application pool in which the new site executes.
+  force:
+    description:
+      - Force update even if old physical_path is missing or equal to current.
+    type: bool
+    default: 'no'
+    version_added: '2.4'
 author:
 - Henrik Wallström
 '''
