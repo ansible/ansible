@@ -28,6 +28,11 @@ options:
     - IP Address or hostname of APIC resolvable by Ansible control host.
     required: yes
     aliases: [ host ]
+  port:
+    description:
+    - Port number to be used for REST connection.
+    default: 443 (for https) and 80 (for http)
+    type: int
   username:
     description:
     - The username to use for authentication.
