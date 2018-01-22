@@ -1798,13 +1798,36 @@ def main():
     if vm:
         if module.params['state'] == 'absent':
             # destroy it
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    current_powerstate=vm.summary.runtime.powerState.lower(),
+                    desired_operation='remove_vm',
+                )
+                module.exit_json(**result)
             if module.params['force']:
                 # has to be poweredoff first
                 set_vm_power_state(pyv.content, vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    desired_operation='reconfigure_vm',
+                )
+                module.exit_json(**result)
             result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    current_powerstate=vm.summary.runtime.powerState.lower(),
+                    desired_operation='set_vm_power_state',
+                )
+                module.exit_json(**result)
             # set powerstate
             tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
             if tmp_result['changed']:
@@ -1817,6 +1840,12 @@ def main():
     # VM doesn't exist
     else:
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
+            if module.check_mode:
+                result.update(
+                    changed=True,
+                    desired_operation='deploy_vm',
+                )
+                module.exit_json(**result)
             result = pyv.deploy_vm()
             if result['failed']:
                 module.fail_json(msg='Failed to create a virtual machine : %s' % result['msg'])
