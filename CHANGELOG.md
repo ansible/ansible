@@ -91,28 +91,36 @@ Ansible Changes By Release
   * cloudfront_distribution
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
+  * ec2_customer_gateway_facts
   * ec2_placement_group
   * ec2_placement_group_facts
   * ecs_taskdefinition_facts
   * elasticache_facts
   * iam_role_facts
 - azure
+  * azure_rm_containerinstance
   * azure_rm_containerregistry
   * azure_rm_image
+  * azure_rm_mysqldatabase
   * azure_rm_mysqlserver
+  * azure_rm_postgresqldatabase
   * azure_rm_postgresqlserver
   * azure_rm_sqlserver
+  * azure_rm_sqlserver_facts
 - cloudscale
   * cloudscale_floating_ip
 - cloudstack
   * cs_network_offering
   * cs_service_offering
+  * cs_vpc_offering
   * cs_vpn_connection
   * cs_vpn_customer_gateway
 - digital_ocean
   * digital_ocean_certificate
   * digital_ocean_floating_ip_facts
   * digital_ocean_sshkey_facts
+- misc
+  * terraform
 - oneandone
   * oneandone_server
 - openstack
@@ -122,20 +130,28 @@ Ansible Changes By Release
   * ovirt_disk_facts
 - spotinst
   * spotinst_aws_elastigroup
-- terraform
-  * terraform
 - vmware
   * vmware_cfg_backup
   * vmware_datastore_facts
+  * vmware_guest_file_operation
   * vmware_guest_powerstate
+  * vmware_host_config_facts
+  * vmware_host_config_manager
   * vmware_host_facts
+  * vmware_host_ntp
+  * vmware_host_service_facts
+  * vmware_host_service_manager
   * vmware_local_role_manager
 - vultr
   * vr_account_facts
+  * vr_dns_domain
+  * vr_dns_record
   * vr_firewall_group
   * vr_firewall_rule
   * vr_server
   * vr_ssh_key
+  * vr_startup_script
+  * vr_user
 
 #### Clustering
 - k8s
@@ -160,6 +176,7 @@ Ansible Changes By Release
 
 #### Monitoring
   * grafana_dashboard
+  * grafana_datasource
   * grafana_plugin
   * icinga2_host
 - zabbix
@@ -171,8 +188,22 @@ Ansible Changes By Release
 
 #### Network
 - aci
+  * aci_aaa_user_certificate
+  * aci_access_port_to_interface_policy_leaf_profile
+  * aci_aep_to_domain
+  * aci_domain
+  * aci_domain_to_encap_pool
+  * aci_domain_to_vlan_pool
   * aci_encap_pool
   * aci_encap_pool_range
+  * aci_firmware_source
+  * aci_interface_policy_leaf_policy_group
+  * aci_interface_policy_leaf_profile
+  * aci_interface_selector_to_switch_policy_leaf_profile
+  * aci_switch_leaf_selector
+  * aci_switch_policy_leaf_profile
+  * aci_vlan_pool
+  * aci_vlan_pool_encap_block
 - avi
   * avi_api_version
   * avi_customipamdnsprofile
@@ -192,8 +223,9 @@ Ansible Changes By Release
   * eos_static_route
 - f5
   * bigip_asm_policy
-  * bigip_configsync_action
   * bigip_device_connectivity
+  * bigip_device_group
+  * bigip_device_group_member
   * bigip_device_httpd
   * bigip_device_trust
   * bigip_gtm_server
@@ -206,16 +238,21 @@ Ansible Changes By Release
   * bigip_policy_rule
   * bigip_profile_client_ssl
   * bigip_remote_syslog
+  * bigip_security_address_list
   * bigip_security_port_list
   * bigip_software_update
   * bigip_ssl_key
+  * bigip_static_route
   * bigip_traffic_group
+  * bigip_ucs_fetch
   * bigip_vcmp_guest
   * bigip_wait
   * bigiq_regkey_license
   * bigiq_regkey_pool
 - ios
+  * ios_l2_interface
   * ios_l3_interface
+  * ios_linkagg
   * ios_lldp
   * ios_vlan
 - iosxr
@@ -224,22 +261,8 @@ Ansible Changes By Release
   * ironware_command
   * ironware_config
   * ironware_facts
-- mlnxos
-  * mlnxos_command
-  * mlnxos_config
-  * mlnxos_facts
-  * mlnxos_interface
-  * mlnxos_l2_interface
-  * mlnxos_l3_interface
-  * mlnxos_linkagg
-  * mlnxos_lldp
-  * mlnxos_lldp_interface
-  * mlnxos_magp
-  * mlnxos_mlag_ipl
-  * mlnxos_mlag_vip
-  * mlnxos_pfc_interface
-  * mlnxos_protocol
-  * mlnxos_vlan
+- junos
+  * junos_scp
 - netscaler
   * netscaler_nitro_request
 - nso
@@ -253,6 +276,24 @@ Ansible Changes By Release
   * nxos_l3_interface
   * nxos_linkagg
   * nxos_lldp
+- onyx
+  * onyx_bgp
+  * onyx_command
+  * onyx_config
+  * onyx_facts
+  * onyx_interface
+  * onyx_l2_interface
+  * onyx_l3_interface
+  * onyx_linkagg
+  * onyx_lldp
+  * onyx_lldp_interface
+  * onyx_magp
+  * onyx_mlag_ipl
+  * onyx_mlag_vip
+  * onyx_ospf
+  * onyx_pfc_interface
+  * onyx_protocol
+  * onyx_vlan
 - radware
   * vdirect_commit
   * vdirect_runnable
@@ -270,6 +311,7 @@ Ansible Changes By Release
 
 #### Remote Management
 - manageiq
+  * manageiq_alert_profiles
   * manageiq_policies
   * manageiq_tags
 - oneview
@@ -279,7 +321,8 @@ Ansible Changes By Release
   * oneview_logical_interconnect_group_facts
   * oneview_san_manager_facts
 - ucs
-  * ucs_macpool
+  * ucs_ip_pool
+  * ucs_mac_pool
   * ucs_san_connectivity
   * ucs_vhba_template
   * ucs_vsans
