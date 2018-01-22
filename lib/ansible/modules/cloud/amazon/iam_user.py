@@ -1,18 +1,6 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -109,6 +97,7 @@ user:
             sample: /
 '''
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import HAS_BOTO3
@@ -180,10 +169,10 @@ def create_or_update_user(connection, module):
             user = connection.create_user(**params)
             changed = True
         except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
+            module.fail_json(msg="Unable to create user: {0}".format(to_native(e)), exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
         except ParamValidationError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc())
+            module.fail_json(msg="Unable to create user: {0}".format(to_native(e)), exception=traceback.format_exc())
 
     # Manage managed policies
     current_attached_policies = get_attached_policy_list(connection, module, params['UserName'])
@@ -201,10 +190,13 @@ def create_or_update_user(connection, module):
                     try:
                         connection.detach_user_policy(UserName=params['UserName'], PolicyArn=policy_arn)
                     except ClientError as e:
-                        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                                         **camel_dict_to_snake_dict(e.response))
+                        module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
+                                         policy_arn, params['UserName'], to_native(e)),
+                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                     except ParamValidationError as e:
-                        module.fail_json(msg=e.message, exception=traceback.format_exc())
+                        module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
+                                         policy_arn, params['UserName'], to_native(e)),
+                                         exception=traceback.format_exc())
 
         # If there are policies to adjust that aren't in the current list, then things have changed
         # Otherwise the only changes were in purging above
@@ -216,10 +208,13 @@ def create_or_update_user(connection, module):
                     try:
                         connection.attach_user_policy(UserName=params['UserName'], PolicyArn=policy_arn)
                     except ClientError as e:
-                        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                                         **camel_dict_to_snake_dict(e.response))
+                        module.fail_json(msg="Unable to attach policy {0} to user {1}: {2}".format(
+                                         policy_arn, params['UserName'], to_native(e)),
+                                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                     except ParamValidationError as e:
-                        module.fail_json(msg=e.message, exception=traceback.format_exc())
+                        module.fail_json(msg="Unable to attach policy {0} to user {1}: {2}".format(
+                                         policy_arn, params['UserName'], to_native(e)),
+                                         exception=traceback.format_exc())
     if module.check_mode:
         module.exit_json(changed=changed)
 
@@ -244,18 +239,22 @@ def destroy_user(connection, module):
             for policy in get_attached_policy_list(connection, module, params['UserName']):
                 connection.detach_user_policy(UserName=params['UserName'], PolicyArn=policy['PolicyArn'])
         except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
+                             policy['PolicyArn'], params['UserName'], to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except ParamValidationError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc())
+            module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
+                             policy['PolicyArn'], params['UserName'], to_native(e)),
+                             exception=traceback.format_exc())
 
         try:
             connection.delete_user(**params)
         except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg="Unable to delete user {0}: {1}".format(params['UserName'], to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except ParamValidationError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc())
+            module.fail_json(msg="Unable to delete user {0}: {1}".format(params['UserName'], to_native(e)),
+                             exception=traceback.format_exc())
 
     else:
         module.exit_json(changed=False)
@@ -274,7 +273,8 @@ def get_user(connection, module, name):
         if e.response['Error']['Code'] == 'NoSuchEntity':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg="Unable to get user {0}: {1}".format(name, to_native(e)),
+                             **camel_dict_to_snake_dict(e.response))
 
 
 def get_attached_policy_list(connection, module, name):
@@ -285,7 +285,8 @@ def get_attached_policy_list(connection, module, name):
         if e.response['Error']['Code'] == 'NoSuchEntity':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg="Unable to get policies for user {0}: {1}".format(name, to_native(e)),
+                             **camel_dict_to_snake_dict(e.response))
 
 
 def main():
