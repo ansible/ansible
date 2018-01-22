@@ -23,7 +23,7 @@
 - name: verify no change on re-uninstall in check mode
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: uninstall sos again
   yum: name=sos state=removed
@@ -32,7 +32,7 @@
 - name: verify no change on re-uninstall
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # INSTALL
 - name: install sos in check mode
@@ -43,7 +43,7 @@
 - name: verify installation of sos in check mode
   assert:
     that:
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: install sos
   yum: name=sos state=present
@@ -58,7 +58,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
         - "rpm_result.rc == 0"
 
 - name: verify yum module outputs
@@ -77,7 +77,7 @@
 - name: verify no change on second install in check mode
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: install sos again
   yum: name=sos state=present
@@ -85,7 +85,7 @@
 - name: verify no change on second install
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # INSTALL AGAIN WITH LATEST
 - name: install sos again with state latest in check mode
@@ -95,7 +95,7 @@
 - name: verify install sos again with state latest in check mode
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: install sos again with state latest idempotence
   yum: name=sos state=latest
@@ -103,7 +103,7 @@
 - name: verify install sos again with state latest idempotence
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # INSTALL WITH LATEST
 - name: uninstall sos
@@ -121,7 +121,7 @@
 - name: verify install sos with state latest in check mode
   assert:
     that:
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: install sos with state latest
   yum: name=sos state=latest
@@ -129,7 +129,7 @@
 - name: verify install sos with state latest
   assert:
     that:
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: install sos with state latest idempotence
   yum: name=sos state=latest
@@ -137,7 +137,7 @@
 - name: verify install sos with state latest idempotence
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 # Multiple packages
 - name: uninstall sos and bc
@@ -178,7 +178,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
         - "rpm_sos_result.rc == 0"
         - "rpm_bc_result.rc == 0"
 
@@ -208,7 +208,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
         - "rpm_sos_result.rc == 0"
         - "rpm_bc_result.rc == 0"
 
@@ -236,7 +236,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
         - "rpm_sos_result.rc == 0"
         - "rpm_bc_result.rc == 0"
 
@@ -269,7 +269,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
         - "rpm_result.rc == 0"
 
 - name: verify yum module outputs
@@ -297,7 +297,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -317,7 +317,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -339,7 +339,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -359,7 +359,7 @@
 - name: verify nothing changed
   assert:
     that:
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -379,7 +379,7 @@
   assert:
     that:
         - "yum_result.rc == 1"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
         - "yum_result is failed"
 
 - name: verify yum module outputs
@@ -401,7 +401,7 @@
   assert:
     that:
         - "yum_result is failed"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -420,7 +420,7 @@
   assert:
     that:
         - "yum_result is failed"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
 
 - name: verify yum module outputs
   assert:
@@ -454,7 +454,7 @@
 - name: verify httpd not installed
   assert:
     that:
-      - "not yum_result.changed"
+      - "not yum_result is changed"
       - "'Packages providing httpd not installed due to update_only specified' in yum_result.results"
 
 - name: try to install not compatible arch rpm, should fail
@@ -468,7 +468,7 @@
   assert:
     that:
         - "yum_result.rc == 1"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
         - "yum_result is failed"
 
 # setup for testing installing an RPM from url
@@ -500,7 +500,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
         - "yum_result is not failed"
 
 - name: verify yum module outputs
@@ -521,7 +521,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "not yum_result.changed"
+        - "not yum_result is changed"
         - "yum_result is not failed"
 
 - name: verify yum module outputs
@@ -547,7 +547,7 @@
   assert:
     that:
         - "yum_result.rc == 0"
-        - "yum_result.changed"
+        - "yum_result is changed"
         - "yum_result is not failed"
 
 - name: verify yum module outputs
