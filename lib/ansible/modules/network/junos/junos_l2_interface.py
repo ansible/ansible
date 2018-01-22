@@ -12,38 +12,52 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
+
 DOCUMENTATION = """
 ---
-module: junos_vlan
-version_added: "2.4"
+module: junos_l2_interface
+version_added: "2.5"
 author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Manage VLANs on Juniper JUNOS network devices
+short_description: Manage Layer-2 interface on Juniper JUNOS network devices
 description:
-  - This module provides declarative management of VLANs
+  - This module provides declarative management of Layer-2 interface
     on Juniper JUNOS network devices.
 options:
   name:
     description:
-      - Name of the VLAN.
-    required: true
-  vlan_id:
-    description:
-      - ID of the VLAN.
-    required: true
+      - Name of the interface excluding any logical unit number.
   description:
     description:
-      - Text description of VLANs.
-  interfaces:
-    description:
-      - List of interfaces to check the VLAN has been
-        configured correctly.
+      - Description of Interface.
   aggregate:
-    description: List of VLANs definitions.
+    description:
+      - List of Layer-2 interface definitions.
+  mode:
+    description:
+      - Mode in which interface needs to be configured.
+    choices: ['access', 'trunk']
+  access_vlan:
+    description:
+      - Configure given VLAN in access port. The value of C(access_vlan) should
+        be vlan name.
+  trunk_vlans:
+    description:
+      - List of VLAN names to be configured in trunk port. The value of C(trunk_vlans) should
+        be list of vlan names.
+  native_vlan:
+    description:
+      - Native VLAN to be configured in trunk port. The value of C(native_vlan)
+        should be vlan id.
+  unit:
+    description:
+      - Logical interface number. Value of C(unit) should be of type
+        integer.
+    default: 0
   state:
     description:
-      - State of the VLAN configuration.
+      - State of the Layer-2 Interface configuration.
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent',]
   active:
     description:
       - Specifies whether or not the configuration is active or deactivated
@@ -54,58 +68,68 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
-  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Tested against vqfx-10000 JUNOS Version 15.1X53-D60.4.
 extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
-- name: configure VLAN ID and name
-  junos_vlan:
-    vlan_name: test
-    vlan_id: 20
-    name: test-vlan
-
-- name: remove VLAN configuration
-  junos_vlan:
-    vlan_name: test
-    state: absent
-
-- name: deactive VLAN configuration
-  junos_vlan:
-    vlan_name: test
-    state: present
-    active: False
-
-- name: activate VLAN configuration
-  junos_vlan:
-    vlan_name: test
-    state: present
+- name: Configure interface in access mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: interface-access
+    mode: access
+    access_vlan: red
     active: True
+    state: present
 
-- name: Create vlan configuration using aggregate
-  junos_vlan:
-    aggregate:
-      - { vlan_id: 159, name: test_vlan_1, description: test vlan-1 }
-      - { vlan_id: 160, name: test_vlan_2, description: test vlan-2 }
+- name: Configure interface in trunk mode
+  junos_l2_interface:
+    name: ge-0/0/1
+    description: interface-trunk
+    mode: trunk
+    trunk_vlans:
+    - blue
+    - green
+    native_vlan: 100
+    active: True
+    state: present
 
-- name: Delete vlan configuration using aggregate
-  junos_vlan:
+- name: Configure interface in access and trunk mode using aggregate
+  junos_l2_interface:
     aggregate:
-      - { vlan_id: 159, name: test_vlan_1 }
-      - { vlan_id: 160, name: test_vlan_2 }
-    state: absent
+    - name: ge-0/0/1
+      description: test-interface-access
+      mode: access
+      access_vlan: red
+    - name: ge-0/0/2
+      description: test-interface-trunk
+      mode: trunk
+      trunk_vlans:
+      - blue
+      - green
+      native_vlan: 100
+    active: True
+    state: present
 """
 
 RETURN = """
-diff.prepared:
+diff:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
   type: string
   sample: >
-         [edit vlans]
-         +   test-vlan-1 {
-         +       vlan-id 60;
-         +   }
+        [edit interfaces]
+        +   ge-0/0/1 {
+        +       description "l2 interface configured by Ansible";
+        +       unit 0 {
+        +           family ethernet-switching {
+        +               interface-mode access;
+        +               vlan {
+        +                   members red;
+        +               }
+        +           }
+        +       }
+        +   }
 """
 import collections
 
@@ -114,8 +138,8 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.junos.junos import junos_argument_spec
-from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
-from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
 try:
     from lxml.etree import tostring
@@ -126,7 +150,7 @@ USE_PERSISTENT_CONNECTION = True
 
 
 def validate_vlan_id(value, module):
-    if value and not 1 <= value <= 4094:
+    if value and not 0 <= value <= 4094:
         module.fail_json(msg='vlan_id must be between 1 and 4094')
 
 
@@ -145,9 +169,12 @@ def main():
     """
     element_spec = dict(
         name=dict(),
-        vlan_id=dict(type='int'),
+        mode=dict(choices=['access', 'trunk']),
+        access_vlan=dict(),
+        native_vlan=dict(type='int'),
+        trunk_vlans=dict(type='list'),
+        unit=dict(default=0, type='int'),
         description=dict(),
-        interfaces=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
@@ -158,20 +185,26 @@ def main():
     # remove default in aggregate spec, to handle common arguments
     remove_default_spec(aggregate_spec)
 
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate'],
+                          ['access_vlan', 'trunk_vlans'],
+                          ['access_vlan', 'native_vlan']]
+
+    required_if = [('mode', 'access', ('access_vlan',)),
+                   ('mode', 'trunk', ('trunk_vlans',))]
+
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec)
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, mutually_exclusive=mutually_exclusive, required_if=required_if),
     )
 
     argument_spec.update(element_spec)
     argument_spec.update(junos_argument_spec)
 
-    required_one_of = [['aggregate', 'name']]
-    mutually_exclusive = [['aggregate', 'name']]
-
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=required_one_of,
+                           supports_check_mode=True,
                            mutually_exclusive=mutually_exclusive,
-                           supports_check_mode=True)
+                           required_one_of=required_one_of,
+                           required_if=required_if)
 
     warnings = list()
     result = {'changed': False}
@@ -179,18 +212,22 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    top = 'vlans/vlan'
+    top = 'interfaces/interface'
 
     param_to_xpath_map = collections.OrderedDict()
     param_to_xpath_map.update([
         ('name', {'xpath': 'name', 'is_key': True}),
-        ('vlan_id', 'vlan-id'),
+        ('unit', {'xpath': 'name', 'top': 'unit', 'is_key': True}),
+        ('mode', {'xpath': 'interface-mode', 'top': 'unit/family/ethernet-switching'}),
+        ('access_vlan', {'xpath': 'members', 'top': 'unit/family/ethernet-switching/vlan'}),
+        ('trunk_vlans', {'xpath': 'members', 'top': 'unit/family/ethernet-switching/vlan'}),
+        ('native_vlan', {'xpath': 'native-vlan-id'}),
         ('description', 'description')
     ])
 
     params = to_param_list(module)
-    requests = list()
 
+    requests = list()
     for param in params:
         # if key doesn't exist in the item, get it from module.params
         for key in param:
@@ -207,7 +244,7 @@ def main():
     diff = None
     with locked_config(module):
         for req in requests:
-            diff = load_config(module, tostring(req), warnings, action='merge')
+            diff = load_config(module, tostring(req), warnings, action='replace')
 
         commit = not module.check_mode
         if diff:
@@ -221,6 +258,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()
