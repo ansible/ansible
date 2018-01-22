@@ -62,6 +62,7 @@
 - name: Ensure backports.lzma is present to create test archive (pip)
   pip: name=backports.lzma state=latest
   when: ansible_python_version.split('.')[0] == '2'
+  register: backports_lzma_pip
 
 - name: prep our file
   copy: src={{ item }} dest={{output_dir}}/{{ item }}
@@ -328,3 +329,7 @@
 
 - name: remove nonascii test
   file: path="{{ output_dir }}/test-archive-nonascii-くらとみ.zip" state=absent
+
+- name: Remove backports.lzma if previously installed (pip)
+  pip: name=backports.lzma state=absent
+  when: backports_lzma_pip is changed
