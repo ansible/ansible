@@ -100,6 +100,8 @@ options:
         description:
             - ID of the VSYS object.
         default: "vsys1"
+            - The IP protocol number [1-255].
+        required: true
 '''
 
 EXAMPLES = '''
@@ -176,7 +178,6 @@ EXAMPLES = '''
     protocol: '6'
   register: result
 - debug: msg='{{result.stdout_lines}}'
-
 '''
 
 RETURN = '''
@@ -190,6 +191,10 @@ try:
     from pan.xapi import PanXapiError
     from pandevice import base
     from pandevice import policies
+    from pan.xapi import PanXapiError
+    from pandevice import base
+    from pandevice import policies
+    from pandevice import firewall
     from pandevice import panorama
     import xmltodict
     import json
@@ -282,16 +287,16 @@ def main():
         vsys_id=dict(default='vsys1'),
         rule_type=dict(required=True, choices=['security', 'nat']),
         source_zone=dict(default=None),
-        source_ip=dict(default=None),
+        source_ip=dict(default=None, required=True),
         source_user=dict(default=None),
         source_port=dict(default=None),
         to_interface=dict(default=None),
         destination_zone=dict(default=None),
-        destination_ip=dict(default=None),
-        destination_port=dict(default=None),
         category=dict(default=None),
         application=dict(default=None),
-        protocol=dict(default=None)
+        protocol=dict(default=None, required=True),
+        destination_ip=dict(default=None, required=True),
+        destination_port=dict(default=None, required=True)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
