@@ -55,6 +55,7 @@ class DistributionFiles:
     #  - allowempty == True
     #  - be listed in SEARCH_STRING
     #  - have a function get_distribution_DISTNAME implemented
+    # keep names in sync with Conditionals page of docs
     OSDIST_LIST = (
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
@@ -404,6 +405,7 @@ class Distribution(object):
         'SMGL': 'Source Mage GNU/Linux',
     }
 
+    # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer'],
