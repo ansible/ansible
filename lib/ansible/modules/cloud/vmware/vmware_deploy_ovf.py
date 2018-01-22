@@ -61,6 +61,8 @@ options:
     ovf:
         description:
         - 'Path to OVF or OVA file to deploy'
+        aliases:
+            - ova
     power_on:
         default: true
         description:
@@ -478,6 +480,7 @@ def main():
         },
         'ovf': {
             'type': path_exists,
+            'aliases': ['ova'],
         },
         'disk_provisioning': {
             'choices': [
