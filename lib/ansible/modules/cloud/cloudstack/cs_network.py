@@ -459,7 +459,7 @@ def main():
         isolated_pvlan=dict(),
         clean_up=dict(type='bool', default=False),
         network_domain=dict(),
-        subdomain_access=dict('bool'),
+        subdomain_access=dict(type='bool'),
         state=dict(choices=['present', 'absent', 'restarted'], default='present'),
         acl_type=dict(choices=['account', 'domain']),
         project=dict(),
