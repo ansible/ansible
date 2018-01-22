@@ -1,0 +1,17 @@
+Machine Description............... Dell Networking Switch
+System Model ID................... N4032
+Machine Type...................... Dell Networking N4032
+Serial Number..................... CN04G4FP282984AI0097A01
+Manufacturer...................... 0xbc00
+Burned In MAC Address............. F8B1.565B.615C
+System Object ID.................. 1.3.6.1.4.1.674.10895.3042
+CPU Version....................... XLP308H-B2
+SOC Version....................... BCM56842_A1
+HW Version........................ 3
+CPLD Version...................... 17
+
+unit active      backup      current-active next-active
+---- ----------- ----------- -------------- --------------
+1    6.3.3.7     6.3.2.7     6.3.3.7        6.3.3.7
+
+
