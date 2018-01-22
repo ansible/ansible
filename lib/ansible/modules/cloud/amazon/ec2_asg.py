@@ -176,21 +176,17 @@ options:
   metrics_collection:
     description:
       - Enable ASG metrics collection
-    required: False
     default: False
-    choices: ['True', 'False']
+    type: bool
     version_added: "2.5"
   metrics_granularity:
     description:
       - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
-    required: False
     default: "1minute"
-    choices: ['1minute']
     version_added: "2.5"
   metrics_list:
     description:
       - List of autoscaling metrics to collect when enabling metrics_collection
-    required: False
     default:
         - 'GroupMinSize'
         - 'GroupMaxSize'
