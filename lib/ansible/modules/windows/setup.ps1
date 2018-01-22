@@ -55,23 +55,29 @@ Function Get-MachineSid {
 }
 
 Function Get-ProductKey {
-    $data = Get-ItemPropertyValue -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion" -Name DigitalProductId
-    $hexdata = $data[52..66]
+    # First try to find the product key from ACPI
+    $product_key = (Get-CimInstance -Class SoftwareLicensingService).OA3xOriginalProductKey
 
-    $chardata = "B","C","D","F","G","H","J","K","M","P","Q","R","T","V","W","X","Y","2","3","4","6","7","8","9"
+    if (-not $product_key) {
+        # Else try to get it from the registry instead
+        $data = Get-ItemPropertyValue -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion" -Name DigitalProductId
+        $hexdata = $data[52..66]
 
-    # Decode base24 binary data
-    $product_key = $null
-    For ($i = 24; $i -ge 0; $i--) {
-        $k = 0
-        For ($j = 14; $j -ge 0; $j--) {
-            $k = $k * 256 -bxor $hexdata[$j]
-            $hexdata[$j] = [math]::truncate($k / 24)
-            $k = $k % 24
-        }
-        $product_key = $chardata[$k] + $product_key
-        If (($i % 5 -eq 0) -and ($i -ne 0)) {
-            $product_key = "-" + $product_key
+        $chardata = "B","C","D","F","G","H","J","K","M","P","Q","R","T","V","W","X","Y","2","3","4","6","7","8","9"
+
+        # Decode base24 binary data
+        $product_key = $null
+        for ($i = 24; $i -ge 0; $i--) {
+            $k = 0
+            for ($j = 14; $j -ge 0; $j--) {
+                $k = $k * 256 -bxor $hexdata[$j]
+                $hexdata[$j] = [math]::truncate($k / 24)
+                $k = $k % 24
+            }
+            $product_key = $chardata[$k] + $product_key
+            if (($i % 5 -eq 0) -and ($i -ne 0)) {
+                $product_key = "-" + $product_key
+            }
         }
     }
     return $product_key
