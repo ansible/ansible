@@ -185,6 +185,13 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
+# try specifying a --encrypt-vault-id that doesnt exist, should exit with an error indicating
+# that --encrypt-vault-id and the known vault-ids
+ansible-vault encrypt "$@" --vault-password-file vault-password --encrypt-vault-id doesnt_exist "${TEST_FILE}" && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
 # encrypt it
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
@@ -251,6 +258,12 @@ echo "newpassword" > "${NEW_VAULT_PASSWORD}"
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
 ansible-vault rekey "$@" --vault-password-file vault-password --new-vault-password-file "${NEW_VAULT_PASSWORD}" "${TEST_FILE}"
+
+# --new-vault-password-file and --new-vault-id should cause options error
+ansible-vault rekey "$@" --vault-password-file vault-password --new-vault-id=foobar --new-vault-password-file "${NEW_VAULT_PASSWORD}" "${TEST_FILE}" && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (2 is expected)"
+[ $WRONG_RC -eq 2 ]
 
 ansible-vault view "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "${TEST_FILE}"
 
