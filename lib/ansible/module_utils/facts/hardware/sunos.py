@@ -263,3 +263,5 @@ class SunOSHardware(Hardware):
 class SunOSHardwareCollector(HardwareCollector):
     _fact_class = SunOSHardware
     _platform = 'SunOS'
+
+    required_facts = set(['platform'])

@@ -710,3 +710,5 @@ class LinuxHardware(Hardware):
 class LinuxHardwareCollector(HardwareCollector):
     _platform = 'Linux'
     _fact_class = LinuxHardware
+
+    required_facts = set(['platform'])

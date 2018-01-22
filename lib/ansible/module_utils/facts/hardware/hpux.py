@@ -161,3 +161,5 @@ class HPUXHardware(Hardware):
 class HPUXHardwareCollector(HardwareCollector):
     _fact_class = HPUXHardware
     _platform = 'HP-UX'
+
+    required_facts = set(['platform', 'distribution'])
