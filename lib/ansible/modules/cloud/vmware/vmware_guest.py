@@ -617,6 +617,10 @@ class PyVmomiHelper(PyVmomi):
 
     def remove_vm(self, vm):
         # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.ManagedEntity.html#destroy
+        if vm.summary.runtime.powerState.lower() == 'poweredon':
+            self.module.fail_json(msg="Virtual machine %s found in 'powered on' state, "
+                                      "please use 'force' parameter to remove or poweroff VM "
+                                      "and try removing VM again." % vm.name)
         task = vm.Destroy()
         self.wait_for_task(task)
 
