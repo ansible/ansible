@@ -383,7 +383,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * If the chown fails we can set the file to be world readable so that
           the second unprivileged user can read the file.
           Since this could allow other users to get access to private
-          information we only do this ansible is configured with
+          information we only do this if ansible is configured with
           "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if remote_user is None:
@@ -431,7 +431,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
                                        'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
-                    if self._connection._shell('allow_world_readable_temp'):
+                    if C.ALLOW_WORLD_READABLE_TMPFILES:
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file
                         display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user. '

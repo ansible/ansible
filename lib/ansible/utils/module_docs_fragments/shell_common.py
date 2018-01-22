@@ -78,15 +78,4 @@ options:
         key: admin_users
     vars:
       - name: ansible_admin_users
-  allow_world_readable_temp:
-    type: boolean
-    description:
-        - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
-        - It is useful when becoming an unprivileged user.
-    ini:
-      - section: defaults
-        key: allow_world_readable_tmpfiles
-    vars:
-      - name: ansible_world_readable_tmpfiles
-    version_added: "2.1"
 """
