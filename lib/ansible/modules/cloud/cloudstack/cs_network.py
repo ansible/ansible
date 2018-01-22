@@ -82,7 +82,7 @@ options:
       - Cleanup old network elements.
       - Only considered on C(state=restarted).
     default: no
-    choices: [ yes, no ]
+    type: bool
   acl_type:
     description:
       - Access control type.
@@ -94,7 +94,7 @@ options:
       - Defines whether to allow subdomains to use networks dedicated to their parent domain(s).
       - Should be used with C(acl_type=Domain).
       - Only considered on create.
-    choices: [ yes, no ]
+    type: bool
     version_added: "2.5"
   network_domain:
     description:
@@ -102,7 +102,6 @@ options:
   state:
     description:
       - State of the network.
-    required: false
     default: present
     choices: [ present, absent, restarted ]
   zone:
@@ -122,7 +121,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: yes
-    choices: [ yes, no ]
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
