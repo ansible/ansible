@@ -84,16 +84,22 @@ class TestSelectCollectorNames(unittest.TestCase):
         collector_names = collector.get_collector_names(valid_subsets=all_valid_subsets,
                                                         aliases_map=aliases_map,
                                                         platform_info=platform_info)
-        res = collector.select_collector_classes(collector_names,
+        complete_collector_names = collector._solve_deps(collector_names, all_fact_subsets)
+
+        dep_map = collector.build_dep_data(complete_collector_names, all_fact_subsets)
+
+        ordered_deps = collector.tsort(dep_map)
+        ordered_collector_names = [x[0] for x in ordered_deps]
+
+        res = collector.select_collector_classes(ordered_collector_names,
                                                  all_fact_subsets)
 
-        # assert the ordering is as expected, with required collectors before requiring collectors
-        self.assertTrue(res.index(default_collectors.PkgMgrFactCollector) >
-                        res.index(default_collectors.DistributionFactCollector))
         self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
-                        res.index(default_collectors.DistributionFactCollector))
+                        res.index(default_collectors.DistributionFactCollector),
+                        res)
         self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
-                        res.index(default_collectors.PlatformFactCollector))
+                        res.index(default_collectors.PlatformFactCollector),
+                        res)
 
     def _all_fact_subsets(self, data=None):
         all_fact_subsets = defaultdict(list)
