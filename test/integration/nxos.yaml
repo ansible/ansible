@@ -520,6 +520,15 @@
 
     - block:
       - include_role:
+          name: nxos_pim
+        when: "limit_to in ['*', 'nxos_pim']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_pim' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_pim_interface
         when: "limit_to in ['*', 'nxos_pim_interface']"
       rescue:
