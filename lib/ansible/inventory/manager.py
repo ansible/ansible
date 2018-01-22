@@ -142,7 +142,7 @@ class InventoryManager(object):
             self._sources = sources
 
         # get to work!
-        self.parse_sources()
+        self.parse_sources(cache=True)
 
     @property
     def localhost(self):
@@ -191,7 +191,7 @@ class InventoryManager(object):
         if not self._inventory_plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
 
-    def parse_sources(self, cache=True):
+    def parse_sources(self, cache=False):
         ''' iterate over inventory sources and parse each one to populate it'''
 
         self._setup_inventory_plugins()
@@ -234,7 +234,7 @@ class InventoryManager(object):
 
                 # recursively deal with directory entries
                 fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(to_native(fullpath))
+                parsed_this_one = self.parse_source(to_native(fullpath), cache=cache)
                 display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
