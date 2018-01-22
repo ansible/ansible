@@ -12,7 +12,7 @@
 # CLEAN ENVIRONMENT
 - name: Remove any pre-existing certificate
   aci_aaa_user_certificate: &cert_absent
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -26,7 +26,7 @@
 # ADD USER CERTIFICATE
 - name: Add user certificate (check_mode)
   aci_aaa_user_certificate: &cert_present
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -62,7 +62,7 @@
 # QUERY ALL USER CERTIFICATES
 - name: Query all user certificates using signature-based authentication (check_mode)
   aci_aaa_user_certificate: &cert_query
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     #password: '{{ aci_password }}'
     private_key: '{{ role_path }}/pki/admin.key'

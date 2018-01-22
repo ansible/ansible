@@ -78,7 +78,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new EPR policy
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -93,7 +93,7 @@ EXAMPLES = r'''
 
 - name: Remove an EPR policy
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -102,7 +102,7 @@ EXAMPLES = r'''
 
 - name: Query an EPR policy
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -111,7 +111,7 @@ EXAMPLES = r'''
 
 - name: Query all EPR policies
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query

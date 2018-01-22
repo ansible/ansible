@@ -86,7 +86,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new contract subject
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -100,7 +100,7 @@ EXAMPLES = r'''
 
 - name: Remove a contract subject
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -110,7 +110,7 @@ EXAMPLES = r'''
 
 - name: Query a contract subject
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -120,7 +120,7 @@ EXAMPLES = r'''
 
 - name: Query all contract subjects
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query

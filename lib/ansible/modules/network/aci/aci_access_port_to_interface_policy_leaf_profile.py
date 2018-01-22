@@ -73,7 +73,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Associate an Interface Access Port Selector to an Interface Policy Leaf Profile with a Policy Group
   aci_access_port_to_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
@@ -86,7 +86,7 @@ EXAMPLES = r'''
 
 - name: Associate an interface access port selector to an Interface Policy Leaf Profile (w/o policy group) (check if this works)
   aci_access_port_to_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
@@ -98,7 +98,7 @@ EXAMPLES = r'''
 
 - name: Remove an interface access port selector associated with an Interface Policy Leaf Profile
   aci_access_port_to_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
@@ -107,7 +107,7 @@ EXAMPLES = r'''
 
 - name: Query Specific access_port_selector under given leaf_interface_profile
   aci_access_port_to_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname

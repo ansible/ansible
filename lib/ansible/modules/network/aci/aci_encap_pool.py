@@ -55,7 +55,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new vlan pool
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -65,7 +65,7 @@ EXAMPLES = r'''
 
 - name: Remove a vlan pool
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -74,7 +74,7 @@ EXAMPLES = r'''
 
 - name: Query a vlan pool
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -83,7 +83,7 @@ EXAMPLES = r'''
 
 - name: Query all vlan pools
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool_type: vlan
