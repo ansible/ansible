@@ -179,14 +179,14 @@ options:
     required: False
     default: False
     choices: ['True', 'False']
-    version_add: "2.5"
+    version_added: "2.5"
   metrics_granularity:
     description:
       - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
     required: False
     default: "1minute"
     choices: ['1minute']
-    version_add: "2.5"
+    version_added: "2.5"
   metrics_list:
     description:
       - List of autoscaling metrics to collect when enabling metrics_collection
@@ -200,7 +200,7 @@ options:
         - 'GroupStandbyInstances'
         - 'GroupTerminatingInstances'
         - 'GroupTotalInstances'
-    version_add: "2.5"
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
