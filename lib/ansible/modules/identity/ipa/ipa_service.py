@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2017, Ansible Project
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -34,34 +34,8 @@ options:
     required: false
     default: present
     choices: ["present", "absent"]
-  ipa_port:
-    description: Port of IPA server
-    required: false
-    default: 443
-  ipa_host:
-    description: IP or hostname of IPA server
-    required: false
-    default: ipa.example.com
-  ipa_user:
-    description: Administrative account used on IPA server
-    required: false
-    default: admin
-  ipa_pass:
-    description: Password of administrative user
-    required: true
-  ipa_prot:
-    description: Protocol used by IPA server
-    required: false
-    default: https
-    choices: ["http", "https"]
-  validate_certs:
-    description:
-    - This only applies if C(ipa_prot) is I(https).
-    - If set to C(no), the SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
-    default: true
-version_added: "2.3"
+extends_documentation_fragment: ipa.documentation
+version_added: "2.5"
 '''
 
 EXAMPLES = '''
@@ -102,7 +76,7 @@ service:
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ipa import IPAClient
+from ansible.module_utils.ipa import IPAClient, ipa_argument_spec
 from ansible.module_utils._text import to_native
 
 
@@ -157,7 +131,6 @@ def ensure(module, client):
 
     ipa_service = client.service_find(name=name)
     module_service = get_service_dict(force=module.params['force'])
-                                      #krbcanonicalname=module.params['krbcanonicalname'])
     changed = False
     if state in ['present', 'enabled', 'disabled']:
         if not ipa_service:
@@ -202,22 +175,16 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = ipa_argument_spec()
+    argument_spec.update(
             krbcanonicalname=dict(type='str', required=True, aliases=['name']),
             force=dict(type='bool', required=False),
             hosts=dict(type='list', required=False),
             state=dict(type='str', required=False, default='present',
-                       choices=['present', 'absent']),
-            ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
-            ipa_host=dict(type='str', required=False, default='ipa.example.com'),
-            ipa_port=dict(type='int', required=False, default=443),
-            ipa_user=dict(type='str', required=False, default='admin'),
-            ipa_pass=dict(type='str', required=True, no_log=True),
-            validate_certs=dict(type='bool', required=False, default=True),
-        ),
-        supports_check_mode=True,
-    )
+                       choices=['present', 'absent']))
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     client = ServiceIPAClient(module=module,
                               host=module.params['ipa_host'],
