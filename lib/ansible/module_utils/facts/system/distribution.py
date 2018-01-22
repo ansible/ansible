@@ -579,7 +579,8 @@ class DistributionFactCollector(BaseFactCollector):
     name = 'distribution'
     _fact_ids = set(['distribution_version',
                      'distribution_release',
-                     'distribution_major_version'])
+                     'distribution_major_version',
+                     'os_family'])
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}
