@@ -23,11 +23,11 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = '''
 options:
-  hostname:
+  host:
     description:
     - IP Address or hostname of APIC resolvable by Ansible control host.
     required: yes
-    aliases: [ host ]
+    aliases: [ hostname ]
   port:
     description:
     - Port number to be used for REST connection.

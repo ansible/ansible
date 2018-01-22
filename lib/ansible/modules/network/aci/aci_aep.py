@@ -55,7 +55,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new AEP
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     aep: ACI-AEP
@@ -64,7 +64,7 @@ EXAMPLES = r'''
 
 - name: Remove an existing AEP
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     aep: ACI-AEP
@@ -72,7 +72,7 @@ EXAMPLES = r'''
 
 - name: Query an AEP
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     aep: ACI-AEP
@@ -80,7 +80,7 @@ EXAMPLES = r'''
 
 - name: Query all AEPs
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query

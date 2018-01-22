@@ -112,14 +112,14 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: create a tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
 
 - name: create a bridge domain
   aci_bd:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -127,7 +127,7 @@ EXAMPLES = r'''
 
 - name: create a subnet
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -137,7 +137,7 @@ EXAMPLES = r'''
 
 - name: create a subnet with options
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -152,7 +152,7 @@ EXAMPLES = r'''
 
 - name: update a subnets scope to private and shared
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -163,14 +163,14 @@ EXAMPLES = r'''
 
 - name: get all subnets
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
 - name: get all subnets of specific gateway in specified tenant
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -180,7 +180,7 @@ EXAMPLES = r'''
 
 - name: get specific subnet
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -191,7 +191,7 @@ EXAMPLES = r'''
 
 - name: delete a subnet
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: absent

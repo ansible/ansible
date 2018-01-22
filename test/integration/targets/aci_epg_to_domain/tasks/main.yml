@@ -34,7 +34,7 @@
 
 - name: ensure phys domain exists for tests to kick off
   aci_rest: &aci_rest_phys_domain
-    hostname: "{{ aci_hostname }}"
+    host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
     validate_certs: '{{ aci_validate_certs | default(false) }}'

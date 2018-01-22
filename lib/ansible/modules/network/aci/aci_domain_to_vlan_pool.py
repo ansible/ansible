@@ -62,7 +62,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Bind a VMM domain to VLAN pool
   aci_domain_to_vlan_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: vmw_dom
@@ -74,7 +74,7 @@ EXAMPLES = r'''
 
 - name: Remove a VMM domain to VLAN pool binding
   aci_domain_to_vlan_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: vmw_dom
@@ -86,7 +86,7 @@ EXAMPLES = r'''
 
 - name: Bind a physical domain to VLAN pool
   aci_domain_to_vlan_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: phys_dom
@@ -97,7 +97,7 @@ EXAMPLES = r'''
 
 - name: Bind a physical domain to VLAN pool
   aci_domain_to_vlan_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: phys_dom
@@ -108,7 +108,7 @@ EXAMPLES = r'''
 
 - name: Query an domain to VLAN pool binding
   aci_domain_to_vlan_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     domain: phys_dom
@@ -119,7 +119,7 @@ EXAMPLES = r'''
 
 - name: Query all domain to VLAN pool bindings
   aci_domain_to_vlan_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query

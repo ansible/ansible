@@ -44,7 +44,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new leaf_interface_profile
   aci_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
@@ -53,7 +53,7 @@ EXAMPLES = r'''
 
 - name: Remove a leaf_interface_profile
   aci_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
@@ -61,14 +61,14 @@ EXAMPLES = r'''
 
 - name: Remove all leaf_interface_profiles
   aci_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: absent
 
 - name: Query a leaf_interface_profile
   aci_interface_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname

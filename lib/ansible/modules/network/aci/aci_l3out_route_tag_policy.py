@@ -55,7 +55,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_l3out_route_tag_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     rtp: '{{ rtp_name }}'

@@ -76,7 +76,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new EPG
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -86,7 +86,7 @@ EXAMPLES = r'''
     bd: prod_bd
 
 - aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -105,7 +105,7 @@ EXAMPLES = r'''
 
 - name: Remove an EPG
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     validate_certs: false
@@ -116,7 +116,7 @@ EXAMPLES = r'''
 
 - name: Query an EPG
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -126,14 +126,14 @@ EXAMPLES = r'''
 
 - name: Query all EPGs
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
 - name: Query all EPGs with a Specific Name
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     validate_certs: false
@@ -142,7 +142,7 @@ EXAMPLES = r'''
 
 - name: Query all EPGs of an App Profile
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     validate_certs: false

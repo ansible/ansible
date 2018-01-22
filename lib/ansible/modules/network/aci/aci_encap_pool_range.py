@@ -74,7 +74,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new vlan range
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -85,7 +85,7 @@ EXAMPLES = r'''
 
 - name: Remove a vlan range
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -96,7 +96,7 @@ EXAMPLES = r'''
 
 - name: Query a vlan range
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -107,7 +107,7 @@ EXAMPLES = r'''
 
 - name: Query a vlan pool for ranges
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -116,7 +116,7 @@ EXAMPLES = r'''
 
 - name: Query all vlan ranges
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool_type: vlan

@@ -11,7 +11,7 @@
 # CLEAN ENVIRONMENT
 - name: Remove tenant
   aci_rest: &tenant_absent
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -24,7 +24,7 @@
 # ADD TENANT
 - name: Add tenant (normal mode)
   aci_rest: &tenant_present
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -57,7 +57,7 @@
 # CHANGE TENANT
 - name: Change description of tenant (normal mode)
   aci_rest: &tenant_changed
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -102,7 +102,7 @@
 # QUERY ALL TENANTS
 - name: Query all tenants (normal mode)
   aci_rest: &tenant_query_all
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -121,7 +121,7 @@
 # QUERY A TENANT
 - name: Query our tenant
   aci_rest: &tenant_query
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
