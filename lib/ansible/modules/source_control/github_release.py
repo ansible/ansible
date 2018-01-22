@@ -119,8 +119,8 @@ RETURN = '''
 create_release:
     description:
     - Version of the created release
-    - "If specified release version already exists, then State is unchanged, version added 2.5"
-    - "If specified release version already exists, then State is skipped, version previous to 2.5"
+    - "For Ansible version 2.5 and later, if specified release version already exists, then State is unchanged"
+    - "For Ansible versions prior to 2.5, if specified release version already exists, then State is skipped"
     type: string
     returned: success
     sample: 1.1.0
