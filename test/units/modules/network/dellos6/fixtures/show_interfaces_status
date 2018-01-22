@@ -1,0 +1,48 @@
+Port      Description     Duplex Speed   Neg  Link   Flow  M  VLAN
+                                              State  Ctrl
+--------- --------------- ------ ------- ---- ------ ----- -- -------------------
+Te1/0/1   connected to sp Full   1000    Auto Up     Off   T  (1),2-4096
+Te1/0/2   to_NIC_1        Full   1000    Auto Up     Off   A  99
+Te1/0/3                   N/A    Unknown Auto Down   Off   A  1
+Te1/0/4                   N/A    Unknown Auto Down   Off   A  1
+Te1/0/5                   N/A    Unknown Auto Down   Off   A  1
+Te1/0/6                   N/A    Unknown Auto Down   Off   A  1
+Te1/0/7                   N/A    Unknown Auto Down   Off   A  1
+Te1/0/8                   N/A    Unknown Auto Down   Off   A  1
+Te1/0/9                   N/A    Unknown Auto Down   Off   A  2
+Te1/0/10                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/11                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/12                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/13                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/14                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/15                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/16                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/17                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/18                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/19                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/20                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/21                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/22                  N/A    Unknown Auto Down   Off   A  100
+Te1/0/23                  N/A    Unknown Auto Down   Off   A  1
+Te1/0/24                  N/A    Unknown Auto Down   Off   A  1
+Fo1/1/1                   N/A    N/A     N/A  Detach N/A
+Fo1/1/2                   Full   40000   Off  Down   Off   A  1
+Te1/1/1                   N/A    N/A     N/A  Detach N/A
+Te1/1/2                   N/A    N/A     N/A  Detach N/A
+Te1/1/3                   N/A    N/A     N/A  Detach N/A
+Te1/1/4                   N/A    N/A     N/A  Detach N/A
+Te1/1/5                   N/A    N/A     N/A  Detach N/A
+Te1/1/6                   N/A    N/A     N/A  Detach N/A
+Te1/1/7                   N/A    N/A     N/A  Detach N/A
+Te1/1/8                   N/A    N/A     N/A  Detach N/A
+
+Oob  Type                            Link
+                                     State
+---  ------------------------------  -----
+oob  Out-Of-Band                     Up
+
+
+Port    Description                    Link    M  VLAN
+Channel                                State
+------- ------------------------------ ------- -- -------------------
+                                                   
