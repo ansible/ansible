@@ -184,6 +184,27 @@ EXAMPLES = '''
       server_name: sqlcrudtest-5961
       name: testdb
       location: eastus
+
+  - name: Restore SQL Database
+    azure_rm_sqldatabase:
+      resource_group: sqlcrudtest-4799
+      server_name: sqlcrudtest-5961
+      name: restoreddb
+      location: eastus
+      create_mode: restore
+      restorable_dropped_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/s
+                                      ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
+
+  - name: Create SQL Database in Copy Mode
+    azure_rm_sqldatabase:
+      resource_group: sqlcrudtest-4799
+      server_name: sqlcrudtest-5961
+      name: copydb
+      location: eastus
+      create_mode: copy
+      source_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/servers/tests
+                          vr/databases/testdb"
+
 '''
 
 RETURN = '''
