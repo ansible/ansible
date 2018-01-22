@@ -30,7 +30,8 @@ options:
   format:
     description:
       - The type of compression to use.
-    choices: [ bz2, gz, tar, zip ]
+      - Support for xz was added in version 2.5.
+    choices: [ bz2, gz, tar, xz, zip ]
     default: gz
   dest:
     description:
@@ -49,8 +50,9 @@ options:
 author:
 - Ben Doherty (@bendoh)
 notes:
-    - requires tarfile, zipfile, gzip, and bzip2 packages on target host
-    - can produce I(gzip), I(bzip2) and I(zip) compressed files or archives
+    - requires tarfile, zipfile, gzip and bzip2 packages on target host
+    - requires lzma or backports.lzma if using xz format
+    - can produce I(gzip), I(bzip2), I(lzma) and I(zip) compressed files or archives
 '''
 
 EXAMPLES = '''
@@ -133,6 +135,7 @@ import bz2
 import filecmp
 import glob
 import gzip
+import io
 import os
 import re
 import shutil
@@ -142,13 +145,27 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY3
+
+if PY3:
+    try:
+        import lzma
+        HAS_LZMA = True
+    except ImportError:
+        HAS_LZMA = False
+else:
+    try:
+        from backports import lzma
+        HAS_LZMA = True
+    except ImportError:
+        HAS_LZMA = False
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(type='list', required=True),
-            format=dict(type='str', default='gz', choices=['bz2', 'gz', 'tar', 'zip']),
+            format=dict(type='str', default='gz', choices=['bz2', 'gz', 'tar', 'xz', 'zip']),
             dest=dict(type='path'),
             exclude_path=dict(type='list'),
             remove=dict(type='bool', default=False),
@@ -174,6 +191,10 @@ def main():
     # Simple or archive file compression (inapplicable with 'zip' since it's always an archive)
     archive = False
     successes = []
+
+    # Fail early
+    if not HAS_LZMA and format == 'xz':
+        module.fail_json(msg="lzma or backports.lzma is required when using xz format.")
 
     for path in paths:
         path = os.path.expanduser(os.path.expandvars(path))
@@ -251,7 +272,7 @@ def main():
     # No source files were found but the named archive exists: are we 'compress' or 'archive' now?
     if len(missing) == len(expanded_paths) and dest and os.path.exists(dest):
         # Just check the filename to know if it's an archive or simple compressed file
-        if re.search(r'(\.tar|\.tar\.gz|\.tgz|.tbz2|\.tar\.bz2|\.zip)$', os.path.basename(dest), re.IGNORECASE):
+        if re.search(r'(\.tar|\.tar\.gz|\.tgz|\.tbz2|\.tar\.bz2|\.tar\.xz|\.zip)$', os.path.basename(dest), re.IGNORECASE):
             state = 'archive'
         else:
             state = 'compress'
@@ -286,6 +307,12 @@ def main():
                     # Easier compression using tarfile module
                     elif format == 'gz' or format == 'bz2':
                         arcfile = tarfile.open(dest, 'w|' + format)
+
+                    # python3 tarfile module allows xz format but for python2 we have to create the tarfile
+                    # in memory and then compress it with lzma.
+                    elif format == 'xz':
+                        arcfileIO = io.BytesIO()
+                        arcfile = tarfile.open(fileobj=arcfileIO, mode='w')
 
                     # Or plain tar archiving
                     elif format == 'tar':
@@ -341,6 +368,11 @@ def main():
                 if arcfile:
                     arcfile.close()
                     state = 'archive'
+
+                if format == 'xz':
+                    with lzma.open(dest, 'wb') as f:
+                        f.write(arcfileIO.getvalue())
+                    arcfileIO.close()
 
                 if errors:
                     module.fail_json(msg='Errors when writing archive at %s: %s' % (dest, '; '.join(errors)))
@@ -402,6 +434,8 @@ def main():
                             f_out = gzip.open(dest, 'wb')
                         elif format == 'bz2':
                             f_out = bz2.BZ2File(dest, 'wb')
+                        elif format == 'xz':
+                            f_out = lzma.LZMAFile(dest, 'wb')
                         else:
                             raise OSError("Invalid format")
 
@@ -446,6 +480,7 @@ def main():
                      missing=missing,
                      expanded_paths=expanded_paths,
                      expanded_exclude_paths=expanded_exclude_paths)
+
 
 if __name__ == '__main__':
     main()
