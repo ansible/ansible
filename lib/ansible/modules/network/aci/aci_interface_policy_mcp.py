@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_intf_policy_mcp
+module: aci_interface_policy_mcp
 short_description: Manage MCP interface policies on Cisco ACI fabrics (mcp:IfPol)
 description:
 - Manage MCP interface policies on Cisco ACI fabrics.
@@ -47,7 +47,7 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_mcp:
+- aci_interface_policy_mcp:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
