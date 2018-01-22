@@ -85,7 +85,7 @@ class WapiBase(object):
             provider = module.params['provider'] or {}
             self.connector = get_connector(**provider)
         except Exception as exc:
-           module.fail_json(msg=to_text(exc))
+            module.fail_json(msg=to_text(exc))
 
     def __getattr__(self, name):
         try:

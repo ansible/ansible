@@ -51,10 +51,6 @@ EXAMPLES = """
   set_fact:
     networkviews: "{{ lookup('nios', 'networkview', provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
-- name: fetch all host records and include extended attributes
-  set_fact:
-    host_records: "{{ lookup('nios', 'record:host', return_fields=['extattrs', 'name', 'view', 'comment'], provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
-
 - name: fetch the default dns view
   set_fact:
     dns_views: "{{ lookup('nios', 'view', filter={'view': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
@@ -63,6 +59,11 @@ EXAMPLES = """
 # export INFOBLOX_HOST=nios01
 # export INFOBLOX_USERNAME=admin
 # export INFOBLOX_PASSWORD=admin
+
+- name: fetch all host records and include extended attributes
+  set_fact:
+    host_records: "{{ lookup('nios', 'record:host', return_fields=['extattrs', 'name', 'view', 'comment']}) }}"
+
 
 - name: use env variables to pass credentials
   set_fact:
@@ -108,11 +109,3 @@ class LookupModule(LookupBase):
         provider = kwargs.pop('provider', {})
         connector = get_connector(**provider)
         return connector.get_object(obj_type, filter_data, return_fields=return_fields)
-
-
-
-
-
-
-
-
