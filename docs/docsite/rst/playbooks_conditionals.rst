@@ -6,7 +6,7 @@ Conditionals
 
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), or previous task result.
 In some cases, the values of variables may depend on other variables.
-Further, additional groups can be created to manage hosts based on whether the hosts match other criteria. This topic covers how conditionals are used in playbooks. 
+Additional groups can be created to manage hosts based on whether the hosts match other criteria. This topic covers how conditionals are used in playbooks.
 
 .. note:: There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons.
 
@@ -319,6 +319,69 @@ You may check the registered variable's string contents for emptiness::
             debug: msg="Directory is empty"
             when: contents.stdout == ""
 
+Commonly Used Facts
+```````````````````
+
+The following Facts (see :ref:`_vars_and_facts`) are frequently used in Conditionals - see above for examples.
+
+.. _ansible_distribution:
+
+ansible_distribution
+--------------------
+
+Possible values::
+
+    Alpine
+    Altlinux
+    Amazon
+    Archlinux
+    ClearLinux
+    Coreos
+    Debian
+    Gentoo
+    Mandriva
+    NA
+    OpenWrt
+    OracleLinux
+    RedHat
+    Slackware
+    SMGL
+    SUSE
+    VMwareESX
+
+.. See `OSDIST_LIST`
+
+.. _ansible_distribution_major_version:
+
+ansible_distribution_major_version
+----------------------------------
+
+This will be the major version of the operating system. For example, the value will be `16` for Ubuntu 16.04.
+
+.. _ansible_os_family:
+
+ansible_os_family
+-----------------
+
+Possible values::
+
+    AIX
+    Alpine
+    Altlinux
+    Archlinux
+    Darwin
+    Debian
+    FreeBSD
+    Gentoo
+    HP-UX
+    Mandrake
+    RedHat
+    SGML
+    Slackware
+    Solaris
+    Suse
+
+.. See `OS_FAMILY_MAP`
 
 .. seealso::
 
