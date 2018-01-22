@@ -53,15 +53,28 @@ EXAMPLES = """
 
 - name: fetch all host records and include extended attributes
   set_fact:
-    host_records: "{{ lookup('nios', 'record:host', return_fields=['extattrs', 'name', 'view', 'comment']) }}"
+    host_records: "{{ lookup('nios', 'record:host', return_fields=['extattrs', 'name', 'view', 'comment'], provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
 - name: fetch the default dns view
   set_fact:
-    dns_views: "{{ lookup('nios', 'viewt', filter={'view': 'default'}) }}"
+    dns_views: "{{ lookup('nios', 'view', filter={'view': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+
+# all of the examples below use credentials that are  set using env variables
+# export INFOBLOX_HOST=nios01
+# export INFOBLOX_USERNAME=admin
+# export INFOBLOX_PASSWORD=admin
 
 - name: use env variables to pass credentials
   set_fact:
     networkviews: "{{ lookup('nios', 'networkview') }}"
+
+- name: get a host record
+  set_fact:
+    host: "{{ lookup('nios', 'record:host', filter={'name': 'hostname.ansible.com'}) }}
+
+- name: get the authoritative zone from a non default dns view
+  set_fact:
+    host: "{{ lookup('nios', 'zone_auth', filter={'fqdn': 'ansible.com', 'view': 'ansible-dns'}) }}"
 """
 
 RETURN = """
