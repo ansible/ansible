@@ -461,10 +461,14 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             self.results['changed'] = True
             self.results['msg'] = 'deployment succeeded'
         else:
-            if self._get_resource_group(self.resource_group_name):
-                self.destroy_resource_group()
-                self.results['changed'] = True
-                self.results['msg'] = "deployment deleted"
+            try:
+                if self.get_resource_group(self.resource_group_name):
+                    self.destroy_resource_group()
+                    self.results['changed'] = True
+                    self.results['msg'] = "deployment deleted"
+            except CloudError:
+                # resource group does not exist
+                pass
 
         return self.results
 
@@ -492,9 +496,13 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             )
 
         if self.append_tags and self.tags:
-            rg = self._get_resource_group(self.resource_group_name)
-            if rg and rg.tags:
-                self.tags = dict(self.tags, **rg.tags)
+            try:
+                rg = self.get_resource_group(self.resource_group_name)
+                if rg.tags:
+                    self.tags = dict(self.tags, **rg.tags)
+            except CloudError:
+                # resource group does not exist
+                pass
 
         params = self.rm_models.ResourceGroup(location=self.location, tags=self.tags)
 
@@ -542,20 +550,6 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             else:
                 self.fail("Delete resource group and deploy failed with status code: %s and message: %s" %
                           (e.status_code, e.message))
-
-    def _get_resource_group(self, resource_group):
-        '''
-        Return requested resource group or None
-
-        :param resource_group: string. Name of a resource group.
-        :return: resource group object
-        :rtype: :class:`ResourceGroup
-         <azure.mgmt.resource.resources.models.ResourceGroup>`
-        '''
-        try:
-            return self.rm_client.resource_groups.get(resource_group)
-        except CloudError:
-            return None
 
     def _get_failed_nested_operations(self, current_operations):
         new_operations = []
