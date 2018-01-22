@@ -110,7 +110,7 @@
   - name: assert changed is True
     assert:
       that:
-        - result|success
+        - result is success
 
 #   # ============================================================
 #   - name: deleting an app that has environments that exist with terminate_by_force True
