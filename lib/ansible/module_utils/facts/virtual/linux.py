@@ -160,6 +160,8 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'uml'
                 elif re.match('^model name.*UML', line):
                     virtual_facts['virtualization_type'] = 'uml'
+                elif re.match('^machine.*CHRP IBM pSeries .emulated by qemu.', line):
+                    virtual_facts['virtualization_type'] = 'kvm'
                 elif re.match('^vendor_id.*PowerVM Lx86', line):
                     virtual_facts['virtualization_type'] = 'powervm_lx86'
                 elif re.match('^vendor_id.*IBM/S390', line):
