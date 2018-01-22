@@ -92,7 +92,7 @@ options:
   subdomain_access:
     description:
       - Defines whether to allow subdomains to use networks dedicated to their parent domain(s).
-      - Should be used with C(acl_type=Domain).
+      - Should be used with C(acl_type=domain).
       - Only considered on create.
     type: bool
     version_added: "2.5"
