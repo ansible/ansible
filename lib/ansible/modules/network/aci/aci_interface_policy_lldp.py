@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_intf_policy_lldp
+module: aci_interface_policy_lldp
 short_description: Manage LLDP interface policies on Cisco ACI fabrics (lldp:IfPol)
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
@@ -54,7 +54,7 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_intf_policy_lldp:
+- aci_interface_policy_lldp:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'

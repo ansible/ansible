@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_intf_policy_port_security
+module: aci_interface_policy_port_security
 short_description: Manage port security on Cisco ACI fabrics (l2:PortSecurityPol)
 description:
 - Manage port security on Cisco ACI fabrics.
@@ -46,7 +46,7 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_intf_policy_port_security:
+- aci_interface_policy_port_security:
     hostname: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'

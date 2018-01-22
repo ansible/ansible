@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_intf_policy_fc
+module: aci_interface_policy_fc
 short_description: Manage Fibre Channel interface policies on Cisco ACI fabrics (fc:IfPol)
 description:
 - Manage ACI Fiber Channel interface policies on Cisco ACI fabrics.
@@ -46,7 +46,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- aci_intf_policy_fc:
+- aci_interface_policy_fc:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'

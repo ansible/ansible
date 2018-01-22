@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_intf_policy_l2
+module: aci_interface_policy_l2
 short_description: Manage Layer 2 interface policies on Cisco ACI fabrics (l2:IfPol)
 description:
 - Manage Layer 2 interface policies on Cisco ACI fabrics.
@@ -56,7 +56,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- aci_intf_policy_l2:
+- aci_interface_policy_l2:
     hostname: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
