@@ -43,7 +43,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -52,7 +52,7 @@ EXAMPLES = r'''
 
 - name: Remove a tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -60,7 +60,7 @@ EXAMPLES = r'''
 
 - name: Query a tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -68,7 +68,7 @@ EXAMPLES = r'''
 
 - name: Query all tenants
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query

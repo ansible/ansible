@@ -102,17 +102,16 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_filter_entry:
-    action: "{{ action }}"
+    host: "{{ inventory_hostname }}"
+    username: "{{ user }}"
+    password: "{{ pass }}"
+    state: "{{ state }}"
     entry: "{{ entry }}"
     tenant: "{{ tenant }}"
     ether_name: "{{  ether_name }}"
     icmp_msg_type: "{{ icmp_msg_type }}"
     filter: "{{ filter }}"
     descr: "{{ descr }}"
-    host: "{{ inventory_hostname }}"
-    username: "{{ user }}"
-    password: "{{ pass }}"
-    protocol: "{{ protocol }}"
 '''
 
 RETURN = ''' # '''

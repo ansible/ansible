@@ -47,7 +47,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Associating an interface selector profile to a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name
@@ -56,7 +56,7 @@ EXAMPLES = r'''
 
 - name: Remove an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name
@@ -65,7 +65,7 @@ EXAMPLES = r'''
 
 - name: Query an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
-    hostname: apic
+    host: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name

@@ -10,7 +10,7 @@
 
 - name: create a snapshot - creation works
   aci_config_snapshot: &create_snapshot
-    hostname: "{{ aci_hostname }}"
+    host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
     validate_certs: '{{ aci_validate_certs | default(false) }}'

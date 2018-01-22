@@ -68,7 +68,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: adding a switch policy leaf profile selector associated Node Block range (w/ policy group)
   aci_switch_leaf_selector:
-    hostname: apic
+    host: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name
@@ -81,7 +81,7 @@ EXAMPLES = r'''
 
 - name: adding a switch policy leaf profile selector associated Node Block range (w/o policy group)
   aci_switch_leaf_selector:
-    hostname: apic
+    host: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name
@@ -93,7 +93,7 @@ EXAMPLES = r'''
 
 - name: Removing a switch policy leaf profile selector
   aci_switch_leaf_selector:
-    hostname: apic
+    host: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name
@@ -102,7 +102,7 @@ EXAMPLES = r'''
 
 - name: Querying a switch policy leaf profile selector
   aci_switch_leaf_selector:
-    hostname: apic
+    host: apic
     username: someusername
     password: somepassword
     leaf_profile: sw_name

@@ -54,7 +54,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a certificate to user
   aci_aaa_user_certificate:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     user: admin
@@ -64,7 +64,7 @@ EXAMPLES = r'''
 
 - name: Remove a certificate of a user
   aci_aaa_user_certificate:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     user: admin
@@ -73,7 +73,7 @@ EXAMPLES = r'''
 
 - name: Query a certificate of a user
   aci_aaa_user_certificate:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     user: admin
@@ -82,7 +82,7 @@ EXAMPLES = r'''
 
 - name: Query all certificates of a user
   aci_aaa_user_certificate:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     user: admin

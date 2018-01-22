@@ -55,7 +55,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_interface_policy_lldp:
-    hostname: '{{ hostname }}'
+    host: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     lldp_policy: '{{ lldp_policy }}'

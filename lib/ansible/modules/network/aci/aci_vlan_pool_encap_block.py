@@ -69,7 +69,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new VLAN encap block
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -79,7 +79,7 @@ EXAMPLES = r'''
 
 - name: Remove a VLAN encap block
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -89,7 +89,7 @@ EXAMPLES = r'''
 
 - name: Query a VLAN encap block
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -99,7 +99,7 @@ EXAMPLES = r'''
 
 - name: Query a VLAN pool for encap blocks
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -107,7 +107,7 @@ EXAMPLES = r'''
 
 - name: Query all VLAN encap blocks
   aci_vlan_pool_encap_block:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query

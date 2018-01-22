@@ -50,13 +50,13 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_tenant_span_src_group_to_dst_group:
+    host:"{{ inventory_hostname }}"
+    username:"{{ username }}"
+    password:"{{ password }}"
     tenant:"{{ tenant }}"
     src_group:"{{ src_group }}"
     dst_group:"{{ dst_group }}"
     description:"{{ description }}"
-    host:"{{ inventory_hostname }}"
-    username:"{{ username }}"
-    password:"{{ password }}"
 '''
 
 RETURN = r'''

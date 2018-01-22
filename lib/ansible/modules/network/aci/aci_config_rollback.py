@@ -76,7 +76,7 @@ EXAMPLES = r'''
 ---
 - name: Create a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: present
@@ -84,7 +84,7 @@ EXAMPLES = r'''
 
 - name: Query Existing Snapshots
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -92,7 +92,7 @@ EXAMPLES = r'''
 
 - name: Compare Snapshot Files
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: preview
@@ -103,7 +103,7 @@ EXAMPLES = r'''
 
 - name: Rollback Configuration
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: rollback
@@ -113,7 +113,7 @@ EXAMPLES = r'''
 
 - name: Rollback Configuration
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: rollback
@@ -225,7 +225,7 @@ def main():
         aci.post_config()
 
     elif state == 'preview':
-        aci.result['url'] = '%(protocol)s://%(hostname)s/mqapi2/snapshots.diff.xml' % module.params
+        aci.result['url'] = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
         aci.result['filter_string'] = (
             '?s1dn=uni/backupst/snapshots-[uni/fabric/configexp-%(export_policy)s]/snapshot-%(snapshot)s&'
             's2dn=uni/backupst/snapshots-[uni/fabric/configexp-%(compare_export_policy)s]/snapshot-%(compare_snapshot)s'
