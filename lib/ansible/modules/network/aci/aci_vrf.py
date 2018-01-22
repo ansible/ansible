@@ -58,7 +58,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new VRF to a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
@@ -70,7 +70,7 @@ EXAMPLES = r'''
 
 - name: Remove a VRF for a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
@@ -79,7 +79,7 @@ EXAMPLES = r'''
 
 - name: Query a VRF of a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
@@ -88,7 +88,7 @@ EXAMPLES = r'''
 
 - name: Query all VRFs
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query

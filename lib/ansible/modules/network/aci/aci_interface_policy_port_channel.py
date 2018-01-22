@@ -101,7 +101,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_interface_policy_port_channel:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     port_channel: '{{ port_channel }}'

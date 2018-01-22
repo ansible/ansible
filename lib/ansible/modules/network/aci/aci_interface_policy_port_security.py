@@ -47,7 +47,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_interface_policy_port_security:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     port_security: '{{ port_security }}'

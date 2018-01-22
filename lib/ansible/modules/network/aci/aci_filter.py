@@ -52,7 +52,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new filter to a tenant
   aci_filter:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     filter: web_filter
@@ -62,7 +62,7 @@ EXAMPLES = r'''
 
 - name: Remove a filter for a tenant
   aci_filter:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     filter: web_filter
@@ -71,7 +71,7 @@ EXAMPLES = r'''
 
 - name: Query a filter of a tenant
   aci_filter:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     filter: web_filter
@@ -80,7 +80,7 @@ EXAMPLES = r'''
 
 - name: Query all filters for a tenant
   aci_filter:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production

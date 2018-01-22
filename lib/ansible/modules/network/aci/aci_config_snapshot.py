@@ -69,7 +69,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Create a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: present
@@ -79,14 +79,14 @@ EXAMPLES = r'''
 
 - name: Query all Snapshots
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
 - name: Query Snapshots associated with a particular Export Policy
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -94,7 +94,7 @@ EXAMPLES = r'''
 
 - name: Delete a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: absent

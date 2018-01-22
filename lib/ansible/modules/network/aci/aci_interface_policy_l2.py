@@ -57,7 +57,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_interface_policy_l2:
-    hostname: '{{ hostname }}'
+    host: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     l2_policy: '{{ l2_policy }}'

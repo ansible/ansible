@@ -65,7 +65,7 @@ notes:
 EXAMPLES = r'''
 - name: Add a tenant using certifcate authentication
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     method: post
@@ -75,7 +75,7 @@ EXAMPLES = r'''
 
 - name: Add a tenant using inline YAML
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     validate_certs: no
@@ -90,7 +90,7 @@ EXAMPLES = r'''
 
 - name: Add a tenant using a JSON string
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     validate_certs: no
@@ -109,7 +109,7 @@ EXAMPLES = r'''
 
 - name: Add a tenant using an XML string
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     private_key: pki/{{ aci_username}}.key
     validate_certs: no
@@ -120,7 +120,7 @@ EXAMPLES = r'''
 
 - name: Get tenants using password authentication
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     method: get
@@ -129,7 +129,7 @@ EXAMPLES = r'''
 
 - name: Configure contracts
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     method: post
@@ -139,7 +139,7 @@ EXAMPLES = r'''
 
 - name: Register leaves and spines
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     validate_certs: no
@@ -155,7 +155,7 @@ EXAMPLES = r'''
 
 - name: Wait for all controllers to become ready
   aci_rest:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ aci_username }}'
     private_key: pki/admin.key
     validate_certs: no
@@ -370,7 +370,7 @@ def main():
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
     # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
-    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path.lstrip('/')
+    aci.result['url'] = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
     if aci.params['method'] != 'get':
         path += '?rsp-subtree=modified'
         aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})

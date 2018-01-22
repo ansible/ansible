@@ -63,7 +63,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_subject_filter_binding:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     tenant: '{{ tenant }}'

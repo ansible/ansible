@@ -12,7 +12,7 @@
 # CLEAN ENVIRONMENT
 - name: Remove leaf profile
   aci_switch_policy_leaf_profile: &aci_switch_policy_leaf_profile_absent
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -25,7 +25,7 @@
 # ADD LEAF PROFILE
 - name: Add switch policy leaf profile (check_mode)
   aci_switch_policy_leaf_profile: &aci_switch_policy_leaf_profile_present
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -109,7 +109,7 @@
 # QUERY ALL LEAF PROFILES
 - name: Query all profiles (check_mode)
   aci_switch_policy_leaf_profile: &aci_switch_policy_leaf_profile_query
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'

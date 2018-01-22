@@ -11,7 +11,7 @@
 # CLEAN ENVIRONMENT
 - name: Add tenant
   aci_tenant:
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -22,7 +22,7 @@
 
 - name: Remove filter
   aci_filter: &filter_absent
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -35,7 +35,7 @@
 # ADD FILTER
 - name: Add filter (check_mode)
   aci_filter: &filter_present
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'
@@ -122,7 +122,7 @@
 # QUERY ALL FILTERS
 - name: Query all filters (check_mode)
   aci_filter: &filter_query
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
     validate_certs: '{{ aci_validate_certs | default(false) }}'

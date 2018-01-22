@@ -114,7 +114,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: creating a Port Channel (PC) Interface Policy Group
   aci_interface_policy_leaf_policy_group:
-    hostname: apic
+    host: apic
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
@@ -126,7 +126,7 @@ EXAMPLES = r'''
 
 - name: creating a Virtual Port Channel (VPC) Interface Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
-    hostname: apic
+    host: apic
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
@@ -137,7 +137,7 @@ EXAMPLES = r'''
 
 - name: creating a Leaf Access Port Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
-    hostname: apic
+    host: apic
     username: yourusername
     password: yourpassword
     policy_group: policygroupname
@@ -148,7 +148,7 @@ EXAMPLES = r'''
 
 - name: deleting an Interface policy Leaf Policy Group
   aci_interface_policy_leaf_policy_group:
-    hostname: apic
+    host: apic
     username: yourusername
     password: yourpassword
     policy_group: policygroupname

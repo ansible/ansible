@@ -63,7 +63,7 @@ except ImportError:
 
 def aci_argument_spec():
     return dict(
-        hostname=dict(type='str', required=True, aliases=['host']),
+        host=dict(type='str', required=True, aliases=['hostname']),
         port=dict(type='int', required=False),
         username=dict(type='str', default='admin', aliases=['user']),
         password=dict(type='str', no_log=True),
@@ -216,9 +216,9 @@ class ACIModule(object):
 
         # Perform login request
         if 'port' in self.params and self.params['port'] is not None:
-            url = '%(protocol)s://%(hostname)s:%(port)s/api/aaaLogin.json' % self.params
+            url = '%(protocol)s://%(host)s:%(port)s/api/aaaLogin.json' % self.params
         else:
-            url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % self.params
+            url = '%(protocol)s://%(host)s/api/aaaLogin.json' % self.params
         payload = {'aaaUser': {'attributes': {'name': self.params['username'], 'pwd': self.params['password']}}}
         resp, auth = fetch_url(self.module, url,
                                data=json.dumps(payload),
@@ -281,9 +281,9 @@ class ACIModule(object):
         self.result['path'] = path
 
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '%(protocol)s://%(hostname)s:%(port)s/' % self.params + path.lstrip('/')
+            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
-            self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
+            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
@@ -319,9 +319,9 @@ class ACIModule(object):
         self.result['path'] = path
 
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '%(protocol)s://%(hostname)s:%(port)s/' % self.params + path.lstrip('/')
+            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
-            self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
+            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
@@ -395,9 +395,9 @@ class ACIModule(object):
 
         self.result['path'] = path
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['hostname'], self.module.params['port'], path)
+            self.result['url'] = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['host'], self.module.params['port'], path)
         else:
-            self.result['url'] = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['hostname'], path)
+            self.result['url'] = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['host'], path)
         self.result['filter_string'] = filter_string
 
     def _construct_url_1(self, obj, child_includes):
