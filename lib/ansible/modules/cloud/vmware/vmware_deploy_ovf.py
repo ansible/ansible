@@ -172,7 +172,7 @@ class TarFileProgressReader(tarfile.ExFileObject):
 
 
 class VMDKUploader(Thread):
-    def __init__(self, vmdk, url, validate_certs=True, tarinfo=None):
+    def __init__(self, vmdk, url, validate_certs=True, tarinfo=None, create=False):
         Thread.__init__(self)
 
         self.vmdk = vmdk
@@ -189,12 +189,39 @@ class VMDKUploader(Thread):
         self.f = None
         self.e = None
 
+        self._create = create
+
     @property
     def bytes_read(self):
         try:
             return self.f.bytes_read
         except AttributeError:
             return 0
+
+    def _request_opts(self):
+        '''
+        Requests for vmdk files differ from other file types. Build the request options here to handle that
+        '''
+        headers = {
+            'Content-Length': self.size
+        }
+
+        if self._create:
+            # Non-VMDK
+            method = 'PUT'
+            headers['Overwrite'] = 't'
+        else:
+            # VMDK
+            method = 'POST'
+            headers['Content-Type'] = 'application/x-vnd.vmware-streamVmdk'
+
+        return {
+            'method': method,
+            'headers': headers,
+        }
+
+    def _open_url(self):
+        open_url(self.url, data=self.f, validate_certs=self.validate_certs, **self._request_opts())
 
     def run(self):
         headers = {
@@ -205,13 +232,13 @@ class VMDKUploader(Thread):
         if self.tarinfo:
             try:
                 with TarFileProgressReader(self.vmdk, self.tarinfo) as self.f:
-                    open_url(self.url, data=self.f, headers=headers, method='POST', validate_certs=self.validate_certs)
+                    self._open_url()
             except Exception:
                 self.e = sys.exc_info()
         else:
             try:
                 with ProgressReader(self.vmdk, 'rb') as self.f:
-                    open_url(self.url, data=self.f, headers=headers, method='POST', validate_certs=self.validate_certs)
+                    self._open_url()
             except Exception:
                 self.e = sys.exc_info()
 
@@ -386,7 +413,8 @@ class VMwareDeployOvf:
                     vmdk,
                     vmdk_post_url,
                     self.params['validate_certs'],
-                    tarinfo=vmdk_tarinfo
+                    tarinfo=vmdk_tarinfo,
+                    create=file_item.create
                 )
             )
 
