@@ -44,8 +44,9 @@ DOCUMENTATION = '''
           description: A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
               and cn-north-1.
         hostnames:
-          description: A list in order of precedence for hostname variables. You can use any of the options specified in
-              U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options.)
+          description: A list in order of precedence for hostname variables. You can use the options specified in
+              U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
+              use the syntax tag:Name=Value to use the hostname Name_Value.
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
@@ -56,6 +57,7 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
 simple_config_file:
+
     plugin: aws_ec2
     boto_profile: aws_profile
     regions: # populate inventory with instances in these regions
@@ -67,6 +69,22 @@ simple_config_file:
       instance.group-id: sg-xxxxxxxx
     # ignores 403 errors rather than failing
     strict_permissions: False
+    hostnames:
+      - tag:Name=Tag1,Name=Tag2
+      - dns-name
+
+    # constructed features may be used to create custom groups
+    strict: False
+    keyed_groups:
+      - prefix: arch
+        key: 'Architecture'
+        value: 'x86_64'
+      - prefix: tag
+        key: Tags
+        value:
+          "Key": "Name"
+          "Value": "Test"
+
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -193,22 +211,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.aws_access_key_id = None
         self.aws_security_token = None
 
-    def _get_group_by_tag_values(self, group, instance):
-        '''
-            :param group: The instance attribute to group by
-            :param instance: A named tuple of the instance data retrieved by boto3 describe_instances
-            :return A list of tag keys or tag values or a dict of key:value pairs
-        '''
-        tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
-        if group.startswith('tag:'):
-            return tags
-        elif group.startswith('tag-key'):
-            return list(tags.keys())
-        elif group.startswith('tag-value'):
-            return list(tags.values())
-        else:
-            raise AnsibleError("To group by tags, use 'tag:name=value', 'tag-value=value', or 'tag-key=key'")
-
     def _compile_values(self, obj, attr):
         '''
             :param obj: A list or dict of instance attributes
@@ -252,24 +254,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for attribute in boto_attr_list:
             instance_value = self._compile_values(instance_value, attribute)
         return instance_value
-
-    def _get_group_by_name_and_value(self, group_by):
-        '''
-            :param group_by A list of filters (and optional corresponding values)
-            :return The group_by name and the group_by value (if one is provided)
-        '''
-        if not group_by:
-            yield 'aws_ec2', None
-
-        for group in group_by:
-            if group.startswith('tag:'):
-                group_name = 'tag:'
-                group_value = group.split('tag:', 1)[1]
-            elif '=' in group:
-                group_name, group_value = group.split('=')
-            else:
-                group_name, group_value = group, 'all'
-            yield group_name, group_value
 
     def _get_credentials(self):
         '''
@@ -319,8 +303,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 paginator = connection.get_paginator('describe_instances')
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
-                if reservations:
-                    instances = reservations[0].get('Instances', [])
+                instances = []
+                for r in reservations:
+                    instances.extend(r.get('Instances'))
             except botocore.exceptions.ClientError as e:
                 if e.response['ResponseMetadata']['HTTPStatusCode'] == 403 and not strict_permissions:
                     instances = []
@@ -333,44 +318,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return sorted(all_instances, key=lambda x: x['InstanceId'])
 
-    def _get_tag_value(self, key, instance):
-        tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
-        return tags.get(key)
-
-    def _get_tag_key(self, value, instance):
-        tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
-        for (k, v) in tags.items():
-            if value == v:
-                return k
-
     def _get_tag_hostname(self, preference, instance):
-        have_hostname = None
-        for key, value in self._get_group_by_name_and_value([preference]):
-            if ',' in value:
-                value = value.split(',')
-            else:
-                value = [value]
-            for v in value:
-                if preference.startswith('tag-key') or preference.startswith('tag-value'):
-                    found_hostname = self._get_group_by_tag_values('%s=%s' % (key, v), instance)
-                    for host in found_hostname:
-                        if preference.startswith('tag-key'):
-                            hostname = to_text(v) + "_" + to_text(self._get_tag_value(v, instance))
-                        elif preference.startswith('tag-value'):
-                            hostname = to_text(v) + "_" + to_text(self._get_tag_key(v, instance))
-                        if hostname:
-                            have_hostname = found_hostname
-                            break
-
-                if preference.startswith('tag:'):
-                    tag_name, tag_value = v.split('=')
-                    found_hostname = self._get_group_by_tag_values("%s%s" % (key, v), instance)
-                    if found_hostname.get(tag_name) == tag_value:
-                        hostname = to_text(v) + "_" + to_text(self._get_tag_key(v, instance))
-                        if hostname:
-                            have_hostname = found_hostname
-                            break
-        return have_hostname
+        tag_hostnames = preference.split('tag:', 1)[1]
+        if ',' in tag_hostnames:
+            tag_hostnames = tag_hostnames.split(',')
+        else:
+            tag_hostnames = [tag_hostnames]
+        for v in tag_hostnames:
+            tag_name, tag_value = v.split('=')
+            tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
+            if tags.get(tag_name) == tag_value:
+                return to_text(tag_name) + "_" + to_text(tag_value)
+        return None
 
     def _get_hostname(self, instance, hostnames):
         '''
@@ -384,6 +343,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         hostname = None
         for preference in hostnames:
             if 'tag' in preference:
+                if not preference.startswith('tag:'):
+                    raise AnsibleError("To name a host by tags name_value, use 'tag:name=value'.")
                 hostname = self._get_tag_hostname(preference, instance)
             else:
                 hostname = self._get_boto_attr_chain(preference, instance)

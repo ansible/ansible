@@ -122,14 +122,6 @@ def test_get_boto_attr_chain():
     assert inv._get_boto_attr_chain('network-interface.addresses.private-ip-address', instance) == "098.76.54.321"
 
 
-def test_get_group_by_name_and_value():
-    inv = InventoryModule()
-    groups_to_make = ["tag:ansible=test", "instance-type=t2.micro"]
-    group_generator = inv._get_group_by_name_and_value(groups_to_make)
-    formatted_groups_to_make = sorted([(group_name, group_value) for group_name, group_value in group_generator])
-    assert formatted_groups_to_make == [('instance-type', 't2.micro'), ('tag:', 'ansible=test')]
-
-
 def test_boto3_conn():
     inv = InventoryModule()
     inv._options = {"boto_profile": "first_precedence",
