@@ -1,0 +1,57 @@
+---
+- debug: msg="START junos netconf/net_l2_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove interface address
+  net_l2_interface:
+    name: ge-0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Setup create vlan 100
+  junos_vlan:
+    vlan_id: 100
+    name: red
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Configure interface in access mode using platform agnostic module
+  net_l2_interface:
+    name: ge-0/0/1
+    description: l2 interface configured by Ansible
+    mode: access
+    access_vlan: red
+    active: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - result.diff.prepared is search("\+ *ge-0/0/1")
+      - result.diff.prepared is search("\+ *description \"l2 interface configured by Ansible\"")
+      - result.diff.prepared is search("\+ *unit 0")
+      - result.diff.prepared is search("\+ *family ethernet-switching")
+      - result.diff.prepared is search("\+ *interface-mode access")
+      - result.diff.prepared is search("\+ *members red")
+
+- name: teardown - remove interface address
+  net_l2_interface:
+    name: ge-0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+
+
+- name: teardown delete vlan 100
+  junos_vlan:
+    vlan_id: 100
+    name: red
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+
+- debug: msg="END junos netconf/net_l3_interface.yaml on connection={{ ansible_connection }}"
