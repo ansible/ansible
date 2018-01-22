@@ -25,6 +25,10 @@ options:
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ["name"]
+  hosts:
+    description:
+    - defines the list of 'ManagedBy' hosts
+    required: false
   force:
     description:
     - Force principal name even if host is not in DNS.
@@ -161,9 +165,8 @@ def ensure(module, client):
             else:
                 for host in hosts:
                     if not module.check_mode:
-                         client.service_add_host(name=name, item=host)
+                        client.service_add_host(name=name, item=host)
                     changed = True
-
 
     else:
         if ipa_service:
@@ -177,11 +180,11 @@ def ensure(module, client):
 def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(
-            krbcanonicalname=dict(type='str', required=True, aliases=['name']),
-            force=dict(type='bool', required=False),
-            hosts=dict(type='list', required=False),
-            state=dict(type='str', required=False, default='present',
-                       choices=['present', 'absent']))
+        krbcanonicalname=dict(type='str', required=True, aliases=['name']),
+        force=dict(type='bool', required=False),
+        hosts=dict(type='list', required=False),
+        state=dict(type='str', required=False, default='present',
+                   choices=['present', 'absent']))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
