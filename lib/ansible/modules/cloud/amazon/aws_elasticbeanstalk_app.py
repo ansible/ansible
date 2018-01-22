@@ -22,15 +22,12 @@ options:
   app_name:
     description:
       - name of the beanstalk application you wish to manage
-    required: false
-    default: null
     aliases: [ 'name' ]
     required: false
     default: null
   state:
     description:
       - whether to ensure the application is present or absent
-    required: false
     default: present
     choices: ['absent','present']
   terminate_by_force:
