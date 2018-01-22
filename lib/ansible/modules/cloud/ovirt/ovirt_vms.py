@@ -176,7 +176,7 @@ options:
         description:
             - Type of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
-        choices: [ desktop, server ]
+        choices: [ desktop, server, high_performance ]
     quota_id:
         description:
             - "Virtual Machine quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine."
@@ -1668,7 +1668,7 @@ def main():
         cpu_cores=dict(type='int'),
         cpu_shares=dict(type='int'),
         cpu_threads=dict(type='int'),
-        type=dict(type='str', choices=['server', 'desktop']),
+        type=dict(type='str', choices=['server', 'desktop', 'high_performance']),
         operating_system=dict(type='str',
                               choices=[
                                   'rhel_6_ppc64', 'other', 'freebsd', 'windows_2003x64', 'windows_10',

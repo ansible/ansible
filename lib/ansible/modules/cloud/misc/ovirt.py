@@ -72,8 +72,8 @@ options:
     aliases: [ vmmem ]
   instance_type:
     description:
-     - Define whether the instance is a server or desktop.
-    choices: [ desktop, server ]
+     - Define whether the instance is a server, desktop or high_performance.
+    choices: [ desktop, server, high_performance ]
     default: server
     aliases: [ vmtype ]
   disk_alloc:
@@ -368,7 +368,7 @@ def main():
             instance_nic=dict(type='str', aliases=['vmnic']),
             instance_network=dict(type='str', default='rhevm', aliases=['vmnetwork']),
             instance_mem=dict(type='str', aliases=['vmmem']),
-            instance_type=dict(type='str', default='server', aliases=['vmtype'], choices=['desktop', 'server']),
+            instance_type=dict(type='str', default='server', aliases=['vmtype'], choices=['desktop', 'server', 'high_performance']),
             disk_alloc=dict(type='str', default='thin', choices=['preallocated', 'thin']),
             disk_int=dict(type='str', default='virtio', choices=['ide', 'virtio']),
             instance_os=dict(type='str', aliases=['vmos']),
@@ -405,7 +405,7 @@ def main():
     vmdisk_alloc = module.params['disk_alloc']  # thin, preallocated
     vmdisk_int = module.params['disk_int']  # disk interface virtio or ide
     vmos = module.params['instance_os']  # Operating System
-    vmtype = module.params['instance_type']  # server or desktop
+    vmtype = module.params['instance_type']  # server, desktop or high_performance
     vmcores = module.params['instance_cores']  # number of cores
     sdomain = module.params['sdomain']  # storage domain to store disk on
     region = module.params['region']  # oVirt Datacenter
