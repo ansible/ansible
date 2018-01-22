@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyrigh (c) 2015, René Moser <mail@renemoser.net>
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
