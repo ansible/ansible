@@ -29,7 +29,8 @@ static ``import_*`` would be inherited by the tasks within.
 
 In 2.4 the separation was incomplete, and did not meet the expectations of this separation. In 2.5, the behaviors have been aligned with the expectations.
 As such, attributes applied to an ``include_*`` task will not be inherited by the tasks within. To achieve a similar outcome to pre-2.5 behaviors, playbooks
-should make use of explicit application of the attribute on the needed tasks, or using blocks to apply the attribute to many tasks.
+should make use of explicit application of the attribute on the needed tasks, or using blocks to apply the attribute to many tasks. Another option is to use
+a static ``import_*`` when possible, instead of a dynamic task.
 
 **OLD** In Ansible 2.4:
 
