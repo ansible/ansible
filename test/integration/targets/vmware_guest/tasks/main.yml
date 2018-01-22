@@ -24,4 +24,5 @@
 - include: mac_address_d1_c1_f0.yml
 - include: disk_type_d1_c1_f0.yml
 - include: create_nw_d1_c1_f0.yml
+- include: delete_vm.yml
 #- include: template_d1_c1_f0.yml
