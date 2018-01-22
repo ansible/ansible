@@ -1,6 +1,18 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
+ALLOW_WORLD_READABLE_TMPFILES:
+  name: Allow world readable temporary files
+  default: False
+  description:
+    - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
+    - It is useful when becoming an unprivileged user.
+  env: []
+  ini:
+  - {key: allow_world_readable_tmpfiles, section: defaults}
+  type: boolean
+  yaml: {key: defaults.allow_world_readable_tmpfiles}
+  version_added: "2.1"
 ANSIBLE_COW_SELECTION:
   name: Cowsay filter selection
   default: default
