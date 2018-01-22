@@ -204,7 +204,6 @@ def ensure(module, client):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            description=dict(type='str', required=False),
             krbcanonicalname=dict(type='str', required=True, aliases=['name']),
             force=dict(type='bool', required=False),
             hosts=dict(type='list', required=False),
