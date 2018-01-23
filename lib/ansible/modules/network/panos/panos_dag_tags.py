@@ -31,7 +31,7 @@ short_description: Create tags for DAG's on PAN-OS devices.
 description:
     - Create the ip address to tag associations. Tags will in turn be used to create DAG's
 author: "Vinay Venkataraghavan @vinayvenkat"
-version_added: "2.4"
+version_added: "2.5"
 requirements:
     - pan-python
     - pan-device
