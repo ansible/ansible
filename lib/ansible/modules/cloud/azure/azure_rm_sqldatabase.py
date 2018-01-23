@@ -44,20 +44,20 @@ options:
         description:
             - Specifies the mode of database creation.
             - "C(default): regular database creation."
-            - "C(copy): creates a database as a C(copy) of an existing database. I(source_database_id) must be specified as the resource ID of the source
+            - "C(copy): creates a database as a copy of an existing database. I(source_database_id) must be specified as the resource ID of the source
               database."
             - "C(online_secondary)/C(non_readable_secondary): creates a database as a (readable or nonreadable) secondary replica of an existing database.
                I(source_database_id) must be specified as the resource ID of the existing primary database."
             - "C(point_in_time_restore): Creates a database by restoring a point in time backup of an existing database. I(source_database_id) must be
                specified as the resource ID of the existing database, and I(restore_point_in_time) must be specified."
             - "C(recovery): Creates a database by restoring a geo-replicated backup. I(source_database_id) must be specified as the recoverable database
-               resource ID to C(restore)."
+               resource ID to restore."
             - "C(restore): Creates a database by restoring a backup of a deleted database. I(source_database_id) must be specified. If I(source_database_id)
                is the database's original resource ID, then I(source_database_deletion_date) must be specified. Otherwise I(source_database_id) must be the
                restorable dropped database resource ID and I(source_database_deletion_date) is ignored. I(restore_point_in_time) may also be specified to
                restore from an earlier point in time."
             - "C(restore_long_term_retention_backup): Creates a database by restoring from a long term retention vault.
-               I(recovery_services_recovery_point_resource_id) must be specified as the C(recovery) point resource ID."
+               I(recovery_services_recovery_point_resource_id) must be specified as the recovery point resource ID."
             - C(copy), C(non_readable_secondary), C(online_secondary) and C(restore_long_term_retention_backup) are not supported for C(data_warehouse) edition.
         choices:
             - 'copy'
