@@ -30,6 +30,7 @@
   with_items: "{{ test_packages }}"
   loop_control:
     loop_var: package_item
+  when: ansible_distribution != "MacOSX"
 
 - name: remove a gem
   gem: name=gist state=absent

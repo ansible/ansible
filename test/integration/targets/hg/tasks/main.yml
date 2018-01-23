@@ -28,6 +28,7 @@
 - name: install mercurial
   package:
     name: mercurial
+  when: ansible_distribution != "MacOSX"
 
 - name: verify that mercurial is installed so this test can continue
   shell: which hg

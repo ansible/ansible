@@ -19,6 +19,7 @@
 - name: install rsync
   package:
     name: rsync
+  when: ansible_distribution != "MacOSX"
 
 - name: cleanup old files
   shell: rm -rf {{output_dir}}/*
