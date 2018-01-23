@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # (c) 2017, Daniel Korn <korndaniel1@gmail.com>
 # (c) 2017, Yaacov Zamir <yzamir@redhat.com>
+# (c) 2018, Raul Sevilla <rsevilla@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -37,7 +38,7 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure']
+    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'OpenStack']
   zone:
     description: The ManageIQ zone name that will manage the provider.
     required: false
@@ -66,6 +67,20 @@ options:
     default: null
     description: Tenant ID. defaults to None.
     version_added: "2.5"
+  keystone_api_version:
+    required: false
+    default: null
+    description: Keystone api version
+    choices: ['v2', 'v3']
+  keystone_v3_domain:
+    required: false
+    default: null
+    description: Keystone v3 domain
+  tenant_mapping_enabled:
+    required: false
+    default: null
+    description: Enable tenant mapping in OpenStack provider
+    choices: [true, false]
 
   provider:
     required: false
@@ -97,7 +112,7 @@ options:
       security_protocol:
         required: false
         default: None
-        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
+        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation','non-ssl']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
       certificate_authority:
         required: false
@@ -181,6 +196,34 @@ options:
         required: false
         default: null
         description: The CA bundle string with custom certificates. defaults to None.
+
+  amqp:
+    required: false
+    description: AMQP endpoint connection information
+    default: null
+    suboptions:
+      hostname:
+        description: The AMQP hostname 
+        default: null
+        required: true
+      port:
+        description: The AMQP api port.
+        default: null
+        required: false
+      userid:
+        default: null
+        description: AMQP authentication username 
+        required: false
+        default: null
+      password:
+        required: false
+        default: null
+        description: AMQP authentication password 
+      security_protocol:
+        required: false
+        default: None
+        choices: ['non-ssl']
+        description: How SSL certificates should be used for HTTPS requests. defaults to None.
 '''
 
 EXAMPLES = '''
@@ -429,6 +472,32 @@ EXAMPLES = '''
       username: 'admin'
       password: 'password'
       verify_ssl: false
+
+- name: Create a new OpenStack provider in ManageIQ
+  manageiq_provider:
+    name: 'OSP'
+    type: 'OpenStack'
+    state: 'present'
+    keystone_api_version: 'v3'
+    keystone_domain: 'default'
+    tenant_mapping_enabled: true
+    provider:
+      hostname: 'keystone.example.com'
+      port: 5000
+      userid: 'admin'
+      password: 'password'
+      security_protocol: 'non-ssl'
+    amqp:
+      userid: 'admin'
+      password: 'password'
+      hostname: 'rabbitmq.example.com'
+      port: 5672
+      security_protocol: 'non-ssl'
+    manageiq_connection:
+      url: 'https://127.0.0.1'
+      username: 'admin'
+      password: 'smartvm'
+      verify_ssl: false 
 '''
 
 RETURN = '''
@@ -461,6 +530,11 @@ def supported_providers():
         Azure=dict(
             class_name='ManageIQ::Providers::Azure::CloudManager',
         ),
+        OpenStack=dict(
+            class_name='ManageIQ::Providers::Openstack::CloudManager',
+            default_role='default',
+            amqp_role='amqp',
+        )
     )
 
 
@@ -469,6 +543,7 @@ def endpoint_list_spec():
         provider=dict(type='dict', options=endpoint_argument_spec()),
         metrics=dict(type='dict', options=endpoint_argument_spec()),
         alerts=dict(type='dict', options=endpoint_argument_spec()),
+        amqp=dict(type='dict', options=endpoint_argument_spec()),
     )
 
 
@@ -484,6 +559,7 @@ def endpoint_argument_spec():
                 'ssl-with-validation',
                 'ssl-with-validation-custom-ca',
                 'ssl-without-validation',
+                'non-ssl',
             ],
         ),
         userid=dict(),
@@ -598,7 +674,6 @@ class ManageIQProvider(object):
                         'auth_key': endpoint.get('auth_key') or default_auth_key,
                     }
                 })
-
         return connection_configurations
 
     def delete_provider(self, provider):
@@ -617,7 +692,7 @@ class ManageIQProvider(object):
 
     def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
                       host_default_vnc_port_start, host_default_vnc_port_end,
-                      subscription, uid_ems):
+                      subscription, uid_ems, api_version, tenant_mapping_enabled):
         """ Edit a user from manageiq.
 
         Returns:
@@ -634,6 +709,8 @@ class ManageIQProvider(object):
             host_default_vnc_port_end=host_default_vnc_port_end,
             subscription=subscription,
             uid_ems=uid_ems,
+            api_version=api_version,
+            tenant_mapping_enabled=tenant_mapping_enabled
         )
 
         # NOTE: we do not check for diff's between requested and current
@@ -657,7 +734,7 @@ class ManageIQProvider(object):
 
     def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
                         host_default_vnc_port_start, host_default_vnc_port_end,
-                        subscription, uid_ems):
+                        subscription, uid_ems, api_version, tenant_mapping_enabled):
         """ Creates the user in manageiq.
 
         Returns:
@@ -681,6 +758,8 @@ class ManageIQProvider(object):
                 subscription=subscription,
                 uid_ems=uid_ems,
                 connection_configurations=endpoints,
+                api_version=api_version,
+                tenant_mapping_enabled=tenant_mapping_enabled
             )
         except Exception as e:
             self.module.fail_json(msg="failed to create provider %s: %s" % (name, str(e)))
@@ -702,6 +781,9 @@ def main():
         host_default_vnc_port_end=dict(),
         subscription=dict(),
         azure_tenant_id=dict(),
+        keystone_api_version=dict(choices=['v2', 'v3']),
+        keystone_domain=dict(),
+        tenant_mapping_enabled=dict(type=bool),
         type=dict(choices=supported_providers().keys()),
     )
     # add the manageiq connection arguments to the arguments
@@ -726,7 +808,9 @@ def main():
     host_default_vnc_port_start = module.params['host_default_vnc_port_start']
     host_default_vnc_port_end = module.params['host_default_vnc_port_end']
     subscription = module.params['subscription']
-    uid_ems = module.params['azure_tenant_id']
+    uid_ems = module.params['azure_tenant_id'] if module.params['azure_tenant_id'] else module.params['keystone_domain']
+    api_version = module.params['keystone_api_version']
+    tenant_mapping_enabled = module.params['tenant_mapping_enabled']
     state = module.params['state']
 
     manageiq = ManageIQ(module)
@@ -774,12 +858,12 @@ def main():
         if provider:
             res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region,
                                                        host_default_vnc_port_start, host_default_vnc_port_end,
-                                                       subscription, uid_ems)
+                                                       subscription, uid_ems, api_version, tenant_mapping_enabled)
         # if we do not have a provider, create it
         else:
             res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region,
                                                          host_default_vnc_port_start, host_default_vnc_port_end,
-                                                         subscription, uid_ems)
+                                                         subscription, uid_ems, api_version, tenant_mapping_enabled)
 
     module.exit_json(**res_args)
 
