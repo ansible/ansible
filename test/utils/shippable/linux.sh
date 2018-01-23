@@ -13,6 +13,8 @@ else
     target="posix/ci/"
 fi
 
+target="mysql_db"
+
 # shellcheck disable=SC2086
 ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
     --exclude "posix/ci/cloud/" \
