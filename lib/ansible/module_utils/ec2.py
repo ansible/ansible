@@ -449,7 +449,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     Args:
         filters_dict (dict): Dict of AWS filters.
     Basic Usage:
-        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> filters = {'some-aws-id': 'i-01234567'}
         >>> ansible_dict_to_boto3_filter_list(filters)
         {
             'some-aws-id': 'i-01234567'
