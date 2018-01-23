@@ -12,9 +12,9 @@ else
     base_branch=""
 fi
 # shellcheck disable=SC2086
-ansible-test compile --failure-ok --color -v --junit --coverage ${CHANGED:+"$CHANGED"} --docker default
+ansible-test compile --failure-ok --color -v --junit ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} --docker default
 # shellcheck disable=SC2086
-ansible-test sanity  --failure-ok --color -v --junit --coverage ${CHANGED:+"$CHANGED"} --docker default --docker-keep-git --base-branch "${base_branch}"
+ansible-test sanity  --failure-ok --color -v --junit ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} --docker default --docker-keep-git --base-branch "${base_branch}"
 
 rm test/results/bot/ansible-test-failure.json
 
