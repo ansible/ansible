@@ -456,6 +456,7 @@ class Ec2Inventory(object):
         cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
         if cache_id:
             cache_name = '%s-%s' % (cache_name, cache_id)
+        cache_name += '-' + str(abs(hash(__file__)))[1:7]
         self.cache_path_cache = os.path.join(cache_dir, "%s.cache" % cache_name)
         self.cache_path_index = os.path.join(cache_dir, "%s.index" % cache_name)
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
