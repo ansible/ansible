@@ -2,6 +2,82 @@
 - block:
 
   # ============================================================
+  - name: create a VPC
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: present
+      cidr_block: "10.232.232.128/26"
+      region: '{{ ec2_region }}'
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token }}'
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+    register: vpc_result
+
+  - name: create egress-only internet gateway (expected changed=true)
+    ec2_vpc_egress_igw:
+      state: present
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      region: '{{ ec2_region }}'
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token }}'
+    register: vpc_eigw_create
+
   - name: assert creation happened (expected changed=true)
     assert:
-      that: 'true'
+      that:
+          - 'vpc_eigw_create'
+          - 'vpc_eigw_create.gateway_id.startswith("eigw-")'
+          - 'vpc_eigw_create.vpc_id == vpc_result.vpc.id'
+
+  - name: attempt to recreate egress-only internet gateway on VPC (expected changed=false)
+    ec2_vpc_egress_igw:
+      state: present
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      region: '{{ ec2_region }}'
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token }}'
+    register: vpc_eigw_recreate
+
+  - name: assert recreation did nothing (expected changed=false)
+    assert:
+      that:
+          - 'vpc_eigw_recreate.changed == False'
+          - 'vpc_eigw_recreate.gateway_id == vpc_eigw_create.gateway_id'
+          - 'vpc_eigw_recreate.vpc_id == vpc_eigw_create.vpc_id'
+
+  - name: test state=absent (expected changed=true)
+    ec2_vpc_egress_igw:
+      state: absent
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      region: '{{ ec2_region }}'
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token }}'
+    register: vpc_eigw_delete
+
+  - name: assert state=absent (expected changed=true)
+    assert:
+      that:
+          - 'vpc_eigw_delete.changed'
+  
+  always:
+  
+    ################################################
+    # TEARDOWN STARTS HERE
+    ################################################
+  
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        region: '{{ ec2_region }}'
+        aws_access_key: '{{ aws_access_key }}'
+        aws_secret_key: '{{ aws_secret_key }}'
+        security_token: '{{ security_token }}'
+  
