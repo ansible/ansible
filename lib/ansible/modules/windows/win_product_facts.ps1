@@ -6,27 +6,47 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
-Function Get-ProductKey {
-    # First try to find the product key from ACPI
+$ErrorActionPreference = "Stop"
+
+$params = Parse-Args -arguments $args -supports_check_mode $true
+
+$result = @{
+    changed = $false
+    ansible_facts = @{
+        ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
+    }
+}
+
+# First try to find the product key from ACPI
+try {
+    $product_key = (Get-CimInstance -Class SoftwareLicensingService).OA3xOriginalProductKey
+} catch {
+    $product_key = $null
+}
+
+if (-not $product_key) {
+    # Else try to get it from the registry instead
     try {
-        $product_key = (Get-CimInstance -Class SoftwareLicensingService).OA3xOriginalProductKey
+        $data = Get-ItemPropertyValue -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion" -Name DigitalProductId
     } catch {
-        $product_key = $null
+        $data = $null
     }
 
-    if (-not $product_key) {
-        # Else try to get it from the registry instead
+    # And for Windows 2008 R2
+    if (-not $data) {
         try {
-            $data = Get-ItemPropertyValue -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion" -Name DigitalProductId
+            $data = Get-ItemPropertyValue -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion" -Name DigitalProductId4
         } catch {
-            return $null
+            $data = $null
         }
+    }
 
+    if ($data) {
+        $product_key = $null
         $hexdata = $data[52..66]
         $chardata = "B","C","D","F","G","H","J","K","M","P","Q","R","T","V","W","X","Y","2","3","4","6","7","8","9"
 
         # Decode base24 binary data
-        $product_key = $null
         for ($i = 24; $i -ge 0; $i--) {
             $k = 0
             for ($j = 14; $j -ge 0; $j--) {
@@ -40,19 +60,8 @@ Function Get-ProductKey {
             }
         }
     }
-    return $product_key
 }
 
-$ErrorActionPreference = "Stop"
-
-$params = Parse-Args -arguments $args -supports_check_mode $true
-
-$result = @{
-    changed = $false
-    ansible_facts = @{
-        ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
-        ansible_os_product_key = Get-ProductKey
-    }
-}
+$result.ansible_facts.ansible_os_product_key = $product_key
 
 Exit-Json -obj $result
