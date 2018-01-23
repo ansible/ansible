@@ -180,13 +180,9 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_model(self, data):
-        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
+        match = re.search(r'^[Cc]isco (\S+).+bytes of memory', data, re.M)
         if match:
-            return match
-        else:
-            match = re.search(r'^[Cc]isco (\S+).+bytes of memory', data, re.M)
-            if match:
-                return [match.group(1)]
+            return match.group(1)
 
     def parse_image(self, data):
         match = re.search(r'image file is "(.+)"', data)
@@ -194,13 +190,9 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_serialnum(self, data):
-        match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
+        match = re.search(r'board ID (\S+)', data)
         if match:
-            return match
-        else:
-            match = re.search(r'board ID (\S+)', data)
-            if match:
-                return [match.group(1)]
+            return match.group(1)
 
 
 class Hardware(FactsBase):
