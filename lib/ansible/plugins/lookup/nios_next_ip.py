@@ -72,7 +72,7 @@ class LookupModule(LookupBase):
         try:
             network = terms[0]
         except IndexError:
-            raise AnsibleError('the network must be specified')
+            raise AnsibleError('missing argument in the form of A.B.C.D/E')
 
         provider = kwargs.pop('provider', {})
         connector = get_connector(**provider)
