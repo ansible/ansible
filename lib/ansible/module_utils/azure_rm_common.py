@@ -35,6 +35,12 @@ except ImportError:
     ANSIBLE_VERSION = 'unknown'
 
 AZURE_COMMON_ARGS = dict(
+    auth_source=dict(
+        type='str',
+        choices=['auto', 'cli', 'env', 'credential_file'],
+        default='auto'
+    ),
+    # deprecated, use auth_source=cli (remove in 2.8)
     cli_default_profile=dict(type='bool'),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
@@ -49,6 +55,7 @@ AZURE_COMMON_ARGS = dict(
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
+    auth_source='AZURE_AUTH_SOURCE',
     cli_default_profile='AZURE_CLI_DEFAULT_PROFILE',
     profile='AZURE_PROFILE',
     subscription_id='AZURE_SUBSCRIPTION_ID',
@@ -225,6 +232,10 @@ class AzureRMModuleBase(object):
                                     add_file_common_args=add_file_common_args,
                                     supports_check_mode=supports_check_mode,
                                     required_if=merged_required_if)
+
+        if self.module.params.get('cli_default_profile', None) is not None:
+            self.module.deprecate("Parameter cli_default_profile is deprecated, use auth_source=cli instead", 2.8)
+            self.module.params['auth_source'] = self.module.params.get('auth_source', 'cli')
 
         if not HAS_PACKAGING_VERSION:
             self.fail("Do you have packaging installed? Try `pip install packaging`"
@@ -489,18 +500,28 @@ class AzureRMModuleBase(object):
 
     def _get_credentials(self, params):
         # Get authentication credentials.
-        # Precedence: module parameters-> environment variables-> default profile in ~/.azure/credentials.
-
         self.log('Getting credentials')
 
         arg_credentials = dict()
         for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             arg_credentials[attribute] = params.get(attribute, None)
 
-        if arg_credentials['cli_default_profile']:
+        if arg_credentials['auth_source'] == 'cli':
             self.log('Retrieving credentials from Azure CLI current profile')
             return self._get_azure_cli_profile()
 
+        if arg_credentials['auth_source'] == 'env':
+            self.log('Retrieving credentials from environment')
+            env_credentials = self._get_env_credentials()
+            return env_credentials
+
+        if arg_credentials['auth_source'] == 'credential_file':
+            self.log("Retrieving credentials from credential file")
+            profile = params.get('profile', 'default')
+            default_credentials = self._get_profile(profile)
+            return default_credentials
+
+        # auto, precedence: module parameters -> environment variables -> default profile in ~/.azure/credentials
         # try module params
         if arg_credentials['profile'] is not None:
             self.log('Retrieving credentials with profile parameter.')

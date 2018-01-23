@@ -76,6 +76,27 @@ options:
         choices: [validate, ignore]
         default: null
         version_added: 2.5
+    cli_default_profile:
+        description:
+            - Source the credentials from the default Azure CLI profile instead of the normal precedence.
+            - This option is deprecated and will be removed in Ansible 2.8.
+            - Use I(auth_source) with the value C(cli) instead.
+        type: bool
+        version_added: 2.4
+    auth_source:
+        description:
+            - Controls the source of the credentials to use for authentication.
+            - C(auto) will follow the default precedence of module parameters -> environment variables -> default profile in credential file
+              C(~/.azure/credentials).
+            - C(cli) will source the credentials from the Azure CLI profile.
+            - Can also be set vial the C(AZURE_AUTH_SOURCE) environment variable.
+        choices:
+        - auto
+        - cli
+        - credential_file
+        - env
+        default: auto
+        version_added: 2.5
 requirements:
     - "python >= 2.7"
     - "azure >= 2.0.0"
