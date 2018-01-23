@@ -102,7 +102,7 @@ options:
                'Capabilities_ListByLocation.'"
     requested_service_objective_id:
         description:
-            - "The configured service level objective ID of the database. This is the service level objective that is in the process of being applied to the
+            - "The configured I(service_level_objective) ID of the database. This is the service level objective that is in the process of being applied to the
                database. Once successfully updated, it will match the value of currentServiceObjectiveId property. If requestedServiceObjectiveId and
                I(requested_service_objective_name) are both updated, the value of requestedServiceObjectiveId overrides the value of
                I(requested_service_objective_name). To see possible values, query the capabilities API
