@@ -8,7 +8,7 @@
     resource_group: "{{ resource_group }}"
     vault_name: "vault{{ rpfx }}"
     enabled_for_deployment: yes
-    tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
+    vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
     sku:
       name: standard
       family: xxxx
@@ -26,7 +26,7 @@
     resource_group: "{{ resource_group }}"
     vault_name: "vault{{ rpfx }}"
     enabled_for_deployment: yes
-    tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
+    vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
     sku:
       name: standard
       family: xxxx
@@ -47,7 +47,7 @@
     resource_group: "{{ resource_group }}"
     vault_name: "vault{{ rpfx }}"
     enabled_for_deployment: yes
-    tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
+    vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
     sku:
       name: standard
       family: xxxx

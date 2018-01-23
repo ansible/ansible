@@ -33,7 +33,7 @@ options:
     location:
         description:
             - Resource location. If not set, location from the resource group will be used as default.
-    tenant_id:
+    vault_tenant:
         description:
             - The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault.
     sku:
@@ -53,8 +53,8 @@ options:
                     - 'premium'
     access_policies:
         description:
-            - "An array of 0 to 16 identities that have access to the key vault. All identities in the array must use the same tenant ID as the key vault's t
-              enant ID."
+            - "An array of 0 to 16 identities that have access to the key vault. All identities in the array must use the same tenant ID as the key vault's
+               tenant ID."
         suboptions:
             tenant_id:
                 description:
@@ -165,7 +165,7 @@ EXAMPLES = '''
       resource_group: myresourcegroup
       vault_name: samplekeyvault
       enabled_for_deployment: yes
-      tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
+      vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
       sku:
         name: standard
       access_policies:
@@ -218,7 +218,7 @@ class AzureRMVaults(AzureRMModuleBase):
             location=dict(
                 type='str'
             ),
-            tenant_id=dict(
+            vault_tenant=dict(
                 type='str'
             ),
             sku=dict(
@@ -273,7 +273,7 @@ class AzureRMVaults(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "location":
                     self.parameters["location"] = kwargs[key]
-                elif key == "tenant_id":
+                elif key == "vault_tenant":
                     self.parameters.setdefault("properties", {})["tenant_id"] = kwargs[key]
                 elif key == "sku":
                     self.parameters.setdefault("properties", {})["sku"] = kwargs[key]
