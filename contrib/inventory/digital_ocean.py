@@ -191,7 +191,7 @@ class DoManager:
 
         except ValueError as e:
             sys.exit("Unable to parse result from %s: %s" % (url, e))
-        return json_resp
+        return resp_data
 
     def all_active_droplets(self):
         resp = self.send('droplets/')
