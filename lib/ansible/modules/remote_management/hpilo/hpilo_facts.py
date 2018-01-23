@@ -39,10 +39,28 @@ options:
     default: admin
   ssl_version:
     description:
-      - Change the ssl_version used.
+      - Change the ssl_version used (Only used in python hpilo versions < 4.0).
     default: TLSv1
     choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
     version_added: '2.4'
+  validate_certs:
+    description:
+      - Verify SSL certificates against the trusted CA
+    default: "no"
+    choices: [ "yes", "no" ]
+    type: bool
+    version_added: '2.7'
+  ca_certificate:
+    description:
+      - CA bundle to validate iLO certificate against, instead of the system CAs
+    version_added: '2.7'
+  ssl_ignore_hostname:
+    description:
+      - Dont check if the hostname matches the certificate when verifying SSL certificates
+    default: "no"
+    type: bool
+    choices: [ "yes", "no" ]
+    version_added: '2.7'
 requirements:
 - hpilo
 notes:
@@ -119,6 +137,7 @@ hw_uuid:
     sample: 123456ABC78901D2
 '''
 
+import ssl
 import re
 import warnings
 
@@ -129,6 +148,7 @@ except ImportError:
     HAS_HPILO = False
 
 from ansible.module_utils.basic import AnsibleModule
+from distutils.version import StrictVersion as V
 
 
 # Suppress warnings from hpilo
@@ -156,6 +176,9 @@ def main():
             login=dict(type='str', default='Administrator'),
             password=dict(type='str', default='admin', no_log=True),
             ssl_version=dict(type='str', default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
+            validate_certs=dict(type='bool', default=False, choices=[True, False]),
+            ssl_ignore_hostname=dict(type='bool', default=False, choices=[True, False]),
+            ca_certificate=dict(type='str', no_log=True)
         ),
         supports_check_mode=True,
     )
@@ -167,8 +190,25 @@ def main():
     login = module.params['login']
     password = module.params['password']
     ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V', 'v'))
+    validate_certs = module.params['validate_certs']
+    ssl_ignore_hostname = module.params['ssl_ignore_hostname']
+    ca_certificate = module.params['ca_certificate']
 
-    ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
+    if V(hpilo.__version__) >= V('4.0'):
+        ssl_context = None
+        if validate_certs:
+            if not hasattr(ssl, 'create_default_context'):
+                module.fail_json(msg='SSL verification not supported in your python version')
+            if not ca_certificate:
+                module.fail_json(msg='ca_certificate option should be specified in order to perform SSL certificate verification')
+            ssl_context = ssl.create_default_context(cafile=ca_certificate)
+            ssl_context.options &= ~ssl.OP_NO_SSLv3
+            ssl_context.check_hostname = not ssl_ignore_hostname
+        ilo = hpilo.Ilo(host, login=login, password=password, ssl_context=ssl_context)
+    elif V(hpilo.__version__) < V('4.0') and validate_certs:
+        module.fail_json(msg='SSL verification not supported in your hpilo python module')
+    else:
+        ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
 
     facts = {
         'module_hw': True,
