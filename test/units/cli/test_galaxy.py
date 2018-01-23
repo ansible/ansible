@@ -320,7 +320,7 @@ class ValidRoleTests(object):
         for d in need_main_ymls:
             main_yml = os.path.join(self.role_dir, d, 'main.yml')
             self.assertTrue(os.path.exists(main_yml))
-            expected_string = "---\n# {0} file for {1}".format(d, self.role_name)
+            expected_string = "# vim: noai:ts=2:sw=2:et:\n---\n# {0} file for {1}".format(d, self.role_name)
             with open(main_yml, 'r') as f:
                 self.assertEqual(expected_string, f.read().strip())
 
