@@ -37,11 +37,8 @@ except ImportError:
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
-        choices=['auto', 'cli', 'env', 'credential_file'],
-        default='auto'
+        choices=['auto', 'env', 'credential_file']
     ),
-    # deprecated, use auth_source=cli (remove in 2.8)
-    cli_default_profile=dict(type='bool'),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
     client_id=dict(type='str', no_log=True),
@@ -55,8 +52,6 @@ AZURE_COMMON_ARGS = dict(
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
-    auth_source='AZURE_AUTH_SOURCE',
-    cli_default_profile='AZURE_CLI_DEFAULT_PROFILE',
     profile='AZURE_PROFILE',
     subscription_id='AZURE_SUBSCRIPTION_ID',
     client_id='AZURE_CLIENT_ID',
@@ -89,7 +84,6 @@ AZURE_FAILED_STATE = "Failed"
 
 HAS_AZURE = True
 HAS_AZURE_EXC = None
-HAS_AZURE_CLI_CORE = True
 
 HAS_MSRESTAZURE = True
 HAS_MSRESTAZURE_EXC = None
@@ -140,14 +134,6 @@ try:
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
-
-
-try:
-    from azure.cli.core.util import CLIError
-    from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
-    from azure.common.cloud import get_cli_active_cloud
-except ImportError:
-    HAS_AZURE_CLI_CORE = False
 
 
 def azure_id_to_dict(id):
@@ -448,19 +434,6 @@ class AzureRMModuleBase(object):
         except Exception as exc:
             self.fail("Error retrieving resource group {0} - {1}".format(resource_group, str(exc)))
 
-    def _get_azure_cli_profile(self):
-        if not HAS_AZURE_CLI_CORE:
-            self.fail("Do you have azure-cli-core installed? Try `pip install 'azure-cli-core' --upgrade`")
-        try:
-            credentials, subscription_id = get_azure_cli_credentials()
-            self._cloud_environment = get_cli_active_cloud()
-            return {
-                'credentials': credentials,
-                'subscription_id': subscription_id
-            }
-        except CLIError as err:
-            self.fail("AzureCLI profile cannot be loaded - {0}".format(err))
-
     def _get_profile(self, profile="default"):
         path = expanduser("~/.azure/credentials")
         try:
@@ -486,9 +459,6 @@ class AzureRMModuleBase(object):
         for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             env_credentials[attribute] = os.environ.get(env_variable, None)
 
-        if (env_credentials['cli_default_profile'] or '').lower() in ["true", "yes", "1"]:
-            return self._get_azure_cli_profile()
-
         if env_credentials['profile']:
             credentials = self._get_profile(env_credentials['profile'])
             return credentials
@@ -506,16 +476,16 @@ class AzureRMModuleBase(object):
         for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             arg_credentials[attribute] = params.get(attribute, None)
 
-        if arg_credentials['auth_source'] == 'cli':
-            self.log('Retrieving credentials from Azure CLI current profile')
-            return self._get_azure_cli_profile()
+        auth_source = params.get('auth_source', None)
+        if not auth_source:
+            auth_source = os.environ.get('ANSIBLE_AZURE_AUTH_SOURCE', 'auto')
 
-        if arg_credentials['auth_source'] == 'env':
+        if auth_source == 'env':
             self.log('Retrieving credentials from environment')
             env_credentials = self._get_env_credentials()
             return env_credentials
 
-        if arg_credentials['auth_source'] == 'credential_file':
+        if auth_source == 'credential_file':
             self.log("Retrieving credentials from credential file")
             profile = params.get('profile', 'default')
             default_credentials = self._get_profile(profile)
