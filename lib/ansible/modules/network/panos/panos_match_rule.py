@@ -100,7 +100,6 @@ options:
         description:
             - ID of the VSYS object.
         default: "vsys1"
-            - The IP protocol number [1-255].
         required: true
 '''
 
@@ -178,6 +177,7 @@ EXAMPLES = '''
     protocol: '6'
   register: result
 - debug: msg='{{result.stdout_lines}}'
+
 '''
 
 RETURN = '''
@@ -189,12 +189,14 @@ from ansible.module_utils.basic import get_exception
 
 try:
     from pan.xapi import PanXapiError
+<<<<<<< 93f79aa5521c58f2b611b480d82b1c2fcbfa8fef
     from pandevice import base
     from pandevice import policies
     from pan.xapi import PanXapiError
+=======
+>>>>>>> removed anomalous-backslash-in-string
     from pandevice import base
     from pandevice import policies
-    from pandevice import firewall
     from pandevice import panorama
     import xmltodict
     import json
