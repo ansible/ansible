@@ -8,14 +8,7 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=linux/fedora26py3/1
     - env: T=linux/fedora27py3/1
-
-    - env: T=linux/fedora26py3/2
-    - env: T=linux/fedora27py3/2
-
-    - env: T=linux/fedora26py3/3
-    - env: T=linux/fedora27py3/3
 branches:
   except:
     - "*-patch-*"
