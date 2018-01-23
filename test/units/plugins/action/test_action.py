@@ -419,6 +419,7 @@ class TestActionBase(unittest.TestCase):
         mock_connection.socket_path = None
         mock_connection._shell.get_remote_filename.return_value = 'copy.py'
         mock_connection._shell.join_path.side_effect = os.path.join
+        mock_connection._shell.tempdir = '/var/tmp/mytempdir'
 
         # we're using a real play context here
         play_context = PlayContext()
