@@ -219,10 +219,6 @@ class AzureRMModuleBase(object):
                                     supports_check_mode=supports_check_mode,
                                     required_if=merged_required_if)
 
-        if self.module.params.get('cli_default_profile', None) is not None:
-            self.module.deprecate("Parameter cli_default_profile is deprecated, use auth_source=cli instead", 2.8)
-            self.module.params['auth_source'] = self.module.params.get('auth_source', 'cli')
-
         if not HAS_PACKAGING_VERSION:
             self.fail("Do you have packaging installed? Try `pip install packaging`"
                       "- {0}".format(HAS_PACKAGING_VERSION_EXC))
