@@ -30,7 +30,7 @@ short_description: Gets facts about NX-OS switches
 description:
   - Collects facts from Cisco Nexus devices running the NX-OS operating
     system.  Fact collection is supported over both Cli and Nxapi
-    transports.  This module prepends all of the base network fact keys
+    Transports.  This module prepends all of the base network fact keys
     with C(ansible_net_<fact>).  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
@@ -334,7 +334,7 @@ class Interfaces(FactsBase):
             if 'type' in item:
                 intf.update(self.transform_dict(item, self.INTERFACE_SVI_MAP))
             else:
-                 intf.update(self.transform_dict(item, self.INTERFACE_MAP))
+                intf.update(self.transform_dict(item, self.INTERFACE_MAP))
 
             if 'eth_ip_addr' in item:
                 intf['ipv4'] = self.transform_dict(item, self.INTERFACE_IPV4_MAP)
