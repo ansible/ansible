@@ -99,6 +99,7 @@ options:
     vsys_id:
         description:
             - ID of the VSYS object.
+        default: "vsys1"
 '''
 
 EXAMPLES = '''
@@ -123,7 +124,7 @@ EXAMPLES = '''
     password: '{{ password }}'
     rule_type: 'security'
     source_ip: '0.0.0.0'
-    source_user: 'mydomain\jsmith'
+    source_user: 'mydomain\\jsmith'
     destination_ip: '192.168.100.115'
     destination_port: '22'
     protocol: '6'
@@ -175,6 +176,7 @@ EXAMPLES = '''
     protocol: '6'
   register: result
 - debug: msg='{{result.stdout_lines}}'
+
 '''
 
 RETURN = '''
@@ -185,12 +187,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_exception
 
 try:
-    import pan.xapi
     from pan.xapi import PanXapiError
-    import pandevice
     from pandevice import base
     from pandevice import policies
-    from pandevice import firewall
     from pandevice import panorama
     import xmltodict
     import json
