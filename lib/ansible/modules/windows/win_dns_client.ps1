@@ -135,7 +135,11 @@ Function Get-DnsClientMatch {
 
     $current_dns_v4 = ($current_dns_all | Where-Object AddressFamily -eq 2 <# IPv4 #>).ServerAddresses
 
-    If ($current_dns_v4 -eq $null) {
+    If (($current_dns_v4 -eq $null) -and ($ipv4_addresses -eq $null)) {
+        $v4_match = $True
+    }
+
+    ElseIf (($current_dns_v4 -eq $null) -or ($ipv4_addresses -eq $null)) {
         $v4_match = $False
     }
 
@@ -166,10 +170,16 @@ Function Set-DnsClientAddresses
     )
 
     Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($ipv4_addresses -join ", "))
+    
+    If ($ipv4_addresses -eq $null) {
+        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ResetServerAddress
+    }
 
+    Else {
     # this silently ignores invalid IPs, so we validate parseability ourselves up front...
-    Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $ipv4_addresses
-
+        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $ipv4_addresses
+    }
+    
     # TODO: implement IPv6
 }
 
