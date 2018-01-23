@@ -225,14 +225,14 @@ def main():
         result, exc = register_ip_to_tag_map(device,
                                              ip_addresses=module.params.get('ip_to_register', None),
                                              tag=module.params.get('tag_names', None)
-                                            )
+                                             )
     elif operation == 'list':
         result, exc = get_all_address_group_mapping(device)
     elif operation == 'delete':
         result, exc = delete_address_from_mapping(device,
                                                   ip_address=module.params.get('ip_to_register', None),
                                                   tags=module.params.get('tag_names', [])
-                                                 )
+                                                  )
     else:
         module.fail_json(msg="Unsupported option")
 
@@ -244,7 +244,7 @@ def main():
             device.commit(sync=True)
         except PanXapiError:
             exc = get_exception()
-            module.fail_json(msg = exc)
+            module.fail_json(msg=exc)
 
     module.exit_json(changed=True, msg=result)
 
