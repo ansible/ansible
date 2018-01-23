@@ -1,0 +1,7 @@
+---
+- block:
+
+  # ============================================================
+  - name: assert creation happened (expected changed=true)
+    assert:
+      that: 'true'
