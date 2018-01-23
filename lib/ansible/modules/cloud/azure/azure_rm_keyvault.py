@@ -242,7 +242,8 @@ class AzureRMVaults(AzureRMModuleBase):
             create_mode=dict(
                 type='str',
                 choices=['recover',
-                         'default']
+                         'default'],
+                default='default'
             ),
             state=dict(
                 type='str',
@@ -284,13 +285,13 @@ class AzureRMVaults(AzureRMModuleBase):
                             policy.setdefault("permissions", {})["keys"] = policy["keys"]
                             policy.pop("keys", None)
                         if 'secrets' in policy:
-                            policy.setdefault("permissions", {})["keys"] = policy["keys"]
+                            policy.setdefault("permissions", {})["secrets"] = policy["secrets"]
                             policy.pop("secrets", None)
                         if 'certificates' in policy:
-                            policy.setdefault("permissions", {})["keys"] = policy["keys"]
+                            policy.setdefault("permissions", {})["certificates"] = policy["certificates"]
                             policy.pop("certificates", None)
                         if 'storage' in policy:
-                            policy.setdefault("permissions", {})["keys"] = policy["keys"]
+                            policy.setdefault("permissions", {})["storage"] = policy["storage"]
                             policy.pop("storage", None)
                     self.parameters.setdefault("properties", {})["access_policies"] = access_policies
                 elif key == "enabled_for_deployment":
@@ -329,7 +330,53 @@ class AzureRMVaults(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if Key Vault instance has to be deleted or may be updated")
-                self.to_do = Actions.Update
+                if ('location' in self.parameters) and (self.parameters['location'] != old_response['location']):
+                    self.to_do = Actions.Update
+                elif ('tenant_id' in self.parameters) and (self.parameters['tenant_id'] != old_response['tenant_id']):
+                    self.to_do = Actions.Update
+                elif ('enabled_for_deployment' in self.parameters) and (self.parameters['enabled_for_deployment'] != old_response['enabled_for_deployment']):
+                    self.to_do = Actions.Update
+                elif (('enabled_for_disk_encryption' in self.parameters) and
+                        (self.parameters['enabled_for_deployment'] != old_response['enabled_for_deployment'])):
+                    self.to_do = Actions.Update
+                elif (('enabled_for_template_deployment' in self.parameters) and
+                        (self.parameters['enabled_for_template_deployment'] != old_response['enabled_for_template_deployment'])):
+                    self.to_do = Actions.Update
+                elif ('enable_soft_delete' in self.parameters) and (self.parameters['enabled_soft_delete'] != old_response['enable_soft_delete']):
+                    self.to_do = Actions.Update
+                elif ('create_mode' in self.parameters) and (self.parameters['create_mode'] != old_response['create_mode']):
+                    self.to_do = Actions.Update
+                # SKU Family
+                # SKU Name
+                # access_policies
+                elif 'access_policies' in self.parameters:
+                    if len(self.parameters['access_policies']) != len(old_response['access_policies']):
+                        self.to_do = Actions.Update
+                    else:
+                        for i in range(len(old_response['access_policies'])):
+                            n = self.parameters['access_policies'][i]
+                            o = old_response['access_policies'][i]
+                            if n.get('tenant_id', False) != o.get('tenant_id', False):
+                                self.to_do = Actions.Update
+                                break
+                            if n.get('object_id', False) != o.get('object_id', False):
+                                self.to_do = Actions.Update
+                                break
+                            if n.get('application_id', False) != o.get('application_id', False):
+                                self.to_do = Actions.Update
+                                break
+                            if n.get('keys', []).cmp(o.get('keys', [])) != 0:
+                                self.to_do = Actions.Update
+                                break
+                            if n.get('secrets', []).cmp(o.get('secrets', [])) != 0:
+                                self.to_do = Actions.Update
+                                break
+                            if n.get('certificates', []).cmp(o.get('certificates', [])) != 0:
+                                self.to_do = Actions.Update
+                                break
+                            if n.get('storage', []).cmp(o.get('storage', [])) != 0:
+                                self.to_do = Actions.Update
+                                break
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Key Vault instance")
