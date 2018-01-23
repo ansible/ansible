@@ -161,6 +161,11 @@ options:
         description:
             - Number of virtual CPUs sockets of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
+    cpu_threads:
+        description:
+            - Number of virtual CPUs sockets of the Virtual Machine.
+            - Default value is set by oVirt/RHV engine.
+        version_added: "2.5"
     type:
         description:
             - Type of the Virtual Machine.
@@ -812,9 +817,10 @@ class VmsModule(BaseModule):
                 topology=otypes.CpuTopology(
                     cores=self.param('cpu_cores'),
                     sockets=self.param('cpu_sockets'),
+                    threads=self.param('cpu_threads'),
                 )
             ) if (
-                self.param('cpu_cores') or self.param('cpu_sockets')
+                any((self.param('cpu_cores'), self.param('cpu_sockets'), self.param('cpu_threads')))
             ) else None,
             cpu_shares=self.param('cpu_shares'),
             os=otypes.OperatingSystem(
@@ -862,6 +868,7 @@ class VmsModule(BaseModule):
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
             equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
+            equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
             equal(self.param('type'), str(entity.type)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('high_availability'), entity.high_availability.enabled) and
@@ -1425,6 +1432,7 @@ def main():
         cpu_sockets=dict(type='int'),
         cpu_cores=dict(type='int'),
         cpu_shares=dict(type='int'),
+        cpu_threads=dict(type='int'),
         type=dict(type='str', choices=['server', 'desktop']),
         operating_system=dict(type='str',
                               choices=[
