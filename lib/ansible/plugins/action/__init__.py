@@ -631,6 +631,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
+        # make sure all commands use the designated temporary directory
+        module_args['_ansible_tempdir'] = self._connection._shell.tempdir
+
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
         update = {}

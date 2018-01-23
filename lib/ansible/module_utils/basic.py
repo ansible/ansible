@@ -47,6 +47,7 @@ PASS_VARS = {
     'shell_executable': '_shell',
     'socket': '_socket_path',
     'syslog_facility': '_syslog_facility',
+    'tempdir': 'tempdir',
     'verbosity': '_verbosity',
     'version': 'ansible_version',
 }
@@ -844,9 +845,6 @@ class AnsibleModule(object):
         self.aliases = {}
         self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
         self._options_context = list()
-
-        # set tempdir to remote tmp
-        self.tempdir = os.environ.get('ANSIBLE_REMOTE_TEMP', None)
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
