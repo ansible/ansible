@@ -25,6 +25,11 @@
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
 
+- name: install subversion
+  package:
+    name: subversion
+  when: ansible_distribution != "MacOSX"
+
 - name: verify that subversion is installed so this test can continue
   shell: which svn
 
