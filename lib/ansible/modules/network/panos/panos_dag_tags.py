@@ -78,7 +78,6 @@ options:
     ip_to_register:
         description
             - IP that will be registered with the given tag names.
-    
 '''
 
 EXAMPLES = '''
@@ -141,10 +140,10 @@ def get_devicegroup(device, devicegroup):
 
 def register_ip_to_tag_map(device, ip_addresses, tag):
     """
-    :param device: 
-    :param ip_addresses: 
-    :param tag: 
-    :return: 
+    :param device:
+    :param ip_addresses:
+    :param tag:
+    :return:
     """
 
     exc = None
@@ -162,8 +161,8 @@ def register_ip_to_tag_map(device, ip_addresses, tag):
 def get_all_address_group_mapping(device):
     """
     Retrieve all the tag to IP address mappings
-    :param device: 
-    :return: 
+    :param device:
+    :return:
     """
     exc = None
     ret = None
@@ -180,11 +179,11 @@ def get_all_address_group_mapping(device):
 
 def delete_address_from_mapping(device, ip_address, tags):
     """
-    Delete an IP address from a tag mapping. 
-    :param device: 
+    Delete an IP address from a tag mapping.
+    :param device:
     :param ip_address:
-    :param tags: 
-    :return: 
+    :param tags:
+    :return:
     """
 
     exc = None
