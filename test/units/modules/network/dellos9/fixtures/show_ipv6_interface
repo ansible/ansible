@@ -1,0 +1,26 @@
+fortyGigE 0/16 is down, line protocol is down
+  IPV6 is enabled
+  Link Local address: fe80::92b1:1cff:fef4:a28f
+  Global Unicast address(es):
+    2001:4898:5808:ffa2::5, subnet is 2001:4898:5808:ffa2::4/126 (MANUAL)
+     Remaining lifetime: infinite
+  Global Anycast address(es):
+  Joined Group address(es):
+    ff02::1
+    ff02::2
+    ff02::1:ff00:5
+    ff02::1:fff4:a28f
+  IP MTU is 1500 bytes
+  ND MTU is 0
+  ICMP redirects are not sent
+  DAD is enabled, number of DAD attempts: 3
+  ND reachable time is 35780 milliseconds
+  ND base reachable time is 30000 milliseconds
+  ND advertised reachable time is 0 milliseconds
+  ND advertised retransmit interval is 0 milliseconds
+  ND router advertisements are sent every 198 to 600 seconds
+  ND router advertisements live for 1800 seconds
+  ND advertised hop limit is 64
+  IPv6 hop limit for originated packets is 64
+  IPv6 unicast RPF check is not supported
+
