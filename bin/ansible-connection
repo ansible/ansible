@@ -25,7 +25,7 @@ import json
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
-from ansible.module_utils.six.moves import cPickle
+from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.playbook.play_context import PlayContext
@@ -169,6 +169,9 @@ def main():
     else:
         stdin = sys.stdin
 
+    saved_stdout = sys.stdout
+    sys.stdout = StringIO()
+
     try:
         # read the play context data via stdin, which means depickling it
         cur_line = stdin.readline()
@@ -260,17 +263,19 @@ def main():
                         'exception': traceback.format_exc()
                     })
 
+    messages.append(sys.stdout.getvalue())
     result.update({
         'messages': messages,
         'socket_path': socket_path
     })
 
+    sys.stdout = saved_stdout
     if 'exception' in result:
         rc = 1
-        sys.stderr.write('\n##RESPONSE##: %s\n' % json.dumps(result))
+        sys.stderr.write(json.dumps(result))
     else:
         rc = 0
-        sys.stdout.write('\n##RESPONSE##: %s\n' % json.dumps(result))
+        sys.stdout.write(json.dumps(result))
 
     sys.exit(rc)
 

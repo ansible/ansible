@@ -15,7 +15,6 @@ DOCUMENTATION = """
 """
 import os
 import pty
-import re
 import json
 import subprocess
 
@@ -89,19 +88,15 @@ class Connection(ConnectionBase):
         stdin.write(src)
 
         stdin.write(b'\n#END_INIT#\n')
+        stdin.flush()
 
         (stdout, stderr) = p.communicate()
         stdin.close()
 
-        out = stdout if p.returncode == 0 else stderr
-        if br"##RESPONSE##:" not in out:
-            return None
-
-        resp = out.split(br"##RESPONSE##:")
-        result = json.loads(to_text(resp[1].strip(), errors='surrogate_then_replace'))
-
-        if resp[0] and C.DEFAULT_DEBUG:
-            display.display(resp[0], color=C.COLOR_DEBUG)
+        if p.returncode == 0:
+            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
+        else:
+            result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
 
         if 'messages' in result:
             for msg in result.get('messages'):
