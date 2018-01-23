@@ -86,6 +86,12 @@ options:
       - ID of project of the device.
     required: true
 
+  public_ipv4_subnet_size:
+    description:
+      - Size of the public IPv4 subnet
+      - This can be set to any available size from packet (/31, /30, /29, /28, /27)
+    choices: [31, 30, 29, 28, 27]
+
   state:
     description:
       - Desired state of the device.
@@ -161,6 +167,7 @@ EXAMPLES = '''
       operating_system: ubuntu_16_04
       plan: baremetal_0
       facility: sjc1
+      public_ipv4_subnet_size: 29
       state: active
       wait_timeout: 600
 
@@ -600,7 +607,7 @@ def main():
             operating_system=dict(),
             plan=dict(),
             project_id=dict(required=True),
-            public_ipv4_subnet_size=dict(type='int', choices=[31, 30, 29, 28, 27])
+            public_ipv4_subnet_size=dict(type='int', choices=[31, 30, 29, 28, 27]),
             state=dict(choices=ALLOWED_STATES, default='present'),
             user_data=dict(default=None),
             wait_for_public_IPv=dict(type='int', choices=[4, 6]),
