@@ -290,6 +290,7 @@ def sha256sum(filename):
 
     return hex_digest
 
+
 def set_tag(client, module, tags, function):
     if not hasattr(client, "list_tags"):
         module.fail_json(msg="Using tags requires botocore 1.5.40 or above")
@@ -326,6 +327,7 @@ def set_tag(client, module, tags, function):
                          to_native(e)), exception=traceback.format_exc())
 
     return changed
+
 
 def main():
     argument_spec = dict(
