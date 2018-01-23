@@ -744,6 +744,19 @@ DEFAULT_MODULE_COMPRESSION:
   - {key: module_compression, section: defaults}
 # vars:
 #   - name: ansible_module_compression
+DEFAULT_MODULE_LANG:
+  name: Target language environment
+  default: "{{ CONTROLLER_LANG }}"
+  description:
+    - "Language locale setting to use for modules when they execute on the target."
+    - "If empty it tries to set itself to the LANG environment variable on the controller."
+    - "This is only used if DEFAULT_MODULE_SET_LOCALE is set to true"
+  env: [{name: ANSIBLE_MODULE_LANG}]
+  ini:
+  - {key: module_lang, section: defaults}
+  deprecated:
+    why: Modules are coded to set their own locale if needed for screenscraping
+    version: "2.9"
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
@@ -759,6 +772,18 @@ DEFAULT_MODULE_PATH:
   ini:
   - {key: library, section: defaults}
   type: pathspec
+DEFAULT_MODULE_SET_LOCALE:
+  name: Target locale
+  default: False
+  description:
+    - Controls if we set locale for modules when executing on the target.
+  env: [{name: ANSIBLE_MODULE_SET_LOCALE}]
+  ini:
+  - {key: module_set_locale, section: defaults}
+  type: boolean
+  deprecated:
+    why: Modules are coded to set their own locale if needed for screenscraping
+    version: "2.9"
 DEFAULT_MODULE_UTILS_PATH:
   name: Module Utils Path
   description: Colon separated paths in which Ansible will search for Module utils files, which are shared by modules.
