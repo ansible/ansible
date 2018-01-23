@@ -33,8 +33,8 @@ description:
 author: "Vinay Venkataraghavan (@vinayvenkat)"
 version_added: "2.5"
 requirements:
-    - pan-python
-    - pan-device
+    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
+    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
 notes:
     - Checkmode is not supported.
     - Panorama is not supported.
@@ -43,43 +43,36 @@ options:
         description:
             - IP address (or hostname) of PAN-OS device
         required: true
-        default: null
     password:
         description:
             - password for authentication
         required: true
-        default: null
     api_key:
         description:
             - API key that can be used instead of I(username)/I(password) credentials.
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     description:
         description:
             - The purpose / objective of the static Address Group
-        required: false
-        default: null
     commit:
         description:
             - commit if changed
-        required: false
         default: true
     devicegroup:
         description: >
             - Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
             If device group is not define we assume that we are contacting Firewall.
-        default: None
     operation:
         description:
-            - The action to be taken.  Supported values are I(add)/I(update)/I(find)/I(delete).
+            - The action to be taken. Supported values are I(add)/I(update)/I(find)/I(delete).
     tag_names:
-        description
-            - The list of the tags that will be added/removed from the IP address.
+        description:
+            - The list of the tags that will be added or removed from the IP address.
     ip_to_register:
-        description
+        description:
             - IP that will be registered with the given tag names.
 '''
 
@@ -92,7 +85,7 @@ EXAMPLES = '''
     tag_names: "{{ tag_names }}"
     description: "Tags to allow certain IP's to access various SaaS Applications"
     operation: 'add'
-  tags: "add-dagip"
+  tags: "adddagip"
 
 - name: List the IP address to tag mapping
   panos_dag_tags:
@@ -101,7 +94,7 @@ EXAMPLES = '''
     tag_names: "{{ tag_names }}"
     description: "List the IP address to tag mapping"
     operation: 'list'
-  tags: "list-dagip"
+  tags: "listdagip"
 
 - name: Unregister an IP address from a tag mapping
   panos_dag_tags:
@@ -111,7 +104,7 @@ EXAMPLES = '''
     tag_names: "{{ tag_names }}"
     description: "Unregister IP address from tag mappings"
     operation: 'delete'
-  tags: "delete-dagip"
+  tags: "deletedagip"
 '''
 
 RETURN = '''
