@@ -277,8 +277,8 @@ class Interfaces(FactsBase):
         ('svi_line_proto', 'state'),
         ('svi_bw', 'bandwidth'),
         ('svi_mac', 'macaddress'),
-        ('eth_mtu', 'mtu'),
-        ('type', 'type'),
+        ('svi_mtu', 'mtu'),
+        ('type', 'type')
     ])
 
     INTERFACE_IPV4_MAP = frozenset([
@@ -286,12 +286,9 @@ class Interfaces(FactsBase):
         ('eth_ip_mask', 'masklen')
     ])
 
-    INTERFACE_SVI_MAP = frozenset([
-        ('svi_line_proto', 'state'),
-        ('svi_bw', 'bandwidth'),
-        ('svi_mac', 'macaddress'),
-        ('eth_mtu', 'mtu'),
-        ('type', 'type'),
+    INTERFACE_SVI_IPV4_MAP = frozenset([
+        ('svi_ip_addr', 'address'),
+        ('svi_ip_mask', 'masklen')
     ])
 
     INTERFACE_IPV6_MAP = frozenset([
