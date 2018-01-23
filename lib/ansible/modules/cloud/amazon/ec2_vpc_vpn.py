@@ -438,18 +438,18 @@ def find_connection_response(connections=None):
 def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, tunnel_options=None):
     """ Creates a VPN connection """
 
-    options = { 'StaticRoutesOnly': static_only }
+    options = {'StaticRoutesOnly': static_only}
 
     if isinstance(tunnel_options, list) and 0 < len(tunnel_options) <= 2:
-      t_opt = []
-      for m in tunnel_options:
-        # See Boto3 docs regarding 'create_vpn_connection' 
-        # tunnel options for allowed 'TunnelOptions' keys.
-        if not isinstance(m, dict):
-          raise TypeError("non-dict list member")
-        t_opt.append(m)
-      if len(t_opt) > 0:
-        options['TunnelOptions'] = t_opt
+        t_opt = []
+        for m in tunnel_options:
+            # See Boto3 docs regarding 'create_vpn_connection'
+            # tunnel options for allowed 'TunnelOptions' keys.
+            if not isinstance(m, dict):
+                raise TypeError("non-dict list member")
+            t_opt.append(m)
+        if len(t_opt) > 0:
+            options['TunnelOptions'] = t_opt
 
     if not (customer_gateway_id and vpn_gateway_id):
         raise VPNConnectionException(msg="No matching connection was found. To create a new connection you must provide "
@@ -709,7 +709,7 @@ def main():
             vpn_gateway_id=dict(type='str'),
             tags=dict(default={}, type='dict'),
             connection_type=dict(default='ipsec.1', type='str'),
-            tunnel_options=dict(type='list',default=[]),
+            tunnel_options=dict(type='list', default=[]),
             static_only=dict(default=False, type='bool'),
             customer_gateway_id=dict(type='str'),
             vpn_connection_id=dict(type='str'),
