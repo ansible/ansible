@@ -81,9 +81,11 @@ options:
             - Controls the source of the credentials to use for authentication.
             - C(auto) will follow the default precedence of module parameters -> environment variables -> default profile in credential file
               C(~/.azure/credentials).
+            - When set to C(cli), the credentials will be sources from the default Azure CLI profile.
             - Can also be set via the C(ANSIBLE_AZURE_AUTH_SOURCE) environment variable.
         choices:
         - auto
+        - cli
         - credential_file
         - env
         default: auto
