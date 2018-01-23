@@ -100,6 +100,10 @@
   shell: which bash
   register: bash
 
+- name: locate sha1sum/shasum
+  shell: which sha1sum || which shasum
+  register: sha1sum
+
 ##
 ## command
 ##
@@ -192,7 +196,7 @@
       - "command_result5.stdout == 'foobar'"
 
 - name: send to stdin literal multiline block
-  command: "{{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, \"buffer\") else sys.stdin).read()).hexdigest())'"
+  command: "{{ sha1sum.stdout }}"
   args:
     stdin: |-
       this is the first line
@@ -205,7 +209,7 @@
 - name: assert the multiline input was passed correctly
   assert:
     that:
-      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
+      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903  -'"
 
 ##
 ## shell
@@ -274,7 +278,9 @@
     "multiline echo" \
     "with a new line
     in quotes" \
-    | {{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())'
+    | {{ sha1sum.stdout }} \
+    | tr -s ' ' \
+    | cut -f1 -d ' '
     echo "this is a second line"
   register: shell_result5
 
