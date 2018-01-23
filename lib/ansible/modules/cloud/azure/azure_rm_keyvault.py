@@ -304,8 +304,6 @@ class AzureRMVaults(AzureRMModuleBase):
                 elif key == "create_mode":
                     self.parameters.setdefault("properties", {})["create_mode"] = kwargs[key]
 
-        self.adjust_parameters()
-
         old_response = None
         response = None
 
