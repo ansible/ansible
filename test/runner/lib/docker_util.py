@@ -104,9 +104,7 @@ def docker_run(args, image, options):
     if not options:
         options = []
 
-    # policy downloaded from:
-    # https://github.com/moby/moby/blob/master/profiles/seccomp/default.json
-    options += ['--security-opt', 'seccomp=test/runner/seccomp.json']
+    options += ['--security-opt', 'apparmor=invalid']
 
     for _ in range(1, 3):
         try:
