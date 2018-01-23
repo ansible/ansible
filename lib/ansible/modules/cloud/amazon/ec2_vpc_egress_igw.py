@@ -69,7 +69,6 @@ vpc_id:
 '''
 
 
-
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     boto3_conn,
@@ -118,8 +117,6 @@ def create_eigw(module, conn, vpc_id):
     module       : AnsibleModule object
     conn         : boto3 client connection object
     vpc_id       : ID of the VPC we are operating on
-    wait         : Bool - determines whether to wait for attached status
-    wait_timeout : Int - determines length of time to wait for status
     """
     gateway_id = None
     changed = False
