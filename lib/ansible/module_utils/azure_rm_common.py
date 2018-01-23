@@ -37,7 +37,7 @@ except ImportError:
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
         type='str',
-        choices=['auto', 'env', 'credential_file']
+        choices=['auto', 'cli', 'env', 'credential_file']
     ),
     profile=dict(type='str'),
     subscription_id=dict(type='str', no_log=True),
@@ -84,6 +84,7 @@ AZURE_FAILED_STATE = "Failed"
 
 HAS_AZURE = True
 HAS_AZURE_EXC = None
+HAS_AZURE_CLI_CORE = True
 
 HAS_MSRESTAZURE = True
 HAS_MSRESTAZURE_EXC = None
@@ -134,6 +135,13 @@ try:
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
+
+try:
+    from azure.cli.core.util import CLIError
+    from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
+    from azure.common.cloud import get_cli_active_cloud
+except ImportError:
+    HAS_AZURE_CLI_CORE = False
 
 
 def azure_id_to_dict(id):
@@ -259,7 +267,9 @@ class AzureRMModuleBase(object):
 
         # if cloud_environment specified, look up/build Cloud object
         raw_cloud_env = self.credentials.get('cloud_environment')
-        if not raw_cloud_env:
+        if self.credentials.get('credentials') is not None and raw_cloud_env is not None:
+            self._cloud_environment = raw_cloud_env
+        elif not raw_cloud_env:
             self._cloud_environment = azure_cloud.AZURE_PUBLIC_CLOUD  # SDK default
         else:
             # try to look up "well-known" values via the name attribute on azure_cloud members
@@ -277,12 +287,15 @@ class AzureRMModuleBase(object):
                 except Exception as e:
                     self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message), exception=traceback.format_exc(e))
 
-        if self.credentials.get('subscription_id', None) is None:
+        if self.credentials.get('subscription_id', None) is None and self.credentials.get('credentials') is None:
             self.fail("Credentials did not include a subscription_id value.")
         self.log("setting subscription_id")
         self.subscription_id = self.credentials['subscription_id']
 
-        if self.credentials.get('client_id') is not None and \
+        if self.credentials.get('credentials') is not None:
+            # AzureCLI credentials
+            self.azure_credentials = self.credentials['credentials']
+        elif self.credentials.get('client_id') is not None and \
            self.credentials.get('secret') is not None and \
            self.credentials.get('tenant') is not None:
             self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
@@ -450,6 +463,23 @@ class AzureRMModuleBase(object):
 
         return None
 
+    def _get_azure_cli_credentials(self):
+        if not HAS_AZURE_CLI_CORE:
+            self.fail("Do you have azure-cli-core installed? Try `pip install 'azure-cli-core' --upgrade`")
+
+        try:
+            credentials, subscription_id = get_azure_cli_credentials()
+            cloud_environment = get_cli_active_cloud()
+
+            cli_credentials = {
+                'credentials': credentials,
+                'subscription_id': subscription_id,
+                'cloud_environment': cloud_environment
+            }
+            return cli_credentials
+        except CLIError as err:
+            self.fail("AzureCLI profile cannot be loaded - {0}".format(err))
+
     def _get_env_credentials(self):
         env_credentials = dict()
         for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
@@ -475,6 +505,11 @@ class AzureRMModuleBase(object):
         auth_source = params.get('auth_source', None)
         if not auth_source:
             auth_source = os.environ.get('ANSIBLE_AZURE_AUTH_SOURCE', 'auto')
+
+        if auth_source == 'cli':
+            self.log('Retrieving credentials from AzureCLI profile')
+            cli_credentials = self._get_azure_cli_credentials()
+            return cli_credentials
 
         if auth_source == 'env':
             self.log('Retrieving credentials from environment')
