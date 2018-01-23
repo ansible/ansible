@@ -181,10 +181,10 @@ Azure
 Network Roadmap
 ---------------
 - Refactor common network shared code into package **(done)**
-- Convert various nxos modules to leverage declarative intent 
+- Convert various nxos modules to leverage declarative intent **(done)**
 - Refactor various modules to leverage the cliconf plugin **(done)**
-- Add various missing declarative modules for supported platforms and functions
-- Implement a feature that handles platform differences and feature unavailability
+- Add various missing declarative modules for supported platforms and functions **(done)**
+- Implement a feature that handles platform differences and feature unavailability **(done)**
 - netconf-config.py should provide control for deployment strategy
 - Create netconf connection plugin **(done)**
 - Create netconf fact module
