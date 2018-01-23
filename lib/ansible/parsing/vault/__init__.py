@@ -600,26 +600,6 @@ class VaultLib:
         self.cipher_name = None
         self.b_version = b'1.2'
 
-    @staticmethod
-    def is_encrypted(data):
-        """ Test if this is vault encrypted data
-
-        :arg data: a byte or text string or a python3 to test for whether it is
-            recognized as vault encrypted data
-        :returns: True if it is recognized.  Otherwise, False.
-        """
-
-        # This could in the future, check to see if the data is a vault blob and
-        # is encrypted with a key associated with this vault
-        # instead of just checking the format.
-        display.deprecated(u'vault.VaultLib.is_encrypted is deprecated.  Use vault.is_encrypted instead', version='2.4')
-        return is_encrypted(data)
-
-    @staticmethod
-    def is_encrypted_file(file_obj):
-        display.deprecated(u'vault.VaultLib.is_encrypted_file is deprecated.  Use vault.is_encrypted_file instead', version='2.4')
-        return is_encrypted_file(file_obj)
-
     def encrypt(self, plaintext, secret=None, vault_id=None):
         """Vault encrypt a piece of data.
 
