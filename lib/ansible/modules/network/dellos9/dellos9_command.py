@@ -44,7 +44,6 @@ options:
         See examples.
     required: false
     default: null
-    aliases: ['waitfor']
     version_added: "2.2"
   match:
     description:
@@ -179,7 +178,7 @@ def main():
         # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
