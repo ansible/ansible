@@ -5,6 +5,7 @@
   eos_l2_interface:
     name: Ethernet1
     state: absent
+  become: yes
 
 - name: Set switchport mode to access on vlan 4000
   eos_l2_interface:
