@@ -122,7 +122,7 @@ from threading import Thread
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils.urls import open_url
+from ansible.module_utils.urls import generic_urlparse, open_url, urlparse, urlunparse
 from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
                                          find_network_by_name, find_resource_pool_by_name, find_vm_by_name, gather_vm_facts,
                                          vmware_argument_spec, wait_for_task, wait_for_vm_ip)
@@ -364,6 +364,19 @@ class VMwareDeployOvf:
 
         return self.lease, self.import_spec
 
+    def _normalize_url(self, url):
+        '''
+        The hostname in URLs from vmware may be ``*`` update it accordingly
+        '''
+        url_parts = generic_urlparse(urlparse(url))
+        if url_parts.hostname == '*':
+            if url_parts.port:
+                url_parts.netloc = '%s:%d' % (self.params['hostname'], url_parts.port)
+            else:
+                url_parts.netloc = self.params['hostname']
+
+        return urlunparse(url_parts.as_list())
+
     def upload(self):
         ovf_dir = os.path.dirname(self.params['ovf'])
 
@@ -375,7 +388,7 @@ class VMwareDeployOvf:
             device_upload_url = None
             for device_url in lease.info.deviceUrl:
                 if file_item.deviceId == device_url.importKey:
-                    device_upload_url = device_url.url.replace('*', self.params['hostname'])
+                    device_upload_url = self._normalize_url(device_url.url)
                     break
 
             if not device_upload_url:
