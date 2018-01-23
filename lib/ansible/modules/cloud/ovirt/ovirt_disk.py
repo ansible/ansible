@@ -616,6 +616,7 @@ def main():
             ret = disks_module.create(
                 entity=disk,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
+                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL,
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])
