@@ -38,29 +38,6 @@ options:
         key: async_dir
     vars:
       - name: ansible_async_dir
-  set_module_language:
-    default: False
-    description: Controls if we set locale for modules when executing on the target.
-    env:
-      - name: ANSIBLE_MODULE_SET_LOCALE
-    ini:
-      - section: defaults
-        key: module_set_locale
-    type: boolean
-    vars:
-      - name: ansible_module_set_locale
-  module_language:
-    description:
-      - "If 'set_module_language' is true, this is the language language/locale setting to use for modules when they execute on the target."
-      - "Defaults to match the controller's settings."
-    default: "{{CONTROLLER_LANG}}"
-    env:
-      - name: ANSIBLE_MODULE_LANG
-    ini:
-      - section: defaults
-        key: module_lang
-    vars:
-      - name: ansible_module_lang
   environment:
     type: dict
     default: {}
