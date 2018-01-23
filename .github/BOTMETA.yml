@@ -219,10 +219,10 @@ files:
   $modules/cloud/dimensiondata/dimensiondata_network.py: aimonb tintoy
   $modules/cloud/docker/docker_container.py:
     ignored: ThomasSteinbach
-    maintainers: $team_ansible cove dusdanig jctanner kassiansun softzilla zfil
-  $modules/cloud/docker/docker_image.py: $team_ansible jctanner softzilla
-  $modules/cloud/docker/docker_image_facts.py: $team_ansible jctanner
-  $modules/cloud/docker/docker_login.py: jctanner olsaki
+    maintainers: $team_ansible cove dusdanig kassiansun softzilla zfil
+  $modules/cloud/docker/docker_image.py: $team_ansible softzilla
+  $modules/cloud/docker/docker_image_facts.py: $team_ansible
+  $modules/cloud/docker/docker_login.py: olsaki
   $modules/cloud/docker/docker_network.py: keitwb olsaki
   $modules/cloud/docker/docker_secret.py:
   $modules/cloud/docker/docker_service.py: $team_ansible
@@ -365,7 +365,9 @@ files:
   $modules/database/postgresql/postgresql_user.py: $team_ansible matburt nerzhul
   $modules/database/proxysql/: bmildren
   $modules/database/vertica/: dareko
-  $modules/files/acl.py: $team_ansible bcoca
+  $modules/files/acl.py:
+    ignored: astorije
+    maintainers: $team_ansible bcoca
   $modules/files/archive.py: bendoh
   $modules/files/assemble.py: $team_ansible sfromm
   $modules/files/blockinfile.py: yaegashi
