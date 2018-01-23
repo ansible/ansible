@@ -332,9 +332,9 @@ class Interfaces(FactsBase):
 
             intf = dict()
             if 'type' in item:
-              intf.update(self.transform_dict(item, self.INTERFACE_SVI_MAP))
+                intf.update(self.transform_dict(item, self.INTERFACE_SVI_MAP))
             else:
-               intf.update(self.transform_dict(item, self.INTERFACE_MAP))
+                 intf.update(self.transform_dict(item, self.INTERFACE_MAP))
 
             if 'eth_ip_addr' in item:
                 intf['ipv4'] = self.transform_dict(item, self.INTERFACE_IPV4_MAP)
@@ -343,7 +343,6 @@ class Interfaces(FactsBase):
             if 'svi_ip_addr' in item:
                 intf['ipv4'] = self.transform_dict(item, self.INTERFACE_SVI_IPV4_MAP)
                 self.facts['all_ipv4_addresses'].append(item['svi_ip_addr'])
-
 
             interfaces[name] = intf
 
