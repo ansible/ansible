@@ -162,7 +162,6 @@ tasks:
         key2: "2"
 
 # To remove previously added tags pass a empty dict
-tasks:
 - name: remove tags
   lambda:
     name: 'Lambda function'
@@ -174,7 +173,6 @@ tasks:
     tags: {}
 
 # Basic Lambda function deletion
-tasks:
 - name: Delete Lambda functions HelloWorld and ByeBye
   lambda:
     name: '{{ item }}'
