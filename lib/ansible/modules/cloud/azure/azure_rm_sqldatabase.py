@@ -63,9 +63,8 @@ options:
             - 'restore_long_term_retention_backup'
     source_database_id:
         description:
-            - "Required if I(create_mode) is C(copy), C(non_readable_secondary), C(online_secondary), C(point_in_time_restore), C(recovery), or C(restore
-              ), then this value is required. Specifies the resource ID of the source database. If I(create_mode) is C(non_readable_secondary) or
-               C(online_secondary), the name of the source database must be the same as the new database being created."
+            - Required unless I(create_mode) is C(default) or C(restore_long_term_retention_backup).
+            - Specifies the resource ID of the source database
     source_database_deletion_date:
         description:
             - "Required if I(create_mode) is C(restore) and I(source_database_id) is the deleted database's original resource id when it existed (as
@@ -112,7 +111,7 @@ options:
     requested_service_objective_name:
         description:
             - "The name of the configured service level objective of the database. This is the service level objective that is in the process of being applied
-               to the database. Once successfully updated, it will match the value of serviceLevelObjective property. To see possible values, query the
+               to the database. Once successfully updated, it will match the value of I(service_level_objective) property. To see possible values, query the
                capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId:
                 'Capabilities_ListByLocation.'."
         choices:
@@ -133,11 +132,11 @@ options:
             - 'elastic_pool'
     elastic_pool_name:
         description:
-            - "The name of the elastic pool the database is in. If elasticPoolName and I(requested_service_objective_name) are both updated, the value of
+            - "The name of the elastic pool the database is in. If C(elastic_pool_name) and I(requested_service_objective_name) are both set, the value of
                I(requested_service_objective_name) is ignored. Not supported for C(data_warehouse) edition."
     read_scale:
         description:
-            - "If the database is a geo-secondary, readScale indicates whether read-only connections are allowed to this database or not. Not supported for
+            - "If the database is a geo-secondary, indicates whether read-only connections are allowed to this database or not. Not supported for
                C(data_warehouse) edition."
         type: bool
         default: False
@@ -154,7 +153,8 @@ options:
         default: False
     force_update:
       description:
-          - Needs to be set to True in order to SQL Database to be updated.
+          - SQL Database will be updated if given parameters differ from existing resource state.
+          - To force SQL Database update in any circumstances set this parameter to True. 
       type: bool
     state:
       description:
