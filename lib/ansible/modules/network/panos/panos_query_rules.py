@@ -212,17 +212,17 @@ def get_object(device, dev_group, obj_name):
 
 
 def addr_in_obj(addr, obj):
-    ip = ipaddress.ip_address(unicode(addr))
+    ip = ipaddress.ip_address(addr)
     # Process address objects
     if isinstance(obj, objects.AddressObject):
         if obj.type == 'ip-netmask':
-            net = ipaddress.ip_network(unicode(obj.value))
+            net = ipaddress.ip_network(obj.value)
             if ip in net:
                 return True
         if obj.type == 'ip-range':
             ip_range = obj.value.split('-')
-            lower = ipaddress.ip_address(unicode(ip_range[0]))
-            upper = ipaddress.ip_address(unicode(ip_range[1]))
+            lower = ipaddress.ip_address(ip_range[0])
+            upper = ipaddress.ip_address(ip_range[1])
             if lower < ip < upper:
                 return True
     return False
@@ -404,10 +404,10 @@ def main():
                     # Otherwise the object_string is not an object and should be handled differently
                     if obj is False:
                         if '-' in object_string:
-                            obj = ipaddress.ip_address(unicode(source_ip))
+                            obj = ipaddress.ip_address(source_ip)
                             source_range = object_string.split('-')
-                            source_lower = ipaddress.ip_address(unicode(source_range[0]))
-                            source_upper = ipaddress.ip_address(unicode(source_range[1]))
+                            source_lower = ipaddress.ip_address(source_range[0])
+                            source_upper = ipaddress.ip_address(source_range[1])
                             if source_lower <= obj <= source_upper:
                                 source_ip_match = True
                         else:
@@ -433,10 +433,10 @@ def main():
                     # Otherwise the object_string is not an object and should be handled differently
                     if obj is False:
                         if '-' in object_string:
-                            obj = ipaddress.ip_address(unicode(destination_ip))
+                            obj = ipaddress.ip_address(destination_ip)
                             destination_range = object_string.split('-')
-                            destination_lower = ipaddress.ip_address(unicode(destination_range[0]))
-                            destination_upper = ipaddress.ip_address(unicode(destination_range[1]))
+                            destination_lower = ipaddress.ip_address(destination_range[0])
+                            destination_upper = ipaddress.ip_address(destination_range[1])
                             if destination_lower <= obj <= destination_upper:
                                 destination_ip_match = True
                         else:
