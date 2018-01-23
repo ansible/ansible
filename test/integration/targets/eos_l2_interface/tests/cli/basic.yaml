@@ -5,6 +5,8 @@
   eos_l2_interface:
     name: Ethernet1
     state: absent
+    authorize: yes
+    provider: "{{ cli }}"
   become: yes
 
 - name: Set switchport mode to access on vlan 4000
