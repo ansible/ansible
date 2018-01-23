@@ -115,7 +115,6 @@ RETURN = '''
 # Default return values
 '''
 
-
 from ansible.module_utils.basic import AnsibleModule, get_exception
 
 try:
@@ -123,6 +122,8 @@ try:
     from pandevice import firewall
     from pandevice import panorama
     from pandevice import objects
+
+    from pan.xapi import PanXapiError
 
     HAS_LIB = True
 except ImportError:
@@ -149,13 +150,13 @@ def register_ip_to_tag_map(device, ip_addresses, tag):
     exc = None
     try:
         device.userid.register(ip_addresses, tag)
-    except Exception:
-            exc = get_exception()
+    except PanXapiError:
+        exc = get_exception()
 
     if exc:
         return False, exc
-    else:
-        return True, exc
+
+    return True, exc
 
 
 def get_all_address_group_mapping(device):
@@ -168,13 +169,13 @@ def get_all_address_group_mapping(device):
     ret = None
     try:
         ret = device.userid.get_registered_ip()
-    except Exception:
+    except PanXapiError:
         exc = get_exception()
 
     if exc:
         return False, exc
-    else:
-        return ret, exc
+
+    return ret, exc
 
 
 def delete_address_from_mapping(device, ip_address, tags):
@@ -189,13 +190,13 @@ def delete_address_from_mapping(device, ip_address, tags):
     exc = None
     try:
         ret = device.userid.unregister(ip_address, tags)
-    except Exception:
+    except PanXapiError:
         exc = get_exception()
 
     if exc:
         return False, exc
-    else:
-        return True, exc
+
+    return True, exc
 
 
 def main():
@@ -241,14 +242,14 @@ def main():
         result, exc = register_ip_to_tag_map(device,
                                              ip_addresses=module.params.get('ip_to_register', None),
                                              tag=module.params.get('tag_names', None)
-                                             )
+                                            )
     elif operation == 'list':
         result, exc = get_all_address_group_mapping(device)
     elif operation == 'delete':
         result, exc = delete_address_from_mapping(device,
                                                   ip_address=module.params.get('ip_to_register', None),
                                                   tags=module.params.get('tag_names', [])
-                                                  )
+                                                 )
     else:
         module.fail_json(msg="Unsupported option")
 
@@ -258,10 +259,11 @@ def main():
     if commit:
         try:
             device.commit(sync=True)
-        except Exception:
+        except PanXapiError:
             module.fail_json(get_exception())
 
     module.exit_json(changed=True, msg=result)
+
 
 if __name__ == "__main__":
     main()
