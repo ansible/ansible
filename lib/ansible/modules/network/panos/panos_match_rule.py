@@ -33,7 +33,7 @@ description: >
     The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches
     the traffic is applied, the more specific rules must precede the more general ones.
 author: "Robert Hagen (@rnh556)"
-version_added: "1.0"
+version_added: "2.5"
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
@@ -67,6 +67,9 @@ options:
         description:
             - The source IP address.
         required: true
+    source_port:
+        description:
+            - The source port.
     source_user:
         description:
             - The source user or group.
@@ -90,6 +93,12 @@ options:
         description:
             - The IP protocol number [1-255].
         required: true
+    category:
+        description:
+            - URL category
+    vsys_id:
+        description:
+            - ID of the VSYS object.
 '''
 
 EXAMPLES = '''
@@ -274,16 +283,16 @@ def main():
         vsys_id=dict(default='vsys1'),
         rule_type=dict(required=True, choices=['security', 'nat']),
         source_zone=dict(default=None),
-        source_ip=dict(default=None, required=True),
+        source_ip=dict(default=None),
         source_user=dict(default=None),
         source_port=dict(default=None),
         to_interface=dict(default=None),
         destination_zone=dict(default=None),
-        destination_ip=dict(default=None, required=True),
-        destination_port=dict(default=None, required=True),
+        destination_ip=dict(default=None),
+        destination_port=dict(default=None),
         category=dict(default=None),
         application=dict(default=None),
-        protocol=dict(default=None, required=True)
+        protocol=dict(default=None)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
