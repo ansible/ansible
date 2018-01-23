@@ -30,11 +30,14 @@ module: panos_dag_tags
 short_description: Create tags for DAG's on PAN-OS devices.
 description:
     - Create the ip address to tag associations. Tags will in turn be used to create DAG's
-author: "Vinay Venkataraghavan @vinayvenkat"
+author: "Vinay Venkataraghavan (@vinayvenkat)"
 version_added: "2.5"
 requirements:
     - pan-python
     - pan-device
+notes:
+    - Checkmode is not supported.
+    - Panorama is not supported.
 options:
     ip_address:
         description:
@@ -140,13 +143,6 @@ def get_devicegroup(device, devicegroup):
 
 
 def register_ip_to_tag_map(device, ip_addresses, tag):
-    """
-    :param device:
-    :param ip_addresses:
-    :param tag:
-    :return:
-    """
-
     exc = None
     try:
         device.userid.register(ip_addresses, tag)
@@ -160,11 +156,6 @@ def register_ip_to_tag_map(device, ip_addresses, tag):
 
 
 def get_all_address_group_mapping(device):
-    """
-    Retrieve all the tag to IP address mappings
-    :param device:
-    :return:
-    """
     exc = None
     ret = None
     try:
@@ -179,14 +170,6 @@ def get_all_address_group_mapping(device):
 
 
 def delete_address_from_mapping(device, ip_address, tags):
-    """
-    Delete an IP address from a tag mapping.
-    :param device:
-    :param ip_address:
-    :param tags:
-    :return:
-    """
-
     exc = None
     try:
         ret = device.userid.unregister(ip_address, tags)
@@ -254,13 +237,14 @@ def main():
         module.fail_json(msg="Unsupported option")
 
     if not result:
-        module.fail_json(msg=exc)
+        module.fail_json(msg=exc.message)
 
     if commit:
         try:
             device.commit(sync=True)
         except PanXapiError:
-            module.fail_json(get_exception())
+            exc = get_exception()
+            module.fail_json(msg = exc)
 
     module.exit_json(changed=True, msg=result)
 
