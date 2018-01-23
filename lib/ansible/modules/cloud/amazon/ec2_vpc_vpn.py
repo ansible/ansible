@@ -57,7 +57,7 @@ options:
   tunnel_options:
     description:
       - An optional list object containing no more than two dict members, each of which may contain 'TunnelInsideCidr'
-        and/or 'PreSharedKey' keys with appropriate string values.  AWS defaults will apply in absense of either of
+        and/or 'PreSharedKey' keys with appropriate string values.  AWS defaults will apply in absence of either of
         the aforementioned keys.
     required: no
     version_added: "2.5"
