@@ -91,7 +91,7 @@ options:
             - The application.
     protocol:
         description:
-            - The IP protocol number [1-255].
+            - The IP protocol number from 1 to 255.
         required: true
     category:
         description:
