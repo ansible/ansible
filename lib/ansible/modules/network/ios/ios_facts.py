@@ -91,6 +91,14 @@ ansible_net_image:
   description: The image file the device is running
   returned: always
   type: string
+ansible_net_stacked_models:
+  description: The model names of each device in the stack
+  returned: when multiple devices are configured in a stack
+  type: list
+ansible_net_stacked_serialnums:
+  description: The serial numbers of each device in the stack
+  returned: when multiple devices are configured in a stack
+  type: list
 
 # hardware
 ansible_net_filesystems:
@@ -168,6 +176,7 @@ class Default(FactsBase):
             self.facts['model'] = self.parse_model(data)
             self.facts['image'] = self.parse_image(data)
             self.facts['hostname'] = self.parse_hostname(data)
+            self.parse_stacks(data)
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+?)(?:,\s|\s)', data)
@@ -193,6 +202,15 @@ class Default(FactsBase):
         match = re.search(r'board ID (\S+)', data)
         if match:
             return match.group(1)
+
+    def parse_stacks(self, data):
+        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
+        if match:
+            self.fatcs['stacked_models'] = match
+
+        match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
+        if match:
+            self.facts['stacked_serialnums'] = match
 
 
 class Hardware(FactsBase):
