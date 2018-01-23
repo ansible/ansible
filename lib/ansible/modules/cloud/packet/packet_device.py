@@ -91,7 +91,8 @@ options:
       - Size of the public IPv4 subnet
       - This can be set to any available size from packet (/31, /30, /29, /28, /27)
     choices: [31, 30, 29, 28, 27]
-
+    version_added: "2.5"
+    
   state:
     description:
       - Desired state of the device.
