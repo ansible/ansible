@@ -81,6 +81,17 @@ options:
             - '- C(mac_changes) (bool): indicates whether mac changes are allowed. (default: false)'
         required: False
         version_added: '2.5'
+    teaming_policy:
+        description:
+            - Dictionary which configures the different teaming values for portgroup.
+            - 'Valid attributes are:'
+            - '- C(load_balance_policy) (string): Network adapter teaming policy. (default: loadbalance_srcid)'
+            - '   - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, failover_explicit]'
+            - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
+            - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
+            - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
+        required: False
+        version_added: '2.5'
     port_policy:
         description:
             - Dictionary which configures the advanced policy settings for the portgroup.
@@ -252,6 +263,14 @@ class VMwareDvsPortgroup(PyVmomi):
         config.defaultPortConfig.securityPolicy.forgedTransmits = vim.BoolPolicy(value=self.security_forged_transmits)
         config.defaultPortConfig.securityPolicy.macChanges = vim.BoolPolicy(value=self.security_mac_changes)
 
+        # Teaming Policy
+        teamingPolicy = vim.dvs.VmwareDistributedVirtualSwitch.UplinkPortTeamingPolicy()
+        teamingPolicy.policy = vim.StringPolicy(value=self.module.params['teaming_policy']['load_balance_policy'])
+        teamingPolicy.reversePolicy = vim.BoolPolicy(value=self.module.params['teaming_policy']['inbound_policy'])
+        teamingPolicy.notifySwitches = vim.BoolPolicy(value=self.module.params['teaming_policy']['notify_switches'])
+        teamingPolicy.rollingOrder = vim.BoolPolicy(value=self.module.params['teaming_policy']['rolling_order'])
+        config.defaultPortConfig.uplinkTeamingPolicy = teamingPolicy
+
         # PG policy (advanced_policy)
         config.policy = vim.dvs.VmwareDistributedVirtualSwitch.VMwarePortgroupPolicy()
         config.policy.blockOverrideAllowed = self.policy_block_override
@@ -269,8 +288,7 @@ class VMwareDvsPortgroup(PyVmomi):
         # PG Type
         config.type = self.portgroup_type
 
-        spec = [config]
-        task = self.dv_switch.AddDVPortgroup_Task(spec)
+        task = self.dv_switch.AddDVPortgroup_Task([config])
         changed, result = wait_for_task(task)
         return changed, result
 
@@ -333,6 +351,29 @@ def main():
                     forged_transmits=False,
                     mac_changes=False
                 )
+            ),
+            teaming_policy=dict(
+                type='dict',
+                options=dict(
+                    inbound_policy=dict(type='bool', default=False),
+                    notify_switches=dict(type='bool', default=True),
+                    rolling_order=dict(type='bool', default=False),
+                    load_balance_policy=dict(type='str',
+                                             default='loadbalance_srcid',
+                                             choices=[
+                                                 'loadbalance_ip',
+                                                 'loadbalance_srcmac',
+                                                 'loadbalance_srcid',
+                                                 'failover_explicit',
+                                             ],
+                                             )
+                ),
+                default=dict(
+                    inbound_policy=False,
+                    notify_switches=True,
+                    rolling_order=False,
+                    load_balance_policy='loadbalance_srcid',
+                ),
             ),
             port_policy=dict(
                 type='dict',
