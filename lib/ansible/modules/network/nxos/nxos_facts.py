@@ -30,7 +30,7 @@ short_description: Gets facts about NX-OS switches
 description:
   - Collects facts from Cisco Nexus devices running the NX-OS operating
     system.  Fact collection is supported over both Cli and Nxapi
-    Transports.  This module prepends all of the base network fact keys
+    transports.  This module prepends all of the base network fact keys
     with C(ansible_net_<fact>).  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
