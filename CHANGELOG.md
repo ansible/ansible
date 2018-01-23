@@ -11,6 +11,7 @@ Ansible Changes By Release
 * Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.os_distribution`) w/o the `ansible_` prefix.
   They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
   currently on by default, in the future it will be off.
+* Add a configuration file to filter modules that a site administrator wants to exclude from being used.
 
 ### Deprecations
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
