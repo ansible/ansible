@@ -118,10 +118,10 @@ options:
     version_added: "2.3"
   tags:
     description:
-      - tag dict to apply to the function
+      - tag dict to apply to the function (requires botocore 1.5.40 or above)
     required: false
     default: None
-    version_added: "2.4"
+    version_added: "2.5"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -227,6 +227,7 @@ configuration:
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import compare_aws_tags
 import base64
 import hashlib
 import traceback
@@ -292,44 +293,39 @@ def sha256sum(filename):
     return hex_digest
 
 def set_tag(client, module, tags, function):
+    if not hasattr(client, "list_tags"):
+        module.fail_json(msg="Using tags requires botocore 1.5.40 or above")
+
     changed = False
     c = client
     arn = function['Configuration']['FunctionArn']
 
     try:
-        response = c.list_tags(
-            Resource=arn
-        )
+        current_tags = c.list_tags(Resource=arn).get('Tags', {})
+    except ClientError as e:
+        module.fail_json(msg="Unable to list tags: {0}".format(to_native(e),
+                         exception=traceback.format_exc()))
 
-        unset_keys = []
-        for key in response['Tags']:
-            if not key in tags:
-                unset_keys.append(key)
+    tags_to_add, tags_to_remove = compare_aws_tags(current_tags, tags, purge_tags=True)
 
-        if len(unset_keys) > 0:
+    try:
+        if tags_to_remove:
             c.untag_resource(
                 Resource=arn,
-                TagKeys=unset_keys
+                TagKeys=tags_to_remove
             )
             changed = True
 
-        for key, value in tags.items():
-            if not key in response['Tags']:
-                c.tag_resource(
-                    Resource=arn,
-                    Tags=tags
-                )
-                changed = True
+        if tags_to_add:
+            c.tag_resource(
+                Resource=arn,
+                Tags=tags_to_add
+            )
+            changed = True
 
-            elif not tags[key] == response['Tags'][key]:
-                c.tag_resource(
-                    Resource=arn,
-                    Tags=tags
-                )
-                changed = True
-
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
+    except ClientError as e:
+        module.fail_json(msg="Unable to tag resource {0}: {1}".format(arn,
+                         to_native(e)), exception=traceback.format_exc())
 
     return changed
 
@@ -351,6 +347,7 @@ def main():
         vpc_security_group_ids=dict(type='list'),
         environment_variables=dict(type='dict'),
         dead_letter_arn=dict(),
+        tags=dict(type='dict'),
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -505,7 +502,7 @@ def main():
                     module.fail_json(msg=str(e), exception=traceback.format_exc())
 
         # Tag Function
-        if tags is not None and len(tags) >= 0:
+        if tags is not None:
             if set_tag(client, module, tags, current_function):
                 changed = True
 
@@ -587,7 +584,7 @@ def main():
             module.fail_json_aws(e, msg="Trying to create function")
 
         # Tag Function
-        if tags is not None and len(tags) >= 0:
+        if tags is not None:
             if set_tag(client, module, tags, get_current_function(client, name)):
                 changed = True
 
