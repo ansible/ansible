@@ -35,7 +35,6 @@ options:
     description:
       - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
         To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
-    required: true
     aliases: [ managed_policies ]
   state:
     description:
