@@ -192,7 +192,7 @@
       - "command_result5.stdout == 'foobar'"
 
 - name: send to stdin literal multiline block
-  command: "{{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1(sys.stdin.read()).hexdigest())'"
+  command: "{{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, \"buffer\") else sys.stdin).read()).hexdigest())'"
   args:
     stdin: |-
       this is the first line
@@ -274,7 +274,7 @@
     "multiline echo" \
     "with a new line
     in quotes" \
-    | {{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1(sys.stdin.read()).hexdigest())'
+    | {{ ansible_python_interpreter }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())'
     echo "this is a second line"
   register: shell_result5
 

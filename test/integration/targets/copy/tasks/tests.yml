@@ -1123,7 +1123,7 @@
     - stat_link_result.stat.islnk
 
 - name: Get the checksum of the link target
-  shell: "{{ ansible_python_interpreter }} -c 'import hashlib; print(hashlib.sha1(open(\"{{remote_dir | expanduser}}/follow_test\").read()).hexdigest())'"
+  shell: "{{ ansible_python_interpreter }} -c 'import hashlib; print(hashlib.sha1(open(\"{{remote_dir | expanduser}}/follow_test\", \"rb\").read()).hexdigest())'"
   register: target_file_result
 
 - name: Assert that the link target was updated
