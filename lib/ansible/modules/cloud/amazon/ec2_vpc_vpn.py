@@ -60,6 +60,7 @@ options:
         and/or 'PreSharedKey' keys with appropriate string values.  AWS defaults will apply in absense of either of
         the aforementioned keys.
     required: no
+    version_added: "2.5"
   filters:
     description:
       - An alternative to using vpn_connection_id. If multiple matches are found, vpn_connection_id is required.
