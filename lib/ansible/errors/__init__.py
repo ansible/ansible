@@ -254,6 +254,7 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
 
 # These Exceptions are temporary, using them as flow control until we can get a better solution.
 # DO NOT USE as they will probably be removed soon.
+# We will port the action modules in our tree to use a context manager instead.
 class AnsibleAction(AnsibleRuntimeError):
     ''' Base Exception for Action plugin flow control '''
 
@@ -284,6 +285,6 @@ class AnsibleActionFail(AnsibleAction):
         self.result.update({'failed': True, 'msg': message})
 
 
-class AnsibleActionDone(AnsibleAction):
+class _AnsibleActionDone(AnsibleAction):
     ''' an action runtime early exit'''
     pass

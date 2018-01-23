@@ -26,7 +26,7 @@ import re
 import tempfile
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionDone, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
@@ -105,7 +105,7 @@ class ActionModule(ActionBase):
 
             if boolean(remote_src, strict=False):
                 result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
-                raise AnsibleActionDone()
+                raise _AnsibleActionDone()
             else:
                 try:
                     src = self._find_needle('files', src)
