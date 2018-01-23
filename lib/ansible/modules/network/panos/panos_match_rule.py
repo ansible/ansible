@@ -102,12 +102,6 @@ options:
         default: "vsys1"
             - The IP protocol number [1-255].
         required: true
-    category:
-        description:
-            - URL category
-    vsys_id:
-        description:
-            - ID of the VSYS object.
 '''
 
 EXAMPLES = '''
