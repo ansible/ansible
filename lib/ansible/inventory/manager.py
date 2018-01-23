@@ -142,7 +142,7 @@ class InventoryManager(object):
             self._sources = sources
 
         # get to work!
-        self.parse_sources()
+        self.parse_sources(cache=True)
 
     @property
     def localhost(self):
@@ -234,7 +234,7 @@ class InventoryManager(object):
 
                 # recursively deal with directory entries
                 fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(to_native(fullpath))
+                parsed_this_one = self.parse_source(to_native(fullpath), cache=cache)
                 display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one

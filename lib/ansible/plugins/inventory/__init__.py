@@ -28,6 +28,7 @@ from collections import MutableMapping
 
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.plugins import AnsiblePlugin
+from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -142,6 +143,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
+        self.cache = None
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates self.groups from the given data. Raises an error on any parse failure.  '''
@@ -185,8 +187,15 @@ class BaseInventoryPlugin(AnsiblePlugin):
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config)
+        if self._options.get('cache'):
+            self._set_cache_options(self._options)
 
         return config
+
+    def _set_cache_options(self, options):
+        self.cache = InventoryFileCacheModule(plugin_name=options.get('cache_plugin'),
+                                              timeout=options.get('cache_timeout'),
+                                              cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
         ''' update existing options from file data'''
@@ -213,6 +222,9 @@ class Cacheable(object):
 
     _cache = {}
 
+    def get_cache_key(self, path):
+        return "{0}_{1}_{2}".format(self.NAME, self._get_cache_prefix(path), self._get_config_identifier(path))
+
     def _get_cache_prefix(self, path):
         ''' create predictable unique prefix for plugin/inventory '''
 
@@ -225,6 +237,11 @@ class Cacheable(object):
         d2 = n.hexdigest()
 
         return 's_'.join([d1[:5], d2[:5]])
+
+    def _get_config_identifier(self, path):
+        ''' create predictable config-specific prefix for plugin/inventory '''
+
+        return hashlib.md5(path.encode()).hexdigest()
 
     def clear_cache(self):
         self._cache = {}
