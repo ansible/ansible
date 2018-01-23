@@ -23,8 +23,9 @@ options:
     description:
       - name of the beanstalk application you wish to manage
     aliases: [ 'name' ]
-    required: false
-    default: null
+  description:
+    description:
+      - the description of the application
   state:
     description:
       - whether to ensure the application is present or absent
@@ -33,12 +34,13 @@ options:
   terminate_by_force:
     description:
       - when set to true, running environments will be terminated before deleting the application
-    required: false
     default: false
 author:
     - Harpreet Singh (@hsingh)
     - Stephen Granger (@viper233)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -58,6 +60,7 @@ EXAMPLES = '''
 RETURN = '''
 app:
     description: beanstalk application
+    returned: always
     type: dict
     sample: {
         "ApplicationName": "app-name",
@@ -78,7 +81,7 @@ output:
 '''
 
 try:
-    import botocore
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
@@ -98,7 +101,7 @@ def list_apps(ebs, app_name, module):
             apps = ebs.describe_applications(ApplicationNames=[app_name])
         else:
             apps = ebs.describe_applications()
-    except Exception as e:
+    except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Could not describe application")
 
     return apps.get("Applications", [])
@@ -119,7 +122,7 @@ def check_app(ebs, app, module):
     elif state == 'present' and app.get("Description", None) == description:
         result = dict(changed=False, output="App is up-to-date", app=app)
     elif state == 'absent' and app is None:
-        result = dict(changed=False, output="App does not exist")
+        result = dict(changed=False, output="App does not exist", app={})
     elif state == 'absent' and app is not None:
         result = dict(changed=True, output="App will be deleted", app=app)
     elif state == 'absent' and app is not None and terminate_by_force is True:
@@ -160,15 +163,8 @@ def main():
 
     result = {}
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        try:
-            ebs = boto3_conn(module, conn_type='client', resource='elasticbeanstalk',
-                             region=region, endpoint=ec2_url, **aws_connect_params)
-        except botocore.exceptions.ProfileNotFound as e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg='region must be specified')
+    ebs = boto3_conn(module, conn_type='client', resource='elasticbeanstalk',
+                     region=region, endpoint=ec2_url, **aws_connect_params)
 
     app = describe_app(ebs, app_name, module)
 
@@ -181,7 +177,7 @@ def main():
             try:
                 create_app = ebs.create_application(**filter_empty(ApplicationName=app_name,
                                                     Description=description))
-            except Exception as e:
+            except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Could not create application")
 
             app = describe_app(ebs, app_name, module)
@@ -194,7 +190,7 @@ def main():
                         ebs.update_application(ApplicationName=app_name)
                     else:
                         ebs.update_application(ApplicationName=app_name, Description=description)
-                except Exception as e:
+                except (BotoCoreError, ClientError) as e:
                     module.fail_json_aws(e, msg="Could not update application")
 
                 app = describe_app(ebs, app_name, module)
@@ -205,7 +201,7 @@ def main():
 
     else:
         if app is None:
-            result = dict(changed=False, output='Application not found')
+            result = dict(changed=False, output='Application not found', app={})
         else:
             try:
                 if terminate_by_force:
@@ -213,7 +209,7 @@ def main():
                     ebs.delete_application(ApplicationName=app_name, TerminateEnvByForce=terminate_by_force)
                 else:
                     ebs.delete_application(ApplicationName=app_name)
-            except Exception as e:
+            except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Cannot terminate app")
 
             result = dict(changed=True, app=app)
