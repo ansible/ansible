@@ -99,7 +99,7 @@ options:
     max_size_bytes:
         description:
             - "The max size of the database expressed in bytes. If I(create_mode) is not C(default), this value is ignored. To see possible values, query the
-               capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 
+               capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId:
                'Capabilities_ListByLocation.'"
     requested_service_objective_id:
         description:
