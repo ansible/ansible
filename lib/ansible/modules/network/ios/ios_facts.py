@@ -189,7 +189,7 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_model(self, data):
-        match = re.search(r'^[Cc]isco (\S+).+bytes of memory', data, re.M)
+        match = re.search(r'^[Cc]isco (\S+).+bytes of .*memory', data, re.M)
         if match:
             return match.group(1)
 
