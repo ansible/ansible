@@ -157,10 +157,10 @@ class FactsBase(object):
         self.responses = None
 
     def populate(self):
-        self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
+        self.responses = run_commands(self.module, commands=self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
-        return run_commands(self.module, cmd, check_rc=False)
+        return run_commands(self.module, commands=cmd, check_rc=False)
 
 
 class Default(FactsBase):
@@ -206,7 +206,7 @@ class Default(FactsBase):
     def parse_stacks(self, data):
         match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
         if match:
-            self.fatcs['stacked_models'] = match
+            self.facts['stacked_models'] = match
 
         match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
         if match:
