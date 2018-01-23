@@ -313,7 +313,8 @@ class AzureRM(object):
             tenant = self.credentials.get('tenant')
             if not tenant:
                 tenant = 'common'
-            # Use legacy client_id
+
+            # # Default to Xplat Client ID
             LEGACY_CLIENT_ID = '04b07795-8ddb-461a-bbee-02f9e1bf7b46'
 
             LOGIN_ENDPOINT = self._cloud_environment.endpoints.active_directory
@@ -323,7 +324,7 @@ class AzureRM(object):
                                                         RESOURCE,
                                                         self.credentials['ad_user'],
                                                         self.credentials['password'],
-                                                        LEGACY_CLIENT_ID)
+                                                        self.credentials.get('client_id', LEGACY_CLIENT_ID))
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
                       "Credentials must include client_id, secret and tenant or ad_user and password.")
