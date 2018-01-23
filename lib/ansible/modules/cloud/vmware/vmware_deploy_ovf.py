@@ -205,7 +205,8 @@ class VMDKUploader(Thread):
         Requests for vmdk files differ from other file types. Build the request options here to handle that
         '''
         headers = {
-            'Content-Length': self.size
+            'Content-Length': self.size,
+            'Content-Type': 'application/octet-stream',
         }
 
         if self._create:
@@ -226,11 +227,6 @@ class VMDKUploader(Thread):
         open_url(self.url, data=self.f, validate_certs=self.validate_certs, **self._request_opts())
 
     def run(self):
-        headers = {
-            'Content-Type': 'application/x-vnd.vmware-streamVmdk',
-            'Content-Length': self.size
-        }
-
         if self.tarinfo:
             try:
                 with TarFileProgressReader(self.vmdk, self.tarinfo) as self.f:
