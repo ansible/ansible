@@ -1266,6 +1266,32 @@ class PyVmomiHelper(PyVmomi):
 
         return datastore
 
+    def get_recommended_datastore(self, datastore_cluster_obj=None):
+        """
+        Function to return Storage DRS recommended datastore from datastore cluster
+        Args:
+            datastore_cluster_obj: datastore cluster managed object
+
+        Returns: Name of recommended datastore from the given datastore cluster
+
+        """
+        if datastore_cluster_obj is None:
+            return None
+        pod_sel_spec = vim.storageDrs.PodSelectionSpec()
+        pod_sel_spec.storagePod = datastore_cluster_obj
+        storage_spec = vim.storageDrs.StoragePlacementSpec()
+        storage_spec.podSelectionSpec = pod_sel_spec
+        storage_spec.type = 'create'
+
+        try:
+            rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
+            rec_action = rec.recommendations[0].action[0]
+            real_datastore_name = rec_action.destination.name
+        except Exception as e:
+            # There is some error so we fall back to general workflow
+            return None
+        return real_datastore_name
+
     def select_datastore(self, vm_obj=None):
         datastore = None
         datastore_name = None
@@ -1293,6 +1319,12 @@ class PyVmomiHelper(PyVmomi):
 
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
+                # Check if user has provided datastore cluster first
+                datastore_cluster = self.cache.find_obj(self.content, [vim.StoragePod], datastore_name)
+                if datastore_cluster:
+                    # If user specified datastore cluster so get recommended datastore
+                    datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
+                # Check if get_recommended_datastore or user specified datastore exists or not
                 datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
