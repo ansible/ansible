@@ -198,7 +198,7 @@ class RabbitMqUser(object):
             self._exec(['add_user', self.username, self.password])
         else:
             self._exec(['add_user', self.username, ''])
-            self._exec(['clear_password', self.username])
+            self.clear_password()
 
     def delete(self):
         self._exec(['delete_user', self.username])
@@ -231,11 +231,18 @@ class RabbitMqUser(object):
 
     def has_password_modification(self):
         _, rc = self._exec(['authenticate_user', self.username, self.password], run_in_check_mode=True, check_rc=False)
-        # 'EX_NOUSER' (The user specified does not exist) from https://github.com/rabbitmq/rabbitmq-server/blob/master/include/rabbit_cli.hrl#L70
-        return rc == 67
+
+        # The old version of rabbitmqctl (before 3.7) returned 'EX_NOUSER' (67) exit code when 'authenticate_user' command could not authenticate user: https://github.com/rabbitmq/rabbitmq-server/blob/fdd9f295d8b33a0774b3fa1f9753ff044fcfee15/src/rabbit_cli.erl#L140
+        # The new one (>= 3.7) returns 'EX_DATAERR' (65) exit code: https://github.com/rabbitmq/rabbitmq-cli/blob/5fe70511a25e8221ad7fc7e7fb40b020dbebc0ac/lib/rabbitmq/cli/ctl/commands/authenticate_user_command.ex#L41
+        # Old rabbitmqctl exit codes: https://github.com/rabbitmq/rabbitmq-server/blob/fdd9f295d8b33a0774b3fa1f9753ff044fcfee15/include/rabbit_cli.hrl#L70
+        # New rabbbitmqctl exit codes: https://github.com/rabbitmq/rabbitmq-cli/blob/2461c0494c7780622555f33d9e0b82d0e686a497/lib/rabbitmq/cli/core/exit_codes.ex#L19
+        return rc == 67 or rc == 65
 
     def set_password(self):
         self._exec(['change_password', self.username, self.password])
+
+    def clear_password(self):
+        self._exec(['clear_password', self.username])
 
 
 def main():
@@ -304,8 +311,12 @@ def main():
                 rabbitmq_user.set_permissions()
                 result['changed'] = True
 
-            if rabbitmq_user.has_password_modification():
-                rabbitmq_user.set_password()
+            if self.password is not None:
+                if rabbitmq_user.has_password_modification():
+                    rabbitmq_user.set_password()
+                    result['changed'] = True
+            else:
+                rabbitmq_user.clear_password()
                 result['changed'] = True
     elif state == 'present':
         rabbitmq_user.add()
