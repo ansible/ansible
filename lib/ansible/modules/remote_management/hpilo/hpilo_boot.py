@@ -65,12 +65,6 @@ options:
     - As a safeguard, without force, hpilo_boot will refuse to reboot a server that is already running.
     default: no
     choices: [ "yes", "no" ]
-  ssl_version:
-    description:
-      - Change the ssl_version used.
-    default: TLSv1
-    choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
-    version_added: '2.4'
 requirements:
 - hpilo
 notes:
@@ -130,7 +124,6 @@ def main():
             image=dict(type='str'),
             state=dict(type='str', default='boot_once', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot', 'poweroff']),
             force=dict(type='bool', default=False),
-            ssl_version=dict(type='str', default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
         )
     )
 
@@ -144,9 +137,8 @@ def main():
     image = module.params['image']
     state = module.params['state']
     force = module.params['force']
-    ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V', 'v'))
 
-    ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
+    ilo = hpilo.Ilo(host, login=login, password=password)
     changed = False
     status = {}
     power_status = 'UNKNOWN'

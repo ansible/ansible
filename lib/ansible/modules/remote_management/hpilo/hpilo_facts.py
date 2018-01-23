@@ -37,12 +37,6 @@ options:
     description:
     - The password to authenticate to the HP iLO interface.
     default: admin
-  ssl_version:
-    description:
-      - Change the ssl_version used.
-    default: TLSv1
-    choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
-    version_added: '2.4'
 requirements:
 - hpilo
 notes:
@@ -155,7 +149,6 @@ def main():
             host=dict(type='str', required=True),
             login=dict(type='str', default='Administrator'),
             password=dict(type='str', default='admin', no_log=True),
-            ssl_version=dict(type='str', default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
         ),
         supports_check_mode=True,
     )
@@ -166,9 +159,8 @@ def main():
     host = module.params['host']
     login = module.params['login']
     password = module.params['password']
-    ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V', 'v'))
 
-    ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
+    ilo = hpilo.Ilo(host, login=login, password=password)
 
     facts = {
         'module_hw': True,
