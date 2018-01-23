@@ -102,6 +102,12 @@ options:
         default: "vsys1"
             - The IP protocol number [1-255].
         required: true
+    category:
+        description:
+            - URL category
+    vsys_id:
+        description:
+            - ID of the VSYS object.
 '''
 
 EXAMPLES = '''
@@ -287,7 +293,7 @@ def main():
         vsys_id=dict(default='vsys1'),
         rule_type=dict(required=True, choices=['security', 'nat']),
         source_zone=dict(default=None),
-        source_ip=dict(default=None, required=True),
+        source_ip=dict(default=None),
         source_user=dict(default=None),
         source_port=dict(default=None),
         to_interface=dict(default=None),
