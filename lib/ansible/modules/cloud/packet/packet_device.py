@@ -443,6 +443,7 @@ def create_single_device(module, packet_conn, hostname):
     facility = module.params.get('facility')
     operating_system = module.params.get('operating_system')
     locked = module.params.get('locked')
+    public_ipv4_subnet_size = module.params.get('public_ipv4_subnet_size')
     ipxe_script_url = module.params.get('ipxe_script_url')
     always_pxe = module.params.get('always_pxe')
     device = packet_conn.create_device(
@@ -451,6 +452,7 @@ def create_single_device(module, packet_conn, hostname):
         plan=plan,
         facility=facility,
         operating_system=operating_system,
+        public_ipv4_subnet_size=public_ipv4_subnet_size,
         userdata=user_data,
         locked=locked)
     return device
@@ -598,6 +600,7 @@ def main():
             operating_system=dict(),
             plan=dict(),
             project_id=dict(required=True),
+            public_ipv4_subnet_size=dict(type='int', choices=[31, 30, 29, 28, 27])
             state=dict(choices=ALLOWED_STATES, default='present'),
             user_data=dict(default=None),
             wait_for_public_IPv=dict(type='int', choices=[4, 6]),
