@@ -22,8 +22,7 @@ short_description: Configure LVM and NFS file systems for AIX
 description:
   - This module creates, removes, mount and unmount LVM and NFS file system for
     AIX using C(/etc/filesystems).
-  - For LVM file systems is possible to resize a
-    file system.
+  - For LVM file systems is possible to resize a file system.
 version_added: "2.5"
 options:
   account_subsystem:
