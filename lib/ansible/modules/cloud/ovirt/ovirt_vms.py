@@ -165,7 +165,7 @@ options:
         description:
             - Type of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
-        choices: [ desktop, server ]
+        choices: [ desktop, server, high_performance ]
     operating_system:
         description:
             - Operating system of the Virtual Machine.
@@ -1425,7 +1425,7 @@ def main():
         cpu_sockets=dict(type='int'),
         cpu_cores=dict(type='int'),
         cpu_shares=dict(type='int'),
-        type=dict(type='str', choices=['server', 'desktop']),
+        type=dict(type='str', choices=['server', 'desktop', 'high_performance']),
         operating_system=dict(type='str',
                               choices=[
                                   'rhel_6_ppc64', 'other', 'freebsd', 'windows_2003x64', 'windows_10',
