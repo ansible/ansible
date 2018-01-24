@@ -1026,8 +1026,9 @@ class ModuleValidator(Validator):
         provider_args = set()
         args_from_argspec = set()
         for arg, data in spec.items():
-            args_from_argspec.add(arg)
-            args_from_argspec.update(data.get('aliases', []))
+            if not data.get('removed_in_version', None):
+                args_from_argspec.add(arg)
+                args_from_argspec.update(data.get('aliases', []))
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
                 # Record provider options from network modules, for later comparison
                 for provider_arg, provider_data in data.get('options', {}).items():
