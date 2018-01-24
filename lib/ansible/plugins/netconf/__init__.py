@@ -102,7 +102,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
            :source: name of the configuration datastore being queried
            :filter: specifies the portion of the configuration to retrieve
            (by default entire configuration is retrieved)"""
-        pass
+        return self.m.get_config(*args, **kwargs).data_xml
 
     @ensure_connected
     def get(self, *args, **kwargs):
@@ -110,7 +110,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         *filter* specifies the portion of the configuration to retrieve
         (by default entire configuration is retrieved)
         """
-        pass
+        return self.m.get(*args, **kwargs).data_xml
 
     @ensure_connected
     def edit_config(self, *args, **kwargs):
@@ -124,7 +124,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
             :error_option: if specified must be one of { `"stop-on-error"`, `"continue-on-error"`, `"rollback-on-error"` }
             The `"rollback-on-error"` *error_option* depends on the `:rollback-on-error` capability.
         """
-        pass
+        return self.m.edit_config(*args, **kwargs).xml
 
     @ensure_connected
     def validate(self, *args, **kwargs):
@@ -132,7 +132,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :source: is the name of the configuration datastore being validated or `config`
         element containing the configuration subtree to be validated
         """
-        pass
+        return self.m.validate(*args, **kwargs).xml
 
     @ensure_connected
     def copy_config(self, *args, **kwargs):
@@ -141,27 +141,27 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :source: is the name of the configuration datastore to use as the source of the
                  copy operation or `config` element containing the configuration subtree to copy
         :target: is the name of the configuration datastore to use as the destination of the copy operation"""
-        return self.m.copy_config(*args, **kwargs).data_xml
+        return self.m.copy_config(*args, **kwargs).xml
 
     @ensure_connected
     def lock(self, *args, **kwargs):
         """Allows the client to lock the configuration system of a device.
         *target* is the name of the configuration datastore to lock
         """
-        return self.m.lock(*args, **kwargs).data_xml
+        return self.m.lock(*args, **kwargs).xml
 
     @ensure_connected
     def unlock(self, *args, **kwargs):
         """Release a configuration lock, previously obtained with the lock operation.
         :target: is the name of the configuration datastore to unlock
         """
-        return self.m.unlock(*args, **kwargs).data_xml
+        return self.m.unlock(*args, **kwargs).xml
 
     @ensure_connected
     def discard_changes(self, *args, **kwargs):
         """Revert the candidate configuration to the currently running configuration.
         Any uncommitted changes are discarded."""
-        pass
+        return self.m.discard_changes(*args, **kwargs).xml
 
     @ensure_connected
     def commit(self, *args, **kwargs):
@@ -175,19 +175,19 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         :confirmed: whether this is a confirmed commit
         :timeout: specifies the confirm timeout in seconds
         """
-        pass
+        return self.m.commit(*args, **kwargs).xml
 
     @ensure_connected
     def validate(self, *args, **kwargs):
         """Validate the contents of the specified configuration.
            :source: name of configuration data store"""
-        return self.m.validate(*args, **kwargs).data_xml
+        return self.m.validate(*args, **kwargs).xml
 
     @ensure_connected
     def get_schema(self, *args, **kwargs):
         """Retrieves the required schema from the device
         """
-        return self.m.get_schema(*args, **kwargs)
+        return self.m.get_schema(*args, **kwargs).xml
 
     @ensure_connected
     def locked(self, *args, **kwargs):
@@ -220,4 +220,4 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         """Fetch file over scp from remote device"""
         pass
 
-# TODO Restore .data_xml, when ncclient supports it for all platforms
+# TODO Restore .xml, when ncclient supports it for all platforms
