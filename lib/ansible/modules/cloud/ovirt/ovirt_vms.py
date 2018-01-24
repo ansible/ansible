@@ -173,7 +173,7 @@ options:
         choices: [ desktop, server ]
     quota_id:
         description:
-            - "Disk quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine."
+            - "Virtual Machine quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine."
         version_added: "2.5"
     operating_system:
         description:
@@ -713,6 +713,7 @@ EXAMPLES = '''
     data_center: Default
     name: myquota
 - ovirt_vms:
+    name: myvm
     sso: False
     boot_menu: True
     usb_support: True
@@ -835,19 +836,19 @@ class VmsModule(BaseModule):
             stateless=self.param('stateless') or self.param('use_latest_template_version'),
             delete_protected=self.param('delete_protected'),
             bios=(
-                otypes.Bios(boot_menu=otypes.BootMenu(enabled=True))
-                if self.param('boot_menu') is True
-                else otypes.Bios(boot_menu=otypes.BootMenu(enabled=False))
+                otypes.Bios(boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')))
             ) if self.param('boot_menu') is not None else None,
             console=(
-                otypes.Console(enabled=True) if self.param('serial_console') is True else otypes.Console(enabled=False)
+                otypes.Console(enabled=self.param('serial_console'))
             ) if self.param('serial_console') is not None else None,
             usb=(
-                otypes.Usb(enabled=True) if self.param('usb_support') is True else otypes.Usb(enabled=False)
+                otypes.Usb(enabled=self.param('usb_support'))
             ) if self.param('usb_support') is not None else None,
             sso=(
-                otypes.Sso() if self.param('sso') is True else otypes.Sso(methods=[])
-            ) if self.param('sso') is not None else None,
+                otypes.Sso(
+                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param('sso') else []
+                )
+            ),
             quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,
             high_availability=otypes.HighAvailability(
                 enabled=self.param('high_availability')
