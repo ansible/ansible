@@ -139,6 +139,18 @@ def map_obj_to_commands(updates, module):
             module.fail_json(msg='invalid interface {0}'.format(name))
 
         if state == 'absent':
+            if obj_in_have['mode'] == 'access':
+                commands.append('no switchport access vlan {0}'.format(obj_in_have['access_vlan']))
+
+            if obj_in_have['mode'] == 'trunk':
+                commands.append('no switchport mode trunk')
+
+            if obj_in_have['native_vlan']:
+                commands.append('no switchport trunk native vlan {0}'.format(obj_in_have['native_vlan']))
+
+            if obj_in_have['trunk_allowed_vlans']:
+                commands.append('no switchport trunk allowed vlan {0}'.format(obj_in_have['trunk_allowed_vlans']))
+
             if obj_in_have['state'] == 'present':
                 commands.append('no switchport')
         else:
@@ -207,14 +219,13 @@ def map_config_to_obj(module):
             'state': state,
         }
 
-        if state == 'present':
-            obj['access_vlan'] = parse_config_argument(configobj, item, 'switchport access vlan')
-            obj['native_vlan'] = parse_config_argument(configobj, item, 'switchport trunk native vlan')
-            obj['trunk_allowed_vlans'] = parse_config_argument(configobj, item, 'switchport trunk allowed vlan')
-            if obj['access_vlan']:
-                obj['mode'] = 'access'
-            else:
-                obj['mode'] = 'trunk'
+        obj['access_vlan'] = parse_config_argument(configobj, item, 'switchport access vlan')
+        obj['native_vlan'] = parse_config_argument(configobj, item, 'switchport trunk native vlan')
+        obj['trunk_allowed_vlans'] = parse_config_argument(configobj, item, 'switchport trunk allowed vlan')
+        if obj['access_vlan']:
+            obj['mode'] = 'access'
+        else:
+            obj['mode'] = 'trunk'
 
         instances.append(obj)
 
