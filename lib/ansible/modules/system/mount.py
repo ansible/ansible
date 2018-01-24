@@ -57,6 +57,9 @@ options:
     default: 0
   state:
     description:
+      - If C(mount), the device will be actively mounted without changing
+        I(fstab_file). If the mount point is not present, the mount
+        point will be created.
       - If C(mounted), the device will be actively mounted and appropriately
         configured in I(fstab_file). If the mount point is not present, the
         mount point will be created.
@@ -68,7 +71,7 @@ options:
         I(fstab_file) and will also unmount the device and remove the mount
         point.
     required: true
-    choices: [ absent, mounted, present, unmounted ]
+    choices: [ absent, mounted, present, mount, unmounted ]
   fstab_file:
     description:
       - File to use instead of C(/etc/fstab). You shouldn't use this option
@@ -136,6 +139,13 @@ EXAMPLES = '''
     opts: bind
     state: mounted
     fstype: none
+
+- name: Mount up device, without changing fstab
+  mount:
+    path: /mnt/data
+    src: /dev/sb1
+    fstype: ext4
+    state: mount
 '''
 
 
@@ -385,6 +395,28 @@ def mount(module, args):
         return rc, out + err
 
 
+def mount_raw(module, args):
+    """Mount up a path or remount if needed, without using fstab."""
+
+    mount_bin = module.get_bin_path('mount', required=True)
+    name = args['name']
+    fstype = args['fstype']
+    src = args['src']
+    cmd = [mount_bin]
+
+    if fstype:
+        cmd += ['-t', fstype]
+
+    cmd += [src, name]
+
+    rc, out, err = module.run_command(cmd)
+
+    if rc == 0:
+        return 0, ''
+    else:
+        return rc, out + err
+
+
 def umount(module, path):
     """Unmount a path."""
 
@@ -586,7 +618,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(default=False, type='bool'),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'mount', 'present', 'unmounted']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -657,6 +689,8 @@ def main():
     #   Do not change fstab state, but unmount.
     # present:
     #   Add to fstab, do not change mount state.
+    # mount:
+    #   Mount only, do not change fstab state.
     # mounted:
     #   Add to fstab if not there and make sure it is mounted. If it has
     #   changed in fstab then remount it.
@@ -691,6 +725,25 @@ def main():
                         msg="Error unmounting %s: %s" % (name, msg))
 
             changed = True
+    elif state == 'mount':
+        if not os.path.exists(name) and not module.check_mode:
+            try:
+                os.makedirs(name)
+            except (OSError, IOError):
+                e = get_exception()
+                module.fail_json(
+                    msg="Error making dir %s: %s" % (name, str(e)))
+
+        res = 0
+
+        # TODO: add a check to see if src have changed and remount if necessary
+
+        changed = True
+        if not module.check_mode:
+            res, msg = mount_raw(module, args)
+
+        if res:
+            module.fail_json(msg="Error mounting %s: %s" % (name, msg))
     elif state == 'mounted':
         if not os.path.exists(name) and not module.check_mode:
             try:
