@@ -285,7 +285,7 @@ class VariableManager:
                 ''' merges all entities by inventory source '''
                 data = {}
                 for inventory_dir in self._inventory._sources:
-                    if ',' in inventory_dir:  # skip host lists
+                    if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
                         continue
                     elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)
