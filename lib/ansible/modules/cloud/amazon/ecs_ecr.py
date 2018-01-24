@@ -154,6 +154,9 @@ class EcsEcr:
         self.ecr = boto3_conn(module, conn_type='client',
                               resource='ecr', region=region,
                               endpoint=ec2_url, **aws_connect_kwargs)
+        self.sts = boto3_conn(module, conn_type='client',
+                              resource='sts', region=region,
+                              endpoint=ec2_url, **aws_connect_kwargs)
         self.check_mode = module.check_mode
         self.changed = False
         self.skipped = False
@@ -183,10 +186,14 @@ class EcsEcr:
             raise
 
     def create_repository(self, registry_id, name):
+        if registry_id:
+            default_registry_id = self.sts.get_caller_identity().get('Account')
+            if registry_id != default_registry_id:
+                raise Exception('Cannot create repository in registry {}.'
+                                'Would be created in {} instead.'.format(
+                                    registry_id, default_registry_id))
         if not self.check_mode:
-            repo = self.ecr.create_repository(
-                repositoryName=name, **build_kwargs(registry_id)).get(
-                'repository')
+            repo = self.ecr.create_repository(repositoryName=name).get('repository')
             self.changed = True
             return repo
         else:
