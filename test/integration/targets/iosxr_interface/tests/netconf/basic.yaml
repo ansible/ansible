@@ -3,7 +3,9 @@
 
 - name: Setup interface
   iosxr_interface:
-    name: GigabitEthernet0/0/0/1
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
     state: absent
     provider: "{{ netconf }}"
   register: result

@@ -40,33 +40,6 @@
     that:
       - result.changed == false
 
-#- name: change to vrf
-#  iosxr_system:
-#    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
-#  register: result
-
-#- assert:
-#    that:
-#      - result.changed == true
-#      - result.commands|length == 2
-#      - "'no ip name-server 2.2.2.2' in result.commands"
-#      - "'ip name-server 2.2.2.2 vrf ansible' in result.commands"
-
-#- name: verify change to vrf
-#  iosxr_system:
-#    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
-#  register: result
-#
-#- assert:
-#    that:
-#      - result.changed == false
-
 - name: remove one
   iosxr_system:
     name_servers:
@@ -86,7 +59,6 @@
     lines:
       - no ip name-server 1.1.1.1
       - no ip name-server 2.2.2.2
-      - no ip name-server 3.3.3.3
     match: none
     provider: "{{ cli }}"
 
