@@ -95,6 +95,7 @@ def describe_log_group(client, log_group_name, module):
         module.fail_json(msg="Unable to describe log group {0}: {1}".format(log_group_name, to_native(e)),
                          exception=traceback.format_exc())
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
