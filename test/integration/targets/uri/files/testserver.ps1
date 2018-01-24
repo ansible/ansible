@@ -1,5 +1,5 @@
 param (
-    [int]$port = 8000,
+    [int]$port = 8000
 )
 
 $listener = New-Object Net.HttpListener
