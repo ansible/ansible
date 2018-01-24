@@ -396,7 +396,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def unfrack_paths(option, opt, value, parser):
-        paths = getattr(parser.values, option.dest)
+        # If this callback is executed, we've been given explicit values, ignore the default value
+        paths = [v for v in getattr(parser.values, option.dest) if v not in option.default]
         if paths is None:
             paths = []
 
@@ -407,7 +408,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             pass  # FIXME: should we raise options error?
 
-        setattr(parser.values, option.dest, paths)
+        # We reverse the list to use the order provided on the CLI
+        setattr(parser.values, option.dest, paths[::-1])
 
     @staticmethod
     def unfrack_path(option, opt, value, parser):
