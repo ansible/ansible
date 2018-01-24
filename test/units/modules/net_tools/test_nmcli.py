@@ -93,6 +93,31 @@ TESTCASE_BOND = [
     }
 ]
 
+TESTCASE_BRIDGE = [
+    {
+        'type': 'bridge',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'br0_non_existant',
+        'ip4': '10.10.10.10',
+        'gw4': '10.10.10.1',
+        'maxage': '100',
+        'stp': True,
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
+
+TESTCASE_BRIDGE_SLAVE = [
+    {
+        'type': 'bridge-slave',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'br0_non_existant',
+        'path_cost': 100,
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
+
 
 def mocker_set(mocker, connection_exists=False):
     """
@@ -243,3 +268,95 @@ def test_dns4_none(mocked_connection_exists, capfd):
     out, err = capfd.readouterr()
     results = json.loads(out)
     assert results['changed']
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_BRIDGE, indirect=['patch_ansible_module'])
+def test_create_bridge(mocked_generic_connection_create):
+    """
+    Test if Bridge created
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'add'
+    assert args[0][3] == 'type'
+    assert args[0][4] == 'bridge'
+    assert args[0][5] == 'con-name'
+    assert args[0][6] == 'non_existent_nw_device'
+
+    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', '100', 'bridge.stp', 'yes']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_BRIDGE, indirect=['patch_ansible_module'])
+def test_mod_bridge(mocked_generic_connection_modify):
+    """
+    Test if Bridge modified
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'mod'
+    assert args[0][3] == 'non_existent_nw_device'
+    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', '100', 'bridge.stp', 'yes']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_BRIDGE_SLAVE, indirect=['patch_ansible_module'])
+def test_create_bridge_slave(mocked_generic_connection_create):
+    """
+    Test if Bridge_slave created
+    """
+
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'add'
+    assert args[0][3] == 'type'
+    assert args[0][4] == 'bridge-slave'
+    assert args[0][5] == 'con-name'
+    assert args[0][6] == 'non_existent_nw_device'
+
+    for param in ['bridge-port.path-cost', '100']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_BRIDGE_SLAVE, indirect=['patch_ansible_module'])
+def test_mod_bridge_slave(mocked_generic_connection_modify):
+    """
+    Test if Bridge_slave modified
+    """
+
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'mod'
+    assert args[0][3] == 'non_existent_nw_device'
+
+    for param in ['bridge-port.path-cost', '100']:
+        assert param in args[0]
