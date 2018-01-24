@@ -441,7 +441,7 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
 
     options = {'StaticRoutesOnly': static_only}
 
-    if isinstance(tunnel_options, list) and 0 < len(tunnel_options) <= 2:
+    if tunnel_options and len(tunnel_options) <= 2:
         t_opt = []
         for m in tunnel_options:
             # See Boto3 docs regarding 'create_vpn_connection'
@@ -449,7 +449,7 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
             if not isinstance(m, dict):
                 raise TypeError("non-dict list member")
             t_opt.append(m)
-        if len(t_opt) > 0:
+        if t_opt:
             options['TunnelOptions'] = t_opt
 
     if not (customer_gateway_id and vpn_gateway_id):
