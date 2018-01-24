@@ -131,6 +131,8 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
+            # Note: After Display() class is refactored need to update the log capture
+            # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
                 fileobj = sys.stdout
             else:

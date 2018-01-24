@@ -88,6 +88,7 @@ class Connection(ConnectionBase):
         stdin.write(src)
 
         stdin.write(b'\n#END_INIT#\n')
+        stdin.flush()
 
         (stdout, stderr) = p.communicate()
         stdin.close()
@@ -104,7 +105,7 @@ class Connection(ConnectionBase):
         if 'error' in result:
             if self._play_context.verbosity > 2:
                 msg = "The full traceback is:\n" + result['exception']
-                display.display(result['exception'], color=C.COLOR_ERROR)
+                display.display(msg, color=C.COLOR_ERROR)
             raise AnsibleError(result['error'])
 
         return result['socket_path']
