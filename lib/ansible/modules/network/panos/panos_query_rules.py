@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: panos_query_rules
-short_description: search for security rules matching specific criteria
+short_description: Module that allows search for security rules that match specific criteria.
 description: >
     - Security policies allow you to enforce rules and take action, and can be as general or specific as needed. The
     policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the
