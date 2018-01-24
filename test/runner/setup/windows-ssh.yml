@@ -1,0 +1,56 @@
+---
+- name: setup an OpenSSH server on a Windows host
+  hosts: all
+  gather_facts: no
+  tasks:
+  - name: ensure .ssh folder exists
+    win_file:
+      path: '%USERPROFILE%\.ssh'
+      state: directory
+
+  - name: copy the SSH public key to host if defined
+    win_copy:
+      src: '{{public_key_path}}'
+      dest: '%USERPROFILE%\.ssh\authorized_keys'
+    when: public_key_path is defined
+
+  - name: check if the SSH service is installed and running
+    win_service:
+      name: sshd
+    register: openssh_service_stat
+
+  - name: install the service if it is not installed
+    block:
+    - name: download OpenSSH package
+      win_get_url:
+        url: https://s3.amazonaws.com/ansible-ci-files/ansible-test/OpenSSH-Win64-1.0.0.0-Beta.zip
+        dest: C:\OpenSSH-Win64.zip
+
+    - name: extract OpenSSH package
+      win_unzip:
+        src: C:\OpenSSH-Win64.zip
+        dest: C:\Program Files
+        delete_archive: yes
+
+    - name: install OpenSSH service
+      win_command: powershell.exe -ExecutionPolicy ByPass -File "C:\Program Files\OpenSSH-Win64\install-sshd.ps1"
+    when: openssh_service_stat.exists == False
+
+  - name: create Firewall rule to allow SSH traffic on port 22
+    win_firewall_rule:
+      name: SSH
+      localport: 22
+      action: allow
+      direction: in
+      protocol: tcp
+      state: present
+      enabled: yes
+
+  - name: ensure SSH services are started and set to start on boot
+    win_service:
+      name: '{{item}}'
+      state: started
+      start_mode: auto
+    with_items:
+    - sshd
+    - ssh-agent
