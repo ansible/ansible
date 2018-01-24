@@ -70,7 +70,7 @@ EOF
     popd # roles-path-bug
 
     # Test that the role was installed to the expected directory
-    [[ -d "${ag_testdir}/${galaxy_test_role}/roles/${galaxy_test_role}" ]]
+    [[ -d "${ag_testdir}/roles-path-bug/roles/${galaxy_test_role}" ]]
 
 popd # ${ag_testdir}
 rm -fr ${ag_testdir}
