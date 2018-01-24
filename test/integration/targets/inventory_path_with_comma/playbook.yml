@@ -1,0 +1,9 @@
+---
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ensure we can see group_vars from path with comma
+      assert:
+        that:
+          - inventory_var_from_path_with_commas is defined
+          - inventory_var_from_path_with_commas == 'here'
