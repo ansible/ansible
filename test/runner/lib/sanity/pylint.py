@@ -91,6 +91,10 @@ class PylintTest(SanitySingleVersion):
 
                 path, code = ignore_entry.split(' ', 1)
 
+                if not os.path.exists(path):
+                    invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
+                    continue
+
                 if ' ' in code:
                     code, version = code.split(' ', 1)
 
@@ -160,6 +164,9 @@ class PylintTest(SanitySingleVersion):
             level=m['type'],
             code=m['symbol'],
         ) for m in messages]
+
+        if args.explain:
+            return SanitySuccess(self.name)
 
         line = 0
 
