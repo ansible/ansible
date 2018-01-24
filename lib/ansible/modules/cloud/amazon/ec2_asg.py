@@ -41,11 +41,11 @@ options:
     required: true
   load_balancers:
     description:
-      - List of ELB names to use for the group
+      - List of ELB names to use for the group. Use for classic load balancers.
     required: false
   target_group_arns:
     description:
-      - List of target group ARNs to use for the group
+      - List of target group ARNs to use for the group. Use for application load balancers.
     version_added: "2.4"
   availability_zones:
     description:
