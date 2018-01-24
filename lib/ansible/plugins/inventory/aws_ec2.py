@@ -86,8 +86,7 @@ simple_config_file:
       - prefix: tag
         key: tags
         value:
-          "Key": "Name"
-          "Value": "Test"
+          "Name": "Test"
 
 '''
 
@@ -405,7 +404,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         for host in hosts:
             hostname = self._get_hostname(host, hostnames)
+
             host = camel_dict_to_snake_dict(host, ignore_list=['Tags'])
+            host['tags'] = boto3_tag_list_to_ansible_dict(host.get('tags', []))
+
             if not hostname:
                 continue
             self.inventory.add_host(hostname, group=group)
