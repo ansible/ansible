@@ -193,12 +193,18 @@ def describe_vpcs(connection, module):
 
     # We can get these results in bulk but still needs two separate calls to the API
     try:
-        cl_enabled = connection.describe_vpc_classic_link(VpcIds=vpc_list)
+        if connection._client_config.region_name != 'us-east-1':
+            cl_enabled = {'Vpcs': [{'VpcId': vpc_id, 'ClassicLinkEnabled': False} for vpc_id in vpc_list]}
+        else:
+            cl_enabled = connection.describe_vpc_classic_link(VpcIds=vpc_list)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     try:
-        cl_dns_support = connection.describe_vpc_classic_link_dns_support(VpcIds=vpc_list)
+        if connection._client_config.region_name != 'us-east-1':
+            cl_dns_support = {'Vpcs': [{'VpcId': vpc_id, 'ClassicLinkDnsSupported': False} for vpc_id in vpc_list]}
+        else:
+            cl_dns_support = connection.describe_vpc_classic_link_dns_support(VpcIds=vpc_list)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
