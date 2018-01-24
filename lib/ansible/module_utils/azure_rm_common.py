@@ -356,6 +356,9 @@ class AzureRMModuleBase(object):
         '''
         self.module.fail_json(msg=msg, **kwargs)
 
+    def deprecate(self, msg, version=None):
+        self.module.deprecate(msg, version)
+
     def log(self, msg, pretty_print=False):
         pass
         # Use only during module development
@@ -654,18 +657,17 @@ class AzureRMModuleBase(object):
             self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
                                                                                                 str(exc)))
 
-    def create_default_pip(self, resource_group, location, name, allocation_method='Dynamic'):
+    def create_default_pip(self, resource_group, location, public_ip_name, allocation_method='Dynamic'):
         '''
-        Create a default public IP address <name>01 to associate with a network interface.
-        If a PIP address matching <vm name>01 exists, return it. Otherwise, create one.
+        Create a default public IP address <public_ip_name> to associate with a network interface.
+        If a PIP address matching <public_ip_name> exists, return it. Otherwise, create one.
 
         :param resource_group: name of an existing resource group
         :param location: a valid azure location
-        :param name: base name to assign the public IP address
+        :param public_ip_name: base name to assign the public IP address
         :param allocation_method: one of 'Static' or 'Dynamic'
         :return: PIP object
         '''
-        public_ip_name = name + '01'
         pip = None
 
         self.log("Starting create_default_pip {0}".format(public_ip_name))
@@ -692,20 +694,19 @@ class AzureRMModuleBase(object):
 
         return self.get_poller_result(poller)
 
-    def create_default_securitygroup(self, resource_group, location, name, os_type, open_ports):
+    def create_default_securitygroup(self, resource_group, location, security_group_name, os_type, open_ports):
         '''
-        Create a default security group <name>01 to associate with a network interface. If a security group matching
-        <name>01 exists, return it. Otherwise, create one.
+        Create a default security group <security_group_name> to associate with a network interface. If a security group matching
+        <security_group_name> exists, return it. Otherwise, create one.
 
         :param resource_group: Resource group name
         :param location: azure location name
-        :param name: base name to use for the security group
+        :param security_group_name: base name to use for the security group
         :param os_type: one of 'Windows' or 'Linux'. Determins any default rules added to the security group.
         :param ssh_port: for os_type 'Linux' port used in rule allowing SSH access.
         :param rdp_port: for os_type 'Windows' port used in rule allowing RDP access.
         :return: security_group object
         '''
-        security_group_name = name + '01'
         group = None
 
         self.log("Create security group {0}".format(security_group_name))
