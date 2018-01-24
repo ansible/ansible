@@ -1131,7 +1131,7 @@ def main():
             account_key_content=dict(type='str', no_log=True),
             account_email=dict(required=False, default=None, type='str'),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            acme_version=dict(required=False, default=1, type='int'),
+            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
             agreement=dict(required=False, type='str'),
             terms_agreed=dict(required=False, default=False, type='bool'),
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
