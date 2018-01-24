@@ -111,6 +111,7 @@ options:
         - Prompt user for host limits on launch.
       required: False
       default: False
+      version_added: "2.5"
     ask_tags:
       description:
         - Prompt user for job tags on launch.
