@@ -140,8 +140,16 @@ class JsonRpc(object):
 
     def exists(self, path):
         payload = {'method': 'exists', 'params': {'path': path}}
-        resp, resp_json = self._read_call(payload)
-        return resp_json['result']['exists']
+        try:
+            resp, resp_json = self._read_call(payload)
+            return resp_json['result']['exists']
+        except NsoException as ex:
+            # calling exists on a sub-list when the parent list does
+            # not exists will cause data.not_found errors on recent
+            # NSO
+            if 'type' in ex.error and ex.error['type'] == 'data.not_found':
+                return False
+            raise
 
     def create(self, th, path):
         payload = {'method': 'create', 'params': {'th': th, 'path': path}}
