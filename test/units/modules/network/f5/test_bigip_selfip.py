@@ -21,8 +21,8 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_selfip import Parameters
     from library.bigip_selfip import ApiParameters
+    from library.bigip_selfip import ModuleParameters
     from library.bigip_selfip import ModuleManager
     from library.bigip_selfip import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
@@ -30,8 +30,8 @@ try:
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
-        from ansible.modules.network.f5.bigip_selfip import Parameters
         from ansible.modules.network.f5.bigip_selfip import ApiParameters
+        from ansible.modules.network.f5.bigip_selfip import ModuleParameters
         from ansible.modules.network.f5.bigip_selfip import ModuleManager
         from ansible.modules.network.f5.bigip_selfip import ArgumentSpec
         from ansible.module_utils.network.f5.common import F5ModuleError
@@ -79,7 +79,7 @@ class TestParameters(unittest.TestCase):
             traffic_group='traffic-group-local-only',
             vlan='net1'
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.address == '10.10.10.10%1/24'
         assert p.allow_service == ['gre:0', 'tcp:80', 'udp:53']
         assert p.name == 'net1'
@@ -96,7 +96,7 @@ class TestParameters(unittest.TestCase):
                 'grp'
             ]
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         with pytest.raises(F5ModuleError) as ex:
             assert p.allow_service == ['grp', 'tcp:80', 'udp:53']
         assert 'The provided protocol' in str(ex)
@@ -119,7 +119,6 @@ class TestParameters(unittest.TestCase):
         assert p.allow_service == ['gre', 'tcp:80', 'udp:53']
         assert p.name == 'net1'
         assert p.netmask == 24
-        assert p.route_domain == 1
         assert p.traffic_group == '/Common/traffic-group-local-only'
         assert p.vlan == '/Common/net1'
 
