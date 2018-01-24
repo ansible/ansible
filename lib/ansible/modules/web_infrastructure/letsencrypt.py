@@ -33,10 +33,10 @@ description:
       you to create a SSL certificate with the appropriate subjectAlternativeNames.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      U(https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7)"
+      U(https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8)"
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
-      protocol."
+      v1 or v2 protocol."
 requirements:
   - "python >= 2.6"
   - openssl
@@ -71,14 +71,32 @@ options:
          CA server API."
       - "For safety reasons the default is set to the Let's Encrypt staging server.
          This will create technically correct, but untrusted certificates."
-      - "The production Let's Encrypt ACME directory URL, which produces properly
+      - "You can find URLs of staging endpoints here:
+         U(https://letsencrypt.org/docs/staging-environment/)"
+      - "The production Let's Encrypt ACME v1 directory URL, which produces properly
          trusted certificates, is U(https://acme-v01.api.letsencrypt.org/directory)."
     default: https://acme-staging.api.letsencrypt.org/directory
+  acme_version:
+    description:
+      - "The ACME version of the endpoint."
+      - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
+         new ACME v2 endpoint."
+    default: 1
+    choices: [1, 2]
+    version_added: "2.5"
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
-         ACME service at C(acme_directory)."
+         ACME v1 service at C(acme_directory)."
       - Default is latest gathered from C(acme_directory) URL.
+      - This option will only be used when C(acme_version) is 1.
+  terms_agreed:
+    description:
+      - "Boolean indicating whether you agree to the terms of service document."
+      - "ACME servers can require this to be true."
+      - This option will only be used when C(acme_version) is not 1.
+    default: false
+    version_added: "2.5"
   challenge:
     description: The challenge to be performed.
     choices: [ 'http-01', 'dns-01', 'tls-sni-02']
@@ -220,9 +238,13 @@ authorizations:
   type: complex
   contains:
       authorization:
-        description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
+        description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.1.4
         returned: success
         type: dict
+finalization_uri:
+  description: ACME finalization URI.
+  returned: changed
+  type: string
 '''
 
 import base64
@@ -369,24 +391,35 @@ class ACMEDirectory(object):
     and the Replay-Nonce for a given URI. This only works for
     URIs that permit GET requests (so normally not the ones that
     require authentication).
-    https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.2
+    https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.1.1
     '''
 
     def __init__(self, module):
         self.module = module
         self.directory_root = module.params['acme_directory']
+        self.version = module.params['acme_version']
 
         self.directory = simple_get(self.module, self.directory_root)
+
+        # Check whether self.version matches what we expect
+        if self.version == 1:
+            for key in ('new-reg', 'new-authz', 'new-cert'):
+                if key not in self.directory:
+                    self.module.fail_json(msg="ACME directory does not seem to follow protocol ACME v1")
+        if self.version == 2:
+            for key in ('newNonce', 'newAccount', 'newOrder'):
+                if key not in self.directory:
+                    self.module.fail_json(msg="ACME directory does not seem to follow protocol ACME v2")
 
     def __getitem__(self, key):
         return self.directory[key]
 
     def get_nonce(self, resource=None):
-        url = self.directory_root
+        url = self.directory_root if self.version == 1 else self.directory['newNonce']
         if resource is not None:
             url = resource
         _, info = fetch_url(self.module, url, method='HEAD')
-        if info['status'] != 200:
+        if info['status'] not in (200, 204):
             self.module.fail_json(msg="Failed to get replay-nonce, got status {0}".format(info['status']))
         return info['replay-nonce']
 
@@ -400,20 +433,17 @@ class ACMEAccount(object):
 
     def __init__(self, module):
         self.module = module
-        self.agreement = module.params['agreement']
+        self.version = module.params['acme_version']
         # account_key path and content are mutually exclusive
         self.key = module.params['account_key_src']
         self.key_content = module.params['account_key_content']
         self.email = module.params['account_email']
-        self.data = module.params['data']
         self.directory = ACMEDirectory(module)
-        self.agreement = module.params['agreement'] or self.directory['meta']['terms-of-service']
+        self.agreement = module.params.get('agreement')
+        self.terms_agreed = module.params.get('terms_agreed')
 
         self.uri = None
         self.changed = False
-
-        self._authz_list_uri = None
-        self._certs_list_uri = None
 
         self._openssl_bin = module.get_bin_path('openssl', True)
 
@@ -433,18 +463,19 @@ class ACMEAccount(object):
         error, self.key_data = self._parse_account_key(self.key)
         if error:
             module.fail_json(msg="error while parsing account key: %s" % error)
+        self.jwk = self.key_data['jwk']
         self.jws_header = {
             "alg": self.key_data['alg'],
-            "jwk": self.key_data['jwk'],
+            "jwk": self.jwk,
         }
         self.init_account()
 
     def get_keyauthorization(self, token):
         '''
         Returns the key authorization for the given token
-        https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.1
         '''
-        accountkey_json = json.dumps(self.jws_header['jwk'], sort_keys=True, separators=(',', ':'))
+        accountkey_json = json.dumps(self.jwk, sort_keys=True, separators=(',', ':'))
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
         return "{0}.{1}".format(token, thumbprint)
 
@@ -531,83 +562,111 @@ class ACMEAccount(object):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-5.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
         '''
-        protected = copy.deepcopy(self.jws_header)
-        protected["nonce"] = self.directory.get_nonce()
+        failed_tries = 0
+        while True:
+            protected = copy.deepcopy(self.jws_header)
+            protected["nonce"] = self.directory.get_nonce()
+            if self.version != 1:
+                protected["url"] = url
 
-        try:
-            payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
-            protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
-        except Exception as e:
-            self.module.fail_json(msg="Failed to encode payload / headers as JSON: {0}".format(e))
+            try:
+                payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
+                protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
+            except Exception as e:
+                self.module.fail_json(msg="Failed to encode payload / headers as JSON: {0}".format(e))
 
-        openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(self.key_data['hash']), "-sign", self.key]
-        sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
-        _, out, _ = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
+            openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(self.key_data['hash']), "-sign", self.key]
+            sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
+            _, out, _ = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
 
-        if self.key_data['type'] == 'ec':
-            _, der_out, _ = self.module.run_command(
-                [self._openssl_bin, "asn1parse", "-inform", "DER"],
-                data=out, binary_data=True)
-            expected_len = 2 * self.key_data['point_size']
-            sig = re.findall(
-                r"prim:\s+INTEGER\s+:([0-9A-F]{1,%s})\n" % expected_len,
-                to_text(der_out, errors='surrogate_or_strict'))
-            if len(sig) != 2:
-                self.module.fail_json(
-                    msg="failed to generate Elliptic Curve signature; cannot parse DER output: {0}".format(
-                        to_text(der_out, errors='surrogate_or_strict')))
-            sig[0] = (expected_len - len(sig[0])) * '0' + sig[0]
-            sig[1] = (expected_len - len(sig[1])) * '0' + sig[1]
-            out = binascii.unhexlify(sig[0]) + binascii.unhexlify(sig[1])
+            if self.key_data['type'] == 'ec':
+                _, der_out, _ = self.module.run_command(
+                    [self._openssl_bin, "asn1parse", "-inform", "DER"],
+                    data=out, binary_data=True)
+                expected_len = 2 * self.key_data['point_size']
+                sig = re.findall(
+                    r"prim:\s+INTEGER\s+:([0-9A-F]{1,%s})\n" % expected_len,
+                    to_text(der_out, errors='surrogate_or_strict'))
+                if len(sig) != 2:
+                    self.module.fail_json(
+                        msg="failed to generate Elliptic Curve signature; cannot parse DER output: {0}".format(
+                            to_text(der_out, errors='surrogate_or_strict')))
+                sig[0] = (expected_len - len(sig[0])) * '0' + sig[0]
+                sig[1] = (expected_len - len(sig[1])) * '0' + sig[1]
+                out = binascii.unhexlify(sig[0]) + binascii.unhexlify(sig[1])
 
-        data = self.module.jsonify({
-            "header": self.jws_header,
-            "protected": protected64,
-            "payload": payload64,
-            "signature": nopad_b64(to_bytes(out)),
-        })
+            data = {
+                "protected": protected64,
+                "payload": payload64,
+                "signature": nopad_b64(to_bytes(out)),
+            }
+            if self.version == 1:
+                data["header"] = self.jws_header
+            data = self.module.jsonify(data)
 
-        resp, info = fetch_url(self.module, url, data=data, method='POST')
-        result = {}
-        try:
-            content = resp.read()
-        except AttributeError:
-            content = info.get('body')
+            resp, info = fetch_url(self.module, url, data=data, method='POST')
+            result = {}
+            try:
+                content = resp.read()
+            except AttributeError:
+                content = info.get('body')
 
-        if content:
-            if info['content-type'].startswith('application/json'):
-                try:
-                    result = self.module.from_json(content.decode('utf8'))
-                except ValueError:
-                    self.module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url, content))
-            else:
-                result = content
+            if content:
+                if info['content-type'].startswith('application/json') or 400 <= info['status'] < 600:
+                    try:
+                        result = self.module.from_json(content.decode('utf8'))
+                        # In case of badNonce error, try again (up to 5 times)
+                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.6)
+                        if (400 <= info['status'] < 600 and
+                                result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
+                                failed_tries <= 5):
+                            failed_tries += 1
+                            continue
+                    except ValueError:
+                        self.module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url, content))
+                else:
+                    result = content
 
-        return result, info
+            return result, info
 
     def _new_reg(self, contact=None):
         '''
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created)
-        https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
         '''
         contact = [] if contact is None else contact
 
         if self.uri is not None:
             return True
 
-        new_reg = {
-            'resource': 'new-reg',
-            'agreement': self.agreement,
-            'contact': contact
-        }
+        if self.version == 1:
+            new_reg = {
+                'resource': 'new-reg',
+                'contact': contact
+            }
+            if self.agreement:
+                new_reg['agreement'] = self.agreement
+            else:
+                new_reg['agreement'] = self.directory['meta']['terms-of-service']
+            url = self.directory['new-reg']
+        else:
+            new_reg = {
+                'contact': contact
+            }
+            if self.terms_agreed:
+                new_reg['termsOfServiceAgreed'] = True
+            url = self.directory['newAccount']
 
-        result, info = self.send_signed_request(self.directory['new-reg'], new_reg)
+        result, info = self.send_signed_request(url, new_reg)
         if 'location' in info:
             self.uri = info['location']
+            if self.version != 1:
+                self.jws_header.pop('jwk')
+                self.jws_header['kid'] = self.uri
 
         if info['status'] in [200, 201]:
             # Account did not exist
@@ -627,7 +686,7 @@ class ACMEAccount(object):
         method will always result in an account being present (except
         on error situations). If the account already exists, it will
         update the contact information.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
         '''
 
         contact = []
@@ -638,12 +697,6 @@ class ACMEAccount(object):
         if not self._new_reg(contact):
             # pre-existing account, get account data...
             result, _ = self.send_signed_request(self.uri, {'resource': 'reg'})
-
-            # XXX: letsencrypt/boulder#1435
-            if 'authorizations' in result:
-                self._authz_list_uri = result['authorizations']
-            if 'certificates' in result:
-                self._certs_list_uri = result['certificates']
 
             # ...and check if update is necessary
             do_update = False
@@ -659,35 +712,6 @@ class ACMEAccount(object):
                 result, _ = self.send_signed_request(self.uri, upd_reg)
                 self.changed = True
 
-    def get_authorizations(self):
-        '''
-        Return a list of currently active authorizations
-        https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.4
-        '''
-        authz_list = {'authorizations': []}
-        if self._authz_list_uri is None:
-            # XXX: letsencrypt/boulder#1435
-            # Workaround, retrieve the known authorization urls
-            # from the data attribute
-            # It is also a way to limit the queried authorizations, which
-            # might become relevant at some point
-            if (self.data is not None) and ('authorizations' in self.data):
-                for auth in self.data['authorizations']:
-                    authz_list['authorizations'].append(auth['uri'])
-            else:
-                return []
-        else:
-            # TODO: need to handle pagination
-            authz_list = simple_get(self.module, self._authz_list_uri)
-
-        authz = []
-        for auth_uri in authz_list['authorizations']:
-            auth = simple_get(self.module, auth_uri)
-            auth['uri'] = auth_uri
-            authz.append(auth)
-
-        return authz
-
 
 class ACMEClient(object):
     '''
@@ -698,14 +722,17 @@ class ACMEClient(object):
 
     def __init__(self, module):
         self.module = module
+        self.version = module.params['acme_version']
         self.challenge = module.params['challenge']
         self.csr = module.params['csr']
         self.dest = module.params['dest']
         self.account = ACMEAccount(module)
         self.directory = self.account.directory
-        self.authorizations = self.account.get_authorizations()
+        self.data = module.params['data']
+        self.authorizations = None
         self.cert_days = -1
         self.changed = self.account.changed
+        self.finalize_uri = self.data.get('finalize_uri') if self.data else None
 
         if not os.path.exists(self.csr):
             module.fail_json(msg="CSR %s not found" % (self.csr))
@@ -733,40 +760,18 @@ class ACMEClient(object):
                     domains.add(san[4:])
         return domains
 
-    def _get_domain_auth(self, domain):
-        '''
-        Get the status string of the first authorization for the given domain.
-        Return None if no active authorization for the given domain was found.
-        '''
-        if self.authorizations is None:
-            return None
-
-        for auth in self.authorizations:
-            if (auth['identifier']['type'] == 'dns') and (auth['identifier']['value'] == domain):
-                return auth
-        return None
-
-    def _add_or_update_auth(self, auth):
+    def _add_or_update_auth(self, domain, auth):
         '''
         Add or update the given authroization in the global authorizations list.
         Return True if the auth was updated/added and False if no change was
         necessary.
         '''
-        for index, cur_auth in enumerate(self.authorizations):
-            if (cur_auth['uri'] == auth['uri']):
-                # does the auth parameter contain updated data?
-                if cur_auth != auth:
-                    # yes, update our current authorization list
-                    self.authorizations[index] = auth
-                    return True
-                else:
-                    return False
-        # this is a new authorization, add it to the list of current
-        # authorizations
-        self.authorizations.append(auth)
+        if self.authorizations.get(domain) == auth:
+            return False
+        self.authorizations[domain] = auth
         return True
 
-    def _new_authz(self, domain):
+    def _new_authz_v1(self, domain):
         '''
         Create a new authorization for the given domain.
         Return the authorization object of the new authorization
@@ -806,11 +811,11 @@ class ACMEClient(object):
             # too complex to be useful and tls-sni-02 is an alternative
             # as soon as it is implemented server side
             if type == 'http-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.2
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.3
                 resource = '.well-known/acme-challenge/' + token
                 value = keyauthorization
             elif type == 'tls-sni-02':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.3
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.4
                 token_digest = hashlib.sha256(token.encode('utf8')).hexdigest()
                 ka_digest = hashlib.sha256(keyauthorization.encode('utf8')).hexdigest()
                 len_token_digest = len(token_digest)
@@ -821,7 +826,7 @@ class ACMEClient(object):
                     "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest // 2], ka_digest[len_ka_digest // 2:]),
                 ]
             elif type == 'dns-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.4
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.5
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
             else:
@@ -830,7 +835,7 @@ class ACMEClient(object):
             data[type] = {'resource': resource, 'resource_value': value}
         return data
 
-    def _validate_challenges(self, auth):
+    def _validate_challenges(self, domain, auth):
         '''
         Validate the authorization provided in the auth dict. Returns True
         when the validation was successful and False when it was not.
@@ -839,7 +844,7 @@ class ACMEClient(object):
             if self.challenge != challenge['type']:
                 continue
 
-            uri = challenge['uri']
+            uri = challenge['uri'] if self.version == 1 else challenge['url']
             token = re.sub(r"[^A-Za-z0-9_\-]", "_", challenge['token'])
             keyauthorization = self.account.get_keyauthorization(token)
 
@@ -856,12 +861,12 @@ class ACMEClient(object):
         while status not in ['valid', 'invalid', 'revoked']:
             result = simple_get(self.module, auth['uri'])
             result['uri'] = auth['uri']
-            if self._add_or_update_auth(result):
+            if self._add_or_update_auth(domain, result):
                 self.changed = True
             # draft-ietf-acme-acme-02
             # "status (required, string): ...
             # If this field is missing, then the default value is "pending"."
-            if 'status' not in result:
+            if self.version == 1 and 'status' not in result:
                 status = 'pending'
             else:
                 status = result['status']
@@ -874,7 +879,9 @@ class ACMEClient(object):
             for challenge in result['challenges']:
                 if challenge['status'] == 'invalid':
                     error_details += ' CHALLENGE: {0}'.format(challenge['type'])
-                    if 'error' in challenge:
+                    if 'errors' in challenge:
+                        error_details += ' DETAILS: {0};'.format('; '.join([error['detail'] for error in challenge['errors']]))
+                    elif 'error' in challenge:
                         error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
                     else:
                         error_details += ';'
@@ -882,7 +889,88 @@ class ACMEClient(object):
 
         return status == 'valid'
 
-    def _new_cert(self):
+    def _finalize_cert(self):
+        '''
+        Create a new certificate based on the csr.
+        Return the certificate object as dict
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        '''
+        openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
+        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
+
+        new_cert = {
+            "csr": nopad_b64(to_bytes(out)),
+        }
+        result, info = self.account.send_signed_request(self.finalize_uri, new_cert)
+        if info['status'] not in [200]:
+            self.module.fail_json(msg="Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
+
+        order = info['location']
+
+        status = result['status']
+        while status not in ['valid', 'invalid']:
+            time.sleep(2)
+            result = simple_get(self.module, order)
+            status = result['status']
+
+        if status != 'valid':
+            self.module.fail_json(msg="Error new cert: CODE: {0} STATUS: {1} RESULT: {2}".format(info['status'], status, result))
+
+        return result['certificate']
+
+    def _der_to_pem(self, der_cert):
+        '''
+        Convert the DER format certificate in der_cert to a PEM format
+        certificate and return it.
+        '''
+        return """-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n""".format(
+            "\n".join(textwrap.wrap(base64.b64encode(der_cert).decode('utf8'), 64)))
+
+    def _download_cert(self, url):
+        '''
+        Download and parse the certificate chain.
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4.2
+        '''
+        resp, info = fetch_url(self.module, url, headers={'Accept': 'application/pem-certificate-chain'})
+        try:
+            content = resp.read()
+        except AttributeError:
+            content = info.get('body')
+
+        if not content or not info['content-type'].startswith('application/pem-certificate-chain'):
+            self.module.fail_json(msg="Cannot download certificate chain from {0}: {1} (headers: {2})".format(url, content, info))
+
+        cert = None
+        chain = []
+
+        # Parse data
+        lines = content.decode('utf-8').splitlines(True)
+        current = []
+        for line in lines:
+            if line.strip():
+                current.append(line)
+            if line.startswith('-----END CERTIFICATE-----'):
+                if cert is None:
+                    cert = ''.join(current)
+                else:
+                    chain.append(''.join(current))
+                current = []
+
+        # Process link-up headers if there was no chain in reply
+        if not chain and 'link' in info:
+            link = info['link']
+            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
+            if parsed_link and parsed_link.group(2) == "up":
+                chain_link = parsed_link.group(1)
+                chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
+                if chain_info['status'] in [200, 201]:
+                    chain.append(self._der_to_pem(chain_result.read()))
+
+        if cert is None or current:
+            self.module.fail_json(msg="Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
+        return {'cert': cert, 'chain': chain}
+
+    def _new_cert_v1(self):
         '''
         Create a new certificate based on the csr.
         Return the certificate object as dict
@@ -905,43 +993,64 @@ class ACMEClient(object):
                 chain_link = parsed_link.group(1)
                 chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
                 if chain_info['status'] in [200, 201]:
-                    chain = [chain_result.read()]
+                    chain = [self._der_to_pem(chain_result.read())]
 
         if info['status'] not in [200, 201]:
             self.module.fail_json(msg="Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
         else:
-            return {'cert': result, 'uri': info['location'], 'chain': chain}
+            return {'cert': self._der_to_pem(result), 'uri': info['location'], 'chain': chain}
 
-    def _der_to_pem(self, der_cert):
-        '''
-        Convert the DER format certificate in der_cert to a PEM format
-        certificate and return it.
-        '''
-        return """-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n""".format(
-            "\n".join(textwrap.wrap(base64.b64encode(der_cert).decode('utf8'), 64)))
+    def _new_order_v2(self):
+        identifiers = []
+        for domain in self.domains:
+            identifiers.append({
+                'type': 'dns',
+                'value': domain,
+            })
+        new_order = {
+            "identifiers": identifiers
+        }
+        result, info = self.account.send_signed_request(self.directory['newOrder'], new_order)
+
+        if info['status'] not in [201]:
+            self.module.fail_json(msg="Error new order: CODE: {0} RESULT: {1}".format(info['status'], result))
+
+        for identifier, auth_uri in zip(result['identifiers'], result['authorizations']):
+            domain = identifier['value']
+            auth_data = simple_get(self.module, auth_uri)
+            auth_data['uri'] = auth_uri
+            self.authorizations[domain] = auth_data
+
+        self.finalize_uri = result['finalize']
 
     def do_challenges(self):
         '''
         Create new authorizations for all domains of the CSR and return
         the challenge details for the chosen challenge type.
         '''
+        self.authorizations = {}
+        if (self.data is None) or ('authorizations' not in self.data):
+            # First run: start new order
+            if self.version == 1:
+                for domain in self.domains:
+                    new_auth = self._new_authz_v1(domain)
+                    self._add_or_update_auth(domain, new_auth)
+            else:
+                self._new_order_v2()
+            self.changed = True
+        else:
+            # Second run: verify challenges
+            for domain, auth in self.data['authorizations'].items():
+                self.authorizations[domain] = auth
+                if auth['status'] == 'pending':
+                    self._validate_challenges(domain, auth)
+
         data = {}
-        for domain in self.domains:
-            auth = self._get_domain_auth(domain)
-            if auth is None:
-                new_auth = self._new_authz(domain)
-                self._add_or_update_auth(new_auth)
-                data[domain] = self._get_challenge_data(new_auth)
-                self.changed = True
-            elif (auth['status'] == 'pending') or ('status' not in auth):
-                # draft-ietf-acme-acme-02
-                # "status (required, string): ...
-                # If this field is missing, then the default value is "pending"."
-                self._validate_challenges(auth)
-                # _validate_challenges updates the global authrozation dict,
-                # so get the current version of the authorization we are working
-                # on to retrieve the challenge data
-                data[domain] = self._get_challenge_data(self._get_domain_auth(domain))
+        for domain, auth in self.authorizations.items():
+            # _validate_challenges updates the global authrozation dict,
+            # so get the current version of the authorization we are working
+            # on to retrieve the challenge data
+            data[domain] = self._get_challenge_data(self.authorizations[domain])
 
         return data
 
@@ -953,19 +1062,26 @@ class ACMEClient(object):
         '''
         if self.dest is None:
             return
+        if self.finalize_uri is None and self.version != 1:
+            return
 
         for domain in self.domains:
-            auth = self._get_domain_auth(domain)
+            auth = self.authorizations.get(domain)
             if auth is None or ('status' not in auth) or (auth['status'] != 'valid'):
                 return
 
-        cert = self._new_cert()
+        if self.version == 1:
+            cert = self._new_cert_v1()
+        else:
+            cert_uri = self._finalize_cert()
+            cert = self._download_cert(cert_uri)
         if cert['cert'] is not None:
-            pem_cert = self._der_to_pem(cert['cert'])
+            pem_cert = cert['cert']
 
-            chain = [self._der_to_pem(link) for link in cert.get('chain', [])]
-            if chain and self.module.params['fullchain']:
-                pem_cert += "\n".join(chain)
+            chain = [link for link in cert.get('chain', [])]
+            if chain:
+                if self.module.params['fullchain']:
+                    pem_cert += "\n".join(chain)
 
             if write_file(self.module, self.dest, pem_cert.encode('utf8')):
                 self.cert_days = get_cert_days(self.module, self.dest)
@@ -976,10 +1092,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             account_key_src=dict(type='path', aliases=['account_key']),
-            account_key_content=dict(type='str'),
+            account_key_content=dict(type='str', no_log=True),
             account_email=dict(required=False, default=None, type='str'),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
+            acme_version=dict(required=False, default=1, type='int'),
             agreement=dict(required=False, type='str'),
+            terms_agreed=dict(required=False, default=False, type='bool'),
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
             data=dict(required=False, no_log=True, default=None, type='dict'),
@@ -1013,7 +1131,13 @@ def main():
             client.cert_days = cert_days
             data = client.do_challenges()
             client.get_certificate()
-            module.exit_json(changed=client.changed, authorizations=client.authorizations, challenge_data=data, cert_days=client.cert_days)
+            module.exit_json(
+                changed=client.changed,
+                authorizations=client.authorizations,
+                finalize_uri=client.finalize_uri,
+                challenge_data=data,
+                cert_days=client.cert_days
+            )
     else:
         module.exit_json(changed=False, cert_days=cert_days)
 
