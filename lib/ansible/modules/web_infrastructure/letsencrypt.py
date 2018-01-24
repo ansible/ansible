@@ -332,7 +332,10 @@ def write_file(module, dest, content):
     checksum_dest = None
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
-        os.remove(tmpsrc)
+        try:
+            os.remove(tmpsrc)
+        except:
+            pass
         module.fail_json(msg="Source %s does not exist" % (tmpsrc))
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
