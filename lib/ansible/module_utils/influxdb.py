@@ -28,7 +28,7 @@ class InfluxDb():
         self.port = self.params['port']
         self.username = self.params['username']
         self.password = self.params['password']
-        self.database_name = self.params['database_name']
+        self.database_name = self.params.get('database_name')
 
     def check_lib(self):
         if not HAS_REQUESTS:
@@ -44,7 +44,6 @@ class InfluxDb():
             port=dict(default=8086, type='int'),
             username=dict(default='root', type='str', aliases=['login_username']),
             password=dict(default='root', type='str', no_log=True, aliases=['login_password']),
-            database_name=dict(default=None, type='str'),
             ssl=dict(default=False, type='bool'),
             validate_certs=dict(default=True, type='bool'),
             timeout=dict(type='int'),
