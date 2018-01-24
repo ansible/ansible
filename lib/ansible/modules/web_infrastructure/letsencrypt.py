@@ -36,7 +36,8 @@ description:
       U(https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8)"
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
-      v1 or v2 protocol."
+      v1 or v2 protocol. I(Warning): ACME v2 support is currently experimental, as
+      the Let's Encrypt production ACME v2 endpoint is still under development."
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
 requirements:
   - "python >= 2.6"
@@ -82,6 +83,11 @@ options:
       - "The ACME version of the endpoint."
       - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
          new ACME v2 endpoint."
+      - "I(Warning): ACME v2 support is currently experimental, as the Let's Encrypt
+         production ACME v2 endpoint is still under development. The code is tested
+         against the latest staging endpoint as well as the Pebble testing server,
+         but there could be bugs which will only appear with a newer version of these
+         or with the production ACME v2 endpoint."
     default: 1
     choices: [1, 2]
     version_added: "2.5"
