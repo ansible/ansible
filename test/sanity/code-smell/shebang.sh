@@ -15,6 +15,7 @@ grep '^#!' -rIn . \
     -e ':#!/usr/bin/env python$' \
     -e ':#!/usr/bin/env bash$' \
     -e ':#!/usr/bin/env fish$' \
+    -e ':#!/usr/bin/env pwsh$' \
 
 if [ $? -ne 1 ]; then
     echo "One or more file(s) listed above have an unexpected shebang."
