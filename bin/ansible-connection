@@ -13,11 +13,9 @@ except Exception:
 
 import fcntl
 import os
-import shlex
 import signal
 import socket
 import sys
-import time
 import traceback
 import errno
 import json
@@ -25,7 +23,7 @@ import json
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
-from ansible.module_utils.six.moves import cPickle
+from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.playbook.play_context import PlayContext
@@ -154,54 +152,6 @@ class ConnectionProcess(object):
                     setattr(self.connection, '_connected', False)
         display.display('shutdown complete', log_only=True)
 
-    def do_EXEC(self, data):
-        cmd = data.split(b'EXEC: ')[1]
-        return self.connection.exec_command(cmd)
-
-    def do_PUT(self, data):
-        (op, src, dst) = shlex.split(to_native(data))
-        return self.connection.fetch_file(src, dst)
-
-    def do_FETCH(self, data):
-        (op, src, dst) = shlex.split(to_native(data))
-        return self.connection.put_file(src, dst)
-
-    def do_CONTEXT(self, data):
-        pc_data = data.split(b'CONTEXT: ', 1)[1]
-
-        if PY3:
-            pc_data = cPickle.loads(pc_data, encoding='bytes')
-        else:
-            pc_data = cPickle.loads(pc_data)
-
-        pc = PlayContext()
-        pc.deserialize(pc_data)
-
-        try:
-            self.connection.update_play_context(pc)
-        except AttributeError:
-            pass
-
-        return (0, 'ok', '')
-
-    def do_RUN(self, data):
-        timeout = self.play_context.timeout
-        while bool(timeout):
-            if os.path.exists(self.socket_path):
-                break
-            time.sleep(1)
-            timeout -= 1
-        socket_bytes = to_bytes(self.socket_path, errors='surrogate_or_strict')
-        return 0, b'\n#SOCKET_PATH#: %s\n' % socket_bytes, ''
-
-
-def communicate(sock, data):
-    send_data(sock, data)
-    rc = int(recv_data(sock), 10)
-    stdout = recv_data(sock)
-    stderr = recv_data(sock)
-    return (rc, stdout, stderr)
-
 
 def main():
     """ Called to initiate the connect to the remote device
@@ -216,6 +166,10 @@ def main():
         stdin = sys.stdin.buffer
     else:
         stdin = sys.stdin
+
+    # Note: update the below log capture code after Display.display() is refactored.
+    saved_stdout = sys.stdout
+    sys.stdout = StringIO()
 
     try:
         # read the play context data via stdin, which means depickling it
@@ -308,11 +262,13 @@ def main():
                         'exception': traceback.format_exc()
                     })
 
+    messages.append(sys.stdout.getvalue())
     result.update({
         'messages': messages,
         'socket_path': socket_path
     })
 
+    sys.stdout = saved_stdout
     if 'exception' in result:
         rc = 1
         sys.stderr.write(json.dumps(result))
