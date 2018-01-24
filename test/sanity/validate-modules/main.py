@@ -1025,10 +1025,14 @@ class ModuleValidator(Validator):
 
         provider_args = set()
         args_from_argspec = set()
+        deprecated_args_from_argspec = set()
         for arg, data in spec.items():
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
                 args_from_argspec.update(data.get('aliases', []))
+            else:
+                deprecated_args_from_argspec.add(arg)
+                deprecated_args_from_argspec.update(data.get('aliases', []))
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
                 # Record provider options from network modules, for later comparison
                 for provider_arg, provider_data in data.get('options', {}).items():
@@ -1062,7 +1066,7 @@ class ModuleValidator(Validator):
                 args_from_docs.update(data.get('aliases', []))
 
             args_missing_from_docs = args_from_argspec.difference(args_from_docs)
-            docs_missing_from_args = args_from_docs.difference(args_from_argspec)
+            docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
             for arg in args_missing_from_docs:
                 # args_from_argspec contains undocumented argument
                 if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
