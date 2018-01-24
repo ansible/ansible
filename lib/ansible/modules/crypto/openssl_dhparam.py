@@ -114,7 +114,7 @@ class DHParameter(object):
             module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
             # openssl dhparam -out <path> <bits>
             command = [self.openssl_bin, 'dhparam', '-out', tmpsrc, str(self.size)]
-            rc, _, err = module.run_command(command, check_rc=False)
+            rc, dummy, err = module.run_command(command, check_rc=False)
             if rc != 0:
                 raise DHParameterError(to_native(err))
             try:
