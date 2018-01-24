@@ -77,6 +77,7 @@ class InventoryCLI(CLI):
         # Actions
         action_group = optparse.OptionGroup(self.parser, "Actions", "One of following must be used on invocation, ONLY ONE!")
         action_group.add_option("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
+        action_group.add_option("--separate-gvars", action="store_true", default=False, dest='group_vars', help='Output vars un-flattened, so they stay on the groups where they were defined. Only works in --list mode')
         action_group.add_option("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
         action_group.add_option("--graph", action="store_true", default=False, dest='graph',
                                 help='create inventory graph, if supplying pattern it must be a valid group name')
@@ -103,6 +104,9 @@ class InventoryCLI(CLI):
             raise AnsibleOptionsError("No action selected, at least one of --host, --graph or --list needs to be specified.")
         elif used > 1:
             raise AnsibleOptionsError("Conflicting options used, only one of --host, --graph or --list can be used at the same time.")
+
+        if self.options.group_vars and not self.options.list:
+            raise AnsibleOptionsError("Can only use --separate-gvars with the --list option.")
 
         # set host pattern to default if not supplied
         if len(self.args) > 0:
@@ -184,7 +188,9 @@ class InventoryCLI(CLI):
         return results
 
     def _get_host_variables(self, host):
-        if self._new_api:
+        if self._new_api and self.options.group_vars:
+            hostvars = host.get_vars()
+        elif self._new_api:
             hostvars = self.vm.get_vars(host=host)
         else:
             hostvars = self.vm.get_vars(self.loader, host=host)
@@ -253,6 +259,10 @@ class InventoryCLI(CLI):
             results[group.name] = {}
             if group.name != 'all':
                 results[group.name]['hosts'] = [h.name for h in sorted(group.hosts, key=attrgetter('name'))]
+
+            if self._new_api and self.options.group_vars:
+                results[group.name]['vars'] = group.get_vars() or {}
+
             results[group.name]['children'] = []
             for subgroup in sorted(group.child_groups, key=attrgetter('name')):
                 results[group.name]['children'].append(subgroup.name)
@@ -281,6 +291,8 @@ class InventoryCLI(CLI):
 
             # initialize group + vars
             results[group.name] = {}
+            if self._new_api and self.options.group_vars:
+                results[group.name]['vars'] = group.get_vars() or {}
 
             # subgroups
             results[group.name]['children'] = {}
