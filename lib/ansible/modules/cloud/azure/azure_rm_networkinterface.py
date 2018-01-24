@@ -59,6 +59,13 @@ options:
             - virtual_network
         required: true
         default: null
+    virtual_network_resource_group:
+        description:
+            - The resource group name in which the virtual network exists. Defaults to the value of the
+              resource group argument.
+        required: false
+        default: resource_group
+        version_added: "2.5"
     subnet_name:
         description:
             - Name of an existing subnet within the specified virtual network. Required when creating a network
@@ -130,6 +137,12 @@ options:
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
         required: false
         default: null
+    backend_address_pool_name:
+        description:
+            - Name of an existing load-balancer backend address pool to associate with the network interface.
+        required: false
+        default: null
+        version_added: "2.5"
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -203,7 +216,8 @@ state:
                 "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/publicip001",
                 "name": "publicip001"
             },
-            "subnet": {}
+            "subnet": {},
+            "backend_address_pool": {}
         },
         "location": "eastus2",
         "mac_address": null,
@@ -239,6 +253,7 @@ def nic_to_dict(nic):
             private_ip_allocation_method=nic.ip_configurations[0].private_ip_allocation_method,
             subnet=dict(),
             public_ip_address=dict(),
+            backend_address_pool=dict(),
         ),
         dns_settings=dict(
             dns_servers=nic.dns_settings.dns_servers,
@@ -262,6 +277,7 @@ def nic_to_dict(nic):
         result['ip_configuration']['subnet']['id'] = \
             nic.ip_configurations[0].subnet.id
         id_keys = azure_id_to_dict(nic.ip_configurations[0].subnet.id)
+        result['ip_configuration']['subnet']['virtual_network_resource_group'] = id_keys['resourceGroups']
         result['ip_configuration']['subnet']['virtual_network_name'] = id_keys['virtualNetworks']
         result['ip_configuration']['subnet']['name'] = id_keys['subnets']
 
@@ -270,6 +286,12 @@ def nic_to_dict(nic):
             nic.ip_configurations[0].public_ip_address.id
         id_keys = azure_id_to_dict(nic.ip_configurations[0].public_ip_address.id)
         result['ip_configuration']['public_ip_address']['name'] = id_keys['publicIPAddresses']
+
+    if nic.ip_configurations[0].load_balancer_backend_address_pools:
+        id_keys = azure_id_to_dict(nic.ip_configurations[0].load_balancer_backend_address_pools[0].id)
+        result['ip_configuration']['backend_address_pool']['name'] = id_keys['backendAddressPools']
+        result['ip_configuration']['backend_address_pool']['id'] = \
+            nic.ip_configurations[0].load_balancer_backend_address_pools[0].id
 
     return result
 
@@ -290,9 +312,11 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             public_ip=dict(type='bool', default=True),
             subnet_name=dict(type='str', aliases=['subnet']),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
+            virtual_network_resource_group=dict(type='str'),
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+            backend_address_pool_name=dict(type='str'),
         )
 
         self.resource_group = None
@@ -306,11 +330,13 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.subnet_name = None
         self.tags = None
         self.virtual_network_name = None
+        self.virtual_network_resource_group = None
         self.security_group_name = None
         self.os_type = None
         self.open_ports = None
         self.public_ip_allocation_method = None
         self.public_ip = None
+        self.backend_address_pool_name = None
 
         self.results = dict(
             changed=False,
@@ -331,11 +357,16 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         subnet = None
         nsg = None
         pip = None
+        beap = None
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             # Set default location
             self.location = resource_group.location
+
+        if not self.virtual_network_resource_group:
+            # Set default virtual network resource group
+            self.virtual_network_resource_group = self.resource_group
 
         if self.state == 'present':
             if self.virtual_network_name and not self.subnet_name:
@@ -345,13 +376,17 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 self.fail("Parameter error: virtual_network_name is required when passing a subnet value.")
 
             if self.virtual_network_name and self.subnet_name:
-                subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
+                subnet = self.get_subnet(self.virtual_network_resource_group,
+                                         self.virtual_network_name, self.subnet_name)
 
             if self.public_ip_address_name:
                 pip = self.get_public_ip_address(self.public_ip_address_name)
 
             if self.security_group_name:
                 nsg = self.get_security_group(self.security_group_name)
+
+            if self.backend_address_pool_name:
+                beap = self.get_backend_pool(self.backend_address_pool_name)
 
         try:
             self.log('Fetching network interface {0}'.format(self.name))
@@ -402,7 +437,17 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         self.log("CHANGED: network interface {0} subnet".format(self.name))
                         results['ip_configuration']['subnet']['id'] = subnet.id
                         results['ip_configuration']['subnet']['name'] = subnet.name
+                        results['ip_configuration']['subnet']['virtual_network_resource_group'] = \
+                            self.virtual_network_resource_group
                         results['ip_configuration']['subnet']['virtual_network_name'] = self.virtual_network_name
+
+                if self.backend_address_pool_name:
+                    if results['ip_configuration']['backend_address_pool'].get('name') != \
+                            self.backend_address_pool_name:
+                        changed = True
+                        self.log("CHANGED: network interface {0} backend address pool".format(self.name))
+                        results['ip_configuration']['backend_address_pool']['name'] = self.backend_address_pool_name
+                        results['ip_configuration']['backend_address_pool']['id'] = beap.id
 
             elif self.state == 'absent':
                 self.log("CHANGED: network interface {0} exists but requested state is 'absent'".format(self.name))
@@ -448,6 +493,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         ip_configurations=[
                             self.network_models.NetworkInterfaceIPConfiguration(
                                 private_ip_allocation_method=self.private_ip_allocation_method,
+                                load_balancer_backend_address_pools=[beap]
                             )
                         ]
                     )
@@ -473,11 +519,13 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         tags=results['tags'],
                         ip_configurations=[
                             self.network_models.NetworkInterfaceIPConfiguration(
-                                private_ip_allocation_method=results['ip_configuration']['private_ip_allocation_method']
+                                private_ip_allocation_method=results['ip_configuration']['private_ip_allocation_method'],
+                                load_balancer_backend_address_pools=[beap]
                             )
                         ]
                     )
-                    subnet = self.get_subnet(results['ip_configuration']['subnet']['virtual_network_name'],
+                    subnet = self.get_subnet(results['ip_configuration']['subnet']['virtual_network_resource_group'],
+                                             results['ip_configuration']['subnet']['virtual_network_name'],
                                              results['ip_configuration']['subnet']['name'])
                     nic.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet.id)
                     nic.ip_configurations[0].name = results['ip_configuration']['name']
@@ -540,14 +588,14 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             self.fail("Error: fetching public ip address {0} - {1}".format(self.name, str(exc)))
         return public_ip
 
-    def get_subnet(self, vnet_name, subnet_name):
-        self.log("Fetching subnet {0} in virtual network {1}".format(subnet_name, vnet_name))
+    def get_subnet(self, vnet_rg, vnet_name, subnet_name):
+        self.log("Fetching subnet {0} in virtual network {1} in resource group {2}"
+                 .format(subnet_name, vnet_name, vnet_rg))
         try:
-            subnet = self.network_client.subnets.get(self.resource_group, vnet_name, subnet_name)
+            subnet = self.network_client.subnets.get(vnet_rg, vnet_name, subnet_name)
         except Exception as exc:
-            self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(subnet_name,
-                                                                                       vnet_name,
-                                                                                       str(exc)))
+            self.fail("Error: fetching subnet {0} in virtual network {1} in resource group {2} - {3}"
+                      .format(subnet_name, vnet_name, vnet_rg, str(exc)))
         return subnet
 
     def get_security_group(self, name):
@@ -557,6 +605,18 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error: fetching network security group {0} - {1}.".format(name, str(exc)))
         return nsg
+
+    def get_backend_pool(self, pool_name):
+        self.log("Fetching backend address pool {0}".format(pool_name))
+        try:
+            lbs = self.network_client.load_balancers.list(self.resource_group)
+        except Exception as exc:
+            self.fail("Error: fetching load balancers in resource group {0} - {1}."
+                      .format(self.resource_group, str(exc)))
+        pools = [pool for lb in lbs for pool in lb.backend_address_pools if pool.name == pool_name]
+        if not pools:
+            self.fail("Error: no pool {0} found".format(pool_name))
+        return pools[0]
 
 
 def main():
