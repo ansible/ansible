@@ -24,6 +24,7 @@ options:
     description:
       - The IP addresses for the new self IP. This value is ignored upon update
         as addresses themselves cannot be changed after they are created.
+      - This value is required when creating new self IPs.
   allow_service:
     description:
       - Configure port lockdown for the Self IP. By default, the Self IP has a
@@ -62,6 +63,7 @@ options:
     description:
       - The route domain id of the system. When creating a new Self IP, if
         this value is not specified, a default value of C(0) will be used.
+      - This value cannot be changed after it is set.
     version_added: 2.3
   partition:
     description:
@@ -249,7 +251,7 @@ except ImportError:
         HAS_F5SDK = False
 
 try:
-    from netaddr import IPNetwork, AddrFormatError, IPAddress
+    import netaddr
     HAS_NETADDR = True
 except ImportError:
     HAS_NETADDR = False
@@ -262,11 +264,11 @@ class Parameters(AnsibleF5Parameters):
     }
 
     updatables = [
-        'traffic_group', 'allow_service', 'vlan', 'route_domain', 'netmask'
+        'traffic_group', 'allow_service', 'vlan', 'netmask', 'address'
     ]
 
     returnables = [
-        'traffic_group', 'allow_service', 'vlan', 'route_domain', 'netmask'
+        'traffic_group', 'allow_service', 'vlan', 'route_domain', 'netmask', 'address'
     ]
 
     api_attributes = [
@@ -280,6 +282,19 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
+        return value
+
+    @property
+    def vlan(self):
+        if self._values['vlan'] is None:
+            return None
+        return self._fqdn_name(self._values['vlan'])
+
+
+class ModuleParameters(Parameters):
     @property
     def address(self):
         address = "{0}%{1}/{2}".format(
@@ -287,18 +302,14 @@ class Parameters(AnsibleF5Parameters):
         )
         return address
 
-    @address.setter
-    def address(self, value):
-        self._values['ip'] = value
-
     @property
     def ip(self):
-        if self._values['ip'] is None:
+        if self._values['address'] is None:
             return None
         try:
-            ip = str(IPAddress(self._values['ip']))
+            ip = str(netaddr.IPAddress(self._values['address']))
             return ip
-        except AddrFormatError:
+        except netaddr.AddrFormatError:
             raise F5ModuleError(
                 'The provided address is not a valid IP address'
             )
@@ -333,13 +344,13 @@ class Parameters(AnsibleF5Parameters):
             try:
                 # IPv4 netmask
                 address = '0.0.0.0/' + self._values['netmask']
-                ip = IPNetwork(address)
-            except AddrFormatError as ex:
+                ip = netaddr.IPNetwork(address)
+            except netaddr.AddrFormatError as ex:
                 try:
                     # IPv6 netmask
                     address = '::/' + self._values['netmask']
-                    ip = IPNetwork(address)
-                except AddrFormatError as ex:
+                    ip = netaddr.IPNetwork(address)
+                except netaddr.AddrFormatError as ex:
                     raise F5ModuleError(
                         'The provided netmask {0} is neither in IP or CIDR format'.format(self._values['netmask'])
                     )
@@ -405,70 +416,57 @@ class Parameters(AnsibleF5Parameters):
         result = sorted(list(set(result)))
         return result
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
-
-    @property
-    def vlan(self):
-        if self._values['vlan'] is None:
-            return None
-        return self._fqdn_name(self._values['vlan'])
-
 
 class ApiParameters(Parameters):
-    api_map = {}
-
-    @property
-    def address(self):
-        if self.ip and self.route_domain and self.netmask:
-            return '{0}%{1}/{2}'.format(self.ip, self.route_domain, self.netmask)
-        elif self.ip and self.netmask:
-            return '{0}/{1}'.format(self.ip, self.netmask)
-
-    @address.setter
-    def address(self, value):
-        pattern = r'^(?P<ip>[0-9A-Fa-f:.]+)%?(?P<rd>\d+)?\/(?P<nm>\d+)$'
-        matches = re.match(pattern, value)
-        if not matches:
-            raise F5ModuleError(
-                "The specified address is malformed. Please see documentation."
-            )
-        try:
-            ip = matches.group('ip')
-            self._values['ip'] = str(IPAddress(ip))
-        except AddrFormatError:
-            raise F5ModuleError(
-                'The provided address is not a valid IP address'
-            )
-        self._values['route_domain'] = matches.group('rd')
-        self._values['netmask'] = matches.group('nm')
-
     @property
     def allow_service(self):
         if self._values['allow_service'] is None:
             return None
+        if self._values['allow_service'] == 'all':
+            self._values['allow_service'] = ['all']
         return sorted(self._values['allow_service'])
 
     @property
-    def trafficGroup(self):
-        return self.traffic_group
-
-    @trafficGroup.setter
-    def trafficGroup(self, value):
-        self._values['traffic_group'] = value
+    def destination_ip(self):
+        if self._values['address'] is None:
+            return None
+        try:
+            pattern = r'(?P<rd>%[0-9]+)'
+            addr = re.sub(pattern, '', self._values['address'])
+            ip = netaddr.IPNetwork(addr)
+            return '{0}/{1}'.format(ip.ip, ip.prefixlen)
+        except netaddr.AddrFormatError:
+            raise F5ModuleError(
+                "The provided destination is not an IP address"
+            )
 
     @property
-    def allowService(self):
-        return self._values['allow_service']
+    def netmask(self):
+        ip = netaddr.IPNetwork(self.destination_ip)
+        return int(ip.prefixlen)
 
-    @allowService.setter
-    def allowService(self, value):
-        if value == 'all':
-            self._values['allow_service'] = ['all']
-        else:
-            self._values['allow_service'] = sorted([str(x) for x in value])
+    @property
+    def ip(self):
+        result = netaddr.IPNetwork(self.destination_ip)
+        return str(result.ip)
+
+
+class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Changes):
+    @property
+    def allow_service(self):
+        if self._values['allow_service'] is None:
+            return None
+        if self._values['allow_service'] == ['all']:
+            return 'all'
+        return sorted(self._values['allow_service'])
+
+
+class ReportableChanges(Changes):
+    pass
 
 
 class ModuleManager(object):
@@ -476,8 +474,8 @@ class ModuleManager(object):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = ApiParameters()
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -485,7 +483,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -496,12 +494,12 @@ class ModuleManager(object):
             if change is None:
                 continue
             else:
-                if k in ['netmask', 'route_domain']:
+                if k in ['netmask']:
                     changed['address'] = change
                 else:
                     changed[k] = change
         if changed:
-            self.changes = ApiParameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -583,11 +581,12 @@ class ModuleManager(object):
             self.want.update({'route_domain': 0})
         if self.want.allow_service:
             if 'all' in self.want.allow_service:
-                self.want.update(dict(allow_service='all'))
+                self.want.update(dict(allow_service=['all']))
             elif 'none' in self.want.allow_service:
                 self.want.update(dict(allow_service=[]))
             elif 'default' in self.want.allow_service:
                 self.want.update(dict(allow_service=['default']))
+        self._set_changed_options()
         if self.want.check_mode:
             return True
         self.create_on_device()
@@ -597,7 +596,7 @@ class ModuleManager(object):
             raise F5ModuleError("Failed to create the Self IP")
 
     def create_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         self.client.api.tm.net.selfips.selfip.create(
             name=self.want.name,
             partition=self.want.partition,
@@ -649,6 +648,10 @@ class Difference(object):
             return attr1
 
     @property
+    def address(self):
+        pass
+
+    @property
     def allow_service(self):
         """Returns services formatted for consumption by f5-sdk update
 
@@ -670,7 +673,7 @@ class Difference(object):
         if result[0] == 'none' and self.have.allow_service is None:
             return None
         elif result[0] == 'all' and self.have.allow_service[0] != 'all':
-            return 'all'
+            return ['all']
         elif result[0] == 'none':
             return []
         elif self.have.allow_service is None:
@@ -683,7 +686,7 @@ class Difference(object):
         if self.want.netmask is None:
             return None
         try:
-            address = IPNetwork(self.have.ip)
+            address = netaddr.IPNetwork(self.have.ip)
             if self.want.route_domain is not None:
                 nipnet = "{0}%{1}/{2}".format(address.ip, self.want.route_domain, self.want.netmask)
                 cipnet = "{0}%{1}/{2}".format(address.ip, self.want.route_domain, self.have.netmask)
@@ -695,30 +698,9 @@ class Difference(object):
                 cipnet = "{0}/{1}".format(address.ip, self.have.netmask)
             if nipnet != cipnet:
                 return nipnet
-        except AddrFormatError:
+        except netaddr.AddrFormatError:
             raise F5ModuleError(
                 'The provided address/netmask value "{0}" was invalid'.format(self.have.ip)
-            )
-
-    @property
-    def route_domain(self):
-        if self.want.route_domain is None:
-            return None
-        try:
-            address = IPNetwork(self.have.ip)
-
-            if self.want.netmask is not None:
-                nipnet = "{0}%{1}/{2}".format(address.ip, self.want.route_domain, self.want.netmask)
-                cipnet = "{0}%{1}/{2}".format(address.ip, self.have.route_domain, self.want.netmask)
-            elif self.have.netmask is not None:
-                nipnet = "{0}%{1}/{2}".format(address.ip, self.want.route_domain, self.have.netmask)
-                cipnet = "{0}%{1}/{2}".format(address.ip, self.have.route_domain, self.have.netmask)
-
-            if nipnet != cipnet:
-                return nipnet
-        except AddrFormatError:
-            raise F5ModuleError(
-                'The provided address/netmask value was invalid'
             )
 
     @property
@@ -737,7 +719,7 @@ class ArgumentSpec(object):
             netmask=dict(),
             traffic_group=dict(),
             vlan=dict(),
-            route_domain=dict(),
+            route_domain=dict(type='int'),
             state=dict(
                 default='present',
                 choices=['present', 'absent']
