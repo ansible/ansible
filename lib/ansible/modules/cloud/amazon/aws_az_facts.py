@@ -18,10 +18,10 @@ author: 'Henrique Rodrigues (github.com/Sodki)'
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
-      U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeAvailabilityZones.html) for \
-      possible filters. Filter names and values are case sensitive. You can also use underscores (_) \
-      instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeAvailabilityZones.html) for
+        possible filters. Filter names and values are case sensitive. You can also use underscores
+        instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
     required: false
     default: {}
 extends_documentation_fragment:
@@ -110,7 +110,7 @@ def main():
     except ClientError as e:
         module.fail_json(msg="Unable to describe availability zones: {0}".format(to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-	except BotoCoreError as e:
+    except BotoCoreError as e:
         module.fail_json(msg="Unable to describe availability zones: {0}".format(to_native(e)),
                          exception=traceback.format_exc())
 
