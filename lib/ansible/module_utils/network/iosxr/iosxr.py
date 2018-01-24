@@ -359,6 +359,8 @@ def get_oper(module, filter=None):
 
     if filter is not None:
         response = conn.get(filter)
+    else:
+        return None
 
     return to_bytes(etree.tostring(response), errors='surrogate_then_replace').strip()
 

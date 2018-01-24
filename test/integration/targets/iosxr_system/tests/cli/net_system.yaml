@@ -7,8 +7,8 @@
 - name: setup
   iosxr_config:
     lines:
-      - no ip domain-list ansible.com
-      - no ip domain-list redhat.com
+      - no domain list ansible.com
+      - no domain list redhat.com
     match: none
     provider: "{{ cli }}"
 
@@ -26,11 +26,11 @@
       - "'domain list ansible.com' in result.commands"
       - "'domain list redhat.com' in result.commands"
 
-- name: setup
+- name: teardown
   iosxr_config:
     lines:
-      - no ip domain-list ansible.com
-      - no ip domain-list redhat.com
+      - no domain list ansible.com
+      - no domain list redhat.com
     match: none
     provider: "{{ cli }}"
 

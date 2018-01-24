@@ -3,9 +3,7 @@
 
 - name: setup
   iosxr_config:
-    lines:
-      - no domain lookup source-interface Loopback10
-#      - vrf ansible
+    lines: no domain lookup source-interface Loopback10
     match: none
     provider: "{{ cli }}"
 
@@ -30,36 +28,10 @@
     that:
       - result.changed == false
 
-#- name: change to vrf
-#  iosxr_system:
-#    lookup_source:
-#      - interface: Loopback10
-#        vrf: ansible
-#  register: result
-#
-#- assert:
-#    that:
-#      - result.changed == true
-#      - "'no ip domain lookup source-interface Management1' in result.commands"
-#      - "'ip domain lookup vrf ansible source-interface Management1' in result.commands"
-#      - result.commands|length == 2
-#
-#- name: verify change to vrf
-#  iosxr_system:
-#    lookup_source:
-#      - interface: Management1
-#        vrf: ansible
-#  register: result
-#
-#- assert:
-#    that:
-#      - result.changed == false
-
 - name: teardown
   iosxr_config:
     lines:
       - no domain lookup source-interface Loopback10
-      - no vrf ansible
     match: none
     provider: "{{ cli }}"
 
