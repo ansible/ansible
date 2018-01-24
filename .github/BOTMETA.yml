@@ -1144,6 +1144,12 @@ files:
   lib/ansible/plugins/filter/network.py:
     maintainers: $team_networking
     labels: networking
+  lib/ansible/plugins/lookup/nios.py:
+    maintainers: $team_networking
+    labels: networking
+  lib/ansible/plugins/lookup/nios_next_ip.py:
+    maintainers: $team_networking
+    labels: networking
   lib/ansible/plugins/lookup/dig:
     maintainers: jpmens
     labels: community
