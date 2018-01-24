@@ -48,6 +48,10 @@ options:
         description:
             - Id of client template to be worked on. This is usually a UUID.
 
+    realm:
+        description:
+            - Realm this client template is found in.
+
     name:
         description:
             - Name of the client template
