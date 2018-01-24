@@ -1277,7 +1277,7 @@ GALAXY_SERVER:
   yaml: {key: galaxy.server}
 GALAXY_TOKEN:
   default: null
-  description: "GitHub personnal access token"
+  description: "GitHub personal access token"
   env: [{name: ANSIBLE_GALAXY_TOKEN}]
   ini:
   - {key: token, section: galaxy}
