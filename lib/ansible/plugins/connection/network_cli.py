@@ -395,6 +395,10 @@ class Connection(ConnectionBase):
             window = self._strip(recv.read())
             if prompts and not handled:
                 handled = self._handle_prompt(window, prompts, answer, newline)
+            elif prompts and handled:
+                # check again even when handled, a sub-prompt could be
+                # repeating (like in the case of a wrong enable password, etc)
+                self._handle_prompt(window, prompts, answer, newline)
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
