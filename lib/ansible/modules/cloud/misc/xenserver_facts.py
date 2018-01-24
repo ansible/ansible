@@ -45,8 +45,6 @@ EXAMPLES = '''
 # }
 '''
 
-import platform
-
 HAVE_XENAPI = False
 try:
     import XenAPI
@@ -54,7 +52,9 @@ try:
 except ImportError:
     pass
 
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils import compat_platform
 
 
 class XenServerFacts:
@@ -70,7 +70,7 @@ class XenServerFacts:
     @property
     def version(self):
         # Be aware! Deprecated in Python 2.6!
-        result = platform.dist()[1]
+        result = compat_platform.dist()[1]
         return result
 
     @property

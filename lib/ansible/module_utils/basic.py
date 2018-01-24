@@ -171,6 +171,7 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils import compat_platform
 
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
@@ -272,16 +273,16 @@ def get_distribution():
     if platform.system() == 'Linux':
         try:
             supported_dists = platform._supported_dists + ('arch', 'alpine', 'devuan')
-            distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
+            distribution = compat_platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
             if not distribution and os.path.isfile('/etc/system-release'):
-                distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
+                distribution = compat_platform.linux_distribution(supported_dists=['system'])[0].capitalize()
                 if 'Amazon' in distribution:
                     distribution = 'Amazon'
                 else:
                     distribution = 'OtherLinux'
         except:
             # FIXME: MethodMissing, I assume?
-            distribution = platform.dist()[0].capitalize()
+            distribution = compat_platform.dist()[0].capitalize()
     else:
         distribution = None
     return distribution
@@ -291,12 +292,12 @@ def get_distribution_version():
     ''' return the distribution version '''
     if platform.system() == 'Linux':
         try:
-            distribution_version = platform.linux_distribution()[1]
+            distribution_version = compat_platform.linux_distribution()[1]
             if not distribution_version and os.path.isfile('/etc/system-release'):
-                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
+                distribution_version = compat_platform.linux_distribution(supported_dists=['system'])[1]
         except:
             # FIXME: MethodMissing, I assume?
-            distribution_version = platform.dist()[1]
+            distribution_version = compat_platform.dist()[1]
     else:
         distribution_version = None
     return distribution_version

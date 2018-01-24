@@ -28,17 +28,17 @@ class TestPlatform(ModuleTestCase):
             self.assertEqual(get_distribution(), None)
 
         with patch('platform.system', return_value='Linux'):
-            with patch('platform.linux_distribution', return_value=["foo"]):
+            with patch('ansible.module_utils.compat_platform.linux_distribution', return_value=["foo"]):
                 self.assertEqual(get_distribution(), "Foo")
 
             with patch('os.path.isfile', return_value=True):
-                with patch('platform.linux_distribution', side_effect=[("AmazonFooBar", )]):
+                with patch('ansible.module_utils.compat_platform.linux_distribution', side_effect=[("AmazonFooBar", )]):
                     self.assertEqual(get_distribution(), "Amazonfoobar")
 
-                with patch('platform.linux_distribution', side_effect=(("", ), ("AmazonFooBam",))):
+                with patch('ansible.module_utils.compat_platform.linux_distribution', side_effect=(("", ), ("AmazonFooBam",))):
                     self.assertEqual(get_distribution(), "Amazon")
 
-                with patch('platform.linux_distribution', side_effect=[("", ), ("", )]):
+                with patch('ansible.module_utils.compat_platform.linux_distribution', side_effect=[("", ), ("", )]):
                     self.assertEqual(get_distribution(), "OtherLinux")
 
                 def _dist(distname='', version='', id='', supported_dists=(), full_distribution_name=1):
@@ -47,11 +47,11 @@ class TestPlatform(ModuleTestCase):
                     else:
                         return ("", "", "")
 
-                with patch('platform.linux_distribution', side_effect=_dist):
+                with patch('ansible.module_utils.compat_platform.linux_distribution', side_effect=_dist):
                     self.assertEqual(get_distribution(), "Bar")
 
-            with patch('platform.linux_distribution', side_effect=Exception("boo")):
-                with patch('platform.dist', return_value=("bar", "2", "Two")):
+            with patch('ansible.module_utils.compat_platform.linux_distribution', side_effect=Exception("boo")):
+                with patch('ansible.module_utils.compat_platform.dist', return_value=("bar", "2", "Two")):
                     self.assertEqual(get_distribution(), "Bar")
 
     def test_module_utils_basic_get_distribution_version(self):
@@ -61,7 +61,7 @@ class TestPlatform(ModuleTestCase):
             self.assertEqual(get_distribution_version(), None)
 
         with patch('platform.system', return_value='Linux'):
-            with patch('platform.linux_distribution', return_value=("foo", "1", "One")):
+            with patch('ansible.module_utils.compat_platform.linux_distribution', return_value=("foo", "1", "One")):
                 self.assertEqual(get_distribution_version(), "1")
 
             with patch('os.path.isfile', return_value=True):
@@ -71,11 +71,11 @@ class TestPlatform(ModuleTestCase):
                     else:
                         return ("", "", "")
 
-                with patch('platform.linux_distribution', side_effect=_dist):
+                with patch('ansible.module_utils.compat_platform.linux_distribution', side_effect=_dist):
                     self.assertEqual(get_distribution_version(), "2")
 
-            with patch('platform.linux_distribution', side_effect=Exception("boo")):
-                with patch('platform.dist', return_value=("bar", "3", "Three")):
+            with patch('ansible.module_utils.compat_platform.linux_distribution', side_effect=Exception("boo")):
+                with patch('ansible.module_utils.compat_platform.dist', return_value=("bar", "3", "Three")):
                     self.assertEqual(get_distribution_version(), "3")
 
     def test_module_utils_basic_load_platform_subclass(self):

@@ -23,6 +23,7 @@ import re
 from ansible.module_utils.facts.utils import get_file_content
 
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils import compat_platform
 
 
 def get_uname_version(module):
@@ -153,7 +154,7 @@ class DistributionFiles:
 
     def _guess_distribution(self):
         # try to find out which linux distribution this is
-        dist = platform.dist()
+        dist = compat_platform.dist()
         distribution_guess = {}
         distribution_guess['distribution'] = dist[0].capitalize() or 'NA'
         distribution_guess['distribution_version'] = dist[1] or 'NA'
@@ -346,7 +347,7 @@ class DistributionFiles:
     def parse_distribution_file_Coreos(self, name, data, path, collected_facts):
         coreos_facts = {}
         # FIXME: pass in ro copy of facts for this kind of thing
-        dist = platform.dist()
+        dist = compat_platform.dist()
         distro = dist[0]
 
         if distro.lower() == 'coreos':

@@ -942,7 +942,7 @@ def test_distribution_version(am, mocker, testcase):
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
     mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
-    mocker.patch('platform.dist', lambda: testcase['platform.dist'])
+    mocker.patch('ansible.module_utils.compat_platform.dist', lambda: testcase['platform.dist'])
     mocker.patch('platform.system', mock_platform_system)
     mocker.patch('platform.release', mock_platform_release)
     mocker.patch('platform.version', mock_platform_version)
