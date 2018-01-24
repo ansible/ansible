@@ -577,7 +577,8 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            result['attempts'] = attempt
+            if retries > 1:
+                result['attempts'] = attempt
 
             # set the changed property if it was missing.
             if 'changed' not in result:
