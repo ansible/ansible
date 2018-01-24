@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
+    'metadata_version': '1.1',
     'supported_by': 'community',
     'status': ['preview']
 }
@@ -20,7 +20,7 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
         U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html) for
-        possible filters. Filter names and values are case sensitive. You can also use underscores (_)
+        possible filters. Filter names and values are case sensitive. You can also use underscores
         instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
     default: {}
 extends_documentation_fragment:
@@ -43,6 +43,7 @@ EXAMPLES = '''
 
 RETURN = '''
 regions:
+    returned: on success
     description: >
         Regions that match the provided filters. Each element consists of a dict with all the information related
         to that region.
@@ -90,7 +91,7 @@ def main():
     )
 
     # Replace filter key underscores with dashes, for compatibility
-    sanitized_filters = dict((k.replace('_', '-'), v) for k,v in module.params.get('filters').items())
+    sanitized_filters = dict((k.replace('_', '-'), v) for k, v in module.params.get('filters').items())
 
     try:
         regions = connection.describe_regions(
