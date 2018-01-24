@@ -29,6 +29,9 @@ options:
         default: datastore1
         description:
         - 'Datastore to deploy to'
+    deployment_option:
+        description:
+        - The key of the chosen deployment option
     disk_provisioning:
         choices:
         - flat
@@ -68,6 +71,9 @@ options:
         description:
         - 'Whether or not to power on the VM after creation'
         type: bool
+    properties:
+        description:
+        - The assignment of values to the properties found in the OVF as key value pairs
     resource_pool:
         default: Resources
         description:
@@ -312,6 +318,15 @@ class VMwareDeployOvf:
             params['entityName'] = self.params['name']
         if network_mappings:
             params['networkMapping'] = network_mappings
+        if self.params['deployment_option']:
+            params['deploymentOption'] = self.params['deployment_option']
+        if self.params['properties']:
+            params['propertyMapping'] = []
+            for key, value in self.params['properties'].items():
+                property_mapping = vim.KeyValue()
+                property_mapping.key = key
+                property_mapping.value = value
+                params['propertyMapping'].append(property_mapping)
 
         spec_params = vim.OvfManager.CreateImportSpecParams(**params)
 
@@ -478,6 +493,9 @@ def main():
         'datacenter': {
             'default': 'ha-datacenter',
         },
+        'deployment_option': {
+            'default': None,
+        },
         'resource_pool': {
             'default': 'Resources',
         },
@@ -509,6 +527,9 @@ def main():
         'power_on': {
             'type': 'bool',
             'default': True,
+        },
+        'properties': {
+            'type': 'dict',
         },
         'wait': {
             'type': 'bool',
