@@ -206,15 +206,6 @@ class UnitsConfig(TestConfig):
         self.collect_only = args.collect_only  # type: bool
 
 
-class CompileConfig(TestConfig):
-    """Configuration for the compile command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CompileConfig, self).__init__(args, 'compile')
-
-
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
     def __init__(self, args):
