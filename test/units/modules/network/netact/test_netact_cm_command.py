@@ -136,7 +136,7 @@ class TestClass(unittest.TestCase):
         set_module_args({
             'operation': "Provision",
             'opsName': 'Provision_test',
-            'DN': "PLMN-PLMN/MRBTS-746",
+            'WS': "PLMN-PLMN/MRBTS-746",
             'createBackupPlan': "Yes",
             'backupPlanName': "backupPlanName"
         })
@@ -154,7 +154,7 @@ class TestClass(unittest.TestCase):
 
         mock_run_command.assert_called_once_with(
             ['/opt/oss/bin/racclimx.sh', '-op', 'Provision', '-opsName', 'Provision_test',
-             '-DN', 'PLMN-PLMN/MRBTS-746', '-createBackupPlan', 'true', '-backupPlanName', 'backupPlanName'],
+             '-WS', 'PLMN-PLMN/MRBTS-746', '-createBackupPlan', 'true', '-backupPlanName', 'backupPlanName'],
             check_rc=True)
 
     def test_withwrongargs(self):
@@ -165,7 +165,7 @@ class TestClass(unittest.TestCase):
         set_module_args({
             'operation': "Upload",
             'opsName': 'Uploading_testi',
-            'DN': "PLMN-PLMN/MRBTS-746",
+            'MR': "PLMN-PLMN/MRBTS-746",
             'abc': 'abc'
         })
 

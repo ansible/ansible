@@ -305,11 +305,11 @@ def main():
 
     if ws:
         command.append('-WS')
-        command.append(dn)
+        command.append(ws)
 
     if mr:
         command.append('-MR')
-        command.append(dn)
+        command.append(mr)
 
     if planname:
         command.append('-planName')
