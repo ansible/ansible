@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2018 Google Inc.
+# Copyright 2013 Google Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -32,6 +32,7 @@ options:
         the base name of a cluster of nodes
     required: false
     default: null
+    aliases: ['base_name']
   num_instances:
     description:
       - can be used with 'name', specifies
@@ -73,6 +74,7 @@ author: "Rahul Paigavan (@Rahul-CSI) <rahul.paigavan@cambridgesemantics.com>"
 EXAMPLES = '''
 # Basic gce fact collect example.  Collect the facts for a single instance
 # test-instance-000 in the us-central1-a Zone.
+- name: Collect gce facts for single instance.
   gce_facts:
     name: test-instance-000
     zone: us-central1-a
@@ -83,6 +85,7 @@ EXAMPLES = '''
 # Collect the facts for multiple instances with name as base name and
 # num_instances as number of instance in the us-central1-a Zone.
 # (e.g. test-instance-000,test-instance-001,test-instance-002)
+- name: Collect gce facts for multiple instances with base_name.
   gce_facts:
     name: test-instance
     num_instances: 3
@@ -94,6 +97,7 @@ EXAMPLES = '''
 # Create multiple instances by specifying multiple names, separated by
 # commas in the instance_names field
 # (e.g. test-instance-000,test-instance-001,test-instance-002)
+- name: Collect gce facts for list of instances with instance_names.
   gce_facts:
     instance_names: test-instance-000,test-instance-001,test-instance-002
     zone: us-central1-a
@@ -146,10 +150,73 @@ EXAMPLES = '''
         msg: "{{ gce_facts }}"
 '''
 
+RETURN = '''
+name:
+    description: Name of the instance.
+    returned: always
+    type: string
+    sample: test-instance-000
+subnetwork:
+    description: Name of the subnetwork where instance resides.
+    returned: always
+    type: string
+    sample: test-subnetwork
+network:
+    description: Name of the network where instance resides.
+    returned: always
+    type: string
+    sample: test-network
+zone:
+    description: Name of the zone where instance resides.
+    returned: always
+    type: string
+    sample: us-central1-a
+private_ip:
+    description: Private ip of instance.
+    returned: always
+    type: string
+    sample: 10.115.0.2
+public_ip:
+    description: Public ip of instance.
+    returned: always
+    type: string
+    sample: 35.224.101.234
+status:
+    description: State of the instance.
+    returned: always
+    type: string
+    sample: RUNNING
+disks:
+    description: Disks including boot disk which are attached to instance.
+    returned: always
+    type: list
+    sample: ["test-disk-000", "test-disk-001"]
+image:
+    description: Image used by instance.
+    returned: always
+    type: string
+    sample: centos-7
+machine_type:
+    description: Type of machine.
+    returned: always
+    type: string
+    sample: n1-standard-1
+metadata:
+    description: Metadata of instance.
+    returned: always
+    type: dictionary
+    sample: {'Type':'Server', 'App':'Nginx'}
+tags:
+    description: Tags of instance.
+    returned: always
+    type: list
+    sample: ['global', 'test']
+'''
+
 try:
     import libcloud
     from libcloud.compute.types import Provider
-    _ = Provider.GCE
+    gce_provider = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
@@ -157,7 +224,53 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect, unexpected_error_msg
 from ansible.module_utils.gcp import get_valid_location
-from ansible.modules.cloud.google.gce import get_instance_info
+
+
+def get_instance_info(inst):
+    """Retrieves instance information from an instance object and returns it
+    as a dictionary.
+
+    """
+    metadata = {}
+    if 'metadata' in inst.extra and 'items' in inst.extra['metadata']:
+        for md in inst.extra['metadata']['items']:
+            metadata[md['key']] = md['value']
+
+    try:
+        netname = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+    except:
+        netname = None
+    try:
+        subnetname = inst.extra['networkInterfaces'][0]['subnetwork'].split('/')[-1]
+    except:
+        subnetname = None
+    if 'disks' in inst.extra:
+        disk_names = [disk_info['source'].split('/')[-1]
+                      for disk_info
+                      in sorted(inst.extra['disks'],
+                                key=lambda disk_info: disk_info['index'])]
+    else:
+        disk_names = []
+
+    if len(inst.public_ips) == 0:
+        public_ip = None
+    else:
+        public_ip = inst.public_ips[0]
+
+    return({
+        'image': inst.image is not None and inst.image.split('/')[-1] or None,
+        'disks': disk_names,
+        'machine_type': inst.size,
+        'metadata': metadata,
+        'name': inst.name,
+        'network': netname,
+        'subnetwork': subnetname,
+        'private_ip': inst.private_ips[0],
+        'public_ip': public_ip,
+        'status': ('status' in inst.extra) and inst.extra['status'] or None,
+        'tags': ('tags' in inst.extra) and inst.extra['tags'] or [],
+        'zone': ('zone' in inst.extra) and inst.extra['zone'].name or None,
+    })
 
 
 def instance_info(module, gce, instance_names, number, zone):
