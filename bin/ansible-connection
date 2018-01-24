@@ -13,11 +13,9 @@ except Exception:
 
 import fcntl
 import os
-import shlex
 import signal
 import socket
 import sys
-import time
 import traceback
 import errno
 import json
@@ -169,6 +167,7 @@ def main():
     else:
         stdin = sys.stdin
 
+    # Note: update the below log capture code after Display.display() is refactored.
     saved_stdout = sys.stdout
     sys.stdout = StringIO()
 
