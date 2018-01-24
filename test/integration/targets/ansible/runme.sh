@@ -32,15 +32,15 @@ galaxy_test_role_github="https://github.com/geerlingguy/ansible-role-nginx.git"
 #
 # Ensure that if a role_path is passed, it is in fact used
 ag_testdir=$(mktemp -d)
-pushd ${ag_testdir}
-    mkdir -p ${galaxy_relative_rolespath}
+pushd "${ag_testdir}"
+    mkdir -p "${galaxy_relative_rolespath}"
 
-    ansible-galaxy install ${galaxy_test_role} -p ${galaxy_relative_rolespath}
+    ansible-galaxy install "${galaxy_test_role}" -p "${galaxy_relative_rolespath}"
 
     # Test that the role was installed to the expected directory
     [[ -d "${galaxy_relative_rolespath}/${galaxy_test_role}" ]]
 popd # ${ag_testdir}
-rm -fr ${ag_testdir}
+rm -fr "${ag_testdir}"
 
 # Galaxy install test case
 #
@@ -51,9 +51,9 @@ rm -fr ${ag_testdir}
 #   https://github.com/ansible/ansible/issues/35217
 
 ag_testdir=$(mktemp -d)
-pushd ${ag_testdir}
+pushd "${ag_testdir}"
 
-    git clone ${galaxy_test_role_github} ${galaxy_test_role}
+    git clone "${galaxy_test_role_github}" "${galaxy_test_role}"
     ansible-galaxy init roles-path-bug
     pushd roles-path-bug
         cat <<EOF > ansible.cfg
@@ -73,7 +73,7 @@ EOF
     [[ -d "${ag_testdir}/roles-path-bug/roles/${galaxy_test_role}" ]]
 
 popd # ${ag_testdir}
-rm -fr ${ag_testdir}
+rm -fr "${ag_testdir}"
 
 
 #
