@@ -25,9 +25,12 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import os
+
 from functools import partial
 
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_text
 
 try:
     from infoblox_client.connector import Connector
@@ -46,7 +49,7 @@ nios_provider_spec = {
     'http_pool_connections': dict(type='int', default=10),
     'http_pool_maxsize': dict(type='int', default=10),
     'max_retries': dict(type='int', default=3),
-    'wapi_version': dict(default='1.4'),
+    'wapi_version': dict(default='1.4')
 }
 
 
@@ -54,12 +57,22 @@ def get_provider_spec():
     return {'provider': dict(type='dict', options=nios_provider_spec)}
 
 
-def get_connector(module):
+def get_connector(*args, **kwargs):
     if not HAS_INFOBLOX_CLIENT:
-        module.fail_json(msg='infoblox-client is required but does not appear '
-                             'to be installed.  It can be installed using the '
-                             'command `pip install infoblox-client`')
-    return Connector(module.params['provider'])
+        raise Exception('infoblox-client is required but does not appear '
+                        'to be installed.  It can be installed using the '
+                        'command `pip install infoblox-client`')
+
+    if not set(kwargs.keys()).issubset(nios_provider_spec.keys()):
+        raise Exception('invalid or unsupported keyword argument for connector')
+
+    for key in nios_provider_spec.keys():
+        if key not in kwargs:
+            env = ('INFOBLOX_%s' % key).upper()
+            if env in os.environ:
+                kwargs[key] = os.environ.get(env)
+
+    return Connector(kwargs)
 
 
 class WapiBase(object):
@@ -67,7 +80,12 @@ class WapiBase(object):
 
     def __init__(self, module):
         self.module = module
-        self.connector = get_connector(module)
+
+        try:
+            provider = module.params['provider'] or {}
+            self.connector = get_connector(**provider)
+        except Exception as exc:
+            module.fail_json(msg=to_text(exc))
 
     def __getattr__(self, name):
         try:
