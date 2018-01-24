@@ -64,6 +64,11 @@ options:
     - The APIC defaults new EPGs to C(none).
     choices: [ none, proxy-arp ]
     default: none
+  preferred_group:
+    description:
+    - Whether ot not the EPG is part of the Preferred Group and can communicate without contracts.
+    - This is very convenient for migration scenarios, or when ACI is used for network automation but not for policy.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -84,6 +89,7 @@ EXAMPLES = r'''
     epg: web_epg
     description: Web Intranet EPG
     bd: prod_bd
+    preferred_group: yes
 
 - aci_epg:
     host: apic
@@ -169,6 +175,7 @@ def main():
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
         intra_epg_isolation=dict(choices=['enforced', 'unenforced']),
         fwd_control=dict(type='str', choices=['none', 'proxy-arp']),
+        preferred_group=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
@@ -192,6 +199,13 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
     ap = module.params['ap']
+
+    if module.params['preferred_group'] is True:
+        preferred_group = 'include'
+    elif module.params['preferred_group'] is False:
+        preferred_group = 'exclude'
+    else:
+        preferred_group = None
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -228,6 +242,7 @@ def main():
                 prio=priority,
                 pcEnfPref=intra_epg_isolation,
                 fwdCtrl=fwd_control,
+                prefGrMemb=preferred_group,
             ),
             child_configs=[
                 dict(fvRsBd=dict(attributes=dict(tnFvBDName=bd))),
