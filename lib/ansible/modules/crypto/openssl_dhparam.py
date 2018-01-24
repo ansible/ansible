@@ -82,48 +82,7 @@ filename:
 
 import os
 import re
-
-"""Note: We also monkey-patch subprocess for python 2.6 to
-give feature parity with later versions.
-Monkey-patch from http://pydoc.net/pep8radius/0.9.0/ with slight modifications
-MIT Licence
-
-Remove patch when Python 2.6 is no longer supported
-"""
-import subprocess
-try:
-    from subprocess import check_output, CalledProcessError
-except ImportError:  # pragma: no cover
-    # python 2.6 doesn't include check_output
-    # monkey patch it in!
-    def check_output(*popenargs, **kwargs):
-        if 'stdout' in kwargs:  # pragma: no cover
-            raise ValueError('stdout argument not allowed, '
-                             'it will be overridden.')
-        process = subprocess.Popen(stdout=subprocess.PIPE,
-                                   *popenargs, **kwargs)
-        output = process.communicate()[0]
-        retcode = process.poll()
-        if retcode:
-            cmd = kwargs.get("args")
-            if cmd is None:
-                cmd = popenargs[0]
-            raise CalledProcessError(retcode, cmd, output=output)
-        return output
-
-    # overwrite CalledProcessError due to `output`
-    # keyword not being available (in 2.6)
-    class CalledProcessError(Exception):
-        """Exception raised for call errors"""
-
-        def __init__(self, returncode, cmd, output=None):
-            self.returncode = returncode
-            self.cmd = cmd
-            self.output = output
-
-        def __str__(self):
-            return "Command '%s' returned non-zero exit status %d" % (
-                self.cmd, self.returncode)
+import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -141,6 +100,7 @@ class DHParameter(object):
         self.size = int(module.params['size'])
         self.force = module.params['force']
         self.changed = False
+        self.openssl_bin = module.get_bin_path('openssl', True)
 
     def generate(self, module):
         """Generate a keypair."""
@@ -148,15 +108,20 @@ class DHParameter(object):
 
         # ony generate when necessary
         if self.force or not self._check_params_valid(module):
+            # create a tempfile
+            fd, tmpsrc = tempfile.mkstemp()
+            os.close(fd)
+            module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
+            # openssl dhparam -out <path> <bits>
+            command = [self.openssl_bin, 'dhparam', '-out', tmpsrc, str(self.size)]
+            rc, _, err = module.run_command(command, check_rc=False)
+            if rc != 0:
+                raise DHParameterError(to_native(err))
             try:
-                # openssl dhparam -out <path> <bits>
-                subprocess.check_call(
-                    ["openssl", "dhparam", "-out", self.path, str(self.size)])
-            except CalledProcessError as exc:
-                os.remove(self.path)
-                raise DHParameterError(str(exc))
-            finally:
-                changed = True
+                module.atomic_move(tmpsrc, self.path)
+            except Exception as e:
+                module.fail_json(msg="Failed to write to file %s: %s" % (self.path, str(e)))
+            changed = True
 
         # fix permissions (checking force not necessary as done above)
         if not self._check_fs_attributes(module):
@@ -174,12 +139,10 @@ class DHParameter(object):
 
     def _check_params_valid(self, module):
         """Check if the params are in the correct state"""
-        try:
-            result = to_native(check_output(
-                ["openssl", "dhparam", "-check", "-text", "-noout", "-in", self.path],
-                stderr=subprocess.STDOUT,
-            )).strip()
-        except CalledProcessError as e:
+        command = [self.openssl_bin, 'dhparam', '-check', '-text', '-noout', '-in', self.path]
+        rc, out, err = module.run_command(command, check_rc=False)
+        result = to_native(out)
+        if rc != 0:
             # If the call failed the file probably doesn't exist or is
             # unreadable
             return False
@@ -191,7 +154,7 @@ class DHParameter(object):
             bits = int(match.group(1))
 
         # if output contains "WARNING" we've got a problem
-        if "WARNING" in result:
+        if "WARNING" in result or "WARNING" in to_native(err):
             return False
 
         return bits == self.size
