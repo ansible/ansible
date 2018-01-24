@@ -44,7 +44,6 @@ def categorize_changes(args, paths, verbose_command=None):
 
     commands = {
         'sanity': set(),
-        'compile': set(),
         'units': set(),
         'integration': set(),
         'windows-integration': set(),
@@ -128,7 +127,6 @@ class PathMapper(object):
         self.sanity_targets = list(walk_sanity_targets())
         self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.ps1']
 
-        self.compile_paths = set(t.path for t in self.compile_targets)
         self.units_modules = set(t.module for t in self.units_targets if t.module)
         self.units_paths = set(a for t in self.units_targets for a in t.aliases)
         self.sanity_paths = set(t.path for t in self.sanity_targets)
@@ -227,10 +225,6 @@ class PathMapper(object):
         # run all tests when no result given
         if result is None:
             return None
-
-        # compile path if eligible
-        if path in self.compile_paths:
-            result['compile'] = path
 
         # run sanity on path unless result specified otherwise
         if path in self.sanity_paths and 'sanity' not in result:
@@ -393,11 +387,6 @@ class PathMapper(object):
         if path.startswith('test/cache/'):
             return minimal
 
-        if path.startswith('test/compile/'):
-            return {
-                'compile': 'all',
-            }
-
         if path.startswith('test/results/'):
             return minimal
 
@@ -544,7 +533,32 @@ class PathMapper(object):
 
             return all_tests(self.args)  # test infrastructure, run all tests
 
+        if path.startswith('test/utils/shippable/tools/'):
+            return minimal  # not used by tests
+
         if path.startswith('test/utils/shippable/'):
+            if dirname == 'test/utils/shippable':
+                test_map = {
+                    'cloud.sh': 'integration:cloud/',
+                    'freebsd.sh': 'integration:all',
+                    'linux.sh': 'integration:all',
+                    'network.sh': 'network-integration:all',
+                    'osx.sh': 'integration:all',
+                    'rhel.sh': 'integration:all',
+                    'sanity.sh': 'sanity:all',
+                    'units.sh': 'units:all',
+                    'windows.sh': 'windows-integration:all',
+                }
+
+                test_match = test_map.get(filename)
+
+                if test_match:
+                    test_command, test_target = test_match.split(':')
+
+                    return {
+                        test_command: test_target,
+                    }
+
             return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/'):
@@ -602,7 +616,6 @@ def all_tests(args, force=False):
 
     return {
         'sanity': 'all',
-        'compile': 'all',
         'units': 'all',
         'integration': integration_all_target,
         'windows-integration': integration_all_target,

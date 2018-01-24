@@ -8,7 +8,8 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=other
+    - env: T=sanity/1
+    - env: T=sanity/2
 
     - env: T=units/2.6
     - env: T=units/2.7
