@@ -70,6 +70,7 @@ options:
     - This is very convenient for migration scenarios, or when ACI is used for network automation but not for policy.
     type: bool
     default: 'no'
+    version_added: '2.5'
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
