@@ -315,12 +315,16 @@ def write_file(module, dest, content):
     has changed.
     '''
     changed = False
-    # create a tempfile with some test content
-    _, tmpsrc = tempfile.mkstemp()
-    f = open(tmpsrc, 'wb')
+    # create a tempfile
+    fd, tmpsrc = tempfile.mkstemp(text=False)
+    f = os.fdopen(fd, 'wb')
     try:
         f.write(content)
     except Exception as err:
+        try:
+            f.close()
+        except:
+            pass
         os.remove(tmpsrc)
         module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
     f.close()
