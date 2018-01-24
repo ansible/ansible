@@ -238,8 +238,7 @@ class Connection(ConnectionBase):
                 if network_os:
                     display.display('discovered network_os %s' % network_os, log_only=True)
 
-        if not network_os:
-            raise AnsibleConnectionFailure('Unable to automatically determine host network os. Please ansible_network_os value')
+        device_params = {'name': (network_os or 'default')}
 
         ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
         if ssh_config in BOOLEANS_TRUE:
@@ -256,9 +255,9 @@ class Connection(ConnectionBase):
                 key_filename=str(key_filename),
                 hostkey_verify=C.HOST_KEY_CHECKING,
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+                device_params=device_params,
                 allow_agent=self._play_context.allow_agent,
                 timeout=self._play_context.timeout,
-                device_params={'name': network_os},
                 ssh_config=ssh_config
             )
         except SSHUnknownHostError as exc:
