@@ -165,6 +165,9 @@ class PylintTest(SanitySingleVersion):
             code=m['symbol'],
         ) for m in messages]
 
+        if args.explain:
+            return SanitySuccess(self.name)
+
         line = 0
 
         filtered = []
