@@ -256,6 +256,34 @@ def get_schema_response(path):
             SCHEMA_DATA[path]))
 
 
+class TestJsonRpc(unittest.TestCase):
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_exists(self, open_url_mock):
+        calls = [
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            MockResponse('exists', {'path': '/exists'}, 200, '{"result": {"exists": true}}'),
+            MockResponse('exists', {'path': '/not-exists'}, 200, '{"result": {"exists": false}}')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+        client = nso.JsonRpc('http://localhost:8080/jsonrpc')
+        self.assertEquals(True, client.exists('/exists'))
+        self.assertEquals(False, client.exists('/not-exists'))
+
+        self.assertEqual(0, len(calls))
+
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_exists_data_not_found(self, open_url_mock):
+        calls = [
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            MockResponse('exists', {'path': '/list{missing-parent}/list{child}'}, 200, '{"error":{"type":"data.not_found"}}')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+        client = nso.JsonRpc('http://localhost:8080/jsonrpc')
+        self.assertEquals(False, client.exists('/list{missing-parent}/list{child}'))
+
+        self.assertEqual(0, len(calls))
+
+
 class TestValueBuilder(unittest.TestCase):
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_identityref_leaf(self, open_url_mock):
