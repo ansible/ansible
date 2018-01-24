@@ -577,7 +577,7 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            if retries > 1:
+            if self._task.until:
                 result['attempts'] = attempt
 
             # set the changed property if it was missing.
