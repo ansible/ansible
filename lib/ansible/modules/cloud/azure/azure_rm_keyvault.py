@@ -137,12 +137,10 @@ options:
         description:
             - Property to specify whether the soft delete functionality is enabled for this key vault.
         type: bool
-    create_mode:
+    recover_mode:
         description:
-            - "The vault's create mode to indicate whether the vault need to be recovered or not."
-        choices:
-            - 'recover'
-            - 'default'
+            - Create vault in recovery mode.
+        type: bool
     state:
         description:
             - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
@@ -239,11 +237,8 @@ class AzureRMVaults(AzureRMModuleBase):
             enable_soft_delete=dict(
                 type='bool'
             ),
-            create_mode=dict(
-                type='str',
-                choices=['recover',
-                         'default'],
-                default='default'
+            recover_mode=dict(
+                type='bool'
             ),
             state=dict(
                 type='str',
@@ -302,8 +297,8 @@ class AzureRMVaults(AzureRMModuleBase):
                     self.parameters.setdefault("properties", {})["enabled_for_template_deployment"] = kwargs[key]
                 elif key == "enable_soft_delete":
                     self.parameters.setdefault("properties", {})["enable_soft_delete"] = kwargs[key]
-                elif key == "create_mode":
-                    self.parameters.setdefault("properties", {})["create_mode"] = kwargs[key]
+                elif key == "recover_mode":
+                    self.parameters.setdefault("properties", {})["create_mode"] = 'recover' if kwargs[key] else 'default'
 
         old_response = None
         response = None
@@ -346,9 +341,6 @@ class AzureRMVaults(AzureRMModuleBase):
                     self.to_do = Actions.Update
                 elif ('create_mode' in self.parameters) and (self.parameters['create_mode'] != old_response['create_mode']):
                     self.to_do = Actions.Update
-                # SKU Family
-                # SKU Name
-                # access_policies
                 elif 'access_policies' in self.parameters:
                     if len(self.parameters['access_policies']) != len(old_response['access_policies']):
                         self.to_do = Actions.Update
@@ -365,16 +357,16 @@ class AzureRMVaults(AzureRMModuleBase):
                             if n.get('application_id', False) != o.get('application_id', False):
                                 self.to_do = Actions.Update
                                 break
-                            if n.get('keys', []).cmp(o.get('keys', [])) != 0:
+                            if sorted(n.get('keys', [])).cmp(sorted(o.get('keys', []))) != 0:
                                 self.to_do = Actions.Update
                                 break
-                            if n.get('secrets', []).cmp(o.get('secrets', [])) != 0:
+                            if sorted(n.get('secrets', [])).cmp(sorted(o.get('secrets', []))) != 0:
                                 self.to_do = Actions.Update
                                 break
-                            if n.get('certificates', []).cmp(o.get('certificates', [])) != 0:
+                            if sorted(n.get('certificates', [])).cmp(sorted(o.get('certificates', []))) != 0:
                                 self.to_do = Actions.Update
                                 break
-                            if n.get('storage', []).cmp(o.get('storage', [])) != 0:
+                            if sorted(n.get('storage', [])).cmp(sorted(o.get('storage', []))) != 0:
                                 self.to_do = Actions.Update
                                 break
 

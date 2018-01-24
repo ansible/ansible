@@ -11,7 +11,7 @@
     vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
     sku:
       name: standard
-      family: xxxx
+      family: S
     access_policies:
       - tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
   check_mode: yes
@@ -29,7 +29,7 @@
     vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
     sku:
       name: standard
-      family: xxxx
+      family: S
     access_policies:
       - tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
         object_id: 99998888-8666-4144-9199-2d7cd0111111
@@ -50,7 +50,7 @@
     vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
     sku:
       name: standard
-      family: xxxx
+      family: S
     access_policies:
       - tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
         object_id: 99998888-8666-4144-9199-2d7cd0111111
