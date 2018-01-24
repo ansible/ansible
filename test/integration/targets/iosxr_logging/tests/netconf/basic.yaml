@@ -10,6 +10,7 @@
 - name: remove console logging
   iosxr_logging:
     dest: console
+    level: warning
     state: absent
     provider: "{{ netconf }}"
   register: result
@@ -92,9 +93,6 @@
     state: absent
     provider: "{{ netconf }}"
   register: result
-
-- debug:
-    msg: "{{ result }}"
 
 - assert: &true
     that:
