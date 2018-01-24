@@ -240,15 +240,6 @@ class AzureRMModuleBase(object):
             self.fail("Do you have azure>={1} installed? Try `pip install ansible[azure]`"
                       "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
 
-        self._cloud_environment = None
-        self._network_client = None
-        self._storage_client = None
-        self._resource_client = None
-        self._compute_client = None
-        self._dns_client = None
-        self._web_client = None
-        self._containerservice_client = None
-
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
         # self.debug = self.module.params.get('debug')
@@ -434,7 +425,7 @@ class AzureRMModuleBase(object):
             result = True
         return result
 
-    def get_resource_group(self, resource_group):
+    def get_resource_group(self, resource_group, resource_group_client):
         '''
         Fetch a resource group.
 
@@ -442,7 +433,7 @@ class AzureRMModuleBase(object):
         :return: resource group object
         '''
         try:
-            return self.rm_client.resource_groups.get(resource_group)
+            return resource_group_client.resource_groups.get(resource_group)
         except CloudError as cloud_error:
             self.fail("Error retrieving resource group {0} - {1}".format(resource_group, cloud_error.message))
         except Exception as exc:
@@ -633,135 +624,6 @@ class AzureRMModuleBase(object):
                 self.fail("Error {0} has a provisioning state of {1}. Expecting state to be {2}.".format(
                     azure_object.name, azure_object.provisioning_state, AZURE_SUCCESS_STATE))
 
-    def get_blob_client(self, resource_group_name, storage_account_name, storage_blob_type='block'):
-        keys = dict()
-        try:
-            # Get keys from the storage account
-            self.log('Getting keys')
-            account_keys = self.storage_client.storage_accounts.list_keys(resource_group_name, storage_account_name)
-        except Exception as exc:
-            self.fail("Error getting keys for account {0} - {1}".format(storage_account_name, str(exc)))
-
-        try:
-            self.log('Create blob service')
-            if storage_blob_type == 'page':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_page_blob_service()
-            elif storage_blob_type == 'block':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
-            else:
-                raise Exception("Invalid storage blob type defined.")
-        except Exception as exc:
-            self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
-                                                                                                str(exc)))
-
-    def create_default_pip(self, resource_group, location, name, allocation_method='Dynamic'):
-        '''
-        Create a default public IP address <name>01 to associate with a network interface.
-        If a PIP address matching <vm name>01 exists, return it. Otherwise, create one.
-
-        :param resource_group: name of an existing resource group
-        :param location: a valid azure location
-        :param name: base name to assign the public IP address
-        :param allocation_method: one of 'Static' or 'Dynamic'
-        :return: PIP object
-        '''
-        public_ip_name = name + '01'
-        pip = None
-
-        self.log("Starting create_default_pip {0}".format(public_ip_name))
-        self.log("Check to see if public IP {0} exists".format(public_ip_name))
-        try:
-            pip = self.network_client.public_ip_addresses.get(resource_group, public_ip_name)
-        except CloudError:
-            pass
-
-        if pip:
-            self.log("Public ip {0} found.".format(public_ip_name))
-            self.check_provisioning_state(pip)
-            return pip
-
-        params = self.network_models.PublicIPAddress(
-            location=location,
-            public_ip_allocation_method=allocation_method,
-        )
-        self.log('Creating default public IP {0}'.format(public_ip_name))
-        try:
-            poller = self.network_client.public_ip_addresses.create_or_update(resource_group, public_ip_name, params)
-        except Exception as exc:
-            self.fail("Error creating {0} - {1}".format(public_ip_name, str(exc)))
-
-        return self.get_poller_result(poller)
-
-    def create_default_securitygroup(self, resource_group, location, name, os_type, open_ports):
-        '''
-        Create a default security group <name>01 to associate with a network interface. If a security group matching
-        <name>01 exists, return it. Otherwise, create one.
-
-        :param resource_group: Resource group name
-        :param location: azure location name
-        :param name: base name to use for the security group
-        :param os_type: one of 'Windows' or 'Linux'. Determins any default rules added to the security group.
-        :param ssh_port: for os_type 'Linux' port used in rule allowing SSH access.
-        :param rdp_port: for os_type 'Windows' port used in rule allowing RDP access.
-        :return: security_group object
-        '''
-        security_group_name = name + '01'
-        group = None
-
-        self.log("Create security group {0}".format(security_group_name))
-        self.log("Check to see if security group {0} exists".format(security_group_name))
-        try:
-            group = self.network_client.network_security_groups.get(resource_group, security_group_name)
-        except CloudError:
-            pass
-
-        if group:
-            self.log("Security group {0} found.".format(security_group_name))
-            self.check_provisioning_state(group)
-            return group
-
-        parameters = self.network_models.NetworkSecurityGroup()
-        parameters.location = location
-
-        if not open_ports:
-            # Open default ports based on OS type
-            if os_type == 'Linux':
-                # add an inbound SSH rule
-                parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow SSH Access',
-                                                     source_port_range='*', destination_port_range='22', priority=100, name='SSH')
-                ]
-                parameters.location = location
-            else:
-                # for windows add inbound RDP and WinRM rules
-                parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
-                                                     source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
-                                                     source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
-                ]
-        else:
-            # Open custom ports
-            parameters.security_rules = []
-            priority = 100
-            for port in open_ports:
-                priority += 1
-                rule_name = "Rule_{0}".format(priority)
-                parameters.security_rules.append(
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', source_port_range='*',
-                                                     destination_port_range=str(port), priority=priority, name=rule_name)
-                )
-
-        self.log('Creating default security group {0}'.format(security_group_name))
-        try:
-            poller = self.network_client.network_security_groups.create_or_update(resource_group,
-                                                                                  security_group_name,
-                                                                                  parameters)
-        except Exception as exc:
-            self.fail("Error creating default security rule {0} - {1}".format(security_group_name, str(exc)))
-
-        return self.get_poller_result(poller)
-
     @staticmethod
     def _validation_ignore_callback(session, global_config, local_config, **kwargs):
         session.verify = False
@@ -792,83 +654,3 @@ class AzureRMModuleBase(object):
             client.config.session_configuration_callback = self._validation_ignore_callback
 
         return client
-
-    @property
-    def storage_client(self):
-        self.log('Getting storage client...')
-        if not self._storage_client:
-            self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-10-01')
-        return self._storage_client
-
-    @property
-    def storage_models(self):
-        self.log('Getting storage models...')
-        return StorageManagementClient.models("2017-10-01")
-
-    @property
-    def network_client(self):
-        self.log('Getting network client')
-        if not self._network_client:
-            self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-06-01')
-        return self._network_client
-
-    @property
-    def network_models(self):
-        self.log("Getting network models...")
-        return NetworkManagementClient.models("2017-06-01")
-
-    @property
-    def rm_client(self):
-        self.log('Getting resource manager client')
-        if not self._resource_client:
-            self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
-                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                             api_version='2017-05-10')
-        return self._resource_client
-
-    @property
-    def rm_models(self):
-        self.log("Getting resource manager models")
-        return ResourceManagementClient.models("2017-05-10")
-
-    @property
-    def compute_client(self):
-        self.log('Getting compute client')
-        if not self._compute_client:
-            self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-03-30')
-        return self._compute_client
-
-    @property
-    def compute_models(self):
-        self.log("Getting compute models")
-        return ComputeManagementClient.models("2017-03-30")
-
-    @property
-    def dns_client(self):
-        self.log('Getting dns client')
-        if not self._dns_client:
-            self._dns_client = self.get_mgmt_svc_client(DnsManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
-        return self._dns_client
-
-    @property
-    def web_client(self):
-        self.log('Getting web client')
-        if not self._web_client:
-            self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
-        return self._web_client
-
-    @property
-    def containerservice_client(self):
-        self.log('Getting container service client')
-        if not self._containerservice_client:
-            self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
-                                                                     base_url=self._cloud_environment.endpoints.resource_manager)
-        return self._containerservice_client
