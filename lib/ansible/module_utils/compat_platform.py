@@ -198,6 +198,11 @@ _release_version = re.compile(r'([^0-9]+)'
                               r'([\d.]+)'
                               r'[^(]*(?:\((.+)\))?')
 
+# from http://bazaar.launchpad.net/~doko/python/pkg2.7-debian/view/head:/patches/platform-lsbrelease.diff
+_distributor_id_file_re = re.compile("(?:DISTRIB_ID\s*=)\s*(.*)", re.I)
+_release_file_re = re.compile("(?:DISTRIB_RELEASE\s*=)\s*(.*)", re.I)
+_codename_file_re = re.compile("(?:DISTRIB_CODENAME\s*=)\s*(.*)", re.I)
+
 # See also http://www.novell.com/coolsolutions/feature/11251.html
 # and http://linuxmafia.com/faq/Admin/release-files.html
 # and http://data.linux-ntfs.org/rpm/whichrpm
@@ -206,7 +211,8 @@ _release_version = re.compile(r'([^0-9]+)'
 _supported_dists = (
     'SuSE', 'debian', 'fedora', 'redhat', 'centos',
     'mandrake', 'mandriva', 'rocks', 'slackware', 'yellowdog', 'gentoo',
-    'UnitedLinux', 'turbolinux', 'arch', 'mageia')
+    'UnitedLinux', 'turbolinux', 'arch', 'mageia', 'Ubuntu')
+
 
 def _parse_release_file(firstline):
 
@@ -267,6 +273,26 @@ def _linux_distribution(distname, version, id, supported_dists,
         args given as parameters.
 
     """
+
+    # check for the LSB /etc/lsb-release file first, needed so
+    # that the distribution doesn't get identified as Debian.
+    try:
+        with open("/etc/lsb-release", "rU") as etclsbrel:
+            for line in etclsbrel:
+                m = _distributor_id_file_re.search(line)
+                if m:
+                    _u_distname = m.group(1).strip()
+                m = _release_file_re.search(line)
+                if m:
+                    _u_version = m.group(1).strip()
+                m = _codename_file_re.search(line)
+                if m:
+                    _u_id = m.group(1).strip()
+            if _u_distname and _u_version:
+                return (_u_distname, _u_version, _u_id)
+    except (EnvironmentError, UnboundLocalError):
+        pass
+
     try:
         etc = os.listdir(_UNIXCONFDIR)
     except OSError:
