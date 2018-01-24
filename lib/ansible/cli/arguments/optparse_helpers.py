@@ -77,17 +77,15 @@ class InvalidOptsParser(SortedOptParser):
 
 def unfrack_paths(option, opt, value, parser):
     """Turn an Option's value into a list of paths in Ansible locations"""
-    paths = getattr(parser.values, option.dest)
-    if paths is None:
-        paths = []
+    paths = getattr(parser.values, option.dest, None) or []
+    new_cli_paths = value
 
     if isinstance(value, string_types):
-        paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep) if x]
-    elif isinstance(value, list):
-        paths[:0] = [unfrackpath(x) for x in value if x]
-    else:
-        pass  # FIXME: should we raise options error?
+        new_cli_paths = value.split(os.pathsep)
 
+    # add here to get a new paths instance containing the new ones
+    # This avoids clobbering the instance the Option default points to
+    paths = paths + [unfrackpath(x) for x in new_cli_paths if x]
     setattr(parser.values, option.dest, paths)
 
 

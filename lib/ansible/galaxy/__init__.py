@@ -26,6 +26,7 @@ __metaclass__ = type
 import os
 
 from ansible import context
+import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 
@@ -39,7 +40,7 @@ class Galaxy(object):
     def __init__(self):
 
         # roles_path needs to be a list and will be by default
-        roles_path = context.CLIARGS.get('roles_path', tuple())
+        roles_path = context.CLIARGS.get('roles_path', None) or C.DEFAULT_ROLES_PATH
         # cli option handling is responsible for splitting roles_path
         self.roles_paths = roles_path
 

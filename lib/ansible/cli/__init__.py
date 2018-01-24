@@ -335,8 +335,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             if op.forks < 1:
                 self.parser.error("The number of processes (--forks) must be >= 1")
 
-        return op
-
     @abstractmethod
     def init_parser(self, usage="", desc=None, epilog=None):
         """

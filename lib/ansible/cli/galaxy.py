@@ -110,7 +110,7 @@ class GalaxyCLI(CLI):
         if self.action not in ("delete", "import", "init", "login", "setup"):
             # NOTE: while the option type=str, the default is a list, and the
             # callback will set the value to a list.
-            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=opt_help.unfrack_paths, default=C.DEFAULT_ROLES_PATH,
+            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=opt_help.unfrack_paths, default=[],
                                    help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg'
                                         ' file (/etc/ansible/roles if not configured)', type='str')
         if self.action in ("init", "install"):
@@ -261,7 +261,7 @@ class GalaxyCLI(CLI):
             # the user needs to specify a role
             raise AnsibleOptionsError("- you must specify a user/role name")
 
-        roles_path = context.CLIARGS['roles_path']
+        roles_path = context.CLIARGS['roles_path'] or C.DEFAULT_ROLES_PATH
 
         data = ''
         for role in context.CLIARGS['args']:
@@ -469,7 +469,7 @@ class GalaxyCLI(CLI):
                 display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
-            roles_path = context.CLIARGS['roles_path']
+            roles_path = context.CLIARGS['roles_path'] or C.DEFAULT_ROLES_PATH
             path_found = False
             warnings = []
             for path in roles_path:
