@@ -66,13 +66,14 @@ options:
       - If C(unmounted), the device will be unmounted without changing
         I(fstab).
       - C(present) only specifies that the device is to be configured in
-        I(fstab) and does not trigger or require a mount.
+        I(fstab_file) and does not trigger or require a mount.
       - C(absent) specifies that the device mount's entry will be removed from
-        I(fstab) and will also unmount the device and remove the mount
+        I(fstab_file) and will also unmount the device and remove the mount
         point.
     required: true
     choices: [ absent, mounted, present, mounted_raw, unmounted ]
   fstab:
+    choices: [ absent, mounted, present, unmounted ]
     description:
       - File to use instead of C(/etc/fstab). You shouldn't use this option
         unless you really know what you are doing. This might be useful if
@@ -81,6 +82,7 @@ options:
         use this on OpenBSD with any state that operates on the live
         filesystem.
     default: /etc/fstab (/etc/vfstab on Solaris)
+    aliases: [ fstab ]
   boot:
     description:
       - Determines if the filesystem should be mounted on boot.
@@ -200,7 +202,7 @@ def set_mount(module, args):
         new_line = (
             '%(src)s - %(name)s %(fstype)s %(passno)s %(boot)s %(opts)s\n')
 
-    for line in open(args['fstab'], 'r').readlines():
+    for line in open(args['fstab_file'], 'r').readlines():
         if not line.strip():
             to_write.append(line)
 
@@ -276,7 +278,7 @@ def set_mount(module, args):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(module, to_write, args['fstab'])
+        write_fstab(module, to_write, args['fstab_file'])
 
     return (args['name'], changed)
 
@@ -288,7 +290,7 @@ def unset_mount(module, args):
     changed = False
     escaped_name = _escape_fstab(args['name'])
 
-    for line in open(args['fstab'], 'r').readlines():
+    for line in open(args['fstab_file'], 'r').readlines():
         if not line.strip():
             to_write.append(line)
 
@@ -344,7 +346,7 @@ def unset_mount(module, args):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(module, to_write, args['fstab'])
+        write_fstab(module, to_write, args['fstab_file'])
 
     return (args['name'], changed)
 
@@ -380,9 +382,9 @@ def mount(module, args):
             module.fail_json(
                 msg=(
                     'OpenBSD does not support alternate fstab files. Do not '
-                    'specify the fstab parameter for OpenBSD hosts'))
+                    'specify the fstab_file parameter for OpenBSD hosts'))
     else:
-        cmd += _set_fstab_args(args['fstab'])
+        cmd += _set_fstab_args(args['fstab_file'])
 
     cmd += [name]
 
@@ -450,7 +452,7 @@ def remount(module, args):
                     'OpenBSD does not support alternate fstab files. Do not '
                     'specify the fstab parameter for OpenBSD hosts'))
     else:
-        cmd += _set_fstab_args(args['fstab'])
+        cmd += _set_fstab_args(args['fstab_file'])
 
     cmd += [args['name']]
     out = err = ''
@@ -610,7 +612,7 @@ def main():
         argument_spec=dict(
             boot=dict(type='bool', default=True),
             dump=dict(type='str'),
-            fstab=dict(type='str'),
+            fstab_file=dict(type='str', aliases=['fstab']),
             fstype=dict(type='str'),
             path=dict(type='path', required=True, aliases=['name']),
             opts=dict(type='str'),
@@ -627,7 +629,7 @@ def main():
     )
 
     # solaris args:
-    #   name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
+    #   name, src, fstype, opts, boot, passno, state, fstab_file=/etc/vfstab
     # linux args:
     #   name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
     # Note: Do not modify module.params['fstab'] as we need to know if the
@@ -637,21 +639,21 @@ def main():
             name=module.params['path'],
             opts='-',
             passno='-',
-            fstab=module.params['fstab'],
+            fstab_file=module.params['fstab_file'],
             boot='yes'
         )
-        if args['fstab'] is None:
-            args['fstab'] = '/etc/vfstab'
+        if args['fstab_file'] is None:
+            args['fstab_file'] = '/etc/vfstab'
     else:
         args = dict(
             name=module.params['path'],
             opts='defaults',
             dump='0',
             passno='0',
-            fstab=module.params['fstab']
+            fstab_file=module.params['fstab_file']
         )
-        if args['fstab'] is None:
-            args['fstab'] = '/etc/fstab'
+        if args['fstab_file'] is None:
+            args['fstab_file'] = '/etc/fstab'
 
         # FreeBSD doesn't have any 'default' so set 'rw' instead
         if get_platform() == 'FreeBSD':
@@ -670,17 +672,17 @@ def main():
                 'Bind mounts might be misinterpreted.')
 
     # Override defaults with user specified params
-    for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
+    for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab_file'):
         if module.params[key] is not None:
             args[key] = module.params[key]
 
     # If fstab file does not exist, we first need to create it. This mainly
-    # happens when fstab option is passed to the module.
-    if not os.path.exists(args['fstab']):
-        if not os.path.exists(os.path.dirname(args['fstab'])):
-            os.makedirs(os.path.dirname(args['fstab']))
+    # happens when fstab_file option is passed to the module.
+    if not os.path.exists(args['fstab_file']):
+        if not os.path.exists(os.path.dirname(args['fstab_file'])):
+            os.makedirs(os.path.dirname(args['fstab_file']))
 
-        open(args['fstab'], 'a').close()
+        open(args['fstab_file'], 'a').close()
 
     # absent:
     #   Remove from fstab and unmounted.
