@@ -125,7 +125,6 @@ def main():
         user_name=dict(required=True, type='str'),
         user_password=dict(required=False, type='str', no_log=True),
         admin=dict(default='False', type='bool')
-
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
