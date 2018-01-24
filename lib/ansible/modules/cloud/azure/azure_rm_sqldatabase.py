@@ -100,40 +100,9 @@ options:
             - "The max size of the database expressed in bytes. If I(create_mode) is not C(default), this value is ignored. To see possible values, query the
                capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId:
                'Capabilities_ListByLocation.'"
-    requested_service_objective_id:
-        description:
-            - "The configured I(service_level_objective) ID of the database. This is the service level objective that is in the process of being applied to the
-               database. Once successfully updated, it will match the value of I(current_service_objective_id) property. If I(requested_service_objective_id)
-               and I(requested_service_objective_name) are both updated, the value of I(requested_service_objective_id) overrides the value of
-               I(requested_service_objective_name). To see possible values, query the capabilities API
-               (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId:
-               'Capabilities_ListByLocation.'"
-    requested_service_objective_name:
-        description:
-            - "The name of the configured I(service_level_objective) of the database. This is the service level objective that is in the process of being
-               applied to the database. Once successfully updated, it will match the value of I(service_level_objective) property. To see possible values,
-               query the capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by
-               operationId: 'Capabilities_ListByLocation.'."
-        choices:
-            - 'basic'
-            - 's0'
-            - 's1'
-            - 's2'
-            - 's3'
-            - 'p1'
-            - 'p2'
-            - 'p3'
-            - 'p4'
-            - 'p6'
-            - 'p11'
-            - 'p15'
-            - 'system'
-            - 'system2'
-            - 'elastic_pool'
     elastic_pool_name:
         description:
-            - "The name of the elastic pool the database is in. If C(elastic_pool_name) and I(requested_service_objective_name) are both set, the value of
-               I(requested_service_objective_name) is ignored. Not supported for C(data_warehouse) edition."
+            - "The name of the elastic pool the database is in. Not supported for C(data_warehouse) edition."
     read_scale:
         description:
             - "If the database is a geo-secondary, indicates whether read-only connections are allowed to this database or not. Not supported for
@@ -303,27 +272,6 @@ class AzureRMDatabases(AzureRMModuleBase):
             max_size_bytes=dict(
                 type='str'
             ),
-            requested_service_objective_id=dict(
-                type='str'
-            ),
-            requested_service_objective_name=dict(
-                type='str',
-                choices=['basic',
-                         's0',
-                         's1',
-                         's2',
-                         's3',
-                         'p1',
-                         'p2',
-                         'p3',
-                         'p4',
-                         'p6',
-                         'p11',
-                         'p15',
-                         'system',
-                         'system2',
-                         'elastic_pool']
-            ),
             elastic_pool_name=dict(
                 type='str'
             ),
@@ -388,10 +336,6 @@ class AzureRMDatabases(AzureRMModuleBase):
                     self.parameters["edition"] = _snake_to_camel(kwargs[key], True)
                 elif key == "max_size_bytes":
                     self.parameters["max_size_bytes"] = kwargs[key]
-                elif key == "requested_service_objective_id":
-                    self.parameters["requested_service_objective_id"] = kwargs[key]
-                elif key == "requested_service_objective_name":
-                    self.parameters["requested_service_objective_name"] = _snake_to_camel(kwargs[key], True)
                 elif key == "elastic_pool_name":
                     self.parameters["elastic_pool_name"] = kwargs[key]
                 elif key == "read_scale":
@@ -433,12 +377,6 @@ class AzureRMDatabases(AzureRMModuleBase):
                     self.to_do = Actions.Update
                 if (('read_scale' in self.parameters) and
                         (self.parameters['read_scale'] != old_response['read_scale'])):
-                    self.to_do = Actions.Update
-                if (('requested_service_objective_id' in self.parameters) and
-                        (self.parameters['requested_service_objective_id'] != old_response['requested_service_objective_id'])):
-                    self.to_do = Actions.Update
-                if (('requested_service_objective_name' in self.parameters) and
-                        (self.parameters['requested_service_objective_name'] != old_response['requested_service_objective_name'])):
                     self.to_do = Actions.Update
                 if (('max_size_bytes' in self.parameters) and
                         (self.parameters['max_size_bytes'] != old_response['max_size_bytes'])):
