@@ -23,6 +23,11 @@ options:
     description: Display name
   givenname:
     description: First name
+  force:
+    description:
+    - Force user password even if user already exists.
+    required: false
+    version_added: 2.5
   krbpasswordexpiration:
     description:
     - Date at which the user password will expire
@@ -178,7 +183,7 @@ def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, 
     return user
 
 
-def get_user_diff(client, ipa_user, module_user):
+def get_user_diff(client, ipa_user, module_user, force=False):
     """
         Return the keys of each dict whereas values are different. Unfortunately the IPA
         API returns everything as a list even if only a single value is possible.
@@ -188,8 +193,18 @@ def get_user_diff(client, ipa_user, module_user):
         must not be changed if the returned API dict is changed.
     :param ipa_user:
     :param module_user:
+    :param force:
     :return:
     """
+    non_updateable_keys = ['force']
+    if not force:
+        non_updateable_keys.append('userpassword')
+        ipa_user.pop('user_password', None)
+
+    for key in non_updateable_keys:
+        if key in module_user:
+            del module_user[key]
+
     # sshpubkeyfp is the list of ssh key fingerprints. IPA doesn't return the keys itself but instead the fingerprints.
     # These are used for comparison.
     sshpubkey = None
@@ -254,7 +269,10 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_user = client.user_add(name=name, item=module_user)
         else:
-            diff = get_user_diff(client, ipa_user, module_user)
+            if not module.params['force']:
+                module_user.pop('userpassword', None)
+            diff = get_user_diff(client, ipa_user, module_user,
+                                 force=module.params['force'])
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -272,6 +290,7 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(displayname=dict(type='str'),
                          givenname=dict(type='str'),
+                         force=dict(type='bool', default=False),
                          krbpasswordexpiration=dict(type='str'),
                          loginshell=dict(type='str'),
                          mail=dict(type='list'),
