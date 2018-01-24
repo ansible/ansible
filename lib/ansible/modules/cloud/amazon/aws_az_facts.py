@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
+    'metadata_version': '1.1',
     'supported_by': 'community',
     'status': ['preview']
 }
@@ -44,6 +44,7 @@ EXAMPLES = '''
 
 RETURN = '''
 availability_zones:
+    returned: on success
     description: >
         Availability zones that match the provided filters. Each element consists of a dict with all the information
         related to that available zone.
@@ -101,7 +102,7 @@ def main():
     )
 
     # Replace filter key underscores with dashes, for compatibility
-    sanitized_filters = dict((k.replace('_', '-'), v) for k,v in module.params.get('filters').items())
+    sanitized_filters = dict((k.replace('_', '-'), v) for k, v in module.params.get('filters').items())
 
     try:
         availability_zones = connection.describe_availability_zones(
