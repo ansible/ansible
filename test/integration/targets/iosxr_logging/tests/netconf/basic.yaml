@@ -93,6 +93,9 @@
     provider: "{{ netconf }}"
   register: result
 
+- debug:
+    msg: "{{ result }}"
+
 - assert: &true
     that:
       - 'result.changed == true'
