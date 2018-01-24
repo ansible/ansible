@@ -20,3 +20,6 @@
   with_first_found: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
+
+- name: reset connection
+  meta: reset_connection
