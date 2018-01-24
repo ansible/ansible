@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    ecr_name: 'ecr-test-{{ ansible_date_time.epoch }}'
+    ecr_name: '{{ resource_prefix }}-ecr'
 
 - block:
 
