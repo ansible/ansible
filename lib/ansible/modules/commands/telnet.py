@@ -49,6 +49,16 @@ options:
       - List of prompts expected before sending next command
     required: False
     default: ['$']
+  login_prompt:
+    description:
+      - Login or username prompt to expect
+    required: False
+    default: 'login: '
+  password_prompt:
+    description:
+      - Login or username prompt to expect
+    required: False
+    default: 'Password: '
   pause:
     description:
         - Seconds to pause between each command issued
