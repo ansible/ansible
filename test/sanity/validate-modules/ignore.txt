@@ -582,7 +582,6 @@ lib/ansible/modules/system/service.py E323
 lib/ansible/modules/system/svc.py E322
 lib/ansible/modules/system/ufw.py E322
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_launch.py E323
-lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_template.py E322
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_team.py E322
 lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py E317
 lib/ansible/modules/web_infrastructure/django_manage.py E317
