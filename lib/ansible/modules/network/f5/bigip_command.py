@@ -163,7 +163,6 @@ import re
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import string_types
 from ansible.module_utils.network.common.parsing import FailedConditionsError
 from ansible.module_utils.network.common.parsing import Conditional
@@ -259,7 +258,8 @@ class ModuleManager(object):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.want.update({'module': self.module})
+        self.changes = Parameters(module=self.module)
 
     def _to_lines(self, stdout):
         lines = list()
@@ -346,7 +346,7 @@ class ModuleManager(object):
             'stdout_lines': self._to_lines(responses),
             'warnings': warnings
         }
-        self.changes = Parameters(params=changes)
+        self.changes = Parameters(params=changes, module=self.module)
         if any(x for x in self.want.user_commands if x.startswith(changed)):
             return True
         return False

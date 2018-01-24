@@ -84,6 +84,7 @@ f5_top_spec = {
     ),
     'transport': dict(
         removed_in_version=2.9,
+        default='rest',
         choices=['cli', 'rest']
     )
 }
@@ -92,6 +93,14 @@ f5_argument_spec.update(f5_top_spec)
 
 def get_provider_argspec():
     return f5_provider_spec
+
+
+def load_params(params):
+    provider = params.get('provider') or dict()
+    for key, value in iteritems(provider):
+        if key in f5_argument_spec:
+            if params.get(key) is None and value is not None:
+                params[key] = value
 
 
 # Fully Qualified name (with the partition)
@@ -143,7 +152,8 @@ def cleanup_tokens(client):
 def is_cli(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
-    return 'cli' in (transport, provider_transport)
+    result = 'cli' in (transport, provider_transport)
+    return result
 
 
 class Noop(object):
@@ -163,6 +173,7 @@ class Noop(object):
 class F5BaseClient(object):
     def __init__(self, *args, **kwargs):
         self.params = kwargs
+        load_params(self.params)
 
     @property
     def api(self):
