@@ -1648,10 +1648,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 self.fail(no_subnets_msg)
 
         self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
-        pip = self.create_default_pip(self.resource_group, self.location, self.name, self.public_ip_allocation_method)
+        pip = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
-        group = self.create_default_securitygroup(self.resource_group, self.location, self.name, self.os_type,
+        group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,
                                                   self.open_ports)
 
         parameters = self.network_models.NetworkInterface(
