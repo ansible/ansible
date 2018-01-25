@@ -46,6 +46,7 @@ docs/docsite/rst/community_maintained.rst
 docs/docsite/rst/config.rst
 docs/docsite/rst/core_maintained.rst
 docs/docsite/rst/list_of_*.rst
+docs/docsite/rst/module_docs/*.rst
 docs/docsite/rst/modules_by_category.rst
 docs/docsite/rst/network_maintained.rst
 docs/docsite/rst/plugins_by_category.rst
