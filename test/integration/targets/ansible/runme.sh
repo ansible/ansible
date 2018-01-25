@@ -46,7 +46,7 @@ popd # "${galaxy_local_test_role_dir}"
 f_ansible_galaxy_status()
 {
 
-    printf "### Testing ansible-galaxy: ${@}\n"
+    printf "### Testing ansible-galaxy: %s\n" "${@}"
 }
 
 # Galaxy install test case
