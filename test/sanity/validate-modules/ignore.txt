@@ -46,6 +46,7 @@ lib/ansible/modules/cloud/azure/azure_rm_postgresqlserver.py E322
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress.py E322
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver.py E322
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver_facts.py E322
+lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E322
 lib/ansible/modules/cloud/azure/azure_rm_storageblob.py E323
 lib/ansible/modules/cloud/azure/azure_rm_subnet.py E322
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py E322
