@@ -255,6 +255,12 @@ challenge_data:
       returned: changed
       type: string
       sample: IlirfxKKXA...17Dt3juxGJ-PCt92wr-oA
+    record:
+      description: the full DNS record's name for the challenge
+      returned: changed and challenge is dns-01
+      type: string
+      sample: _acme-challenge.example.com
+      version_added: "2.5"
 authorizations:
   description: ACME authorization data.
   returned: changed
@@ -824,7 +830,7 @@ class ACMEClient(object):
             result['uri'] = info['location']
             return result
 
-    def _get_challenge_data(self, auth):
+    def _get_challenge_data(self, auth, domain):
         '''
         Returns a dict with the data for all proposed (and supported) challenges
         of the given authorization.
@@ -845,7 +851,7 @@ class ACMEClient(object):
             if type == 'http-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.3
                 resource = '.well-known/acme-challenge/' + token
-                value = keyauthorization
+                data[type] = {'resource': resource, 'resource_value': keyauthorization}
             elif type == 'tls-sni-02':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.4
                 token_digest = hashlib.sha256(token.encode('utf8')).hexdigest()
@@ -857,14 +863,16 @@ class ACMEClient(object):
                     "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest // 2], token_digest[len_token_digest // 2:]),
                     "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest // 2], ka_digest[len_ka_digest // 2:]),
                 ]
+                data[type] = {'resource': resource, 'resource_value': value}
             elif type == 'dns-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.5
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
+                record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
+                data[type] = {'resource': resource, 'resource_value': value, 'record': record}
             else:
                 continue
 
-            data[type] = {'resource': resource, 'resource_value': value}
         return data
 
     def _validate_challenges(self, domain, auth):
@@ -1080,7 +1088,7 @@ class ACMEClient(object):
             # _validate_challenges updates the global authrozation dict,
             # so get the current version of the authorization we are working
             # on to retrieve the challenge data
-            data[domain] = self._get_challenge_data(self.authorizations[domain])
+            data[domain] = self._get_challenge_data(self.authorizations[domain], domain)
 
         return data
 
