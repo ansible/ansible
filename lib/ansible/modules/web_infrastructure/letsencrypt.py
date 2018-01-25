@@ -354,7 +354,10 @@ def write_file(module, dest, content):
     checksum_dest = None
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
-        os.remove(tmpsrc)
+        try:
+            os.remove(tmpsrc)
+        except:
+            pass
         module.fail_json(msg="Source %s does not exist" % (tmpsrc))
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
@@ -449,14 +452,17 @@ class ACMEAccount(object):
 
         # Create a key file from content, key (path) and key content are mutually exclusive
         if self.key_content is not None:
-            _, tmpsrc = tempfile.mkstemp()
+            fd, tmpsrc = tempfile.mkstemp()
             module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
-            f = open(tmpsrc, 'wb')
+            f = os.fdopen(fd, 'wb')
             try:
                 f.write(self.key_content.encode('utf-8'))
                 self.key = tmpsrc
             except Exception as err:
-                os.remove(tmpsrc)
+                try:
+                    f.close()
+                except:
+                    pass
                 module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
             f.close()
 
