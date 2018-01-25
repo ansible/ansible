@@ -82,6 +82,17 @@
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
 
+- name: Remove subnet (idempotent)
+  azure_rm_subnet:
+    state: absent
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: not output.changed
+
 - name: Remove security group
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
