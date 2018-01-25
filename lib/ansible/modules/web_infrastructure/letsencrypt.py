@@ -739,8 +739,8 @@ class ACMEClient(object):
         self.version = module.params['acme_version']
         self.challenge = module.params['challenge']
         self.csr = module.params['csr']
-        self.dest = module.get('dest')
-        self.fullchain_dest = module.get('fullchain_dest')
+        self.dest = module.params.get('dest')
+        self.fullchain_dest = module.params.get('fullchain_dest')
         self.account = ACMEAccount(module)
         self.directory = self.account.directory
         self.data = module.params['data']
