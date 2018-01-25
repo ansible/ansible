@@ -396,14 +396,23 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def unfrack_paths(option, opt, value, parser):
-        paths = getattr(parser.values, option.dest)
+        # If this callback is executed, we've been given explicit values, ignore the default value
+        paths = [v for v in getattr(parser.values, option.dest) if v not in option.default]
+
+        # If this is the first pass option.default is populated, ensure value is in paths and empty option.default
+        if option.default:
+            if value not in paths:
+                paths.append(value)
+            option.default[:] = []
+
         if paths is None:
             paths = []
 
+        # We reverse the lists to we end up with the order provided at the end
         if isinstance(value, string_types):
-            paths[:0] = [unfrackpath(x) for x in value.split(os.pathsep) if x]
+            paths.extend([unfrackpath(x) for x in value.split(os.pathsep) if x and unfrackpath(x) not in paths][::-1])
         elif isinstance(value, list):
-            paths[:0] = [unfrackpath(x) for x in value if x]
+            paths.extend([unfrackpath(x) for x in value if x and unfrackpath(x) not in paths][::-1])
         else:
             pass  # FIXME: should we raise options error?
 
