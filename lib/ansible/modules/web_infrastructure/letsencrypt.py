@@ -37,6 +37,7 @@ description:
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       v1 or v2 protocol."
+   - "At least one of C(dest) and C(fullchain_dest) must be specified."
 requirements:
   - "python >= 2.6"
   - openssl
@@ -119,13 +120,17 @@ options:
       - "The value that must be used here will be provided by a previous use
          of this module."
   dest:
-    description: The destination file for the certificate.
-    required: true
+    description:
+      - "The destination file for the certificate."
+      - "Required if C(fullchain_dest) is not specified."
     aliases: ['cert']
-  fullchain:
-    description: Include the full certificate chain in the destination file.
-    default: false
+  fullchain_dest:
+    description:
+      - "The destination file for the full chain (i.e. certificate followed
+         by chain of intermediate certificates)."
+      - "Required if C(dest) is not specified."
     version_added: 2.5
+    aliases: ['fullchain']
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
@@ -150,7 +155,7 @@ EXAMPLES = '''
   letsencrypt:
     account_key_content: "{{ lookup('hashi_vault', 'secret=secret/account_private_key:value') }}"
     csr: /etc/pki/cert/csr/sample.com.csr
-    dest: /etc/httpd/ssl/sample.com.crt
+    fullchain_dest: /etc/httpd/ssl/sample.com-fullchain.crt
   register: sample_com_challenge
 
 # Alternative first step:
@@ -159,6 +164,7 @@ EXAMPLES = '''
     account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
+    fullchain_dest: /etc/httpd/ssl/sample.com-fullchain.crt
   register: sample_com_challenge
 
 # perform the necessary steps to fulfill the challenge
@@ -174,6 +180,7 @@ EXAMPLES = '''
     account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
+    fullchain_dest: /etc/httpd/ssl/sample.com-fullchain.crt
     data: "{{ sample_com_challenge }}"
 
 ### Example with DNS challenge against production ACME server ###
@@ -311,7 +318,8 @@ def simple_get(module, url):
 def get_cert_days(module, cert_file):
     '''
     Return the days the certificate in cert_file remains valid and -1
-    if the file was not found.
+    if the file was not found. If cert_file contains more than one
+    certificate, only the first one will be considered.
     '''
     if not os.path.exists(cert_file):
         return -1
@@ -731,7 +739,8 @@ class ACMEClient(object):
         self.version = module.params['acme_version']
         self.challenge = module.params['challenge']
         self.csr = module.params['csr']
-        self.dest = module.params['dest']
+        self.dest = module.get('dest')
+        self.fullchain_dest = module.get('fullchain_dest')
         self.account = ACMEAccount(module)
         self.directory = self.account.directory
         self.data = module.params['data']
@@ -1066,7 +1075,7 @@ class ACMEClient(object):
         Only do this if a destination file was provided and if all authorizations
         for the domains of the csr are valid. No Return value.
         '''
-        if self.dest is None:
+        if self.dest is None and self.fullchain_dest is None:
             return
         if self.finalize_uri is None and self.version != 1:
             return
@@ -1085,12 +1094,13 @@ class ACMEClient(object):
             pem_cert = cert['cert']
 
             chain = [link for link in cert.get('chain', [])]
-            if chain:
-                if self.module.params['fullchain']:
-                    pem_cert += "\n".join(chain)
 
-            if write_file(self.module, self.dest, pem_cert.encode('utf8')):
+            if self.dest and write_file(self.module, self.dest, pem_cert.encode('utf8')):
                 self.cert_days = get_cert_days(self.module, self.dest)
+                self.changed = True
+
+            if self.fullchain_dest and write_file(self.module, self.fullchain_dest, (pem_cert + "\n".join(chain)).encode('utf8')):
+                self.cert_days = get_cert_days(self.module, self.fullchain_dest)
                 self.changed = True
 
 
@@ -1107,12 +1117,13 @@ def main():
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
             data=dict(required=False, no_log=True, default=None, type='dict'),
-            fullchain=dict(required=False, default=False, type='bool'),
-            dest=dict(required=True, aliases=['cert'], type='path'),
+            dest=dict(aliases=['cert'], type='path'),
+            fullchain_dest=dict(aliases=['fullchain'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
+            ['dest', 'fullchain_dest'],
         ),
         mutually_exclusive=(
             ['account_key_src', 'account_key_content'],
@@ -1124,7 +1135,10 @@ def main():
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
     locale.setlocale(locale.LC_ALL, 'C')
 
-    cert_days = get_cert_days(module, module.params['dest'])
+    if module.params.get('dest'):
+        cert_days = get_cert_days(module, module.params['dest'])
+    else:
+        cert_days = get_cert_days(module, module.params['fullchain_dest'])
     if cert_days < module.params['remaining_days']:
         # If checkmode is active, base the changed state solely on the status
         # of the certificate file as all other actions (accessing an account, checking
