@@ -85,7 +85,7 @@ def delete_eigw(module, conn, eigw_id):
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         # When boto3 method is run with DryRun=True it returns an error on success
         # We need to catch the error and return something valid
-        if e.response.get('Error', {}).get('Code') == "DryRunOperation":
+        if "DryRunOperation" in e.message:
             changed = True
         else:
             module.fail_json_aws(e, msg="Could not delete Egress-Only Internet Gateway {0} from VPC {1}".format(eigw_id, module.vpc_id))
@@ -112,9 +112,9 @@ def create_eigw(module, conn, vpc_id):
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         # When boto3 method is run with DryRun=True it returns an error on success
         # We need to catch the error and return something valid
-        if e.response.get('Error', {}).get('Code') == "DryRunOperation":
+        if "DryRunOperation" in e.message:
             changed = True
-        elif e.response.get('Error', {}).get('Code') == "InvalidVpcID.NotFound":
+        elif "InvalidVpcID.NotFound" in e.message:
             module.fail_json_aws(e, msg="invalid vpc ID '{0}' provided".format(vpc_id))
         else:
             module.fail_json_aws(e, msg="Could not create Egress-Only Internet Gateway for vpc ID {0}".format(vpc_id))
