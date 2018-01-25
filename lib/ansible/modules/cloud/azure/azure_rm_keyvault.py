@@ -288,6 +288,8 @@ class AzureRMVaults(AzureRMModuleBase):
                         if 'storage' in policy:
                             policy.setdefault("permissions", {})["storage"] = policy["storage"]
                             policy.pop("storage", None)
+                    if 'tenant_id' not in policy:
+                        policy['tenant_id'] = self.credentials['tenant']
                     self.parameters.setdefault("properties", {})["access_policies"] = access_policies
                 elif key == "enabled_for_deployment":
                     self.parameters.setdefault("properties", {})["enabled_for_deployment"] = kwargs[key]
@@ -299,6 +301,9 @@ class AzureRMVaults(AzureRMModuleBase):
                     self.parameters.setdefault("properties", {})["enable_soft_delete"] = kwargs[key]
                 elif key == "recover_mode":
                     self.parameters.setdefault("properties", {})["create_mode"] = 'recover' if kwargs[key] else 'default'
+
+        if 'tenant_id' not in self.parameters:
+            self.parameters['tenant_id'] = self.credentials['tenant']
 
         old_response = None
         response = None
