@@ -305,7 +305,7 @@ def main():
 
     changed = False
 
-    if checksum_src != checksum:
+    if checksum and checksum_src != checksum:
         module.fail_json(
             msg='Copied file does not match the expected checksum. Transfer failed.',
             checksum=checksum_src,
