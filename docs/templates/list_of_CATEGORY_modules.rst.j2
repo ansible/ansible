@@ -9,7 +9,7 @@
 {% if category['_modules'] %}
 
 {% for module in category['_modules'] | sort %}
-  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} - @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%}  --  @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
 {% endfor %}
 {% endif %}
 
@@ -21,7 +21,7 @@
 
 {% for module in info['_modules'] | sort %}
 {#  :ref:`@{ module }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@ #}
-    @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+    @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%}  --  @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
 {% endfor %}
 
 {% endfor %}
