@@ -86,16 +86,25 @@ options:
       - absent
       - present
 
+  internal:
+    version_added: 2.8
+    description:
+      - Restrict external access to the network.
+    type: bool
+    default: null
+    required: false
+
 extends_documentation_fragment:
     - docker
 
 author:
     - "Ben Keith (@keitwb)"
     - "Chris Houseknecht (@chouseknecht)"
+    - "Dave Bendit (@DBendit)"
 
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.8.0"
+    - "docker-py >= 1.9.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
@@ -181,6 +190,7 @@ class TaskParameters(DockerBaseClass):
         self.ipam_options = None
         self.appends = None
         self.force = None
+        self.internal = None
         self.debug = None
 
         for key, value in client.module.params.items():
@@ -269,6 +279,15 @@ class DockerNetworkManager(object):
                         # key has different value
                         different = True
                         differences.append('ipam_options.%s' % key)
+        if self.parameters.internal is not None:
+            if self.parameters.internal:
+                if not net.get('Internal'):
+                    different = True
+                    differences.append('internal')
+            else:
+                if net.get('Internal'):
+                    different = True
+                    differences.append('internal')
         return different, differences
 
     def create_network(self):
@@ -291,7 +310,8 @@ class DockerNetworkManager(object):
                 resp = self.client.create_network(self.parameters.network_name,
                                                   driver=self.parameters.driver,
                                                   options=self.parameters.driver_options,
-                                                  ipam=ipam_config)
+                                                  ipam=ipam_config,
+                                                  internal=self.parameters.internal)
 
                 self.existing_network = self.client.inspect_network(resp['Id'])
             self.results['actions'].append("Created network %s with driver %s" % (self.parameters.network_name, self.parameters.driver))
@@ -378,12 +398,14 @@ def main():
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
         ipam_options=dict(type='dict', default={}),
+        internal=dict(type='bool', default=None),
         debug=dict(type='bool', default=False)
     )
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_version='1.9.0'
         # "The docker server >= 1.9.0"
     )
 
